@@ -1,0 +1,19 @@
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+  producer:
+    acks: all
+    linger-ms: 5
+    compression-type: lz4
+  consumer:
+    auto-offset-reset: earliest
+    enable-auto-commit: false
+    session-timeout-ms: 30000
+
+synflux:
+  kafka:
+    consumer-threads: 2
+    max-retries: 3
+    retry-backoff-ms: 500
+  pipeline:
+    enrichment-enabled: ${SYNFLUX_ENRICHMENT_ENABLED:false}
+    embedding-enabled: ${SYNFLUX_EMBEDDING_ENABLED:false}

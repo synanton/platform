@@ -1,0 +1,131 @@
+[versions]
+java                  = "21"
+springBoot            = "3.3.5"
+springDependencyMgmt  = "1.1.6"
+flyway                = "10.20.1"
+postgresql            = "42.7.4"
+h2                    = "2.3.232"
+jena                  = "5.2.0"
+caffeine              = "3.1.8"
+nimbusJose            = "9.40"
+bcrypt                = "0.10.2"
+jackson               = "2.17.2"
+slf4j                 = "2.0.16"
+logback               = "1.5.8"
+junit                 = "5.11.3"
+assertj               = "3.26.3"
+mockito               = "5.14.2"
+testcontainers        = "1.20.3"
+jakartaServlet        = "6.0.0"
+argon2                = "2.11"
+micrometer            = "1.13.5"
+cassandraDriver       = "4.17.0"
+tika                  = "2.9.2"
+jgrapht               = "1.5.2"
+lucene                = "9.11.1"
+awsSdkV2              = "2.27.21"
+lz4                   = "1.8.0"
+mustache              = "0.9.14"
+springWebflux         = "3.3.5"
+kafkaClients          = "3.7.0"
+owaspSanitizer        = "20240325.1"
+pgvJavaStub           = "1.2.1"
+lettuce               = "6.5.1.RELEASE"
+grpc                  = "1.68.1"
+
+[libraries]
+# Spring Boot starters
+spring-boot-starter-web        = { module = "org.springframework.boot:spring-boot-starter-web",        version.ref = "springBoot" }
+spring-boot-starter-jdbc       = { module = "org.springframework.boot:spring-boot-starter-jdbc",       version.ref = "springBoot" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
+spring-boot-starter-actuator   = { module = "org.springframework.boot:spring-boot-starter-actuator",   version.ref = "springBoot" }
+spring-boot-starter-test       = { module = "org.springframework.boot:spring-boot-starter-test",       version.ref = "springBoot" }
+
+# Persistence
+flyway-core         = { module = "org.flywaydb:flyway-core",            version.ref = "flyway" }
+flyway-postgresql   = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+postgresql          = { module = "org.postgresql:postgresql",           version.ref = "postgresql" }
+h2                  = { module = "com.h2database:h2",                   version.ref = "h2" }
+
+# RDF / SHACL
+jena-arq            = { module = "org.apache.jena:jena-arq",            version.ref = "jena" }
+jena-tdb2           = { module = "org.apache.jena:jena-tdb2",           version.ref = "jena" }
+jena-shacl          = { module = "org.apache.jena:jena-shacl",          version.ref = "jena" }
+
+# Cache
+caffeine            = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+# Servlet API
+jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "jakartaServlet" }
+
+# JWT / crypto
+nimbus-jose-jwt     = { module = "com.nimbusds:nimbus-jose-jwt",        version.ref = "nimbusJose" }
+bcrypt              = { module = "at.favre.lib:bcrypt",                 version.ref = "bcrypt" }
+
+# Jackson
+jackson-databind    = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+
+# Logging
+slf4j-api           = { module = "org.slf4j:slf4j-api",                 version.ref = "slf4j" }
+logback-classic     = { module = "ch.qos.logback:logback-classic",      version.ref = "logback" }
+
+# Argon2 for API key hashing
+argon2-jvm          = { module = "de.mkammerer:argon2-jvm",            version.ref = "argon2" }
+
+# Micrometer (Prometheus metrics)
+micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+
+# Testing
+junit-bom           = { module = "org.junit:junit-bom",                 version.ref = "junit" }
+junit-jupiter       = { module = "org.junit.jupiter:junit-jupiter" }
+assertj-core        = { module = "org.assertj:assertj-core",            version.ref = "assertj" }
+mockito-core        = { module = "org.mockito:mockito-core",            version.ref = "mockito" }
+mockito-junit       = { module = "org.mockito:mockito-junit-jupiter",   version.ref = "mockito" }
+testcontainers-bom  = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
+testcontainers-junit      = { module = "org.testcontainers:junit-jupiter" }
+
+# Cassandra
+cassandra-driver-core = { module = "com.datastax.oss:java-driver-core", version.ref = "cassandraDriver" }
+
+# Apache Tika
+tika-core             = { module = "org.apache.tika:tika-core",          version.ref = "tika" }
+tika-parsers          = { module = "org.apache.tika:tika-parsers-standard-package", version.ref = "tika" }
+
+# JGraphT
+jgrapht-core          = { module = "org.jgrapht:jgrapht-core",           version.ref = "jgrapht" }
+
+# Apache Lucene
+lucene-core           = { module = "org.apache.lucene:lucene-core",       version.ref = "lucene" }
+lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "lucene" }
+lucene-queryparser    = { module = "org.apache.lucene:lucene-queryparser", version.ref = "lucene" }
+
+# AWS S3 SDK v2
+aws-s3               = { module = "software.amazon.awssdk:s3",           version.ref = "awsSdkV2" }
+
+# LZ4
+lz4-java             = { module = "org.lz4:lz4-java",                    version.ref = "lz4" }
+
+# Mustache
+mustache-compiler    = { module = "com.github.spullara.mustache.java:compiler", version.ref = "mustache" }
+
+# Spring WebFlux
+spring-boot-starter-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "springBoot" }
+
+# Apache Kafka
+kafka-clients            = { module = "org.apache.kafka:kafka-clients",             version.ref = "kafkaClients" }
+
+# Testcontainers extras
+testcontainers-cassandra = { module = "org.testcontainers:cassandra" }
+
+# Phase 4 security / sanitisation
+owasp-java-html-sanitizer = { module = "com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer", version.ref = "owaspSanitizer" }
+pgv-java-stub             = { module = "build.buf.protoc-gen-validate:pgv-java-stub", version.ref = "pgvJavaStub" }
+lettuce-core              = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }
+grpc-api                  = { module = "io.grpc:grpc-api", version.ref = "grpc" }
+grpc-stub                 = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
+micrometer-core           = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
+
+[plugins]
+spring-boot         = { id = "org.springframework.boot",                version.ref = "springBoot" }
+spring-dep-mgmt     = { id = "io.spring.dependency-management",         version.ref = "springDependencyMgmt" }

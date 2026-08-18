@@ -1,0 +1,10 @@
+groups:
+  - name: acl
+    rules:
+      - alert: AclStuckGrant
+        expr: topology_grant_state_total{state="STUCK"} > 0
+        for: 30m
+        labels: { severity: page }
+        annotations:
+          summary: "ACL grant stuck in propagation"
+          runbook: "https://docs.synanton.dev/runbooks/acl-stuck"

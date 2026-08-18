@@ -1,0 +1,15 @@
+groups:
+  - name: mcp
+    rules:
+      - alert: McpSessionRevalidationLag
+        expr: synanton_mcp_session_active / clamp_min(synanton_mcp_session_revalidations_total, 1) > 20
+        labels: { severity: warn }
+        annotations:
+          summary: "MCP session revalidation lag"
+          runbook: "https://docs.synanton.dev/runbooks/mcp-revalidation"
+      - alert: McpScopeDeniedSpike
+        expr: rate(synanton_mcp_scope_denied_total[1m]) * 60 > 20
+        labels: { severity: warn }
+        annotations:
+          summary: "MCP scope denials spiked"
+          runbook: "https://docs.synanton.dev/runbooks/mcp-scope"

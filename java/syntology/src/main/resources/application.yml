@@ -1,0 +1,47 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: syntology-demo
+  datasource:
+    url: ${SYNTOLOGY_DB_URL:jdbc:postgresql://localhost:5432/synanton}
+    driver-class-name: org.postgresql.Driver
+    username: ${SYNTOLOGY_DB_USER:synanton}
+    password: ${SYNTOLOGY_DB_PASSWORD:changeme}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+syntology:
+  storage:
+    adapter: jena
+    jena:
+      path: ${SYNTOLOGY_JENA_PATH:./data/syntology/tdb2}
+  cache:
+    entity-ttl-seconds: 600
+  mcp:
+    server:
+      path: /mcp
+  tenant:
+    default-id: demo
+  events:
+    log-path: ${SYNTOLOGY_EVENTS_LOG:./data/syntology/syntology-events.log}
+  ontology-dir: ${SYNTOLOGY_ONTOLOGY_DIR:/data/ontologies}
+  auth:
+    enabled: true
+    jwt-secret: ${SYNANTON_JWT_SECRET:dev-secret-at-least-32-bytes-long!!}
+
+logging:
+  level:
+    org.synanton.synt: INFO

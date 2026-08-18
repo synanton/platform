@@ -1,0 +1,7 @@
+# username:bcrypt_hash:uid:gid1,gid2,...
+# alice  - writer (gid 2000 = writers)
+alice:$2y$12$fMkO2Q4O50DdzCdw4fVlA.I8bmA5UhfsIvTIjB5ojsA0E8nxZEYt6:1001:1001,2000
+# bob    - reader only (gid 3000 = readers)
+bob:$2y$12$k0JMbiojzXqvYqJV8lQYyOwbdaAesABQAegZZrElE9HinGYaNwi66:1002:1002,3000
+# admin  - full access (writer + reader)
+admin:$2y$12$1UsjoKoiAZCMqstoxvzcbOx/hsssNQI4DkHcWJnhRJoSaSxyKNLNK:1000:1000,2000,3000

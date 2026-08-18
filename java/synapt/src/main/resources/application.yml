@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: synapt
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+synapt:
+  gateway:
+    base-url: ${GATEWAY_BASE_URL:http://gateway:8086}
+    timeout-ms: 10000
+  tenant:
+    default-tenant: ${SYNAPT_DEFAULT_TENANT:demo}
+  ui-security:
+    csp-mode: enforce
+  validation:
+    strict: false
+
+synanton:
+  sanitizer:
+    enabled: true

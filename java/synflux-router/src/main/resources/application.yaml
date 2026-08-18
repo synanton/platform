@@ -1,0 +1,31 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: synflux-router
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+  producer:
+    acks: all
+    linger-ms: 5
+    compression-type: lz4
+  consumer:
+    auto-offset-reset: earliest
+    enable-auto-commit: false
+    session-timeout-ms: 30000
+
+synflux-router:
+  kafka:
+    ingestion-requests-topic: ingestion_requests
+    ingestion-events-topic: ingestion_events
+    pause-queue-max-size: 1000
+    producer-retry-attempts: 3
+    producer-retry-backoff-ms: 100

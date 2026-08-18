@@ -1,0 +1,32 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: relix
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+relix:
+  graph:
+    load-on-boot: true
+    tenant: ${RELIX_TENANT:demo}
+  query:
+    entity-lookup-default-limit: 10
+    one-hop-default-limit: 50
+    k-hop-max-hops-cap: 6
+    k-hop-max-paths-cap: 100
+
+ingestion-cache:
+  contact-points:
+    - ${CASSANDRA_HOST:cassandra}
+  port: ${CASSANDRA_PORT:9042}
+  keyspace: ingestion_cache
+  local-dc: ${CASSANDRA_LOCAL_DC:datacenter1}

@@ -1,0 +1,46 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: synflux
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+synflux:
+  ingest:
+    parallelism: 4
+    max-file-size-bytes: 104857600
+    chunk:
+      strategy: fixed-window
+      target-tokens: 400
+      overlap-tokens: 50
+  pipeline:
+    enrichment-enabled: false
+    embedding-enabled: false
+  enrichment:
+    model-id: llama-3.1-8b-instruct
+    llm-base-url: ${LLM_BASE_URL:http://vllm-llm:8000}
+    parallelism: 4
+  embedding:
+    model-id: bge-base-en-v1.5
+    embed-base-url: ${EMBED_BASE_URL:http://vllm-embed:8001}
+    batch-size: 32
+
+ingestion-cache:
+  contact-points: ${CASSANDRA_CONTACT_POINTS:localhost}
+  port: ${CASSANDRA_PORT:9042}
+  keyspace: ingestion_cache
+  local-dc: ${CASSANDRA_LOCAL_DC:datacenter1}
+
+synvault:
+  object-store:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: synanton-hot
+    path-style-access: true

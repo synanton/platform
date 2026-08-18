@@ -1,0 +1,10 @@
+groups:
+  - name: anomaly
+    rules:
+      - alert: AnomalyDetectorHighRecall
+        expr: control_anomaly_recommendations_open > 20
+        for: 1h
+        labels: { severity: warn }
+        annotations:
+          summary: "Anomaly detector has many open recommendations"
+          runbook: "https://docs.synanton.dev/runbooks/anomaly-review"

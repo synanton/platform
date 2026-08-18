@@ -1,0 +1,212 @@
+---
+description: Protobuf and gRPC design standards for the Synanton platform - SPI contracts, field validation with protoc-gen-validate, naming conventions, and versioning rules
+globs: "**/*.proto"
+alwaysApply: false
+---
+
+# Synanton Proto / gRPC Rules
+
+## Role
+
+You are a senior platform engineer working on the Synanton knowledge platform. You design and maintain gRPC service contracts that are used by multiple modules and external connector authors.
+
+## Design Reference
+
+The authoritative SPI contracts are defined in `docs/architecture/synanton-design-1.19.md` Part IV (§28–§34). Any proto change must align with the design document.
+
+## Package Structure
+
+All Synanton proto files live under:
+
+```
+java/<module>/src/main/proto/
+  synanton/<module>/v1/
+    <entity>_service.proto
+    <entity>.proto
+rust/<module>/proto/
+  synanton/<module>/v1/
+    <entity>_service.proto
+```
+
+Package naming:
+```protobuf
+package synanton.<module>.v1;
+```
+
+Examples:
+- `package synanton.synquest.v1;`
+- `package synanton.relix.v1;`
+- `package synanton.synapt.v1;`
+
+## File Naming
+
+- gRPC service definitions: `<entity>_service.proto`
+- Message-only files: `<entity>.proto`
+- Never duplicate the module name in the file name within its directory:
+  - ✅ `relix/v1/graph_connector_service.proto`
+  - ❌ `relix/v1/relix_graph_connector_service.proto`
+
+## Versioning
+
+- Versions follow `v1`, `v2` (no alpha/beta in Synanton).
+- Within a version, backward compatibility must be maintained.
+- Breaking changes require a new version (`v2/`).
+- Do not reuse proto message types across versions - copy into the new version directory.
+
+## Field Naming
+
+- `lower_snake_case` for all message fields.
+- Timestamps: use `google.protobuf.Timestamp` with `_at` suffix (`created_at`, `updated_at`, `expires_at`).
+- Durations: use `google.protobuf.Duration` (never `int64` for durations).
+- IDs: `<entity>_id` for foreign keys; `id` for the entity's own primary key within the entity message.
+- Status/state enums: `SCREAMING_SNAKE_CASE`; always reserve `STATUS_UNSPECIFIED = 0`.
+- Repeated fields: plural noun matching the domain term (`entity_ids`, `chunk_ids`, not `items`).
+
+## SPI-Specific Conventions (§28–§34)
+
+### Relix Graph Connector SPI (§28)
+
+```protobuf
+service GraphConnectorService {
+  rpc Connect(ConnectRequest) returns (ConnectResponse);
+  rpc MutateGraph(MutationRequest) returns (MutationResponse);
+  rpc QueryGraph(GraphQueryRequest) returns (GraphQueryResponse);
+  rpc Disconnect(DisconnectRequest) returns (DisconnectResponse);
+}
+```
+
+- `tenant_id` must be present on every request message.
+- Idempotency keys on mutation operations must be `string idempotency_key` with PGV `min_len: 1, max_len: 256`.
+
+### Content Adapter SPI (§29)
+
+```protobuf
+service ContentAdapterService {
+  rpc Discover(DiscoverRequest) returns (stream DiscoverResponse);
+  rpc Fetch(FetchRequest) returns (FetchResponse);
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (Capabilities);
+}
+```
+
+### Long-Running Task Framework (§34)
+
+Use `JobHandle` for any operation exceeding 1 second:
+
+```protobuf
+message JobHandle {
+  string job_id = 1 [(validate.string).uuid = true];
+  string tenant_id = 2 [(validate.string).pattern = "^[a-zA-Z0-9_-]{1,64}$"];
+  google.protobuf.Timestamp started_at = 3;
+}
+```
+
+## Validation with protoc-gen-validate (PGV)
+
+**All public SPI fields must have PGV annotations.** This is mandatory per design §28–§32 (v1.18 hardening).
+
+```protobuf
+import "validate/validate.proto";
+
+message SearchRequest {
+  string tenant_id = 1 [(validate.rules).string = {
+    pattern: "^[a-zA-Z0-9_-]{1,64}$"
+  }];
+  string query_text = 2 [(validate.rules).string.max_len = 10000];
+  int32 top_k = 3 [(validate.rules).int32 = {gte: 1, lte: 1000}];
+}
+```
+
+**PGV rule guidelines:**
+- `tenant_id`: always `pattern: "^[a-zA-Z0-9_-]{1,64}$"`
+- UUIDs: `(validate.rules).string.uuid = true`
+- Required strings: `(validate.rules).string.min_len = 1`
+- Bounded strings: `(validate.rules).string.max_len = <N>`
+- Non-empty repeated: `(validate.rules).repeated.min_items = 1`
+- Positive integers: `(validate.rules).int32.gt = 0` or `gte: 1`
+
+**ServerInterceptor:** The `ValidatingServerInterceptor` (registered in each module's gRPC server config) runs `Validator.check()` on every incoming message and returns `INVALID_ARGUMENT` on failure. Never manually validate protobuf fields for null - they are never null.
+
+## Sensitive Fields
+
+Annotate with `(sensitive) = true` any field that must not be logged:
+
+```protobuf
+import "synanton/common/v1/annotations.proto";
+
+message AuthRequest {
+  string token = 1 [(synanton.sensitive) = true];
+}
+```
+
+## Standard Patterns
+
+### Module Capability Descriptor (§33)
+
+Every module must expose:
+
+```protobuf
+service ModuleService {
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (ModuleCapabilities);
+}
+
+message ModuleCapabilities {
+  string module_id = 1;
+  string version = 2;
+  repeated string supported_features = 3;
+}
+```
+
+### Pagination
+
+Use cursor-based pagination for list operations:
+
+```protobuf
+message ListRequest {
+  string tenant_id = 1 [(validate.rules).string.min_len = 1];
+  int32 page_size = 2 [(validate.rules).int32 = {gte: 1, lte: 1000}];
+  string page_token = 3 [(validate.rules).string.max_len = 2000];
+}
+
+message ListResponse {
+  repeated <Entity> items = 1;
+  string next_page_token = 2;
+}
+```
+
+### Error Detail
+
+Use `google.rpc.Status` for rich error details; map to the platform's `ProblemDetail` at the REST boundary.
+
+## Backward Compatibility Rules
+
+- **Never** remove a field or change its field number.
+- **Never** rename a field (changes the JSON/proto name).
+- **Do** add new optional fields with new field numbers.
+- **Do** add new enum values (but do not remove existing ones).
+- **Avoid** changing a `singular` field to `repeated` - use a new field name.
+
+Breaking changes require a new version (`v2/`) and a deprecation notice per the design doc §24 (API deprecation policy: 3-release / 6-month window).
+
+## Build Integration (Gradle)
+
+Protobuf generation is configured in each module's `build.gradle.kts`:
+
+```kotlin
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:${Versions.protobuf}" }
+    plugins {
+        id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:${Versions.grpc}" }
+        id("validate") { artifact = "build.buf:protoc-gen-validate:${Versions.pgv}" }
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins {
+                id("grpc")
+                id("validate") { option("lang=java") }
+            }
+        }
+    }
+}
+```
+
+Run `./gradlew generateProto` to regenerate Java stubs after `.proto` changes.

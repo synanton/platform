@@ -1,0 +1,4 @@
+synapt:
+  gateway:
+    base-url: http://localhost:0
+    timeout-ms: 5000

@@ -1,0 +1,122 @@
+@prefix sc:   <http://synanton.example/ontology/supply-chain#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+sc: a owl:Ontology ;
+    rdfs:label "Supply Chain Ontology" ;
+    rdfs:comment "Demo ontology for standalone Syntology module" .
+
+sc:Thing a owl:Class ;
+    rdfs:label "Thing" .
+
+sc:Organization a owl:Class ;
+    rdfs:label "Organization" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Supplier a owl:Class ;
+    rdfs:label "Supplier" ;
+    rdfs:subClassOf sc:Organization .
+
+sc:Customer a owl:Class ;
+    rdfs:label "Customer" ;
+    rdfs:subClassOf sc:Organization .
+
+sc:Product a owl:Class ;
+    rdfs:label "Product" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Warehouse a owl:Class ;
+    rdfs:label "Warehouse" ;
+    rdfs:subClassOf sc:Organization .
+
+sc:Order a owl:Class ;
+    rdfs:label "Order" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:OrderLine a owl:Class ;
+    rdfs:label "Order Line" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Shipment a owl:Class ;
+    rdfs:label "Shipment" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:InventoryItem a owl:Class ;
+    rdfs:label "Inventory Item" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Location a owl:Class ;
+    rdfs:label "Location" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Address a owl:Class ;
+    rdfs:label "Address" ;
+    rdfs:subClassOf sc:Location .
+
+sc:Country a owl:Class ;
+    rdfs:label "Country" ;
+    rdfs:subClassOf sc:Location .
+
+sc:City a owl:Class ;
+    rdfs:label "City" ;
+    rdfs:subClassOf sc:Location .
+
+sc:PurchaseOrder a owl:Class ;
+    rdfs:label "Purchase Order" ;
+    rdfs:subClassOf sc:Order .
+
+sc:SalesOrder a owl:Class ;
+    rdfs:label "Sales Order" ;
+    rdfs:subClassOf sc:Order .
+
+sc:Carrier a owl:Class ;
+    rdfs:label "Carrier" ;
+    rdfs:subClassOf sc:Organization .
+
+sc:Contract a owl:Class ;
+    rdfs:label "Contract" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Invoice a owl:Class ;
+    rdfs:label "Invoice" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Payment a owl:Class ;
+    rdfs:label "Payment" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:hasSupplier a rdf:Property ;
+    rdfs:label "has supplier" ;
+    rdfs:domain sc:Product ;
+    rdfs:range sc:Supplier .
+
+sc:hasCustomer a rdf:Property ;
+    rdfs:label "has customer" ;
+    rdfs:domain sc:Order ;
+    rdfs:range sc:Customer .
+
+sc:locatedIn a rdf:Property ;
+    rdfs:label "located in" ;
+    rdfs:domain sc:Warehouse ;
+    rdfs:range sc:Location .
+
+sc:containsProduct a rdf:Property ;
+    rdfs:label "contains product" ;
+    rdfs:domain sc:OrderLine ;
+    rdfs:range sc:Product .
+
+sc:partOfOrder a rdf:Property ;
+    rdfs:label "part of order" ;
+    rdfs:domain sc:OrderLine ;
+    rdfs:range sc:Order .
+
+sc:shipsVia a rdf:Property ;
+    rdfs:label "ships via" ;
+    rdfs:domain sc:Shipment ;
+    rdfs:range sc:Carrier .
+
+sc:fulfillsOrder a rdf:Property ;
+    rdfs:label "fulfills order" ;
+    rdfs:domain sc:Shipment ;
+    rdfs:range sc:Order .

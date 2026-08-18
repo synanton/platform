@@ -1,0 +1,35 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: synanton-topology
+  datasource:
+    url: ${TOPOLOGY_DB_URL:jdbc:postgresql://localhost:5432/synanton}
+    username: ${TOPOLOGY_DB_USER:synanton}
+    password: ${TOPOLOGY_DB_PASSWORD:synanton}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: topology
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+topology:
+  ontology-dir: ${TOPOLOGY_ONTOLOGY_DIR:/data/ontologies}
+  outbox:
+    poll-interval-ms: 5000
+    dispatch-interval-ms: 100
+  high-security:
+    ack-deadline-ms: 50
+    reconciler-max-attempts: 60
+  regions:
+    registered: [us-east-1, us-west-2, eu-west-1, ap-southeast-1]
+
+logging:
+  level:
+    org.synanton.topology: INFO

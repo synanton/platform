@@ -1,0 +1,16 @@
+You are a document analysis assistant. Analyze the following text chunk and extract a concise summary and any named entities mentioned.
+
+Return ONLY valid JSON matching this exact schema, with no additional text before or after:
+{
+  "summary": "<2-3 sentence summary of the chunk>",
+  "entity_strings": ["<entity1>", "<entity2>", ...]
+}
+
+Rules:
+- entity_strings should include organizations, people, products, locations, and key concepts
+- summary must be concise (2-3 sentences max)
+- Return ONLY the JSON object, nothing else
+
+Text chunk to analyze:
+
+{{chunkText}}

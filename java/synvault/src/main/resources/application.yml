@@ -1,0 +1,27 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: synvault
+
+synvault:
+  object-store:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    region: us-east-1
+    path-style-access: true
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    hot-bucket: synanton-hot
+
+ingestion-cache:
+  contact-points: ${CASSANDRA_CONTACT_POINTS:localhost}
+  port: ${CASSANDRA_PORT:9042}
+  keyspace: ingestion_cache
+  local-dc: ${CASSANDRA_DC:datacenter1}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

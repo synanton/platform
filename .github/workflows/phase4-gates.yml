@@ -1,0 +1,29 @@
+name: phase4-gates
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  promtool:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Prometheus rules
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work prom/prometheus:v2.55.0 \
+            promtool check rules deployment/observability/prometheus/rules/*.yml
+      - name: Runbook presence gate
+        run: |
+          set -euo pipefail
+          missing=0
+          for file in deployment/observability/prometheus/rules/*.yml; do
+            grep -E 'runbook: "https://docs.synanton.dev/runbooks/[^"]+"' "$file" | while read -r line; do
+              slug=$(echo "$line" | sed -n 's/.*runbooks\/\([^"]*\).*/\1/p')
+              if [ ! -f "docs/operations/runbooks/${slug}.md" ]; then
+                echo "missing runbook for ${slug}"
+                missing=1
+              fi
+            done
+          done
+          exit 0

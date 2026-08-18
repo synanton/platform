@@ -1,0 +1,32 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: planner
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+planner:
+  relix:
+    base-url: ${RELIX_BASE_URL:http://relix:8084}
+  labels:
+    max-size: 50000
+    refresh-interval-seconds: ${PLANNER_LABEL_REFRESH_SECONDS:300}
+  llm:
+    enabled: false
+    enabled-tenants: []
+    base-url: ${VLLM_LLM_BASE_URL:http://vllm-llm:8000/v1}
+    model: ${LLM_MODEL:llama-3.1-8b-instruct}
+    timeout-ms: 2000
+    temperature: 0.0
+    max-tokens: 150
+    seed: 42
+    max-retries: 1

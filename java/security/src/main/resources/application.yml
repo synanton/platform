@@ -1,0 +1,42 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: synanton-security
+  datasource:
+    url: ${SECURITY_DB_URL:jdbc:postgresql://localhost:5432/synanton}
+    username: ${SECURITY_DB_USER:synanton}
+    password: ${SECURITY_DB_PASSWORD:synanton}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: security
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+security:
+  idp:
+    backend: htpasswd
+    htpasswd-path: ${SECURITY_HTPASSWD_PATH:/etc/synanton/users}
+  jwt:
+    secret: ${SYNANTON_JWT_SECRET:change-me-in-production-32chars!!}
+    expires-in-seconds: 3600
+    tenant-id: demo
+  api-key:
+    prefix: "syn_"
+    cache:
+      ttl-seconds: 60
+      max-size: 10000
+  oidc:
+    enabled: ${SECURITY_OIDC_ENABLED:false}
+    issuer-uri: ${SECURITY_OIDC_ISSUER:http://keycloak.security.svc/realms/synanton}
+    client-id: synanton
+
+logging:
+  level:
+    org.synanton.security: INFO

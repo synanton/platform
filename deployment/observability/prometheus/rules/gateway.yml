@@ -1,0 +1,15 @@
+groups:
+  - name: gateway
+    rules:
+      - alert: RerankerFallbackHigh
+        expr: rate(gateway_reranker_fallback_total[15m]) / clamp_min(rate(gateway_reranker_calls_total[15m]), 0.001) > 0.05
+        labels: { severity: warn }
+        annotations:
+          summary: "Reranker fallback rate high"
+          runbook: "https://docs.synanton.dev/runbooks/reranker-fallback"
+      - alert: ColdSynthesisDegradedRateHigh
+        expr: rate(gateway_cold_synthesis_degraded_total[30m]) / clamp_min(rate(gateway_synthesis_total[30m]), 0.001) > 0.05
+        labels: { severity: warn }
+        annotations:
+          summary: "Cold synthesis degraded rate high"
+          runbook: "https://docs.synanton.dev/runbooks/cold-rehydration"

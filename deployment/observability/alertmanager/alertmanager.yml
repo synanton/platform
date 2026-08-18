@@ -1,0 +1,23 @@
+route:
+  receiver: default
+  group_by: [alertname, tenant]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = page
+      receiver: pagerduty
+    - matchers:
+        - severity = warn
+      receiver: slack
+receivers:
+  - name: default
+    webhook_configs:
+      - url: http://127.0.0.1:9099/dev-null
+  - name: pagerduty
+    webhook_configs:
+      - url: http://127.0.0.1:9099/pagerduty
+  - name: slack
+    webhook_configs:
+      - url: http://127.0.0.1:9099/slack

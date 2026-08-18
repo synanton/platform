@@ -1,0 +1,45 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: synquest
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+synquest:
+  index:
+    path: ${SYNQUEST_INDEX_PATH:./data/synquest}
+    rebuild-on-boot-if-empty: true
+    reader-refresh-seconds: 30
+  search:
+    default-top-k: 20
+    default-top-k-dense: 100
+    default-top-k-lexical: 100
+    default-rrf-k: 60
+    dense-similarity: COSINE
+  embedding:
+    model: ${EMBED_MODEL:bge-base-en-v1.5}
+    dim: 768
+    normalise-l2: true
+
+llm-client:
+  embed:
+    base-url: ${VLLM_EMBED_BASE_URL:http://vllm-embed:8001/v1}
+    model: ${EMBED_MODEL:bge-base-en-v1.5}
+    timeout-ms: 15000
+    max-retries: 3
+
+ingestion-cache:
+  contact-points:
+    - ${CASSANDRA_HOST:cassandra}
+  port: ${CASSANDRA_PORT:9042}
+  keyspace: ingestion_cache
+  local-dc: ${CASSANDRA_LOCAL_DC:datacenter1}

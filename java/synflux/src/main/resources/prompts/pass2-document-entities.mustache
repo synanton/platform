@@ -1,0 +1,21 @@
+You are a knowledge extraction assistant. Based on the following chunk summaries from a single document, extract typed entities and relationships.
+
+Return ONLY valid JSON matching this exact schema, with no additional text before or after:
+{
+  "typed_entities": [
+    {"label": "<entity name>", "type": "<ORGANIZATION|PERSON|PRODUCT|LOCATION|CONCEPT|EVENT>", "confidence": <0.0-1.0>}
+  ],
+  "relations": [
+    {"from": "<entity label>", "to": "<entity label>", "verb": "<relationship verb>", "confidence": <0.0-1.0>}
+  ]
+}
+
+Rules:
+- confidence must be a float between 0.0 and 1.0
+- type must be one of: ORGANIZATION, PERSON, PRODUCT, LOCATION, CONCEPT, EVENT
+- relations should describe meaningful connections between entities
+- Return ONLY the JSON object, nothing else
+
+Chunk summaries to analyze:
+
+{{combinedSummaries}}

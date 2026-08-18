@@ -1,0 +1,9 @@
+groups:
+  - name: csp
+    rules:
+      - alert: CspViolationBurst
+        expr: increase(ui_csp_violation_report_total[5m]) > 20
+        labels: { severity: warn }
+        annotations:
+          summary: "CSP violation burst"
+          runbook: "https://docs.synanton.dev/runbooks/csp-violations"

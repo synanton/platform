@@ -1,0 +1,3 @@
+org.synanton.common.security.sanitizer.SanitizerAutoConfiguration
+org.synanton.common.validation.ValidationAutoConfiguration
+org.synanton.common.grpc.validation.PgvValidatingConfiguration

@@ -1,0 +1,34 @@
+groups:
+  - name: security
+    rules:
+      - alert: OutboundTokenSlaBreached
+        expr: increase(security_outbound_deny_slo_total[5m]) > 5
+        labels: { severity: warn }
+        annotations:
+          summary: "Outbound token SLO breached"
+          runbook: "https://docs.synanton.dev/runbooks/outbound-slo"
+      - alert: IdpAmortizationStaleAuthzHigh
+        expr: increase(security_idp_amortization_stale_authz_total{tier="HIGH_SECURITY"}[1h]) > 5
+        labels: { severity: page }
+        annotations:
+          summary: "HIGH_SECURITY IdP amortization served stale allow"
+          runbook: "https://docs.synanton.dev/runbooks/idp-amortization"
+      - alert: SynaptSanitizationHighRate
+        expr: rate(synapt_sanitization_applied_total[1m]) > 10
+        labels: { severity: warn }
+        annotations:
+          summary: "Sanitiser firing at high rate"
+          runbook: "https://docs.synanton.dev/runbooks/sanitization"
+      - alert: GrpcValidationBurst
+        expr: increase(grpc_validation_failed_total[1m]) > 100
+        labels: { severity: warn }
+        annotations:
+          summary: "gRPC validation burst"
+          runbook: "https://docs.synanton.dev/runbooks/grpc-validation"
+      - alert: ApiKeyPastExpiry
+        expr: security_api_key_active_total{key_class="support"} > 0
+        for: 14d
+        labels: { severity: warn }
+        annotations:
+          summary: "Support API key nearing expiry"
+          runbook: "https://docs.synanton.dev/runbooks/api-key-expiry"

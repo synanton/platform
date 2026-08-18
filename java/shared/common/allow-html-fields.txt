@@ -1,0 +1,2 @@
+# Fields allowed to skip OWASP sanitisation. New @AllowHtml usages must be listed here.
+# Format: fully.qualified.ClassName#fieldName

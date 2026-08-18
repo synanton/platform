@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:syntology-test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VERSION
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration-h2
+    url: jdbc:h2:mem:syntology-test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VERSION
+    user: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+syntology:
+  storage:
+    jena:
+      path: ${java.io.tmpdir}/syntology-test/tdb2
+  events:
+    log-path: ${java.io.tmpdir}/syntology-test/events.log
+  ontology-dir: /tmp/syntology-test-ontologies
+  auth:
+    enabled: false

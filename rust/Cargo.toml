@@ -1,0 +1,5 @@
+# Placeholder workspace. Members (synquest, synquest-core) will be added
+# in a later iteration; the demo does not depend on any Rust code.
+[workspace]
+resolver = "2"
+members = []

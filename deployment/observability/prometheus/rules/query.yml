@@ -1,0 +1,16 @@
+groups:
+  - name: query
+    rules:
+      - alert: synquest_recall_below_slo
+        expr: synquest_recall_at_10 < 0.90
+        for: 1h
+        labels: { severity: warn }
+        annotations:
+          summary: "synquest recall@10 below SLO"
+          runbook: "https://docs.synanton.dev/runbooks/synquest-recall"
+      - alert: relix_mgv_lag_seconds
+        expr: relix_mgv_lag_seconds > 30
+        labels: { severity: page }
+        annotations:
+          summary: "Relix MGV lag"
+          runbook: "https://docs.synanton.dev/runbooks/mgv-lag"

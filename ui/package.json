@@ -1,0 +1,16 @@
+{
+  "name": "@synanton/ui-root",
+  "private": true,
+  "version": "0.0.0",
+  "description": "pnpm workspace root for Synanton UI packages",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter @synanton/syntology-admin dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

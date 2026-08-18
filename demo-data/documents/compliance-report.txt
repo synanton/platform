@@ -1,0 +1,25 @@
+Supply Chain Compliance and Regulatory Report - FY2024
+
+Introduction
+
+This report summarizes the compliance posture of Acme Corp's supply chain operations and documents the outcomes of supplier compliance audits, regulatory assessments, and corrective action programs conducted during fiscal year 2024. It covers environmental compliance, labor standards, trade compliance, cybersecurity, and conflict minerals reporting. The report is prepared annually for the Board's Audit and Risk Committee and is also shared with key suppliers including Globex Manufacturing and Initech Ltd.
+
+Environmental Compliance
+
+Acme Corp completed environmental compliance reviews at 28 supplier facilities during FY2024, including all primary production sites operated by Globex Manufacturing and Initech Ltd. Key findings included two minor non-conformances related to wastewater discharge reporting at a Globex Manufacturing facility in Ohio, which were resolved through a corrective action plan closed within 60 days. No critical environmental violations were identified across the supply base. Both Globex Manufacturing and Initech Ltd maintained their ISO 14001 certifications throughout the review period.
+
+Labor Standards and Human Rights
+
+Acme Corp conducts annual self-assessments and periodic third-party audits of high-risk suppliers against the Responsible Business Alliance (RBA) Code of Conduct. In FY2024, Acme Corp completed RBA-aligned audits at four high-risk facilities, none of which included Globex Manufacturing or Initech Ltd (both classified as lower risk based on geography and historical performance). Two findings related to overtime hour tracking at a tier-two sub-supplier were escalated and remediated through Initech Ltd's supply chain management program.
+
+Trade Compliance and Customs
+
+Acme Corp maintained a Customs-Trade Partnership Against Terrorism (C-TPAT) certification throughout FY2024. All cross-border shipments from Initech Ltd's Canadian and Polish facilities were cleared under validated free trade agreement preferential tariff claims, resulting in approximately $1.2 million in duty savings. The company's trade compliance team conducted a USMCA content analysis for 47 part numbers sourced from Globex Manufacturing, confirming qualifying origination status for all applicable items.
+
+Conflict Minerals
+
+In accordance with SEC Rule 13p-1 under the Dodd-Frank Act, Acme Corp filed its annual conflict minerals report (Form SD) covering tantalum, tin, tungsten, and gold sourced through its supply chain. Globex Manufacturing and Initech Ltd both completed the CMRT survey with full transparency, with no confirmed sourcing from conflict-affected or high-risk areas.
+
+Cybersecurity Supply Chain Risk
+
+During FY2024, Acme Corp formalized a Supplier Cybersecurity Minimum Requirements standard applicable to all suppliers with electronic connectivity to Acme Corp systems. Both Globex Manufacturing and Initech Ltd completed the baseline assessment questionnaire and have committed to achieving SOC 2 Type II certification by end of FY2025. Three lower-tier suppliers were placed on a corrective action watch list for deficiencies in multi-factor authentication and patch management practices.

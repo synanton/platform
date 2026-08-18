@@ -1,0 +1,26 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: synanton-mcp
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+synanton-mcp:
+  security-url: ${MCP_SECURITY_URL:http://localhost:8081}
+  synapt-url: ${MCP_SYNAPT_URL:http://localhost:8085}
+  relix-url: ${MCP_RELIX_URL:http://localhost:8084}
+  syntology-url: ${MCP_SYNTOLOGY_URL:http://localhost:8083}
+  tool-timeout-ms: 8000
+  auth-cache:
+    ttl-seconds: 60
+    max-size: 5000
+
+logging:
+  level:
+    org.synanton.mcp: INFO

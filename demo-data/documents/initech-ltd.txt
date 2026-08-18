@@ -1,0 +1,21 @@
+Initech Ltd - Supplier and Partner Profile
+
+Company Overview
+
+Initech Ltd is an electronics manufacturing services (EMS) provider and component integrator headquartered in Mississauga, Ontario, Canada. The company was incorporated in 1995 and has grown through a combination of organic expansion and targeted acquisitions to become a mid-tier EMS player with approximately 3,100 employees and revenues of $490 million in fiscal year 2024. Initech Ltd operates three manufacturing facilities: two in Ontario and one in Krakow, Poland, serving customers in North America and Europe.
+
+Relationship with Acme Corp
+
+Initech Ltd has been a strategic supplier to Acme Corp since 2009. The partnership covers the design, manufacture, and delivery of electrical harness assemblies, printed circuit board assemblies (PCBAs), and thermal management subsystems integrated into Acme Corp's industrial product lines. Initech Ltd's Mississauga facility is co-located with an Acme Corp vendor-managed inventory hub, which allows Initech Ltd to replenish Acme Corp's production lines on a kanban-triggered basis with a two-hour delivery window.
+
+Products and Services
+
+Initech Ltd's product portfolio includes wire harness assemblies rated up to 600V, multi-layer PCBAs assembled using surface-mount and through-hole technology, battery management system (BMS) modules, and thermal interface pads and heat sink assemblies. The company also offers design-for-manufacturability (DfM) engineering services, enabling customers such as Acme Corp to optimize new product designs before committing to tooling investments.
+
+Quality and Compliance
+
+All three Initech Ltd facilities are certified to ISO 9001:2015 and IATF 16949. The Krakow facility additionally holds IPC-A-610 Class 3 certification for high-reliability electronics assembly. Initech Ltd conducts monthly quality business reviews with Acme Corp's supplier quality team and maintains a corrective action closure rate of 94% within agreed timelines.
+
+Strategic Outlook
+
+Initech Ltd is investing in expanded automation at its Krakow facility to support anticipated growth in European demand for electrification components. The company is also developing a software-enabled supply chain visibility portal that will provide customers including Acme Corp with real-time production status, quality dashboards, and shipment tracking integrated directly into customer ERP systems.

@@ -1,0 +1,51 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.fleet/
+*.swp
+
+.claude/settings.local.json
+
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+dist/
+.next/
+.vite/
+*.log
+
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Python (incidental)
+__pycache__/
+*.pyc
+.venv/
+
+# Docker / runtime data - keep seed files, ignore live data
+demo-data/ontologies/**/*.tdb2
+demo-data/ontologies/.lock
+deployment/docker/**/volumes/
+
+# Secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Runtime ontology storage (standalone demo)
+data/syntology/
+
+/gradle-*-bin.zip

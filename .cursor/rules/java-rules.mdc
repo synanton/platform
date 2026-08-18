@@ -1,0 +1,190 @@
+---
+description: Java code generation standards and testing guidelines for hexagonal architecture - Synanton platform
+globs: **/*.java
+alwaysApply: false
+---
+
+# Java Generation Rules
+
+## Role
+
+You are a senior developer, obsessed with clean and fully tested code.
+
+## Code Structure
+
+Use hexagonal architecture packages pattern. The project structure follows this pattern:
+
+```
+src/
+├── adapter/
+│   ├── in/           # Entry points (incoming adapters)
+│   │   ├── grpc/     # gRPC controllers/endpoints
+│   │   ├── rest/     # REST controllers
+│   │   ├── schedule/ # @Scheduled (and Shedlock) triggers - delegate to domain use cases only
+│   │   └── ...       # Other entry point adapters (e.g. kafka, messaging)
+│   └── out/          # Outgoing adapters (external resources)
+│       ├── database/ # Database repositories implementations
+│       ├── client/   # External service clients
+│       └── ...       # Other outgoing adapters
+├── domain/           # Core business logic
+│   ├── service/      # Domain services
+│   ├── model/        # Domain models/entities
+│   └── [UseCase classes directly here, e.g., GetAllTemplatesUseCase.java]
+└── config/           # Configuration classes and files
+```
+
+**Adapter package:**
+- **`adapter/in/`**: Contains all entry points for the application. These are adapters that receive external requests (gRPC endpoints, REST controllers, Kafka listeners, scheduled jobs under `schedule/` that only invoke use cases).
+- **`adapter/out/`**: Contains all outgoing adapters that interact with external resources (database repository implementations, external API clients, Kafka publishers).
+
+**Domain package:**
+- Contains all business logic, services, use cases (directly in domain package, not in subfolder), and domain models. This is the core of the application and must not depend on adapters.
+
+**Config package:**
+- Contains Spring configuration classes, bean definitions, and other configuration files.
+
+## Build System
+
+**Synanton uses Gradle with Kotlin DSL** (`build.gradle.kts`). The wrapper is `./gradlew`.
+
+Key build commands:
+```bash
+./gradlew compileJava          # compile before making changes
+./gradlew test                 # run all tests
+./gradlew :java:<module>:test  # run tests for a specific module
+./gradlew :java:<module>:bootRun  # start a specific service
+./gradlew build                # full build (compile + test + package)
+```
+
+**Module layout** (multi-module Gradle build):
+- `java/<module>/build.gradle.kts` - module build file
+- `settings.gradle.kts` - lists all modules
+- `build.gradle.kts` - root build file with shared config
+
+Use `./gradlew dependencies --configuration compileClasspath` to inspect the dependency tree for a module.
+
+## Guidelines
+
+When generating Java code:
+- Make minimum change possible to complete the task
+- Create multi-char variable names (no single-char variable names)
+- When generating POJOs, use Lombok annotations to avoid boilerplate getters/setters/constructors
+- Prefer `@RequiredArgsConstructor` (Lombok) for dependency injection and `final` field initialization whenever it fits; avoid hand-written constructors that only assign fields
+- Use `rows.getFirst()` instead of `rows.get(0)` where possible
+- Use `@Accessors(chain = true)` from `lombok.experimental.Accessors` on domain classes for fluent construction
+- Repository classes should return domain objects, not protobuf objects
+- Use case classes should return domain objects; protobuf conversion happens in the gRPC adapter layer
+- Protobuf class fields cannot be null - no need for null checks on them
+- Annotate every field and method parameter that may be `null` with `@Nullable` (`import org.jspecify.annotations.Nullable`); unannotated reference types are treated as non-null. Skip protobuf fields and test code.
+
+**Configuration defaults (Spring Boot):**
+- Do not put tunable defaults in Java: no `@Value("${key:DEFAULT}")`, no literal config fallbacks.
+- Put defaults in `application.yml` (including per-profile files) and in test `application.yml` when tests require the property.
+- Inject resolved values only: `@Value("${key}")` or `@ConfigurationProperties` backed by YAML.
+
+**Code Style:**
+- Respect checkstyle rules in `/checkstyle.xml`
+- Maximum line length: 120 characters (as configured in checkstyle.xml)
+- Prefer multi-line builder pattern over one-liners for readability
+
+```java
+// Instead of this:
+AssistantsOutProto.Error.newBuilder().setCode(failure.message()).setMessage(failure.message()).build();
+
+// Do this:
+AssistantsOutProto.Error.newBuilder()
+    .setCode(failure.message())
+    .setMessage(failure.message())
+    .build();
+```
+
+**Comments and Javadoc:**
+- Do not edit or remove existing comments/Javadoc unless they are wrong or contradict the new code
+- Add Javadoc on public classes, methods, and fields that form the module API
+- Add brief comments only for non-obvious logic (invariants, external system contracts, multi-step algorithms)
+- Do not restate the code; do not document volatile implementation details unless required for safety or a stable contract
+- Prefer stable "why/what" wording over step-by-step narration
+
+**Logging:**
+- Use `@Slf4j` annotation with log methods instead of `System.out.print`
+- No need to check logging level before logging
+
+```java
+// Instead of this:
+if (log.isDebugEnabled()) {
+    log.debug("IDs to process: {}", ids);
+}
+
+// Do this:
+log.debug("IDs to process: {}", ids);
+```
+
+## Project Stack (Synanton)
+
+- Java 21
+- Spring Boot 3.x
+- Lombok
+- **Gradle with Kotlin DSL** (not Maven)
+- Protobuf + gRPC (`protoc-gen-validate` for field validation per design §28-§32)
+- Cassandra (DataStax driver), PostgreSQL (JDBC + Flyway), Kafka, Redis
+
+## Tests
+
+### Global Approach
+
+Two types of tests: integration and unit.
+
+**Unit tests:**
+- Naming: `{ClassName}Test.java`
+- No Spring context or integration test inheritance
+- Only the class under test and its dependencies as mocks
+
+**Integration tests:**
+- Use Spring context; live in `integration/` package
+- Test the app as a black box
+- Cover the happy path; do not test every corner case
+
+**Integration test steps:**
+1. **Prepare:** Use mock server (e.g. `grpcMock`) to stub external calls; use `@MockitoBean` only on beans in `adapter.out`; interact via API calls only - no repository objects for preparation
+2. **Trigger:** Interact with the app via API calls or input messages
+3. **Verify:** Assert via API calls or captured output messages
+
+**Repository beans in tests:**
+- Present only in a base integration class for `deleteAll()` calls before each test
+- Prefer creating unique random resources per test (random prefix per test) to avoid collisions
+
+### Other
+
+- Pre-change safety: run `./gradlew compileJava` before applying changes; stop if it fails
+- Integration and unit tests ALWAYS use single object comparison, not field-by-field:
+
+```java
+// Not this:
+assertThat(actual.talkId()).isEqualTo(talkId);
+assertThat(actual.version()).isEqualTo(instant);
+
+// Do this:
+TalkIndexedState expected = new TalkIndexedState(talkId, ..., instant, false);
+assertThat(actualRows).isEqualTo(List.of(expected));
+```
+
+- Allowed whole-object assertions: `isEqualTo`, `containsExactly`, `containsExactlyInAnyOrder`, `containsExactlyElementsOf`, `containsExactlyInAnyOrderElementsOf`
+- Test naming: generated names start with `"should"`
+- Use `@InjectMocks` in unit tests where possible
+- Use static imports: `import static org.mockito.Mockito.*`
+- Do not use `@DirtiesContext` - clean repositories instead
+- Use `Instant.now(clock)` not `Instant.now()`; `clock` must be a `Clock.fixed(...)` bean in test config
+
+## Additional Guidelines
+
+These bullets complement the rules above. Invoke the corresponding skill for detailed guidance.
+
+- **Pre-change safety:** Run `./gradlew compileJava` before applying changes; stop if it fails (see @121-java-object-oriented-design, @131-java-testing-unit-testing).
+- **Method/member order:** static members → instance fields → constructors → instance methods (public → protected → package → private); group by functionality; callers before callees; inner classes/enums at bottom (see @115-java-method-and-member-ordering).
+- **Exception handling:** Specific types; try-with-resources for closeables; validate inputs early; do not expose sensitive data; chain causes; document `@throws` (see @123-java-exception-handling).
+- **Secure coding:** Validate untrusted input; parameterized queries (no string-concat SQL); least privilege; no hardcoded secrets; encode output for XSS (see @124-java-secure-coding).
+- **Concurrency:** Prefer `java.util.concurrent` and virtual threads for I/O-bound work; do not swallow `InterruptedException`; bounded queues and timeouts (see @125-java-concurrency).
+- **Logging policy:** Structured logging; log once at boundaries; include correlation IDs; avoid log-and-throw duplication.
+- **Generics:** No raw types; PECS wildcards; bounded type parameters; diamond operator (see @128-java-generics).
+- **Unit testing:** JUnit 5; AssertJ; Given-When-Then; one responsibility per test; Mockito for isolation; no reflection to test private code (see @131-java-testing-unit-testing).
+- **gRPC / protobuf:** Use `protoc-gen-validate` (PGV) rules on `.proto` fields; validate at the `ServerInterceptor` boundary; never validate protobuf fields for null (see @proto-rules and @124-java-secure-coding).

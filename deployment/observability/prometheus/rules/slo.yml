@@ -1,0 +1,14 @@
+groups:
+  - name: slo
+    rules:
+      - alert: QuerySloBurnFast
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{uri="/query",outcome!~"SUCCESS"}[5m]))
+            / clamp_min(sum(rate(http_server_requests_seconds_count{uri="/query"}[5m])), 0.001)
+          ) > (14.4 * (1 - 0.999))
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "Query SLO fast-burn"
+          runbook: "https://docs.synanton.dev/runbooks/budget-overrun"

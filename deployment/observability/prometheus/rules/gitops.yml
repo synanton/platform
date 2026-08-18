@@ -1,0 +1,10 @@
+groups:
+  - name: gitops
+    rules:
+      - alert: GitOpsReconcileFailed
+        expr: control_gitops_reconcile_success_ratio == 0
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "GitOps reconcile failed"
+          runbook: "https://docs.synanton.dev/runbooks/gitops-reconcile"

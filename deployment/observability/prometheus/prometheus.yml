@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+rule_files:
+  - /etc/prometheus/rules/*.yml
+scrape_configs:
+  - job_name: synanton
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - synapt:8080
+          - gateway:8086
+          - planner:8085
+          - security:8081
+          - topology:8082
+          - synquest:8083
+          - relix:8084
+          - synflux-router:8086
+          - control-plane:8092
+          - synanton-mcp:8093

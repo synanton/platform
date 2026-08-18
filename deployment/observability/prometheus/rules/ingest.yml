@@ -1,0 +1,22 @@
+groups:
+  - name: ingest
+    rules:
+      - alert: SynfluxRouterShortRetention
+        expr: synflux_router_short_retention == 1
+        labels: { severity: warn }
+        annotations:
+          summary: "Router short retention active"
+          runbook: "https://docs.synanton.dev/runbooks/router-retention"
+      - alert: SynfluxRouterFairShareStuck
+        expr: synflux_router_fair_share_used_ratio == 0
+        for: 5m
+        labels: { severity: warn }
+        annotations:
+          summary: "Fair-share stuck for a weighted tenant"
+          runbook: "https://docs.synanton.dev/runbooks/router-fairshare"
+      - alert: SynfluxRouterBackpressureDrops
+        expr: rate(synflux_router_backpressure_drops_total[1m]) * 60 > 100
+        labels: { severity: warn }
+        annotations:
+          summary: "Router backpressure drops"
+          runbook: "https://docs.synanton.dev/runbooks/router-backpressure"

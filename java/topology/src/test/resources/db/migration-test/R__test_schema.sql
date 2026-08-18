@@ -1,0 +1,4 @@
+-- Repeatable migration: creates/replaces the topology schema for H2 test environments.
+-- Runs after V1 would fail; Flyway's "outOfOrder" or disabling V1 is handled via
+-- spring.flyway.locations ordering (migration-test runs first with just this file,
+-- overriding V1 for the test profile).

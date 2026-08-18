@@ -1,0 +1,442 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-synanton}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-synanton}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-synanton}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # One-shot container that prepares the ontology directory inside the named
+  # volume with the ownership alice (uid=1001) expects for write permission.
+  init-perms:
+    image: alpine:3
+    command:
+      - sh
+      - -c
+      - "mkdir -p /data/ontologies/demo && chown -R 1001:2000 /data/ontologies && chmod 750 /data/ontologies/demo"
+    volumes:
+      - ontology-data:/data/ontologies
+    restart: "no"
+
+  security:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/security.Dockerfile
+    environment:
+      SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
+      SECURITY_HTPASSWD_PATH: /etc/synanton/users
+    volumes:
+      - ../../demo-data/users/users:/etc/synanton/users:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  topology:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/topology.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TOPOLOGY_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-synanton}
+      TOPOLOGY_DB_USER: ${POSTGRES_USER:-synanton}
+      TOPOLOGY_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      TOPOLOGY_ONTOLOGY_DIR: /data/ontologies
+      SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
+    volumes:
+      - ontology-data:/data/ontologies:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  syntology:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/syntology.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      init-perms:
+        condition: service_completed_successfully
+    environment:
+      SYNTOLOGY_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-synanton}
+      SYNTOLOGY_DB_USER: ${POSTGRES_USER:-synanton}
+      SYNTOLOGY_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      SYNTOLOGY_ONTOLOGY_DIR: /data/ontologies
+      SYNTOLOGY_JENA_PATH: /var/lib/syntology/tdb2
+      SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
+      SERVER_PORT: 8083
+    volumes:
+      - ontology-data:/data/ontologies
+      - syntology-tdb2:/var/lib/syntology/tdb2
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  syntology-admin:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/syntology-admin.Dockerfile
+    depends_on:
+      security:
+        condition: service_healthy
+      topology:
+        condition: service_healthy
+      syntology:
+        condition: service_healthy
+    ports:
+      - "${SYNTOLOGY_ADMIN_PORT:-8080}:80"
+    restart: unless-stopped
+
+  cassandra:
+    image: cassandra:4.1
+    environment:
+      CASSANDRA_CLUSTER_NAME: synanton-local
+      CASSANDRA_DC: datacenter1
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 100M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q '^UN'"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "mc alias set local http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin} &&
+             mc mb --ignore-existing local/synanton-hot"
+    restart: "no"
+
+  synvault:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/synvault.Dockerfile
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      CASSANDRA_CONTACT_POINTS: cassandra
+      CASSANDRA_PORT: 9042
+      CASSANDRA_LOCAL_DC: datacenter1
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      SERVER_PORT: 8091
+    volumes:
+      - ../../demo-data/documents:/demo-data/documents:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8091/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+
+  synflux:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/synflux.Dockerfile
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      CASSANDRA_CONTACT_POINTS: cassandra
+      CASSANDRA_PORT: 9042
+      CASSANDRA_LOCAL_DC: datacenter1
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      LLM_BASE_URL: http://vllm-llm:8000/v1
+      EMBED_BASE_URL: http://vllm-embed:8001/v1
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8090
+    volumes:
+      - ../../demo-data/documents:/demo-data/documents:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+
+  planner:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/planner.Dockerfile
+    environment:
+      RELIX_BASE_URL: http://relix:8084
+      SERVER_PORT: 8085
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/gateway.Dockerfile
+    depends_on:
+      planner:
+        condition: service_healthy
+    environment:
+      PLANNER_BASE_URL: http://planner:8085
+      SYNQUEST_BASE_URL: http://synquest:8083
+      RELIX_BASE_URL: http://relix:8084
+      LLM_BASE_URL: http://vllm-llm:8000/v1
+      SERVER_PORT: 8086
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  synapt:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/synapt.Dockerfile
+    depends_on:
+      gateway:
+        condition: service_healthy
+    ports:
+      - "${SYNAPT_PORT:-8080}:8080"
+    environment:
+      GATEWAY_BASE_URL: http://gateway:8086
+      SERVER_PORT: 8080
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:3.7.0
+    profiles: [phase3]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: synanton-local-kafka-cluster
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+    restart: unless-stopped
+
+  kafka-init:
+    image: apache/kafka:3.7.0
+    profiles: [phase3]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "/scripts/kafka-init.sh"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - ../../scripts:/scripts:ro
+    restart: "no"
+
+  synflux-router:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/synflux-router.Dockerfile
+    profiles: [phase3]
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8086
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+
+  vllm-llm:
+    image: vllm/vllm-openai:latest
+    profiles: [phase2]
+    command: >
+      --model hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4
+      --quantization awq_marlin
+      --dtype half
+      --max-model-len 4096
+      --max-num-seqs 4
+      --gpu-memory-utilization 0.85
+      --enable-prefix-caching
+      --served-model-name llama-3.1-8b-instruct
+      --port 8000
+    environment:
+      CUDA_VISIBLE_DEVICES: "0"
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  vllm-embed:
+    image: vllm/vllm-openai:latest
+    profiles: [phase2]
+    command: >
+      --model BAAI/bge-base-en-v1.5
+      --task embed
+      --dtype half
+      --max-model-len 512
+      --gpu-memory-utilization 0.30
+      --served-model-name bge-base-en-v1.5
+      --port 8001
+    environment:
+      CUDA_VISIBLE_DEVICES: "1"
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8001/health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    profiles: [observability]
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules/:/etc/prometheus/rules/:ro
+    ports: ["9090:9090"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.0
+    profiles: [observability]
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports: ["9093:9093"]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:11.4.0
+    profiles: [observability]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    profiles: [observability]
+    ports: ["16686:16686", "4317:4317", "4318:4318"]
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    profiles: [observability]
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports: ["8088:8080"]
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  ontology-data:
+  syntology-tdb2:
+  cassandra-data:
+  minio-data:
+  hf-cache:
+  kafka-data:
+
+networks:
+  default:
+    name: synanton-demo

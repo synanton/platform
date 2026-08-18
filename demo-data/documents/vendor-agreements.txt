@@ -1,0 +1,21 @@
+Vendor Agreements Framework and Summary
+
+Overview of Master Supply Agreements
+
+This document summarizes the key commercial and operational terms governing Acme Corp's master supply agreements with its principal vendors. It is intended to serve as a reference for procurement, legal, and supply chain operations teams. The agreements described herein are legally binding contracts; this summary does not supersede the original agreement text.
+
+Agreement with Globex Manufacturing
+
+The master supply agreement between Acme Corp and Globex Manufacturing was originally executed in 2003 and most recently renewed effective January 1, 2022 for a five-year term expiring December 31, 2026. Key terms include a capacity reservation commitment from Globex Manufacturing covering a minimum of 85% of Acme Corp's rolling twelve-month forecast for covered part numbers, quarterly pricing adjustments indexed to the Midwest Manufacturer's Steel Price Index, a minimum order quantity of 500 units per part number per release, and a 30-day payment term with a 1.5% early payment discount available for settlement within 10 days.
+
+The agreement grants Acme Corp the right to conduct annual supplier audits with 30 days' notice, including access to production records, quality data, and sub-tier supplier lists. Globex Manufacturing is required to notify Acme Corp within 48 hours of any event that may materially affect delivery commitments, including equipment failures, labor actions, or supply disruptions affecting tier-two inputs.
+
+Agreement with Initech Ltd
+
+The master supply agreement between Acme Corp and Initech Ltd was executed in 2009 and operates on a rolling three-year evergreen term, subject to 180 days' written notice of termination by either party. Key terms include vendor-managed inventory (VMI) obligations requiring Initech Ltd to maintain a minimum 10-day supply of finished goods at the Mississauga hub, delivery performance requirements with financial penalties triggered if on-time delivery falls below 95% in any rolling 90-day period, and most-favored-customer pricing provisions applicable to the top 20 part numbers by annual spend.
+
+Initech Ltd is obligated to maintain IATF 16949 certification throughout the term and to provide Acme Corp with advance written notice of any planned changes to manufacturing processes, material substitutions, or sub-tier supplier changes that may affect form, fit, or function of delivered components.
+
+General Terms Applicable to All Vendors
+
+All Acme Corp vendor agreements incorporate by reference the company's Supplier Code of Conduct, which mandates compliance with applicable labor laws, prohibition of child and forced labor, environmental regulatory compliance, and anti-corruption policies consistent with the Foreign Corrupt Practices Act and UK Bribery Act.
