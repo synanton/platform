@@ -15,7 +15,9 @@ import org.synanton.syntology.infra.jena.TboxRuntimeMapper;
 import org.synanton.syntology.infra.schema.IncludeResolver;
 
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -57,8 +59,28 @@ public class SchemaLoadService {
     }
 
     public OntologySchemaIr compile(Path bundleRoot, String entryFile) {
-        Path entry = bundleRoot.resolve(entryFile == null || entryFile.isBlank() ? "schema.hcl" : entryFile);
+        String safeEntryFile = sanitizeEntryFile(entryFile);
+        Path entry = bundleRoot.resolve(safeEntryFile);
         return includeResolver.resolve(bundleRoot, entry);
+    }
+
+    private String sanitizeEntryFile(String entryFile) {
+        String candidate = (entryFile == null || entryFile.isBlank()) ? "schema.hcl" : entryFile;
+        try {
+            Path parsed = Paths.get(candidate);
+            if (parsed.isAbsolute()) {
+                throw new IllegalArgumentException("Entry file path must be relative");
+            }
+            Path normalized = parsed.normalize();
+            for (Path part : normalized) {
+                if ("..".equals(part.toString())) {
+                    throw new IllegalArgumentException("Entry file path must not contain parent traversal");
+                }
+            }
+            return normalized.toString();
+        } catch (InvalidPathException ex) {
+            throw new IllegalArgumentException("Invalid entry file path", ex);
+        }
     }
 
     public Map<String, Object> preview(Path bundleRoot, String entryFile) {
