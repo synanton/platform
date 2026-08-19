@@ -58,7 +58,7 @@ flowchart TB
 ### Package layout (hexagonal, per v1.17 doc)
 
 ```
-org.synanton.synt
+org.synanton.syntology
 ├── app/                    SyntologyApplication, config, DemoDataLoader
 ├── api/
 │   ├── rest/               OntologyController, CapabilitiesController

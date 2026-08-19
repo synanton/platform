@@ -93,7 +93,7 @@ synanton/
 
 ### 1.1 Conventions
 
-- Java module package roots: `org.synanton.<module-id>`. Syntology uses `org.synanton.synt.*` per the manifesto.
+- Java module package roots: `org.synanton.<module-id>`. Syntology uses `org.synanton.syntology.*` per the manifesto.
 - UI packages scoped as `@synanton/<module-id>`.
 - Configuration keys, metrics, log fields prefixed with the module id.
 - `settings.gradle.kts` includes only `java:shared:common`, `java:security`, `java:topology`, `java:syntology` at the start.
@@ -223,7 +223,7 @@ On startup, a `FilesystemAclSeeder` walks `/data/ontologies`, reads POSIX mode +
 **Package layout (hexagonal):**
 
 ```
-org.synanton.synt
+org.synanton.syntology
 ├── api/                # REST controllers, request/response DTOs
 ├── domain/             # OntologyService, EntityType, RelationType, OntologyVersion
 │   └── port/

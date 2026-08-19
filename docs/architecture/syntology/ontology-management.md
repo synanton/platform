@@ -22,7 +22,7 @@ The `syntology` module adheres to the platform’s architectural principles, as 
 
 | Principle                       | Implementation in Demo                                       |
 | ------------------------------- | ------------------------------------------------------------ |
-| **Unified Identity**            | Module is named `syntology` across all contexts; code package `org.synanton.synt.*`. |
+| **Unified Identity**            | Module is named `syntology` across all contexts; code package `org.synanton.syntology.*`. |
 | **Hexagonal Architecture**      | Ports & Adapters are used; the domain is isolated from REST/gRPC/MCP and storage. |
 | **Honest Capability Surfacing** | The module exposes `/capabilities` with a reduced feature set (no reasoning, limited validation). |
 | **Cost Awareness**              | Cost attribution is stubbed (log events) but not wired to the full `api_usage` pipeline. |
