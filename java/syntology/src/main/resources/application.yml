@@ -46,4 +46,4 @@ syntology:
 
 logging:
   level:
-    org.synanton.synt: INFO
+    org.synanton.syntology: INFO
