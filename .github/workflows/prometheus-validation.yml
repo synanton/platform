@@ -13,7 +13,7 @@ jobs:
 
       - name: Check Prometheus rules syntax
         run: |
-          docker run --rm -v "$PWD:/work" -w /work prom/promtool:v2.55.0 \
+          docker run --rm -v "$PWD:/work" -w /work --entrypoint "" prom/prometheus:v2.55.0 \
             sh -c 'promtool check rules deployment/observability/prometheus/rules/*.yml'
 
       - name: Verify runbook links presence
@@ -27,16 +27,16 @@ jobs:
             while read -r line; do
               slug=$(echo "$line" | sed -n 's/.*runbooks\/\([^"]*\).*/\1/p')
               if [ -n "$slug" ] && [ ! -f "docs/operations/runbooks/${slug}.md" ]; then
-                echo "❌ Missing runbook file for slug: ${slug} (found in $file)"
+                echo "Missing runbook file for slug: ${slug} (found in $file)"
                 missing=1
               fi
             done < <(grep -E 'runbook: "https://synanton.org[^"]+"' "$file" || true)
           done
           
           if [ "$missing" -ne 0 ]; then
-            echo "🚨 Build failed: One or more markdown runbooks are missing in docs/operations/runbooks/"
+            echo "Build failed: One or more markdown runbooks are missing in docs/operations/runbooks/"
             exit 1
           fi
           
-          echo "✅ All runbooks are present."
+          echo "All runbooks are present."
 
