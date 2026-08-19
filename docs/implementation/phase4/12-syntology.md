@@ -57,7 +57,7 @@ flowchart TD
 ```json
 HTTP 400 Bad Request
 {
-  "type": "https://synanton.dev/errors/shacl-violation",
+  "type": "https://synanton.org/errors/shacl-violation",
   "title": "SHACL validation failed",
   "status": 400,
   "violations": [

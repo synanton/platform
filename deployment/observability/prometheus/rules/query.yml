@@ -7,10 +7,10 @@ groups:
         labels: { severity: warn }
         annotations:
           summary: "synquest recall@10 below SLO"
-          runbook: "https://docs.synanton.dev/runbooks/synquest-recall"
+          runbook: "https://docs.synanton.org/runbooks/synquest-recall"
       - alert: relix_mgv_lag_seconds
         expr: relix_mgv_lag_seconds > 30
         labels: { severity: page }
         annotations:
           summary: "Relix MGV lag"
-          runbook: "https://docs.synanton.dev/runbooks/mgv-lag"
+          runbook: "https://docs.synanton.org/runbooks/mgv-lag"

@@ -127,14 +127,14 @@ groups:
         labels: { severity: warn }
         annotations:
           summary: "Tenant {{ $labels.tenant }} budget forecast < 7 days"
-          runbook: "https://docs.synanton.dev/runbooks/budget-overrun"
+          runbook: "https://docs.synanton.org/runbooks/budget-overrun"
       - alert: ForecastCostOverrunCritical
         expr: control_forecast_budget_days_remaining < 3
         for: 5m
         labels: { severity: page }
         annotations:
           summary: "Tenant {{ $labels.tenant }} budget forecast < 3 days"
-          runbook: "https://docs.synanton.dev/runbooks/budget-overrun"
+          runbook: "https://docs.synanton.org/runbooks/budget-overrun"
 ```
 
 ---

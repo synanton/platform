@@ -7,4 +7,4 @@ groups:
         labels: { severity: page }
         annotations:
           summary: "ACL grant stuck in propagation"
-          runbook: "https://docs.synanton.dev/runbooks/acl-stuck"
+          runbook: "https://docs.synanton.org/runbooks/acl-stuck"

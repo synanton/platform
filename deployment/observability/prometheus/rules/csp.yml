@@ -6,4 +6,4 @@ groups:
         labels: { severity: warn }
         annotations:
           summary: "CSP violation burst"
-          runbook: "https://docs.synanton.dev/runbooks/csp-violations"
+          runbook: "https://docs.synanton.org/runbooks/csp-violations"

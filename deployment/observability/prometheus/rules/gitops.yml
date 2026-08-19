@@ -7,4 +7,4 @@ groups:
         labels: { severity: page }
         annotations:
           summary: "GitOps reconcile failed"
-          runbook: "https://docs.synanton.dev/runbooks/gitops-reconcile"
+          runbook: "https://docs.synanton.org/runbooks/gitops-reconcile"

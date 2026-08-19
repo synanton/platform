@@ -92,7 +92,7 @@ Global `@RestControllerAdvice` (also shipped): `ValidationExceptionHandler` tran
 ```json
 HTTP 400 Bad Request
 {
-  "type": "https://synanton.dev/errors/validation",
+  "type": "https://synanton.org/errors/validation",
   "title": "Validation failed",
   "status": 400,
   "field_errors": [

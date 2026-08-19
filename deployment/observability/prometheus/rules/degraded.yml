@@ -6,11 +6,11 @@ groups:
         labels: { severity: page }
         annotations:
           summary: "Degraded recrawl stalled"
-          runbook: "https://docs.synanton.dev/runbooks/degraded-mode"
+          runbook: "https://docs.synanton.org/runbooks/degraded-mode"
       - alert: PlatformDegradedModeActive
         expr: gateway_degraded_mode_active == 1
         for: 15m
         labels: { severity: warn }
         annotations:
           summary: "Platform degraded mode active"
-          runbook: "https://docs.synanton.dev/runbooks/degraded-mode"
+          runbook: "https://docs.synanton.org/runbooks/degraded-mode"

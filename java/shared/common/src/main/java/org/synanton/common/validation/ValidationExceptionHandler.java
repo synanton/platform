@@ -20,7 +20,7 @@ import java.util.List;
 @RestControllerAdvice
 public class ValidationExceptionHandler {
 
-    public static final String TYPE = "https://synanton.dev/errors/validation";
+    public static final String TYPE = "https://synanton.org/errors/validation";
 
     private final MeterRegistry meterRegistry;
     private final boolean strict;

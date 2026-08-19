@@ -6,4 +6,4 @@ groups:
         labels: { severity: warn }
         annotations:
           summary: "Topology Neo4j projection lag"
-          runbook: "https://docs.synanton.dev/runbooks/topology-projection"
+          runbook: "https://docs.synanton.org/runbooks/topology-projection"

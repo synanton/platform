@@ -6,23 +6,23 @@ groups:
         labels: { severity: page }
         annotations:
           summary: "Helper destructive ops rate"
-          runbook: "https://docs.synanton.dev/runbooks/helper-destructive"
+          runbook: "https://docs.synanton.org/runbooks/helper-destructive"
       - alert: HelperAuthFailureSpike
         expr: increase(helper_auth_failure_total[5m]) > 20
         labels: { severity: page }
         annotations:
           summary: "Helper auth failures"
-          runbook: "https://docs.synanton.dev/runbooks/helper-auth"
+          runbook: "https://docs.synanton.org/runbooks/helper-auth"
       - alert: SupportAdminOnBehalfOfRate
         expr: increase(admin_audit_on_behalf_of_total[1h]) > 20
         labels: { severity: page }
         annotations:
           summary: "support_admin on-behalf-of rate"
-          runbook: "https://docs.synanton.dev/runbooks/support-admin-review"
+          runbook: "https://docs.synanton.org/runbooks/support-admin-review"
       - alert: DeprecationGateProbeFailed
         expr: deprecation_gate_prometheus_unreachable == 1
         for: 1h
         labels: { severity: warn }
         annotations:
           summary: "Deprecation gate cannot reach Prometheus"
-          runbook: "https://docs.synanton.dev/runbooks/deprecation-gate"
+          runbook: "https://docs.synanton.org/runbooks/deprecation-gate"

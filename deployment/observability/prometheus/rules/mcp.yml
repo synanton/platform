@@ -6,10 +6,10 @@ groups:
         labels: { severity: warn }
         annotations:
           summary: "MCP session revalidation lag"
-          runbook: "https://docs.synanton.dev/runbooks/mcp-revalidation"
+          runbook: "https://docs.synanton.org/runbooks/mcp-revalidation"
       - alert: McpScopeDeniedSpike
         expr: rate(synanton_mcp_scope_denied_total[1m]) * 60 > 20
         labels: { severity: warn }
         annotations:
           summary: "MCP scope denials spiked"
-          runbook: "https://docs.synanton.dev/runbooks/mcp-scope"
+          runbook: "https://docs.synanton.org/runbooks/mcp-scope"

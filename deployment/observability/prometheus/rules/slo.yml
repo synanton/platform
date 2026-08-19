@@ -11,4 +11,4 @@ groups:
         labels: { severity: page }
         annotations:
           summary: "Query SLO fast-burn"
-          runbook: "https://docs.synanton.dev/runbooks/budget-overrun"
+          runbook: "https://docs.synanton.org/runbooks/budget-overrun"

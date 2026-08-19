@@ -71,7 +71,7 @@ On mismatch:
 ```json
 HTTP 403 Forbidden
 {
-  "type": "https://synanton.dev/errors/tenant-scope-denied",
+  "type": "https://synanton.org/errors/tenant-scope-denied",
   "title": "Caller tenant does not match resource tenant",
   "status": 403,
   "caller_tenant": "demo",
@@ -112,7 +112,7 @@ Refusal:
 ```json
 HTTP 422 Unprocessable Entity
 {
-  "type": "https://synanton.dev/errors/residency-refusal",
+  "type": "https://synanton.org/errors/residency-refusal",
   "title": "No adapter available in tenant's allowed regions",
   "status": 422,
   "tenant": "demo",
