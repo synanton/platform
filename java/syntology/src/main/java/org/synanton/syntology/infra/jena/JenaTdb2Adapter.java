@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ public class JenaTdb2Adapter implements OntologyAdapter {
 
     @Override
     public void init(String storagePath) {
-        this.storageRoot = Path.of(storagePath);
+        this.storageRoot = Path.of(storagePath).toAbsolutePath().normalize();
         try {
             Files.createDirectories(storageRoot);
         } catch (IOException e) {
@@ -270,7 +271,26 @@ public class JenaTdb2Adapter implements OntologyAdapter {
     }
 
     private Path datasetPath(String tenant, String version) {
-        return storageRoot.resolve(tenant).resolve(version);
+        validatePathComponent(tenant, "tenant");
+        validatePathComponent(version, "version");
+        try {
+            Path candidate = storageRoot.resolve(tenant).resolve(version).normalize();
+            if (!candidate.startsWith(storageRoot)) {
+                throw new IllegalArgumentException("Invalid tenant/version path");
+            }
+            return candidate;
+        } catch (InvalidPathException ex) {
+            throw new IllegalArgumentException("Invalid tenant/version path", ex);
+        }
+    }
+
+    private static void validatePathComponent(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Invalid " + field);
+        }
+        if (value.contains("..") || value.contains("/") || value.contains("\\")) {
+            throw new IllegalArgumentException("Invalid " + field);
+        }
     }
 
     private static String localName(Resource resource) {
