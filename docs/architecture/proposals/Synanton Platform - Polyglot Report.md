@@ -150,6 +150,8 @@ text
 - **Store configurations in Git** with the control plane
 - **Support hot-reload** of configurations via the admin API
 
+**Syntology (SNTP-7):** Ontology schemas are authored in HCL, stored in Git (`schemas/ontology/`), compiled through a JSON IR to SHACL + OWL TBox, and loaded with `POST /api/v1/admin/ontology/schemas`. Jsonnet is reserved as a future frontend onto the same IR.
+
 **Why:** DevOps teams can version-control platform configuration using standard GitOps workflows.
 
 ## 4. Module-by-Module Polyglot Roadmap

@@ -22,13 +22,13 @@ The `syntology` module adheres to the platform’s architectural principles, as 
 
 | Principle                       | Implementation in Demo                                       |
 | ------------------------------- | ------------------------------------------------------------ |
-| **Unified Identity**            | Module is named `syntology` across all contexts; code package `org.synanton.synt.*`. |
+| **Unified Identity**            | Module is named `syntology` across all contexts; code package `org.synanton.syntology.*`. |
 | **Hexagonal Architecture**      | Ports & Adapters are used; the domain is isolated from REST/gRPC/MCP and storage. |
 | **Honest Capability Surfacing** | The module exposes `/capabilities` with a reduced feature set (no reasoning, limited validation). |
 | **Cost Awareness**              | Cost attribution is stubbed (log events) but not wired to the full `api_usage` pipeline. |
 | **MCP Integration**             | MCP tools are implemented as a first‑class interface for the Synton agent. |
 | **Security & Multi‑tenancy**    | Simplified: a single hard‑coded tenant, no real authentication (mock JWT). |
-| **GitOps**                      | Not implemented in demo; ontology files are uploaded via UI. |
+| **GitOps**                      | Ontology **schemas** are HCL files in Git (`schemas/ontology/`). Load a zip bundle or local checkout via Admin API (`POST /api/v1/admin/ontology/schemas`). Control-plane tenant-policy GitOps is separate. |
 
 The demo does not depend on other platform modules (`security`, `topology`, `control-plane`, `relix`) except for minimal stubs. This allows it to run standalone, with only a local database (Jena TDB2) and an embedded web server.
 
@@ -100,7 +100,11 @@ text
    - `GET /api/v1/ontology/relations?version=&label=` – resolve relation.
    - `GET /api/v1/ontology/graph?version=` – return full graph data (nodes/edges) for visualisation.
    - `GET /api/v1/ontology/capabilities` – return capability matrix.
-   - `POST /api/v1/ontology/validate` – stub: checks that entity has a label and URI.
+   - `POST /api/v1/ontology/validate` – SHACL validation when `shapes.ttl` exists for the active version; otherwise label+URI check.
+   - `POST /api/v1/admin/ontology/schemas` – compile an HCL bundle (zip or `.hcl`) through JSON IR into OWL Turtle + SHACL and persist a version.
+   - `POST /api/v1/admin/ontology/schemas/preview` – same compile, no persist.
+   - `POST /api/v1/admin/ontology/schemas/from-path` – load from `syntology.schema.git-root` + relative path.
+   - `GET /api/v1/admin/ontology/schemas/{version}` – stored JSON IR.
 
 2. **MCP Server (STREAMABLE_HTTP)** – tools:
 
@@ -130,7 +134,8 @@ text
    
 
    - In demo, `JenaTdb2Adapter` implements this using Apache Jena TDB2.
-   - Features supported: `BASIC_GRAPH_STORAGE`, `VERSIONING`. Not supported: `OWL_REASONING`, `SHACL_VALIDATION`.
+   - Features supported: `BASIC_GRAPH_STORAGE`, `VERSIONING`, `SHACL_VALIDATION`. Not supported: `OWL_REASONING`.
+   - HCL load writes `ontology.ttl`, `shapes.ttl`, and `schema.json` beside the existing per-version directory.
 
 2. **Event Logger** – instead of Kafka, ontology change events are logged to a file (`syntology-events.log`) with timestamp and event type.
 
@@ -335,10 +340,10 @@ The demo is intentionally limited. Planned enhancements for production:
 
 - Full integration with `security` (real authentication, tenant resolution).
 - Integration with `relix` (ontology‑triggered graph rebuilds).
-- SHACL validation UI and API.
+- SHACL validation UI (API + HCL→SHACL compiler shipped).
 - OWL reasoning (materialised or on‑demand).
 - Session pinning per user.
-- GitOps reconciliation.
+- Control-plane GitOps reconciler for ontology trees (operators/CI call the Admin API today).
 - Event emission to Kafka.
 - Full cost attribution and observability.
 

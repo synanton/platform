@@ -56,6 +56,7 @@ Syntology uses SHACL—which is excellent—but SHACL shapes are usually static 
 Currently, Syntology manages versioned schemas. Defining these in Java annotations or XML is verbose.
 
 - **Improvement**: Support **HashiCorp Configuration Language (HCL)** or **JSONnet** for ontology definitions. These are polyglot-friendly, support  imports/composition, and can be parsed by Terraform/Crossplane for  GitOps-driven schema-as-code rollouts. The Java backend translates HCL  into internal SHACL models on the fly.
+- **Implemented (SNTP-7):** HCL is the authoring format. Files compile through a **JSON IR** (`OntologySchemaIr`) into SHACL runtime objects (`NodeShape` / `PropertyConstraint`) and OWL TBox Turtle. Cross-file `include` is resolved in-process. Load via `POST /api/v1/admin/ontology/schemas`. A Jsonnet frontend can later evaluate to the same JSON IR without changing the SHACL mapper.
 
 #### 6. Open Policy Agent (OPA) for Graph-Level Authorization (Policy Polyglot)
 

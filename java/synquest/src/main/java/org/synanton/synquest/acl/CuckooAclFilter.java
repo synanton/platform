@@ -84,11 +84,11 @@ public class CuckooAclFilter {
     }
 
     private int index1(long fingerprint) {
-        return (int) (Math.floorMod(fingerprint, bucketCount));
+        return Math.floorMod(fingerprint, bucketCount);
     }
 
     private int index2(int index1, long fingerprint) {
-        return (int) Math.floorMod(index1 ^ Long.hashCode(fingerprint), bucketCount);
+        return Math.floorMod(index1 ^ Long.hashCode(fingerprint), bucketCount);
     }
 
     private static long fingerprint(String subjectId, String resourceId) {

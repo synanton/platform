@@ -6,6 +6,7 @@ flyway                = "10.20.1"
 postgresql            = "42.7.4"
 h2                    = "2.3.232"
 jena                  = "5.2.0"
+hcl4j                 = "0.9.1"
 caffeine              = "3.1.8"
 nimbusJose            = "9.40"
 bcrypt                = "0.10.2"
@@ -51,6 +52,7 @@ h2                  = { module = "com.h2database:h2",                   version.
 jena-arq            = { module = "org.apache.jena:jena-arq",            version.ref = "jena" }
 jena-tdb2           = { module = "org.apache.jena:jena-tdb2",           version.ref = "jena" }
 jena-shacl          = { module = "org.apache.jena:jena-shacl",          version.ref = "jena" }
+hcl4j               = { module = "com.bertramlabs.plugins:hcl4j",       version.ref = "hcl4j" }
 
 # Cache
 caffeine            = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
