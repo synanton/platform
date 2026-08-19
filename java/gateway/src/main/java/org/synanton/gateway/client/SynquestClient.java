@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.synanton.gateway.domain.Hit;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.util.List;
 
@@ -44,6 +45,8 @@ public class SynquestClient {
     public record SynquestResponse(List<Hit> hits, int total) {}
 
     public static class SynquestUnavailableException extends RuntimeException {
+        @Serial
+        private static final long serialVersionUID = 1L;
         public SynquestUnavailableException(String msg, Throwable cause) {
             super(msg, cause);
         }
