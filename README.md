@@ -11,9 +11,9 @@ Documents / APIs / Databases / S3
         │
         ▼
 ┌───────────────────────────────────────────────────────────┐
-│  Synvault (content store + tier manager)                   │
+│  Synvault (content store + tier manager)                  │
 │  Synflux  (parse → chunk → enrich → embed → persist)      │
-│  ingestion-cache (Cassandra artifact cache)                │
+│  ingestion-cache (Cassandra artifact cache)               │
 └───────────────────────────────────────────────────────────┘
         │
         ▼
