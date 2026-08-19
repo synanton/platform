@@ -75,7 +75,7 @@ Synanton provides a single coherent platform for this problem:
 | Lucentrix (sibling CLI) | Pluggable crawl CLI (web/dummy) that pushes raw bytes into synvault | ✅ Sibling repo |
 | `security` | AuthN/Z, JWT issuance, htpasswd IdP, `FsPermissionGuard` | ✅ Done |
 | `topology` | Org/ACL/policy store, `FilesystemAclSeeder`, JDBC repos | ✅ Done |
-| `syntology` | Ontology service - REST API, Jena TDB2, SHACL validation, versioning | ✅ Done (standalone) |
+| `syntology` | Ontology service - REST API, Jena storage, HCL→JSON IR→SHACL, versioning | ✅ Done (standalone) |
 | `syntology-admin` | React SPA - graph editor, login, grants view | ✅ Done (standalone) |
 | `synquest` | Hybrid search kernel - BM25 + HNSW + RRF | ✅ Done (Phase 1) |
 | `relix` | GraphRAG engine - JGraphT in-memory graph, MCP tools | ✅ Done (Phase 1) |

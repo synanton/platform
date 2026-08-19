@@ -15,7 +15,18 @@ import org.synanton.synt.domain.port.out.MetadataRepository;
 import org.synanton.synt.domain.port.out.OntologyAdapter;
 import org.synanton.synt.infra.cache.EntityCache;
 import org.synanton.synt.infra.jena.JenaTdb2Adapter;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.shacl.ShaclValidator;
+import org.apache.jena.shacl.Shapes;
+import org.apache.jena.shacl.ValidationReport;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -108,13 +119,32 @@ public class OntologyService {
 
     public Map<String, Object> validateConcept(String label, String uri) {
         Map<String, Object> result = new LinkedHashMap<>();
-        boolean valid = label != null && !label.isBlank() && uri != null && !uri.isBlank();
-        result.put("valid", valid);
-        if (!valid) {
+        boolean basic = label != null && !label.isBlank() && uri != null && !uri.isBlank();
+        if (!basic) {
+            result.put("valid", false);
             result.put("message", "Entity must have both label and URI");
-        } else {
-            result.put("message", "Basic validation passed");
+            return result;
         }
+        String tenant = tenant();
+        String version = resolveVersion("active");
+        var shapesTurtle = ontologyAdapter.loadShapes(tenant, version);
+        if (shapesTurtle.isEmpty()) {
+            result.put("valid", true);
+            result.put("message", "Basic validation passed");
+            return result;
+        }
+        EntityType entity = resolveEntity(label, version);
+        Model data = ModelFactory.createDefaultModel();
+        Resource node = data.createResource(uri);
+        node.addProperty(RDF.type, data.createResource(entity.uri()));
+        node.addProperty(RDFS.label, label);
+        Model shapeModel = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(shapeModel, new ByteArrayInputStream(shapesTurtle.get()), Lang.TURTLE);
+        Shapes shapes = Shapes.parse(shapeModel);
+        ValidationReport report = ShaclValidator.get().validate(shapes, data.getGraph());
+        result.put("valid", report.conforms());
+        result.put("conforms", report.conforms());
+        result.put("message", report.conforms() ? "SHACL validation passed" : "SHACL validation failed");
         return result;
     }
 

@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class JenaTdb2Adapter implements OntologyAdapter {
@@ -76,6 +77,26 @@ public class JenaTdb2Adapter implements OntologyAdapter {
     }
 
     @Override
+    public void persistShapes(String tenant, String version, byte[] turtleBytes) {
+        writeVersionFile(tenant, version, "shapes.ttl", turtleBytes);
+    }
+
+    @Override
+    public void persistSchemaIr(String tenant, String version, byte[] jsonBytes) {
+        writeVersionFile(tenant, version, "schema.json", jsonBytes);
+    }
+
+    @Override
+    public Optional<byte[]> loadShapes(String tenant, String version) {
+        return readVersionFile(tenant, version, "shapes.ttl");
+    }
+
+    @Override
+    public Optional<byte[]> loadSchemaIr(String tenant, String version) {
+        return readVersionFile(tenant, version, "schema.json");
+    }
+
+    @Override
     public boolean versionExists(String tenant, String version) {
         return Files.exists(datasetPath(tenant, version).resolve("ontology.ttl"));
     }
@@ -102,7 +123,9 @@ public class JenaTdb2Adapter implements OntologyAdapter {
 
     @Override
     public boolean supportsFeature(Feature feature) {
-        return feature == Feature.BASIC_GRAPH_STORAGE || feature == Feature.VERSIONING;
+        return feature == Feature.BASIC_GRAPH_STORAGE
+                || feature == Feature.VERSIONING
+                || feature == Feature.SHACL_VALIDATION;
     }
 
     public List<EntityType> listEntities(String tenant, String version) {
@@ -222,6 +245,28 @@ public class JenaTdb2Adapter implements OntologyAdapter {
             RDFDataMgr.write(out, model, Lang.TURTLE);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to write ontology file", e);
+        }
+    }
+
+    private void writeVersionFile(String tenant, String version, String fileName, byte[] bytes) {
+        Path datasetDir = datasetPath(tenant, version);
+        try {
+            Files.createDirectories(datasetDir);
+            Files.write(datasetDir.resolve(fileName), bytes);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to persist " + fileName + " for " + tenant + "/" + version, e);
+        }
+    }
+
+    private Optional<byte[]> readVersionFile(String tenant, String version, String fileName) {
+        Path file = datasetPath(tenant, version).resolve(fileName);
+        if (!Files.exists(file)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Files.readAllBytes(file));
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read " + fileName + " for " + tenant + "/" + version, e);
         }
     }
 

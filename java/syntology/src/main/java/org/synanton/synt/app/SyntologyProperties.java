@@ -10,7 +10,8 @@ public record SyntologyProperties(
         Tenant tenant,
         Events events,
         String ontologyDir,
-        Auth auth
+        Auth auth,
+        Schema schema
 ) {
     public record Storage(String adapter, Jena jena) {
         public record Jena(String path) {
@@ -32,5 +33,8 @@ public record SyntologyProperties(
     }
 
     public record Auth(boolean enabled, String jwtSecret) {
+    }
+
+    public record Schema(String gitRoot) {
     }
 }

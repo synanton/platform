@@ -21,6 +21,8 @@ dependencies {
 
     implementation(libs.jena.arq)
     implementation(libs.jena.tdb2)
+    implementation(libs.jena.shacl)
+    implementation(libs.hcl4j)
 
     implementation(libs.caffeine)
     implementation(libs.logback.classic)
