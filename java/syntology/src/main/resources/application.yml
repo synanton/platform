@@ -38,10 +38,12 @@ syntology:
   events:
     log-path: ${SYNTOLOGY_EVENTS_LOG:./data/syntology/syntology-events.log}
   ontology-dir: ${SYNTOLOGY_ONTOLOGY_DIR:/data/ontologies}
+  schema:
+    git-root: ${SYNTOLOGY_SCHEMA_GIT_ROOT:.}
   auth:
     enabled: true
     jwt-secret: ${SYNANTON_JWT_SECRET:dev-secret-at-least-32-bytes-long!!}
 
 logging:
   level:
-    org.synanton.synt: INFO
+    org.synanton.syntology: INFO

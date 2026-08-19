@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.synanton.gateway.domain.GraphEdge;
 import org.synanton.gateway.domain.GraphEntity;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,8 @@ public class RelixClient {
     }
 
     public static class RelixUnavailableException extends RuntimeException {
+        @Serial
+        private static final long serialVersionUID = 1L;
         public RelixUnavailableException(String msg, Throwable cause) {
             super(msg, cause);
         }

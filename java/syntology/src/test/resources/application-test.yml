@@ -19,5 +19,7 @@ syntology:
   events:
     log-path: ${java.io.tmpdir}/syntology-test/events.log
   ontology-dir: /tmp/syntology-test-ontologies
+  schema:
+    git-root: ${java.io.tmpdir}/syntology-test/git-root
   auth:
     enabled: false

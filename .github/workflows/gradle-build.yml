@@ -32,4 +32,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run buildAll task
-        run: ./gradlew buildAll
+        run: ./gradlew clean buildAll --no-build-cache

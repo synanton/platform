@@ -1,5 +1,6 @@
 package org.synanton.synvault.security;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Set;
 
@@ -19,6 +20,8 @@ public class AdapterResidencyGuard {
     }
 
     public static class NoCompatibleAdapterException extends RuntimeException {
+        @Serial
+        private static final long serialVersionUID = 1L;
         public NoCompatibleAdapterException(Set<String> allowedRegions) {
             super("no_compatible_adapter_for_residency " + allowedRegions);
         }

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.util.Map;
 
@@ -65,6 +66,8 @@ public class PlannerClient {
     ) {}
 
     public static class PlannerUnavailableException extends RuntimeException {
+        @Serial
+        private static final long serialVersionUID = 1L;
         public PlannerUnavailableException(String msg, Throwable cause) {
             super(msg, cause);
         }
