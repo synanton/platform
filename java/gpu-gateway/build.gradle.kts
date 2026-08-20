@@ -16,9 +16,12 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     implementation(libs.postgresql)
-    implementation(libs.grpc.netty.shaded)
-    implementation(libs.grpc.protobuf)
-    implementation(libs.grpc.stub)
+
+    implementation("io.grpc:grpc-stub:${libs.versions.grpc.get()}")
+    implementation("io.grpc:grpc-protobuf:${libs.versions.grpc.get()}")
+    implementation("io.grpc:grpc-netty-shaded:${libs.versions.grpc.get()}")  // or grpc-netty
+    implementation("io.grpc:grpc-inprocess:${libs.versions.grpc.get()}")
+
     implementation(libs.protobuf.java)
     implementation(libs.micrometer.prometheus)
     implementation(libs.micrometer.core)

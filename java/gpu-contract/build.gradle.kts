@@ -20,11 +20,14 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = libs.protoc.get().toString()
+        // Use the version from the catalog
+        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
     }
     plugins {
         create("grpc") {
-            artifact = libs.protoc.gen.grpc.java.get().toString()
+            // If you have a grpc version defined, use it; otherwise specify the version directly
+            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
+            // or hardcode if no version entry: "io.grpc:protoc-gen-grpc-java:1.54.0"
         }
     }
     generateProtoTasks {
