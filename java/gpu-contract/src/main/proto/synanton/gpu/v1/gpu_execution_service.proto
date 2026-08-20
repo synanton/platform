@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+package synanton.gpu.v1;
+
+option java_package = "org.synanton.gpu.v1";
+option java_outer_classname = "GpuProto";
+option java_multiple_files = true;
+
+// GPUExecutionService is the sole gRPC boundary between the Synanton primary
+// platform and the GPU Execution Plane (synanton/gpu-execution-plane).
+//
+// The primary platform owns:  request_id, tenant_id, model selection, execution planning.
+// The GPU Gateway owns:       execution_id, admission, dispatch, idempotency, telemetry.
+// Kubernetes owns:            pod placement, node selection, GPU allocation.
+//
+// Validation rules (enforced at the GPU Gateway boundary before any dispatch):
+//   ExecutionRequest.request_id     required; max 255 chars; idempotency key
+//   ExecutionRequest.tenant_id      required; max 255 chars; assertion only — not a credential
+//   ExecutionRequest.model          required; max 255 chars
+//   ExecutionRequest.model_version  required; max 128 chars
+//   ExecutionRequest.operation      must not be OPERATION_UNSPECIFIED
+//   ExecutionRequest.payload        max 4 MB
+service GPUExecutionService {
+    // Execute dispatches a GPU workload. May block until completion or deadline.
+    // If the caller's stream closes before a response arrives, the Gateway does NOT
+    // cancel the underlying GPU operation. Callers MUST call GetStatus(execution_id)
+    // to reconcile any timed-out or disconnected Execute call.
+    rpc Execute(ExecutionRequest) returns (ExecutionResponse);
+
+    // Cancel is best-effort. Does not imply rollback of primary-platform business state.
+    rpc Cancel(CancelRequest) returns (CancelResponse);
+
+    // GetStatus is authoritative. Always safe to call after an Execute timeout.
+    // The response is readable even after the initiating gRPC stream has closed.
+    rpc GetStatus(GetStatusRequest) returns (ExecutionStatus);
+
+    // GetCapacity is advisory. A successful response does NOT reserve GPU capacity.
+    // Admission is authoritative only at Execute time.
+    rpc GetCapacity(GetCapacityRequest) returns (CapacityResponse);
+}
+
+// ─── Enumerations ────────────────────────────────────────────────────────────
+
+// Operation enumerates the supported GPU workload types.
+enum Operation {
+    OPERATION_UNSPECIFIED = 0;
+    SYNTHESIZE = 1;  // LLM text generation via /v1/chat/completions
+    EMBED      = 2;  // Dense vector embedding via /v1/embeddings
+    RERANK     = 3;  // Cross-encoder reranking
+}
+
+// ExecutionState is the lifecycle of a single GPU execution attempt.
+enum ExecutionState {
+    EXECUTION_STATE_UNSPECIFIED = 0;
+    QUEUED    = 1;  // Accepted; awaiting GPU capacity or model load
+    RUNNING   = 2;  // Dispatched to GPU runtime
+    SUCCESS   = 3;  // Completed successfully
+    FAILED    = 4;  // Terminal failure
+    CANCELLED = 5;  // Cancelled (best-effort; no business rollback implied)
+    TIMEOUT   = 6;  // Gateway deadline exceeded
+}
+
+// ErrorReason is the structured error catalogue.
+// Each code defines whether it is retryable:
+//   retryable=true:  MODEL_NOT_READY, GPU_UNAVAILABLE, GPU_CAPACITY_EXCEEDED
+//   retryable=false: all others
+enum ErrorReason {
+    ERROR_REASON_UNSPECIFIED = 0;
+    UNAUTHORIZED             = 1;   // mTLS authentication failure
+    TENANT_NOT_ALLOWED       = 2;   // tenant_id not in calling service's permitted scope
+    INVALID_REQUEST          = 3;   // Field validation failure
+    MODEL_NOT_FOUND          = 4;   // Model not in approved configuration
+    MODEL_NOT_READY          = 5;   // Model approved but not loaded; async load triggered
+    MODEL_LOAD_TIMEOUT       = 6;   // Model failed to load within configured timeout
+    GPU_UNAVAILABLE          = 7;   // No GPU resources available
+    GPU_CAPACITY_EXCEEDED    = 8;   // Admission queue full
+    EXECUTION_TIMEOUT        = 9;   // Inference exceeded Gateway deadline
+    EXECUTION_CANCELLED      = 10;  // Cancelled via Cancel()
+    EXECUTION_FAILED         = 11;  // Runtime error during inference
+}
+
+// CancellationOutcome describes whether Cancel() was applied.
+enum CancellationOutcome {
+    CANCELLATION_OUTCOME_UNSPECIFIED = 0;
+    ACCEPTED      = 1;  // Cancellation accepted; execution is being stopped
+    COMPLETED     = 2;  // Execution completed before cancellation arrived
+    NOT_APPLICABLE = 3; // Execution not found or already in terminal state
+}
+
+// ─── Messages ────────────────────────────────────────────────────────────────
+
+// ExecutionRequest is supplied exclusively by the primary Synanton platform.
+// The caller MUST NOT set execution_id — that field is Gateway-owned.
+message ExecutionRequest {
+    // request_id is the primary platform's originating request/workflow identity.
+    // It is mandatory and serves as the idempotency key in the GPU Gateway.
+    // Callers that retry a failed Execute() MUST reuse the same request_id.
+    string request_id = 1;
+
+    // tenant_id is a tenant context assertion, not an authentication credential.
+    // The GPU Gateway validates it against the authenticated mTLS service principal.
+    string tenant_id = 2;
+
+    string model         = 3;
+    string model_version = 4;
+    Operation operation  = 5;
+
+    // execution_class is an optional scheduling hint (e.g. "interactive", "batch").
+    string execution_class = 6;
+
+    // payload is the operation-specific input, JSON-encoded.
+    // For SYNTHESIZE: serialised OpenAI-compatible chat completion request body.
+    // For EMBED:      serialised OpenAI-compatible embedding request body.
+    // For RERANK:     serialised rerank request body (query + passages).
+    bytes payload = 7;
+
+    // trace_context carries OpenTelemetry W3C traceparent/tracestate headers
+    // for cross-cluster trace propagation.
+    map<string, string> trace_context = 8;
+}
+
+// ExecutionResponse is returned by the GPU Gateway after dispatch completes.
+// execution_id is generated by the Gateway; callers MUST NOT set it.
+message ExecutionResponse {
+    string request_id    = 1;
+    string execution_id  = 2;
+    ExecutionState state = 3;
+
+    // result is the operation-specific output, JSON-encoded.
+    // Populated only when state == SUCCESS.
+    bytes result = 4;
+
+    ErrorInfo   error = 5;
+    UsageReport usage = 6;
+}
+
+message CancelRequest {
+    string execution_id = 1;
+    string request_id   = 2;
+}
+
+message CancelResponse {
+    string execution_id         = 1;
+    CancellationOutcome outcome = 2;
+}
+
+message GetStatusRequest {
+    string execution_id = 1;
+}
+
+// ExecutionStatus is the authoritative post-execution state record.
+// Readable via GetStatus() even after the initiating Execute() stream has closed.
+message ExecutionStatus {
+    string request_id    = 1;
+    string execution_id  = 2;
+    ExecutionState state = 3;
+    ErrorInfo   error = 4;
+    UsageReport usage = 5;
+}
+
+message GetCapacityRequest {
+    string model    = 1;
+    string gpu_type = 2;  // Optional; empty means any available GPU class
+}
+
+// CapacityResponse is advisory only. A successful response does NOT reserve capacity.
+// The primary platform MUST NOT build correctness assumptions on a prior GetCapacity result.
+message CapacityResponse {
+    string model    = 1;
+    string gpu_type = 2;
+
+    // estimated_queue_depth is the approximate number of requests ahead in the admission queue.
+    int32  estimated_queue_depth        = 3;
+    bool   model_loaded                 = 4;
+    double estimated_available_fraction = 5;  // 0.0 = saturated, 1.0 = fully available
+    bool   healthy                      = 6;
+}
+
+// ErrorInfo carries structured failure detail originating in the GPU Execution Plane.
+// The message field is diagnostic metadata only; the primary platform renders user-facing errors.
+message ErrorInfo {
+    ErrorReason reason   = 1;
+    string      message  = 2;  // Diagnostic only; NOT for user-facing rendering
+    bool        retryable = 3;
+}
+
+// UsageReport captures GPU execution measurements for cost attribution.
+// The primary platform owns tenant attribution and billing policy; this is raw measurement.
+message UsageReport {
+    int64  duration_ms   = 1;
+    string gpu_type      = 2;
+    string model         = 3;
+    string model_version = 4;
+    int64  input_tokens  = 5;
+    int64  output_tokens = 6;
+    string outcome       = 7;  // "success" | "failed" | "cancelled" | "timeout"
+}

@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: gpu-gateway
+  datasource:
+    url: ${GPU_GATEWAY_DB_URL:jdbc:postgresql://localhost:5432/gpu_gateway}
+    username: ${GPU_GATEWAY_DB_USER:synanton}
+    password: ${GPU_GATEWAY_DB_PASSWORD:synanton}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+      validation-timeout: 2000
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+# HTTP server is kept running for management/metrics endpoints only.
+# gRPC runs on gpu-gateway.grpc-port (default 9090).
+server:
+  port: ${GPU_GATEWAY_HTTP_PORT:8090}
+
+gpu-gateway:
+  grpc-port: ${GPU_GATEWAY_GRPC_PORT:9090}
+  max-inbound-message-size-bytes: ${GPU_GATEWAY_MAX_MSG_BYTES:4259840}
+  dispatch:
+    strategy: ${GPU_GATEWAY_DISPATCH_STRATEGY:direct}
+    vllm-endpoint: ${VLLM_ENDPOINT:http://vllm-service:8000}
+    timeout-ms: ${DISPATCH_TIMEOUT_MS:120000}
+  idempotency:
+    retention-hours: ${IDEMPOTENCY_RETENTION_HOURS:24}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    org.synanton.gpu: INFO
+    io.grpc: WARN

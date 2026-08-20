@@ -41,3 +41,13 @@ gateway:
     max-tokens: 150
     model: llama-3.1-8b-instruct
     base-url: ${LLM_BASE_URL:http://vllm-llm:8000/v1}
+  gpu:
+    enabled: ${GATEWAY_GPU_ENABLED:false}
+    endpoint: ${GPU_GATEWAY_ENDPOINT:localhost:9090}
+    model-version: ${GPU_MODEL_VERSION:latest}
+    timeout-ms: ${GPU_TIMEOUT_MS:120000}
+    tls:
+      enabled: ${GPU_TLS_ENABLED:false}
+    retry:
+      max-attempts: ${GPU_RETRY_MAX_ATTEMPTS:3}
+      backoff-base-ms: ${GPU_RETRY_BACKOFF_BASE_MS:500}

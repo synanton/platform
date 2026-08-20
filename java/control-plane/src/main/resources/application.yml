@@ -23,6 +23,7 @@ control-plane:
       cost-per-token-usd: 0.0000003
       capabilities: [text-generation]
       status: active
+      execution-plane: gpu
     - model-id: bge-base-en-v1.5
       provider: openai-compat
       base-url: http://vllm-embed:8001/v1

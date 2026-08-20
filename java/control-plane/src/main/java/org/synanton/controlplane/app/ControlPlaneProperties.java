@@ -19,8 +19,13 @@ public record ControlPlaneProperties(
             String baseUrl,
             double costPerTokenUsd,
             List<String> capabilities,
-            String status
-    ) {}
+            String status,
+            String executionPlane  // "gpu" or null/absent for CPU default
+    ) {
+        public boolean isGpuBacked() {
+            return "gpu".equalsIgnoreCase(executionPlane);
+        }
+    }
 
     public record HttpClientConfig(int connectTimeoutMs, int readTimeoutMs) {}
 

@@ -24,4 +24,14 @@ public class ModelServingDirectory {
                 .filter(m -> m.modelId().equals(modelId))
                 .findFirst();
     }
+
+    public boolean isGpuBacked(String modelId) {
+        return getById(modelId).map(ControlPlaneProperties.ModelEntry::isGpuBacked).orElse(false);
+    }
+
+    public List<ControlPlaneProperties.ModelEntry> getGpuModels() {
+        return models.stream()
+                .filter(ControlPlaneProperties.ModelEntry::isGpuBacked)
+                .toList();
+    }
 }

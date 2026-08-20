@@ -80,18 +80,30 @@ Synanton provides a single coherent platform for this problem:
 | `synquest` | Hybrid search kernel - BM25 + HNSW + RRF | ✅ Done (Phase 1) |
 | `relix` | GraphRAG engine - JGraphT in-memory graph, MCP tools | ✅ Done (Phase 1) |
 | `planner` | Intent classifier + query plan generator | ✅ Done (Phase 1) |
-| `gateway` | Plan DAG executor + LLM synthesis + reranker | ✅ Done (Phase 1+2) |
+| `gateway` | Plan DAG executor + LLM synthesis + reranker + GPU execution client | ✅ Done (Phase 1+2; GPU client v1.20) |
 | `synapt` | Public REST/gRPC ingress, rate limiting, sanitisation | ✅ Done (Phase 1+2) |
 | `synflux-router` | Kafka-driven work distribution across synflux workers | ✅ Done (Phase 3) |
 | `control-plane` | Admin API, forecast engine, anomaly detection, GitOps | ✅ Done (Phase 3 - admin API + ModelServingDirectory) |
 | `synanton-mcp` | MCP protocol bridge - exposes platform tools to MCP clients | ✅ Done (Phase 3) |
 | `synreview` | Human-in-the-loop review queue for low-confidence entities | 🔲 Phase 5 |
 
+**GPU Execution Plane** (modules `java/gpu-contract` + `java/gpu-gateway` in this repo; extracted to `synanton/gpu-execution-plane` for independent deployment):
+
+> Production GPU workloads (model serving, embedding, reranking) run in a physically isolated GPU cluster connected to this platform via the `synanton.gpu.v1` gRPC contract.
+
+| Component | Role | Status |
+|-----------|------|--------|
+| `java/gpu-contract` | `synanton.gpu.v1` protobuf contract — `Execute`, `Cancel`, `GetStatus`, `GetCapacity` RPCs; structured error catalogue; generated gRPC stubs | ✅ GPU-1 done |
+| `java/gpu-gateway` | GPU Gateway service — mTLS boundary, field validation, tenant assertion, idempotency store (PostgreSQL, fail-closed), `DirectDispatcher` → vLLM, execution lifecycle, Micrometer metrics | ✅ GPU-2 done |
+| `gateway` GPU client | `GpuExecutionClient` + `GpuSynthesisAdapter` — primary platform gRPC client + synthesis adapter with `MODEL_NOT_READY` retry, CPU degraded fallback, trace context propagation; `ModelServingDirectory` `isGpuBacked()` / `getGpuModels()` | ✅ GPU-3 done |
+| Consumer contract tests | `GpuContractTest` — in-process gRPC tests verifying all 4 RPCs, error shapes, and `MODEL_NOT_READY` retryable flag | ✅ GPU-1 done |
+| `EqualixScheduler` | Optional fairness/quota scheduler (data-gated on GPU-4 evidence) | 🔲 GPU Phase 5 |
+
 ---
 
 ## Roadmap
 
-The platform is being built in five phases. Each phase ships a runnable demo and is fully additive - Phase N never breaks Phase N-1.
+The platform is being built in five phases, with an additional GPU execution plane track introduced in v1.20. Each phase ships a runnable demo and is fully additive - Phase N never breaks Phase N-1.
 
 ### Phase 1 - Foundation *(complete)*
 
@@ -157,6 +169,20 @@ The platform is being built in five phases. Each phase ships a runnable demo and
 - `synreview` - human-in-the-loop review queue, 24-hour staging, replay
 - Cross-region DR within RTO/RPO SLOs
 
+### GPU Execution Plane track - v1.20 *(planned, separate repository)*
+
+**Delivers:** physically isolated GPU cluster with a versioned gRPC contract between the primary platform and GPU infrastructure.
+
+> **Note:** The Phase 2 Quick Start below runs vLLM locally for development and demo purposes. That is **not** the production GPU Execution Plane. Production GPU workloads use the `synanton/gpu-execution-plane` repository and connect via `synanton.gpu.v1` over mTLS.
+
+- **GPU-1** ✅ - `synanton.gpu.v1` contract (`java/gpu-contract`), structured error catalogue, generated stubs, consumer contract tests (`GpuContractTest`), `GpuExecutionClient` in `gateway`
+- **GPU-2** ✅ - GPU Gateway (`java/gpu-gateway`): `GpuExecutionServiceImpl`, `DirectDispatcher`, durable PostgreSQL idempotency store (fail-closed), `TenantAssertionValidator`, `GpuGatewayMetrics`, Flyway migration
+- **GPU-3** ✅ - `GpuSynthesisAdapter` (retry + CPU degraded fallback), wired into `SynthesisService`; `ModelServingDirectory` `isGpuBacked()` / `getGpuModels()`; trace context propagation; `gateway.gpu.*` config; llama model marked `execution-plane: gpu`
+- **GPU-4** 🔲 - Security hardening, failure injection tests, idempotency/duplicate tests, observability dashboards, cost attribution validation
+- **GPU-5** 🔲 *(conditional)* - `EqualixScheduler` — only after GPU-4 operational evidence
+
+See `docs/implementation/gpu-execution-plane/INDEX.md` for the detailed implementation plan.
+
 ---
 
 ## Quick start
@@ -179,6 +205,8 @@ curl http://localhost:8091/manifest/demo | python3 -m json.tool
 ```
 
 ### Ingestion demo with LLM enrichment (Phase 2 - requires 2× 8 GB GPU)
+
+> **Note:** This demo runs vLLM locally in Docker for development and evaluation only. Production GPU inference uses the separate `synanton/gpu-execution-plane` repository connected via `synanton.gpu.v1` over mTLS.
 
 ```bash
 # Download models (~6 GB, needs HF token for Llama 3.1)
@@ -325,7 +353,9 @@ MINIO_ROOT_PASSWORD=<your-choice>
 
 | Document | Location |
 |---|---|
-| Platform architecture (v1.19) | `docs/architecture/synanton-design-1.19.md` |
+| Platform architecture (v1.20) | `docs/architecture/synanton-design-1.20.md` |
+| Platform architecture (v1.19, baseline) | `docs/architecture/synanton-design-1.19.md` |
+| GPU Execution Plane implementation plan | `docs/implementation/gpu-execution-plane/INDEX.md` |
 | Phases master plan | `docs/implementation/synanton-phases-plan.md` |
 | Phase 1 ingestion plan | `docs/implementation/phase1/01-ingestion-pipeline.md` |
 | Phase 2 LLM enrichment plan | `docs/implementation/phase2/01-ingestion-pipeline.md` |
