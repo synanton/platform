@@ -20,7 +20,7 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(libs.logback.classic)
 
-    // Add gRPC and Protocol Buffers support
+    // Add gRPC and protobuf dependencies
     implementation(libs.grpc.stub)
     implementation(libs.grpc.protobuf)
     implementation(libs.protobuf.java)

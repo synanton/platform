@@ -27,7 +27,7 @@ public class TenantAssertionValidator {
     }
 
     public record ValidationResult(boolean allowed, String reason) {
-        static ValidationResult allowed() { return new ValidationResult(true, null); }
-        static ValidationResult denied(String reason) { return new ValidationResult(false, reason); }
+        public static ValidationResult allowed() { return new ValidationResult(true, null); }
+        public static ValidationResult denied(String reason) { return new ValidationResult(false, reason); }
     }
 }
