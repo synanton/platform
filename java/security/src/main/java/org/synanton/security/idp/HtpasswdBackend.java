@@ -30,7 +30,7 @@ public class HtpasswdBackend {
         reload();
     }
 
-    public void reload() {
+    public final void reload() {
         try {
             Map<String, UserRecord> loaded = Files.readAllLines(filePath)
                     .stream()

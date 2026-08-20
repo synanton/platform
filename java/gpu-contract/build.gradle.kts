@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.grpc.stub)
     compileOnly(libs.javax.annotation)
 
+    testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
     testImplementation(libs.grpc.inprocess)
@@ -20,14 +21,11 @@ dependencies {
 
 protobuf {
     protoc {
-        // Use the version from the catalog
-        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
+        artifact = libs.protoc.asProvider().get().toString()
     }
     plugins {
         create("grpc") {
-            // If you have a grpc version defined, use it; otherwise specify the version directly
-            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
-            // or hardcode if no version entry: "io.grpc:protoc-gen-grpc-java:1.54.0"
+            artifact = libs.protoc.gen.grpc.java.get().toString()
         }
     }
     generateProtoTasks {

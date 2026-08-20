@@ -132,7 +132,8 @@ public class GrantMutationService {
     }
 
     public static class InvalidGrantException extends RuntimeException {
-        private final List<PgvFieldViolation> violations;
+        @java.io.Serial private static final long serialVersionUID = 1L;
+        private final transient List<PgvFieldViolation> violations;
 
         public InvalidGrantException(List<PgvFieldViolation> violations) {
             super("PGV validation failed");

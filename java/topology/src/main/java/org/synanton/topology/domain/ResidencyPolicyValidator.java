@@ -27,6 +27,7 @@ public class ResidencyPolicyValidator {
     }
 
     public static class ResidencyDowngradeException extends RuntimeException {
+        @java.io.Serial private static final long serialVersionUID = 1L;
         public ResidencyDowngradeException(String message) {
             super(message);
         }

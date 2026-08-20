@@ -49,6 +49,7 @@ public class GatewayClient {
     private record GatewayQueryRequest(String tenant, String query, int topK, Hints hints) {}
 
     public static class GatewayException extends RuntimeException {
+        @java.io.Serial private static final long serialVersionUID = 1L;
         private final int statusCode;
 
         public GatewayException(int statusCode, String message, Throwable cause) {

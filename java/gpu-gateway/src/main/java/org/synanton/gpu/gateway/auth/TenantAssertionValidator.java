@@ -16,18 +16,18 @@ public class TenantAssertionValidator {
 
     public ValidationResult validate(String tenantId, String serviceIdentity) {
         if (tenantId == null || tenantId.isBlank()) {
-            return ValidationResult.failure("tenant_id is required");
+            return ValidationResult.denied("tenant_id is required");
         }
         if (tenantId.length() > 255) {
-            return ValidationResult.failure("tenant_id exceeds maximum length of 255");
+            return ValidationResult.denied("tenant_id exceeds maximum length of 255");
         }
         // Production: verify that serviceIdentity (mTLS CN) is authorized to assert this tenantId.
         // Omitted in initial implementation; all authenticated callers are trusted for any tenant.
-        return ValidationResult.success();
+        return ValidationResult.permit();
     }
 
-    public record ValidationResult(boolean success, String reason) {
-        public static ValidationResult success() { return new ValidationResult(true, null); }
-        public static ValidationResult failure(String reason) { return new ValidationResult(false, reason); }
+    public record ValidationResult(boolean allowed, String reason) {
+        static ValidationResult permit() { return new ValidationResult(true, null); }
+        static ValidationResult denied(String reason) { return new ValidationResult(false, reason); }
     }
 }

@@ -118,6 +118,7 @@ public class LlmIntentClassifier {
     }
 
     public static class LlmClassificationException extends RuntimeException {
+        @java.io.Serial private static final long serialVersionUID = 1L;
         public LlmClassificationException(String msg) { super(msg); }
         public LlmClassificationException(String msg, Throwable cause) { super(msg, cause); }
     }

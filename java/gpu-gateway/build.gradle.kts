@@ -9,22 +9,28 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":java:synanton-llm-client"))
     implementation(project(":java:gpu-contract"))
 
-    implementation(libs.spring.boot.starter.web)
-    implementation(libs.spring.boot.starter.webflux)
+    implementation(libs.spring.boot.starter.jdbc)
     implementation(libs.spring.boot.starter.actuator)
-    implementation(libs.jackson.databind)
-    implementation(libs.mustache.compiler)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.postgresql)
+    implementation(libs.postgresql)
+    implementation(libs.grpc.netty.shaded)
+    implementation(libs.grpc.protobuf)
+    implementation(libs.grpc.stub)
+    implementation(libs.protobuf.java)
+    implementation(libs.micrometer.prometheus)
+    implementation(libs.micrometer.core)
     implementation(libs.slf4j.api)
     implementation(libs.logback.classic)
-
-    // Add gRPC and protobuf dependencies
-    implementation(libs.grpc.stub)
-    implementation(libs.grpc.protobuf)
-    implementation(libs.protobuf.java)
     compileOnly(libs.javax.annotation)
 
     testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.h2)
+    testImplementation(libs.grpc.inprocess)
+    testImplementation(libs.grpc.testing)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.junit)
+    testImplementation(libs.assertj.core)
 }

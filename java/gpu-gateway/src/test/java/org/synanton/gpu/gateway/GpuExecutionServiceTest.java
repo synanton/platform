@@ -155,7 +155,7 @@ class GpuExecutionServiceTest {
 
         assertThat(response.getState()).isEqualTo(ExecutionState.FAILED);
         assertThat(response.getError().getReason()).isEqualTo(ErrorReason.EXECUTION_FAILED);
-        assertThat(response.getError().isRetryable()).isFalse();
+        assertThat(response.getError().getRetryable()).isFalse();
     }
 
     // ─── GetStatus ────────────────────────────────────────────────────────────

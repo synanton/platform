@@ -121,12 +121,14 @@ public class JdbcIdempotencyStore implements IdempotencyStore {
     }
 
     public static class IdempotencyStoreUnavailableException extends RuntimeException {
+        @java.io.Serial private static final long serialVersionUID = 1L;
         public IdempotencyStoreUnavailableException(String message, Throwable cause) {
             super(message, cause);
         }
     }
 
     public static class DuplicateRequestIdException extends RuntimeException {
+        @java.io.Serial private static final long serialVersionUID = 1L;
         public DuplicateRequestIdException(String message, Throwable cause) {
             super(message, cause);
         }
