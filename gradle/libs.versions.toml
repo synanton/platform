@@ -82,7 +82,7 @@ micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus
 
 # Testing
 junit-bom           = { module = "org.junit:junit-bom",                 version.ref = "junit" }
-junit-jupiter       = { module = "org.junit.jupiter:junit-jupiter" }
+junit-jupiter       = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 assertj-core        = { module = "org.assertj:assertj-core",            version.ref = "assertj" }
 mockito-core        = { module = "org.mockito:mockito-core",            version.ref = "mockito" }
 mockito-junit       = { module = "org.mockito:mockito-junit-jupiter",   version.ref = "mockito" }
