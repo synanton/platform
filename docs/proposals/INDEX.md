@@ -14,7 +14,9 @@ last_reviewed: "2026-07-21"
 
 | Proposal | Status |
 |---------|--------|
-| [`v1.19/`](./v1.19/) | **Latest** - Helper & Wizard modules |
+| [`v1.21/`](./v1.21/) | **Latest** - Structured PDF parsing (PoC) |
+| [`v1.20/`](./v1.20/) | Accepted - GPU Execution Plane isolation |
+| [`v1.19/`](./v1.19/) | Accepted - Helper & Wizard modules |
 | [`v1.18/`](./v1.18/) | Accepted - Data validation & XSS protection |
 | [`v1.17/`](./v1.17/) | Accepted - Operational robustness & DR |
 
@@ -25,6 +27,8 @@ last_reviewed: "2026-07-21"
 | `v1.17/` | v1.17 proposal + decision record |
 | `v1.18/` | v1.18 proposal + decision record |
 | `v1.19/` | v1.19 proposal + decision record |
+| `v1.20/` | v1.20 proposal + decision record |
+| `v1.21/` | v1.21 proposal — structured PDF parsing (PoC) |
 | `templates/` | Proposal document template |
 
 ## Lifecycle

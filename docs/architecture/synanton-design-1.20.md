@@ -7,6 +7,12 @@
 > **Audience:** Architects, module owners, SREs, security engineers, partner connector authors, UI/frontend leads, DevOps/platform engineers
 > **Philosophy:** Clean-slate · zero legacy · single API surface · no compatibility shims
 
+> ⚠️ **Superseded as the entry point by [`synanton-design-1.21.md`](./synanton-design-1.21.md) (2026-08-26).**
+> This document remains **authoritative for Part VIII, the GPU Execution Plane (§50–§64)**, and for its
+> v1.20 deltas to Parts I–VII (§1, §3, §4, §5, §23, §26, §45, §47, §48 as reproduced below). v1.21 restates
+> Part VIII as unchanged and adds no GPU-plane requirements. For the full baseline §1–§49, read
+> [`synanton-design-1.19.md`](./synanton-design-1.19.md). See [`INDEX.md`](./INDEX.md) for the chain.
+
 This document is the **single authoritative engineering reference** for the Synanton platform for version 1.20. It builds on v1.19 as the complete baseline and introduces the GPU Execution Plane as a strictly isolated execution boundary. All content from v1.19 that is not explicitly modified here remains authoritative and unchanged; readers of unchanged areas should use this document's §1–§49 as the definitive reference (those sections are identical to v1.19 unless otherwise noted by an in-section v1.20 callout).
 
 The GPU Execution Plane architecture is specified in full in the new Part VIII (§50–§64) of this document.

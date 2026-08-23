@@ -7,6 +7,13 @@
 > **Audience:** Architects, module owners, SREs, security engineers, partner connector authors, UI/frontend leads, DevOps/platform engineers
 > **Philosophy:** Clean-slate · zero legacy · single API surface · no compatibility shims
 
+> ⚠️ **Superseded as the entry point by [`synanton-design-1.21.md`](./synanton-design-1.21.md) (2026-08-26).**
+> This document remains the **complete baseline for §1–§49**. Later versions are incremental and do not
+> reproduce it in full, so it is still the reference for any section they leave unchanged. Read it together
+> with [`synanton-design-1.20.md`](./synanton-design-1.20.md) (Part VIII, plus its deltas to §1, §3, §4, §5,
+> §23, §26, §45, §47, §48) and [`synanton-design-1.21.md`](./synanton-design-1.21.md) (Part IX).
+> See [`INDEX.md`](./INDEX.md) for the chain.
+
 This document is the **single authoritative engineering reference** for the Synanton platform. It merges the conceptual content of every design draft from v1.7 through v1.16 - folding their concerns, decisions, risks, and open questions into one coherent, exhaustive specification. Version 1.17 additionally integrated the operational-robustness, disaster-recovery, resilience, and developer-ergonomics changes proposed in `Synanton Platform Version 1.17 Proposal.md` (2026-07-04). Version 1.18 additionally integrated the systematic data-validation and XSS-protection changes proposed in `Synanton Platform Version 1.18 Proposal.md` (2026-07-19). Version 1.19 additionally integrates the `helper` and `wizard` operational CLI modules proposed in `Synanton Platform Version 1.19 Proposal.md` (2026-07-20).
 
 Where prior drafts split content across enhancement proposals, reviews, and risk dossiers, this document presents them as a single coherent surface: **principles → topology → end-to-end processing flows → module-by-module specifications → SPIs → data model → cross-cutting concerns → operations**.

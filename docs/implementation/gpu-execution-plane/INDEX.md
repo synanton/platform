@@ -7,7 +7,7 @@ last_reviewed: "2026-08-20"
 # GPU Execution Plane — Implementation Plan
 
 **Purpose:** Implementation plan for the v1.20 GPU Execution Plane architectural change. Introduces a physically isolated GPU cluster connected to the primary Synanton platform through the versioned `synanton.gpu.v1` gRPC contract.
-**Architecture reference:** `docs/architecture/synanton-design-1.20.md` §50–§64 (Part VIII)
+**Architecture reference:** `docs/architecture/synanton-design-1.20.md` §50–§64 (Part VIII) — still the authoritative text for the GPU Execution Plane. The current design entry point is `synanton-design-1.21.md`, which restates Part VIII as unchanged; v1.21 adds no GPU-plane requirements.
 **Proposal source:** `docs/architecture/proposals/Synanton_v1.20_Proposal_GPU_Workload_Isolation.md`
 **Audience:** Architects, module owners, GPU infrastructure engineers, SREs
 **Last Updated:** 2026-08-20
@@ -266,7 +266,7 @@ Plan files in this directory follow the naming convention `NN-{component}.md` fo
 When authoring or updating a plan:
 
 1. Update this INDEX and `docs/implementation/synanton-phases-plan.md` GPU section.
-2. Every plan file MUST cite `docs/architecture/synanton-design-1.20.md` as the authoritative architecture source and name the specific section(s) it implements.
+2. Every plan file MUST cite `docs/architecture/synanton-design-1.20.md` §50–§64 as the authoritative architecture source for the GPU Execution Plane and name the specific section(s) it implements. Cite v1.20 rather than the current entry point (`synanton-design-1.21.md`) because v1.20 holds the Part VIII text; cite the current entry point only for sections it actually restates.
 3. When a plan introduces a new metric or alert, add it to `docs/implementation/phase4/15-observability.md` §3 Alert Catalogue.
 4. When a plan introduces a new config key, prefix it with the module name (`gateway.gpu.*`, `gpu-gateway.*`).
 5. Every plan file MUST have a numbered, testable Definition of Done that maps back to this INDEX.

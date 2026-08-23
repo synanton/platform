@@ -353,8 +353,9 @@ MINIO_ROOT_PASSWORD=<your-choice>
 
 | Document | Location |
 |---|---|
-| Platform architecture (v1.20) | `docs/architecture/synanton-design-1.20.md` |
-| Platform architecture (v1.19, baseline) | `docs/architecture/synanton-design-1.19.md` |
+| Platform architecture (v1.21, current) | `docs/architecture/synanton-design-1.21.md` |
+| ↳ GPU Execution Plane (Part VIII, §50–§64) | `docs/architecture/synanton-design-1.20.md` |
+| ↳ Baseline platform (§1–§49) | `docs/architecture/synanton-design-1.19.md` |
 | GPU Execution Plane implementation plan | `docs/implementation/gpu-execution-plane/INDEX.md` |
 | Phases master plan | `docs/implementation/synanton-phases-plan.md` |
 | Phase 1 ingestion plan | `docs/implementation/phase1/01-ingestion-pipeline.md` |
