@@ -99,11 +99,23 @@ Synanton provides a single coherent platform for this problem:
 | Consumer contract tests | `GpuContractTest` — in-process gRPC tests verifying all 4 RPCs, error shapes, and `MODEL_NOT_READY` retryable flag | ✅ GPU-1 done |
 | `EqualixScheduler` | Optional fairness/quota scheduler (data-gated on GPU-4 evidence) | 🔲 GPU Phase 5 |
 
+**Structured Content Extraction Plane** (module `java/extraction-contract` in this repo; implementation in `synanton/content_extractor`):
+
+> Content extraction (PDF/text/EPUB/HTML now; audio, image, and video later) runs behind the `synanton.extraction.v1` gRPC contract. Deployment topology — embedded, co-located, or an independently scaled cluster — is a scaling concern that does not change the contract.
+
+| Component | Role | Status |
+|-----------|------|--------|
+| `java/extraction-contract` | `synanton.extraction.v1` protobuf contract — 9 RPCs (submit, batch, sync, status poll, cursor completion poll, result, cancel, capacity, estimate, capabilities); 13-code error catalogue; explicit feature-state model; generated gRPC stubs | ✅ SCEP-1 done |
+| Contract mirror check | `scripts/verify-contract-mirror.sh` + `verifyContractMirror` Gradle task, wired into `check` and CI — fails when the protos diverge from `content_extractor` | ✅ SCEP-1 done |
+| Consumer contract tests | 43 tests: in-process gRPC round trip, idempotency replay, cursor polling, validation rules, and descriptor-level black-box enforcement (`ContractOpacityTest`) | ✅ SCEP-1 done |
+| `java/extraction-client` | `ExtractionPlaneClient`, reconcile-after-timeout, `ExtractionFallbackPolicy` | 🔲 SCEP-5 |
+| `synflux` extraction wiring | `ParseStage` re-pointed at the plane; in-process Tika retained as fallback; structure-aware chunking | 🔲 SCEP-5 |
+
 ---
 
 ## Roadmap
 
-The platform is being built in five phases, with an additional GPU execution plane track introduced in v1.20. Each phase ships a runnable demo and is fully additive - Phase N never breaks Phase N-1.
+The platform is being built in five phases, with a GPU execution plane track introduced in v1.20 and a structured content extraction track in v1.21. Each phase ships a runnable demo and is fully additive - Phase N never breaks Phase N-1.
 
 ### Phase 1 - Foundation *(complete)*
 
@@ -183,6 +195,22 @@ The platform is being built in five phases, with an additional GPU execution pla
 
 See `docs/implementation/gpu-execution-plane/INDEX.md` for the detailed implementation plan.
 
+### Structured Content Extraction Plane track - v1.21 *(in progress, separate repository)*
+
+**Delivers:** structured content extraction behind a deployment-neutral contract. Consumers receive reading order, headings, tables, and page provenance instead of a flat string, and never reparse the source to obtain text.
+
+> **Architectural decision:** the extraction plane is a black box. The platform specifies *what* to extract and under *what constraints*; the plane decides *how*. Which parser runs, whether OCR is local or remote, and whether work is CPU-, GPU-, or accelerator-backed are invisible through the contract — so the implementation can grow from an embedded processor into a distributed cluster without a platform API change.
+
+- **SCEP-1** ✅ - `synanton.extraction.v1` contract (`java/extraction-contract`), byte-identical mirror in `synanton/content_extractor` with a drift check wired into `check` and CI, 13-code error catalogue with retryability verdicts, explicit feature-state model, 43 consumer contract tests
+- **SCEP-2** 🔲 - Extraction plane skeleton + sync path: gRPC server, `ModalityAdapter` SPI, router, text/EPUB/HTML adapter, sandbox limits
+- **SCEP-3** 🔲 - PDF PoC via OpenDataLoader behind the adapter boundary; the 15 acceptance criteria of the design draft
+- **SCEP-4** 🔲 - Async operation model: PostgreSQL operation store, fail-closed idempotency, admission under advisory lock, expiry semantics, cursor completion feed
+- **SCEP-5** 🔲 - Platform integration: `extraction-client`, `synflux` `ParseStage` re-pointed at the plane with Tika fallback retained, structure-aware chunking
+- **SCEP-6** 🔲 - Topology equivalence proof (embedded vs remote produce equivalent semantics) + security hardening; gates v1.21 completion
+- **SCEP-7** 🔲 *(post-v1.21)* - Audio, image, and video extraction; additive, no contract change
+
+See `docs/implementation/content-extraction-plane/INDEX.md` for the detailed implementation plan and `docs/implementation/content-extraction-plane/error-catalogue.md` for the error contract.
+
 ---
 
 ## Quick start
@@ -255,6 +283,10 @@ java/
   control-plane/        Admin API, forecast, anomaly, GitOps
   synflux-router/       Kafka-driven ingestion work distributor
   synanton-mcp/         MCP protocol bridge
+  gpu-contract/         synanton.gpu.v1 protobuf contract (v1.20)
+  gpu-gateway/          GPU Execution Plane service (v1.20)
+  extraction-contract/  synanton.extraction.v1 protobuf contract (v1.21),
+                        mirrored byte-for-byte in synanton/content_extractor
 
 rust/                   Future Rust components (synquest hot loop - Phase 5)
 
@@ -267,12 +299,15 @@ deployment/
 docs/
   architecture/         Platform design (v1.19), module contracts, decision records
   implementation/       Phase-by-phase implementation plans (Phases 1–3 complete)
+  proposals/            Versioned change proposals (v1.20 GPU, v1.21 extraction)
 
 scripts/
   setup-dev.sh          Toolchain check (Java 21, Docker, Node 20)
   run-demo.sh           Full demo stack via docker compose
   run-ingestion-demo.sh Ingestion-only demo (Phase 1 or Phase 2)
   build-all.sh          Build every active module
+  verify-contract-mirror.sh  Fail if synanton.extraction.v1 diverges from
+                        the content_extractor copy (runs in `check` and CI)
 
 demo-data/
   documents/            10 synthetic markdown/text files for ingestion demo

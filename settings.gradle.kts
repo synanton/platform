@@ -16,6 +16,8 @@ dependencyResolutionManagement {
 
 // Active Java modules - Phase 3 adds control-plane, synanton-mcp, and synflux-router.
 // v1.20 adds gpu-contract (synanton.gpu.v1 proto stubs) and gpu-gateway (GPU Execution Plane).
+// v1.21 adds extraction-contract (synanton.extraction.v1 proto stubs, mirrored from
+// the content_extractor repository) for the Structured Content Extraction Plane.
 include(
     "java:shared:common",
     "java:security",
@@ -35,6 +37,7 @@ include(
     "java:synanton-llm-client",
     "java:gpu-contract",
     "java:gpu-gateway",
+    "java:extraction-contract",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)

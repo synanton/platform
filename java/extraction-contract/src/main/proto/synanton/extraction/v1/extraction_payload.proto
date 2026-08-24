@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package synanton.extraction.v1;
+
+option java_package = "synanton.extraction.v1";
+option java_outer_classname = "ExtractionPayloadProto";
+option java_multiple_files = true;
+
+// Normalized payload schemas for the Structured Content Extraction Plane.
+//
+// Payload schemas are versioned INDEPENDENTLY of the service contract
+// (proposal §20: "Processor version and schema version remain independent").
+// A processor upgrade that produces the same schema is not a contract change.
+//
+// v1.21 defines DocumentPayload concretely. Audio, image, and video payloads
+// are reserved so that adding them later is additive, not breaking (draft §29).
+//
+// INVARIANT (§67.4, §67.17): the Synanton core MUST NOT interpret
+// modality-specific payload contents. It reads the descriptor and, where
+// meaningful, the flattened_text projection.
+
+// ─── Serialization ───────────────────────────────────────────────────────────
+
+// SerializationFormat identifies how payload content bytes are encoded.
+// Enum value names are prefixed: proto3 enum values live in the enclosing
+// PACKAGE scope (C++ scoping rules), so unprefixed names would collide with
+// values in extraction_service.proto and with the reserved modality enums.
+enum SerializationFormat {
+    SERIALIZATION_FORMAT_UNSPECIFIED = 0;
+    SERIALIZATION_JSON     = 1;  // canonical: a DocumentPayload rendered as JSON
+    SERIALIZATION_PROTOBUF = 2;  // canonical: a serialized DocumentPayload message
+    SERIALIZATION_MARKDOWN = 3;  // projection only; never the sole representation
+    SERIALIZATION_HTML     = 4;  // projection only; never the sole representation
+}
+
+// ─── Descriptor ──────────────────────────────────────────────────────────────
+
+// PayloadDescriptor identifies WHAT a payload is, without the consumer having
+// to parse it. Proposal §20 and §25 (result integrity).
+//
+// schema_* describes the representation; processor_* describes what produced it.
+// These version independently: replacing OpenDataLoader with another PDF parser
+// changes processor_id/processor_version and leaves schema_id/schema_version
+// untouched — which is precisely the black-box property (§67.2).
+message PayloadDescriptor {
+    // Stable schema identifier, e.g. "synanton.extraction.document".
+    string schema_id = 1;
+
+    // Semantic version of the schema, e.g. "1.0".
+    string schema_version = 2;
+
+    // Opaque, bounded processor identifier, e.g. "pdf-adapter".
+    // MUST NOT encode a worker name, pool, host, or device (§67.16).
+    string processor_id = 3;
+
+    // Processor implementation version, e.g. "opendataloader-2.1.1".
+    // Diagnostic; consumers MUST NOT branch on it for correctness.
+    string processor_version = 4;
+
+    SerializationFormat format = 5;
+
+    // Digest of the schema definition, for compatibility checking.
+    string schema_digest = 6;
+
+    // sha256 of the payload content bytes. Consumers SHOULD verify (§25).
+    string payload_digest = 7;
+}
+
+// PayloadReference points at payload content held in object storage, used when
+// the payload exceeds the inline threshold. Keeps large results off the RPC path.
+message PayloadReference {
+    string bucket = 1;
+    string key = 2;
+    string version = 3;
+    int64 size_bytes = 4;
+}
+
+// StructuredPayload is the generic result carrier (§20, §67.4).
+// New modalities add a new content variant; they do not change this envelope.
+message StructuredPayload {
+    // Named payload_descriptor, not descriptor: every generated protobuf message
+    // already has a static getDescriptor(), and a field named `descriptor` makes
+    // the generated Java uncompilable.
+    PayloadDescriptor payload_descriptor = 1;
+
+    // Content is inline for small payloads and a reference for large ones.
+    // Callers MUST handle both.
+    oneof content {
+        bytes inline_content = 2;
+        PayloadReference reference = 3;
+    }
+}
+
+// ─── Document payload (v1.21 scope) ──────────────────────────────────────────
+
+// DocumentElementType enumerates structural element kinds. Draft §7.2.
+//
+// These are STRUCTURAL, not semantic: HEADING means "this is a heading", not
+// "this is the contract title". Semantic interpretation is knowledge
+// processing and lives downstream (§67.18).
+enum DocumentElementType {
+    ELEMENT_TYPE_UNSPECIFIED = 0;
+    ELEMENT_PARAGRAPH  = 1;
+    ELEMENT_HEADING    = 2;
+    ELEMENT_LIST       = 3;
+    ELEMENT_LIST_ITEM  = 4;
+    ELEMENT_TABLE      = 5;
+    ELEMENT_TABLE_ROW  = 6;
+    ELEMENT_TABLE_CELL = 7;
+    ELEMENT_IMAGE      = 8;
+    ELEMENT_FORMULA    = 9;
+    ELEMENT_CAPTION    = 10;
+    ELEMENT_FOOTNOTE   = 11;
+    ELEMENT_HEADER     = 12;
+    ELEMENT_FOOTER     = 13;
+    ELEMENT_CODE_BLOCK = 14;
+    ELEMENT_PAGE_BREAK = 15;
+}
+
+// ContentProvenance records HOW an element's content was obtained (draft §30).
+//
+// This separation is load-bearing: OCR text and a VLM-generated image
+// description are NOT the same kind of evidence as embedded text, and
+// downstream consumers must be able to tell them apart. Draft §42 forbids
+// treating generated descriptions as source evidence.
+enum ContentProvenance {
+    PROVENANCE_UNSPECIFIED      = 0;
+    PROVENANCE_EMBEDDED_TEXT    = 1;  // extracted directly from the source
+    PROVENANCE_OCR              = 2;  // recognized from raster content
+    PROVENANCE_TAGGED_STRUCTURE = 3;  // from the document's own accessibility tags
+    PROVENANCE_LAYOUT_INFERRED  = 4;  // inferred from geometry
+    PROVENANCE_GENERATED        = 5;  // LLM/VLM produced; NOT source evidence
+    PROVENANCE_TRANSCRIBED      = 6;  // ASR output (audio)
+}
+
+// BoundingBox locates an element on a page, in PDF user-space points,
+// origin bottom-left. Present when the processor supplies geometry.
+message BoundingBox {
+    double x0 = 1;
+    double y0 = 2;
+    double x1 = 3;
+    double y1 = 4;
+}
+
+// ElementLocation ties an element back to a position in the source artifact.
+message ElementLocation {
+    // 1-based page number; 0 when the format has no pages (e.g. HTML).
+    int32 page = 1;
+    BoundingBox bbox = 2;
+}
+
+// DocumentElement is one structural unit. Draft §7.2.
+//
+// Elements are emitted in READING ORDER. Order is part of the contract:
+// consumers may rely on the sequence without re-sorting by geometry.
+message DocumentElement {
+    // Stable within one payload, e.g. "p1-e07".
+    string id = 1;
+
+    DocumentElementType type = 2;
+    ElementLocation location = 3;
+
+    // Textual content, where the element has any.
+    string text = 4;
+
+    ContentProvenance provenance = 5;
+
+    // Heading depth (1-6) for HEADING; nesting depth for LIST/LIST_ITEM.
+    int32 level = 6;
+
+    // Child ids, for tables and nested lists. Children also appear in the
+    // top-level element list, so a consumer may ignore the hierarchy entirely.
+    repeated string child_ids = 7;
+
+    // Processor-specific extras. Opaque to the platform (§67.11) and MUST NOT
+    // be required to interpret the element.
+    map<string, string> attributes = 8;
+
+    // For FORMULA: LaTeX. For IMAGE: a description when one was requested and
+    // produced, in which case provenance is GENERATED.
+    string alternate_representation = 9;
+}
+
+// DocumentPayload is the normalized document result. Draft §7.2.
+message DocumentPayload {
+    string media_type = 1;
+
+    // Document-level metadata (title, author, page count, ...).
+    // Opaque pass-through; the plane does not assign business meaning (§67.11).
+    map<string, string> metadata = 2;
+
+    // Reading-order element sequence.
+    repeated DocumentElement elements = 3;
+
+    // Compatibility projection (§21). MUST be derived from `elements`, never by
+    // reparsing the source: a consumer that only wants text must not force a
+    // second extraction (§67.17).
+    string flattened_text = 4;
+}
+
+// ─── Reserved modality payloads (SCEP-7, post-v1.21) ─────────────────────────
+//
+// Declared as empty messages so that field numbers and names are claimed now
+// and filling them in later is additive. Draft §29.
+
+message AudioPayload {
+    // Reserved for: timeline segments, speaker turns, pauses, overlaps,
+    // transcript provenance. Draft §17-§21.
+    reserved 1 to 20;
+}
+
+message ImagePayload {
+    // Reserved for: OCR regions, generated description, detected objects.
+    // Draft §22-§24.
+    reserved 1 to 20;
+}
+
+message VideoPayload {
+    // Reserved for: scenes, keyframes, clips, embedded audio timeline.
+    // Draft §25-§27.
+    reserved 1 to 20;
+}
