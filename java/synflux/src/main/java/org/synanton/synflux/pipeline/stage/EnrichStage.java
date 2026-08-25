@@ -4,7 +4,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.AnalysisRow;
 import org.synanton.llm.LlmClient;
 import org.synanton.llm.CompletionRequest;
-import org.synanton.synflux.domain.Chunk;
+import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
@@ -53,7 +53,7 @@ public class EnrichStage implements PipelineStage<ChunkedDocument, ChunkedDocume
         List<Future<String>> pass1Futures = new ArrayList<>();
         List<String> pass1Results = new ArrayList<>();
 
-        for (Chunk chunk : doc.chunks()) {
+        for (SemanticChunk chunk : doc.chunks()) {
             final int ordinal = chunk.ordinal();
             final String chunkText = chunk.text();
             pass1Futures.add(pool.submit(() -> {

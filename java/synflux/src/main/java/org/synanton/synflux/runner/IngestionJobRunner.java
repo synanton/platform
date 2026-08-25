@@ -29,8 +29,8 @@ public class IngestionJobRunner {
     private final ContentPullPort pullPort;
     private final IngestionCacheClient cacheClient;
     private final AcquireStage acquireStage;
-    private final ParseStage parseStage;
-    private final ChunkStage chunkStage;
+    private final ExtractionStage extractionStage;
+    private final SemanticChunkStage semanticChunkStage;
     private final PipelineStage<ChunkedDocument, ChunkedDocument> enrichStage;
     private final PipelineStage<ChunkedDocument, ChunkedDocument> embedStage;
     private final PersistStage persistStage;
@@ -42,8 +42,8 @@ public class IngestionJobRunner {
         ContentPullPort pullPort,
         IngestionCacheClient cacheClient,
         AcquireStage acquireStage,
-        ParseStage parseStage,
-        ChunkStage chunkStage,
+        ExtractionStage extractionStage,
+        SemanticChunkStage semanticChunkStage,
         PipelineStage<ChunkedDocument, ChunkedDocument> enrichStage,
         PipelineStage<ChunkedDocument, ChunkedDocument> embedStage,
         PersistStage persistStage
@@ -52,8 +52,8 @@ public class IngestionJobRunner {
         this.pullPort = pullPort;
         this.cacheClient = cacheClient;
         this.acquireStage = acquireStage;
-        this.parseStage = parseStage;
-        this.chunkStage = chunkStage;
+        this.extractionStage = extractionStage;
+        this.semanticChunkStage = semanticChunkStage;
         this.enrichStage = enrichStage;
         this.embedStage = embedStage;
         this.persistStage = persistStage;
@@ -122,8 +122,8 @@ public class IngestionJobRunner {
                             }
                         }
 
-                        var parsed = parseStage.apply(acquired, ctx);
-                        var chunked = chunkStage.apply(parsed, ctx);
+                        var parsed = extractionStage.apply(acquired, ctx);
+                        var chunked = semanticChunkStage.apply(parsed, ctx);
 
                         ChunkedDocument enriched = props.pipeline().enrichmentEnabled()
                             ? enrichStage.apply(chunked, ctx) : chunked;

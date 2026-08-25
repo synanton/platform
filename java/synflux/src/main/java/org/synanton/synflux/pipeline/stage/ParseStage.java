@@ -34,6 +34,6 @@ public class ParseStage implements PipelineStage<AcquiredDocument, ParsedDocumen
         } catch (Exception e) {
             log.warn("Parse failed for {}: {}", doc.sourceUri(), e.getMessage());
         }
-        return new ParsedDocument(doc, text, meta);
+        return new ParsedDocument(doc, text, meta, null);
     }
 }
