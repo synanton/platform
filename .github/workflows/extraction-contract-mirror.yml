@@ -1,0 +1,66 @@
+name: Extraction Contract Mirror
+
+# Fails when the synanton.extraction.v1 protos diverge between this repository and
+# synanton/content_extractor.
+#
+# This job exists because the synanton.gpu.v1 "mirror" silently drifted: the two
+# copies are now one file vs four, org.* vs com.*, with different RPC names, and no
+# build ever complained. A contract that differs per repository is not one contract,
+# and topology independence depends on it being one.
+#
+# The local `check` task also runs this script, but only enforces when a sibling
+# checkout happens to be present. This job is what makes it authoritative.
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'java/extraction-contract/src/main/proto/**'
+      - 'scripts/verify-contract-mirror.sh'
+      - '.github/workflows/extraction-contract-mirror.yml'
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - 'java/extraction-contract/src/main/proto/**'
+      - 'scripts/verify-contract-mirror.sh'
+      - '.github/workflows/extraction-contract-mirror.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-mirror:
+    name: Verify contract matches content_extractor
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout platform
+        uses: actions/checkout@v4
+        with:
+          path: platform
+
+      - name: Checkout content_extractor
+        uses: actions/checkout@v4
+        with:
+          repository: Synanton/content_extractor
+          path: content_extractor
+          # A PR targeting a coordinated contract change must land on both sides.
+          # Comparing against the peer default branch is what surfaces a one-sided edit.
+          fetch-depth: 1
+
+      - name: Verify contract mirror
+        working-directory: platform
+        run: |
+          chmod +x scripts/verify-contract-mirror.sh
+          ./scripts/verify-contract-mirror.sh "${GITHUB_WORKSPACE}/content_extractor"
+
+      - name: Confirm the check is enforcing, not skipping
+        working-directory: platform
+        run: |
+          # A missing peer makes the script SKIP with exit 0, which would make this
+          # job pass while verifying nothing. Fail loudly if that happened.
+          if ! ./scripts/verify-contract-mirror.sh "${GITHUB_WORKSPACE}/content_extractor" | grep -q '^OK:'; then
+            echo "Mirror check did not report OK — it likely skipped. Treating as failure."
+            exit 1
+          fi

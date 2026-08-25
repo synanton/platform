@@ -1,0 +1,584 @@
+syntax = "proto3";
+
+package synanton.extraction.v1;
+
+import "google/protobuf/timestamp.proto";
+import "synanton/extraction/v1/extraction_payload.proto";
+
+option java_package = "synanton.extraction.v1";
+option java_outer_classname = "ExtractionServiceProto";
+option java_multiple_files = true;
+
+// ExtractionService is the sole boundary between the Synanton platform and the
+// Structured Content Extraction Plane.
+//
+// Ownership:
+//   Platform owns:  content_ref_id, tenant_id, idempotency_key, source object
+//                   reference, requested options, priority intent, expiry.
+//   Plane owns:     operation_id, admission, routing, processor selection,
+//                   scheduling, progress, feature states, payload production.
+//
+// THE CENTRAL INVARIANT (§67.1): this contract MUST be identical whether
+// extraction runs embedded in the platform, co-located, or as an independently
+// scaled cluster. Deployment topology is a scaling concern. Nothing in this
+// file may name a parser, library, queue, worker, pool, host, or device.
+//
+// Validation rules are enforced in Java at the service boundary before any work
+// is admitted, and are documented per-field below. This mirrors the
+// synanton.gpu.v1 convention: the protoc-gen-validate plugin is not wired into
+// either build, so PGV annotations here would be silently inert. Rules live in
+// ExtractionRequestValidator and are covered by contract tests.
+//
+// Validation summary (see each field for detail):
+//   tenant_id         required; ^[a-zA-Z0-9_-]{1,64}$
+//   idempotency_key   required; 1..256 chars
+//   content_ref_id    required; 1..256 chars
+//   source.bucket     required; 1..255 chars
+//   source.key        required; 1..1024 chars
+//   source.sha256     required; ^[a-f0-9]{64}$
+//   source.size_bytes required; > 0
+//   media_type        required; 1..255 chars
+//   priority_class    MUST NOT be PRIORITY_CLASS_UNSPECIFIED
+//   items             batch: 1..256 items
+//   page_size         1..1000
+service ExtractionService {
+    // SubmitExtraction queues one artifact and returns an operation handle
+    // immediately. Asynchronous operation is first-class (§67.13).
+    //
+    // If the caller's stream closes before the response arrives, the plane does
+    // NOT cancel the work. Callers MUST reconcile via GetOperations rather than
+    // resubmitting blindly — resubmission with the same idempotency_key is
+    // safe, resubmission with a fresh key duplicates expensive work (§13).
+    rpc SubmitExtraction(SubmitExtractionRequest) returns (ExtractionOperation);
+
+    // SubmitExtractionBatch queues several artifacts as ONE operation, so an
+    // application can associate a group of files with a single business action
+    // (§14). Per-item status is exposed; the operation completes as PARTIAL when
+    // some items fail.
+    rpc SubmitExtractionBatch(SubmitExtractionBatchRequest) returns (ExtractionOperation);
+
+    // ExtractSync runs a single small extraction inline and returns the result.
+    //
+    // It exists for prototyping, demos, and interactive tooling (§19). It MUST
+    // NOT be a second implementation or a second result model: the plane
+    // implements it as submit-and-await over the same domain path. Requests
+    // above the configured sync ceiling are rejected with INVALID_REQUEST
+    // pointing the caller at the async API.
+    rpc ExtractSync(SubmitExtractionRequest) returns (ExtractionResult);
+
+    // GetOperations is authoritative and always safe to call, including after a
+    // timeout or a dropped stream (§17.1). Intended for callers that already
+    // know their operation ids.
+    rpc GetOperations(GetOperationsRequest) returns (GetOperationsResponse);
+
+    // ListCompletedOperations returns operations that reached a terminal state
+    // since a cursor position (§17.2), so a high-throughput consumer does not
+    // have to poll every operation individually.
+    //
+    // Each terminal operation is returned exactly once in cursor order.
+    // Webhooks are deliberately out of scope for v1.21 (§18, §67.15); this plus
+    // GetOperations is the whole notification story.
+    rpc ListCompletedOperations(ListCompletedOperationsRequest)
+        returns (ListCompletedOperationsResponse);
+
+    // GetResult returns the structured result for one completed item.
+    rpc GetResult(GetResultRequest) returns (ExtractionResult);
+
+    // CancelOperation is best-effort. A RUNNING item may still complete when
+    // cancellation is unsafe or costs more than finishing (§12).
+    rpc CancelOperation(CancelOperationRequest) returns (ExtractionOperation);
+
+    // GetCapacity is ADVISORY. A successful response does not reserve capacity;
+    // admission is authoritative only at submit time (§11).
+    rpc GetCapacity(GetCapacityRequest) returns (CapacityResponse);
+
+    // EstimateExtraction optionally returns a pre-flight estimate (§10).
+    // Advisory: it neither admits nor reserves.
+    rpc EstimateExtraction(SubmitExtractionRequest) returns (ExtractionEstimate);
+
+    // GetCapabilities reports which media types and features this plane can
+    // actually satisfy, so callers can avoid requesting the impossible (§23).
+    rpc GetCapabilities(GetCapabilitiesRequest) returns (ExtractionCapabilities);
+}
+
+// ─── Enumerations ────────────────────────────────────────────────────────────
+
+// ExtractionStatus is the externally visible operation lifecycle (§15).
+// The plane's internal state machine may be richer; THIS set is the contract.
+// Enum value names are prefixed because proto3 enum values follow C++ scoping
+// rules: they live in the enclosing PACKAGE scope, not inside the enum. Without
+// prefixes, PARTIAL/FAILED/EXPIRED would collide across the enums below.
+enum ExtractionStatus {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACCEPTED  = 1;  // admitted, not yet queued for a worker
+    STATUS_QUEUED    = 2;  // awaiting capacity
+    STATUS_RUNNING   = 3;  // being processed
+    STATUS_COMPLETED = 4;  // all items succeeded
+    STATUS_PARTIAL   = 5;  // some items succeeded, some did not (§24)
+    STATUS_FAILED    = 6;  // no item succeeded
+    STATUS_CANCELLED = 7;  // cancelled by the caller
+    STATUS_EXPIRED   = 8;  // expires_at passed; NOT a technical failure (§12)
+}
+
+// PriorityClass is external scheduling INTENT (§9, §67.9).
+//
+// HIGH does not name a queue, a worker pool, a CPU allocation, or an algorithm.
+// The plane maps these onto its own policy. Callers MUST NOT infer topology.
+// A numeric priority is deliberately absent: it invites callers to encode
+// assumptions about the scheduler.
+enum PriorityClass {
+    PRIORITY_CLASS_UNSPECIFIED = 0;
+    PRIORITY_LOW      = 1;
+    PRIORITY_NORMAL   = 2;
+    PRIORITY_HIGH     = 3;
+    PRIORITY_CRITICAL = 4;
+}
+
+// FeatureState records what actually happened to a requested capability
+// (draft §6). This exists to kill a specific ambiguity: `ocr = true` alone
+// never tells the caller whether OCR ran, was unnecessary, was unsupported,
+// or failed.
+//
+// INVARIANT (§67.10): a requested feature that was not applied MUST NOT be
+// reported as success by omission.
+enum FeatureState {
+    FEATURE_STATE_UNSPECIFIED = 0;
+    FEATURE_REQUESTED      = 1;  // asked for; outcome not yet determined
+    FEATURE_APPLIED        = 2;  // asked for and performed
+    FEATURE_NOT_REQUESTED  = 3;  // not asked for
+    FEATURE_NOT_APPLICABLE = 4;  // asked for, but meaningless here (OCR on digital text)
+    FEATURE_UNSUPPORTED    = 5;  // asked for, but this plane cannot do it
+    FEATURE_FAILED         = 6;  // asked for, attempted, failed
+    FEATURE_PARTIAL        = 7;  // asked for, partially achieved (some pages OCR'd)
+}
+
+// ExtractionErrorCode is the contract-level error catalogue (§24).
+//
+// These are CONTRACT errors. Implementation detail such as a parser NPE is a
+// diagnostic, never a contract code: "tika-parser-null-pointer" is not an
+// error code, EXTRACTION_FAILED is.
+enum ExtractionErrorCode {
+    ERROR_CODE_UNSPECIFIED         = 0;
+    ERROR_INVALID_REQUEST          = 1;   // malformed/inconsistent request
+    ERROR_INVALID_OBJECT_REFERENCE = 2;   // reference structurally invalid
+    ERROR_OBJECT_NOT_FOUND         = 3;   // reference valid, object absent
+    ERROR_OBJECT_CHANGED           = 4;   // object sha256 no longer matches
+    ERROR_UNSUPPORTED_MEDIA_TYPE   = 5;   // cannot process this media type
+    ERROR_UNSUPPORTED_OPTION       = 6;   // option not supportable for this content
+    ERROR_REJECTED_CAPACITY        = 7;   // admission refused; retryable later
+    ERROR_EXPIRED                  = 8;   // expires_at passed
+    ERROR_TIMEOUT                  = 9;   // exceeded max processing duration
+    ERROR_EXTRACTION_FAILED        = 10;  // processing failed
+    ERROR_PARTIAL_EXTRACTION       = 11;  // some content extracted, some not
+    ERROR_PAYLOAD_INVALID          = 12;  // produced payload failed validation
+    ERROR_INTERNAL_ERROR           = 13;  // unclassified internal fault
+}
+
+// CapacityLevel is a coarse admission signal (§11).
+// Deliberately coarse: worker counts and queue depths are topology (§67.16).
+enum CapacityLevel {
+    CAPACITY_LEVEL_UNSPECIFIED = 0;
+    CAPACITY_AVAILABLE = 1;
+    CAPACITY_LIMITED   = 2;
+    CAPACITY_SATURATED = 3;
+}
+
+// AdmissionVerdict is the outcome of an admission decision (§11).
+enum AdmissionVerdict {
+    ADMISSION_VERDICT_UNSPECIFIED = 0;
+    ADMISSION_ADMITTED    = 1;
+    ADMISSION_REJECTED    = 2;  // no capacity; retryable later
+    ADMISSION_DEFERRED    = 3;
+}
+
+// ─── Source and request ──────────────────────────────────────────────────────
+
+// ObjectReference identifies source content in object storage (§5).
+//
+// Large content is referenced, never transported through this API: the plane
+// reads bytes directly from storage. This keeps the RPC path cheap and makes the
+// source the single authoritative artifact.
+//
+// INVARIANT (§67.3): the plane MUST NOT modify the referenced object.
+message ObjectReference {
+    // Validation: required, 1..255 chars.
+    string bucket = 1;
+
+    // Validation: required, 1..1024 chars.
+    string key = 2;
+
+    // Object version, where the store is versioned. Optional but strongly
+    // recommended: without it, OBJECT_CHANGED cannot be detected reliably.
+    string version = 3;
+
+    // Validation: required, ^[a-f0-9]{64}$. Used to detect OBJECT_CHANGED and to
+    // bind the result to the exact source bytes (§25).
+    string sha256 = 4;
+
+    // Validation: required, > 0. Checked against admission limits BEFORE any
+    // download, so an oversized object costs nothing (§27).
+    int64 size_bytes = 5;
+}
+
+// ExtractionOptions expresses WHAT should be extracted, never HOW (§8).
+//
+// Every option is `optional` on purpose: the contract must distinguish
+// "unset — plane decides" from "explicitly false — do not do this". A plain
+// bool cannot express that, and the difference is load-bearing. Requesting OCR
+// on a digital PDF should yield NOT_APPLICABLE, whereas leaving it unset should
+// let the plane decide; a scanned page with ocr=false must NOT be OCR'd.
+//
+// Unsupported options MUST be reported explicitly via feature_states, never
+// silently ignored (§67.10).
+message ExtractionOptions {
+    optional bool ocr = 1;
+    optional bool transcription = 2;
+    optional bool layout = 3;
+    optional bool tables = 4;
+    optional bool embedded_images = 5;
+    optional bool scene_analysis = 6;
+
+    // BCP-47 language hint, e.g. "en". A hint, not a constraint.
+    optional string language = 7;
+
+    // Request a pre-flight estimate instead of execution (§10).
+    optional bool preflight = 8;
+}
+
+// ExtractionRequestItem is one artifact to extract.
+message ExtractionRequestItem {
+    // Caller-owned content identity, carried through to the result (§25).
+    // Validation: required, 1..256 chars.
+    string content_ref_id = 1;
+
+    // Validation: required.
+    ObjectReference source = 2;
+
+    // Declared media type. The plane MAY additionally sniff content and remains
+    // authoritative about whether it can actually process the artifact (§23).
+    // Validation: required, 1..255 chars.
+    string media_type = 3;
+
+    ExtractionOptions options = 4;
+
+    // Opaque business metadata: ticketId, caseId, projectId, ...
+    //
+    // INVARIANT (§67.11): the plane MUST NOT attach domain semantics to these
+    // keys. They are carried, stored, and returned; never interpreted.
+    map<string, string> metadata = 5;
+
+    // Routing tags affect extraction behavior, e.g. "ocr=include".
+    //
+    // These are REQUESTS, not implementation commands: "ocr=include" means
+    // "produce OCR-derived content where applicable", never "invoke processor X"
+    // (§7.1). Prefer typed options above; tags cover what options do not.
+    map<string, string> routing_tags = 6;
+
+    // Business tags carried for downstream use, e.g. "department=legal".
+    // Preserved, not interpreted (§7.2).
+    map<string, string> business_tags = 7;
+}
+
+// SubmitExtractionRequest submits a single artifact.
+message SubmitExtractionRequest {
+    // Assertion of caller identity, not a credential. Used for quotas,
+    // fairness, and isolation (§28).
+    // Validation: required, ^[a-zA-Z0-9_-]{1,64}$.
+    string tenant_id = 1;
+
+    // Idempotency is REQUIRED for async extraction (§13, §67.6): a client must
+    // be able to retry after a network failure without duplicating expensive
+    // OCR/transcription work.
+    //
+    // Same key + same request  -> the same operation is returned.
+    // Same key + different request -> ERROR_INVALID_REQUEST (never silent reuse).
+    // Validation: required, 1..256 chars.
+    string idempotency_key = 2;
+
+    // Validation: required.
+    ExtractionRequestItem item = 3;
+
+    // Validation: MUST NOT be PRIORITY_CLASS_UNSPECIFIED. Callers state intent
+    // explicitly rather than inheriting an invisible default.
+    PriorityClass priority_class = 4;
+
+    // Latest point at which the result is still useful (§12). Optional; when
+    // unset the plane applies its configured default retention.
+    //
+    // Expiry is a lifecycle constraint, not a failure: an expired operation
+    // reports STATUS_EXPIRED, never STATUS_FAILED.
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+// SubmitExtractionBatchRequest submits several artifacts as ONE operation, so a
+// group of files can be tied to a single business action (§14).
+message SubmitExtractionBatchRequest {
+    // Validation: required, ^[a-zA-Z0-9_-]{1,64}$.
+    string tenant_id = 1;
+
+    // Covers the whole batch. Validation: required, 1..256 chars.
+    string idempotency_key = 2;
+
+    // Validation: 1..256 items.
+    repeated ExtractionRequestItem items = 3;
+
+    // Validation: MUST NOT be PRIORITY_CLASS_UNSPECIFIED.
+    PriorityClass priority_class = 4;
+
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+// ─── Operation ───────────────────────────────────────────────────────────────
+
+// ExtractionError is a contract-level failure (§24).
+//
+// INVARIANT: `code` is drawn from the fixed catalogue and is the ONLY field a
+// consumer may branch on. `diagnostic` carries implementation detail for
+// operators and MUST NOT be parsed — that would turn an internal detail into a
+// de-facto contract.
+message ExtractionError {
+    ExtractionErrorCode code = 1;
+
+    // Operator-facing detail. Free-form, unstable, never parsed by consumers.
+    string diagnostic = 2;
+
+    // Whether retrying the same request could plausibly succeed.
+    // True for ERROR_REJECTED_CAPACITY, ERROR_TIMEOUT, ERROR_INTERNAL_ERROR.
+    bool retryable = 3;
+}
+
+// ExtractionItemStatus is per-item state within an operation.
+message ExtractionItemStatus {
+    // Position in the submitted batch; 0 for single-item operations.
+    int32 item_index = 1;
+
+    string content_ref_id = 2;
+    ExtractionStatus status = 3;
+
+    // Advisory, 0.0..1.0 (§16).
+    double progress = 4;
+
+    // What actually happened to each requested feature, keyed by feature name
+    // ("text", "layout", "ocr", "tables", ...). Draft §6.
+    map<string, FeatureState> feature_states = 5;
+
+    // Set when this item reached a non-success terminal state.
+    ExtractionError error = 6;
+}
+
+// ExtractionOperation is the asynchronous unit of work (§14).
+//
+// It is returned by submit, cancel, and status calls, so a caller always holds
+// the same handle shape regardless of how it was obtained.
+message ExtractionOperation {
+    string operation_id = 1;
+    string tenant_id = 2;
+    ExtractionStatus status = 3;
+
+    // Operation-level progress, derived from item progress. Advisory: it MUST
+    // NOT be read as a scheduling, billing, or capacity metric (§16).
+    double progress = 4;
+
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
+    google.protobuf.Timestamp expires_at = 7;
+
+    repeated ExtractionItemStatus items = 8;
+
+    // Admission outcome for this submit (§11).
+    AdmissionVerdict admission = 9;
+
+    // Set when the operation as a whole failed before per-item work began.
+    ExtractionError error = 10;
+}
+
+// ─── Result ──────────────────────────────────────────────────────────────────
+
+// ResultProvenance binds a result to the exact source bytes it came from (§25).
+//
+// This is what lets a consumer decide whether a result it holds still describes
+// the object it thinks it does.
+message ResultProvenance {
+    string content_ref_id = 1;
+
+    // sha256 of the source object as extracted.
+    string source_sha256 = 2;
+
+    ObjectReference source = 3;
+
+    google.protobuf.Timestamp extracted_at = 4;
+}
+
+// ExtractionResult is the structured outcome for one item (§20).
+message ExtractionResult {
+    string operation_id = 1;
+    int32 item_index = 2;
+    string content_ref_id = 3;
+    ExtractionStatus status = 4;
+
+    // Absent when the item did not reach a success or partial state.
+    StructuredPayload payload = 5;
+
+    // Compatibility projection for generic text consumers (§21).
+    //
+    // Derived from the structured payload, never by reparsing the source: a
+    // consumer wanting only text MUST NOT trigger a second extraction (§67.17).
+    // Empty for content where text is not meaningful.
+    string flattened_text = 6;
+
+    // Per-feature outcome; same semantics as ExtractionItemStatus (draft §6).
+    map<string, FeatureState> feature_states = 7;
+
+    ResultProvenance provenance = 8;
+
+    // Business metadata and tags echoed back unchanged (§7.2, §67.11).
+    map<string, string> metadata = 9;
+    map<string, string> business_tags = 10;
+
+    ExtractionError error = 11;
+}
+
+// ─── Status polling ──────────────────────────────────────────────────────────
+
+// GetOperationsRequest polls operations the caller already knows about (§17.1).
+message GetOperationsRequest {
+    // Validation: required, ^[a-zA-Z0-9_-]{1,64}$.
+    string tenant_id = 1;
+
+    // Validation: 1..256 ids.
+    repeated string operation_ids = 2;
+}
+
+message GetOperationsResponse {
+    repeated ExtractionOperation operations = 1;
+
+    // Ids that were requested but not found (unknown, or purged after retention).
+    // Reported explicitly so a caller can tell "not found" from "still running".
+    repeated string not_found_operation_ids = 2;
+}
+
+// ListCompletedOperationsRequest walks terminal operations from a cursor (§17.2).
+//
+// Intended for high-throughput consumers: one call surfaces everything that
+// finished since the last cursor, instead of polling each operation.
+message ListCompletedOperationsRequest {
+    // Validation: required, ^[a-zA-Z0-9_-]{1,64}$.
+    string tenant_id = 1;
+
+    // Opaque cursor from a previous response. Empty starts from the oldest
+    // retained terminal operation.
+    // Validation: max 2000 chars.
+    string cursor = 2;
+
+    // Validation: 1..1000. Callers state the page size explicitly.
+    int32 page_size = 3;
+}
+
+message ListCompletedOperationsResponse {
+    repeated ExtractionOperation operations = 1;
+
+    // Cursor for the next page. Empty when the caller has caught up.
+    //
+    // Each terminal operation appears exactly once across the cursor sequence,
+    // so a consumer can treat this as an at-least-once completion feed and
+    // dedupe on operation_id.
+    string next_cursor = 2;
+}
+
+message GetResultRequest {
+    // Validation: required, ^[a-zA-Z0-9_-]{1,64}$.
+    string tenant_id = 1;
+
+    // Validation: required.
+    string operation_id = 2;
+
+    // Which item of the operation. 0 for single-item operations.
+    int32 item_index = 3;
+}
+
+message CancelOperationRequest {
+    // Validation: required, ^[a-zA-Z0-9_-]{1,64}$.
+    string tenant_id = 1;
+
+    // Validation: required.
+    string operation_id = 2;
+}
+
+// ─── Capacity, estimation, capabilities ──────────────────────────────────────
+
+message GetCapacityRequest {
+    // Validation: required, ^[a-zA-Z0-9_-]{1,64}$.
+    string tenant_id = 1;
+
+    // Optional: capacity for a specific media type, which may differ from the
+    // plane's overall state.
+    string media_type = 2;
+}
+
+// CapacityResponse is deliberately coarse (§11).
+//
+// INVARIANT (§67.16): no worker counts, queue names, node counts, CPU/GPU
+// inventory, or pool identifiers. A caller that wants to know "can I submit
+// now?" gets an answer; a caller that wants to infer the topology cannot.
+message CapacityResponse {
+    CapacityLevel level = 1;
+
+    // Whether a submit is likely to be admitted right now. Advisory: admission
+    // is authoritative only at submit time.
+    bool accepting_work = 2;
+
+    // Coarse queue delay hint. Absent when the plane cannot estimate.
+    optional int64 estimated_queue_delay_seconds = 3;
+}
+
+// ExtractionEstimate is an advisory pre-flight estimate (§10).
+// It neither admits the request nor reserves capacity.
+message ExtractionEstimate {
+    // Whether the plane believes it can process this artifact at all.
+    bool processable = 1;
+
+    optional int64 estimated_duration_seconds = 2;
+    optional int64 estimated_payload_bytes = 3;
+
+    // Per-feature expectation, so a caller learns BEFORE paying for extraction
+    // that a requested feature is unsupported (draft §6).
+    map<string, FeatureState> expected_feature_states = 4;
+
+    // Set when the artifact cannot be processed as requested.
+    ExtractionError error = 5;
+}
+
+message GetCapabilitiesRequest {
+    string tenant_id = 1;
+}
+
+// MediaTypeCapability declares what the plane can do for one media type (§23).
+message MediaTypeCapability {
+    string media_type = 1;
+
+    // Feature names this media type supports, e.g. "text", "layout", "tables".
+    repeated string supported_features = 2;
+
+    // Maximum object size accepted for this media type.
+    int64 max_object_bytes = 3;
+}
+
+// ExtractionCapabilities lets a caller avoid requesting the impossible.
+//
+// It exposes CAPABILITY, not topology: which media types and features are
+// supported, never how many workers or what hardware backs them.
+message ExtractionCapabilities {
+    // Contract version implemented, e.g. "synanton.extraction.v1".
+    string contract_version = 1;
+
+    repeated MediaTypeCapability media_types = 2;
+
+    // Payload schemas this plane can emit, e.g. "synanton.extraction.document".
+    repeated string payload_schema_ids = 3;
+
+    // Whether the synchronous path is enabled (§19).
+    bool sync_supported = 4;
+
+    // Ceiling for ExtractSync; larger artifacts must use the async API.
+    int64 max_sync_object_bytes = 5;
+}
