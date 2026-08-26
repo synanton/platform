@@ -13,7 +13,6 @@
 # Gradle
 .gradle/
 build/
-out/
 !gradle/wrapper/gradle-wrapper.jar
 
 # Node / pnpm

@@ -7,5 +7,19 @@ public record ChunkRow(
     UUID contentRefId,
     int chunkOrdinal,
     String chunkText,
-    String chunkSha256
-) {}
+    String chunkSha256,
+    int pageStart,
+    int pageEnd,
+    String sectionPath,
+    String chunkType,
+    String heading
+) {
+    public ChunkRow(
+            String tenantId,
+            UUID contentRefId,
+            int chunkOrdinal,
+            String chunkText,
+            String chunkSha256) {
+        this(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256, -1, -1, "", "", "");
+    }
+}

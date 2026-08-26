@@ -3,7 +3,7 @@
 > **Document type:** Definitive engineering reference
 > **Version:** 1.19
 > **Date:** 2026-07-21
-> **Status:** Final merged reference (v1.16 → v1.17 lineage + operational-robustness & DR integration; v1.18 adds systematic data validation & XSS protection; v1.19 adds `helper` and `wizard` operational CLI modules)
+> **Status:** Superseded as the live pointer. Baseline for Parts I–VII. Current: [`synanton-design-1.21.md`](./synanton-design-1.21.md). GPU plane: [`synanton-design-1.20.md`](./synanton-design-1.20.md).
 > **Audience:** Architects, module owners, SREs, security engineers, partner connector authors, UI/frontend leads, DevOps/platform engineers
 > **Philosophy:** Clean-slate · zero legacy · single API surface · no compatibility shims
 

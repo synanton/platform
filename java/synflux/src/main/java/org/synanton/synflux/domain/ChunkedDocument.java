@@ -4,5 +4,5 @@ import java.util.List;
 
 public record ChunkedDocument(
     ParsedDocument parsed,
-    List<Chunk> chunks
+    List<SemanticChunk> chunks
 ) {}

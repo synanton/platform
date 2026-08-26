@@ -47,16 +47,21 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         );
 
         // Upsert manifest
+        String state = ctx.props().pipeline().embeddingEnabled() ? "EMBEDDED" : "CHUNKED";
         cacheClient.upsertManifest(new ManifestRow(
             ctx.tenant(), acquired.contentRefId(), Instant.now(),
-            1, "fixed-window", 1, "CHUNKED", "HOT", archiveLocation,
+            1, "semantic-v1", 1, state, "HOT", archiveLocation,
             acquired.sourceUri(), acquired.sha256(), acquired.bytes().length,
             acquired.mimeType(), "FULL", null
         ));
 
-        // Persist chunks
         List<ChunkRow> chunkRows = doc.chunks().stream()
-            .map(c -> new ChunkRow(ctx.tenant(), acquired.contentRefId(), c.ordinal(), c.text(), c.sha256()))
+            .map(c -> new ChunkRow(
+                ctx.tenant(), acquired.contentRefId(), c.ordinal(), c.text(), c.sha256(),
+                c.pageStart(), c.pageEnd(),
+                c.sectionPath() == null ? "" : String.join(" > ", c.sectionPath()),
+                c.type() == null ? "" : c.type().name(),
+                c.heading() == null ? "" : c.heading()))
             .collect(Collectors.toList());
         if (!chunkRows.isEmpty()) {
             cacheClient.insertChunks(chunkRows);

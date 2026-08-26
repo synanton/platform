@@ -1,20 +1,26 @@
 package org.synanton.synflux.config;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.llm.HttpLlmClient;
 import org.synanton.llm.LlmClient;
-import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.domain.ChunkedDocument;
+import org.synanton.synflux.domain.ChunkerConfig;
+import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.stage.*;
 import org.synanton.synvault.port.ContentPullPort;
 import org.synanton.synvault.port.ObjectStorePort;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import synanton.extraction.v1.ExtractionServiceGrpc;
 
 @Configuration
 @EnableConfigurationProperties(SynfluxProperties.class)
 public class SynfluxConfig {
+
+    private static final String HOT_BUCKET = "synanton-hot";
 
     @Bean
     public AcquireStage acquireStage(ContentPullPort pullPort) {
@@ -22,16 +28,21 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public ParseStage parseStage() {
-        return new ParseStage();
+    public ExtractionStage extractionStage(SynfluxProperties props, ObjectStorePort objectStore) {
+        String url = props.pipeline() != null ? props.pipeline().extractionServiceUrl() : null;
+        ExtractionServiceGrpc.ExtractionServiceBlockingStub stub = null;
+        if (url != null && !url.isBlank()) {
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(url).usePlaintext().build();
+            stub = ExtractionServiceGrpc.newBlockingStub(channel);
+        }
+        return new ExtractionStage(stub, objectStore, HOT_BUCKET);
     }
 
     @Bean
-    public ChunkStage chunkStage(SynfluxProperties props) {
+    public SemanticChunkStage semanticChunkStage(SynfluxProperties props) {
         SynfluxProperties.Ingest.Chunk chunk = props.ingest() != null ? props.ingest().chunk() : null;
-        int target = chunk != null ? chunk.targetTokens() : 400;
-        int overlap = chunk != null ? chunk.overlapTokens() : 50;
-        return new ChunkStage(target, overlap);
+        int maxTokens = chunk != null ? chunk.targetTokens() : 512;
+        return new SemanticChunkStage(ChunkerConfig.of(maxTokens));
     }
 
     @Bean
@@ -58,7 +69,7 @@ public class SynfluxConfig {
 
     @Bean
     public PersistStage persistStage(IngestionCacheClient cacheClient, ObjectStorePort objectStore,
-                                      SynfluxProperties props) {
-        return new PersistStage(cacheClient, objectStore, "synanton-hot");
+                                     SynfluxProperties props) {
+        return new PersistStage(cacheClient, objectStore, HOT_BUCKET);
     }
 }

@@ -40,12 +40,21 @@ tasks.register("buildAll") {
 }
 
 // Fails when the mirrored synanton.extraction.v1 protos diverge from the copy in
-// the content_extractor repository. The synanton.gpu.v1 pair drifted precisely
-// because no such check existed: it is now one file vs four, org.* vs com.*, with
-// different RPC names. Skips (does not fail) when the peer repo is absent.
+// the content_extractor repository. Skips (does not fail) when the peer repo is absent.
 tasks.register<Exec>("verifyContractMirror") {
     group = "verification"
     description = "Verify the extraction contract matches the content_extractor repository copy"
     commandLine("./scripts/verify-contract-mirror.sh")
     isIgnoreExitValue = false
+}
+
+tasks.register<Exec>("verifyGpuContractMirror") {
+    group = "verification"
+    description = "Verify the GPU contract matches the gpu-runtime repository copy"
+    commandLine("./scripts/verify-gpu-contract-mirror.sh")
+    isIgnoreExitValue = false
+}
+
+tasks.named("check") {
+    dependsOn("verifyContractMirror", "verifyGpuContractMirror")
 }

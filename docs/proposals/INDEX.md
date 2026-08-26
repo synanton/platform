@@ -14,7 +14,9 @@ last_reviewed: "2026-07-21"
 
 | Proposal | Status |
 |---------|--------|
-| [`v1.19/`](./v1.19/) | **Latest** - Helper & Wizard modules |
+| [`v1.21/`](./v1.21/) | Folded into architecture 1.21 — Structured Content Extraction Plane |
+| [`v1.20/`](./v1.20/) | Folded into architecture 1.20 — GPU Execution Plane isolation |
+| [`v1.19/`](./v1.19/) | Folded into architecture 1.19 — Helper & Wizard modules |
 | [`v1.18/`](./v1.18/) | Accepted - Data validation & XSS protection |
 | [`v1.17/`](./v1.17/) | Accepted - Operational robustness & DR |
 
@@ -24,6 +26,8 @@ last_reviewed: "2026-07-21"
 |-----------|---------|
 | `v1.17/` | v1.17 proposal + decision record |
 | `v1.18/` | v1.18 proposal + decision record |
+| `v1.20/` | GPU isolation proposal |
+| `v1.21/` | Extraction plane proposal |
 | `v1.19/` | v1.19 proposal + decision record |
 | `templates/` | Proposal document template |
 

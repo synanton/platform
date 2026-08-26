@@ -11,6 +11,10 @@ dependencies {
     implementation(project(":java:ingestion-cache"))
     implementation(project(":java:synvault"))
     implementation(project(":java:synanton-llm-client"))
+    implementation(project(":java:extraction-contract"))
+    implementation(libs.protobuf.java)
+    implementation(libs.grpc.netty.shaded)
+    implementation(libs.grpc.stub)
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.actuator)

@@ -50,7 +50,7 @@ flowchart LR
 
 ## 4. Deliverables
 
-### 4.1 `com.synanton.common.security.sanitizer` package
+### 4.1 `org.synanton.common.security.sanitizer` package
 
 - `SanitizingStringDeserializer extends JsonDeserializer<String>` - runs the OWASP HTML sanitizer with a policy configured at construction time; increments `synapt_sanitization_applied_total{tenant,field}` when input differs from output; increments `synapt_sanitization_skipped_total{tenant,field}` when the field's setter carries `@AllowHtml`.
 - `@AllowHtml` - runtime-retained marker annotation for DTO fields that legitimately carry HTML (e.g. `chunk_content` on ingestion webhook payloads). The deserialiser looks up the target `BeanProperty` and skips sanitisation if the annotation is present.
@@ -74,7 +74,7 @@ Jackson2ObjectMapperBuilderCustomizer sanitizingCustomizer(SanitizingModule modu
 }
 ```
 
-### 4.2 `com.synanton.common.validation.constraints` package
+### 4.2 `org.synanton.common.validation.constraints` package
 
 Ships the canonical constraint annotations referenced across every service so identifier formats never diverge:
 
@@ -104,7 +104,7 @@ HTTP 400 Bad Request
 
 Emit metric `synapt_validation_rejected_total{tenant,field,error}` on strict-mode rejection; `synapt_validation_lenient_warning_total{tenant,field,error}` when strict mode is off. The `strict` flag is read from `synapt.validation.strict` in Spring config; the advice pattern is service-agnostic (relies on Spring core, not `synapt`).
 
-### 4.3 `com.synanton.common.grpc.validation` package
+### 4.3 `org.synanton.common.grpc.validation` package
 
 - `PgvValidatingServerInterceptor implements ServerInterceptor` - invokes `Validator.check(message)` on messages implementing PGV's `io.envoyproxy.pgv.ValidatorImpl`. On failure: closes call with `Status.INVALID_ARGUMENT`, attaches `com.google.rpc.BadRequest` payload with `field_violations[]`, increments `grpc_validation_failed_total{service,method,field,error}`.
 - `PgvValidatingConfiguration @Configuration` - auto-registers the interceptor on every `ServerBuilder` if `grpc.validation.enabled: true` (default).

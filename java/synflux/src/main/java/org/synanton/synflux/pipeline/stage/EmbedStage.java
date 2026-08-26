@@ -4,7 +4,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.llm.LlmClient;
 import org.synanton.llm.EmbedRequest;
-import org.synanton.synflux.domain.Chunk;
+import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
@@ -40,23 +40,23 @@ public class EmbedStage implements PipelineStage<ChunkedDocument, ChunkedDocumen
         var acquired = doc.parsed().acquired();
         String tenantId = ctx.tenant();
         UUID contentRefId = acquired.contentRefId();
-        List<Chunk> chunks = doc.chunks();
+        List<SemanticChunk> chunks = doc.chunks();
 
         // Filter uncached chunks
-        List<Chunk> toEmbed = new ArrayList<>();
-        for (Chunk c : chunks) {
+        List<SemanticChunk> toEmbed = new ArrayList<>();
+        for (SemanticChunk c : chunks) {
             var cached = cacheClient.readEmbeddingByChunkHash(tenantId, c.sha256(), modelId);
             if (cached.isEmpty()) toEmbed.add(c);
         }
 
         // Process in batches
         for (int i = 0; i < toEmbed.size(); i += batchSize) {
-            List<Chunk> batch = toEmbed.subList(i, Math.min(i + batchSize, toEmbed.size()));
-            List<String> texts = batch.stream().map(Chunk::text).collect(Collectors.toList());
+            List<SemanticChunk> batch = toEmbed.subList(i, Math.min(i + batchSize, toEmbed.size()));
+            List<String> texts = batch.stream().map(SemanticChunk::text).collect(Collectors.toList());
             try {
                 var resp = embedClient.embed(new EmbedRequest(modelId, texts));
                 for (int j = 0; j < batch.size(); j++) {
-                    Chunk c = batch.get(j);
+                    SemanticChunk c = batch.get(j);
                     float[] embedding = resp.embeddings().get(j);
                     cacheClient.upsertEmbedding(new EmbeddingRow(
                         tenantId, contentRefId, c.ordinal(), modelId, c.sha256(),

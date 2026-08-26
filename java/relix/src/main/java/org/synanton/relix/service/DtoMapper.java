@@ -7,18 +7,18 @@ import org.synanton.relix.graph.GraphNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-final class DtoMapper {
+public final class DtoMapper {
 
     private DtoMapper() {}
 
-    static Entity toDto(GraphNode node) {
+    public static Entity toDto(GraphNode node) {
         List<SourceRef> refs = node.sourceRefs().entrySet().stream()
                 .map(e -> new SourceRef(e.getKey(), new ArrayList<>(e.getValue())))
                 .collect(Collectors.toList());
         return new Entity(node.entityId(), node.label(), node.type(), node.confidence(), refs);
     }
 
-    static Edge toDto(GraphEdge edge, UUID fromId, UUID toId) {
+    public static Edge toDto(GraphEdge edge, UUID fromId, UUID toId) {
         List<SourceRef> refs = edge.sourceRefs().entrySet().stream()
                 .map(e -> new SourceRef(e.getKey(), new ArrayList<>(e.getValue())))
                 .collect(Collectors.toList());

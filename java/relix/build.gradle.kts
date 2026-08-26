@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.jackson.databind)
     implementation(libs.logback.classic)
     implementation(libs.jgrapht.core)
+    implementation(libs.neo4j.java.driver)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.mockito.core)

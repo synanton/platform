@@ -17,7 +17,7 @@ class ChunkStageTest {
     private static ParsedDocument parsedDoc(String text) {
         var ref = new ContentRef("file", "file:///test.txt", "text/plain", text.length(), Instant.now());
         var acquired = new AcquiredDocument(ref, text.getBytes(), "sha", "text/plain", "file:///test.txt", UUID.randomUUID());
-        return new ParsedDocument(acquired, text, Map.of());
+        return new ParsedDocument(acquired, text, Map.of(), null);
     }
 
     private static StageContext ctx() {

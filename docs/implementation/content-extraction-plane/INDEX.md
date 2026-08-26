@@ -68,7 +68,7 @@ Structure mirrors `synanton/gpu-runtime` exactly: root Gradle Kotlin DSL multi-m
 
 ```text
 content_extractor/
-├── build.gradle.kts                    # root: group=com.synanton, Java 21 toolchain, buildAll task
+├── build.gradle.kts                    # root: group=org.synanton, Java 21 toolchain, buildAll task
 ├── settings.gradle.kts
 ├── gradle.properties
 ├── gradle/
@@ -104,7 +104,7 @@ content_extractor/
     └── adapter-stubs/                  # audio/image/video: capability-declining stubs
 ```
 
-**Package root:** `com.synanton.extraction.*` (matches `gpu-runtime`'s `com.synanton.gpu.*`; note the platform side uses `org.synanton.*`).
+**Package root:** `org.synanton.extraction.*` (matches `gpu-runtime`'s `org.synanton.gpu.*`; note the platform side uses `org.synanton.*`).
 
 ### Hexagonal boundaries enforced in the new repo
 
@@ -128,11 +128,11 @@ Phases follow §31 of the proposal (Contract → Embedded → Async → External
 
 | Phase | Name | Repo(s) | Status |
 |-------|------|---------|--------|
-| SCEP-1 | Contract | both | Planned |
-| SCEP-2 | Extraction plane skeleton + sync path | `content_extractor` | Planned |
-| SCEP-3 | PDF PoC (OpenDataLoader) | `content_extractor` | Planned |
+| SCEP-1 | Contract | both | Done |
+| SCEP-2 | Extraction plane skeleton + sync path | `content_extractor` | ExtractSync PoC |
+| SCEP-3 | PDF PoC (OpenDataLoader) | `content_extractor` | HTTP adapter; incomplete feature-state |
 | SCEP-4 | Async operation model | `content_extractor` | Planned |
-| SCEP-5 | Platform integration | `platform` | Planned |
+| SCEP-5 | Platform integration | `platform` | Partial (synflux ExtractSync + semantic chunks) |
 | SCEP-6 | Topology equivalence + hardening | both | Planned |
 | SCEP-7 | Multimodal expansion (audio/image/video) | `content_extractor` | Post-v1.21 |
 

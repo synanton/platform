@@ -26,6 +26,13 @@ public class LuceneIndexBuilder {
     private static final String FIELD_EMBEDDING = "embedding";
     private static final String FIELD_SOURCE_URI = "source_uri";
     private static final String FIELD_MIME_TYPE = "mime_type";
+    private static final String FIELD_PAGE_START = "page_start";
+    private static final String FIELD_PAGE_END = "page_end";
+    private static final String FIELD_SECTION_PATH = "section_path";
+    private static final String FIELD_HEADING = "heading";
+
+    private static final java.util.Set<String> INDEXABLE_STATES =
+            java.util.Set.of("CHUNKED", "ENRICHED", "EMBEDDED");
 
     private final IngestionCacheClient cacheClient;
     private final String indexBasePath;
@@ -70,7 +77,7 @@ public class LuceneIndexBuilder {
 
             List<ManifestRow> manifests = cacheClient.listManifest(tenant, 200_000);
             for (ManifestRow manifest : manifests) {
-                if (!"EMBEDDED".equalsIgnoreCase(manifest.state())) {
+                if (!INDEXABLE_STATES.contains(manifest.state() == null ? "" : manifest.state().toUpperCase())) {
                     skipCount++;
                     continue;
                 }
@@ -79,17 +86,6 @@ public class LuceneIndexBuilder {
                 for (var chunk : chunks) {
                     var embOpt = cacheClient.readEmbedding(
                             tenant, manifest.contentRefId(), chunk.chunkOrdinal(), embeddingModel);
-                    if (embOpt.isEmpty()) continue;
-
-                    EmbeddingRow emb = embOpt.get();
-                    float[] vec = emb.embedding();
-                    if (vec.length != embeddingDim) {
-                        log.warn("Embedding dim mismatch for {}#{}: expected {} got {}",
-                                manifest.contentRefId(), chunk.chunkOrdinal(), embeddingDim, vec.length);
-                        continue;
-                    }
-                    // L2-normalise so cosine on the HNSW side matches indexing
-                    vec = QueryEmbedder.normalise(vec);
 
                     Document doc = new Document();
                     String id = manifest.contentRefId() + "#" + chunk.chunkOrdinal();
@@ -97,13 +93,28 @@ public class LuceneIndexBuilder {
                     doc.add(new StringField(FIELD_CONTENT_REF_ID, manifest.contentRefId().toString(), Field.Store.YES));
                     doc.add(new NumericDocValuesField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));
                     doc.add(new StoredField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));
-                    doc.add(new TextField(FIELD_TEXT, chunk.chunkText(), Field.Store.YES));
-                    doc.add(new KnnFloatVectorField(FIELD_EMBEDDING, vec, VectorSimilarityFunction.COSINE));
+                    doc.add(new TextField(FIELD_TEXT, chunk.chunkText() == null ? "" : chunk.chunkText(), Field.Store.YES));
                     if (manifest.sourceUri() != null) {
                         doc.add(new StoredField(FIELD_SOURCE_URI, manifest.sourceUri()));
                     }
                     if (manifest.mimeType() != null) {
                         doc.add(new StoredField(FIELD_MIME_TYPE, manifest.mimeType()));
+                    }
+                    doc.add(new StoredField(FIELD_PAGE_START, chunk.pageStart()));
+                    doc.add(new StoredField(FIELD_PAGE_END, chunk.pageEnd()));
+                    doc.add(new StoredField(FIELD_SECTION_PATH, chunk.sectionPath() == null ? "" : chunk.sectionPath()));
+                    doc.add(new StoredField(FIELD_HEADING, chunk.heading() == null ? "" : chunk.heading()));
+
+                    if (embOpt.isPresent()) {
+                        EmbeddingRow emb = embOpt.get();
+                        float[] vec = emb.embedding();
+                        if (vec.length == embeddingDim) {
+                            vec = QueryEmbedder.normalise(vec);
+                            doc.add(new KnnFloatVectorField(FIELD_EMBEDDING, vec, VectorSimilarityFunction.COSINE));
+                        } else {
+                            log.warn("Embedding dim mismatch for {}#{}: expected {} got {}",
+                                    manifest.contentRefId(), chunk.chunkOrdinal(), embeddingDim, vec.length);
+                        }
                     }
 
                     writer.addDocument(doc);
@@ -114,7 +125,7 @@ public class LuceneIndexBuilder {
             writer.commit();
         }
 
-        log.info("Built Lucene index for tenant '{}': {} docs indexed, {} manifests skipped (not EMBEDDED)",
+        log.info("Built Lucene index for tenant '{}': {} docs indexed, {} manifests skipped",
                 tenant, docCount, skipCount);
     }
 }

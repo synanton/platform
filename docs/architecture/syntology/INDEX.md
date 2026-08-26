@@ -19,4 +19,4 @@ last_reviewed: "2026-08-19"
 
 ## How to Contribute
 
-Updates to the Syntology design should be reflected in the main platform design document (`../synanton-design-1.19.md §19 syntology`) and summarised here.
+Updates to the Syntology design should be reflected in the current platform design (`../synanton-design-1.21.md`) and the 1.19 baseline §19, and summarised here.

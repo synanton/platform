@@ -18,6 +18,17 @@ relix:
   graph:
     load-on-boot: true
     tenant: ${RELIX_TENANT:demo}
+    connector: ${RELIX_GRAPH_CONNECTOR:memory}
+    neo4j:
+      uri: ${NEO4J_URI:}
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:}
+      database: ${NEO4J_DATABASE:neo4j}
+    nebula:
+      graphd-hosts: ${NEBULA_GRAPHD_HOSTS:}
+      username: ${NEBULA_USERNAME:root}
+      password: ${NEBULA_PASSWORD:nebula}
+      space: ${NEBULA_SPACE:synanton}
   query:
     entity-lookup-default-limit: 10
     one-hop-default-limit: 50

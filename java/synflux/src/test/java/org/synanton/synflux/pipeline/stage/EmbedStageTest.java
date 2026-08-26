@@ -34,9 +34,14 @@ class EmbedStageTest {
     private ChunkedDocument makeDoc(int numChunks) {
         var ref = new ContentRef("file", "file:///test.txt", "text/plain", 100, Instant.now());
         var acquired = new AcquiredDocument(ref, new byte[0], "sha256test", "text/plain", "file:///test.txt", UUID.randomUUID());
-        var parsed = new ParsedDocument(acquired, "text", Map.of());
-        List<Chunk> chunks = new ArrayList<>();
-        for (int i = 0; i < numChunks; i++) chunks.add(new Chunk(i, "chunk " + i, "sha" + i));
+        var parsed = new ParsedDocument(acquired, "text", Map.of(), null);
+        List<SemanticChunk> chunks = new ArrayList<>();
+        for (int i = 0; i < numChunks; i++) {
+            chunks.add(new SemanticChunk(
+                "doc-c" + i, "doc", i, SemanticChunk.ChunkType.FALLBACK,
+                "chunk " + i, null, List.of(), null, List.of(),
+                -1, -1, 10, false, Map.of(), "sha" + i));
+        }
         return new ChunkedDocument(parsed, chunks);
     }
 

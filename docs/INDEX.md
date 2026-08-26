@@ -1,21 +1,23 @@
 ---
 title: "Synanton Documentation"
 status: "current"
-last_reviewed: "2026-07-21"
+last_reviewed: "2026-08-26"
 ---
 
 # Synanton Documentation
 
 **Purpose:** Top-level navigation for all Synanton platform documentation. Start here to find the right document for your role.
-**Current design version:** [`1.19`](./VERSION) - [`architecture/synanton-design-1.19.md`](./architecture/synanton-design-1.19.md)
+**Current design version:** [`1.21`](./VERSION) - [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md)
 
 ## Quick Links
 
 | Document | Description |
 |----------|-------------|
-| [`architecture/synanton-design-1.19.md`](./architecture/synanton-design-1.19.md) | **Current authoritative design** - single merged reference |
+| [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md) | **Current** — extraction plane + pointers to GPU (1.20) and baseline (1.19) |
+| [`architecture/synanton-design-1.20.md`](./architecture/synanton-design-1.20.md) | GPU Execution Plane (Part VIII) |
 | [`implementation/synanton-phases-plan.md`](./implementation/synanton-phases-plan.md) | Master implementation phases plan |
-| [`proposals/v1.19/`](./proposals/v1.19/) | Latest accepted proposal (helper + wizard modules) |
+| [`proposals/v1.21/`](./proposals/v1.21/) | Extraction-plane proposal (folded into 1.21) |
+| [`proposals/v1.20/`](./proposals/v1.20/) | GPU isolation proposal (folded into 1.20) |
 | [`operations/`](./operations/) | Runbooks, DR playbooks, capacity planning |
 | [`api/`](./api/) | REST, gRPC, and CLI reference |
 | [`user-guides/`](./user-guides/) | Getting started, tenant admin, developer guides |
@@ -35,6 +37,6 @@ last_reviewed: "2026-07-21"
 
 ## How "Current" Is Managed
 
-The `VERSION` file at the root of `docs/` contains the current design version number (e.g., `1.19`).
+The `VERSION` file at the root of `docs/` contains the current design version number (e.g., `1.21`).
 The `architecture/INDEX.md` explicitly marks which design file is authoritative.
 No symlinks are used - all files are real paths, compatible with Git on all platforms.

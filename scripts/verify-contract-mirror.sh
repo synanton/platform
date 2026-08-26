@@ -3,10 +3,8 @@
 # Verifies that the synanton.extraction.v1 protobuf contract is byte-identical
 # between the platform repository and the content_extractor repository.
 #
-# Why this exists: the synanton.gpu.v1 "mirror" silently diverged. The platform
-# holds one file under org.synanton.gpu.v1 with a GetStatus RPC; gpu-runtime
-# holds four files under com.synanton.gpu.v1 with a StatusRequest RPC. Nothing
-# failed, because nothing checked. This script is that check for v1.21.
+# Why this exists: a previous gpu.v1 "mirror" silently diverged until a check
+# existed. This script is that check for synanton.extraction.v1.
 #
 # Usage:  ./scripts/verify-contract-mirror.sh [path-to-other-repo]
 #

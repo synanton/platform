@@ -73,13 +73,30 @@ public class SearchService {
 
         long t0 = System.currentTimeMillis();
 
-        // Embed the query
-        long embedStart = System.currentTimeMillis();
-        float[] queryVec = queryEmbedder.embed(req.query());
-        long embedMs = System.currentTimeMillis() - embedStart;
+        float[] queryVec = null;
+        long embedMs = 0;
+        try {
+            long embedStart = System.currentTimeMillis();
+            queryVec = queryEmbedder.embed(req.query());
+            embedMs = System.currentTimeMillis() - embedStart;
+        } catch (Exception e) {
+            log.warn("Query embedding unavailable, using BM25 only: {}", e.getMessage());
+        }
 
-        // Run dense and lexical searches in parallel
-        Future<TopDocs> denseFuture = searchPool.submit(() -> searcher.dense(queryVec, topKDense));
+        final float[] denseVec = queryVec;
+        Future<TopDocs> denseFuture = searchPool.submit(() -> {
+            if (denseVec == null) {
+                return new TopDocs(new org.apache.lucene.search.TotalHits(0,
+                        org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
+            }
+            try {
+                return searcher.dense(denseVec, topKDense);
+            } catch (Exception e) {
+                log.warn("Dense search skipped: {}", e.getMessage());
+                return new TopDocs(new org.apache.lucene.search.TotalHits(0,
+                        org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
+            }
+        });
         Future<TopDocs> lexicalFuture = searchPool.submit(() -> searcher.lexical(req.query(), topKLexical));
 
         long denseStart = System.currentTimeMillis();
@@ -116,7 +133,11 @@ public class SearchService {
                         fh.rankDense(),
                         fh.rankLexical(),
                         snippet,
-                        doc.get("source_uri")));
+                        doc.get("source_uri"),
+                        parseInt(doc.get("page_start"), -1),
+                        parseInt(doc.get("page_end"), -1),
+                        doc.get("section_path"),
+                        doc.get("heading")));
             }
 
             long totalMs = System.currentTimeMillis() - t0;
@@ -167,5 +188,16 @@ public class SearchService {
     private HybridSearcher getSearcher(String tenant) {
         AtomicReference<HybridSearcher> ref = searcherRefs.get(tenant);
         return ref != null ? ref.get() : null;
+    }
+
+    private static int parseInt(String value, int fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 }

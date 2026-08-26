@@ -1,6 +1,6 @@
-// gpu-contract: slim library module that owns the synanton.gpu.v1 protobuf contract.
-// Both gpu-gateway (server) and gateway (client) depend on this module for generated stubs.
-// Nothing in this module may depend on synanton/platform internals.
+// The .proto files here are a byte-identical mirror of
+// gpu-runtime/java/gpu-contract/src/main/proto/. Enforced by
+// `verifyGpuContractMirror` (scripts/verify-gpu-contract-mirror.sh).
 
 plugins {
     java

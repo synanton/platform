@@ -6,6 +6,7 @@ COPY java/shared ./java/shared
 COPY java/ingestion-cache ./java/ingestion-cache
 COPY java/synvault ./java/synvault
 COPY java/synanton-llm-client ./java/synanton-llm-client
+COPY java/extraction-contract ./java/extraction-contract
 COPY java/synflux ./java/synflux
 RUN ./gradlew :java:synflux:bootJar -x test --no-daemon
 

@@ -13,5 +13,9 @@ public record Hit(
         @JsonProperty("rank_dense") int rankDense,
         @JsonProperty("rank_lexical") int rankLexical,
         String snippet,
-        @JsonProperty("source_uri") String sourceUri
+        @JsonProperty("source_uri") String sourceUri,
+        @JsonProperty("page_start") int pageStart,
+        @JsonProperty("page_end") int pageEnd,
+        @JsonProperty("section_path") String sectionPath,
+        String heading
 ) {}

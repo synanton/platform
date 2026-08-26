@@ -36,10 +36,13 @@ class EnrichStageTest {
     private ChunkedDocument makeDoc(String... chunkTexts) {
         var ref = new ContentRef("file", "file:///test.txt", "text/plain", 100, Instant.now());
         var acquired = new AcquiredDocument(ref, new byte[0], "sha256test", "text/plain", "file:///test.txt", UUID.randomUUID());
-        var parsed = new ParsedDocument(acquired, String.join(" ", chunkTexts), Map.of());
-        List<Chunk> chunks = new ArrayList<>();
+        var parsed = new ParsedDocument(acquired, String.join(" ", chunkTexts), Map.of(), null);
+        List<SemanticChunk> chunks = new ArrayList<>();
         for (int i = 0; i < chunkTexts.length; i++) {
-            chunks.add(new Chunk(i, chunkTexts[i], "sha" + i));
+            chunks.add(new SemanticChunk(
+                "doc-c" + i, "doc", i, SemanticChunk.ChunkType.FALLBACK,
+                chunkTexts[i], null, List.of(), null, List.of(),
+                -1, -1, 10, false, Map.of(), "sha" + i));
         }
         return new ChunkedDocument(parsed, chunks);
     }

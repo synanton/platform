@@ -148,6 +148,30 @@ services:
              mc mb --ignore-existing local/synanton-hot"
     restart: "no"
 
+  extraction-gateway:
+    build:
+      context: ../../../content_extractor
+      dockerfile: deployment/docker/extraction-gateway.Dockerfile
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      EXTRACTION_GATEWAY_GRPC_PORT: 9091
+      EXTRACTION_GATEWAY_HTTP_PORT: 8092
+      EXTRACTION_OBJECTSTORE_ENDPOINT: http://minio:9000
+      EXTRACTION_OBJECTSTORE_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      EXTRACTION_OBJECTSTORE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      EXTRACTION_OPENDATALOADER_BASE_URL: ${EXTRACTION_OPENDATALOADER_BASE_URL:-}
+    ports:
+      - "9091:9091"
+      - "8092:8092"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8092/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
   synvault:
     build:
       context: ../..
@@ -165,6 +189,8 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       SERVER_PORT: 8091
+    ports:
+      - "8091:8091"
     volumes:
       - ../../demo-data/documents:/demo-data/documents:ro
     healthcheck:
@@ -183,6 +209,8 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+      extraction-gateway:
+        condition: service_healthy
     environment:
       CASSANDRA_CONTACT_POINTS: cassandra
       CASSANDRA_PORT: 9042
@@ -194,10 +222,35 @@ services:
       EMBED_BASE_URL: http://vllm-embed:8001/v1
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8090
+      EXTRACTION_SERVICE_URL: extraction-gateway:9091
+    ports:
+      - "8090:8090"
     volumes:
       - ../../demo-data/documents:/demo-data/documents:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+
+  synquest:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/synquest.Dockerfile
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    environment:
+      CASSANDRA_HOST: cassandra
+      CASSANDRA_PORT: 9042
+      CASSANDRA_LOCAL_DC: datacenter1
+      SERVER_PORT: 8083
+      SYNQUEST_INDEX_PATH: /var/lib/synquest
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 15s
       timeout: 5s
       retries: 8
