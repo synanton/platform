@@ -401,7 +401,7 @@ A PDF with:
 - figure/caption
 - enough content for some sections to exceed the target chunk size
 
-### Stage 1 — OpenDataLoader
+### Stage 1 - OpenDataLoader
 
 Produce:
 
@@ -411,7 +411,7 @@ JSON + Markdown
 
 The project explicitly supports both, with JSON carrying structured semantic elements and Markdown intended for clean LLM/RAG context. 
 
-### Stage 2 — Synanton normalization
+### Stage 2 - Synanton normalization
 
 Convert to:
 
@@ -423,7 +423,7 @@ Document
 
 as already specified by v1.21. 
 
-### Stage 3 — Structure builder
+### Stage 3 - Structure builder
 
 Build:
 
@@ -437,7 +437,7 @@ Document
            └── Figure
 ```
 
-### Stage 4 — Semantic chunker
+### Stage 4 - Semantic chunker
 
 Produce:
 
@@ -455,11 +455,11 @@ Produce:
 
 with a configurable maximum token/character budget.
 
-### Stage 5 — Embedding
+### Stage 5 - Embedding
 
 Generate embeddings for chunks.
 
-### Stage 6 — Retrieval experiment
+### Stage 6 - Retrieval experiment
 
 Compare:
 
@@ -480,10 +480,10 @@ Measure at least:
 - table retrieval quality
 - citation/source reconstruction
 
-That comparison would make this more than an implementation demo—it would provide evidence that **structured extraction actually improves Synanton's ingestion/search architecture**.
+That comparison would make this more than an implementation demo-it would provide evidence that **structured extraction actually improves Synanton's ingestion/search architecture**.
 
 The key architectural statement to v1.21 is:
 
-> **Structured extraction is the canonical input to semantic chunking. Chunk boundaries SHOULD follow document semantics—section hierarchy, lists, tables, figures and other structural elements—while token/size limits provide a secondary constraint and fallback. `flattenedText` MUST NOT be the only input available to the chunking stage.**
+> **Structured extraction is the canonical input to semantic chunking. Chunk boundaries SHOULD follow document semantics-section hierarchy, lists, tables, figures and other structural elements-while token/size limits provide a secondary constraint and fallback. `flattenedText` MUST NOT be the only input available to the chunking stage.**
 
 That gives Synanton a clean separation between **extraction**, **document understanding/structuring**, and **task-specific representation**, while making very good use of what OpenDataLoader already provides. 

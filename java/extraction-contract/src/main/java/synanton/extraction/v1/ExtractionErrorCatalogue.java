@@ -7,7 +7,7 @@ import java.util.Map;
  *
  * <p>Each of the 13 codes maps to a retryability verdict and a recommended caller action. Callers
  * branch on {@link ExtractionErrorCode} and, where they need to decide whether to retry, on
- * {@link #isRetryable(ExtractionErrorCode)} — never on the {@code diagnostic} string, which is
+ * {@link #isRetryable(ExtractionErrorCode)} - never on the {@code diagnostic} string, which is
  * unstable operator detail by design.
  *
  * <p>"Retryable" here means: retrying the identical request could plausibly succeed without the
@@ -22,7 +22,7 @@ public final class ExtractionErrorCatalogue {
      *
      * <p>Deliberately narrow. Capacity rejection and timeouts reflect transient conditions;
      * internal errors may be transient. Everything else describes a problem with the request or
-     * the content, which retrying cannot fix — retrying those just burns extraction capacity.
+     * the content, which retrying cannot fix - retrying those just burns extraction capacity.
      */
     private static final Map<ExtractionErrorCode, Boolean> RETRYABLE = Map.ofEntries(
             Map.entry(ExtractionErrorCode.ERROR_INVALID_REQUEST, false),

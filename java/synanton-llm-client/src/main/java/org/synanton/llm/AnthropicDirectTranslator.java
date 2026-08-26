@@ -59,7 +59,7 @@ class AnthropicDirectTranslator implements LlmProviderTranslator {
     }
 
     @Override
-    public EmbedResponse parseEmbedResponse(String json) {
+    public EmbedResponse parseEmbedResponse(String json, int inputChars) {
         throw new UnsupportedOperationException("Anthropic direct translator does not support embeddings.");
     }
 

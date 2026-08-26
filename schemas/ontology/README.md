@@ -5,9 +5,9 @@ Syntology compiles HCL through a JSON IR into OWL Turtle (`ontology.ttl`) and SH
 
 ## Layout
 
-- `schema.hcl` — entry file
-- `_common.hcl` — shared `ontology` metadata and base classes
-- `include { path = "./file.hcl" }` — relative includes; cycles are rejected
+- `schema.hcl` - entry file
+- `_common.hcl` - shared `ontology` metadata and base classes
+- `include { path = "./file.hcl" }` - relative includes; cycles are rejected
 
 ## Load via Admin API
 

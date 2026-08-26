@@ -1,14 +1,14 @@
 ---
 title: "API Reference"
 status: "current"
-last_reviewed: "2026-07-21"
+last_reviewed: "2026-08-26"
 ---
 
 # API Reference
 
 **Purpose:** REST/OpenAPI, gRPC/SPI, and CLI reference documentation for Synanton platform APIs.
 **Audience:** API consumers, connector authors, integration engineers
-**Last Updated:** 2026-07-21
+**Last Updated:** 2026-08-26
 
 ## Quick Links
 

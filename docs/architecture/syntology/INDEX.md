@@ -1,14 +1,14 @@
 ---
 title: "Syntology Architecture"
 status: "current"
-last_reviewed: "2026-08-19"
+last_reviewed: "2026-08-26"
 ---
 
 # Syntology - Ontology Management
 
 **Purpose:** Architecture and design for the Syntology ontology management sub-domain.
 **Audience:** Architects, module owners working on the `syntology` module
-**Last Updated:** 2026-08-19
+**Last Updated:** 2026-08-26
 
 ## Quick Links
 
@@ -19,4 +19,4 @@ last_reviewed: "2026-08-19"
 
 ## How to Contribute
 
-Updates to the Syntology design should be reflected in the current platform design (`../synanton-design-1.21.md`) and the 1.19 baseline §19, and summarised here.
+Updates to the Syntology design should be reflected in the current platform design (`../synanton-design-1.22.md`) and the 1.19 baseline §19, and summarised here.

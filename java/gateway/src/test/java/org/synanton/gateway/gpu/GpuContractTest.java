@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // must pass its own matching server-side tests.
 //
 // When the proto contract changes, this test fails if the client is broken
-// before any deployment — satisfying GPU-1 DoD item 4 (consumer contract tests).
+// before any deployment - satisfying GPU-1 DoD item 4 (consumer contract tests).
 class GpuContractTest {
 
     private GrpcCleanupRule grpcCleanup;
@@ -98,7 +98,7 @@ class GpuContractTest {
         CapacityResponse response = stub.getCapacity(request);
 
         assertThat(response.getModel()).isEqualTo("llama3");
-        // Advisory only — no capacity reservation implied
+        // Advisory only - no capacity reservation implied
     }
 
     @Test

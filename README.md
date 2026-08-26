@@ -12,7 +12,7 @@ Documents / APIs / Databases / S3
         ▼
 ┌───────────────────────────────────────────────────────────┐
 │  Synvault (content store + tier manager)                  │
-│  Synflux  (parse → chunk → enrich → embed → persist)      │
+│  Synflux  (acquire → extract → semantic chunk → enrich → embed → persist) │
 │  ingestion-cache (Cassandra artifact cache)               │
 └───────────────────────────────────────────────────────────┘
         │
@@ -43,7 +43,7 @@ Enterprise knowledge sits scattered across document stores, wikis, databases, an
 
 Synanton provides a single coherent platform for this problem:
 
-- **Ingest once.** A pluggable content adapter SPI handles S3, local filesystems, SharePoint, RDBMS, Kafka CDC feeds, and webhooks. Raw content moves through a staged pipeline that parses, chunks, enriches (two-pass LLM chain-of-thought), and embeds every document.
+- **Ingest once.** A pluggable content adapter SPI handles S3, local filesystems, SharePoint, RDBMS, Kafka CDC feeds, and webhooks. Raw content moves through a staged pipeline that extracts structure, semantically chunks, enriches (two-pass LLM chain-of-thought), and embeds every document.
 - **Query flexibly.** Hybrid BM25 + HNSW search, GraphRAG traversal, ontology-guided entity resolution, and cross-encoder reranking are combined by a planner into the optimal query plan for each question.
 - **Answer accurately.** The Gateway synthesises a natural-language answer grounded in retrieved chunks, with citations, confidence scores, and execution traces attached.
 - **Stay governed.** Per-tenant isolation, POSIX-backed ACL enforcement, GDPR erasure cascade, SHACL ontology validation, and per-tenant cost attribution are first-class concerns - not afterthoughts.
@@ -68,16 +68,16 @@ Synanton provides a single coherent platform for this problem:
 | Module | Role | Status |
 |---|---|---|
 | `shared/common` | JWT verifier, error model, `TenantContext`, `MockTenantFilter` | ✅ Done |
-| `ingestion-cache` | Cassandra DAO library - manifest, chunks, analysis, embeddings | ✅ Done |
+| `ingestion-cache` | Cassandra DAO library - manifest (incl. `ingest_usage`), chunks, analysis, embeddings | ✅ Done |
 | `synanton-llm-client` | Provider-agnostic LLM + embedding client (OpenAI-compat) | ✅ Done |
 | `synvault` | Content store + adapter registry + MinIO/S3 facade | ✅ Done |
-| `synflux` | Ingestion pipeline - acquire → parse → chunk → enrich → embed → persist | ✅ Done (Phase 1+2) |
+| `synflux` | Ingestion pipeline - acquire → extract → semantic chunk → enrich → embed → persist; `UsageAccumulator` rolls ingest cost to search hits | ✅ Done (Phase 1+2; extraction client + semantic chunking v1.22) |
 | Lucentrix (sibling CLI) | Pluggable crawl CLI (web/dummy) that pushes raw bytes into synvault | ✅ Sibling repo |
 | `security` | AuthN/Z, JWT issuance, htpasswd IdP, `FsPermissionGuard` | ✅ Done |
 | `topology` | Org/ACL/policy store, `FilesystemAclSeeder`, JDBC repos | ✅ Done |
 | `syntology` | Ontology service - REST API, Jena storage, HCL→JSON IR→SHACL, versioning | ✅ Done (standalone) |
 | `syntology-admin` | React SPA - graph editor, login, grants view | ✅ Done (standalone) |
-| `synquest` | Hybrid search kernel - BM25 + HNSW + RRF | ✅ Done (Phase 1) |
+| `synquest` | Hybrid search kernel - BM25 + HNSW + RRF; hits expose citation + `ingest_usage`; `query_usage` on response | ✅ Done (Phase 1) |
 | `relix` | GraphRAG engine - `GraphConnector` adapters (JGraphT / Neo4j / Nebula), MCP tools | ✅ Done (Phase 1; Neo4j/Nebula selectable) |
 | `planner` | Intent classifier + query plan generator | ✅ Done (Phase 1) |
 | `gateway` | Plan DAG executor + LLM synthesis + reranker + GPU execution client | ✅ Done (Phase 1+2; GPU client v1.20) |
@@ -93,30 +93,31 @@ Synanton provides a single coherent platform for this problem:
 
 | Component | Role | Status |
 |-----------|------|--------|
-| `java/gpu-contract` | `synanton.gpu.v1` protobuf — `Execute`, `Cancel`, `GetStatus`, `GetCapacity`; `org.synanton.gpu.v1`; `ErrorReason` catalogue; **byte-identical** with `gpu-runtime` | ✅ GPU-1 + mirror |
+| `java/gpu-contract` | `synanton.gpu.v1` protobuf - `Execute`, `Cancel`, `GetStatus`, `GetCapacity`; `org.synanton.gpu.v1`; `ErrorReason` catalogue; **byte-identical** with `gpu-runtime` | ✅ GPU-1 + mirror |
 | Contract mirror check | `scripts/verify-gpu-contract-mirror.sh` + `verifyGpuContractMirror`, wired into `check` and CI | ✅ Done |
-| `java/gpu-gateway` | GPU Gateway service — mTLS boundary, field validation, tenant assertion, idempotency store (PostgreSQL, fail-closed), `DirectDispatcher` → vLLM, execution lifecycle, Micrometer metrics | ✅ GPU-2 done |
-| `gateway` GPU client | `GpuExecutionClient` + `GpuSynthesisAdapter` — primary platform gRPC client + synthesis adapter with `MODEL_NOT_READY` retry, CPU degraded fallback, trace context propagation; `ModelServingDirectory` `isGpuBacked()` / `getGpuModels()` | ✅ GPU-3 done |
-| Consumer contract tests | `GpuContractTest` — in-process gRPC tests verifying all 4 RPCs, error shapes, and `MODEL_NOT_READY` retryable flag | ✅ GPU-1 done |
+| `java/gpu-gateway` | GPU Gateway service - mTLS boundary, field validation, tenant assertion, idempotency store (PostgreSQL, fail-closed), `DirectDispatcher` → vLLM, execution lifecycle, Micrometer metrics | ✅ GPU-2 done |
+| `gateway` GPU client | `GpuExecutionClient` + `GpuSynthesisAdapter` - primary platform gRPC client + synthesis adapter with `MODEL_NOT_READY` retry, CPU degraded fallback, trace context propagation; `ModelServingDirectory` `isGpuBacked()` / `getGpuModels()` | ✅ GPU-3 done |
+| Consumer contract tests | `GpuContractTest` - in-process gRPC tests verifying all 4 RPCs, error shapes, and `MODEL_NOT_READY` retryable flag | ✅ GPU-1 done |
 | `EqualixScheduler` | Optional fairness/quota scheduler (data-gated on GPU-4 evidence) | 🔲 GPU Phase 5 |
 
 **Structured Content Extraction Plane** (module `java/extraction-contract` in this repo; implementation in `synanton/content_extractor`):
 
-> Content extraction (PDF/text/EPUB/HTML now; audio, image, and video later) runs behind the `synanton.extraction.v1` gRPC contract. Deployment topology — embedded, co-located, or an independently scaled cluster — is a scaling concern that does not change the contract.
+> Content extraction (PDF/text/EPUB/HTML now; audio, image, and video later) runs behind the `synanton.extraction.v1` gRPC contract. Deployment topology - embedded, co-located, or an independently scaled cluster - is a scaling concern that does not change the contract.
 
 | Component | Role | Status |
 |-----------|------|--------|
-| `java/extraction-contract` | `synanton.extraction.v1` protobuf contract — 9 RPCs (submit, batch, sync, status poll, cursor completion poll, result, cancel, capacity, estimate, capabilities); 13-code error catalogue; explicit feature-state model; generated gRPC stubs | ✅ SCEP-1 done |
-| Contract mirror check | `scripts/verify-contract-mirror.sh` + `verifyContractMirror` Gradle task, wired into `check` and CI — fails when the protos diverge from `content_extractor` | ✅ SCEP-1 done |
+| `java/extraction-contract` | `synanton.extraction.v1` protobuf contract - 9 RPCs (submit, batch, sync, status poll, cursor completion poll, result, cancel, capacity, estimate, capabilities); 13-code error catalogue; explicit feature-state model; generated gRPC stubs | ✅ SCEP-1 done |
+| Contract mirror check | `scripts/verify-contract-mirror.sh` + `verifyContractMirror` Gradle task, wired into `check` and CI - fails when the protos diverge from `content_extractor` | ✅ SCEP-1 done |
 | Consumer contract tests | 43 tests: in-process gRPC round trip, idempotency replay, cursor polling, validation rules, and descriptor-level black-box enforcement (`ContractOpacityTest`) | ✅ SCEP-1 done |
-| `java/extraction-client` | Dedicated client library with reconcile-after-timeout and `ExtractionFallbackPolicy` | 🔲 SCEP-5 |
-| `synflux` extraction wiring | `ExtractionStage` calls `ExtractSync`; Tika fallback when the plane is down or returns no payload; `SemanticChunkStage` | 🔶 PoC |
+| `content_extractor` gateway | Sync + async extraction, Flyway operation store, worker leases, Prometheus metrics | ✅ SCEP-2/4 done |
+| `java/extraction-client` | Dedicated client - sync/async extract, reconcile-after-timeout, `ExtractionFallbackPolicy`, local Tika fallback, metrics | ✅ SCEP-5 done |
+| `synflux` extraction wiring | `ExtractionStage` via `ExtractionPlaneClient`; `SemanticChunkStage`; provenance + `ingest_usage` on persist/index | ✅ Done |
 
 ---
 
 ## Roadmap
 
-The platform is being built in five phases, with a GPU execution plane track introduced in v1.20 and a structured content extraction track in v1.21. Each phase ships a runnable demo and is fully additive - Phase N never breaks Phase N-1.
+The platform is being built in five phases, with a GPU execution plane track (v1.20), structured content extraction (v1.21), and semantic chunking (v1.22). **Current design pointer:** `docs/architecture/synanton-design-1.22.md` (`docs/VERSION` = 1.22). Each phase ships a runnable demo and is fully additive - Phase N never breaks Phase N-1.
 
 ### Phase 1 - Foundation *(complete)*
 
@@ -182,7 +183,7 @@ The platform is being built in five phases, with a GPU execution plane track int
 - `synreview` - human-in-the-loop review queue, 24-hour staging, replay
 - Cross-region DR within RTO/RPO SLOs
 
-### GPU Execution Plane track - v1.20 *(planned, separate repository)*
+### GPU Execution Plane track - v1.20 *(in progress, separate repository)*
 
 **Delivers:** physically isolated GPU cluster with a versioned gRPC contract between the primary platform and GPU infrastructure.
 
@@ -192,7 +193,7 @@ The platform is being built in five phases, with a GPU execution plane track int
 - **GPU-2** ✅ - in-repo `java/gpu-gateway` (`GpuExecutionServiceImpl`, `DirectDispatcher`, PostgreSQL idempotency). Production binary is `gpu-runtime`, which implements the same proto
 - **GPU-3** ✅ - `GpuSynthesisAdapter` (retry + CPU degraded fallback), `ModelServingDirectory` GPU flags, `gateway.gpu.*`
 - **GPU-4** 🔶 - gpu-runtime can serve platform clients (contract unified). Ingest embeddings still use HTTP `HttpLlmClient`. Security/hardening/dashboards still open
-- **GPU-5** 🔲 *(conditional)* - `EqualixScheduler` — only after GPU-4 operational evidence
+- **GPU-5** 🔲 *(conditional)* - `EqualixScheduler` - only after GPU-4 operational evidence
 
 See `docs/implementation/gpu-execution-plane/INDEX.md` for the detailed implementation plan.
 
@@ -200,17 +201,32 @@ See `docs/implementation/gpu-execution-plane/INDEX.md` for the detailed implemen
 
 **Delivers:** structured content extraction behind a deployment-neutral contract. Consumers receive reading order, headings, tables, and page provenance instead of a flat string, and never reparse the source to obtain text.
 
-> **Architectural decision:** the extraction plane is a black box. The platform specifies *what* to extract and under *what constraints*; the plane decides *how*. Which parser runs, whether OCR is local or remote, and whether work is CPU-, GPU-, or accelerator-backed are invisible through the contract — so the implementation can grow from an embedded processor into a distributed cluster without a platform API change.
+> **Architectural decision:** the extraction plane is a black box. The platform specifies *what* to extract and under *what constraints*; the plane decides *how*. Which parser runs, whether OCR is local or remote, and whether work is CPU-, GPU-, or accelerator-backed are invisible through the contract - so the implementation can grow from an embedded processor into a distributed cluster without a platform API change.
 
 - **SCEP-1** ✅ - `synanton.extraction.v1` contract (`java/extraction-contract`), byte-identical mirror in `synanton/content_extractor` with a drift check wired into `check` and CI, 13-code error catalogue with retryability verdicts, explicit feature-state model, 43 consumer contract tests
-- **SCEP-2** 🔶 - Extraction gateway `ExtractSync` + `GetCapabilities` (no durable operation store yet)
-- **SCEP-3** 🔶 - PDF adapter via OpenDataLoader HTTP; declined when the sidecar is unset
-- **SCEP-4** 🔲 - Async operation model
-- **SCEP-5** 🔶 - `ExtractionStage` + semantic chunking + provenance persist/index; `extraction-client` module still missing
+- **SCEP-2** ✅ - Sync path DoD: pre-download reject, adapter timeout, ArchUnit domain isolation, Prometheus metrics, honest text feature states
+- **SCEP-3** 🔶 - PDF via OpenDataLoader HTTP sidecar; feature states derived from produced output (OCR/scene_analysis honest reporting)
+- **SCEP-4** ✅ - Async operations (Flyway + PostgreSQL idempotency store, worker with leases, full gRPC surface)
+- **SCEP-5** ✅ - `java/extraction-client` + synflux `ExtractionStage` with fallback policies
 - **SCEP-6** 🔲 - Topology equivalence proof + security hardening
 - **SCEP-7** 🔲 *(post-v1.21)* - Audio, image, and video extraction
 
 See `docs/implementation/content-extraction-plane/INDEX.md` for the detailed implementation plan and `docs/implementation/content-extraction-plane/error-catalogue.md` for the error contract.
+
+### Semantic Content Structuring / Chunking track - v1.22 *(in progress)*
+
+**Delivers:** structure-aware chunks with heading hierarchy, atomic tables, and full provenance for retrieval and citation-operating on normalized extraction output, not `flattenedText`.
+
+> **Architectural decision:** chunking is a separate layer from extraction. The extraction plane produces structured `elements`; `SemanticChunkStage` in `synflux` builds a section tree and emits semantically bounded chunks with `sectionPath`, `sourceElements`, and page coordinates.
+
+- **SC-1** ✅ - Structure builder (`DocumentStructureBuilder`: elements → section tree)
+- **SC-2** ✅ - Semantic chunker (section boundaries, list/figure atomicity, `sectionPath` embed prefix)
+- **SC-3** 🔶 - Table and figure chunk types (atomic tables; figure+caption; structured table rows still thin)
+- **SC-4** ✅ - Persist + index citation fields (`section_path`, `source_elements`, `token_count`, `structured_content`, `is_partial_section`) and `ingest_usage` on search hits
+- **SC-5** 🔲 *(post-v1.22)* - Summarization hierarchy from chunk tree
+- **SC-6** 🔲 *(post-v1.22)* - Multimodal chunking (audio, image, video)
+
+See `docs/implementation/semantic-chunking/INDEX.md` for the detailed implementation plan and `docs/architecture/synanton-design-1.22.md` for Part X.
 
 ---
 
@@ -218,17 +234,19 @@ See `docs/implementation/content-extraction-plane/INDEX.md` for the detailed imp
 
 ### Ingest → extract → index (PoC)
 
-The ingest → extract → index path is wired end to end. **Full Docker image builds were not verified in every environment** — run the script locally to confirm.
+The ingest → extract → index path is wired end to end. **Full Docker image builds were not verified in every environment** - run the script locally to confirm.
 
 **What it does**
 
 - Starts Cassandra, MinIO, `extraction-gateway`, synvault, synflux, and synquest.
 - Ingests `demo-data/documents` (markdown/text plus a sample PDF and a heading-structured markdown file).
-- Reindexes synquest and runs a search whose hits can include `source_uri`, `page_start`, and `section_path`.
+- Reindexes synquest and runs a search whose hits can include `source_uri`, `section_path`, `source_elements`, and `ingest_usage`; the response may include `query_usage`.
 
-**Extraction plane.** `content_extractor` serves ExtractSync and GetCapabilities, reads objects from MinIO, routes by media type, and enforces size/time/payload limits. Markdown is a first-class text type. PDF uses the OpenDataLoader HTTP sidecar when `EXTRACTION_OPENDATALOADER_BASE_URL` is set; otherwise the PDF adapter reports unsupported and synflux falls back to Tika.
+**Extraction plane (`content_extractor`).** Serves sync and async extraction over `synanton.extraction.v1`, reads objects from MinIO, routes by media type, and enforces size/time/payload limits. Plain text and markdown use the Tika adapter with honest feature states. PDF uses the OpenDataLoader HTTP sidecar when `EXTRACTION_OPENDATALOADER_BASE_URL` is set; otherwise the PDF adapter reports unsupported and synflux applies the configured fallback policy (`FALLBACK_LOCAL_TIKA` by default).
 
-**Platform.** Synflux calls the plane and skips the extra Tika pass when structured extraction succeeds. Chunks store `page_start`, `page_end`, `section_path`, `chunk_type`, and `heading`. Manifests stay `CHUNKED` unless embeddings are enabled (`EMBEDDED`). Synquest indexes those states with BM25; HNSW is optional. Search does not fail if query embedding is down; hits include citation fields.
+**Platform client.** `java/extraction-client` wraps the gRPC contract with `ExtractionFallbackPolicy`, reconcile-after-timeout on async submit, and Micrometer metrics. Configure via `synanton.extraction.client.*` in synflux `application.yml`.
+
+**Chunking and search.** Synflux skips redundant Tika when structured extraction succeeds. `SemanticChunkStage` chunks from `elements` (not flat text). Chunks persist `page_start`, `page_end`, `section_path`, `chunk_type`, `heading`, `source_elements`, `token_count`, and table `structured_content`. Manifests store a document-level `ingest_usage` JSON rollup (wall time, CPU time, model chars/tokens per stage - a benchmark ledger, not billing). Synquest indexes those fields with BM25; HNSW is optional. Search does not fail if query embedding is down; hits carry citation and usage metadata.
 
 ```bash
 # From this repository (Docker + Java 21)
@@ -334,8 +352,8 @@ java/
   synanton-mcp/         MCP protocol bridge
   gpu-contract/         synanton.gpu.v1 protobuf (mirrored in gpu-runtime)
   gpu-gateway/          in-repo GPU gateway (not a substitute for gpu-runtime)
-  extraction-contract/  synanton.extraction.v1 protobuf,
-                        mirrored byte-for-byte in synanton/content_extractor
+  extraction-contract/  synanton.extraction.v1 protobuf (mirrored in content_extractor)
+  extraction-client/      Extraction plane client - sync/async, fallback policies, metrics
 
 rust/                   Future Rust components (synquest hot loop - Phase 5)
 
@@ -346,9 +364,9 @@ deployment/
   docker/               Docker Compose stack and Dockerfiles for all services
 
 docs/
-  architecture/         Current design 1.21; 1.20 GPU Part VIII; 1.19 baseline
+  architecture/         Current design 1.22; 1.21 extraction; 1.20 GPU Part VIII; 1.19 baseline
   implementation/       Phase-by-phase implementation plans
-  proposals/            Versioned change proposals (v1.20 GPU, v1.21 extraction)
+  proposals/            Versioned change proposals (v1.20 GPU, v1.21 extraction, v1.22 chunking)
 
 scripts/
   setup-dev.sh          Toolchain check (Java 21, Docker, Node 20)
@@ -394,7 +412,7 @@ This means every adapter is swappable without touching domain logic. `Filesystem
 **Cross-cutting concerns built in from day one:**
 - Multi-tenancy via `TenantContext` thread-local propagated on every request.
 - Compile-time ACL injection - search and graph queries carry a tenant-scope filter before reaching storage.
-- Per-tenant cost attribution - LLM calls, object-store bytes, and index queries are metered and budgeted.
+- Per-tenant cost attribution - LLM calls, object-store bytes, and index queries are metered and budgeted. Ingest path records a `ResourceUsage` benchmark ledger on each manifest (`ingest_usage` JSON) and copies it onto search hits; billing/rate cards are a later consumer of the same numbers.
 - GDPR erasure cascade - tombstoning a document propagates through manifest, chunks, embeddings, analysis, and graph nodes.
 
 ---
@@ -438,9 +456,12 @@ MINIO_ROOT_PASSWORD=<your-choice>
 
 | Document | Location |
 |---|---|
-| Platform architecture (**current** 1.21) | `docs/architecture/synanton-design-1.21.md` |
+| Platform architecture (**current** 1.22) | `docs/architecture/synanton-design-1.22.md` |
+| Structured Content Extraction Plane (1.21 Part IX) | `docs/architecture/synanton-design-1.21.md` |
+| Semantic chunking (1.22 Part X) | `docs/implementation/semantic-chunking/INDEX.md` |
 | GPU Execution Plane (1.20 Part VIII) | `docs/architecture/synanton-design-1.20.md` |
 | Core baseline (1.19, superseded pointer) | `docs/architecture/synanton-design-1.19.md` |
+| Extraction plane implementation plan | `docs/implementation/content-extraction-plane/INDEX.md` |
 | GPU Execution Plane implementation plan | `docs/implementation/gpu-execution-plane/INDEX.md` |
 | Phases master plan | `docs/implementation/synanton-phases-plan.md` |
 | Phase 1 ingestion plan | `docs/implementation/phase1/01-ingestion-pipeline.md` |

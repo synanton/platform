@@ -18,7 +18,7 @@ import java.time.Duration;
 // DirectDispatcher is the default execution strategy.
 // It delegates GPU workloads to a vLLM instance via its OpenAI-compatible HTTP API,
 // relying on Kubernetes Service load balancing for pod selection.
-// No global request scheduling is performed — that is Equalix's responsibility if enabled.
+// No global request scheduling is performed - that is Equalix's responsibility if enabled.
 @Component
 public class DirectDispatcher implements ExecutionDispatcher {
 

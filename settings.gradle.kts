@@ -38,6 +38,7 @@ include(
     "java:gpu-contract",
     "java:gpu-gateway",
     "java:extraction-contract",
+    "java:extraction-client",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)

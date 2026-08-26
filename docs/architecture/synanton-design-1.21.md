@@ -1,16 +1,16 @@
-# Synanton Platform - Architecture (v1.21 current)
+# Synanton Platform - Architecture (v1.21)
 
-> **Document type:** Current engineering reference (pointer + extraction-plane addendum)
+> **Document type:** Engineering reference (pointer + extraction-plane addendum)
 > **Version:** 1.21
 > **Date:** 2026-08-26
-> **Status:** Current
+> **Status:** Superseded as the live pointer - see [`synanton-design-1.22.md`](./synanton-design-1.22.md). Part IX (extraction plane) text remains authoritative here.
 > **Audience:** Architects, module owners, SREs, security engineers
 
-This is the **current** architecture pointer for the Synanton platform.
+This document is the **Part IX** extraction-plane pointer. The live architecture pointer is [`synanton-design-1.22.md`](./synanton-design-1.22.md).
 
 | Layer | Where to read it |
 |---|---|
-| Baseline (helper/wizard, query/ingest core, DR, security) | [`synanton-design-1.19.md`](./synanton-design-1.19.md) — **superseded as “the” current doc**, still the merged baseline for Parts I–VII |
+| Baseline (helper/wizard, query/ingest core, DR, security) | [`synanton-design-1.19.md`](./synanton-design-1.19.md) - **superseded as “the” current doc**, still the merged baseline for Parts I–VII |
 | GPU Execution Plane isolation (Part VIII, §50–§64) | [`synanton-design-1.20.md`](./synanton-design-1.20.md) |
 | Structured Content Extraction Plane (Part IX) | This document + [`../proposals/v1.21/`](../proposals/v1.21/) |
 
@@ -33,7 +33,7 @@ v1.20 GPU isolation remains in force. `synanton.gpu.v1` is mirrored byte-for-byt
 
 ---
 
-## Part IX — Structured Content Extraction Plane (summary)
+## Part IX - Structured Content Extraction Plane (summary)
 
 **Invariant:** the platform specifies *what* to extract and under *what constraints*. The plane specifies *how*. Parsers, OCR sidecars, GPUs, queues, and worker topology MUST NOT appear on the contract.
 
@@ -69,4 +69,4 @@ Implementation plan: [`../implementation/content-extraction-plane/INDEX.md`](../
 
 ## How “current” is managed
 
-`docs/VERSION` is `1.21`. [`INDEX.md`](./INDEX.md) names this file as authoritative. 1.19 and 1.20 remain in this directory as lineage, not as the live pointer.
+`docs/VERSION` is `1.22`. [`INDEX.md`](./INDEX.md) names [`synanton-design-1.22.md`](./synanton-design-1.22.md) as authoritative. This file remains the Part IX extraction summary; 1.19 and 1.20 remain as lineage for earlier parts.

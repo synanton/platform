@@ -16,7 +16,7 @@ interface LlmProviderTranslator {
     String buildEmbedPayload(EmbedRequest request);
 
     /** Parse the HTTP response body from an embed call. */
-    EmbedResponse parseEmbedResponse(String json);
+    EmbedResponse parseEmbedResponse(String json, int inputChars);
 
     /** Returns the base path suffix for completions (e.g. {@code /chat/completions}). */
     String completionPath();

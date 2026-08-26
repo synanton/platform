@@ -438,7 +438,7 @@ Illustrative element:
 
 ---
 
-# 8. PDF Processing PoC — OpenDataLoader PDF
+# 8. PDF Processing PoC - OpenDataLoader PDF
 
 For the PDF PoC, use:
 
@@ -991,14 +991,14 @@ Represent it explicitly:
   "speakerId": "speaker-1",
   "startMs": 10200,
   "endMs": 13800,
-  "text": "The important part is—"
+  "text": "The important part is-"
 },
 {
   "id": "u022",
   "speakerId": "speaker-2",
   "startMs": 12900,
   "endMs": 15200,
-  "text": "Yes, but the contract—"
+  "text": "Yes, but the contract-"
 }
 ```
 
@@ -1481,7 +1481,7 @@ The knowledge layer can reject, enrich, resolve, or combine extracted observatio
 
 ---
 
-# 32. End-to-End Example — PDF
+# 32. End-to-End Example - PDF
 
 ```text
 SharePoint / FileNet / local FS
@@ -1526,7 +1526,7 @@ SharePoint / FileNet / local FS
 
 ---
 
-# 33. End-to-End Example — Audio Meeting
+# 33. End-to-End Example - Audio Meeting
 
 ```text
 meeting.mp3
@@ -1552,7 +1552,7 @@ Extraction Plane
 
 ---
 
-# 34. End-to-End Example — Image
+# 34. End-to-End Example - Image
 
 ```text
 photo.jpg
@@ -1576,7 +1576,7 @@ Knowledge Processing
 
 ---
 
-# 35. End-to-End Example — Video Clip
+# 35. End-to-End Example - Video Clip
 
 ```text
 recording.mp4

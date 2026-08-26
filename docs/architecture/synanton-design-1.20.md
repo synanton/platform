@@ -3,7 +3,7 @@
 > **Document type:** Definitive engineering reference
 > **Version:** 1.20
 > **Date:** 2026-08-20
-> **Status:** Folded into the lineage. **Not** the current pointer — see [`synanton-design-1.21.md`](./synanton-design-1.21.md). This file remains the Part VIII (GPU Execution Plane) text.
+> **Status:** Folded into the lineage. **Not** the current pointer - see [`synanton-design-1.21.md`](./synanton-design-1.21.md). This file remains the Part VIII (GPU Execution Plane) text.
 > **Audience:** Architects, module owners, SREs, security engineers, partner connector authors, UI/frontend leads, DevOps/platform engineers
 > **Philosophy:** Clean-slate · zero legacy · single API surface · no compatibility shims
 
@@ -21,25 +21,25 @@ Version 1.20 introduces a strict architectural boundary between the **primary Sy
 
 | # | Change | Home in v1.20 |
 |---|--------|---------------|
-| 1 | New `GPU Execution Plane` — physically isolated cluster responsible for GPU-specific execution (model serving, admission, dispatch, runtime lifecycle, GPU capacity, execution telemetry) | New §50–§64 (Part VIII) |
-| 2 | New `synanton.gpu.v1` gRPC contract — `Execute`, `Cancel`, `GetStatus`, `GetCapacity` RPCs with PGV validation and structured error categories | §57 |
-| 3 | New `GPU Gateway` — execution-plane boundary service with mTLS, authorization assertion validation, idempotency store, and dispatch strategy | §55 |
-| 4 | `ModelServingDirectory` refined — resolves logical GPU execution endpoints only; MUST NOT resolve GPU pod IPs, Kubernetes pods, or vLLM instances | §54 |
-| 5 | `gateway` extended — uses GPU execution client rather than direct GPU runtime access | §53 (v1.20 callout) |
-| 6 | `security` extended — GPU Gateway becomes an independent authenticated service boundary; mTLS required between CPU and GPU clusters | §60 |
-| 7 | Deployment split — GPU infrastructure moves to `synanton/gpu-execution-plane` repository; `synanton/platform` no longer owns the production GPU runtime | §53 |
-| 8 | Observability — trace context crosses CPU/GPU cluster boundary; new low-cardinality GPU execution attributes | §62 |
-| 9 | Cost model extended — GPU usage is reported by the execution plane; primary platform owns tenant attribution and billing policy | §63 |
+| 1 | New `GPU Execution Plane` - physically isolated cluster responsible for GPU-specific execution (model serving, admission, dispatch, runtime lifecycle, GPU capacity, execution telemetry) | New §50–§64 (Part VIII) |
+| 2 | New `synanton.gpu.v1` gRPC contract - `Execute`, `Cancel`, `GetStatus`, `GetCapacity` RPCs with PGV validation and structured error categories | §57 |
+| 3 | New `GPU Gateway` - execution-plane boundary service with mTLS, authorization assertion validation, idempotency store, and dispatch strategy | §55 |
+| 4 | `ModelServingDirectory` refined - resolves logical GPU execution endpoints only; MUST NOT resolve GPU pod IPs, Kubernetes pods, or vLLM instances | §54 |
+| 5 | `gateway` extended - uses GPU execution client rather than direct GPU runtime access | §53 (v1.20 callout) |
+| 6 | `security` extended - GPU Gateway becomes an independent authenticated service boundary; mTLS required between CPU and GPU clusters | §60 |
+| 7 | Deployment split - GPU infrastructure moves to `synanton/gpu-execution-plane` repository; `synanton/platform` no longer owns the production GPU runtime | §53 |
+| 8 | Observability - trace context crosses CPU/GPU cluster boundary; new low-cardinality GPU execution attributes | §62 |
+| 9 | Cost model extended - GPU usage is reported by the execution plane; primary platform owns tenant attribution and billing policy | §63 |
 | 10 | `DirectDispatcher` (default) and optional `EqualixScheduler` introduced as dispatch strategies inside the GPU plane | §59 |
 
 ### Compatibility statement (v1.20)
 
 v1.20 introduces no breaking changes to the primary-platform public API surface. The following are new or modified surfaces:
 
-- **New repository:** `synanton/gpu-execution-plane` — independently deployable; MUST NOT depend on `synanton/platform` internals.
-- **New gRPC service:** `synanton.gpu.v1.GPUExecutionService` — exposed only to primary-platform GPU execution clients, not to external API consumers.
-- **New primary-platform client:** GPU execution client inside `gateway` module — calls `synanton.gpu.v1` over mTLS.
-- **Modified `ModelServingDirectory`:** resolves logical GPU execution endpoints; pod-level resolution removed (no schema migration required — this is a constraint tightening, not a schema change).
+- **New repository:** `synanton/gpu-execution-plane` - independently deployable; MUST NOT depend on `synanton/platform` internals.
+- **New gRPC service:** `synanton.gpu.v1.GPUExecutionService` - exposed only to primary-platform GPU execution clients, not to external API consumers.
+- **New primary-platform client:** GPU execution client inside `gateway` module - calls `synanton.gpu.v1` over mTLS.
+- **Modified `ModelServingDirectory`:** resolves logical GPU execution endpoints; pod-level resolution removed (no schema migration required - this is a constraint tightening, not a schema change).
 - **New config keys** (all with safe defaults): `gateway.gpu.*`, `gpu-gateway.*` (see §55, §57).
 - **New metrics:** `gpu_execute_total`, `gpu_execute_duration_seconds`, `gpu_admission_rejected_total`, `gpu_model_not_ready_total`, `gpu_idempotency_hit_total` (see §62).
 - **No Kafka schema changes.**
@@ -168,7 +168,7 @@ D. `synanton-ops` Binary - Build & Distribution
 
 *Inline callouts use the following convention:*
 
-> **[v1.20]** — This section is modified in v1.20. The change description below supersedes or extends the v1.19 text at this point.
+> **[v1.20]** - This section is modified in v1.20. The change description below supersedes or extends the v1.19 text at this point.
 
 ---
 
@@ -276,7 +276,7 @@ The primary platform MUST NOT directly discover GPU pods, nodes, GPUs, or vLLM i
 
 ---
 
-## §23 `gateway` — Query Gateway
+## §23 `gateway` - Query Gateway
 
 > **[v1.20]** The gateway module is extended to include the GPU execution client. The v1.19 gateway specification is unchanged for all non-GPU paths.
 
@@ -295,17 +295,17 @@ The gateway module acquires a new internal component: **GPU Execution Client**. 
 | Key | Default | Description |
 |-----|---------|-------------|
 | `gateway.gpu.enabled` | `false` | Enables GPU execution client; falls back to CPU path when false |
-| `gateway.gpu.endpoint` | — | GPU Gateway address (host:port) |
-| `gateway.gpu.tls.cert-path` | — | Client mTLS certificate path |
-| `gateway.gpu.tls.key-path` | — | Client mTLS key path |
-| `gateway.gpu.tls.ca-path` | — | CA certificate for server validation |
+| `gateway.gpu.endpoint` | - | GPU Gateway address (host:port) |
+| `gateway.gpu.tls.cert-path` | - | Client mTLS certificate path |
+| `gateway.gpu.tls.key-path` | - | Client mTLS key path |
+| `gateway.gpu.tls.ca-path` | - | CA certificate for server validation |
 | `gateway.gpu.timeout-ms` | `120000` | Execute() deadline; after expiry, GetStatus() is called |
 | `gateway.gpu.retry.max-attempts` | `3` | Max retry attempts for MODEL_NOT_READY |
 | `gateway.gpu.retry.backoff-base-ms` | `500` | Base backoff for MODEL_NOT_READY retries |
 
 ---
 
-## §26 `security` — AuthN/Z + Outbound Broker
+## §26 `security` - AuthN/Z + Outbound Broker
 
 > **[v1.20]** The GPU Gateway becomes an independent authenticated service boundary. The v1.19 security specification is unchanged for all non-GPU paths.
 
@@ -372,7 +372,7 @@ The mTLS certificate pair for the GPU execution client is issued by the same CA 
 
 ---
 
-# Part VIII — GPU Execution Plane
+# Part VIII - GPU Execution Plane
 
 *(new in v1.20)*
 
@@ -578,7 +578,7 @@ To prevent a thundering herd of retries from the primary platform, the Gateway:
 - MAY serve queued requests once the model becomes ready, subject to a configurable maximum queue time;
 - MUST return `MODEL_NOT_READY` only if the model cannot be loaded within the configured timeout or if the queue is full.
 
-The primary platform's retry policy for `MODEL_NOT_READY` MUST include exponential backoff and jitter. The Gateway MUST NOT rely on the primary platform to poll for readiness — queuing and deferred execution are the preferred failure-avoidance mechanisms.
+The primary platform's retry policy for `MODEL_NOT_READY` MUST include exponential backoff and jitter. The Gateway MUST NOT rely on the primary platform to poll for readiness - queuing and deferred execution are the preferred failure-avoidance mechanisms.
 
 ---
 
@@ -773,13 +773,13 @@ The primary platform may maintain a separate business lifecycle correlated throu
 
 There are three distinct layers:
 
-### §59.1 Execution Planning — Synanton
+### §59.1 Execution Planning - Synanton
 
 *What should happen?*
 
 The primary platform decides: operation, model, model version, policy, execution class, fallback/degraded behavior.
 
-### §59.2 Request Scheduling — Optional Equalix
+### §59.2 Request Scheduling - Optional Equalix
 
 *Which eligible request should happen next?*
 
@@ -787,7 +787,7 @@ Equalix may provide: fairness, quotas, priorities, tenant-aware scheduling, GPU-
 
 Equalix is optional. The initial implementation SHOULD use `DirectDispatcher`. Equalix SHOULD be introduced only when measurable contention, fairness, quota, or priority requirements justify it.
 
-### §59.3 Infrastructure Scheduling — Kubernetes
+### §59.3 Infrastructure Scheduling - Kubernetes
 
 *Where should the workload run?*
 
@@ -950,7 +950,7 @@ The GPU plane reports structured execution failure. It does not decide the busin
 
 ---
 
-## Appendix B (v1.20 update) — Module Dependency Diagram
+## Appendix B (v1.20 update) - Module Dependency Diagram
 
 ```text
 synanton/platform

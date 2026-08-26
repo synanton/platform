@@ -1,28 +1,28 @@
 ---
-title: "Structured Content Extraction Plane — Implementation Plan"
-status: "planned"
-last_reviewed: "2026-08-24"
+title: "Structured Content Extraction Plane - Implementation Plan"
+status: "in progress"
+last_reviewed: "2026-08-26"
 ---
 
-# Structured Content Extraction Plane — Implementation Plan
+# Structured Content Extraction Plane - Implementation Plan
 
 **Purpose:** Implementation plan for the v1.21 Structured Content Extraction Plane. Introduces a deployment-neutral extraction boundary between raw content storage and Synanton knowledge processing, connected to the primary platform through the versioned `synanton.extraction.v1` gRPC contract.
 **Architecture reference:** `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md` (contract), `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane_draft.md` (multimodal design)
-**Target repositories:** `synanton/platform` (this repo — client side), `synanton/content_extractor` (new repo — extraction plane)
+**Target repositories:** `synanton/platform` (this repo - client side), `synanton/content_extractor` (new repo - extraction plane)
 **Audience:** Architects, module owners, extraction engineers, SREs
-**Last Updated:** 2026-08-24
+**Last Updated:** 2026-08-26
 
 ---
 
 ## Theme
 
-> Extraction is a platform contract, not a processor implementation. The platform decides *what* must be extracted and *with what constraints*. The extraction plane decides *how* extraction is performed. Deployment topology — embedded, co-located, or an independent cluster — is a scaling concern that MUST NOT change the contract.
+> Extraction is a platform contract, not a processor implementation. The platform decides *what* must be extracted and *with what constraints*. The extraction plane decides *how* extraction is performed. Deployment topology - embedded, co-located, or an independent cluster - is a scaling concern that MUST NOT change the contract.
 
 ---
 
 ## User-Facing Capability Unlocked
 
-- PDF, plain text, EPUB, and HTML content is extracted into a structured payload that preserves reading order, headings, lists, tables, bounding boxes, and page provenance — not just flattened text.
+- PDF, plain text, EPUB, and HTML content is extracted into a structured payload that preserves reading order, headings, lists, tables, bounding boxes, and page provenance - not just flattened text.
 - Downstream consumers never reparse raw source bytes to obtain text; `flattenedText` is a projection of the structured result.
 - Expensive extraction (OCR, transcription, image description, video scene analysis) is requested explicitly and reported honestly: callers learn whether a feature was applied, was unnecessary, is unsupported, or failed.
 - Extraction work survives client disconnects. Operations are idempotent, pollable, expirable, and batchable.
@@ -62,13 +62,13 @@ Mirroring rule (inherited from the GPU plane): the `.proto` files are copied ver
 
 ---
 
-## New Project — `synanton/content_extractor`
+## New Project - `synanton/content_extractor`
 
 Structure mirrors `synanton/gpu-runtime` exactly: root Gradle Kotlin DSL multi-module build, `java/<module>/`, a version catalog, `.cursor/rules/` carrying the architectural invariants, `doc/` for the plan, and `.github/workflows/gradle.yml`.
 
 ```text
 content_extractor/
-├── build.gradle.kts                    # root: group=org.synanton, Java 21 toolchain, buildAll task
+├── build.gradle.kts                    # root: group=com.synanton, Java 21 toolchain, buildAll task
 ├── settings.gradle.kts
 ├── gradle.properties
 ├── gradle/
@@ -104,7 +104,7 @@ content_extractor/
     └── adapter-stubs/                  # audio/image/video: capability-declining stubs
 ```
 
-**Package root:** `org.synanton.extraction.*` (matches `gpu-runtime`'s `org.synanton.gpu.*`; note the platform side uses `org.synanton.*`).
+**Package root:** `com.synanton.extraction.*` (matches `gpu-runtime`'s `com.synanton.gpu.*`; note the platform side uses `org.synanton.*`).
 
 ### Hexagonal boundaries enforced in the new repo
 
@@ -129,10 +129,10 @@ Phases follow §31 of the proposal (Contract → Embedded → Async → External
 | Phase | Name | Repo(s) | Status |
 |-------|------|---------|--------|
 | SCEP-1 | Contract | both | Done |
-| SCEP-2 | Extraction plane skeleton + sync path | `content_extractor` | ExtractSync PoC |
-| SCEP-3 | PDF PoC (OpenDataLoader) | `content_extractor` | HTTP adapter; incomplete feature-state |
-| SCEP-4 | Async operation model | `content_extractor` | Planned |
-| SCEP-5 | Platform integration | `platform` | Partial (synflux ExtractSync + semantic chunks) |
+| SCEP-2 | Extraction plane skeleton + sync path | `content_extractor` | Done (DoD: metrics, ArchUnit, pre-download reject) |
+| SCEP-3 | PDF PoC (OpenDataLoader) | `content_extractor` | In progress (honest feature_states) |
+| SCEP-4 | Async operation model | `content_extractor` | Done (Flyway + worker + gRPC) |
+| SCEP-5 | Platform integration | `platform` | Done (`extraction-client` + synflux) |
 | SCEP-6 | Topology equivalence + hardening | both | Planned |
 | SCEP-7 | Multimodal expansion (audio/image/video) | `content_extractor` | Post-v1.21 |
 
@@ -160,12 +160,12 @@ Phases follow §31 of the proposal (Contract → Embedded → Async → External
 
 ### Deliberately unchanged
 
-- `syntology`, `relix`, `planner`, `gateway`, `synquest` — extraction sits upstream of them.
-- `java/gpu-contract`, `java/gpu-gateway` — the extraction plane MUST NOT reach the GPU plane *through* the platform. If extraction wants GPU, that is its own internal decision behind its own boundary.
+- `syntology`, `relix`, `planner`, `gateway`, `synquest` - extraction sits upstream of them.
+- `java/gpu-contract`, `java/gpu-gateway` - the extraction plane MUST NOT reach the GPU plane *through* the platform. If extraction wants GPU, that is its own internal decision behind its own boundary.
 
 ---
 
-## The Contract — `synanton.extraction.v1`
+## The Contract - `synanton.extraction.v1`
 
 Two proto files under `synanton/extraction/v1/`, following `.cursor/rules/proto-rules.mdc`: `lower_snake_case` fields, `Timestamp` with `_at` suffix, `*_UNSPECIFIED = 0` on every enum, PGV rules on every request field, cursor pagination.
 
@@ -208,7 +208,7 @@ Key messages, with the proposal section each satisfies:
 |---|---|---|
 | `ObjectReference` | `bucket`, `key`, `version`, `sha256`, `size_bytes` | §5 |
 | `ExtractionRequestItem` | `content_ref_id`, `source`, `media_type`, `options`, `metadata`, `routing_tags`, `business_tags` | §6, §7 |
-| `ExtractionOptions` | `ocr`, `transcription`, `layout`, `tables`, `embedded_images`, `scene_analysis`, `language`, `preflight` — each `optional bool` so *unset* ≠ *false* | §8 |
+| `ExtractionOptions` | `ocr`, `transcription`, `layout`, `tables`, `embedded_images`, `scene_analysis`, `language`, `preflight` - each `optional bool` so *unset* ≠ *false* | §8 |
 | `SubmitExtractionRequest` | item + `tenant_id`, `idempotency_key`, `priority_class`, `expires_at` | §9, §12, §13 |
 | `ExtractionOperation` | `operation_id`, `status`, `progress`, `created_at`, `expires_at`, `items[]` | §14, §16 |
 | `ExtractionResult` | `content_ref_id`, `payload`, `flattened_text`, `feature_states`, `provenance`, `error` | §20, §21, §25 |
@@ -218,9 +218,9 @@ Key messages, with the proposal section each satisfies:
 ### Enums
 
 - `ExtractionStatus`: `ACCEPTED`, `QUEUED`, `RUNNING`, `COMPLETED`, `PARTIAL`, `FAILED`, `CANCELLED`, `EXPIRED` (§15)
-- `PriorityClass`: `LOW`, `NORMAL`, `HIGH`, `CRITICAL` (§9) — no numeric priority, no queue names
+- `PriorityClass`: `LOW`, `NORMAL`, `HIGH`, `CRITICAL` (§9) - no numeric priority, no queue names
 - `FeatureState`: `REQUESTED`, `APPLIED`, `NOT_REQUESTED`, `NOT_APPLICABLE`, `UNSUPPORTED`, `FAILED`, `PARTIAL` (draft §6)
-- `ExtractionErrorCode`: the 13 codes of §24 — `INVALID_REQUEST`, `INVALID_OBJECT_REFERENCE`, `OBJECT_NOT_FOUND`, `OBJECT_CHANGED`, `UNSUPPORTED_MEDIA_TYPE`, `UNSUPPORTED_OPTION`, `REJECTED_CAPACITY`, `EXPIRED`, `TIMEOUT`, `EXTRACTION_FAILED`, `PARTIAL_EXTRACTION`, `PAYLOAD_INVALID`, `INTERNAL_ERROR`
+- `ExtractionErrorCode`: the 13 codes of §24 - `INVALID_REQUEST`, `INVALID_OBJECT_REFERENCE`, `OBJECT_NOT_FOUND`, `OBJECT_CHANGED`, `UNSUPPORTED_MEDIA_TYPE`, `UNSUPPORTED_OPTION`, `REJECTED_CAPACITY`, `EXPIRED`, `TIMEOUT`, `EXTRACTION_FAILED`, `PARTIAL_EXTRACTION`, `PAYLOAD_INVALID`, `INTERNAL_ERROR`
 - `CapacityLevel`: `AVAILABLE`, `LIMITED`, `SATURATED` (§11); admission verdict `ACCEPTED` / `REJECTED_CAPACITY` / `DEFERRED`
 
 ### `extraction_payload.proto`
@@ -251,11 +251,11 @@ message DocumentElement {
 
 `AudioPayload`, `ImagePayload`, and `VideoPayload` are declared with their draft-defined shape (timeline segments with pause/overlap, OCR + description with provenance, scene + clip structure) but are not implemented until SCEP-7. Declaring them now keeps SCEP-7 additive rather than breaking.
 
-**Provenance rule (draft §24, §30):** any LLM/VLM-generated text — image descriptions, clip summaries, conversation summaries — carries `provenance: GENERATED` plus the generating model id, and MUST NOT be presented as source evidence. Extracted text carries `provenance: SOURCE`; OCR carries `provenance: OCR`.
+**Provenance rule (draft §24, §30):** any LLM/VLM-generated text - image descriptions, clip summaries, conversation summaries - carries `provenance: GENERATED` plus the generating model id, and MUST NOT be presented as source evidence. Extracted text carries `provenance: SOURCE`; OCR carries `provenance: OCR`.
 
 ---
 
-## Phase SCEP-1 — Contract
+## Phase SCEP-1 - Contract
 
 **Goal:** the complete contract exists, validates, and is provably identical in both repositories, before any service implementation.
 
@@ -282,7 +282,7 @@ message DocumentElement {
 
 ---
 
-## Phase SCEP-2 — Extraction Plane Skeleton + Sync Path
+## Phase SCEP-2 - Extraction Plane Skeleton + Sync Path
 
 **Goal:** a running service that satisfies the contract end-to-end for one trivial media type, with the domain fully isolated from adapters. Sync first, because it proves the result model without the operation store.
 
@@ -293,7 +293,7 @@ message DocumentElement {
 | 1 | `content_extractor` repo scaffolding: root build, version catalog, wrapper, LICENSE, README, CI workflow, `.cursor/rules/` |
 | 2 | `extraction-gateway` Spring Boot app + gRPC server lifecycle (mirrors `GrpcServerLifecycle` from `gpu-runtime`) |
 | 3 | `extraction-spi`: `ModalityAdapter`, `AdapterCapabilities`, `NormalizedDocument`, `FeatureStateMap` |
-| 4 | `ExtractionRouter` — media type + routing tags → adapter; `UNSUPPORTED_MEDIA_TYPE` when none matches |
+| 4 | `ExtractionRouter` - media type + routing tags → adapter; `UNSUPPORTED_MEDIA_TYPE` when none matches |
 | 5 | `adapter-document-text`: `text/plain` via a direct reader; EPUB and HTML via Tika |
 | 6 | `SourceObjectReader` (S3/MinIO) with size cap enforced *before* download |
 | 7 | `ExtractSync` implemented: read → route → adapt → normalize → digest → return |
@@ -313,7 +313,7 @@ message DocumentElement {
 
 ---
 
-## Phase SCEP-3 — PDF PoC (OpenDataLoader)
+## Phase SCEP-3 - PDF PoC (OpenDataLoader)
 
 **Goal:** satisfy all 15 PoC acceptance criteria from draft §39 behind the adapter boundary.
 
@@ -321,13 +321,13 @@ message DocumentElement {
 
 | # | Deliverable |
 |---|---|
-| 1 | Resolve the OpenDataLoader Java artifact coordinates and pin them in the version catalog — see the open question below |
+| 1 | Resolve the OpenDataLoader Java artifact coordinates and pin them in the version catalog - see the open question below |
 | 2 | `adapter-document-pdf`: invoke OpenDataLoader, request JSON output |
 | 3 | `OpenDataLoaderJsonNormalizer`: raw JSON → `DocumentElement` list, reading order preserved |
 | 4 | Bounding box + page provenance carried onto every element |
 | 5 | Heading hierarchy, lists, tables, image references, formula LaTeX mapped to the normalized model |
 | 6 | Option → OpenDataLoader flag mapping for `ocr`, `tables`, `embedded_images`, `language` |
-| 7 | Feature-state computation from what the processor actually produced — never from what was requested |
+| 7 | Feature-state computation from what the processor actually produced - never from what was requested |
 | 8 | `flattened_text` generated from the element tree, never by reparsing the PDF |
 | 9 | Markdown projection (`text/markdown`) as an alternate serialization of the same payload |
 | 10 | Fixture PDFs: text-only, scanned (OCR path), tables, formulas, mixed |
@@ -337,16 +337,16 @@ message DocumentElement {
 1. The 15 criteria of draft §39 each have a named passing test.
 2. A scanned PDF with `ocr` unset reports `ocr=NOT_APPLICABLE` or `NOT_REQUESTED` and does **not** silently OCR.
 3. The same scanned PDF with `ocr=true` reports `ocr=APPLIED` and returns OCR text with `provenance=OCR`.
-4. Requesting `scene_analysis` on a PDF reports `UNSUPPORTED` — the operation still succeeds for the features that do apply.
+4. Requesting `scene_analysis` on a PDF reports `UNSUPPORTED` - the operation still succeeds for the features that do apply.
 5. When OCR is requested and the OCR step fails but text extraction succeeds, status is `PARTIAL` with `ocr=FAILED`, not `FAILED`.
 6. Every element carries a page number and a 4-element bbox.
-7. `flattened_text` is derived from elements — verified by mutating the element list in a test and observing the projection change.
+7. `flattened_text` is derived from elements - verified by mutating the element list in a test and observing the projection change.
 8. No OpenDataLoader type appears in `extraction-contract`, `extraction-spi`, or `domain/` (enforced by an import test).
 9. A grep for `opendataloader` in the `platform` repo returns nothing.
 
 ---
 
-## Phase SCEP-4 — Async Operation Model
+## Phase SCEP-4 - Async Operation Model
 
 **Goal:** operations become durable, idempotent, pollable, expirable, cancellable, and batchable. This is where PostgreSQL becomes authoritative.
 
@@ -380,7 +380,7 @@ extraction_idempotency
 | 6 | `GetOperations` (by ids) and `ListCompletedOperations` (cursor over `completion_seq`) |
 | 7 | Expiration semantics per §12: pre-execution → `EXPIRED` unstarted; queued → removed, `EXPIRED`; running → may finish, status distinguishes `COMPLETED` / `EXPIRED` / `CANCELLED` |
 | 8 | `CancelOperation` (best-effort) and `GetCapacity` (`AVAILABLE`/`LIMITED`/`SATURATED`) |
-| 9 | `EstimateExtraction` — advisory, no reservation |
+| 9 | `EstimateExtraction` - advisory, no reservation |
 | 10 | Batch progress: operation progress derived from item progress |
 
 ### Definition of Done
@@ -390,7 +390,7 @@ extraction_idempotency
 3. Two concurrent submits cannot exceed the tenant concurrency limit (advisory-lock test, modeled on the GPU plane's admission race test).
 4. `expires_at` in the past at submit ⇒ `EXPIRED`, and no adapter is ever invoked (verified with a spy).
 5. An operation expiring while `QUEUED` reaches `EXPIRED` and is never dispatched.
-6. An operation expiring while `RUNNING` reports `COMPLETED` or `EXPIRED` — never `FAILED`.
+6. An operation expiring while `RUNNING` reports `COMPLETED` or `EXPIRED` - never `FAILED`.
 7. A killed and restarted gateway resumes: no operation is stuck in `RUNNING` without a lease, no work is silently lost.
 8. Cursor polling returns each completed operation exactly once, in `completion_seq` order, across pagination.
 9. A batch of 3 items where 1 fails ⇒ operation status `PARTIAL`, per-item statuses correct.
@@ -399,7 +399,7 @@ extraction_idempotency
 
 ---
 
-## Phase SCEP-5 — Platform Integration
+## Phase SCEP-5 - Platform Integration
 
 **Goal:** `synflux` consumes the extraction plane, and behaves correctly when the plane is absent.
 
@@ -421,16 +421,16 @@ extraction_idempotency
 1. An ingestion job over the `demo-data` PDFs completes through the extraction plane, and chunks carry page provenance.
 2. With the plane stopped and policy `FALLBACK_LOCAL_TIKA`, ingestion still completes; `extraction_client_fallback_total` increments; a warning names the fallback.
 3. With policy `STRUCTURED_REQUIRED` and the plane stopped, the job fails with a clear error and does **not** write partial chunks.
-4. A submit that times out client-side is reconciled by polling — asserted by a test where the server delays the response and the client observes exactly one server-side operation.
+4. A submit that times out client-side is reconciled by polling - asserted by a test where the server delays the response and the client observes exactly one server-side operation.
 5. Document bytes never transit the gRPC contract: the plane reads from object storage. Asserted by a test that the request carries only a reference.
 6. A grep for `opendataloader` and for any worker/pool/device identifier in `platform` returns nothing.
 7. `./gradlew build` green in `platform`.
 
 ---
 
-## Phase SCEP-6 — Topology Equivalence + Hardening
+## Phase SCEP-6 - Topology Equivalence + Hardening
 
-**Goal:** prove invariant #1 empirically — the same request produces equivalent semantics embedded and remote. This is the gate on calling v1.21 complete (§32.1, and decision item 22).
+**Goal:** prove invariant #1 empirically - the same request produces equivalent semantics embedded and remote. This is the gate on calling v1.21 complete (§32.1, and decision item 22).
 
 ### Deliverables
 
@@ -446,16 +446,16 @@ extraction_idempotency
 ### Definition of Done
 
 1. For every fixture, embedded and remote runs agree on: element count and order, element types, feature states, error codes, and payload descriptor `schema_id`/`schema_version`. Only diagnostics and timings may differ.
-2. A malicious fixture set (PDF bomb, deeply nested XML, huge embedded image, malformed EPUB) yields a contract error code — never a hang, OOM, or crash of the gateway.
+2. A malicious fixture set (PDF bomb, deeply nested XML, huge embedded image, malformed EPUB) yields a contract error code - never a hang, OOM, or crash of the gateway.
 3. No source-supplied code executes: verified with a fixture carrying embedded JavaScript.
 4. Tenant A cannot reference tenant B's object, even with a valid bucket/key.
-5. Prompts, document text, and transcript content never appear in logs — only ids, media types, states, and error codes.
+5. Prompts, document text, and transcript content never appear in logs - only ids, media types, states, and error codes.
 6. §32.2–§32.9 validation items each map to a passing test.
 7. Part IX exists in the design doc and the decision record is filed.
 
 ---
 
-## Phase SCEP-7 — Multimodal Expansion (post-v1.21)
+## Phase SCEP-7 - Multimodal Expansion (post-v1.21)
 
 Additive only; no contract change. Audio (ASR + diarization + pause/overlap timeline), image (OCR + VLM description with provenance separation), video (demux → scene detection → frame/clip extraction, delegating to the audio and image adapters).
 
@@ -475,9 +475,9 @@ Until then, `adapter-stubs` declines these media types with `UNSUPPORTED_MEDIA_T
 
 ---
 
-## Open Question — OpenDataLoader Coordinates
+## Open Question - OpenDataLoader Coordinates
 
-Maven Central shows the PDF core library under two candidate groupIds: `io.github.opendataloader-project:opendataloader-pdf-core` and `org.opendataloader:opendataloader-pdf-core` (2.1.1 observed). Which is current — and whether the Java library covers the OCR, formula, and image-description features, or whether those require the CLI or hybrid mode — is the first task of SCEP-3, not an assumption baked into this plan.
+Maven Central shows the PDF core library under two candidate groupIds: `io.github.opendataloader-project:opendataloader-pdf-core` and `org.opendataloader:opendataloader-pdf-core` (2.1.1 observed). Which is current - and whether the Java library covers the OCR, formula, and image-description features, or whether those require the CLI or hybrid mode - is the first task of SCEP-3, not an assumption baked into this plan.
 
 This does not block SCEP-1 or SCEP-2. If the Java library turns out to cover less than draft §38 claims, the adapter boundary is exactly the place that absorbs it: the affected features report `UNSUPPORTED` through the normal feature-state mechanism, and the contract does not change.
 
@@ -505,13 +505,13 @@ SCEP-4 (async + Postgres)       |
         SCEP-7 (multimodal, post-v1.21)
 ```
 
-SCEP-1 is the hard serialization point. After it, the platform client can be built against the mock in parallel with the plane itself — the same split that let `gpu-contract` and `gpu-gateway` proceed independently.
+SCEP-1 is the hard serialization point. After it, the platform client can be built against the mock in parallel with the plane itself - the same split that let `gpu-contract` and `gpu-gateway` proceed independently.
 
 ---
 
 ## Configuration Keys
 
-### `content_extractor` — `extraction-gateway.*`
+### `content_extractor` - `extraction-gateway.*`
 
 | Property | Env var | Default | Purpose |
 |---|---|---|---|
@@ -528,7 +528,7 @@ SCEP-1 is the hard serialization point. After it, the platform client can be bui
 | `extraction-gateway.objectstore.endpoint` | `EXTRACTION_OBJECTSTORE_ENDPOINT` | `http://minio:9000` | Source + payload storage |
 | `extraction-gateway.retention.result-ttl-hours` | `EXTRACTION_RESULT_TTL_HOURS` | `168` | Result retention |
 
-### `platform` — `synanton.extraction.client.*`
+### `platform` - `synanton.extraction.client.*`
 
 | Property | Env var | Default | Purpose |
 |---|---|---|---|
@@ -558,7 +558,7 @@ extraction_payload_bytes
 extraction_fallback_total
 ```
 
-`extraction_fallback_total` is the one the platform owns — it counts how often the plane was unavailable or incompatible and the platform fell back. A rising value means the plane is failing without anyone noticing, because ingestion still "succeeds."
+`extraction_fallback_total` is the one the platform owns - it counts how often the plane was unavailable or incompatible and the platform fell back. A rising value means the plane is failing without anyone noticing, because ingestion still "succeeds."
 
 Cardinality guard: `processor_id` is a bounded adapter identifier, never a version string or worker identity.
 
@@ -572,7 +572,7 @@ Cardinality guard: `processor_id` is a bounded adapter identifier, never a versi
 | Structured payload grows large for long documents | Memory pressure, gRPC message limits | `inline-payload-threshold-bytes` moves payloads to object storage as `PayloadReference` |
 | `ChunkStage` rework on structured elements changes existing chunk boundaries | Re-embedding of already-ingested corpora | Structure-aware chunking lands behind a flag; flat-text chunking stays the default until measured |
 | Sync path becomes the de-facto production path | Long extractions block callers, invariant §19 eroded | Sync path enforces its own size/duration ceiling and rejects above it, pointing callers at async |
-| Two implementations drift (sync vs async) | §19 violation — a second result model | Sync is implemented as *submit + await* over the same domain service; no separate code path (verified in SCEP-2 DoD) |
+| Two implementations drift (sync vs async) | §19 violation - a second result model | Sync is implemented as *submit + await* over the same domain service; no separate code path (verified in SCEP-2 DoD) |
 | Extraction plane reaches for the GPU plane through the platform | Topology leak, circular dependency | `content_extractor` has no dependency on `synanton.gpu.v1`; enforced by `.cursor/rules/extraction-rules.mdc` and a dependency check |
 | Proto mirror divergence between repos | Silent incompatibility | CI diff check in both repos, as with `synanton.gpu.v1` |
 
@@ -581,7 +581,7 @@ Cardinality guard: `processor_id` is a bounded adapter identifier, never a versi
 ## How to Contribute
 
 1. Plan changes land here first; phase-level detail lives in `content_extractor/doc/`.
-2. A phase is not done until its numbered Definition of Done is fully satisfied — partial completion is reported as partial.
+2. A phase is not done until its numbered Definition of Done is fully satisfied - partial completion is reported as partial.
 3. Contract changes (SCEP-1 artifacts) require the mirror update in both repos in the same change set.
 4. New config keys are added to the tables above in the same change that introduces them.
 5. Any new invariant goes into `.cursor/rules/extraction-rules.mdc`, not just prose here.
@@ -590,10 +590,10 @@ Cardinality guard: `processor_id` is a bounded adapter identifier, never a versi
 
 ## References
 
-1. `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md` — contract proposal (§1–§35)
-2. `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane_draft.md` — multimodal design and PDF PoC (§1–§49)
-3. `docs/implementation/gpu-execution-plane/INDEX.md` — the plan this one is patterned after
-4. `docs/architecture/synanton-design-1.20.md` — GPU Execution Plane precedent for a contract-bounded plane
-5. [OpenDataLoader PDF](https://github.com/opendataloader-project/opendataloader-pdf) — PoC processor
-6. [`opendataloader-pdf-core` on Maven Central](https://central.sonatype.com/artifact/org.opendataloader/opendataloader-pdf-core/2.1.1) — coordinate candidate, to be confirmed in SCEP-3
+1. `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md` - contract proposal (§1–§35)
+2. `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane_draft.md` - multimodal design and PDF PoC (§1–§49)
+3. `docs/implementation/gpu-execution-plane/INDEX.md` - the plan this one is patterned after
+4. `docs/architecture/synanton-design-1.20.md` - GPU Execution Plane precedent for a contract-bounded plane
+5. [OpenDataLoader PDF](https://github.com/opendataloader-project/opendataloader-pdf) - PoC processor
+6. [`opendataloader-pdf-core` on Maven Central](https://central.sonatype.com/artifact/org.opendataloader/opendataloader-pdf-core/2.1.1) - coordinate candidate, to be confirmed in SCEP-3
 

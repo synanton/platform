@@ -62,7 +62,7 @@ class OpenAiCompatTranslator implements LlmProviderTranslator {
     }
 
     @Override
-    public EmbedResponse parseEmbedResponse(String json) {
+    public EmbedResponse parseEmbedResponse(String json, int inputChars) {
         try {
             JsonNode root = MAPPER.readTree(json);
             JsonNode data = root.path("data");
@@ -70,10 +70,16 @@ class OpenAiCompatTranslator implements LlmProviderTranslator {
             for (JsonNode item : data) {
                 JsonNode embNode = item.path("embedding");
                 float[] emb = new float[embNode.size()];
-                for (int i = 0; i < embNode.size(); i++) emb[i] = (float) embNode.get(i).asDouble();
+                for (int i = 0; i < embNode.size(); i++) {
+                    emb[i] = (float) embNode.get(i).asDouble();
+                }
                 embeddings.add(emb);
             }
-            return new EmbedResponse(embeddings);
+            JsonNode usage = root.path("usage");
+            int promptTokens = usage.path("prompt_tokens").asInt(0);
+            int totalTokens = usage.path("total_tokens").asInt(promptTokens);
+            int completionTokens = Math.max(0, totalTokens - promptTokens);
+            return new EmbedResponse(embeddings, inputChars, 0, 0, promptTokens, completionTokens);
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse embed response: " + json, e);
         }

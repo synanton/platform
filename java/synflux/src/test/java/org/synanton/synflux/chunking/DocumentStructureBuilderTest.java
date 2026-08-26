@@ -152,7 +152,7 @@ class DocumentStructureBuilderTest {
     @Test
     void elementsBeforeFirstHeadingAreIgnoredAsOrphanedRoot() {
         // Elements before any heading attach to the synthetic root and do not appear
-        // as a named section — this is intentional (they are preamble content).
+        // as a named section - this is intentional (they are preamble content).
         var sections = builder.build(List.of(
             para("p0", "Preamble before any heading."),
             heading("Chapter 1", 1),

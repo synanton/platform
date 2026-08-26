@@ -222,7 +222,8 @@ services:
       EMBED_BASE_URL: http://vllm-embed:8001/v1
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8090
-      EXTRACTION_SERVICE_URL: extraction-gateway:9091
+      EXTRACTION_CLIENT_ENABLED: "true"
+      EXTRACTION_ENDPOINT: extraction-gateway:9091
     ports:
       - "8090:8090"
     volumes:

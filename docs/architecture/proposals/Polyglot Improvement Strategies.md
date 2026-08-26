@@ -43,7 +43,7 @@ The ingestion pipeline (`Synflux`) currently uses a "two-pass LLM chain-of-thoug
 
 #### 4. Polyglot Ontology Rules via WebAssembly / JavaScript (Logic Polyglot)
 
-Syntology uses SHACL—which is excellent—but SHACL shapes are usually static RDF  files. For enterprise agility, business rules change weekly.
+Syntology uses SHACL-which is excellent-but SHACL shapes are usually static RDF  files. For enterprise agility, business rules change weekly.
 
 - **Improvement**: Introduce a **sandboxed rules engine** alongside SHACL:
   - Allow Ontology Administrators to write validation rules in **JavaScript** (via GraalJS) or **WebAssembly** (compiled from Rust/Go).

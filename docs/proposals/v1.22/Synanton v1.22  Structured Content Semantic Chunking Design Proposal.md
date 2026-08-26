@@ -2,7 +2,7 @@
 
 **Document ID:** SNTP-8-DESIGN-SCEP-1.22
 **Date:** 2026-08-25
-**Status:** PROPOSED — ARCHITECTURAL DESIGN IN PROGRESS
+**Status:** PROPOSED - ARCHITECTURAL DESIGN IN PROGRESS
 **Basis:** Synanton v1.20 Architecture, v1.21 Structured Content Extraction Plane proposal, and OpenDataLoader PoC findings
 **Purpose:** Define a concrete multimodal extraction model with integrated semantic  chunking, while preserving the deployment-neutral extraction contract.
 
@@ -997,7 +997,7 @@ batch jobs when capacity is constrained.
 
 
 
-**Chunk A — Section Introduction**
+**Chunk A - Section Introduction**
 
 json
 
@@ -1018,7 +1018,7 @@ json
 
 
 
-**Chunk B — Subsection**
+**Chunk B - Subsection**
 
 json
 
@@ -1039,7 +1039,7 @@ json
 
 
 
-**Chunk C — Table**
+**Chunk C - Table**
 
 json
 
@@ -1070,7 +1070,7 @@ json
 
 
 
-**Chunk D — Subsection**
+**Chunk D - Subsection**
 
 json
 
@@ -1119,9 +1119,9 @@ json
 
 ## 12. Embedding and Summarization: Different Uses of the Same Structure
 
-Version 1.22 distinguishes between embedding and summarization—they use the same structured content differently.
+Version 1.22 distinguishes between embedding and summarization-they use the same structured content differently.
 
-### Embeddings — Optimize for Retrieval Granularity
+### Embeddings - Optimize for Retrieval Granularity
 
 text
 
@@ -1141,7 +1141,7 @@ embedding
 
 A subsection might produce several embedding chunks if it is large. Each  chunk is optimized for precise retrieval of specific information.
 
-### Summarization — Optimize for Hierarchical Context
+### Summarization - Optimize for Hierarchical Context
 
 text
 
@@ -1198,7 +1198,7 @@ The v1.22 design explicitly recognizes that different downstream tasks require t
 
 ------
 
-## 14. PDF Processing PoC — OpenDataLoader PDF
+## 14. PDF Processing PoC - OpenDataLoader PDF
 
 For the PDF PoC, use:
 
@@ -1682,14 +1682,14 @@ json
   "speakerId": "speaker-1",
   "startMs": 10200,
   "endMs": 13800,
-  "text": "The important part is—"
+  "text": "The important part is-"
 },
 {
   "id": "u022",
   "speakerId": "speaker-2",
   "startMs": 12900,
   "endMs": 15200,
-  "text": "Yes, but the contract—"
+  "text": "Yes, but the contract-"
 }
 ```
 
@@ -2348,7 +2348,7 @@ The knowledge layer can reject, enrich, resolve, or combine extracted observatio
 
 ------
 
-## 33. End-to-End Example — PDF with Semantic Chunking
+## 33. End-to-End Example - PDF with Semantic Chunking
 
 text
 
@@ -2420,7 +2420,7 @@ SharePoint / FileNet / local FS
 
 ------
 
-## 34. End-to-End Example — Audio Meeting
+## 34. End-to-End Example - Audio Meeting
 
 text
 
@@ -2461,7 +2461,7 @@ Extraction Plane
 
 ------
 
-## 35. End-to-End Example — Image
+## 35. End-to-End Example - Image
 
 text
 
@@ -2496,7 +2496,7 @@ Knowledge Processing
 
 ------
 
-## 36. End-to-End Example — Video Clip
+## 36. End-to-End Example - Video Clip
 
 text
 
@@ -3288,13 +3288,13 @@ The implementation behind it can change.
 
 The key architectural statement for Synanton v1.22 is:
 
-> **Structured extraction is the canonical input to semantic chunking. Chunk  boundaries SHOULD follow document semantics—section hierarchy, lists,  tables, figures, and other structural elements—while token/size limits  provide a secondary constraint and fallback. `flattenedText` MUST NOT be the only input available to the chunking stage.**
+> **Structured extraction is the canonical input to semantic chunking. Chunk  boundaries SHOULD follow document semantics-section hierarchy, lists,  tables, figures, and other structural elements-while token/size limits  provide a secondary constraint and fallback. `flattenedText` MUST NOT be the only input available to the chunking stage.**
 
 This design gives Synanton a clean, scalable separation between:
 
-1. **Extraction** — What is in the document (v1.21)
-2. **Document Understanding/Structuring** — How it is organized (v1.22)
-3. **Task-Specific Representation** — How it is consumed (v1.22)
+1. **Extraction** - What is in the document (v1.21)
+2. **Document Understanding/Structuring** - How it is organized (v1.22)
+3. **Task-Specific Representation** - How it is consumed (v1.22)
 
 It fully leverages the provenance and semantic richness already provided  by the v1.21 OpenDataLoader integration, transforming Synanton's  ingestion and search architecture from a naive text pipeline into a  truly structure-aware knowledge engine.
 

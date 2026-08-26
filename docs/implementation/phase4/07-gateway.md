@@ -300,9 +300,9 @@ Fallback on reranker failure (from Phase 3): return un-reranked hits, `gateway_r
 ## 9. Testing Strategy
 
 - **Unit:** ACL clause construction (OR of subject + groups). Cache key invariance property (two ACLs with different concrete grants but same intersection → identical key). Cold rehydrator backoff state machine.
-- **Integration:** All above `*IT` classes with Testcontainers Postgres + Kafka + Redis. `AclLeakageFuzzIT` — mutate ACL grants in random order under continuous search; assert `gateway_acl_trim_removed_total` remains 0.
+- **Integration:** All above `*IT` classes with Testcontainers Postgres + Kafka + Redis. `AclLeakageFuzzIT` - mutate ACL grants in random order under continuous search; assert `gateway_acl_trim_removed_total` remains 0.
 - **Regression:** Phase 3 gateway tests (reranker fallback, circuit breaker) unchanged.
-- **Security:** `CacheKeyBypassTest` — verify ACL strip cannot be tricked into serving wider results by manipulating request parameters.
+- **Security:** `CacheKeyBypassTest` - verify ACL strip cannot be tricked into serving wider results by manipulating request parameters.
 
 ---
 

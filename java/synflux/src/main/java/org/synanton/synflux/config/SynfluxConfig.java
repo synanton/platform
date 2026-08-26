@@ -1,7 +1,9 @@
 package org.synanton.synflux.config;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import org.synanton.extraction.client.ExtractionClientMetrics;
+import org.synanton.extraction.client.ExtractionClientProperties;
+import org.synanton.extraction.client.ExtractionPlaneClient;
+import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.llm.HttpLlmClient;
 import org.synanton.llm.LlmClient;
@@ -14,10 +16,9 @@ import org.synanton.synvault.port.ObjectStorePort;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import synanton.extraction.v1.ExtractionServiceGrpc;
 
 @Configuration
-@EnableConfigurationProperties(SynfluxProperties.class)
+@EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class})
 public class SynfluxConfig {
 
     private static final String HOT_BUCKET = "synanton-hot";
@@ -28,14 +29,19 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public ExtractionStage extractionStage(SynfluxProperties props, ObjectStorePort objectStore) {
-        String url = props.pipeline() != null ? props.pipeline().extractionServiceUrl() : null;
-        ExtractionServiceGrpc.ExtractionServiceBlockingStub stub = null;
-        if (url != null && !url.isBlank()) {
-            ManagedChannel channel = ManagedChannelBuilder.forTarget(url).usePlaintext().build();
-            stub = ExtractionServiceGrpc.newBlockingStub(channel);
-        }
-        return new ExtractionStage(stub, objectStore, HOT_BUCKET);
+    public ExtractionStage extractionStage(
+            ExtractionPlaneClient extractionClient,
+            LocalTikaFallbackExtractor fallbackExtractor,
+            ExtractionClientProperties extractionClientProperties,
+            ExtractionClientMetrics extractionClientMetrics,
+            ObjectStorePort objectStore) {
+        return new ExtractionStage(
+                extractionClient,
+                fallbackExtractor,
+                extractionClientProperties.fallbackPolicy(),
+                extractionClientMetrics,
+                objectStore,
+                HOT_BUCKET);
     }
 
     @Bean

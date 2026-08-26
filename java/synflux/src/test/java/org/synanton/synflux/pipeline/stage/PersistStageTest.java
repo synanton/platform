@@ -44,7 +44,7 @@ class PersistStageTest {
 
         SynfluxProperties props = new SynfluxProperties(
                 new SynfluxProperties.Ingest(1, 1000, new SynfluxProperties.Ingest.Chunk("semantic-v1", 400, 50)),
-                new SynfluxProperties.Pipeline(false, false, ""),
+                new SynfluxProperties.Pipeline(false, false),
                 new SynfluxProperties.Enrichment("http://x", "m", 1),
                 new SynfluxProperties.Embedding("http://x", "m", 1),
                 new SynfluxProperties.Kafka(1, 1, 1)

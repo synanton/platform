@@ -70,7 +70,7 @@ public class GpuExecutionServiceImpl extends GPUExecutionServiceGrpc.GPUExecutio
 
         String requestId = request.getRequestId();
 
-        // 3. Idempotency check — fail-closed
+        // 3. Idempotency check - fail-closed
         Optional<ExecutionResponse> cached;
         try {
             cached = idempotencyStore.get(requestId);
@@ -94,7 +94,7 @@ public class GpuExecutionServiceImpl extends GPUExecutionServiceGrpc.GPUExecutio
         // 4. Generate Gateway-owned execution_id
         String executionId = UUID.randomUUID().toString();
 
-        // 5. Record QUEUED state — fail-closed; duplicate request_id is a guard, not an error path
+        // 5. Record QUEUED state - fail-closed; duplicate request_id is a guard, not an error path
         try {
             idempotencyStore.initiate(requestId, executionId);
         } catch (DuplicateRequestIdException e) {
@@ -119,7 +119,7 @@ public class GpuExecutionServiceImpl extends GPUExecutionServiceGrpc.GPUExecutio
         log.info("Dispatching execution_id={} model={} op={} request_id={}",
                 executionId, request.getModel(), request.getOperation(), requestId);
 
-        // 6. Dispatch — Gateway does NOT cancel this if the gRPC stream closes
+        // 6. Dispatch - Gateway does NOT cancel this if the gRPC stream closes
         DispatchResult result;
         try {
             result = dispatcher.dispatch(request, executionId);
@@ -226,7 +226,7 @@ public class GpuExecutionServiceImpl extends GPUExecutionServiceGrpc.GPUExecutio
 
     @Override
     public void getCapacity(GetCapacityRequest request, StreamObserver<CapacityResponse> observer) {
-        // Advisory only — does not reserve capacity.
+        // Advisory only - does not reserve capacity.
         CapacityResponse response = dispatcher.capacity(request);
         observer.onNext(response);
         observer.onCompleted();

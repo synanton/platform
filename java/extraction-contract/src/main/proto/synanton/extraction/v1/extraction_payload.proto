@@ -41,7 +41,7 @@ enum SerializationFormat {
 // schema_* describes the representation; processor_* describes what produced it.
 // These version independently: replacing OpenDataLoader with another PDF parser
 // changes processor_id/processor_version and leaves schema_id/schema_version
-// untouched — which is precisely the black-box property (§67.2).
+// untouched - which is precisely the black-box property (§67.2).
 message PayloadDescriptor {
     // Stable schema identifier, e.g. "synanton.extraction.document".
     string schema_id = 1;
