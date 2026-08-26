@@ -68,7 +68,7 @@ Structure mirrors `synanton/gpu-runtime` exactly: root Gradle Kotlin DSL multi-m
 
 ```text
 content_extractor/
-├── build.gradle.kts                    # root: group=com.synanton, Java 21 toolchain, buildAll task
+├── build.gradle.kts                    # root: group=org.synanton, Java 21 toolchain, buildAll task
 ├── settings.gradle.kts
 ├── gradle.properties
 ├── gradle/
@@ -104,7 +104,7 @@ content_extractor/
     └── adapter-stubs/                  # audio/image/video: capability-declining stubs
 ```
 
-**Package root:** `com.synanton.extraction.*` (matches `gpu-runtime`'s `com.synanton.gpu.*`; note the platform side uses `org.synanton.*`).
+**Package root:** `org.synanton.extraction.*` (matches `gpu-runtime`'s `org.synanton.gpu.*`; note the platform side uses `org.synanton.*`).
 
 ### Hexagonal boundaries enforced in the new repo
 
