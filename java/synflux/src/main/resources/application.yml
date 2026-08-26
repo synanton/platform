@@ -22,6 +22,7 @@ synflux:
   pipeline:
     enrichment-enabled: false
     embedding-enabled: false
+    extraction-service-url: ${EXTRACTION_SERVICE_URL:}
   enrichment:
     model-id: llama-3.1-8b-instruct
     llm-base-url: ${LLM_BASE_URL:http://vllm-llm:8000}

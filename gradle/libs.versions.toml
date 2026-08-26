@@ -23,6 +23,7 @@ micrometer            = "1.13.5"
 cassandraDriver       = "4.17.0"
 tika                  = "2.9.2"
 jgrapht               = "1.5.2"
+neo4jDriver           = "5.26.1"
 lucene                = "9.11.1"
 awsSdkV2              = "2.27.21"
 lz4                   = "1.8.0"
@@ -99,6 +100,9 @@ tika-parsers          = { module = "org.apache.tika:tika-parsers-standard-packag
 
 # JGraphT
 jgrapht-core          = { module = "org.jgrapht:jgrapht-core",           version.ref = "jgrapht" }
+
+# Graph backends (Relix adapters)
+neo4j-java-driver     = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4jDriver" }
 
 # Apache Lucene
 lucene-core           = { module = "org.apache.lucene:lucene-core",       version.ref = "lucene" }

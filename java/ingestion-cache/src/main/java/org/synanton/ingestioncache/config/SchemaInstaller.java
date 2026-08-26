@@ -16,6 +16,7 @@ public class SchemaInstaller {
     private static final String[] MIGRATIONS = {
         "cql/V1__baseline.cql",
         "cql/V2_1__kafka_outbox.cql",
+        "cql/V3__chunk_provenance.cql",
     };
 
     public static void install(CqlSession session) {

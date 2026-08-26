@@ -79,8 +79,12 @@ public class IngestionCacheClient {
 
     public void insertChunk(ChunkRow chunk) {
         session.execute(SimpleStatement.newInstance(
-            "INSERT INTO ingestion_cache.chunks_payload (tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256) VALUES (?,?,?,?,?)",
-            chunk.tenantId(), chunk.contentRefId(), chunk.chunkOrdinal(), chunk.chunkText(), chunk.chunkSha256()
+            "INSERT INTO ingestion_cache.chunks_payload " +
+            "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
+            "page_start, page_end, section_path, chunk_type, heading) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            chunk.tenantId(), chunk.contentRefId(), chunk.chunkOrdinal(), chunk.chunkText(),
+            chunk.chunkSha256(), chunk.pageStart(), chunk.pageEnd(), chunk.sectionPath(),
+            chunk.chunkType(), chunk.heading()
         ));
     }
 
@@ -88,8 +92,12 @@ public class IngestionCacheClient {
         var batch = BatchStatement.newInstance(DefaultBatchType.LOGGED);
         for (ChunkRow c : chunks) {
             batch = batch.add(SimpleStatement.newInstance(
-                "INSERT INTO ingestion_cache.chunks_payload (tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256) VALUES (?,?,?,?,?)",
-                c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(), c.chunkSha256()
+                "INSERT INTO ingestion_cache.chunks_payload " +
+                "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
+                "page_start, page_end, section_path, chunk_type, heading) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
+                c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
+                c.chunkType(), c.heading()
             ));
         }
         session.execute(batch);
@@ -105,10 +113,35 @@ public class IngestionCacheClient {
             rows.add(new ChunkRow(
                 r.getString("tenant_id"), r.getUuid("content_ref_id"),
                 r.getInt("chunk_ordinal"), r.getString("chunk_text"),
-                r.getString("chunk_sha256")
+                r.getString("chunk_sha256"),
+                intOrDefault(r, "page_start", -1),
+                intOrDefault(r, "page_end", -1),
+                stringOrEmpty(r, "section_path"),
+                stringOrEmpty(r, "chunk_type"),
+                stringOrEmpty(r, "heading")
             ));
         }
         return rows;
+    }
+
+    private static int intOrDefault(Row r, String column, int fallback) {
+        try {
+            if (r.isNull(column)) {
+                return fallback;
+            }
+            return r.getInt(column);
+        } catch (IllegalArgumentException e) {
+            return fallback;
+        }
+    }
+
+    private static String stringOrEmpty(Row r, String column) {
+        try {
+            String v = r.getString(column);
+            return v == null ? "" : v;
+        } catch (IllegalArgumentException e) {
+            return "";
+        }
     }
 
     // ---- Jobs ----

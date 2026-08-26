@@ -78,7 +78,7 @@ Synanton provides a single coherent platform for this problem:
 | `syntology` | Ontology service - REST API, Jena storage, HCL→JSON IR→SHACL, versioning | ✅ Done (standalone) |
 | `syntology-admin` | React SPA - graph editor, login, grants view | ✅ Done (standalone) |
 | `synquest` | Hybrid search kernel - BM25 + HNSW + RRF | ✅ Done (Phase 1) |
-| `relix` | GraphRAG engine - JGraphT in-memory graph, MCP tools | ✅ Done (Phase 1) |
+| `relix` | GraphRAG engine - `GraphConnector` adapters (JGraphT / Neo4j / Nebula), MCP tools | ✅ Done (Phase 1; Neo4j/Nebula selectable) |
 | `planner` | Intent classifier + query plan generator | ✅ Done (Phase 1) |
 | `gateway` | Plan DAG executor + LLM synthesis + reranker + GPU execution client | ✅ Done (Phase 1+2; GPU client v1.20) |
 | `synapt` | Public REST/gRPC ingress, rate limiting, sanitisation | ✅ Done (Phase 1+2) |
@@ -93,7 +93,8 @@ Synanton provides a single coherent platform for this problem:
 
 | Component | Role | Status |
 |-----------|------|--------|
-| `java/gpu-contract` | `synanton.gpu.v1` protobuf contract — `Execute`, `Cancel`, `GetStatus`, `GetCapacity` RPCs; structured error catalogue; generated gRPC stubs | ✅ GPU-1 done |
+| `java/gpu-contract` | `synanton.gpu.v1` protobuf — `Execute`, `Cancel`, `GetStatus`, `GetCapacity`; `org.synanton.gpu.v1`; `ErrorReason` catalogue; **byte-identical** with `gpu-runtime` | ✅ GPU-1 + mirror |
+| Contract mirror check | `scripts/verify-gpu-contract-mirror.sh` + `verifyGpuContractMirror`, wired into `check` and CI | ✅ Done |
 | `java/gpu-gateway` | GPU Gateway service — mTLS boundary, field validation, tenant assertion, idempotency store (PostgreSQL, fail-closed), `DirectDispatcher` → vLLM, execution lifecycle, Micrometer metrics | ✅ GPU-2 done |
 | `gateway` GPU client | `GpuExecutionClient` + `GpuSynthesisAdapter` — primary platform gRPC client + synthesis adapter with `MODEL_NOT_READY` retry, CPU degraded fallback, trace context propagation; `ModelServingDirectory` `isGpuBacked()` / `getGpuModels()` | ✅ GPU-3 done |
 | Consumer contract tests | `GpuContractTest` — in-process gRPC tests verifying all 4 RPCs, error shapes, and `MODEL_NOT_READY` retryable flag | ✅ GPU-1 done |
@@ -108,8 +109,8 @@ Synanton provides a single coherent platform for this problem:
 | `java/extraction-contract` | `synanton.extraction.v1` protobuf contract — 9 RPCs (submit, batch, sync, status poll, cursor completion poll, result, cancel, capacity, estimate, capabilities); 13-code error catalogue; explicit feature-state model; generated gRPC stubs | ✅ SCEP-1 done |
 | Contract mirror check | `scripts/verify-contract-mirror.sh` + `verifyContractMirror` Gradle task, wired into `check` and CI — fails when the protos diverge from `content_extractor` | ✅ SCEP-1 done |
 | Consumer contract tests | 43 tests: in-process gRPC round trip, idempotency replay, cursor polling, validation rules, and descriptor-level black-box enforcement (`ContractOpacityTest`) | ✅ SCEP-1 done |
-| `java/extraction-client` | `ExtractionPlaneClient`, reconcile-after-timeout, `ExtractionFallbackPolicy` | 🔲 SCEP-5 |
-| `synflux` extraction wiring | `ParseStage` re-pointed at the plane; in-process Tika retained as fallback; structure-aware chunking | 🔲 SCEP-5 |
+| `java/extraction-client` | Dedicated client library with reconcile-after-timeout and `ExtractionFallbackPolicy` | 🔲 SCEP-5 |
+| `synflux` extraction wiring | `ExtractionStage` calls `ExtractSync`; Tika fallback when the plane is down or returns no payload; `SemanticChunkStage` | 🔶 PoC |
 
 ---
 
@@ -125,7 +126,7 @@ The platform is being built in five phases, with a GPU execution plane track int
 - [x] `synvault` - `FilesystemAdapter`, MinIO object store, manifest REST API
 - [x] `synflux` - acquire → parse → chunk → persist pipeline, CLI + REST trigger
 - [x] `synquest` - Lucene BM25 + HNSW hybrid search, boot-time index build
-- [x] `relix` - JGraphT in-memory graph, `POST /graph/query`, three query shapes
+- [x] `relix` - `POST /graph/query`, three query shapes, `relix.graph.connector` (`memory` default, `neo4j`, `nebula`)
 - [x] `planner` - heuristic classifier (T1–T4), 4 plan templates, entity trie, `POST /plan`
 - [x] `gateway` - plan DAG executor, parallel step dispatch, RRF fusion, `POST /query`
 - [x] `synapt` - thin REST ingress, `MockTenantFilter`, Jakarta Validation, `POST /search`
@@ -187,10 +188,10 @@ The platform is being built in five phases, with a GPU execution plane track int
 
 > **Note:** The Phase 2 Quick Start below runs vLLM locally for development and demo purposes. That is **not** the production GPU Execution Plane. Production GPU workloads use the `synanton/gpu-execution-plane` repository and connect via `synanton.gpu.v1` over mTLS.
 
-- **GPU-1** ✅ - `synanton.gpu.v1` contract (`java/gpu-contract`), structured error catalogue, generated stubs, consumer contract tests (`GpuContractTest`), `GpuExecutionClient` in `gateway`
-- **GPU-2** ✅ - GPU Gateway (`java/gpu-gateway`): `GpuExecutionServiceImpl`, `DirectDispatcher`, durable PostgreSQL idempotency store (fail-closed), `TenantAssertionValidator`, `GpuGatewayMetrics`, Flyway migration
-- **GPU-3** ✅ - `GpuSynthesisAdapter` (retry + CPU degraded fallback), wired into `SynthesisService`; `ModelServingDirectory` `isGpuBacked()` / `getGpuModels()`; trace context propagation; `gateway.gpu.*` config; llama model marked `execution-plane: gpu`
-- **GPU-4** 🔲 - Security hardening, failure injection tests, idempotency/duplicate tests, observability dashboards, cost attribution validation
+- **GPU-1** ✅ - `synanton.gpu.v1` (`java/gpu-contract`), mirrored in `gpu-runtime`, `ErrorReason` catalogue, `GpuContractTest`, `GpuExecutionClient`
+- **GPU-2** ✅ - in-repo `java/gpu-gateway` (`GpuExecutionServiceImpl`, `DirectDispatcher`, PostgreSQL idempotency). Production binary is `gpu-runtime`, which implements the same proto
+- **GPU-3** ✅ - `GpuSynthesisAdapter` (retry + CPU degraded fallback), `ModelServingDirectory` GPU flags, `gateway.gpu.*`
+- **GPU-4** 🔶 - gpu-runtime can serve platform clients (contract unified). Ingest embeddings still use HTTP `HttpLlmClient`. Security/hardening/dashboards still open
 - **GPU-5** 🔲 *(conditional)* - `EqualixScheduler` — only after GPU-4 operational evidence
 
 See `docs/implementation/gpu-execution-plane/INDEX.md` for the detailed implementation plan.
@@ -202,18 +203,66 @@ See `docs/implementation/gpu-execution-plane/INDEX.md` for the detailed implemen
 > **Architectural decision:** the extraction plane is a black box. The platform specifies *what* to extract and under *what constraints*; the plane decides *how*. Which parser runs, whether OCR is local or remote, and whether work is CPU-, GPU-, or accelerator-backed are invisible through the contract — so the implementation can grow from an embedded processor into a distributed cluster without a platform API change.
 
 - **SCEP-1** ✅ - `synanton.extraction.v1` contract (`java/extraction-contract`), byte-identical mirror in `synanton/content_extractor` with a drift check wired into `check` and CI, 13-code error catalogue with retryability verdicts, explicit feature-state model, 43 consumer contract tests
-- **SCEP-2** 🔲 - Extraction plane skeleton + sync path: gRPC server, `ModalityAdapter` SPI, router, text/EPUB/HTML adapter, sandbox limits
-- **SCEP-3** 🔲 - PDF PoC via OpenDataLoader behind the adapter boundary; the 15 acceptance criteria of the design draft
-- **SCEP-4** 🔲 - Async operation model: PostgreSQL operation store, fail-closed idempotency, admission under advisory lock, expiry semantics, cursor completion feed
-- **SCEP-5** 🔲 - Platform integration: `extraction-client`, `synflux` `ParseStage` re-pointed at the plane with Tika fallback retained, structure-aware chunking
-- **SCEP-6** 🔲 - Topology equivalence proof (embedded vs remote produce equivalent semantics) + security hardening; gates v1.21 completion
-- **SCEP-7** 🔲 *(post-v1.21)* - Audio, image, and video extraction; additive, no contract change
+- **SCEP-2** 🔶 - Extraction gateway `ExtractSync` + `GetCapabilities` (no durable operation store yet)
+- **SCEP-3** 🔶 - PDF adapter via OpenDataLoader HTTP; declined when the sidecar is unset
+- **SCEP-4** 🔲 - Async operation model
+- **SCEP-5** 🔶 - `ExtractionStage` + semantic chunking + provenance persist/index; `extraction-client` module still missing
+- **SCEP-6** 🔲 - Topology equivalence proof + security hardening
+- **SCEP-7** 🔲 *(post-v1.21)* - Audio, image, and video extraction
 
 See `docs/implementation/content-extraction-plane/INDEX.md` for the detailed implementation plan and `docs/implementation/content-extraction-plane/error-catalogue.md` for the error contract.
 
 ---
 
 ## Quick start
+
+### Ingest → extract → index (PoC)
+
+The ingest → extract → index path is wired end to end. **Full Docker image builds were not verified in every environment** — run the script locally to confirm.
+
+**What it does**
+
+- Starts Cassandra, MinIO, `extraction-gateway`, synvault, synflux, and synquest.
+- Ingests `demo-data/documents` (markdown/text plus a sample PDF and a heading-structured markdown file).
+- Reindexes synquest and runs a search whose hits can include `source_uri`, `page_start`, and `section_path`.
+
+**Extraction plane.** `content_extractor` serves ExtractSync and GetCapabilities, reads objects from MinIO, routes by media type, and enforces size/time/payload limits. Markdown is a first-class text type. PDF uses the OpenDataLoader HTTP sidecar when `EXTRACTION_OPENDATALOADER_BASE_URL` is set; otherwise the PDF adapter reports unsupported and synflux falls back to Tika.
+
+**Platform.** Synflux calls the plane and skips the extra Tika pass when structured extraction succeeds. Chunks store `page_start`, `page_end`, `section_path`, `chunk_type`, and `heading`. Manifests stay `CHUNKED` unless embeddings are enabled (`EMBEDDED`). Synquest indexes those states with BM25; HNSW is optional. Search does not fail if query embedding is down; hits include citation fields.
+
+```bash
+# From this repository (Docker + Java 21)
+./scripts/run-extract-index-poc.sh
+```
+
+Optional PDF OCR/structure sidecar:
+
+```bash
+export EXTRACTION_OPENDATALOADER_BASE_URL=http://opendataloader:8080
+./scripts/run-extract-index-poc.sh
+```
+
+GPU runtime is **not** on this path. Ingest embeddings still use `HttpLlmClient` when a GPU is present. Production GPU inference uses `synanton.gpu.v1` (mirrored with `gpu-runtime`); see GPU track below.
+
+### Graph engines (Relix)
+
+Relix query shapes (`entity_lookup`, `one_hop`, `k_hop_path`) go through a `GraphConnector` port. Switch backends without changing executors:
+
+| `relix.graph.connector` / `RELIX_GRAPH_CONNECTOR` | Adapter | Notes |
+|---|---|---|
+| `memory` (default) | `InMemoryGraphConnector` | JGraphT, hydrated from Pass-2 Cassandra rows |
+| `neo4j` | `Neo4jGraphConnector` | Bolt/Cypher; requires `NEO4J_URI` |
+| `nebula` | `NebulaGraphConnector` | nGQL; requires a `NebulaSession` bean (hosts via `NEBULA_GRAPHD_HOSTS`) |
+
+```yaml
+relix:
+  graph:
+    connector: memory   # or neo4j | nebula
+    neo4j:
+      uri: ${NEO4J_URI:}
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:}
+```
 
 ### Ingestion demo (Phase 1 - no GPU required)
 
@@ -276,16 +325,16 @@ java/
   topology/             Org/user/ACL store - JDBC repos, Flyway, FilesystemAclSeeder
   syntology/            Ontology service - REST API + Jena TDB2 + SHACL
   synquest/             Hybrid search kernel (Lucene 9 BM25 + HNSW)
-  relix/                GraphRAG engine (JGraphT, MCP tools)
+  relix/                GraphRAG engine (`GraphConnector` adapters, MCP tools)
   planner/              Query intent classifier + plan generator
   gateway/              Plan DAG executor + LLM synthesis
   synapt/               Public REST/gRPC ingress, rate limiting
   control-plane/        Admin API, forecast, anomaly, GitOps
   synflux-router/       Kafka-driven ingestion work distributor
   synanton-mcp/         MCP protocol bridge
-  gpu-contract/         synanton.gpu.v1 protobuf contract (v1.20)
-  gpu-gateway/          GPU Execution Plane service (v1.20)
-  extraction-contract/  synanton.extraction.v1 protobuf contract (v1.21),
+  gpu-contract/         synanton.gpu.v1 protobuf (mirrored in gpu-runtime)
+  gpu-gateway/          in-repo GPU gateway (not a substitute for gpu-runtime)
+  extraction-contract/  synanton.extraction.v1 protobuf,
                         mirrored byte-for-byte in synanton/content_extractor
 
 rust/                   Future Rust components (synquest hot loop - Phase 5)
@@ -297,17 +346,18 @@ deployment/
   docker/               Docker Compose stack and Dockerfiles for all services
 
 docs/
-  architecture/         Platform design (v1.19), module contracts, decision records
-  implementation/       Phase-by-phase implementation plans (Phases 1–3 complete)
+  architecture/         Current design 1.21; 1.20 GPU Part VIII; 1.19 baseline
+  implementation/       Phase-by-phase implementation plans
   proposals/            Versioned change proposals (v1.20 GPU, v1.21 extraction)
 
 scripts/
   setup-dev.sh          Toolchain check (Java 21, Docker, Node 20)
   run-demo.sh           Full demo stack via docker compose
+  run-extract-index-poc.sh  Ingest → extract → index → search (compose)
   run-ingestion-demo.sh Ingestion-only demo (Phase 1 or Phase 2)
   build-all.sh          Build every active module
-  verify-contract-mirror.sh  Fail if synanton.extraction.v1 diverges from
-                        the content_extractor copy (runs in `check` and CI)
+  verify-contract-mirror.sh      synanton.extraction.v1 vs content_extractor
+  verify-gpu-contract-mirror.sh  synanton.gpu.v1 vs gpu-runtime
 
 demo-data/
   documents/            10 synthetic markdown/text files for ingestion demo
@@ -328,7 +378,7 @@ Synanton follows a **hexagonal (ports-and-adapters)** architecture. Each module 
 - A set of **outbound ports** - SPIs the module calls without knowing the implementation.
 - **Adapters** - concrete implementations of those SPIs (e.g. `FilesystemAdapter`, `MinioObjectStoreAdapter`, `JenaTdb2OntologyAdapter`).
 
-This means every adapter is swappable without touching domain logic. `FilesystemAdapter` is replaced by `S3Adapter` by configuration alone. `InMemoryGraphConnector` in Relix is replaced by `Neo4jConnector` in Phase 3.
+This means every adapter is swappable without touching domain logic. `FilesystemAdapter` is replaced by `S3Adapter` by configuration alone. Relix graph backends swap the same way: `relix.graph.connector=memory|neo4j|nebula` selects `InMemoryGraphConnector`, `Neo4jGraphConnector`, or `NebulaGraphConnector`. Phase 3 may still move that Java port behind gRPC; the in-process adapters do not wait on that work.
 
 **Key SPIs defined:**
 
@@ -336,7 +386,7 @@ This means every adapter is swappable without touching domain logic. `Filesystem
 |---|---|---|
 | `ContentAdapter` | `synvault` | Pluggable document source (filesystem, S3, SharePoint, webhooks) |
 | `OntologyAdapter` | `syntology` | Pluggable RDF store (Jena TDB2, GraphDB, RDF4J) |
-| `GraphConnectorSPI` | `relix` | Pluggable graph backend (in-memory, Neo4j, Neptune) |
+| `GraphConnector` | `relix` | Pluggable graph backend (`memory`, `neo4j`, `nebula`; add an adapter for Neptune/others) |
 | `RerankerPort` | `gateway` | Cross-encoder reranker (vLLM, Cohere, custom) |
 | `IdentityProviderPort` | `security` | IdP backend (htpasswd, Keycloak, OIDC) |
 | `LlmClient` | `synanton-llm-client` | LLM provider (vLLM, OpenAI, Anthropic, Bedrock) |
@@ -388,8 +438,9 @@ MINIO_ROOT_PASSWORD=<your-choice>
 
 | Document | Location |
 |---|---|
-| Platform architecture (v1.20) | `docs/architecture/synanton-design-1.20.md` |
-| Platform architecture (v1.19, baseline) | `docs/architecture/synanton-design-1.19.md` |
+| Platform architecture (**current** 1.21) | `docs/architecture/synanton-design-1.21.md` |
+| GPU Execution Plane (1.20 Part VIII) | `docs/architecture/synanton-design-1.20.md` |
+| Core baseline (1.19, superseded pointer) | `docs/architecture/synanton-design-1.19.md` |
 | GPU Execution Plane implementation plan | `docs/implementation/gpu-execution-plane/INDEX.md` |
 | Phases master plan | `docs/implementation/synanton-phases-plan.md` |
 | Phase 1 ingestion plan | `docs/implementation/phase1/01-ingestion-pipeline.md` |

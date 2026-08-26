@@ -1,0 +1,53 @@
+name: GPU Contract Mirror
+
+# Fails when synanton.gpu.v1 diverges between this repository and synanton/gpu-runtime.
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'java/gpu-contract/src/main/proto/**'
+      - 'scripts/verify-gpu-contract-mirror.sh'
+      - '.github/workflows/gpu-contract-mirror.yml'
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - 'java/gpu-contract/src/main/proto/**'
+      - 'scripts/verify-gpu-contract-mirror.sh'
+      - '.github/workflows/gpu-contract-mirror.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-mirror:
+    name: Verify GPU contract matches gpu-runtime
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout platform
+        uses: actions/checkout@v4
+        with:
+          path: platform
+
+      - name: Checkout gpu-runtime
+        uses: actions/checkout@v4
+        with:
+          repository: Synanton/gpu-runtime
+          path: gpu-runtime
+          fetch-depth: 1
+
+      - name: Verify contract mirror
+        working-directory: platform
+        run: |
+          chmod +x scripts/verify-gpu-contract-mirror.sh
+          ./scripts/verify-gpu-contract-mirror.sh "${GITHUB_WORKSPACE}/gpu-runtime"
+
+      - name: Confirm the check is enforcing, not skipping
+        working-directory: platform
+        run: |
+          if ! ./scripts/verify-gpu-contract-mirror.sh "${GITHUB_WORKSPACE}/gpu-runtime" | grep -q '^OK:'; then
+            echo "Mirror check did not report OK — it likely skipped. Treating as failure."
+            exit 1
+          fi

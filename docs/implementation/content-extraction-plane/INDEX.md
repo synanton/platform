@@ -128,11 +128,11 @@ Phases follow §31 of the proposal (Contract → Embedded → Async → External
 
 | Phase | Name | Repo(s) | Status |
 |-------|------|---------|--------|
-| SCEP-1 | Contract | both | Planned |
-| SCEP-2 | Extraction plane skeleton + sync path | `content_extractor` | Planned |
-| SCEP-3 | PDF PoC (OpenDataLoader) | `content_extractor` | Planned |
+| SCEP-1 | Contract | both | Done |
+| SCEP-2 | Extraction plane skeleton + sync path | `content_extractor` | ExtractSync PoC |
+| SCEP-3 | PDF PoC (OpenDataLoader) | `content_extractor` | HTTP adapter; incomplete feature-state |
 | SCEP-4 | Async operation model | `content_extractor` | Planned |
-| SCEP-5 | Platform integration | `platform` | Planned |
+| SCEP-5 | Platform integration | `platform` | Partial (synflux ExtractSync + semantic chunks) |
 | SCEP-6 | Topology equivalence + hardening | both | Planned |
 | SCEP-7 | Multimodal expansion (audio/image/video) | `content_extractor` | Post-v1.21 |
 

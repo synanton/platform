@@ -1,6 +1,5 @@
 package org.synanton.synflux.pipeline.stage;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.synanton.synflux.domain.AcquiredDocument;
@@ -67,26 +66,34 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
 
     @Override
     public ParsedDocument apply(AcquiredDocument doc, StageContext ctx) {
-        String flatText = extractFlatText(doc);
-        Map<String, String> metadata = extractMetadata(doc);
-        DocumentPayload documentPayload = null;
-
         if (extractionStub != null) {
             try {
-                documentPayload = callExtractionService(doc, ctx);
+                ExtractionResult result = callExtractionService(doc, ctx);
+                if (result != null
+                        && (result.getStatus() == ExtractionStatus.STATUS_COMPLETED
+                            || result.getStatus() == ExtractionStatus.STATUS_PARTIAL)
+                        && result.hasPayload()
+                        && result.getPayload().hasInlineContent()) {
+                    DocumentPayload documentPayload = DocumentPayload.parseFrom(
+                            result.getPayload().getInlineContent());
+                    String flatText = !result.getFlattenedText().isBlank()
+                            ? result.getFlattenedText()
+                            : documentPayload.getFlattenedText();
+                    Map<String, String> metadata = new HashMap<>(documentPayload.getMetadataMap());
+                    return new ParsedDocument(doc, flatText, metadata, documentPayload);
+                }
             } catch (Exception e) {
                 log.warn("Structured extraction failed for ref={}, falling back to flat text: {}",
                     doc.contentRefId(), e.getMessage());
             }
         }
 
-        return new ParsedDocument(doc, flatText, metadata, documentPayload);
+        String flatText = extractFlatText(doc);
+        Map<String, String> metadata = extractMetadata(doc);
+        return new ParsedDocument(doc, flatText, metadata, null);
     }
 
-    // ─── Structured extraction ────────────────────────────────────────────────
-
-    private DocumentPayload callExtractionService(AcquiredDocument doc, StageContext ctx)
-            throws InvalidProtocolBufferException {
+    private ExtractionResult callExtractionService(AcquiredDocument doc, StageContext ctx) {
 
         // Stage raw bytes in object storage so the extraction plane can read them.
         String key = ctx.tenant() + "/" + doc.contentRefId();
@@ -135,7 +142,7 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
             return null;
         }
 
-        return DocumentPayload.parseFrom(result.getPayload().getInlineContent());
+        return result;
     }
 
     // ─── Flat-text fallback (Tika) ────────────────────────────────────────────
