@@ -1,8 +1,8 @@
-# Synanton v1.21 Design Proposal — Structured Content Extraction Plane
+# Synanton v1.21 Design Proposal - Structured Content Extraction Plane
 
 **Document ID:** SNTP-6-PROP-1.21-SCEP-REV1  
 **Date:** 2026-08-24  
-**Status:** PROPOSED — ARCHITECTURAL DESIGN IN PROGRESS  
+**Status:** PROPOSED - ARCHITECTURAL DESIGN IN PROGRESS  
 **Amends:** Part IX (§65–§79) of `docs/architecture/synanton-design-1.21.md`  
 **Scope:** Structured content extraction architecture and external contract
 
@@ -122,7 +122,7 @@ The Structured Content Extraction Contract is the architectural boundary.
 These deployments are contractually equivalent:
 
 ```text
-Mode A — Embedded
+Mode A - Embedded
 
 Synanton
    |
@@ -130,7 +130,7 @@ Synanton
 ```
 
 ```text
-Mode B — Co-located
+Mode B - Co-located
 
 Synanton
    |
@@ -138,7 +138,7 @@ Synanton
 ```
 
 ```text
-Mode C — Cluster
+Mode C - Cluster
 
 Synanton
    |
@@ -148,7 +148,7 @@ Synanton
 ```
 
 ```text
-Mode D — Distributed / delegated
+Mode D - Distributed / delegated
 
 Synanton
    |
@@ -1072,75 +1072,75 @@ High-cardinality identifiers such as content IDs, object keys, payload digests, 
 
 The following are normative.
 
-### §67.1 — Contract/topology separation
+### §67.1 - Contract/topology separation
 
 Deployment topology MUST NOT change the extraction contract.
 
-### §67.2 — Black-box extraction
+### §67.2 - Black-box extraction
 
 Synanton MUST NOT depend on internal extraction implementation.
 
-### §67.3 — Raw source authority
+### §67.3 - Raw source authority
 
 Raw source content remains the authoritative source artifact.
 
-### §67.4 — Structured payload extensibility
+### §67.4 - Structured payload extensibility
 
 `StructuredPayload` MUST support modality-specific representations without extending the core document model.
 
-### §67.5 — CanonicalDocument scope
+### §67.5 - CanonicalDocument scope
 
 `CanonicalDocument` remains a supported document/block representation and is not the universal multimodal representation.
 
-### §67.6 — Idempotency
+### §67.6 - Idempotency
 
 Asynchronous extraction MUST support idempotent request submission.
 
-### §67.7 — Expiration
+### §67.7 - Expiration
 
 Asynchronous operations MUST support expiration semantics.
 
-### §67.8 — Capacity
+### §67.8 - Capacity
 
 The extraction plane MUST be able to reject or defer work when capacity constraints prevent safe admission.
 
-### §67.9 — External priority
+### §67.9 - External priority
 
 Requests MAY provide priority intent. Priority MUST NOT expose internal scheduling topology.
 
-### §67.10 — Extraction options
+### §67.10 - Extraction options
 
 Extraction options MUST express requested capabilities such as OCR without prescribing implementation.
 
-### §67.11 — Business metadata opacity
+### §67.11 - Business metadata opacity
 
 Business metadata and tags MUST remain opaque to the extraction implementation unless explicitly defined as extraction options.
 
-### §67.12 — Pre-flight estimation
+### §67.12 - Pre-flight estimation
 
 Pre-flight estimation MAY be provided and MUST be advisory rather than contractual timing guarantees.
 
-### §67.13 — Async first-class
+### §67.13 - Async first-class
 
 Asynchronous extraction MUST be a first-class contract, not an alternative implementation with different semantics.
 
-### §67.14 — Batch operations
+### §67.14 - Batch operations
 
 The contract MUST support processing multiple content references under one operation.
 
-### §67.15 — No webhook dependency
+### §67.15 - No webhook dependency
 
 v1.21 MUST NOT require webhooks for operation completion.
 
-### §67.16 — No topology leakage
+### §67.16 - No topology leakage
 
 The contract MUST NOT expose worker pools, queues, hardware allocation, internal routing, or downstream extractor topology as required API concepts.
 
-### §67.17 — No consumer reparse
+### §67.17 - No consumer reparse
 
 Unavailable structured consumers MUST use an existing compatibility projection rather than triggering another extraction.
 
-### §67.18 — Extraction/knowledge boundary
+### §67.18 - Extraction/knowledge boundary
 
 Extraction produces content structure. Knowledge processing interprets that structure.
 
@@ -1152,7 +1152,7 @@ Because v1.21 is not yet committed, this proposal is part of the v1.21 design ra
 
 The preferred rollout is:
 
-### Phase 1 — Contract
+### Phase 1 - Contract
 
 Define:
 
@@ -1166,13 +1166,13 @@ Define:
 - structured payload;
 - result descriptor.
 
-### Phase 2 — Embedded implementation
+### Phase 2 - Embedded implementation
 
 Implement the contract with the existing PDF/Tika/OpenDataLoader path.
 
 The implementation remains replaceable.
 
-### Phase 3 — Async operation model
+### Phase 3 - Async operation model
 
 Introduce:
 
@@ -1183,13 +1183,13 @@ Introduce:
 - expiration;
 - idempotency.
 
-### Phase 4 — External extraction deployment
+### Phase 4 - External extraction deployment
 
 Move the implementation behind the same contract.
 
 No Synanton API redesign should be required.
 
-### Phase 5 — Scaling
+### Phase 5 - Scaling
 
 Scale the extraction implementation independently according to workload.
 

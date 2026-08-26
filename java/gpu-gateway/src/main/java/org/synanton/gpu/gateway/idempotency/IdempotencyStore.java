@@ -12,7 +12,7 @@ import java.util.Optional;
 //   If the store is unhealthy or unreachable, implementations MUST throw an exception.
 //   Callers MUST NOT allow Execute() to proceed without a successful idempotency check.
 //   Passing through without the check creates a duplicate-execution window precisely
-//   when the store is unavailable — the worst possible time.
+//   when the store is unavailable - the worst possible time.
 public interface IdempotencyStore {
 
     // get returns the stored response for the given request_id if it exists.

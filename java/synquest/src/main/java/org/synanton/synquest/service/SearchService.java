@@ -1,5 +1,7 @@
 package org.synanton.synquest.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.TopDocs;
 import org.synanton.synquest.api.dto.*;
@@ -18,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SearchService {
 
     private static final Logger log = LoggerFactory.getLogger(SearchService.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public enum Status { STARTING, READY, ERROR }
 
@@ -72,14 +75,17 @@ public class SearchService {
         int rrfK = req.rrfK() != null ? req.rrfK() : props.search().defaultRrfK();
 
         long t0 = System.currentTimeMillis();
+        long queryInputChars = req.query() == null ? 0 : req.query().length();
 
         float[] queryVec = null;
         long embedMs = 0;
+        boolean embedSkipped = false;
         try {
             long embedStart = System.currentTimeMillis();
             queryVec = queryEmbedder.embed(req.query());
             embedMs = System.currentTimeMillis() - embedStart;
         } catch (Exception e) {
+            embedSkipped = true;
             log.warn("Query embedding unavailable, using BM25 only: {}", e.getMessage());
         }
 
@@ -110,12 +116,10 @@ public class SearchService {
             lexicalResults = lexicalFuture.get();
             long lexicalMs = System.currentTimeMillis() - lexicalStart;
 
-            // RRF fusion
             long fusionStart = System.currentTimeMillis();
             List<RrfFusion.FusedHit> fused = RrfFusion.combine(denseResults, lexicalResults, topK, rrfK);
             long fusionMs = System.currentTimeMillis() - fusionStart;
 
-            // Hydrate hits from stored fields
             var stored = searcher.storedFields();
             List<Hit> hits = new ArrayList<>(fused.size());
             for (RrfFusion.FusedHit fh : fused) {
@@ -137,17 +141,25 @@ public class SearchService {
                         parseInt(doc.get("page_start"), -1),
                         parseInt(doc.get("page_end"), -1),
                         doc.get("section_path"),
-                        doc.get("heading")));
+                        doc.get("heading"),
+                        parseSourceElements(doc.get("source_elements")),
+                        parseInt(doc.get("token_count"), 0),
+                        emptyToNull(doc.get("structured_content")),
+                        parseBoolean(doc.get("is_partial_section")),
+                        emptyToNull(doc.get("ingest_usage"))));
             }
 
             long totalMs = System.currentTimeMillis() - t0;
             SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
                     searcher.generation());
-            return new SearchResponse(hits, trace);
+            QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped);
+            return new SearchResponse(hits, trace, queryUsage);
 
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
-            if (cause instanceof IOException ioe) throw ioe;
+            if (cause instanceof IOException ioe) {
+                throw ioe;
+            }
             throw new RuntimeException("Search failed", cause);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -159,13 +171,11 @@ public class SearchService {
         Object lock = rebuildLocks.computeIfAbsent(tenant, t -> new Object());
         synchronized (lock) {
             log.info("Reindexing tenant '{}'...", tenant);
-            // Close existing searcher
             AtomicReference<HybridSearcher> ref = searcherRefs.get(tenant);
             if (ref != null && ref.get() != null) {
                 ref.get().close();
                 ref.set(null);
             }
-            // Rebuild from scratch
             indexBuilder.build(tenant);
             HybridSearcher fresh = new HybridSearcher(indexBuilder.indexPath(tenant), props.embedding().dim());
             searcherRefs.computeIfAbsent(tenant, t -> new AtomicReference<>()).set(fresh);
@@ -198,6 +208,25 @@ public class SearchService {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return fallback;
+        }
+    }
+
+    private static boolean parseBoolean(String value) {
+        return "true".equalsIgnoreCase(value);
+    }
+
+    private static String emptyToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private static List<String> parseSourceElements(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return MAPPER.readValue(json, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return List.of();
         }
     }
 }

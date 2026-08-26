@@ -76,4 +76,15 @@ SEARCH=$(curl -sf "http://localhost:${SYNQUEST_PORT}/search" \
   -d "{\"tenant\":\"$TENANT\",\"query\":\"$QUERY\",\"top_k\":5}")
 echo "$SEARCH" | python3 -m json.tool
 
-echo "[5/5] Hits should include source_uri, page_start, section_path when structured extraction succeeded."
+echo "[5/5] Hits should include source_uri, section_path, source_elements, and ingest_usage when structured extraction succeeded."
+echo "$SEARCH" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+hits = data.get('hits') or []
+usage = data.get('query_usage')
+print(f'  hits={len(hits)} query_usage={\"present\" if usage else \"absent\"}')
+if hits:
+    h = hits[0]
+    for key in ('section_path', 'source_elements', 'ingest_usage'):
+        print(f'  first_hit.{key}={h.get(key)!r}')
+"

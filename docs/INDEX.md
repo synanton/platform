@@ -7,15 +7,17 @@ last_reviewed: "2026-08-26"
 # Synanton Documentation
 
 **Purpose:** Top-level navigation for all Synanton platform documentation. Start here to find the right document for your role.
-**Current design version:** [`1.21`](./VERSION) - [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md)
+**Current design version:** [`1.22`](./VERSION) - [`architecture/synanton-design-1.22.md`](./architecture/synanton-design-1.22.md)
 
 ## Quick Links
 
 | Document | Description |
 |----------|-------------|
-| [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md) | **Current** — extraction plane + pointers to GPU (1.20) and baseline (1.19) |
+| [`architecture/synanton-design-1.22.md`](./architecture/synanton-design-1.22.md) | **Current** - semantic chunking + pointers to extraction (1.21), GPU (1.20), baseline (1.19) |
+| [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md) | Structured Content Extraction Plane (Part IX) |
 | [`architecture/synanton-design-1.20.md`](./architecture/synanton-design-1.20.md) | GPU Execution Plane (Part VIII) |
 | [`implementation/synanton-phases-plan.md`](./implementation/synanton-phases-plan.md) | Master implementation phases plan |
+| [`proposals/v1.22/`](./proposals/v1.22/) | Semantic chunking proposal (folded into 1.22) |
 | [`proposals/v1.21/`](./proposals/v1.21/) | Extraction-plane proposal (folded into 1.21) |
 | [`proposals/v1.20/`](./proposals/v1.20/) | GPU isolation proposal (folded into 1.20) |
 | [`operations/`](./operations/) | Runbooks, DR playbooks, capacity planning |
@@ -37,6 +39,6 @@ last_reviewed: "2026-08-26"
 
 ## How "Current" Is Managed
 
-The `VERSION` file at the root of `docs/` contains the current design version number (e.g., `1.21`).
+The `VERSION` file at the root of `docs/` contains the current design version number (e.g., `1.22`).
 The `architecture/INDEX.md` explicitly marks which design file is authoritative.
 No symlinks are used - all files are real paths, compatible with Git on all platforms.

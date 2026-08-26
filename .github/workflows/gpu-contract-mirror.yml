@@ -48,6 +48,6 @@ jobs:
         working-directory: platform
         run: |
           if ! ./scripts/verify-gpu-contract-mirror.sh "${GITHUB_WORKSPACE}/gpu-runtime" | grep -q '^OK:'; then
-            echo "Mirror check did not report OK — it likely skipped. Treating as failure."
+            echo "Mirror check did not report OK - it likely skipped. Treating as failure."
             exit 1
           fi

@@ -1,7 +1,7 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-07-21"
+last_reviewed: "2026-08-26"
 ---
 
 # Architecture Decision Records (ADRs)

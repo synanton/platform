@@ -2,6 +2,7 @@ package org.synanton.synquest.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.UUID;
 
 public record Hit(
@@ -17,5 +18,10 @@ public record Hit(
         @JsonProperty("page_start") int pageStart,
         @JsonProperty("page_end") int pageEnd,
         @JsonProperty("section_path") String sectionPath,
-        String heading
+        String heading,
+        @JsonProperty("source_elements") List<String> sourceElements,
+        @JsonProperty("token_count") int tokenCount,
+        @JsonProperty("structured_content") String structuredContent,
+        @JsonProperty("is_partial_section") boolean isPartialSection,
+        @JsonProperty("ingest_usage") String ingestUsage
 ) {}

@@ -1,10 +1,10 @@
 ---
-title: "GPU Execution Plane — Implementation Plan"
+title: "GPU Execution Plane - Implementation Plan"
 status: "planned"
 last_reviewed: "2026-08-20"
 ---
 
-# GPU Execution Plane — Implementation Plan
+# GPU Execution Plane - Implementation Plan
 
 **Purpose:** Implementation plan for the v1.20 GPU Execution Plane architectural change. Introduces a physically isolated GPU cluster connected to the primary Synanton platform through the versioned `synanton.gpu.v1` gRPC contract.
 **Architecture reference:** `docs/architecture/synanton-design-1.20.md` §50–§64 (Part VIII)
@@ -23,7 +23,7 @@ last_reviewed: "2026-08-20"
 ## User-Facing Capability Unlocked
 
 - GPU synthesis, embedding, and reranking run in a physically separate cluster without affecting the primary platform's availability.
-- Primary platform degrades gracefully when the GPU plane is unavailable (CPU fallback, partial results, or structured failure — all configured per tenant).
+- Primary platform degrades gracefully when the GPU plane is unavailable (CPU fallback, partial results, or structured failure - all configured per tenant).
 - GPU infrastructure (model serving, Kubernetes, vLLM) can be deployed, scaled, and upgraded independently of the primary platform release cycle.
 - Duplicate GPU execution is prevented on retry via a durable, fail-closed idempotency store.
 - GPU model cold starts queue requests instead of returning thundering-herd rejections.
@@ -44,7 +44,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 
 ---
 
-## Phase GPU-1 — Contract
+## Phase GPU-1 - Contract
 
 **Goal:** Define and validate the complete `synanton.gpu.v1` gRPC contract before any server implementation starts. Consumer-driven contract tests must exist so that primary-platform client compatibility can be verified independently of the GPU plane during release.
 
@@ -61,7 +61,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 | 7 | Consumer-driven contract tests | `synanton/platform` | Primary-platform client tests against a mock GPU Gateway |
 | 8 | Contract CI pipeline | `synanton/gpu-execution-plane` | Fails if proto changes break generated bindings |
 
-### Definition of Done — GPU-1
+### Definition of Done - GPU-1
 
 1. `buf build` passes with zero errors on `synanton.gpu.v1`.
 2. PGV rules reject: missing `request_id`, unknown `operation`, `model` exceeding length limits, `tenant_id` patterns that violate the format spec.
@@ -71,7 +71,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 
 ---
 
-## Phase GPU-2 — GPU Execution Plane
+## Phase GPU-2 - GPU Execution Plane
 
 **Goal:** Stand up `synanton/gpu-execution-plane` as an independently deployable repository containing the GPU Gateway, model serving integration, execution lifecycle, and durable idempotency store.
 
@@ -94,12 +94,12 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 | 13 | Kubernetes manifests for GPU Gateway deployment | Namespace, service, deployment, HPA, PodDisruptionBudget |
 | 14 | Integration tests against the public contract | Full round-trip: primary-platform client → GPU Gateway → model serving |
 
-### Definition of Done — GPU-2
+### Definition of Done - GPU-2
 
 1. GPU Gateway starts, serves mTLS, and rejects unauthenticated connections.
 2. `Execute()` with a valid `request_id` returns a successful `ExecutionResponse` containing `execution_id`.
 3. Duplicate `Execute()` with the same `request_id` returns the stored `ExecutionResponse` without re-executing (idempotency store hit confirmed by `gpu_idempotency_hit_total` metric).
-4. Sending `Execute()` and immediately closing the gRPC stream; subsequent `GetStatus(execution_id)` returns the completed result — the underlying GPU operation was not cancelled.
+4. Sending `Execute()` and immediately closing the gRPC stream; subsequent `GetStatus(execution_id)` returns the completed result - the underlying GPU operation was not cancelled.
 5. `MODEL_NOT_READY` is returned when a valid-but-not-loaded model is requested; a second `Execute()` with the same `request_id` within the queue window returns the result after the model loads (no duplicate execution).
 6. Idempotency store made unhealthy → Gateway returns `5xx` on `Execute()` (fail-closed); restore → Gateway resumes normal operation.
 7. `Cancel()` returns `ACCEPTED` for a running execution; `NOT_APPLICABLE` for a completed execution.
@@ -108,7 +108,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 
 ---
 
-## Phase GPU-3 — Primary Platform Integration
+## Phase GPU-3 - Primary Platform Integration
 
 **Goal:** Connect the primary platform (`gateway`) to the GPU Execution Plane via the `synanton.gpu.v1` client. Replace direct GPU adapter paths with the remote execution boundary. Preserve all existing business-layer behaviour.
 
@@ -119,7 +119,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 | 1 | GPU execution client implementation | `gateway` | Wraps `synanton.gpu.v1` gRPC stub; mTLS configured |
 | 2 | `ModelServingDirectory` constraint enforcement | `control-plane` | MUST NOT resolve pod IPs, Kubernetes pods, or vLLM instances; resolves logical endpoint only |
 | 3 | GPU-backed execution plan dispatch | `gateway` | Planner-produced plans route GPU steps to GPU execution client |
-| 4 | Degraded-mode orchestration | `gateway` | CPU fallback / partial result / retry / fail — per-tenant policy |
+| 4 | Degraded-mode orchestration | `gateway` | CPU fallback / partial result / retry / fail - per-tenant policy |
 | 5 | `MODEL_NOT_READY` retry with exponential backoff + jitter | `gateway` | Max attempts and backoff base configurable (see §23 config table) |
 | 6 | `Execute()` timeout → `GetStatus()` reconciliation | `gateway` | After deadline, calls `GetStatus(execution_id)` to resolve outcome |
 | 7 | Cross-cluster trace context propagation | `gateway` | OpenTelemetry `traceparent` header forwarded in `ExecutionRequest.trace_context` |
@@ -128,7 +128,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 | 10 | Metrics wired (see §45) | `gateway` | `gpu_execute_total`, `gpu_execute_duration_seconds`, etc. |
 | 11 | Alerts wired (see §45) | Observability | `GpuExecutionErrorRate`, `GpuModelNotReadySpike`, `GpuAdmissionRejectionHigh`, `GpuIdempotencyStoreUnhealthy` |
 
-### Definition of Done — GPU-3
+### Definition of Done - GPU-3
 
 1. `gateway.gpu.enabled=false` (default) → full v1.19 query path works unchanged; no GPU dependency in startup.
 2. `gateway.gpu.enabled=true` → `POST /search` with a GPU-backed model returns `QueryResponse.answer` synthesised by the GPU plane.
@@ -142,7 +142,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 
 ---
 
-## Phase GPU-4 — Production Hardening
+## Phase GPU-4 - Production Hardening
 
 **Goal:** Validate security, resilience, observability, and cost attribution at production scale before serving real tenant traffic.
 
@@ -150,18 +150,18 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 
 | # | Deliverable | Owner |
 |---|-------------|-------|
-| 1 | Security tests — mTLS rejection of self-signed certs, `tenant_id` injection attempts, unauthorized service principals | Security team |
-| 2 | Failure injection tests — GPU plane crash, idempotency store unavailability, network partition, model crash | Platform + GPU infra |
-| 3 | Network partition tests — `Execute()` sent, partition induced, `GetStatus()` reconciliation verified | Platform team |
-| 4 | Duplicate-request / idempotency tests — concurrent identical `request_id` submissions; exactly one execution confirmed | GPU infra team |
-| 5 | GPU runtime failure tests — vLLM pod crash mid-inference; Gateway reports failure; primary platform applies degraded mode | GPU infra team |
-| 6 | Capacity / admission tests — `GPU_CAPACITY_EXCEEDED` under sustained load; primary falls back | GPU infra team |
-| 7 | Observability dashboards — GPU execution latency, queue depth, model readiness, idempotency hit rate, error rates | SRE |
-| 8 | Cost attribution validation — GPU usage events correlated to primary-platform `request_id`; tenant attribution verified | Platform team |
-| 9 | Load test — sustained p50/p95/p99 GPU execution latency within SLO targets | Performance team |
-| 10 | Runbook authoring — all runbooks listed in §47 of `synanton-design-1.20.md` authored and reviewed | SRE |
+| 1 | Security tests - mTLS rejection of self-signed certs, `tenant_id` injection attempts, unauthorized service principals | Security team |
+| 2 | Failure injection tests - GPU plane crash, idempotency store unavailability, network partition, model crash | Platform + GPU infra |
+| 3 | Network partition tests - `Execute()` sent, partition induced, `GetStatus()` reconciliation verified | Platform team |
+| 4 | Duplicate-request / idempotency tests - concurrent identical `request_id` submissions; exactly one execution confirmed | GPU infra team |
+| 5 | GPU runtime failure tests - vLLM pod crash mid-inference; Gateway reports failure; primary platform applies degraded mode | GPU infra team |
+| 6 | Capacity / admission tests - `GPU_CAPACITY_EXCEEDED` under sustained load; primary falls back | GPU infra team |
+| 7 | Observability dashboards - GPU execution latency, queue depth, model readiness, idempotency hit rate, error rates | SRE |
+| 8 | Cost attribution validation - GPU usage events correlated to primary-platform `request_id`; tenant attribution verified | Platform team |
+| 9 | Load test - sustained p50/p95/p99 GPU execution latency within SLO targets | Performance team |
+| 10 | Runbook authoring - all runbooks listed in §47 of `synanton-design-1.20.md` authored and reviewed | SRE |
 
-### Definition of Done — GPU-4
+### Definition of Done - GPU-4
 
 1. Security test suite passes; zero bypasses of mTLS authentication or tenant assertion validation.
 2. `tenant_id` injection (caller-supplied tenant not in authenticated principal's scope) rejected at Gateway with `TENANT_NOT_ALLOWED`.
@@ -174,7 +174,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 
 ---
 
-## Phase GPU-5 — Optional Scheduling (Equalix)
+## Phase GPU-5 - Optional Scheduling (Equalix)
 
 **Trigger:** Phase GPU-5 is ONLY initiated after Phase GPU-4 operational data demonstrates measurable contention, fairness violations, or priority starvation that `DirectDispatcher` cannot address.
 
@@ -191,7 +191,7 @@ The GPU execution plane is delivered in five phases. Phases GPU-1 through GPU-3 
 | 5 | `EqualixScheduler` enabled by configuration flag | Default remains `DirectDispatcher` |
 | 6 | Integration tests with Equalix enabled | Full round-trip; fairness guarantees validated |
 
-### Definition of Done — GPU-5
+### Definition of Done - GPU-5
 
 1. Operational evidence report demonstrates a measurable improvement in fairness metric (e.g., Jain's fairness index) with Equalix vs DirectDispatcher under mixed-tenant load.
 2. A low-priority tenant cannot starve a high-priority tenant for more than `equalix.starvation.max-wait-ms` (configurable, default 10 s).

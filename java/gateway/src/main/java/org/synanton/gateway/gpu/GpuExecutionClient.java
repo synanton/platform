@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 // Ownership invariants:
 //   - request_id is supplied by this client (from the gateway's workflow context).
 //   - execution_id is received from the Gateway; callers must not fabricate it.
-//   - On Execute() timeout, callers MUST call getStatus(executionId) — do not assume failure.
+//   - On Execute() timeout, callers MUST call getStatus(executionId) - do not assume failure.
 @Component
 public class GpuExecutionClient {
 

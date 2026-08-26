@@ -15,7 +15,7 @@ option java_multiple_files = true;
 //
 // Validation rules (enforced at the GPU Gateway boundary before any dispatch):
 //   ExecutionRequest.request_id     required; max 255 chars; idempotency key
-//   ExecutionRequest.tenant_id      required; max 255 chars; assertion only — not a credential
+//   ExecutionRequest.tenant_id      required; max 255 chars; assertion only - not a credential
 //   ExecutionRequest.model          required; max 255 chars
 //   ExecutionRequest.model_version  required; max 128 chars
 //   ExecutionRequest.operation      must not be OPERATION_UNSPECIFIED
@@ -90,7 +90,7 @@ enum CancellationOutcome {
 // ─── Messages ────────────────────────────────────────────────────────────────
 
 // ExecutionRequest is supplied exclusively by the primary Synanton platform.
-// The caller MUST NOT set execution_id — that field is Gateway-owned.
+// The caller MUST NOT set execution_id - that field is Gateway-owned.
 message ExecutionRequest {
     // request_id is the primary platform's originating request/workflow identity.
     // It is mandatory and serves as the idempotency key in the GPU Gateway.

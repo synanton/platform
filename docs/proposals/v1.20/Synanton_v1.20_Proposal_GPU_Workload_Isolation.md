@@ -1,4 +1,4 @@
-# Synanton v1.20 — GPU Execution Plane
+# Synanton v1.20 - GPU Execution Plane
 
 **Status:** Final
 **Supersedes:** GPU-related assumptions in Synanton Platform v1.19
@@ -260,7 +260,7 @@ To prevent a thundering herd of retries from the primary platform, the Gateway:
 - MAY serve queued requests once the model becomes ready, subject to a configurable maximum queue time;
 - MUST return `MODEL_NOT_READY` only if the model cannot be loaded within the configured timeout or if the queue is full.
 
-The primary platform's retry policy for `MODEL_NOT_READY` MUST include exponential backoff and jitter. The Gateway MUST NOT rely  on the primary platform to poll for readiness—queuing and deferred  execution are the preferred failure-avoidance mechanisms.
+The primary platform's retry policy for `MODEL_NOT_READY` MUST include exponential backoff and jitter. The Gateway MUST NOT rely  on the primary platform to poll for readiness-queuing and deferred  execution are the preferred failure-avoidance mechanisms.
 
 ------
 
@@ -491,7 +491,7 @@ The primary platform MUST NOT implement correctness assumptions based on a previ
 
 There are three distinct layers:
 
-### 15.1 Execution Planning — Synanton
+### 15.1 Execution Planning - Synanton
 
 Answers:
 
@@ -506,7 +506,7 @@ The primary platform decides:
 - execution class;
 - fallback/degraded behavior.
 
-### 15.2 Request Scheduling — Optional Equalix
+### 15.2 Request Scheduling - Optional Equalix
 
 Answers:
 
@@ -523,7 +523,7 @@ Equalix may provide:
 
 Equalix is optional.
 
-### 15.3 Infrastructure Scheduling — Kubernetes
+### 15.3 Infrastructure Scheduling - Kubernetes
 
 Answers:
 
@@ -873,7 +873,7 @@ Create:
 
 # 28. Implementation Sequence
 
-## Phase 1 — Contract
+## Phase 1 - Contract
 
 1. Define `synanton.gpu.v1`.
 2. Define PGV validation rules.
@@ -883,7 +883,7 @@ Create:
 6. Generate client/server bindings.
 7. Implement consumer-driven contract tests (e.g., gRPC reflection or Pact) to  validate primary client compatibility against the GPU Gateway during  independent release cycles.
 
-## Phase 2 — GPU Execution Plane
+## Phase 2 - GPU Execution Plane
 
 1. Create `synanton/gpu-execution-plane`.
 2. Implement GPU Gateway.
@@ -898,7 +898,7 @@ Create:
 11. Implement status reporting.
 12. Implement usage telemetry.
 
-## Phase 3 — Primary Platform Integration
+## Phase 3 - Primary Platform Integration
 
 1. Implement GPU execution client.
 2. Integrate with `ModelServingDirectory`.
@@ -908,7 +908,7 @@ Create:
 6. Add cross-cluster tracing.
 7. Implement client-side reconciliation (`GetStatus` polling) for timed-out or ambiguous `Execute()` responses.
 
-## Phase 4 — Production Hardening
+## Phase 4 - Production Hardening
 
 1. Security tests.
 2. Failure-injection tests.
@@ -919,7 +919,7 @@ Create:
 7. Observability dashboards.
 8. Cost attribution validation.
 
-## Phase 5 — Optional Scheduling
+## Phase 5 - Optional Scheduling
 
 Only after production measurements demonstrate a requirement:
 

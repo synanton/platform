@@ -8,8 +8,10 @@ import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.domain.SemanticChunk.ChunkType;
+import org.synanton.synflux.domain.StageUsage;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
+import org.synanton.synflux.pipeline.StageUsageTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import synanton.extraction.v1.DocumentPayload;
@@ -19,18 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Semantic chunking stage (v1.22).
- *
- * <p>When a {@link DocumentPayload} with structured elements is available in
- * {@link ParsedDocument}, the stage builds a section tree and applies structure-aware
- * chunking — respecting heading hierarchy, table atomicity, and paragraph boundaries
- * before falling back to token-size limits (proposal §10.2).
- *
- * <p>When no {@code DocumentPayload} is present (extraction service not configured or
- * call failed), the stage falls back to the legacy fixed-window token split on
- * {@link ParsedDocument#text()}, ensuring the pipeline continues to function.
- */
 public class SemanticChunkStage implements PipelineStage<ParsedDocument, ChunkedDocument> {
 
     private static final Logger log = LoggerFactory.getLogger(SemanticChunkStage.class);
@@ -40,9 +30,9 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
     private final SemanticChunker chunker;
 
     public SemanticChunkStage(ChunkerConfig config) {
-        this.config          = config;
+        this.config = config;
         this.structureBuilder = new DocumentStructureBuilder();
-        this.chunker          = new SemanticChunker();
+        this.chunker = new SemanticChunker();
     }
 
     @Override
@@ -50,6 +40,17 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
 
     @Override
     public ChunkedDocument apply(ParsedDocument doc, StageContext ctx) {
+        StageUsageTracker.TimedResult<ChunkedDocument> timed = StageUsageTracker.time(() -> chunk(doc));
+        long outputChars = timed.value().chunks().stream()
+            .mapToLong(c -> c.content() == null ? 0 : c.content().length())
+            .sum();
+        ctx.usage().record(new StageUsage(
+            name(), timed.wallMs(), timed.cpuNs(), null,
+            0, outputChars, 0, 0, 0, 0));
+        return timed.value();
+    }
+
+    private ChunkedDocument chunk(ParsedDocument doc) {
         DocumentPayload payload = doc.documentPayload();
         String documentId = doc.acquired().contentRefId().toString();
 
@@ -62,7 +63,6 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
             List<SectionNode> sections = structureBuilder.build(payload.getElementsList());
             chunks = new ArrayList<>(chunker.chunk(sections, documentId, config));
 
-            // Sections with no headings produce no nodes; fall back to flat-text split.
             if (chunks.isEmpty() && !doc.text().isBlank()) {
                 chunks = flatTextFallback(doc.text(), documentId);
             }
@@ -75,21 +75,23 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
         return new ChunkedDocument(doc, chunks);
     }
 
-    // ─── Flat-text fallback ───────────────────────────────────────────────────
-
     private List<SemanticChunk> flatTextFallback(String text, String documentId) {
-        if (text == null || text.isBlank()) return List.of();
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
 
         String[] words = text.split("\\s+");
         List<SemanticChunk> chunks = new ArrayList<>();
-        int start   = 0;
+        int start = 0;
         int ordinal = 0;
 
         while (start < words.length) {
             int end = Math.min(start + config.maxTokensPerChunk(), words.length);
             String chunkText = String.join(" ", Arrays.copyOfRange(words, start, end));
             chunks.add(fallbackChunk(chunkText, documentId, ordinal++));
-            if (end == words.length) break;
+            if (end == words.length) {
+                break;
+            }
             int overlap = Math.min(config.minChunkTokens(), config.maxTokensPerChunk() / 10);
             start = end - overlap;
         }

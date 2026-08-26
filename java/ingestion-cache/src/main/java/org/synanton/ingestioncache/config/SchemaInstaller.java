@@ -17,6 +17,8 @@ public class SchemaInstaller {
         "cql/V1__baseline.cql",
         "cql/V2_1__kafka_outbox.cql",
         "cql/V3__chunk_provenance.cql",
+        "cql/V4__ingest_usage.cql",
+        "cql/V5__chunk_citation.cql",
     };
 
     public static void install(CqlSession session) {

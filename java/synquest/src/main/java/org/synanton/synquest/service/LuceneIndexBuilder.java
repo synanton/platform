@@ -30,6 +30,12 @@ public class LuceneIndexBuilder {
     private static final String FIELD_PAGE_END = "page_end";
     private static final String FIELD_SECTION_PATH = "section_path";
     private static final String FIELD_HEADING = "heading";
+    private static final String FIELD_SOURCE_ELEMENTS = "source_elements";
+    private static final String FIELD_TOKEN_COUNT = "token_count";
+    private static final String FIELD_STRUCTURED_CONTENT = "structured_content";
+    private static final String FIELD_IS_PARTIAL_SECTION = "is_partial_section";
+    private static final String FIELD_INGEST_USAGE = "ingest_usage";
+    private static final String FIELD_INGEST_WALL_MS = "ingest_wall_ms";
 
     private static final java.util.Set<String> INDEXABLE_STATES =
             java.util.Set.of("CHUNKED", "ENRICHED", "EMBEDDED");
@@ -83,6 +89,8 @@ public class LuceneIndexBuilder {
                 }
 
                 var chunks = cacheClient.readChunks(tenant, manifest.contentRefId());
+                String ingestUsage = manifest.ingestUsage() == null ? "" : manifest.ingestUsage();
+                long ingestWallMs = parseIngestWallMs(ingestUsage);
                 for (var chunk : chunks) {
                     var embOpt = cacheClient.readEmbedding(
                             tenant, manifest.contentRefId(), chunk.chunkOrdinal(), embeddingModel);
@@ -104,6 +112,12 @@ public class LuceneIndexBuilder {
                     doc.add(new StoredField(FIELD_PAGE_END, chunk.pageEnd()));
                     doc.add(new StoredField(FIELD_SECTION_PATH, chunk.sectionPath() == null ? "" : chunk.sectionPath()));
                     doc.add(new StoredField(FIELD_HEADING, chunk.heading() == null ? "" : chunk.heading()));
+                    doc.add(new StoredField(FIELD_SOURCE_ELEMENTS, chunk.sourceElementsJson() == null ? "[]" : chunk.sourceElementsJson()));
+                    doc.add(new StoredField(FIELD_TOKEN_COUNT, chunk.tokenCount()));
+                    doc.add(new StoredField(FIELD_STRUCTURED_CONTENT, chunk.structuredContentJson() == null ? "" : chunk.structuredContentJson()));
+                    doc.add(new StoredField(FIELD_IS_PARTIAL_SECTION, String.valueOf(chunk.isPartialSection())));
+                    doc.add(new StoredField(FIELD_INGEST_USAGE, ingestUsage));
+                    doc.add(new StoredField(FIELD_INGEST_WALL_MS, ingestWallMs));
 
                     if (embOpt.isPresent()) {
                         EmbeddingRow emb = embOpt.get();
@@ -127,5 +141,38 @@ public class LuceneIndexBuilder {
 
         log.info("Built Lucene index for tenant '{}': {} docs indexed, {} manifests skipped",
                 tenant, docCount, skipCount);
+    }
+
+    private static long parseIngestWallMs(String ingestUsageJson) {
+        if (ingestUsageJson == null || ingestUsageJson.isBlank()) {
+            return 0L;
+        }
+        int idx = ingestUsageJson.indexOf("\"wallMs\"");
+        if (idx < 0) {
+            idx = ingestUsageJson.indexOf("\"wall_ms\"");
+        }
+        if (idx < 0) {
+            return 0L;
+        }
+        int colon = ingestUsageJson.indexOf(':', idx);
+        if (colon < 0) {
+            return 0L;
+        }
+        int end = colon + 1;
+        while (end < ingestUsageJson.length() && Character.isWhitespace(ingestUsageJson.charAt(end))) {
+            end++;
+        }
+        int startNum = end;
+        while (end < ingestUsageJson.length() && Character.isDigit(ingestUsageJson.charAt(end))) {
+            end++;
+        }
+        if (startNum == end) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(ingestUsageJson.substring(startNum, end));
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 }

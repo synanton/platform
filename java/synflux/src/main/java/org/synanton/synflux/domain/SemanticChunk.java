@@ -42,6 +42,6 @@ public record SemanticChunk(
 
     public record FigureContent(String caption, String description) {}
 
-    /** Backward-compatible text accessor — returns content for embedding. */
+    /** Backward-compatible text accessor - returns content for embedding. */
     public String text() { return content; }
 }

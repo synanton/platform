@@ -18,5 +18,6 @@ public record ManifestRow(
     long sizeBytes,
     String mimeType,
     String embeddingQuality,
-    String enrichmentModelId
+    String enrichmentModelId,
+    String ingestUsage
 ) {}

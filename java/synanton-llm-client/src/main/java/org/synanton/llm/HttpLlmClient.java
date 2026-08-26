@@ -41,9 +41,18 @@ public class HttpLlmClient implements LlmClient {
 
     @Override
     public EmbedResponse embed(EmbedRequest request) {
+        int inputChars = request.inputs().stream().mapToInt(String::length).sum();
+        long start = System.nanoTime();
         String payload = translator.buildEmbedPayload(request);
         String responseBody = post(baseUrl + translator.embeddingPath(), payload);
-        return translator.parseEmbedResponse(responseBody);
+        EmbedResponse parsed = translator.parseEmbedResponse(responseBody, inputChars);
+        long durationMs = (System.nanoTime() - start) / 1_000_000L;
+        if (parsed.durationMs() == 0) {
+            return new EmbedResponse(
+                parsed.embeddings(), parsed.inputChars(), parsed.outputChars(),
+                durationMs, parsed.inputTokens(), parsed.outputTokens());
+        }
+        return parsed;
     }
 
     private String post(String url, String body) {

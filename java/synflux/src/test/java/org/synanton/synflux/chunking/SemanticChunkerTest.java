@@ -153,7 +153,7 @@ class SemanticChunkerTest {
             .filter(c -> c.type() == SemanticChunk.ChunkType.TABLE)
             .toList();
 
-        // Exactly one table chunk — atomicity is enforced regardless of budget.
+        // Exactly one table chunk - atomicity is enforced regardless of budget.
         assertThat(tableChunks).hasSize(1);
     }
 
@@ -195,6 +195,82 @@ class SemanticChunkerTest {
         // None should exceed the budget by more than the size of one element (no mid-para splits).
         chunks.forEach(c -> assertThat(c.content().split("\\s+").length)
             .isLessThanOrEqualTo(tightCfg.maxTokensPerChunk() + 50));
+    }
+
+    // ─── List atomicity ───────────────────────────────────────────────────────
+
+    @Test
+    void listEmittedAsAtomicChunkWhenUnderBudget() {
+        var chunks = chunkElements(List.of(
+            heading("Features", 1),
+            DocumentElement.newBuilder().setId("list-1").setType(DocumentElementType.ELEMENT_LIST).setText("").build(),
+            DocumentElement.newBuilder().setId("li-1").setType(DocumentElementType.ELEMENT_LIST_ITEM).setText("Fast").build(),
+            DocumentElement.newBuilder().setId("li-2").setType(DocumentElementType.ELEMENT_LIST_ITEM).setText("Reliable").build()
+        ), ChunkerConfig.defaults());
+
+        var listChunks = chunks.stream()
+            .filter(c -> c.type() == SemanticChunk.ChunkType.LIST)
+            .toList();
+
+        assertThat(listChunks).hasSize(1);
+        assertThat(listChunks.get(0).sourceElements()).contains("li-1", "li-2");
+    }
+
+    @Test
+    void listSplitsAtItemBoundariesWhenOverBudget() {
+        ChunkerConfig tightCfg = ChunkerConfig.of(8);
+        var chunks = chunkElements(List.of(
+            heading("Items", 1),
+            DocumentElement.newBuilder().setId("li-1").setType(DocumentElementType.ELEMENT_LIST_ITEM)
+                .setText("word ".repeat(20).trim()).build(),
+            DocumentElement.newBuilder().setId("li-2").setType(DocumentElementType.ELEMENT_LIST_ITEM)
+                .setText("word ".repeat(20).trim()).build()
+        ), tightCfg);
+
+        var listChunks = chunks.stream()
+            .filter(c -> c.type() == SemanticChunk.ChunkType.LIST)
+            .toList();
+
+        assertThat(listChunks.size()).isGreaterThan(1);
+    }
+
+    // ─── Figure with caption ──────────────────────────────────────────────────
+
+    @Test
+    void figureAndCaptionEmittedAsSingleChunk() {
+        var chunks = chunkElements(List.of(
+            heading("Diagrams", 1),
+            DocumentElement.newBuilder().setId("img-1").setType(DocumentElementType.ELEMENT_IMAGE)
+                .setText("architecture diagram").build(),
+            DocumentElement.newBuilder().setId("cap-1").setType(DocumentElementType.ELEMENT_CAPTION)
+                .setText("System overview").build()
+        ), ChunkerConfig.defaults());
+
+        var figureChunks = chunks.stream()
+            .filter(c -> c.type() == SemanticChunk.ChunkType.FIGURE)
+            .toList();
+
+        assertThat(figureChunks).hasSize(1);
+        assertThat(figureChunks.get(0).content()).contains("System overview");
+        assertThat(figureChunks.get(0).sourceElements()).containsExactly("img-1", "cap-1");
+    }
+
+    // ─── Section path prefix ──────────────────────────────────────────────────
+
+    @Test
+    void batchChunkContentIsPrefixedWithSectionPath() {
+        var chunks = chunkElements(List.of(
+            heading("GPU Execution Plane", 1),
+            heading("Gateway", 2),
+            para("p1", "The gateway provides a secure boundary.")
+        ), ChunkerConfig.defaults());
+
+        SemanticChunk chunk = chunks.stream()
+            .filter(c -> c.content().contains("secure boundary"))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(chunk.content()).startsWith("GPU Execution Plane > Gateway");
     }
 
     // ─── sha256 ───────────────────────────────────────────────────────────────

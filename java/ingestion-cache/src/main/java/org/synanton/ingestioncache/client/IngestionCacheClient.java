@@ -36,11 +36,11 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.manifest " +
             "(tenant_id, content_ref_id, ingested_at, schema_version, chunk_strategy, chunk_strategy_version, " +
             "state, storage_tier, archive_location, source_uri, source_sha256, size_bytes, mime_type, " +
-            "embedding_quality, enrichment_model_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "embedding_quality, enrichment_model_id, ingest_usage) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row.tenantId(), row.contentRefId(), row.ingestedAt(), row.schemaVersion(),
             row.chunkStrategy(), row.chunkStrategyVersion(), row.state(), row.storageTier(),
             row.archiveLocation(), row.sourceUri(), row.sourceSha256(), row.sizeBytes(),
-            row.mimeType(), row.embeddingQuality(), row.enrichmentModelId()
+            row.mimeType(), row.embeddingQuality(), row.enrichmentModelId(), row.ingestUsage()
         ));
     }
 
@@ -71,7 +71,8 @@ public class IngestionCacheClient {
             r.getString("archive_location"), r.getString("source_uri"),
             r.getString("source_sha256"), r.getLong("size_bytes"),
             r.getString("mime_type"), r.getString("embedding_quality"),
-            r.getString("enrichment_model_id")
+            r.getString("enrichment_model_id"),
+            stringOrEmpty(r, "ingest_usage")
         );
     }
 
@@ -81,10 +82,13 @@ public class IngestionCacheClient {
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.chunks_payload " +
             "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
-            "page_start, page_end, section_path, chunk_type, heading) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            "page_start, page_end, section_path, chunk_type, heading, " +
+            "source_elements, token_count, structured_content, is_partial_section) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             chunk.tenantId(), chunk.contentRefId(), chunk.chunkOrdinal(), chunk.chunkText(),
             chunk.chunkSha256(), chunk.pageStart(), chunk.pageEnd(), chunk.sectionPath(),
-            chunk.chunkType(), chunk.heading()
+            chunk.chunkType(), chunk.heading(), chunk.sourceElementsJson(), chunk.tokenCount(),
+            chunk.structuredContentJson(), chunk.isPartialSection()
         ));
     }
 
@@ -94,10 +98,13 @@ public class IngestionCacheClient {
             batch = batch.add(SimpleStatement.newInstance(
                 "INSERT INTO ingestion_cache.chunks_payload " +
                 "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
-                "page_start, page_end, section_path, chunk_type, heading) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                "page_start, page_end, section_path, chunk_type, heading, " +
+                "source_elements, token_count, structured_content, is_partial_section) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
                 c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
-                c.chunkType(), c.heading()
+                c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
+                c.structuredContentJson(), c.isPartialSection()
             ));
         }
         session.execute(batch);
@@ -118,10 +125,34 @@ public class IngestionCacheClient {
                 intOrDefault(r, "page_end", -1),
                 stringOrEmpty(r, "section_path"),
                 stringOrEmpty(r, "chunk_type"),
-                stringOrEmpty(r, "heading")
+                stringOrEmpty(r, "heading"),
+                stringOrDefault(r, "source_elements", "[]"),
+                intOrDefault(r, "token_count", 0),
+                stringOrEmpty(r, "structured_content"),
+                boolOrDefault(r, "is_partial_section", false)
             ));
         }
         return rows;
+    }
+
+    private static boolean boolOrDefault(Row r, String column, boolean fallback) {
+        try {
+            if (r.isNull(column)) {
+                return fallback;
+            }
+            return r.getBoolean(column);
+        } catch (IllegalArgumentException e) {
+            return fallback;
+        }
+    }
+
+    private static String stringOrDefault(Row r, String column, String fallback) {
+        try {
+            String v = r.getString(column);
+            return v == null ? fallback : v;
+        } catch (IllegalArgumentException e) {
+            return fallback;
+        }
     }
 
     private static int intOrDefault(Row r, String column, int fallback) {

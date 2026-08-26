@@ -57,6 +57,6 @@ jobs:
           # A missing peer makes the script SKIP with exit 0, which would make this
           # job pass while verifying nothing. Fail loudly if that happened.
           if ! ./scripts/verify-contract-mirror.sh "${GITHUB_WORKSPACE}/content_extractor" | grep -q '^OK:'; then
-            echo "Mirror check did not report OK — it likely skipped. Treating as failure."
+            echo "Mirror check did not report OK - it likely skipped. Treating as failure."
             exit 1
           fi

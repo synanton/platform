@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  *
  * <p>This is hand-written rather than generated because the protoc-gen-validate plugin is not
  * wired into either repository's build. PGV annotations in the {@code .proto} would compile
- * without complaint and validate nothing — a silent gap on requests that admit expensive work.
+ * without complaint and validate nothing - a silent gap on requests that admit expensive work.
  * The platform's existing {@code PgvRuleCatalogue} takes the same approach for the same reason.
  *
  * <p>This class lives in the contract module so that the server (which must reject bad requests

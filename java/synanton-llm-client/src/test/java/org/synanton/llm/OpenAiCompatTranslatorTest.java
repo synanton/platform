@@ -104,9 +104,11 @@ class OpenAiCompatTranslatorTest {
                   ]
                 }
                 """;
-        EmbedResponse resp = translator.parseEmbedResponse(json);
+        EmbedResponse resp = translator.parseEmbedResponse(json, 8);
 
         assertThat(resp.embeddings()).hasSize(2);
+        assertThat(resp.inputChars()).isEqualTo(8);
+        assertThat(resp.inputTokens()).isZero();
         assertThat(resp.embeddings().get(0)).usingComparatorWithPrecision(0.001f)
                 .containsExactly(0.1f, 0.2f, 0.3f);
         assertThat(resp.embeddings().get(1)).usingComparatorWithPrecision(0.001f)
@@ -116,7 +118,7 @@ class OpenAiCompatTranslatorTest {
     @Test
     void parseEmbedResponse_parsesEmptyData() {
         String json = "{\"data\": []}";
-        EmbedResponse resp = translator.parseEmbedResponse(json);
+        EmbedResponse resp = translator.parseEmbedResponse(json, 8);
 
         assertThat(resp.embeddings()).isEmpty();
     }
