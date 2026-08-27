@@ -7,30 +7,30 @@
 ## What it does
 
 ```
-Documents / APIs / Databases / S3
-              │
-              ▼
+         Documents / APIs / Databases / S3
+                          │
+                          ▼
 ┌───────────────────────────────────────────────────────────┐
 │  Synvault (content store + tier manager)                  │
 │  Synflux  (acquire/extract/chunk/enrich/embed/persist)    │
 │  ingestion-cache (Cassandra artifact cache)               │
 └───────────────────────────────────────────────────────────┘
-        │
-        ▼
+                          │
+                          ▼
 ┌───────────────────────────────────────────────────────────┐
 │  Synquest  BM25 + HNSW hybrid search kernel               │
 │  Relix     GraphRAG engine (entity/relation graph)        │
 │  Syntology ontology management (SHACL + versioning)       │
 └───────────────────────────────────────────────────────────┘
-        │
-        ▼
+                          │
+                          ▼
 ┌───────────────────────────────────────────────────────────┐
 │  Planner  intent classification + query plan generation   │
 │  Gateway  plan execution + LLM synthesis + reranking      │
 │  Synapt   public REST/gRPC ingress + auth + rate limits   │
 └───────────────────────────────────────────────────────────┘
-        │
-  REST / gRPC / MCP / ACP
+                          │
+              REST / gRPC / MCP / ACP
 ```
 
 A single query (`POST /search`) traverses the full stack: content is retrieved from the hybrid index, graph context is woven in by Relix and the Gateway synthesises a natural-language answer citing the source chunks - all within per-tenant ACL boundaries.
