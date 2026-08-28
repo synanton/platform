@@ -5520,7 +5520,7 @@ Full proposal texts remain under [`../proposals/`](../proposals/): [`v1.20/`](..
 
 ## Open design work
 
-The classification-aware search work proposed in [`../proposals/v1.23/`](../proposals/v1.23/) is **not** folded into this document. It is proposed, not approved: §20, §23, §25, §26, §40 and §41 describe the enforcement model as it stands today, and the v1.23 proposal documents where that model cannot express sub-document sensitivity classes.
+The classification-aware search work in [`synanton-design-1.23.md`](./synanton-design-1.23.md) extends this document. §20, §23, §25, §26, §40 and §41 here describe the enforcement model as it stands in v1.22; v1.23 documents chunk-level class grants, compile-time class filtering, and ingest-time masking. Implementation: [`../implementation/classification-aware-search/INDEX.md`](../implementation/classification-aware-search/INDEX.md). Demo: [`../demos/classification-aware-semantic-search-demo.md`](../demos/classification-aware-semantic-search-demo.md).
 
 ## How "current" is managed
 

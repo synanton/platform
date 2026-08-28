@@ -4,7 +4,7 @@
 > **Title:** Classification‑Aware Semantic Search Demo
 > **Status:** Draft
 > **Last reviewed:** 2026-08-28
-> **Related:** [v1.23 proposal](https://./Synanton_v1.23_Classification_Aware_Semantic_Search.md), [standalone-syntology-demo.md](https://../implementation/demo/standalone-syntology-demo.md)
+> **Related:** [synanton-design-1.23.md](../architecture/synanton-design-1.23.md), [v1.23 implementation plan](../implementation/classification-aware-search/INDEX.md), [standalone-syntology-demo.md](../implementation/demo/standalone-syntology-demo.md)
 
 ## 1. Scenario and Roles
 
@@ -182,7 +182,7 @@ All five must print `PASS`.
 
 - Physical separation per class (SEC‑6) — optional, regulated tenants only
 - LLM‑based classification (A4) — not recommended as sole gate
-- Pre‑ingest sanitisation of original PDF — out of scope (see §5 of proposal)
+- Pre‑ingest sanitisation of original PDF — out of scope (see §5 of [synanton-design-1.23.md](../architecture/synanton-design-1.23.md))
 
 ## 8. Troubleshooting
 
