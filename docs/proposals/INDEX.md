@@ -12,14 +12,15 @@ last_reviewed: "2026-08-26"
 
 ## Quick Links
 
-| Proposal | Status |
-|---------|--------|
+| Proposal             | Status                                                                  |
+|----------------------|-------------------------------------------------------------------------|
+| [`v1.23/`](./v1.23/) | Proposal 1.23 - Classification-Aware Semantic Search Proposal           |
 | [`v1.22/`](./v1.22/) | Folded into architecture 1.22 - Semantic Content Structuring / Chunking |
-| [`v1.21/`](./v1.21/) | Folded into architecture 1.21 - Structured Content Extraction Plane |
-| [`v1.20/`](./v1.20/) | Folded into architecture 1.20 - GPU Execution Plane isolation |
-| [`v1.19/`](./v1.19/) | Folded into architecture 1.19 - Helper & Wizard modules |
-| [`v1.18/`](./v1.18/) | Accepted - Data validation & XSS protection |
-| [`v1.17/`](./v1.17/) | Accepted - Operational robustness & DR |
+| [`v1.21/`](./v1.21/) | Folded into architecture 1.21 - Structured Content Extraction Plane     |
+| [`v1.20/`](./v1.20/) | Folded into architecture 1.20 - GPU Execution Plane isolation           |
+| [`v1.19/`](./v1.19/) | Folded into architecture 1.19 - Helper & Wizard modules                 |
+| [`v1.18/`](./v1.18/) | Accepted - Data validation & XSS protection                             |
+| [`v1.17/`](./v1.17/) | Accepted - Operational robustness & DR                                  |
 
 ## Sub-directories
 
