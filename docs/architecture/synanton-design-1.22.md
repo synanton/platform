@@ -19,7 +19,7 @@ This document is the **single authoritative engineering reference** for the Syna
 
 Sections that v1.20 extended carry a **GPU Execution Plane additions *(v1.20)*** subsection at the end of the host section, reproducing the v1.20 text verbatim rather than rewriting the v1.19 text around it.
 
-Versions 1.19, 1.20 and 1.21 are no longer separate live documents. They are retained as lineage under [`../archive/architecture/`](../archive/architecture/) and this document defers to none of them.
+Versions 1.19, 1.20 and 1.21 are no longer separate live documents. They are retained as lineage under [`../archive/architecture/`](archive/architecture/) and this document defers to none of them.
 
 Where prior drafts split content across enhancement proposals, reviews, and risk dossiers, this document presents them as a single coherent surface: **principles → topology → end-to-end processing flows → module-by-module specifications → SPIs → data model → cross-cutting concerns → operations → GPU execution → structured extraction → semantic chunking**.
 
@@ -5080,7 +5080,7 @@ synflux SemanticChunkStage → persist (page/section) → synquest
 
 **Out of scope for the PoC (still planned):** async operations, PostgreSQL operation store, dedicated `extraction-client`, SCEP-6 topology proof.
 
-Full contract text: [`../proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md`](../proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md).  
+Full contract text: [`../proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md`](proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md).  
 Implementation plan: [`../implementation/content-extraction-plane/INDEX.md`](../implementation/content-extraction-plane/INDEX.md).
 
 ------
@@ -5137,7 +5137,7 @@ Semantic Chunker → chunks (sectionPath, sourceElements, page/bbox)
 
 **Out of scope for the PoC (still planned):** multimodal chunking (audio turn-based, image OCR/description, video scene/clip), chunking tags on the extraction request, summarization hierarchy built from chunk tree, dedicated `semantic-chunking` service boundary.
 
-Full design text: [`../proposals/v1.22/Synanton v1.22  Structured Content Semantic Chunking Design Proposal.md`](../proposals/v1.22/Synanton%20v1.22%20%20Structured%20Content%20Semantic%20Chunking%20Design%20Proposal.md).  
+Full design text: [`../proposals/v1.22/Synanton v1.22  Structured Content Semantic Chunking Design Proposal.md`](proposals/v1.22/Synanton%20v1.22%20%20Structured%20Content%20Semantic%20Chunking%20Design%20Proposal.md).  
 Implementation plan: [`../implementation/semantic-chunking/INDEX.md`](../implementation/semantic-chunking/INDEX.md).
 
 ------
@@ -5511,12 +5511,12 @@ exec "$SYNANTON_LIBEXEC/synanton-ops" "$@"
 | Version | Content it owned | Where it lives now |
 |---|---|---|
 | 1.22 | Semantic Content Structuring / Chunking (Part X) | **this document** |
-| 1.21 | Structured Content Extraction Plane (Part IX) | Part IX here; original at [`../archive/architecture/synanton-design-1.21.md`](../archive/architecture/synanton-design-1.21.md) |
-| 1.20 | GPU Execution Plane (Part VIII) | Part VIII here; original at [`../archive/architecture/synanton-design-1.20.md`](../archive/architecture/synanton-design-1.20.md) |
-| 1.19 | Parts I–VII baseline + Appendices A–D | Parts I–VII here; original at [`../archive/architecture/synanton-design-1.19.md`](../archive/architecture/synanton-design-1.19.md) |
-| ≤1.18 | Superseded lineage | [`../archive/architecture/`](../archive/architecture/) |
+| 1.21 | Structured Content Extraction Plane (Part IX) | Part IX here; original at [`../archive/architecture/synanton-design-1.21.md`](archive/synanton-design-1.21.md) |
+| 1.20 | GPU Execution Plane (Part VIII) | Part VIII here; original at [`../archive/architecture/synanton-design-1.20.md`](archive/synanton-design-1.20.md) |
+| 1.19 | Parts I–VII baseline + Appendices A–D | Parts I–VII here; original at [`../archive/architecture/synanton-design-1.19.md`](archive/synanton-design-1.19.md) |
+| ≤1.18 | Superseded lineage | [`../archive/architecture/`](archive/architecture/) |
 
-Full proposal texts remain under [`../proposals/`](../proposals/): [`v1.20/`](../proposals/v1.20/) (GPU isolation), [`v1.21/`](../proposals/v1.21/) (extraction plane), [`v1.22/`](../proposals/v1.22/) (semantic chunking). Implementation plans live under [`../implementation/`](../implementation/), including [`content-extraction-plane/INDEX.md`](../implementation/content-extraction-plane/INDEX.md) and [`semantic-chunking/INDEX.md`](../implementation/semantic-chunking/INDEX.md).
+Full proposal texts remain under [`../proposals/`](../proposals/): [`v1.20/`](proposals/v1.20/) (GPU isolation), [`v1.21/`](proposals/v1.21/) (extraction plane), [`v1.22/`](proposals/v1.22/) (semantic chunking). Implementation plans live under [`../implementation/`](../implementation/), including [`content-extraction-plane/INDEX.md`](../implementation/content-extraction-plane/INDEX.md) and [`semantic-chunking/INDEX.md`](../implementation/semantic-chunking/INDEX.md).
 
 ## Open design work
 

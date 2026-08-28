@@ -44,9 +44,9 @@ last_reviewed: "2026-08-26"
 | 1.21 | [`synanton-design-1.21.md`](./synanton-design-1.21.md) | Extraction plane (Part IX; folded) |
 | 1.20 | [`synanton-design-1.20.md`](./synanton-design-1.20.md) | GPU plane (folded; still the Part VIII text) |
 | 1.19 | [`synanton-design-1.19.md`](./synanton-design-1.19.md) | Superseded as current; baseline for core modules |
-| 1.18 | [`../archive/architecture/synanton-design-1.18.md`](../archive/architecture/synanton-design-1.18.md) | Superseded |
-| 1.17 | [`../archive/architecture/synanton-design-1.17.md`](../archive/architecture/synanton-design-1.17.md) | Superseded |
-| ≤1.16 | [`../archive/architecture/`](../archive/architecture/) | Archived |
+| 1.18 | [`../archive/architecture/synanton-design-1.18.md`](archive/architecture/synanton-design-1.18.md) | Superseded |
+| 1.17 | [`../archive/architecture/synanton-design-1.17.md`](archive/architecture/synanton-design-1.17.md) | Superseded |
+| ≤1.16 | [`../archive/architecture/`](archive/architecture/) | Archived |
 
 ## How to Contribute
 
