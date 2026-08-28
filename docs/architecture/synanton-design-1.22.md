@@ -1,4 +1,4 @@
-# Synanton Platform - Architecture (Merged Reference)
+# Synanton Platform - Architecture (v1.22)
 
 > **Document type:** Definitive engineering reference
 > **Version:** 1.22
