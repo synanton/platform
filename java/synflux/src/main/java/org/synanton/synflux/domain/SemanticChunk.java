@@ -18,8 +18,10 @@ public record SemanticChunk(
     int tokenCount,
     boolean isPartialSection,
     Map<String, Object> metadata,
+    List<String> classification,
     String sha256
 ) {
+    public static final List<String> PUBLIC_ONLY = List.of("PUBLIC");
     public enum ChunkType {
         SECTION, SUBSECTION, SUBSECTION_CHUNK, PARAGRAPH, LIST, TABLE, FIGURE,
         HEADING, IMAGE, FALLBACK, CONVERSATION_TURN, IMAGE_OCR, IMAGE_DESCRIPTION,

@@ -1,5 +1,6 @@
 package org.synanton.ingestioncache.domain;
 
+import java.util.List;
 import java.util.UUID;
 
 public record ChunkRow(
@@ -16,8 +17,11 @@ public record ChunkRow(
     String sourceElementsJson,
     int tokenCount,
     String structuredContentJson,
-    boolean isPartialSection
+    boolean isPartialSection,
+    List<String> classification
 ) {
+    public static final List<String> PUBLIC_ONLY = List.of("PUBLIC");
+
     public ChunkRow(
             String tenantId,
             UUID contentRefId,
@@ -25,7 +29,7 @@ public record ChunkRow(
             String chunkText,
             String chunkSha256) {
         this(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256,
-            -1, -1, "", "", "", "[]", 0, "", false);
+            -1, -1, "", "", "", "[]", 0, "", false, PUBLIC_ONLY);
     }
 
     public ChunkRow(
@@ -41,6 +45,6 @@ public record ChunkRow(
             String heading) {
         this(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256,
             pageStart, pageEnd, sectionPath, chunkType, heading,
-            "[]", 0, "", false);
+            "[]", 0, "", false, PUBLIC_ONLY);
     }
 }

@@ -40,7 +40,7 @@ class EmbedStageTest {
             chunks.add(new SemanticChunk(
                 "doc-c" + i, "doc", i, SemanticChunk.ChunkType.FALLBACK,
                 "chunk " + i, null, List.of(), null, List.of(),
-                -1, -1, 10, false, Map.of(), "sha" + i));
+                -1, -1, 10, false, Map.of(), SemanticChunk.PUBLIC_ONLY, "sha" + i));
         }
         return new ChunkedDocument(parsed, chunks);
     }

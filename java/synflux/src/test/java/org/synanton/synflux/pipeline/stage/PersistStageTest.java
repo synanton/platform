@@ -39,7 +39,8 @@ class PersistStageTest {
         ParsedDocument parsed = new ParsedDocument(acquired, "hello", Map.of(), null);
         SemanticChunk chunk = new SemanticChunk(
                 "c0", refId.toString(), 0, SemanticChunk.ChunkType.SECTION, "hello", null,
-                List.of("Supply chain", "Europe"), "Europe", List.of("e1"), 2, 2, 1, false, Map.of(), "bb");
+                List.of("Supply chain", "Europe"), "Europe", List.of("e1"), 2, 2, 1, false, Map.of(),
+                SemanticChunk.PUBLIC_ONLY, "bb");
         ChunkedDocument doc = new ChunkedDocument(parsed, List.of(chunk));
 
         SynfluxProperties props = new SynfluxProperties(

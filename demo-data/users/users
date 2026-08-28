@@ -3,5 +3,9 @@
 alice:$2y$12$fMkO2Q4O50DdzCdw4fVlA.I8bmA5UhfsIvTIjB5ojsA0E8nxZEYt6:1001:1001,2000
 # bob    - reader only (gid 3000 = readers)
 bob:$2y$12$k0JMbiojzXqvYqJV8lQYyOwbdaAesABQAegZZrElE9HinGYaNwi66:1002:1002,3000
+# hr     - PERSONAL class grant demo (gid 4000)
+hr:$2y$12$k0JMbiojzXqvYqJV8lQYyOwbdaAesABQAegZZrElE9HinGYaNwi66:1003:1003,4000
+# payroll - FINANCIAL class grant demo (gid 4100)
+payroll:$2y$12$k0JMbiojzXqvYqJV8lQYyOwbdaAesABQAegZZrElE9HinGYaNwi66:1004:1004,4100
 # admin  - full access (writer + reader)
 admin:$2y$12$1UsjoKoiAZCMqstoxvzcbOx/hsssNQI4DkHcWJnhRJoSaSxyKNLNK:1000:1000,2000,3000

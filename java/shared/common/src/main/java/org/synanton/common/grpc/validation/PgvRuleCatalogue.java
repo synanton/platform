@@ -19,8 +19,11 @@ public class PgvRuleCatalogue {
     public static final Pattern UUID = Pattern.compile(
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
     private static final Set<String> SUBJECT_TYPES = Set.of("USER", "GROUP");
+    private static final Set<String> CLASS_SUBJECT_TYPES = Set.of("USER", "GROUP", "ROLE");
     private static final Set<String> RESOURCE_TYPES = Set.of("SPACE", "PROJECT", "FOLDER", "DOCUMENT");
     private static final Set<String> PERMISSIONS = Set.of("READ", "WRITE", "ADMIN");
+    private static final Set<String> CLASS_PERMISSIONS = Set.of("SEARCH", "VIEW");
+    private static final Set<String> SENSITIVITY_CLASSES = Set.of("PUBLIC", "PERSONAL", "FINANCIAL", "RESTRICTED");
 
     public List<PgvFieldViolation> validate(String service, String method, Object message) {
         if (message == null) {
@@ -28,6 +31,9 @@ public class PgvRuleCatalogue {
         }
         if ("TopologyMutation".equals(service) && "Grant".equals(method)) {
             return validateGrant(asMap(message));
+        }
+        if ("TopologyMutation".equals(service) && "ClassGrant".equals(method)) {
+            return validateClassGrant(asMap(message));
         }
         if (message instanceof Map<?, ?> map) {
             return validateGrant(stringMap(map));
@@ -43,6 +49,21 @@ public class PgvRuleCatalogue {
         requirePattern(fields, "resource_id", UUID, "string.uuid", violations);
         requireIn(fields, "resource_type", RESOURCE_TYPES, violations);
         requireIn(fields, "permission", PERMISSIONS, violations);
+        String idempotency = fields.get("idempotency_key");
+        if (idempotency == null || idempotency.isBlank() || idempotency.length() > 256) {
+            violations.add(new PgvFieldViolation(
+                    "idempotency_key", "string.len", "idempotency_key must be 1-256 characters"));
+        }
+        return violations;
+    }
+
+    public List<PgvFieldViolation> validateClassGrant(Map<String, String> fields) {
+        List<PgvFieldViolation> violations = new ArrayList<>();
+        requirePattern(fields, "tenant_id", TENANT_ID, "string.pattern", violations);
+        requirePattern(fields, "subject_id", SUBJECT_ID, "string.pattern", violations);
+        requireIn(fields, "subject_type", CLASS_SUBJECT_TYPES, violations);
+        requireIn(fields, "class", SENSITIVITY_CLASSES, violations);
+        requireIn(fields, "permission", CLASS_PERMISSIONS, violations);
         String idempotency = fields.get("idempotency_key");
         if (idempotency == null || idempotency.isBlank() || idempotency.length() > 256) {
             violations.add(new PgvFieldViolation(

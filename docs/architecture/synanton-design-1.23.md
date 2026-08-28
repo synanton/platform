@@ -1,10 +1,11 @@
-# Synanton Platform v1.23 Proposal - Classification-Aware Semantic Search
+# Synanton Platform - Architecture (v1.23)
 
-> **Document type:** Enhancement proposal
-> **Version:** 1.23 (draft)
+> **Document type:** Definitive engineering reference
+> **Version:** 1.23
 > **Date:** 2026-08-28
-> **Status:** Proposed
-> **Related docs:** [synanton-design-1.22.md](https://../architecture/synanton-design-1.22.md), [security-review-findings.md](https://./security-review-findings.md)
+> **Status:** Approved (implementation in progress)
+> **Audience:** Architects, module owners, security engineers, SREs
+> **Related docs:** [synanton-design-1.22.md](./synanton-design-1.22.md), [classification-aware-search implementation plan](../implementation/classification-aware-search/INDEX.md), [classification-aware semantic search demo](../demos/classification-aware-semantic-search-demo.md)
 
 ## 1. Motivation
 
@@ -402,6 +403,5 @@ The design is **additive**, **non‑breaking**, and **rollback‑safe**. All new
 
 **Next steps:**
 
-- Review and approve this proposal.
-- Finalise `security-review-findings.md` with all six gaps documented.
-- Begin SEC‑1 implementation.
+- Continue SEC‑2 through SEC‑6 per [implementation plan](../implementation/classification-aware-search/INDEX.md).
+- Fold approved sections into the merged design baseline when v1.23 reaches GA.

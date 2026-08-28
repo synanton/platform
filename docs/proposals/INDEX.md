@@ -12,14 +12,17 @@ last_reviewed: "2026-08-26"
 
 ## Quick Links
 
-| Proposal | Status |
-|---------|--------|
+| Proposal             | Status                                                                  |
+|----------------------|-------------------------------------------------------------------------|
+| [`synanton-design-1.23.md`](../architecture/synanton-design-1.23.md) | Folded into architecture 1.23 - Classification-Aware Semantic Search |
+| [`../implementation/classification-aware-search/`](../implementation/classification-aware-search/) | v1.23 implementation plan |
+| [`../demos/classification-aware-semantic-search-demo.md`](../demos/classification-aware-semantic-search-demo.md) | v1.23 demo scenario |
 | [`v1.22/`](./v1.22/) | Folded into architecture 1.22 - Semantic Content Structuring / Chunking |
-| [`v1.21/`](./v1.21/) | Folded into architecture 1.21 - Structured Content Extraction Plane |
-| [`v1.20/`](./v1.20/) | Folded into architecture 1.20 - GPU Execution Plane isolation |
-| [`v1.19/`](./v1.19/) | Folded into architecture 1.19 - Helper & Wizard modules |
-| [`v1.18/`](./v1.18/) | Accepted - Data validation & XSS protection |
-| [`v1.17/`](./v1.17/) | Accepted - Operational robustness & DR |
+| [`v1.21/`](./v1.21/) | Folded into architecture 1.21 - Structured Content Extraction Plane     |
+| [`v1.20/`](./v1.20/) | Folded into architecture 1.20 - GPU Execution Plane isolation           |
+| [`v1.19/`](./v1.19/) | Folded into architecture 1.19 - Helper & Wizard modules                 |
+| [`v1.18/`](./v1.18/) | Accepted - Data validation & XSS protection                             |
+| [`v1.17/`](./v1.17/) | Accepted - Operational robustness & DR                                  |
 
 ## Sub-directories
 

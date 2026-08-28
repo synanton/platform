@@ -49,3 +49,4 @@ deployment/docker/**/volumes/
 data/syntology/
 
 /gradle-*-bin.zip
+/claude-resume.txt

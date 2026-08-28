@@ -3,6 +3,8 @@ package org.synanton.topology.api;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.topology.app.TopologyProperties;
 import org.synanton.topology.domain.AckTracker;
+import org.synanton.topology.domain.ClassGrantMutationService;
+import org.synanton.topology.domain.ClassGrantMutationService.ClassGrantCommand;
+import org.synanton.topology.domain.ClassGrantMutationService.InvalidClassGrantException;
 import org.synanton.topology.domain.GrantMutationService;
 import org.synanton.topology.domain.GrantMutationService.GrantCommand;
 import org.synanton.topology.domain.GrantMutationService.InvalidGrantException;
@@ -29,6 +34,7 @@ public class TopologyMutationController {
     private static final List<String> CONSUMERS = List.of("synquest", "gateway", "relix");
 
     private final GrantMutationService grants;
+    private final ClassGrantMutationService classGrants;
     private final AckTracker ackTracker;
     private final JdbcOrganizationPolicyRepository policies;
     private final ResidencyPolicyValidator residencyValidator;
@@ -36,12 +42,14 @@ public class TopologyMutationController {
 
     public TopologyMutationController(
             GrantMutationService grants,
+            ClassGrantMutationService classGrants,
             AckTracker ackTracker,
             JdbcOrganizationPolicyRepository policies,
             ResidencyPolicyValidator residencyValidator,
             TopologyProperties properties
     ) {
         this.grants = grants;
+        this.classGrants = classGrants;
         this.ackTracker = ackTracker;
         this.policies = policies;
         this.residencyValidator = residencyValidator;
@@ -83,6 +91,56 @@ public class TopologyMutationController {
         return ResponseEntity.accepted().body(result);
     }
 
+    @PostMapping("/mutations/class-grant")
+    public ResponseEntity<PropagationId> grantClass(@RequestBody ClassGrantCommand body) {
+        TenantContext ctx = TenantContext.get();
+        ClassGrantCommand command = new ClassGrantCommand(
+                body.tenantId(),
+                body.subjectId(),
+                body.subjectType(),
+                body.sensitivityClass(),
+                body.permission(),
+                body.idempotencyKey(),
+                ctx != null && ctx.subject() != null ? ctx.subject() : "anonymous",
+                ctx != null && ctx.hasRole("support_admin") ? "SUPPORT_ADMIN" : "USER_SUBJECT",
+                ctx != null && ctx.hasRole("support_admin") ? "support_admin" : "user"
+        );
+        PropagationId result = classGrants.grant(command);
+        OrganizationPolicy policy = policies.require(body.tenantId());
+        if (policy.isHighSecurity()) {
+            boolean acked = ackTracker.await(
+                    result.outboxId(),
+                    CONSUMERS,
+                    Duration.ofMillis(properties.highSecurity().ackDeadlineMs())
+            );
+            if (!acked) {
+                return ResponseEntity.status(HttpStatus.ACCEPTED)
+                        .header("Warning", "propagation-pending")
+                        .header("Retry-After", "1")
+                        .body(new PropagationId(result.grantId(), result.outboxId(), PropagationId.PENDING, result.createdAt()));
+            }
+            return ResponseEntity.ok(new PropagationId(
+                    result.grantId(), result.outboxId(), PropagationId.PROPAGATED, result.createdAt()));
+        }
+        return ResponseEntity.accepted().body(result);
+    }
+
+    @DeleteMapping("/mutations/class-grants/{grantId}")
+    public ResponseEntity<PropagationId> revokeClass(
+            @PathVariable java.util.UUID grantId,
+            @RequestBody RevokeClassGrantRequest body
+    ) {
+        TenantContext ctx = TenantContext.get();
+        PropagationId result = classGrants.revoke(
+                grantId,
+                body.tenantId(),
+                ctx != null && ctx.subject() != null ? ctx.subject() : "anonymous",
+                ctx != null && ctx.hasRole("support_admin") ? "SUPPORT_ADMIN" : "USER_SUBJECT",
+                ctx != null && ctx.hasRole("support_admin") ? "support_admin" : "user"
+        );
+        return ResponseEntity.accepted().body(result);
+    }
+
     @PostMapping("/mutations/acks")
     public Map<String, String> ack(@RequestBody AckRequest ack) {
         ackTracker.record(ack.outboxId(), ack.consumer(), ack.status());
@@ -97,6 +155,17 @@ public class TopologyMutationController {
             return ResponseEntity.ok(Map.of("event", "RESIDENCY_DOWNGRADE_WITH_CONTENT"));
         }
         return ResponseEntity.ok(Map.of("event", "RESIDENCY_UPDATED"));
+    }
+
+    @ExceptionHandler(InvalidClassGrantException.class)
+    public ResponseEntity<Map<String, Object>> invalidClassGrant(InvalidClassGrantException ex) {
+        List<Map<String, String>> fieldViolations = ex.violations().stream()
+                .map(v -> Map.of("field", v.field(), "error", v.error(), "description", v.message()))
+                .toList();
+        return ResponseEntity.badRequest().body(Map.of(
+                "grpc_status", "INVALID_ARGUMENT",
+                "field_violations", fieldViolations
+        ));
     }
 
     @ExceptionHandler(InvalidGrantException.class)
@@ -116,6 +185,8 @@ public class TopologyMutationController {
     }
 
     public record AckRequest(java.util.UUID outboxId, String consumer, int status) {}
+
+    public record RevokeClassGrantRequest(String tenantId) {}
 
     public record ResidencyUpdate(
             String tenantId,

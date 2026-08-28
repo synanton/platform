@@ -19,6 +19,7 @@ public class SchemaInstaller {
         "cql/V3__chunk_provenance.cql",
         "cql/V4__ingest_usage.cql",
         "cql/V5__chunk_citation.cql",
+        "cql/V6__chunk_classification.cql",
     };
 
     public static void install(CqlSession session) {

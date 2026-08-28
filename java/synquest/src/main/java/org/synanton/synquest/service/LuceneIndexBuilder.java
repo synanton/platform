@@ -34,6 +34,7 @@ public class LuceneIndexBuilder {
     private static final String FIELD_TOKEN_COUNT = "token_count";
     private static final String FIELD_STRUCTURED_CONTENT = "structured_content";
     private static final String FIELD_IS_PARTIAL_SECTION = "is_partial_section";
+    private static final String FIELD_CLASSIFICATION = "classification";
     private static final String FIELD_INGEST_USAGE = "ingest_usage";
     private static final String FIELD_INGEST_WALL_MS = "ingest_wall_ms";
 
@@ -116,6 +117,9 @@ public class LuceneIndexBuilder {
                     doc.add(new StoredField(FIELD_TOKEN_COUNT, chunk.tokenCount()));
                     doc.add(new StoredField(FIELD_STRUCTURED_CONTENT, chunk.structuredContentJson() == null ? "" : chunk.structuredContentJson()));
                     doc.add(new StoredField(FIELD_IS_PARTIAL_SECTION, String.valueOf(chunk.isPartialSection())));
+                    for (String cls : chunk.classification()) {
+                        doc.add(new StringField(FIELD_CLASSIFICATION, cls, Field.Store.YES));
+                    }
                     doc.add(new StoredField(FIELD_INGEST_USAGE, ingestUsage));
                     doc.add(new StoredField(FIELD_INGEST_WALL_MS, ingestWallMs));
 

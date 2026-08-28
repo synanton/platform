@@ -83,12 +83,13 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.chunks_payload " +
             "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
             "page_start, page_end, section_path, chunk_type, heading, " +
-            "source_elements, token_count, structured_content, is_partial_section) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "source_elements, token_count, structured_content, is_partial_section, classification) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             chunk.tenantId(), chunk.contentRefId(), chunk.chunkOrdinal(), chunk.chunkText(),
             chunk.chunkSha256(), chunk.pageStart(), chunk.pageEnd(), chunk.sectionPath(),
             chunk.chunkType(), chunk.heading(), chunk.sourceElementsJson(), chunk.tokenCount(),
-            chunk.structuredContentJson(), chunk.isPartialSection()
+            chunk.structuredContentJson(), chunk.isPartialSection(),
+            new java.util.HashSet<>(chunk.classification())
         ));
     }
 
@@ -99,12 +100,13 @@ public class IngestionCacheClient {
                 "INSERT INTO ingestion_cache.chunks_payload " +
                 "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
                 "page_start, page_end, section_path, chunk_type, heading, " +
-                "source_elements, token_count, structured_content, is_partial_section) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "source_elements, token_count, structured_content, is_partial_section, classification) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
                 c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
                 c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
-                c.structuredContentJson(), c.isPartialSection()
+                c.structuredContentJson(), c.isPartialSection(),
+                new java.util.HashSet<>(c.classification())
             ));
         }
         session.execute(batch);
@@ -129,7 +131,8 @@ public class IngestionCacheClient {
                 stringOrDefault(r, "source_elements", "[]"),
                 intOrDefault(r, "token_count", 0),
                 stringOrEmpty(r, "structured_content"),
-                boolOrDefault(r, "is_partial_section", false)
+                boolOrDefault(r, "is_partial_section", false),
+                setOrDefault(r, "classification", ChunkRow.PUBLIC_ONLY)
             ));
         }
         return rows;
@@ -172,6 +175,21 @@ public class IngestionCacheClient {
             return v == null ? "" : v;
         } catch (IllegalArgumentException e) {
             return "";
+        }
+    }
+
+    private static List<String> setOrDefault(Row r, String column, List<String> fallback) {
+        try {
+            if (r.isNull(column)) {
+                return fallback;
+            }
+            Set<String> values = r.getSet(column, String.class);
+            if (values == null || values.isEmpty()) {
+                return fallback;
+            }
+            return List.copyOf(values);
+        } catch (IllegalArgumentException e) {
+            return fallback;
         }
     }
 
