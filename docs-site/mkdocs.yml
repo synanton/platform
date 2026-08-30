@@ -1,0 +1,76 @@
+site_name: Synanton Guides
+site_description: >-
+  Business and operational guides to Synanton's search, security, ingestion,
+  deployment, and troubleshooting model — no code or API depth required.
+site_url: https://synanton.github.io/
+repo_url: https://github.com/synanton/platform
+repo_name: synanton/platform
+edit_uri: edit/main/docs-site/guides/
+
+docs_dir: guides
+site_dir: site
+
+# NOTE: source lives here (in platform), but the built, mike-versioned site
+# is published to the org's root Pages site at https://synanton.github.io/ —
+# see docs-site/README.md "Publishing" for how CI pushes there.
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: true
+
+extra:
+  version:
+    provider: mike
+    default: latest
+
+nav:
+  - Home: index.md
+  - For Everyone:
+      - Search 101: search-101.md
+      - Ingestion 101: ingestion-101.md
+  - For Security & Compliance Teams:
+      - Security 101: security-101.md
+  - For Operators:
+      - Deployment 101: deployment-101.md
+      - Troubleshooting 101: troubleshooting-101.md

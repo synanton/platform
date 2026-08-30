@@ -13,6 +13,7 @@ last_reviewed: "2026-08-26"
 
 | Document | Description |
 |----------|-------------|
+| [Synanton Guides](https://synanton.github.io/) (`../docs-site/`) | **Business/operator-level guides** - Search, Security, Ingestion, Deployment, Troubleshooting 101. No code or API depth; start here if you're not an engineer. |
 | [`architecture/synanton-design-1.23.md`](./architecture/synanton-design-1.23.md) | **In progress** - classification-aware semantic search (v1.23) |
 | [`architecture/synanton-design-1.22.md`](./architecture/synanton-design-1.22.md) | **Current baseline** - semantic chunking + pointers to extraction (1.21), GPU (1.20), baseline (1.19) |
 | [`demos/`](./demos/) | End-to-end demo scenarios |

@@ -34,6 +34,9 @@ __pycache__/
 *.pyc
 .venv/
 
+# MkDocs build output (docs-site/) - published to gh-pages by CI, not committed here
+docs-site/site/
+
 # Docker / runtime data - keep seed files, ignore live data
 demo-data/ontologies/**/*.tdb2
 demo-data/ontologies/.lock

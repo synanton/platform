@@ -1,0 +1,81 @@
+name: Docs Site (MkDocs)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "docs-site/**"
+      - ".github/workflows/docs-site.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "docs-site/**"
+      - ".github/workflows/docs-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Guides Site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install MkDocs and plugins
+        run: pip install -r docs-site/requirements.txt
+
+      - name: Build site (strict — fails on broken links/nav)
+        run: mkdocs build -f docs-site/mkdocs.yml --strict
+
+  deploy:
+    name: Publish to synanton.github.io
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout guide sources (this repo)
+        uses: actions/checkout@v4
+
+      - name: Checkout synanton.github.io (publish target)
+        uses: actions/checkout@v4
+        with:
+          repository: synanton/synanton.github.io
+          token: ${{ secrets.SYNANTON_IO_PAGES_TOKEN }}
+          path: synanton.github.io
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install MkDocs and plugins
+        run: pip install -r docs-site/requirements.txt
+
+      - name: Configure git identity for mike
+        working-directory: synanton.github.io
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # mike commits/pushes into whatever git repo is in the current working
+      # directory (its "origin"/"gh-pages" defaults), so we run it from inside
+      # the synanton.github.io checkout while pointing -F at this repo's
+      # mkdocs.yml. Requires the SYNANTON_IO_PAGES_TOKEN secret (see
+      # docs-site/README.md) and gh-pages set as the Pages source branch on
+      # synanton/synanton.github.io.
+      - name: Deploy version 1.23 and update 'latest' alias
+        working-directory: synanton.github.io
+        run: mike deploy --push --update-aliases -F ../docs-site/mkdocs.yml -b gh-pages 1.23 latest
+
+      - name: Set default version shown at the site root
+        working-directory: synanton.github.io
+        run: mike set-default --push -F ../docs-site/mkdocs.yml -b gh-pages latest
