@@ -14,7 +14,7 @@ last_reviewed: "2026-08-26"
 
 | Document | Decision |
 |----------|---------|
-| *(ADRs to be extracted from the main design document)* | |
+| [ADR-001: Classification-Aware Search & Semantic Chunking](./adr-001-classification-aware-search.md) | Sub-document sensitivity via chunk-level ACLs and masked representations (v1.23 approved 2026-08-30) |
 
 ## How to Contribute
 
