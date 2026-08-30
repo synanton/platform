@@ -1,30 +1,31 @@
 ---
 title: "Classification-Aware Semantic Search - Implementation Plan"
 status: "in progress"
-last_reviewed: "2026-08-28"
+last_reviewed: "2026-08-29"
 ---
 
 # Classification-Aware Semantic Search - Implementation Plan
 
-**Purpose:** Implementation plan for v1.23 classification-aware semantic search. Closes the sub-document security gap by labelling chunks with sensitivity classes, masking restricted spans before any downstream store write, and enforcing compile-time class filtering at query time.
+**Purpose:** Implementation plan for v1.23 classification-aware semantic search. Closes the sub-document security gap by labelling chunks with sensitivity classes, deciding per chunk whether masking requires a second, authorized-only original representation (§3.2a of the design doc), and enforcing compile-time representation selection at query time.
 **Architecture reference:** [`docs/architecture/synanton-design-1.23.md`](../../architecture/synanton-design-1.23.md), [`docs/architecture/synanton-design-1.22.md`](../../architecture/synanton-design-1.22.md) (§20, §23, §25, §40)
 **Prerequisite:** v1.22 semantic chunking (structured `elements` → `SemanticChunk` with provenance) — see [`../semantic-chunking/INDEX.md`](../semantic-chunking/INDEX.md)
 **Target repository:** `synanton/platform` (`topology`, `synflux`, `synquest`, `gateway`, `planner`, `relix`, `ingestion-cache`, `control-plane`)
 **Audience:** Security engineers, ingestion engineers, search engineers, SREs
-**Last Updated:** 2026-08-28
+**Last Updated:** 2026-08-29
 
 ---
 
 ## Theme
 
-> Resource ACLs answer *which documents* a caller may see. Class grants answer *which sensitivity bands within a document* they may see. Effective visibility is `resource_acl ∧ class_grants`. Restricted literals must never reach any search-facing store — masking happens before Cassandra commit, and compile-time filters prevent term-statistics leakage for all tenant tiers.
+> Resource ACLs answer *which documents* a caller may see. Class grants answer *which sensitivity bands within a document* they may see. Effective visibility is `resource_acl ∧ class_grants`. Masking is evaluated per chunk: if it makes no change, the chunk has one representation shared by every caller; if it changes the content, an authorized-only `original` representation exists alongside an always-available `masked` one, unless the class is configured `store_original: false` (e.g. SSN/`RESTRICTED`), in which case the original is never computed for storage at all, for any caller. Compile-time filters select the right representation before term statistics are computed — never a post-filter, and never whole-chunk exclusion.
 
 ---
 
 ## User-Facing Capability Unlocked
 
 - A single document containing identity (RESTRICTED), contact (PERSONAL), and compensation (FINANCIAL) data can be searched by HR, payroll, and default users with disjoint, least-privilege visibility.
-- Restricted literals (e.g. SSN `000-00-0000`) are masked to `[REDACTED:CLASS]` before any chunk, cache, index, Kafka, graph, or synthesis store write.
+- Restricted literals configured `store_original: false` (e.g. SSN `000-00-0000` under `RESTRICTED`) are masked to `[REDACTED:CLASS]` before any chunk, cache, index, Kafka, graph, or synthesis store write, and the original is never computed for storage — for any caller.
+- Other classified content (e.g. `FINANCIAL`, `PERSONAL`) that masking actually changes gets a second, class-grant-gated `original` representation in the same stores; unauthorized callers still search and retrieve the `masked` representation rather than being excluded.
 - Class grant changes propagate over the existing topology outbox path; revoked entitlements disappear from search within the §11 SLO (p99 < 300 ms).
 - Operators can quarantine documents on detector failure and re-index after policy change without a full re-ingest.
 - A `test:security` CI tier asserts that restricted literals appear in zero stores after ingestion.
@@ -35,9 +36,9 @@ last_reviewed: "2026-08-28"
 
 Derived from the v1.23 proposal §3 and §5.
 
-1. **Mask before commit.** `ClassificationDetector` runs after chunking and **before** `PersistStage`, `EnrichStage`, and `EmbedStage`. No unmasked restricted span may reach Cassandra, Kafka, Lucene, embedding cache, graph, or synthesis cache.
+1. **Mask before commit, decide representation before commit.** `ClassificationDetector` runs after chunking and **before** `PersistStage`, `EnrichStage`, and `EmbedStage`. For classes configured `store_original: false` (e.g. `RESTRICTED`/SSN), no unmasked span may reach Cassandra, Kafka, Lucene, embedding cache, graph, or synthesis cache — for any caller. For classes configured `store_original: true` where masking changed the content, both a `masked` and a class-grant-gated `original` representation are computed and persisted side by side; only the `masked` one is ever cross-tenant-shareable or reachable without the matching class grant. See [`synanton-design-1.23.md`](../../architecture/synanton-design-1.23.md) §3.2a.
 2. **Cache-before-bus preserved.** Masking completes before any Kafka publish or outbox write (§6 invariant).
-3. **Compile-time, not post-filter.** Class clauses are injected by `AclInjector` at plan compile time for **all** tenant tiers — not only `HIGH_SECURITY`.
+3. **Compile-time, not post-filter.** Representation-selecting clauses are injected by `AclInjector` at plan compile time for **all** tenant tiers — not only `HIGH_SECURITY`. This selects `original` vs. `masked` per chunk; it does not exclude the chunk.
 4. **Fail-closed default.** When `gateway.classification.enforce=true`, chunks with missing `classification[]` are treated as `RESTRICTED`.
 5. **Deterministic detectors only at gate.** SSN, phone, address, and table-header rules are regex/gazetteer-based; GPU-free and auditable. LLM classification is advisory (`synreview`) only.
 6. **Additive and opt-in.** All features ship behind flags defaulting to v1.22 behaviour until explicitly enabled per tenant.
@@ -189,7 +190,7 @@ Derived from the v1.23 proposal §3 and §5.
 
 ## Phase SEC-3 — Compile-Time Class Filtering
 
-**Goal:** Inject class clauses at plan compile time so BM25 statistics and HNSW pre-filter never see unauthorised chunks — for all tenant tiers.
+**Goal:** Inject a representation-selecting clause at plan compile time so BM25 statistics and HNSW pre-filter are computed against the caller's authorized representation only — for all tenant tiers. This replaces whole-chunk exclusion: an unauthorized caller still matches the chunk's `masked` field/embedding, not nothing.
 
 ### Work items
 
@@ -198,15 +199,16 @@ Derived from the v1.23 proposal §3 and §5.
    - Returns effective class set for the caller (e.g. `hr` → `{PUBLIC, PERSONAL}`).
 
 2. **Extend `AclInjector`** — `java/gateway/.../acl/AclInjector.java`:
-   - Add `injectClassClauses(AclScope, Set<String> callerClasses)` producing `class:FINANCIAL`, `class:PUBLIC`, …
+   - Add `injectRepresentationClauses(AclScope, Set<String> callerClasses)` that, per chunk classification, resolves whether the caller targets `content_original`/`embedding_original` or `content_masked`/`embedding_masked` — not a boolean include/exclude.
+   - For classes with `store_original: false`, always resolve to `masked` regardless of `callerClasses`.
    - Merge with existing resource ACL clauses in plan JSON.
 
 3. **`planner` integration** — ensure compiled plan steps carry class must-clauses to every retrieval step (search + graph).
 
 4. **`synquest` query execution**:
-   - Parse class clauses from plan; add Lucene `Filter` / boolean query on `classification` field.
-   - Extend `CuckooAclFilter` with class dimension; enable pre-filter for **all** tiers when `synquest.classification.filter.enabled=true`.
-   - `fail_closed: true` → missing field matches nothing (or `RESTRICTED` only).
+   - Parse the representation clause from the plan; query targets the `content_masked` or `content_original` Lucene field accordingly (both fields exist only for Dual-outcome chunks; Masked-only and Single-outcome chunks have one field).
+   - Extend `CuckooAclFilter` with a class → representation dimension; enable pre-filter for **all** tiers when `synquest.classification.filter.enabled=true`.
+   - `fail_closed: true` → missing field resolves to `RESTRICTED`/masked-only behaviour.
 
 5. **`SearchService` / `SearchController`** — honour class filter before scoring; emit `synquest_class_filter_rejected_total`.
 
@@ -214,10 +216,10 @@ Derived from the v1.23 proposal §3 and §5.
 
 ### Definition of Done
 
-1. Search as `bob` (PUBLIC only) returns zero hits for PERSONAL/FINANCIAL/RESTRICTED chunks.
-2. Search as `hr` for `"Springfield"` returns Contact section; `"gross income"` returns zero hits.
-3. Search as `payroll` shows inverse behaviour.
-4. Term dictionary for `bob` never contains restricted-class terms (compile-time, not post-filter trim).
+1. Search as `bob` (PUBLIC only) for the exact SSN literal returns zero hits (Masked-only, `store_original: false`); search for `"gross income"` or `"Springfield"` returns the chunk with `[REDACTED:CLASS]` in place of the value (Dual outcome), not zero hits.
+2. Search as `hr` for `"Springfield"` returns the Contact section with the original address; search as `payroll` for the same term returns the masked Contact chunk.
+3. Search as `payroll` for `"gross income"` returns the original compensation values; search as `hr` for the same term returns the masked chunk.
+4. Term dictionary for `bob` never contains the `content_original` field's terms for classes he lacks (compile-time field selection, not post-filter trim).
 5. Unit tests: `AclInjector`, Lucene class filter, Cuckoo class tuples.
 6. Metric: `gateway_class_denied_total{class,role}`.
 
@@ -240,9 +242,12 @@ Derived from the v1.23 proposal §3 and §5.
 ### Work items
 
 1. **`SpanMasker`** — apply policy actions in `ClassificationStage` (or dedicated `MaskingStage` immediately after classification):
-   - `MASK`: replace matched substrings in chunk `content`, table cells, and structured fields.
+   - `MASK`: replace matched substrings in chunk `content`, table cells, and structured fields; return both the resulting `masked_content` and a `changed: boolean` flag (masked vs. original comparison).
    - `DROP`: omit chunk from downstream pipeline.
    - Preserve `[REDACTED:SSN]`, `[REDACTED:PERSONAL]`, etc.
+   - When `changed == false`: single representation; persist one `content` field, no `original` artefact.
+   - When `changed == true` and the matched class's `store_original: true`: dual representation; persist `content_masked` and `content_original` (class-grant-gated on read).
+   - When `changed == true` and `store_original: false`: masked-only; persist `content_masked`, never compute an `original` field for storage.
 
 2. **Pipeline ordering (final)**:
 
@@ -269,8 +274,8 @@ Derived from the v1.23 proposal §3 and §5.
 
 ### Definition of Done
 
-1. All five negative-test commands in [`classification-aware-semantic-search-demo.md`](../../demos/classification-aware-semantic-search-demo.md) §6 print `PASS`.
-2. Cassandra shows `"SSN: [REDACTED:SSN]"` — original literal absent.
+1. All negative-test commands in [`classification-aware-semantic-search-demo.md`](../../demos/classification-aware-semantic-search-demo.md) §6 print `PASS`.
+2. Cassandra shows `"SSN: [REDACTED:SSN]"` for the identity chunk — original literal absent for every role. For the Compensation chunk, Cassandra shows both `content_masked` (`"Gross income: [REDACTED:FINANCIAL]"`) and `content_original` (`"Gross income: €..."`), the latter gated by `class_grants` on read.
 3. `test:security` CI job blocks PRs that reintroduce literals into any store.
 4. Alert `RestrictedContentDetectedInIndex` fires if post-gate scan finds a restricted pattern (Prometheus rule in `docs/observability/` or module metrics).
 
@@ -293,14 +298,14 @@ Derived from the v1.23 proposal §3 and §5.
 ### Work items
 
 1. **Embedding cache key change** — `V7__embedding_class_key.cql`:
-   - Add `classification set<text>` to `embedding_content_cache` PK or clustering key.
-   - Key becomes `(tenant, classification_hash, chunk_sha256, model_id)`.
-   - `EmbedStage` passes chunk class set; skip cross-tenant cache lookup when class ≠ `PUBLIC`.
+   - Add `classification set<text>` and `representation text` (`single` | `masked` | `original`) to `embedding_content_cache` PK or clustering key.
+   - Key becomes `(tenant, classification_hash, representation, chunk_sha256, model_id)`.
+   - `EmbedStage` computes one embedding for Single/Masked-only outcomes, two embeddings (`masked` + `original`) for Dual outcomes; skip cross-tenant cache lookup when class ≠ `PUBLIC` or representation = `original`.
 
-2. **Graph entity class** — `relix`:
-   - Extend `Entity` DTO and Neo4j node properties with `classification[]`.
-   - Entity extraction from masked chunks inherits chunk class.
-   - Graph expansion filters by caller classes before traversal.
+2. **Graph entity class + representation** — `relix`:
+   - Extend `Entity` DTO and Neo4j node/edge properties with `classification[]` and `representation`.
+   - For Dual-outcome chunks, run entity extraction once over `content_masked` and once over `content_original`; tag each result set accordingly.
+   - Graph expansion selects `representation` (masked vs. original) per caller the same way search does (§3.3 of the design doc), then filters by caller classes before traversal.
 
 3. **Synthesis cache** — `gateway/synthesis/SynthesisCache.java`:
    - Change `aclMask` from flat string to structured `{ org_id, resource_ids, class_set }`.
@@ -313,8 +318,8 @@ Derived from the v1.23 proposal §3 and §5.
 
 ### Definition of Done
 
-1. Embedding cache entry for RESTRICTED chunk is not reused across tenants or classes.
-2. Graph entity derived from FINANCIAL table carries `classification: [FINANCIAL]`.
+1. Embedding cache entry for a `RESTRICTED`/masked-only chunk is not reused across tenants or classes; an `original`-representation entry is never reused across tenants.
+2. Graph entity derived from the FINANCIAL table carries `classification: [FINANCIAL]` and `representation`; a `payroll` traversal reaches the `original` edge, an `hr` traversal reaches only the `masked` edge for the same chunk.
 3. Synthesis cache miss when caller class set is narrower than entry's `class_set`.
 4. Integration test: ingest → embed → graph → query synthesis with class-scoped caller.
 
@@ -382,7 +387,10 @@ Per-tenant opt-in: separate index shards, embedding cache namespaces, or storage
 |----------|---------|---------|---------|
 | `synflux.classification.enabled` | `SYNFLUX_CLASSIFICATION_ENABLED` | `false` | Master ingest gate |
 | `synflux.classification.detectors` | — | `[ssn, phone, address, table_header]` | Active detectors |
-| `synflux.classification.policy.RESTRICTED` | — | `MASK` | Action per class |
+| `synflux.classification.policy.RESTRICTED.action` | — | `MASK` | Action per class |
+| `synflux.classification.policy.RESTRICTED.store-original` | — | `false` | Whether an authorized-only original representation may exist (`false` = masked-only, for anyone) |
+| `synflux.classification.policy.PERSONAL.store-original` | — | `true` | Dual representation when masking changes content |
+| `synflux.classification.policy.FINANCIAL.store-original` | — | `true` | Dual representation when masking changes content |
 | `synflux.classification.fail-mode` | — | `quarantine` | On detector error |
 | `synquest.classification.filter.enabled` | `SYNQUEST_CLASS_FILTER_ENABLED` | `false` | Query-side class filter |
 | `synquest.classification.filter.fail-closed` | — | `false` | Missing field → RESTRICTED |

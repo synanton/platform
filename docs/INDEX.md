@@ -20,9 +20,9 @@ last_reviewed: "2026-08-26"
 | [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md) | Structured Content Extraction Plane (Part IX) |
 | [`architecture/synanton-design-1.20.md`](./architecture/synanton-design-1.20.md) | GPU Execution Plane (Part VIII) |
 | [`implementation/synanton-phases-plan.md`](./implementation/synanton-phases-plan.md) | Master implementation phases plan |
-| [`proposals/v1.22/`](./proposals/v1.22/) | Semantic chunking proposal (folded into 1.22) |
-| [`proposals/v1.21/`](./proposals/v1.21/) | Extraction-plane proposal (folded into 1.21) |
-| [`proposals/v1.20/`](./proposals/v1.20/) | GPU isolation proposal (folded into 1.20) |
+| [`proposals/v1.22/`](architecture/proposals/v1.22/) | Semantic chunking proposal (folded into 1.22) |
+| [`proposals/v1.21/`](architecture/proposals/v1.21/) | Extraction-plane proposal (folded into 1.21) |
+| [`proposals/v1.20/`](architecture/proposals/v1.20/) | GPU isolation proposal (folded into 1.20) |
 | [`operations/`](./operations/) | Runbooks, DR playbooks, capacity planning |
 | [`api/`](./api/) | REST, gRPC, and CLI reference |
 | [`user-guides/`](./user-guides/) | Getting started, tenant admin, developer guides |
@@ -40,7 +40,7 @@ last_reviewed: "2026-08-26"
 | [`api/`](./api/) | REST/OpenAPI, gRPC/SPI, CLI reference | API consumers, connector authors | **Stable** |
 | [`user-guides/`](./user-guides/) | Task-oriented guides | Tenants, admins, developers | **Stable** |
 | [`contrib/`](./contrib/) | Contribution guidelines, dev setup, testing discipline | Contributors | **Semi-stable** |
-| [`archive/`](./archive/) | Historical documents (read-only) | Forensics | **Frozen** |
+| [`archive/`](architecture/archive/) | Historical documents (read-only) | Forensics | **Frozen** |
 
 ## How "Current" Is Managed
 
