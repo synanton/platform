@@ -2,7 +2,7 @@ name: Docs Site (MkDocs)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "SNTP-11-Documentation" ]
     paths:
       - "docs-site/**"
       - ".github/workflows/docs-site.yml"
@@ -38,17 +38,26 @@ jobs:
   deploy:
     name: Publish to synanton.github.io
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/SNTP-11-Documentation' || startsWith(github.ref, 'refs/tags/'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout guide sources (this repo)
         uses: actions/checkout@v4
 
-      - name: Checkout synanton.github.io (publish target)
+      # Create an installation token from the GitHub App using the private key + app id + installation id
+      - name: Create GitHub App installation token
+        id: app_token
+        uses: crazy-max/ghaction-github-app-token@v1
+        with:
+          app_id: ${{ secrets.SYNANTON_PAGES_APP_ID }}
+          private_key: ${{ secrets.SYNANTON_PAGES_APP_PRIVATE_KEY }}
+          installation_id: ${{ secrets.SYNANTON_PAGES_INSTALLATION_ID }}
+
+      - name: Checkout synanton.github.io (publish target) using app installation token
         uses: actions/checkout@v4
         with:
           repository: synanton/synanton.github.io
-          token: ${{ secrets.SYNANTON_IO_PAGES_TOKEN }}
+          token: ${{ steps.app_token.outputs.token }}
           path: synanton.github.io
           fetch-depth: 0
 
@@ -57,25 +66,45 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install MkDocs and plugins
-        run: pip install -r docs-site/requirements.txt
+      - name: Install MkDocs, plugins and mike
+        run: pip install -r docs-site/requirements.txt mike
 
-      - name: Configure git identity for mike
+      - name: Configure git identity for actions
         working-directory: synanton.github.io
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # mike commits/pushes into whatever git repo is in the current working
-      # directory (its "origin"/"gh-pages" defaults), so we run it from inside
-      # the synanton.github.io checkout while pointing -F at this repo's
-      # mkdocs.yml. Requires the SYNANTON_IO_PAGES_TOKEN secret (see
-      # docs-site/README.md) and gh-pages set as the Pages source branch on
-      # synanton/synanton.github.io.
-      - name: Deploy version 1.23 and update 'latest' alias
-        working-directory: synanton.github.io
-        run: mike deploy --push --update-aliases -F ../docs-site/mkdocs.yml -b gh-pages 1.23 latest
+      - name: Compute deploy version and alias policy
+        id: vars
+        run: |
+          REF="${GITHUB_REF}"
+          if [[ "$REF" == refs/tags/* ]]; then
+            VERSION="${REF#refs/tags/}"
+            UPDATE_ALIASES=true
+          elif [[ "$REF" == refs/heads/main ]]; then
+            VERSION="main-$(date +%Y%m%d)-${GITHUB_SHA:0:8}"
+            UPDATE_ALIASES=true
+          else
+            BRANCH="${REF#refs/heads/}"
+            SAFE_BRANCH="${BRANCH//\//-}"
+            VERSION="${SAFE_BRANCH}-$(date +%Y%m%d)-${GITHUB_SHA:0:8}"
+            UPDATE_ALIASES=false
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "update_aliases=${UPDATE_ALIASES}" >> $GITHUB_OUTPUT
+          echo "Computed version=${VERSION}, update_aliases=${UPDATE_ALIASES}"
 
-      - name: Set default version shown at the site root
+      - name: Deploy with mike
         working-directory: synanton.github.io
-        run: mike set-default --push -F ../docs-site/mkdocs.yml -b gh-pages latest
+        run: |
+          set -e
+          VERSION='${{ steps.vars.outputs.version }}'
+          UPDATE_ALIASES='${{ steps.vars.outputs.update_aliases }}'
+          echo "Deploying version: $VERSION (update_aliases=$UPDATE_ALIASES)"
+          if [ "$UPDATE_ALIASES" = "true" ]; then
+            mike deploy --push --update-aliases -F ../docs-site/mkdocs.yml -b gh-pages "$VERSION" latest
+            mike set-default --push -F ../docs-site/mkdocs.yml -b gh-pages latest
+          else
+            mike deploy --push -F ../docs-site/mkdocs.yml -b gh-pages "$VERSION"
+          fi
