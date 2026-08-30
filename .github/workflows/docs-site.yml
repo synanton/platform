@@ -44,27 +44,52 @@ jobs:
       - name: Checkout guide sources (this repo)
         uses: actions/checkout@v4
 
-      # Create an installation token from the GitHub App using the private key + app id + installation id
-      - name: Create GitHub App installation token
-        id: app_token
-        uses: crazy-max/ghaction-github-app-token@v1
-        with:
-          app_id: ${{ secrets.SYNANTON_PAGES_APP_ID }}
-          private_key: ${{ secrets.SYNANTON_PAGES_APP_PRIVATE_KEY }}
-          installation_id: ${{ secrets.SYNANTON_PAGES_INSTALLATION_ID }}
-
-      - name: Checkout synanton.github.io (publish target) using app installation token
-        uses: actions/checkout@v4
-        with:
-          repository: synanton/synanton.github.io
-          token: ${{ steps.app_token.outputs.token }}
-          path: synanton.github.io
-          fetch-depth: 0
-
-      - name: Set up Python
+      - name: Set up Python (for token creation)
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      # Inline creation of GitHub App installation token (no external actions)
+      - name: Create GitHub App installation token (inline)
+        id: create_token
+        env:
+          SYNANTON_PAGES_APP_ID: ${{ secrets.SYNANTON_PAGES_APP_ID }}
+          SYNANTON_PAGES_APP_PRIVATE_KEY: ${{ secrets.SYNANTON_PAGES_APP_PRIVATE_KEY }}
+          SYNANTON_PAGES_INSTALLATION_ID: ${{ secrets.SYNANTON_PAGES_INSTALLATION_ID }}
+        run: |
+          pip install PyJWT requests
+          python - <<'PY'
+          import time, jwt, requests, os, sys
+          app_id = os.environ['SYNANTON_PAGES_APP_ID']
+          key = os.environ['SYNANTON_PAGES_APP_PRIVATE_KEY']
+          inst_id = os.environ['SYNANTON_PAGES_INSTALLATION_ID']
+          now = int(time.time())
+          payload = {"iat": now - 60, "exp": now + 600, "iss": str(app_id)}
+          jwt_token = jwt.encode(payload, key, algorithm="RS256")
+          if isinstance(jwt_token, bytes):
+              jwt_token = jwt_token.decode('utf-8')
+          headers = {"Authorization": f"Bearer {jwt_token}", "Accept": "application/vnd.github+json"}
+          url = f"https://api.github.com/app/installations/{inst_id}/access_tokens"
+          r = requests.post(url, headers=headers)
+          if r.status_code != 201:
+              print("ERROR creating installation token", r.status_code, r.text, file=sys.stderr)
+              sys.exit(1)
+          token = r.json().get("token")
+          expires_at = r.json().get("expires_at")
+          # write outputs for subsequent steps
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+              fh.write(f"token={token}\n")
+              fh.write(f"expires_at={expires_at}\n")
+          print("Created installation token, expires_at:", expires_at)
+          PY
+
+      - name: Checkout synanton.github.io (publish target) using installation token
+        uses: actions/checkout@v4
+        with:
+          repository: synanton/synanton.github.io
+          token: ${{ steps.create_token.outputs.token }}
+          path: synanton.github.io
+          fetch-depth: 0
 
       - name: Install MkDocs, plugins and mike
         run: pip install -r docs-site/requirements.txt mike
