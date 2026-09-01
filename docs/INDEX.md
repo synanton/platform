@@ -13,6 +13,7 @@ last_reviewed: "2026-08-26"
 
 | Document | Description |
 |----------|-------------|
+| [`architecture/synanton-design-1.25.md`](./architecture/synanton-design-1.25.md) | **Approved (architecture)** - annotations, derived knowledge, recalculation, analytics & reporting plane (v1.25, consolidates 1.24) |
 | [`architecture/synanton-design-1.23.md`](./architecture/synanton-design-1.23.md) | **In progress** - classification-aware semantic search (v1.23) |
 | [`architecture/synanton-design-1.22.md`](./architecture/synanton-design-1.22.md) | **Current baseline** - semantic chunking + pointers to extraction (1.21), GPU (1.20), baseline (1.19) |
 | [`demos/`](./demos/) | End-to-end demo scenarios |
@@ -20,6 +21,7 @@ last_reviewed: "2026-08-26"
 | [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md) | Structured Content Extraction Plane (Part IX) |
 | [`architecture/synanton-design-1.20.md`](./architecture/synanton-design-1.20.md) | GPU Execution Plane (Part VIII) |
 | [`implementation/synanton-phases-plan.md`](./implementation/synanton-phases-plan.md) | Master implementation phases plan |
+| [`proposals/v1.24-1.25/`](architecture/proposals/v1.24-1.25/) | Annotations/analytics proposal (folded into 1.25) |
 | [`proposals/v1.22/`](architecture/proposals/v1.22/) | Semantic chunking proposal (folded into 1.22) |
 | [`proposals/v1.21/`](architecture/proposals/v1.21/) | Extraction-plane proposal (folded into 1.21) |
 | [`proposals/v1.20/`](architecture/proposals/v1.20/) | GPU isolation proposal (folded into 1.20) |

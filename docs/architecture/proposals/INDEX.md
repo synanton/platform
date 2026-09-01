@@ -14,6 +14,7 @@ last_reviewed: "2026-08-26"
 
 | Proposal             | Status                                                                  |
 |----------------------|-------------------------------------------------------------------------|
+| [`v1.24-1.25/`](v1.24-1.25/) | Folded into architecture 1.25 (`synanton-design-1.25.md`) - Annotations, Derived Knowledge, Recalculation and Analytics/Reporting Plane |
 | [`synanton-design-1.23.md`](../synanton-design-1.23.md) | Folded into architecture 1.23 - Classification-Aware Semantic Search |
 | [`../implementation/classification-aware-search/`](../implementation/classification-aware-search/) | v1.23 implementation plan |
 | [`../demos/classification-aware-semantic-search-demo.md`](../../demos/classification-aware-semantic-search-demo.md) | v1.23 demo scenario |
@@ -28,6 +29,7 @@ last_reviewed: "2026-08-26"
 
 | Directory | Purpose |
 |-----------|---------|
+| `v1.24-1.25/` | Annotations, derived knowledge, recalculation & analytics/reporting plane proposal |
 | `v1.17/` | v1.17 proposal + decision record |
 | `v1.18/` | v1.18 proposal + decision record |
 | `v1.20/` | GPU isolation proposal |
