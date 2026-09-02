@@ -31,6 +31,7 @@ public class IngestionJobRunner {
     private final AcquireStage acquireStage;
     private final ExtractionStage extractionStage;
     private final SemanticChunkStage semanticChunkStage;
+    private final PipelineStage<ChunkedDocument, ChunkedDocument> annotationStage;
     private final PipelineStage<ChunkedDocument, ChunkedDocument> enrichStage;
     private final PipelineStage<ChunkedDocument, ChunkedDocument> embedStage;
     private final PersistStage persistStage;
@@ -44,6 +45,7 @@ public class IngestionJobRunner {
         AcquireStage acquireStage,
         ExtractionStage extractionStage,
         SemanticChunkStage semanticChunkStage,
+        PipelineStage<ChunkedDocument, ChunkedDocument> annotationStage,
         PipelineStage<ChunkedDocument, ChunkedDocument> enrichStage,
         PipelineStage<ChunkedDocument, ChunkedDocument> embedStage,
         PersistStage persistStage
@@ -54,6 +56,7 @@ public class IngestionJobRunner {
         this.acquireStage = acquireStage;
         this.extractionStage = extractionStage;
         this.semanticChunkStage = semanticChunkStage;
+        this.annotationStage = annotationStage;
         this.enrichStage = enrichStage;
         this.embedStage = embedStage;
         this.persistStage = persistStage;
@@ -125,8 +128,14 @@ public class IngestionJobRunner {
                         var parsed = extractionStage.apply(acquired, ctx);
                         var chunked = semanticChunkStage.apply(parsed, ctx);
 
+                        // AAP-1: annotation runs on chunked content today. Once v1.23's masking
+                        // stage (SEC-4) lands, this MUST move after it - see AnnotationStage's
+                        // class-level note on Invariant 5.
+                        ChunkedDocument annotated = props.pipeline().annotationEnabled()
+                            ? annotationStage.apply(chunked, ctx) : chunked;
+
                         ChunkedDocument enriched = props.pipeline().enrichmentEnabled()
-                            ? enrichStage.apply(chunked, ctx) : chunked;
+                            ? enrichStage.apply(annotated, ctx) : annotated;
                         ChunkedDocument embedded = props.pipeline().embeddingEnabled()
                             ? embedStage.apply(enriched, ctx) : enriched;
 

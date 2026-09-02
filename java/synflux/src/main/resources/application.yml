@@ -22,6 +22,11 @@ synflux:
   pipeline:
     enrichment-enabled: false
     embedding-enabled: false
+    annotation-enabled: false
+  annotation:
+    service-base-url: ${ANNOTATIONS_SERVICE_BASE_URL:http://localhost:8095}
+    producer: rule-engine
+    producer-version: "1.0"
 
 synanton:
   extraction:

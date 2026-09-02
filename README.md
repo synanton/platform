@@ -86,6 +86,8 @@ Synanton provides a single coherent platform for this problem:
 | `control-plane` | Admin API, forecast engine, anomaly detection, GitOps | ✅ Done (Phase 3 - admin API + ModelServingDirectory) |
 | `synanton-mcp` | MCP protocol bridge - exposes platform tools to MCP clients | ✅ Done (Phase 3) |
 | `synreview` | Human-in-the-loop review queue for low-confidence entities | 🔲 Phase 5 |
+| `annotations` | Annotation registry - definitions, versions, dependency DAG, provenance, processing runs, Resolutor, Equalix | 🔶 AAP-1 + AAP-2 done (v1.24/1.25); analytics phases pending |
+| `analytics` | Analytics Plane - events, analytical facts, ClickHouse adapter, Analytics Registry, metrics/reports | 🔲 Not started (v1.24/1.25) |
 
 **GPU Execution Plane** (modules `java/gpu-contract` + `java/gpu-gateway` in this repo; extracted to `synanton/gpu-execution-plane` for independent deployment):
 
@@ -228,6 +230,23 @@ See `docs/implementation/content-extraction-plane/INDEX.md` for the detailed imp
 
 See `docs/implementation/semantic-chunking/INDEX.md` for the detailed implementation plan and `docs/architecture/synanton-design-1.22.md` for Part X.
 
+### Annotation, Derived Knowledge, Recalculation, Analytics & Reporting Plane track - v1.24/1.25 *(planned, not started)*
+
+**Delivers:** first-class, versioned annotations with explicit dependencies and provenance; dependency-aware recalculation (**Resolutor** determines impact, **Equalix** executes it under priority/resource controls); and a downstream **Analytics and Reporting Plane** (events, facts, aggregates, metrics, reports).
+
+> **Architectural decision:** analytics is strictly downstream of the Design 1.23 classification/masking boundary - analytics events are emitted only after that decision, never before it. Analytics observes canonical knowledge and platform activity; it never becomes authoritative knowledge or a security side channel.
+
+- **AAP-1** 🔶 - Annotation foundation: new `annotations` service (definitions, versions, dependency DAG, processing runs), new Cassandra `annotations` table, `synflux` `AnnotationStage` (flag-gated, `synflux.pipeline.annotation-enabled: false` by default)
+- **AAP-2** 🔶 - Recalculation: Resolutor (impact analysis) + Equalix (priority-scheduled controlled execution) in `annotations`, `POST /recalculate`; only definition-publish events are wired end-to-end so far
+- **AAP-3** 🔲 - Knowledge projections: annotation/definition-version provenance in `synquest`, embedding cache, `relix`
+- **AAP-4** 🔲 - Analytics PoC: `analytics_events` Kafka topic, new `analytics` service, ClickHouse adapter, initial facts/aggregates/metrics
+- **AAP-5** 🔲 - Analytics security: classification propagation, tenant/system scope isolation, aggregate protection, `test:analytics-security` CI tier
+- **AAP-6** 🔲 - Reporting: Analytics Registry, metric/report lifecycle, first end-to-end report (`daily-platform-processing`)
+- **AAP-7** 🔲 - Production hardening: ClickHouse PoC evaluation, retention, backup/restore, alerting, load testing
+- **AAP-8** 🔲 - MCP / external integration: `synanton-mcp` analytics tools, public Analytics API via `synapt`
+
+See `docs/implementation/annotations-analytics-plane/INDEX.md` for the detailed implementation plan and `docs/architecture/synanton-design-1.25.md` for the full design.
+
 ---
 
 ## Quick start
@@ -354,6 +373,8 @@ java/
   gpu-gateway/          in-repo GPU gateway (not a substitute for gpu-runtime)
   extraction-contract/  synanton.extraction.v1 protobuf (mirrored in content_extractor)
   extraction-client/      Extraction plane client - sync/async, fallback policies, metrics
+  annotations/          Annotation registry - definitions, dependency DAG, Resolutor, Equalix (AAP-1+AAP-2 done, v1.24/1.25)
+  analytics/            Analytics Plane - events, facts, ClickHouse adapter, registry (planned, v1.24/1.25)
 
 rust/                   Future Rust components (synquest hot loop - Phase 5)
 
@@ -459,6 +480,7 @@ MINIO_ROOT_PASSWORD=<your-choice>
 | Platform architecture (**current** 1.22) | `docs/architecture/synanton-design-1.22.md` |
 | Structured Content Extraction Plane (1.21 Part IX) | `docs/architecture/synanton-design-1.21.md` |
 | Semantic chunking (1.22 Part X) | `docs/implementation/semantic-chunking/INDEX.md` |
+| Annotation, recalculation, analytics & reporting plane (1.24/1.25) | `docs/implementation/annotations-analytics-plane/INDEX.md` |
 | GPU Execution Plane (1.20 Part VIII) | `docs/architecture/synanton-design-1.20.md` |
 | Core baseline (1.19, superseded pointer) | `docs/architecture/synanton-design-1.19.md` |
 | Extraction plane implementation plan | `docs/implementation/content-extraction-plane/INDEX.md` |
@@ -468,6 +490,13 @@ MINIO_ROOT_PASSWORD=<your-choice>
 | Phase 2 LLM enrichment plan | `docs/implementation/phase2/01-ingestion-pipeline.md` |
 | Syntology standalone demo | `docs/implementation/demo/standalone-syntology-demo.md` |
 | Lucentrix ingest CLI | `docs/implementation/lucentrix-ingest-cli.md` |
+
+---
+
+## Contact
+
+- **Research & general inquiries:** research@synanton.org
+- **Security reports:** security@synanton.org
 
 ---
 

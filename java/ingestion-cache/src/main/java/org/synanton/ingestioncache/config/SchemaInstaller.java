@@ -20,6 +20,7 @@ public class SchemaInstaller {
         "cql/V4__ingest_usage.cql",
         "cql/V5__chunk_citation.cql",
         "cql/V6__chunk_classification.cql",
+        "cql/V7__annotations.cql",
     };
 
     public static void install(CqlSession session) {

@@ -7,6 +7,10 @@ import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.llm.HttpLlmClient;
 import org.synanton.llm.LlmClient;
+import org.synanton.synflux.annotation.AnnotationRule;
+import org.synanton.synflux.annotation.AnnotationsServiceClient;
+import org.synanton.synflux.annotation.HttpAnnotationsServiceClient;
+import org.synanton.synflux.annotation.KeywordAnnotationRule;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.pipeline.PipelineStage;
@@ -16,6 +20,8 @@ import org.synanton.synvault.port.ObjectStorePort;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class})
@@ -77,5 +83,36 @@ public class SynfluxConfig {
     public PersistStage persistStage(IngestionCacheClient cacheClient, ObjectStorePort objectStore,
                                      SynfluxProperties props) {
         return new PersistStage(cacheClient, objectStore, HOT_BUCKET);
+    }
+
+    @Bean
+    public AnnotationsServiceClient annotationsServiceClient(SynfluxProperties props) {
+        return new HttpAnnotationsServiceClient(props.annotation().serviceBaseUrl());
+    }
+
+    /**
+     * Demo/initial producer, mirroring the design's own §8 example
+     * (definition_id: payment-detection, producer: payment-rule-engine, producer_version: 4.2).
+     * Real deployments register definitions/versions with the {@code annotations} service instead
+     * of hardcoding rules here; this bean is the seam Resolutor/Equalix (AAP-2) will extend.
+     */
+    @Bean
+    public List<AnnotationRule> annotationRules() {
+        return List.of(new KeywordAnnotationRule(
+                "payment-detection", 4, "TAG", "billing", "payment",
+                "payment-rule-engine", "4.2",
+                List.of("invoice number", "payment reference", "payment terms")));
+    }
+
+    @Bean
+    public PipelineStage<ChunkedDocument, ChunkedDocument> annotationStage(
+            SynfluxProperties props, IngestionCacheClient cacheClient,
+            AnnotationsServiceClient annotationsServiceClient, List<AnnotationRule> annotationRules) {
+        if (props.pipeline().annotationEnabled()) {
+            return new AnnotationStage(
+                    cacheClient, annotationsServiceClient, annotationRules,
+                    props.annotation().producer(), props.annotation().producerVersion());
+        }
+        return new NoOpAnnotationStage();
     }
 }
