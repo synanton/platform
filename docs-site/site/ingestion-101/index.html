@@ -1,0 +1,1108 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Business and operational guides to Synanton's search, security, ingestion, deployment, and troubleshooting model — no code or API depth required.">
+      
+      
+      
+        <link rel="canonical" href="https://synanton.github.io/ingestion-101/">
+      
+      
+        <link rel="prev" href="../search-101/">
+      
+      
+        <link rel="next" href="../security-101/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Ingestion 101 - Synanton Guides</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ingestion-101-why-chunking-and-structure-matter" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Synanton Guides" class="md-header__button md-logo" aria-label="Synanton Guides" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Synanton Guides
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Ingestion 101
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/synanton/platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    synanton/platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../search-101/" class="md-tabs__link">
+          
+  
+    
+  
+  For Everyone
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../security-101/" class="md-tabs__link">
+          
+  
+    
+  
+  For Security & Compliance Teams
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../deployment-101/" class="md-tabs__link">
+          
+  
+    
+  
+  For Operators
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Synanton Guides" class="md-nav__button md-logo" aria-label="Synanton Guides" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Synanton Guides
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/synanton/platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    synanton/platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    For Everyone
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            For Everyone
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../search-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Search 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Ingestion 101
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Ingestion 101
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-short-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      The short version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure-first-whats-actually-in-this-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      Structure first: what's actually in this document?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-not-just-split-every-n-words" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why not just split every N words?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-a-chunk-actually-carries" class="md-nav__link">
+    <span class="md-ellipsis">
+      What a chunk actually carries
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enrichment-giving-an-llm-room-to-think-in-two-steps-not-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enrichment: giving an LLM room to think in two steps, not one
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turning-a-chunk-into-something-searchable-by-meaning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Turning a chunk into something searchable by meaning
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-guarantee-that-makes-ingestion-crash-safe" class="md-nav__link">
+    <span class="md-ellipsis">
+      The guarantee that makes ingestion crash-safe
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-document-three-destinations" class="md-nav__link">
+    <span class="md-ellipsis">
+      One document, three destinations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-when-a-document-is-re-ingested-unchanged" class="md-nav__link">
+    <span class="md-ellipsis">
+      What happens when a document is re-ingested unchanged
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Frequently asked questions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#go-deeper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Go Deeper
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For Security & Compliance Teams
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            For Security & Compliance Teams
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For Operators
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            For Operators
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deployment 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Troubleshooting 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-short-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      The short version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure-first-whats-actually-in-this-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      Structure first: what's actually in this document?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-not-just-split-every-n-words" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why not just split every N words?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-a-chunk-actually-carries" class="md-nav__link">
+    <span class="md-ellipsis">
+      What a chunk actually carries
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enrichment-giving-an-llm-room-to-think-in-two-steps-not-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enrichment: giving an LLM room to think in two steps, not one
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turning-a-chunk-into-something-searchable-by-meaning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Turning a chunk into something searchable by meaning
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-guarantee-that-makes-ingestion-crash-safe" class="md-nav__link">
+    <span class="md-ellipsis">
+      The guarantee that makes ingestion crash-safe
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-document-three-destinations" class="md-nav__link">
+    <span class="md-ellipsis">
+      One document, three destinations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-when-a-document-is-re-ingested-unchanged" class="md-nav__link">
+    <span class="md-ellipsis">
+      What happens when a document is re-ingested unchanged
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Frequently asked questions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#go-deeper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Go Deeper
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/synanton/platform/edit/main/docs-site/guides/ingestion-101.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="ingestion-101-why-chunking-and-structure-matter">Ingestion 101: Why Chunking and Structure Matter<a class="headerlink" href="#ingestion-101-why-chunking-and-structure-matter" title="Permanent link">&para;</a></h1>
+<p><strong>Audience:</strong> anyone who wants to understand how a raw document becomes searchable knowledge — and why that process is more involved than "read the file and index the text."</p>
+<h2 id="the-short-version">The short version<a class="headerlink" href="#the-short-version" title="Permanent link">&para;</a></h2>
+<p>A PDF or a Word document isn't text — it's a <em>rendering</em> of text, tables, headings, and images that happens to be recoverable if you know how to look. Before any of it can be searched intelligently, Synanton has to answer two questions in order: <em>what is actually in this document, and how is it organized?</em> and then <em>what are the coherent, meaningful pieces inside it?</em> Getting both answers right — before classification, before embedding, before indexing — is most of what separates useful search from a system that technically "indexed the file" but returns garbled, out-of-context fragments.</p>
+<pre class="mermaid"><code>flowchart TD
+    A[Raw bytes&lt;br/&gt;PDF, DOCX, HTML...] --&gt; B[Structure extraction&lt;br/&gt;headings, tables, page layout]
+    B --&gt; C[Semantic chunking&lt;br/&gt;coherent, meaningful units]
+    C --&gt; D[Classification &amp; masking&lt;br/&gt;see Security 101]
+    D --&gt; E[Protected chunks]
+    E --&gt; F1[Reverse index]
+    E --&gt; F2[Vector store]
+    E --&gt; F3[Knowledge graph]</code></pre>
+<h2 id="structure-first-whats-actually-in-this-document">Structure first: what's actually in this document?<a class="headerlink" href="#structure-first-whats-actually-in-this-document" title="Permanent link">&para;</a></h2>
+<p>Before anything is chunked or indexed, a dedicated extraction step figures out the document's actual shape: which text belongs to which heading, which numbers form a table versus which are just numbers that happen to be near each other, where page boundaries fall, and where an image sits relative to the text around it. This step deliberately says nothing about <em>how</em> it produces that answer — which parser ran, whether OCR was involved, whether the work happened on a CPU or a GPU accelerator are all invisible below this layer. That's a deliberate design choice: it lets the underlying extraction technology evolve — swap a parser, add OCR support for scanned documents, add an entirely new format — without any of the search, security, or ranking logic downstream needing to change.</p>
+<p>If this extraction step is temporarily unavailable, or doesn't support a given document type, the pipeline doesn't stop — it falls back to a simpler, local extraction path rather than blocking ingestion outright. The system would rather ingest at reduced quality, visibly flagged, than not ingest at all. This is the same philosophy <a href="../search-101/">Search 101</a> describes for query-time degraded modes: a broken component should make things worse, not make things stop.</p>
+<h2 id="why-not-just-split-every-n-words">Why not just split every N words?<a class="headerlink" href="#why-not-just-split-every-n-words" title="Permanent link">&para;</a></h2>
+<p>The most naive way to prepare a document for search is to slice it into fixed-size windows — every 500 words, say — and index each window independently. This is cheap to implement and catastrophic for quality, for a simple reason: <strong>meaning doesn't respect arbitrary boundaries.</strong></p>
+<p>A fixed-size split can:</p>
+<ul>
+<li>Sever a table in the middle of a row, so neither half means anything on its own, and a search for a specific figure returns half a row with no context for what it represents.</li>
+<li>Separate a heading from the very paragraph it introduces, so a search hit shows body text with no indication of what section — or what topic — it belongs to.</li>
+<li>Cut a legal clause in half at exactly the point where "the following exceptions apply" meets the list of exceptions, so the retrieved fragment reads as an unqualified statement that's actually conditional.</li>
+</ul>
+<p>Synanton's rule inverts the usual priority:</p>
+<blockquote>
+<p><strong>Semantic boundaries first. Token or word-count limits are a fallback, not the primary rule.</strong></p>
+</blockquote>
+<p>The chunker works from the <em>structure</em> identified in the previous step — sections, paragraphs, list items, tables — rather than from flattened text. It follows the document's own hierarchy, only splitting a section at a paragraph or list boundary when that section is too large to handle as one piece, and even then, it never severs those boundaries arbitrarily. A table is treated as <strong>atomic</strong> — it is never split mid-row or mid-column just because it happened to be long. It's kept together and given a structured representation that a search or embedding step can work with directly, rather than being flattened into a wall of numbers stripped of the labels that gave them meaning.</p>
+<pre class="mermaid"><code>flowchart LR
+    subgraph Naive["Naive: fixed token windows"]
+    direction TB
+    n1["...eligible for the annual bonus\nprogram. Compensation Table:\nName | Salary | Bonus"] --&gt; n2["John Doe | 180,000 | 15,000\nJane Roe | 165,00..."]
+    end
+    subgraph Semantic["Synanton: semantic boundaries"]
+    direction TB
+    s1["Chunk: 'employees are eligible\nfor the annual bonus program'"]
+    s2["Chunk: full Compensation Table,\nkept intact, atomic"]
+    end</code></pre>
+<p>The naive approach on the left severs a table mid-row for no reason other than word count; the row is now split across two independently-retrievable, independently-ranked fragments that neither means much alone. The semantic approach keeps the sentence and the table as two separate, individually coherent chunks — each one is a complete, meaningful unit on its own.</p>
+<h2 id="what-a-chunk-actually-carries">What a chunk actually carries<a class="headerlink" href="#what-a-chunk-actually-carries" title="Permanent link">&para;</a></h2>
+<p>A chunk isn't just a string of text — it's a small structured record that carries everything needed to use it safely and cite it precisely:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it's for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A stable identifier</td>
+<td>Lets every downstream store (search index, vector store, graph) refer to the same unit consistently</td>
+</tr>
+<tr>
+<td>Its position in the document's outline</td>
+<td>Lets a search result cite "§3.1 GPU Execution Plane" instead of just "page 14 of a 40-page PDF"</td>
+</tr>
+<tr>
+<td>The actual content</td>
+<td>What gets embedded, indexed, and (per <a href="../security-101/">Security 101</a>) classified</td>
+</tr>
+<tr>
+<td>A pointer back to the original structural elements it came from</td>
+<td>Lets the platform prove, later, exactly where a piece of knowledge originated</td>
+</tr>
+<tr>
+<td>Page range</td>
+<td>Supports citation and audit</td>
+</tr>
+<tr>
+<td>Sensitivity classification</td>
+<td>Added during the security processing stage — a property of the chunk, not the whole document</td>
+</tr>
+</tbody>
+</table>
+<p>The provenance fields — knowing exactly which structural elements and page range a chunk came from — aren't a nice-to-have for citations. They become load-bearing again in two places later in the pipeline: the security model needs to know precisely what content a classification decision was made about, and the knowledge graph needs to trace every extracted fact back to the exact passage it was derived from, so that a caller denied access to a passage in search can't circumvent that by asking the graph for the same fact through a different route.</p>
+<h2 id="enrichment-giving-an-llm-room-to-think-in-two-steps-not-one">Enrichment: giving an LLM room to think in two steps, not one<a class="headerlink" href="#enrichment-giving-an-llm-room-to-think-in-two-steps-not-one" title="Permanent link">&para;</a></h2>
+<p>When enabled, an optional enrichment stage uses a large language model to find entities, concepts, and relationships within and across chunks — but deliberately as <strong>two separate calls</strong> rather than one. The first pass reads the content and produces structured findings: candidate entities, how they relate to what's already known, and anywhere the new content seems to contradict existing knowledge. The second pass takes those findings and turns them into the specific, graph-ready output — the actual entities and relationships to add — plus a list of anything uncertain enough to route to a human reviewer.</p>
+<p>The reasoning for splitting the work rather than doing it in a single call is straightforward: asking one model call to simultaneously read the content, reason carefully about how it fits with everything else, <em>and</em> produce a clean, well-structured final output tends to sacrifice quality on at least one of those three jobs. Splitting also creates a natural checkpoint — if the second, more expensive step needs to be retried, the first step's analysis doesn't have to be redone.</p>
+<h2 id="turning-a-chunk-into-something-searchable-by-meaning">Turning a chunk into something searchable by meaning<a class="headerlink" href="#turning-a-chunk-into-something-searchable-by-meaning" title="Permanent link">&para;</a></h2>
+<p>Each chunk gets converted into a numerical representation — an embedding — that positions it in a "meaning space" where similar content ends up near similar content, which is what lets <a href="../search-101/">Search 101</a>'s semantic search work. This is cached by the chunk's own content: if the same content is ingested again (a re-crawled page that hasn't actually changed, say), the platform recognizes that and skips recomputing the embedding entirely, rather than redoing expensive work for a result it already has.</p>
+<h2 id="the-guarantee-that-makes-ingestion-crash-safe">The guarantee that makes ingestion crash-safe<a class="headerlink" href="#the-guarantee-that-makes-ingestion-crash-safe" title="Permanent link">&para;</a></h2>
+<p>There's a strict ordering rule underneath all of this: every artifact the pipeline produces gets durably committed to permanent storage <strong>before</strong> anything about it is announced to the rest of the system. If that initial commit fails, nothing downstream ever hears about the document at all — there's no dangling, half-processed reference for anything else to trip over. If the announcement step fails <em>after</em> a successful commit, the platform retries it automatically, and every downstream consumer is built to safely ignore a duplicate announcement rather than double-processing anything.</p>
+<p>This ordering is also precisely what makes the security guarantees in <a href="../security-101/">Security 101</a> trustworthy rather than aspirational: because classification and masking decisions are made <em>before</em> that initial durable commit, there is no window in which an unmasked, sensitive value gets written somewhere and then "cleaned up" afterward. If a value was never safe to store, it's never stored — not briefly, not in an intermediate state, not ever.</p>
+<h2 id="one-document-three-destinations">One document, three destinations<a class="headerlink" href="#one-document-three-destinations" title="Permanent link">&para;</a></h2>
+<p>Once a chunk has passed through structure extraction, semantic chunking, and security processing, it's fanned out to every specialized store that needs it — a lexical index, a vector store, and a knowledge graph, each covered in <a href="../search-101/">Search 101</a>. Every one of those stores is updated using an identity that's stable and idempotent, so if a delivery has to be retried after a failure, the result is the same as if it had succeeded the first time — never a duplicate. Deletion works through the identical channel: removing a document produces the same kind of signal, telling every downstream store to remove rather than re-add, so a deleted document doesn't linger searchable in one store while it's already gone from another.</p>
+<h2 id="what-happens-when-a-document-is-re-ingested-unchanged">What happens when a document is re-ingested unchanged<a class="headerlink" href="#what-happens-when-a-document-is-re-ingested-unchanged" title="Permanent link">&para;</a></h2>
+<p>Before any of the expensive work above happens at all, the platform checks whether it has seen this exact content before, using a cryptographic fingerprint of the raw bytes. An exact repeat — the same file crawled again by a scheduled job that doesn't know it's unchanged, for instance — short-circuits the entire pipeline. Nothing gets re-parsed, re-chunked, re-analyzed by an LLM, or re-embedded; the system simply confirms the existing results are still valid. This isn't just a performance optimization — it also means re-running an ingestion job is safe to do liberally, without worrying about wasted cost or duplicate content appearing in search results.</p>
+<h2 id="frequently-asked-questions">Frequently asked questions<a class="headerlink" href="#frequently-asked-questions" title="Permanent link">&para;</a></h2>
+<p><strong>Does a bigger, more powerful LLM in the enrichment stage make chunking better?</strong>
+No — chunking happens <em>before</em> enrichment and doesn't use an LLM at all. It's a deterministic, structure-driven process specifically so that the same document produces the same chunks every time, and so that chunking quality doesn't depend on, or vary with, whichever language model happens to be configured for enrichment that week.</p>
+<p><strong>What happens to a 10,000-row table? Does it really become one giant chunk?</strong>
+Very large tables are still treated as a single atomic unit rather than being arbitrarily split, but they're given a structured, column-aware representation rather than being flattened into an undifferentiated block of numbers — which is what makes a search or an embedding of that content actually useful rather than a wall of digits with no labels attached.</p>
+<p><strong>If I re-ingest a document that changed slightly, does everything get reprocessed?</strong>
+Only what actually needs to be. The content-fingerprint check operates at the whole-document level for the fast-path short-circuit, but changed sections still benefit from the same idempotent, chunk-level identity scheme — reprocessing doesn't require throwing away and rebuilding search results for parts of the document that didn't change in a way that affects their chunk boundaries.</p>
+<p><strong>Why does the extraction step matter if the chunker "just" needs text?</strong>
+Because context that's obvious to a human reading a rendered PDF — that these five numbers form a table, that this line is a heading, not a sentence — isn't obvious at all from raw text alone. Skipping structure extraction and chunking straight from flattened text is exactly the failure mode described above under "Why not just split every N words?", just with a different-looking symptom: chunks that are technically complete sentences but have lost the tabular or hierarchical context that gave them their actual meaning.</p>
+<p><strong>Can ingestion get "stuck"?</strong>
+Yes — usually because a downstream dependency (a queue, a cache, an external content source) is slow or unavailable, not because the chunking logic itself failed. See <a href="../troubleshooting-101/">Troubleshooting 101</a> for the operator-facing symptoms and where to look first.</p>
+<h2 id="go-deeper">Go Deeper<a class="headerlink" href="#go-deeper" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What exactly does the structured extraction contract specify?</td>
+<td><code>docs/architecture/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md</code></td>
+</tr>
+<tr>
+<td>What are the precise semantic chunking rules and thresholds?</td>
+<td><code>docs/architecture/proposals/v1.22/Synanton v1.22  Structured Content Semantic Chunking Design Proposal.md</code></td>
+</tr>
+<tr>
+<td>What's the full ingestion pipeline, step by step, including failure semantics and SLOs?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §6</td>
+</tr>
+<tr>
+<td>How does classification fit into this pipeline exactly?</td>
+<td><a href="../security-101/">Security 101</a>; <code>docs/architecture/synanton-design-1.23.md</code> §3.1–3.2</td>
+</tr>
+<tr>
+<td>What happens to a chunk once it reaches the three stores?</td>
+<td><a href="../search-101/">Search 101</a>; <code>docs/book/Ingestion and security processing guide.md</code> Part IV</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>

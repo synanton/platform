@@ -8,13 +8,16 @@ public record SynfluxProperties(
     Pipeline pipeline,
     Enrichment enrichment,
     Embedding embedding,
+    Annotation annotation,
     Kafka kafka
 ) {
     public record Ingest(int parallelism, long maxFileSizeBytes, Chunk chunk) {
         public record Chunk(String strategy, int targetTokens, int overlapTokens) {}
     }
-    public record Pipeline(boolean enrichmentEnabled, boolean embeddingEnabled) {}
+    public record Pipeline(boolean enrichmentEnabled, boolean embeddingEnabled, boolean annotationEnabled) {}
     public record Enrichment(String llmBaseUrl, String modelId, int parallelism) {}
     public record Embedding(String embedBaseUrl, String modelId, int batchSize) {}
+    /** AAP-1: annotation producer wiring - see docs/implementation/annotations-analytics-plane/01-annotation-foundation.md */
+    public record Annotation(String serviceBaseUrl, String producer, String producerVersion) {}
     public record Kafka(int consumerThreads, int maxRetries, long retryBackoffMs) {}
 }

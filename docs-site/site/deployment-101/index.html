@@ -1,0 +1,1176 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Business and operational guides to Synanton's search, security, ingestion, deployment, and troubleshooting model — no code or API depth required.">
+      
+      
+      
+        <link rel="canonical" href="https://synanton.github.io/deployment-101/">
+      
+      
+        <link rel="prev" href="../security-101/">
+      
+      
+        <link rel="next" href="../troubleshooting-101/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Deployment 101 - Synanton Guides</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deployment-101-high-level-topology-and-data-flows" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Synanton Guides" class="md-header__button md-logo" aria-label="Synanton Guides" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Synanton Guides
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Deployment 101
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/synanton/platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    synanton/platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../search-101/" class="md-tabs__link">
+          
+  
+    
+  
+  For Everyone
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../security-101/" class="md-tabs__link">
+          
+  
+    
+  
+  For Security & Compliance Teams
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+    
+  
+  For Operators
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Synanton Guides" class="md-nav__button md-logo" aria-label="Synanton Guides" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Synanton Guides
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/synanton/platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    synanton/platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For Everyone
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            For Everyone
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../search-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Search 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingestion-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ingestion 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For Security & Compliance Teams
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            For Security & Compliance Teams
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    For Operators
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            For Operators
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Deployment 101
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Deployment 101
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-shape-of-the-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      The shape of the platform
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-gpu-cluster-is-a-separate-plane-on-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      The GPU cluster is a separate plane, on purpose
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-deployment-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three deployment profiles
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tenant-isolation-two-tiers-one-decision-to-make-per-customer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant isolation: two tiers, one decision to make per customer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-residency-keeping-data-where-its-allowed-to-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data residency: keeping data where it's allowed to be
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#degraded-mode-designed-to-bend-not-break" class="md-nav__link">
+    <span class="md-ellipsis">
+      Degraded mode: designed to bend, not break
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-practical-way-to-think-about-sizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      A practical way to think about sizing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-a-profile-the-questions-that-actually-decide-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choosing a profile: the questions that actually decide it
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-operators-actually-watch-day-to-day" class="md-nav__link">
+    <span class="md-ellipsis">
+      What operators actually watch day to day
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backup-and-disaster-recovery-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backup and disaster recovery, at a glance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Frequently asked questions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#go-deeper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Go Deeper
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Troubleshooting 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-shape-of-the-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      The shape of the platform
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-gpu-cluster-is-a-separate-plane-on-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      The GPU cluster is a separate plane, on purpose
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-deployment-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three deployment profiles
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tenant-isolation-two-tiers-one-decision-to-make-per-customer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant isolation: two tiers, one decision to make per customer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-residency-keeping-data-where-its-allowed-to-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data residency: keeping data where it's allowed to be
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#degraded-mode-designed-to-bend-not-break" class="md-nav__link">
+    <span class="md-ellipsis">
+      Degraded mode: designed to bend, not break
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-practical-way-to-think-about-sizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      A practical way to think about sizing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-a-profile-the-questions-that-actually-decide-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choosing a profile: the questions that actually decide it
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-operators-actually-watch-day-to-day" class="md-nav__link">
+    <span class="md-ellipsis">
+      What operators actually watch day to day
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backup-and-disaster-recovery-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backup and disaster recovery, at a glance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Frequently asked questions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#go-deeper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Go Deeper
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/synanton/platform/edit/main/docs-site/guides/deployment-101.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="deployment-101-high-level-topology-and-data-flows">Deployment 101: High-Level Topology and Data Flows<a class="headerlink" href="#deployment-101-high-level-topology-and-data-flows" title="Permanent link">&para;</a></h1>
+<p><strong>Audience:</strong> platform engineers, IT decision-makers, and partners who need to understand <em>where things run</em> and <em>what changes between deployment options</em> — without Kubernetes manifests or Ansible playbooks.</p>
+<h2 id="the-shape-of-the-platform">The shape of the platform<a class="headerlink" href="#the-shape-of-the-platform" title="Permanent link">&para;</a></h2>
+<p>Synanton is a set of independently-deployable services, not a monolith. Content flows in one direction through an ingestion path, and queries flow through a separate path that reads what ingestion produced — the two paths share stores, but neither blocks on the other in normal operation.</p>
+<pre class="mermaid"><code>flowchart TB
+    subgraph Ingestion["Ingestion path"]
+        direction LR
+        Src[S3 / SharePoint /&lt;br/&gt;filesystems / databases] --&gt; SV[Content store&lt;br/&gt;+ tier manager]
+        SV --&gt; SF[Ingestion engine&lt;br/&gt;extract, chunk, classify, embed]
+        SF --&gt; Fan[Fan-out router]
+        Fan --&gt; Lex[Lexical + vector store]
+        Fan --&gt; Graph[Knowledge graph]
+    end
+    subgraph Query["Query path"]
+        direction LR
+        Client[REST / gRPC / MCP client] --&gt; GW[Gateway&lt;br/&gt;ACL, rerank, synthesis]
+        GW --&gt; Plan[Planner]
+        Plan --&gt; Lex
+        Plan --&gt; Graph
+    end
+    subgraph Authority["Authoritative stores"]
+        Topo[Org / ACL / classification&lt;br/&gt;grants store]
+    end
+    SF -.reads.-&gt; Topo
+    GW -.reads.-&gt; Topo</code></pre>
+<p>Two authoritative stores sit outside both paths and are consulted by each: the organization/permissions store (who exists, what they can access — covered in <a href="../security-101/">Security 101</a>) and the model-serving layer that both ingestion and query use for LLM and embedding calls without needing to know exactly where those models are physically running.</p>
+<h2 id="the-gpu-cluster-is-a-separate-plane-on-purpose">The GPU cluster is a separate plane, on purpose<a class="headerlink" href="#the-gpu-cluster-is-a-separate-plane-on-purpose" title="Permanent link">&para;</a></h2>
+<p>One topology decision is worth calling out explicitly because it surprises people expecting a single, uniform cluster: GPU-backed inference (embeddings, LLM enrichment, reranking, answer synthesis) runs on a <strong>separately-scaled, separately-owned cluster</strong>, connected to the main platform over an encrypted, authenticated network boundary — not baked into the same nodes that run search and ingestion.</p>
+<pre class="mermaid"><code>flowchart LR
+    subgraph CPU["Main cluster (CPU)"]
+        A[Ingress / Gateway / Planner]
+    end
+    subgraph GPU["GPU execution plane"]
+        B[Model serving&lt;br/&gt;embeddings, LLM, reranking]
+    end
+    A -- "encrypted, authenticated&lt;br/&gt;service boundary" --&gt; B</code></pre>
+<p>This split exists for two independent reasons. First, GPU capacity has a fundamentally different cost and scaling profile than the rest of the platform — it makes sense to scale it up and down on its own schedule rather than tying every service's hardware footprint to whatever the busiest GPU workload needs. Second, and just as important: if the GPU plane is saturated, degraded, or entirely down, the rest of the platform is designed to keep working in a reduced-capability mode (see "Degraded mode" below) rather than going down with it. Ingestion and search have a <em>dependency</em> on GPU capacity for full quality, not a <em>hard requirement</em> for basic availability.</p>
+<h2 id="three-deployment-profiles">Three deployment profiles<a class="headerlink" href="#three-deployment-profiles" title="Permanent link">&para;</a></h2>
+<p>Synanton ships as the same set of service images regardless of how you run them — what changes between profiles is the orchestration layer underneath, not the application logic itself.</p>
+<table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>How it's orchestrated</th>
+<th>Best fit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Full</strong> (default)</td>
+<td>Kubernetes, with configuration changes rolled out through a GitOps pipeline</td>
+<td>Organizations already running Kubernetes, or that need the full elasticity/auto-scaling story</td>
+</tr>
+<tr>
+<td><strong>Standalone</strong></td>
+<td>systemd services provisioned by Ansible — no Kubernetes at all</td>
+<td>Teams that want the platform's full capability without taking on Kubernetes operational overhead</td>
+</tr>
+<tr>
+<td><strong>Embedded</strong></td>
+<td>The platform runs as a library inside a host application's own process</td>
+<td>Products that want to bundle Synanton's search/ingestion capability directly rather than run it as a separate service</td>
+</tr>
+</tbody>
+</table>
+<p>The same container images and the same configuration schema apply across all three — the difference is entirely in <em>what launches, restarts, and scales</em> the services, not in what the services do once running. Standalone deployments even get an equivalent to Kubernetes' rolling restarts and load rebalancing, implemented as a lightweight sidecar process rather than depending on Kubernetes' scheduler to provide it. Embedded deployments support upgrading the underlying index format without downtime, using a shadow-index technique: a new index is built alongside the running one and swapped in atomically once ready, rather than taking the host application offline to migrate.</p>
+<pre class="mermaid"><code>flowchart LR
+    Full["Full profile&lt;br/&gt;Kubernetes + GitOps"] --- Same[Same images,&lt;br/&gt;same config schema]
+    Standalone["Standalone profile&lt;br/&gt;systemd + Ansible"] --- Same
+    Embedded["Embedded profile&lt;br/&gt;library inside host app"] --- Same</code></pre>
+<h2 id="tenant-isolation-two-tiers-one-decision-to-make-per-customer">Tenant isolation: two tiers, one decision to make per customer<a class="headerlink" href="#tenant-isolation-two-tiers-one-decision-to-make-per-customer" title="Permanent link">&para;</a></h2>
+<p>Multi-tenancy — multiple organizations' data living in the same platform, kept strictly separate — comes in two isolation strengths, chosen per tenant rather than platform-wide:</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th><code>STANDARD</code> tier</th>
+<th><code>HIGH_SECURITY</code> tier</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data isolation</td>
+<td>Logical (shared infrastructure, tenant-scoped by identifier)</td>
+<td>Physical (dedicated storage partitions per tenant)</td>
+</tr>
+<tr>
+<td>Cross-tenant result caching</td>
+<td>Enabled, for cost efficiency on shareable content</td>
+<td>Disabled entirely</td>
+</tr>
+<tr>
+<td>Access-control enforcement path</td>
+<td>Standard filtering</td>
+<td>Additional fast, defense-in-depth pre-filter applied to every query, with no exceptions</td>
+</tr>
+<tr>
+<td>Permission-change propagation</td>
+<td>Standard (asynchronous, near-real-time)</td>
+<td>Synchronous — a revoked grant is guaranteed in effect before the change is acknowledged</td>
+</tr>
+</tbody>
+</table>
+<p>Choosing <code>HIGH_SECURITY</code> for a tenant costs some of the cross-tenant efficiency gains (shared caching in particular), and it's the right trade for regulated industries or customers with contractual data-isolation requirements. <code>STANDARD</code> is the right default for the common case where logical isolation and asynchronous propagation are more than sufficient, and the efficiency gains matter.</p>
+<h2 id="data-residency-keeping-data-where-its-allowed-to-be">Data residency: keeping data where it's allowed to be<a class="headerlink" href="#data-residency-keeping-data-where-its-allowed-to-be" title="Permanent link">&para;</a></h2>
+<p>Every tenant can have a residency policy that names which geographic regions its data and processing are allowed to touch. When a query would need to reach outside that boundary — because the nearest available capacity for some resource happens to sit in a disallowed region, say — the platform has two configurable behaviors: <strong>fail closed</strong> (refuse the query outright with a clear "this would violate your residency policy" response) or <strong>fail open with a warning</strong> (drop the out-of-region option and proceed, flagging that a residency boundary constrained the result). Which behavior applies is a per-tenant policy choice, not a platform-wide default — a regulated customer typically wants fail-closed; a customer using residency purely as a latency-optimization hint typically wants fail-open.</p>
+<p>The same regional awareness extends to model serving: a global deployment can route embedding and LLM inference to follow demand across time zones (serving European traffic from European capacity during European business hours, for instance) without that routing ever crossing a tenant's declared residency boundary.</p>
+<h2 id="degraded-mode-designed-to-bend-not-break">Degraded mode: designed to bend, not break<a class="headerlink" href="#degraded-mode-designed-to-bend-not-break" title="Permanent link">&para;</a></h2>
+<p>Both the CPU-side platform and the GPU execution plane can fail independently of each other, and the platform is explicitly designed around that independence rather than assuming both are always healthy together. If GPU capacity is unavailable or saturated:</p>
+<ul>
+<li>Ingestion falls back to a smaller, CPU-compatible embedding model, and if even that isn't feasible, proceeds with lexical-only indexing rather than blocking — every affected item is flagged so it can be upgraded automatically once capacity returns.</li>
+<li>Query-time semantic search and reranking degrade the same way, with a response flag rather than a silent quality drop, and answer synthesis (which needs an LLM) is disabled with a clear "temporarily unavailable" signal rather than an error that looks like a bug.</li>
+</ul>
+<p>This "fail visibly, not silently" philosophy is deliberate and repeated everywhere in the platform's design — a component that's struggling should say so, not quietly produce a worse answer that looks the same as a good one.</p>
+<h2 id="a-practical-way-to-think-about-sizing">A practical way to think about sizing<a class="headerlink" href="#a-practical-way-to-think-about-sizing" title="Permanent link">&para;</a></h2>
+<p>Deployment sizing genuinely scales with three largely independent dimensions: how much content you're ingesting (drives storage and ingestion throughput), how much query traffic you're serving (drives the search and gateway tiers), and how much LLM-dependent capability you're using — enrichment during ingestion, synthesis and reranking during query (drives GPU plane sizing specifically). A deployment that ingests a huge volume of content but serves comparatively little live search traffic has a very different shape than one doing the reverse, and the platform's separation of these concerns into independently-scalable services is what makes that difference expressible rather than forcing one uniform cluster shape regardless of actual workload.</p>
+<h2 id="choosing-a-profile-the-questions-that-actually-decide-it">Choosing a profile: the questions that actually decide it<a class="headerlink" href="#choosing-a-profile-the-questions-that-actually-decide-it" title="Permanent link">&para;</a></h2>
+<p>The three deployment profiles aren't ranked best-to-worst — they answer different constraints:</p>
+<ul>
+<li><strong>Do you already run Kubernetes, and want the platform to participate in your existing GitOps workflow?</strong> Full profile is the natural fit, and it's the one the platform's own scaling and self-healing behavior is built around most directly.</li>
+<li><strong>Do you want the platform's full feature set without taking on Kubernetes as new operational surface area?</strong> Standalone gets you the same services and the same configuration model, run by more familiar tooling (systemd, Ansible), at the cost of some of Kubernetes' automatic scheduling conveniences — which the platform compensates for with its own lightweight rebalancing.</li>
+<li><strong>Are you building a product that should feel like it has search and ingestion "built in," rather than depending on a separately-run service?</strong> Embedded mode runs the platform as a library inside your own application process — no separate service to operate at all, at the cost of running within your application's own resource envelope rather than an independently scalable cluster.</li>
+</ul>
+<p>A given organization can also legitimately run different profiles for different environments — Standalone for a lightweight staging environment, Full for production — because the configuration schema doesn't change between them.</p>
+<h2 id="what-operators-actually-watch-day-to-day">What operators actually watch day to day<a class="headerlink" href="#what-operators-actually-watch-day-to-day" title="Permanent link">&para;</a></h2>
+<p>Regardless of deployment profile, the platform exposes the same operational signals: per-service health and latency metrics, ingestion pipeline throughput and backlog, and a set of alerts specifically designed to catch the failure modes this guide and <a href="../security-101/">Security 101</a> describe — a GPU-degraded-mode window running longer than expected, a tenant's isolation-tier guarantee being violated, a permission propagation delay exceeding its SLA. None of that requires deployment-profile-specific tooling; the same dashboards and alert definitions apply whether the underlying orchestration is Kubernetes, systemd, or an embedded process. <a href="../troubleshooting-101/">Troubleshooting 101</a> walks through what to do when one of those signals fires.</p>
+<h2 id="backup-and-disaster-recovery-at-a-glance">Backup and disaster recovery, at a glance<a class="headerlink" href="#backup-and-disaster-recovery-at-a-glance" title="Permanent link">&para;</a></h2>
+<p>Different stores have different recovery expectations, because they hold different kinds of data with different regeneration costs. Content that can be re-derived from the original source document (a search index entry, a cached embedding) has a more relaxed recovery target than content that has no other copy anywhere (the raw source document itself, and the authoritative permissions/organization store). The platform's default posture is active-passive across regions for the stores that matter most for continuity — a secondary region stands ready to take over, rather than every region actively serving all traffic simultaneously — which keeps the failover story simple at the cost of not using secondary-region capacity for day-to-day load. Exact recovery time and recovery point targets differ by storage class and are documented in the capacity planning appendix linked below, not repeated here — they're the kind of number that needs to stay in one authoritative place rather than being restated (and risk drifting) across multiple documents.</p>
+<h2 id="frequently-asked-questions">Frequently asked questions<a class="headerlink" href="#frequently-asked-questions" title="Permanent link">&para;</a></h2>
+<p><strong>Can we mix isolation tiers — some tenants <code>STANDARD</code>, some <code>HIGH_SECURITY</code> — in the same deployment?</strong>
+Yes, that's the intended usage pattern. Isolation tier is a per-tenant setting, not a whole-deployment choice, so a single platform instance can serve both a regulated customer on <code>HIGH_SECURITY</code> and a cost-sensitive customer on <code>STANDARD</code> side by side.</p>
+<p><strong>If we start on Standalone, can we migrate to Full later without re-ingesting everything?</strong>
+Yes — because both profiles run the same images against the same data model, migrating orchestration layers is an infrastructure change, not a data migration. The content, indexes, and graph don't need to be rebuilt just because the orchestrator underneath them changed.</p>
+<p><strong>Does losing GPU capacity mean losing search entirely?</strong>
+No — this is exactly what degraded mode exists to prevent. Lexical (keyword) search keeps working even with the GPU plane fully down; what's lost is semantic search quality and answer synthesis, both restored automatically once GPU capacity returns, with previously-degraded content quietly upgraded in the background.</p>
+<p><strong>Do we need to run our own GPU infrastructure, or is that offered as a managed service?</strong>
+That's a deployment-time choice independent of which of the three orchestration profiles you pick — the GPU execution plane's contract is designed so it can be self-hosted or consumed as an externally-managed service, without the rest of the platform needing to know which.</p>
+<h2 id="go-deeper">Go Deeper<a class="headerlink" href="#go-deeper" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What's the exact module-by-module topology and every service's responsibilities?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §4 (System Topology), §5 (Module Map)</td>
+</tr>
+<tr>
+<td>What are the precise isolation-tier mechanics and per-tenant resource partitioning rules?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §41 (Multi-Tenancy and Isolation Tiers)</td>
+</tr>
+<tr>
+<td>How exactly is data residency enforced, and what's the cross-region latency model?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §43 (Cross-Region &amp; Data Residency)</td>
+</tr>
+<tr>
+<td>What's the full deployment-profile mechanics (Ansible roles, GitOps pipeline, shadow-index migration)?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §46 (Deployment Profiles)</td>
+</tr>
+<tr>
+<td>Why is the GPU plane a separate repository and ownership boundary?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §50–§53</td>
+</tr>
+<tr>
+<td>What are the disaster-recovery RTO/RPO targets per storage class?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §47a (Disaster Recovery)</td>
+</tr>
+<tr>
+<td>How do I size a cluster for N documents or N queries/second?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code>, Appendix A (Capacity Planning Guide)</td>
+</tr>
+<tr>
+<td>How do I actually run a demo or development deployment?</td>
+<td><code>README.md</code> ("Ingestion demo," "Full demo stack")</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>

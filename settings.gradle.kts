@@ -18,6 +18,7 @@ dependencyResolutionManagement {
 // v1.20 adds gpu-contract (synanton.gpu.v1 proto stubs) and gpu-gateway (GPU Execution Plane).
 // v1.21 adds extraction-contract (synanton.extraction.v1 proto stubs, mirrored from
 // the content_extractor repository) for the Structured Content Extraction Plane.
+// v1.24/1.25 adds annotations (AAP-1: annotation definitions, dependency DAG, processing runs).
 include(
     "java:shared:common",
     "java:security",
@@ -39,6 +40,7 @@ include(
     "java:gpu-gateway",
     "java:extraction-contract",
     "java:extraction-client",
+    "java:annotations",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)

@@ -1,0 +1,1104 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Business and operational guides to Synanton's search, security, ingestion, deployment, and troubleshooting model — no code or API depth required.">
+      
+      
+      
+        <link rel="canonical" href="https://synanton.github.io/search-101/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../ingestion-101/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Search 101 - Synanton Guides</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#search-101-how-hybrid-search-works" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Synanton Guides" class="md-header__button md-logo" aria-label="Synanton Guides" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Synanton Guides
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Search 101
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/synanton/platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    synanton/platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+    
+  
+  For Everyone
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../security-101/" class="md-tabs__link">
+          
+  
+    
+  
+  For Security & Compliance Teams
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../deployment-101/" class="md-tabs__link">
+          
+  
+    
+  
+  For Operators
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Synanton Guides" class="md-nav__button md-logo" aria-label="Synanton Guides" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Synanton Guides
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/synanton/platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    synanton/platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    For Everyone
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            For Everyone
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Search 101
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Search 101
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-short-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      The short version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-not-just-pick-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why not just pick one?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-engines-briefly" class="md-nav__link">
+    <span class="md-ellipsis">
+      The three engines, briefly
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-results-get-combined" class="md-nav__link">
+    <span class="md-ellipsis">
+      How the results get combined
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-never-forgets-whos-asking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search never forgets who's asking
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-when-things-arent-running-at-full-strength" class="md-nav__link">
+    <span class="md-ellipsis">
+      What happens when things aren't running at full strength
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      A worked example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-across-languages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search across languages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-searches-feel-instant-even-under-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why searches feel instant even under load
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Frequently asked questions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#go-deeper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Go Deeper
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingestion-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ingestion 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For Security & Compliance Teams
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            For Security & Compliance Teams
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For Operators
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            For Operators
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deployment 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting-101/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Troubleshooting 101
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-short-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      The short version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-not-just-pick-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why not just pick one?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-engines-briefly" class="md-nav__link">
+    <span class="md-ellipsis">
+      The three engines, briefly
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-results-get-combined" class="md-nav__link">
+    <span class="md-ellipsis">
+      How the results get combined
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-never-forgets-whos-asking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search never forgets who's asking
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-when-things-arent-running-at-full-strength" class="md-nav__link">
+    <span class="md-ellipsis">
+      What happens when things aren't running at full strength
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      A worked example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-across-languages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search across languages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-searches-feel-instant-even-under-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why searches feel instant even under load
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Frequently asked questions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#go-deeper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Go Deeper
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/synanton/platform/edit/main/docs-site/guides/search-101.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="search-101-how-hybrid-search-works">Search 101: How Hybrid Search Works<a class="headerlink" href="#search-101-how-hybrid-search-works" title="Permanent link">&para;</a></h1>
+<p><strong>Audience:</strong> anyone evaluating or using Synanton who wants to understand what happens between typing a question and getting an answer — no query DSL, no gRPC, no ranking math required.</p>
+<h2 id="the-short-version">The short version<a class="headerlink" href="#the-short-version" title="Permanent link">&para;</a></h2>
+<p>When you search Synanton, you're not running one search — you're running up to three, at once, against the same content, and then letting the results argue their way into a single ranked list:</p>
+<ol>
+<li>A <strong>keyword search</strong> finds documents that contain the words you typed.</li>
+<li>A <strong>meaning search</strong> finds documents that are <em>about</em> what you asked, even if they don't share a single word with your query.</li>
+<li>A <strong>relationship search</strong> finds documents connected to your answer through facts the platform has already extracted — "who supplies whom," "which policy governs which contract."</li>
+</ol>
+<p>No single one of these is "the real search" with the others bolted on for flavor. They're three different lenses on the same underlying content, and Synanton fuses their opinions into one ranked, access-controlled result set — typically in under 200 milliseconds.</p>
+<h2 id="why-not-just-pick-one">Why not just pick one?<a class="headerlink" href="#why-not-just-pick-one" title="Permanent link">&para;</a></h2>
+<p>Each approach has a blind spot the others cover.</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Good at</th>
+<th>Blind spot</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Keyword (lexical)</strong></td>
+<td>Exact terms, names, IDs, jargon a user typed correctly</td>
+<td>Misses paraphrases — "end the agreement" won't match "terminate this contract"</td>
+</tr>
+<tr>
+<td><strong>Meaning (vector/semantic)</strong></td>
+<td>Paraphrase, synonym, conceptual similarity</td>
+<td>Can miss an exact but rare term (a part number, a specific SSN-like ID) that isn't semantically distinctive</td>
+</tr>
+<tr>
+<td><strong>Relationship (graph)</strong></td>
+<td>"What's connected to what" — ownership, supply chains, governing policies</td>
+<td>Doesn't rank by textual relevance at all; it answers a different kind of question</td>
+</tr>
+</tbody>
+</table>
+<p>A user asking <em>"which suppliers have contracts expiring soon, and what are the termination requirements?"</em> is really asking a graph question (find the suppliers), a keyword question (find contract clauses), and a meaning question (find clauses about termination that don't use the word "termination") — all in one sentence. Committing to one search technology means silently failing on the other two-thirds of that question.</p>
+<h2 id="the-three-engines-briefly">The three engines, briefly<a class="headerlink" href="#the-three-engines-briefly" title="Permanent link">&para;</a></h2>
+<p><strong>Lexical search</strong> (powered by <code>synquest</code>, Synanton's Rust-based search kernel) works the way a librarian's index card catalog works: for every meaningful word, it keeps a list of exactly which passages contain it, plus how often and how prominently. This is the same family of technique used by traditional search engines (the ranking algorithm is BM25, if you want the name) — fast, precise, and excellent at exact terms, but blind to phrasing differences.</p>
+<p><strong>Vector (semantic) search</strong> turns each passage into a point in a high-dimensional space, positioned so that passages with similar <em>meaning</em> end up near each other — regardless of the specific words used. A query is turned into a point the same way, and the search finds the nearest neighbors. This is what lets "rules for ending an agreement" find a clause that says "either party may terminate this contract," even though the two sentences share almost no vocabulary.</p>
+<p><strong>Graph search</strong> (powered by <code>relix</code>) doesn't rank passages at all — it traverses facts. Every passage that mentions entities and relationships (companies, people, contracts, obligations) contributes nodes and edges to a knowledge graph, and a graph query walks that structure to answer "what is connected to what" — a question neither of the other two approaches can answer well, because relevance-ranking and graph-traversal are fundamentally different operations.</p>
+<pre class="mermaid"><code>flowchart LR
+    Q[Your question] --&gt; L[Lexical search&lt;br/&gt;exact terms]
+    Q --&gt; V[Semantic search&lt;br/&gt;meaning/paraphrase]
+    Q --&gt; G[Graph search&lt;br/&gt;relationships]
+    L --&gt; F[Fusion]
+    V --&gt; F
+    G --&gt; F
+    F --&gt; R[Optional reranking]
+    R --&gt; A[Answer, filtered by&lt;br/&gt;what you're allowed to see]</code></pre>
+<h2 id="how-the-results-get-combined">How the results get combined<a class="headerlink" href="#how-the-results-get-combined" title="Permanent link">&para;</a></h2>
+<p>Lexical and semantic hits are combined through a technique called <strong>Reciprocal Rank Fusion</strong>: instead of trying to compare a BM25 score to a vector-similarity score directly (they're not the same kind of number, and comparing them naively produces nonsense), the platform looks at each engine's <em>rank order</em> — first place, second place, third place — and combines those ranks. A passage that lands in the top five of both lists outranks one that's first on only one list. This is why fusing two "different" scoring systems produces a coherent single ranking rather than an arbitrary blend.</p>
+<p>Graph results, when relevant, seed a further expansion step: the top candidates from the lexical/semantic fusion become starting points for a graph traversal, which can pull in connected facts that neither text-based approach would have surfaced on its own — a supplier mentioned in a different document than the one containing the expiring contract, say.</p>
+<p>After fusion (and optional graph expansion), an optional <strong>reranking</strong> step can take a second, more expensive pass over just the top candidates — a specialized model reads the actual query alongside each candidate passage and re-scores how well they answer it, which is a meaningfully different (and more accurate, if slower) judgment than any single-pass ranking. If the reranker is unavailable for any reason, Synanton returns the un-reranked results rather than failing the search — a reranker outage degrades ranking quality, never availability.</p>
+<h2 id="search-never-forgets-whos-asking">Search never forgets who's asking<a class="headerlink" href="#search-never-forgets-whos-asking" title="Permanent link">&para;</a></h2>
+<p>This is the part that makes Synanton's search meaningfully different from bolting a search engine onto a document store: <strong>access control isn't a filter applied to results after the fact — it's built into the search itself, before any ranking happens.</strong></p>
+<p>Concretely, when you search, the platform doesn't compute "all matches, then remove the ones you can't see." It computes "matches, restricted to what you can see" from the very first step — the same way a database query with a <code>WHERE</code> clause never even considers rows outside that clause, rather than fetching everything and throwing rows away afterward. This distinction matters more than it sounds: a naive post-filter can still leak information through side channels — how many total hits there were, which terms were statistically common — even while correctly hiding the actual sensitive content. Building the restriction in from the start closes that leak.</p>
+<p>The practical effect: two people can run the identical search and get genuinely different, both-correct answers. A payroll employee searching "gross income" sees the real compensation figures in a matching passage. An HR employee running the exact same search sees the same passage, ranked the same way, but with the sensitive figure replaced by a redaction marker — a real, useful, non-zero result that still correctly withholds the number it isn't authorized to show. Neither person gets an error; neither person gets zero results just because <em>part</em> of a document is sensitive. <a href="../security-101/">Security 101</a> covers exactly how that decision gets made.</p>
+<pre class="mermaid"><code>flowchart TD
+    S[Same search, two people] --&gt; P[Payroll caller]
+    S --&gt; H[HR caller]
+    P --&gt; PR["Result: 'Gross income: €180,000'"]
+    H --&gt; HR2["Result: 'Gross income: [REDACTED]'"]
+    PR -.-&gt;|same rank, same passage| HR2</code></pre>
+<h2 id="what-happens-when-things-arent-running-at-full-strength">What happens when things aren't running at full strength<a class="headerlink" href="#what-happens-when-things-arent-running-at-full-strength" title="Permanent link">&para;</a></h2>
+<p>Search is designed to degrade gracefully rather than fail outright. If the GPU capacity behind semantic search is saturated or temporarily unavailable, the platform falls back to a smaller, CPU-friendly model rather than skipping semantic search altogether — and if even that isn't feasible, it proceeds with lexical-only results rather than returning an error. The response is always labeled when this happens (a warning flag, not a silent quality drop), because a platform that quietly gets worse without telling anyone is worse than one that's visibly degraded. The same philosophy applies to reranking: if it's unavailable, you get un-reranked results with a flag, not a failed search.</p>
+<p>This matters operationally too — see <a href="../troubleshooting-101/">Troubleshooting 101</a> for what a degraded-mode flag actually means when you see one, and when it's worth escalating versus just noting that the platform is temporarily running at reduced capability.</p>
+<h2 id="a-worked-example">A worked example<a class="headerlink" href="#a-worked-example" title="Permanent link">&para;</a></h2>
+<p>Suppose a user asks: <em>"What are our obligations if a vendor misses a delivery deadline?"</em></p>
+<ul>
+<li><strong>Lexical search</strong> finds passages containing "delivery," "deadline," "vendor," and close variants — including a clause that literally says "vendor shall notify buyer within 48 hours of an anticipated delay."</li>
+<li><strong>Semantic search</strong> finds a clause that never uses the word "deadline" at all: "should the supplier fail to fulfill the agreed shipment schedule, the following remedies apply" — same concept, essentially no shared vocabulary with the query.</li>
+<li><strong>Graph search</strong>, seeded from the vendor entity found in those clauses, surfaces a related fact from a <em>different</em> document: an amendment that changed the penalty terms for that same vendor relationship six months later.</li>
+<li><strong>Fusion</strong> combines the two text-based results by rank, promoting whichever passage's overall standing (across both lists) is strongest, and the graph fact gets attached as supporting context rather than competing for a rank slot of its own.</li>
+<li><strong>Reranking</strong>, if enabled, takes a final look at the fused top candidates with full knowledge of the exact question asked, and may reorder them if one passage answers the specific question ("what are our obligations") more directly than another that's merely topically related.</li>
+<li>Every returned passage is filtered, before all of the above, to only what this specific caller's classification and resource permissions allow — so if the penalty-terms amendment happens to live in a restricted contract folder this user can't access, it simply never enters the candidate set, regardless of how relevant it would otherwise be.</li>
+</ul>
+<h2 id="search-across-languages">Search across languages<a class="headerlink" href="#search-across-languages" title="Permanent link">&para;</a></h2>
+<p>Enterprise content is rarely monolingual, and lexical search has a historical weak spot here: Western tokenization (splitting on spaces and punctuation) doesn't work for languages like Chinese, Japanese, or Korean, which don't reliably use spaces to separate words at all. Rather than requiring a per-language dictionary (which needs constant maintenance as vocabulary changes), Synanton's lexical layer uses an overlapping-character technique for CJK text that doesn't need to know what a "word" is in that language to index it usefully. The practical effect: a mixed-language document set doesn't need separate index pipelines per language, and a search for a CJK term works the same way a search for an English term does, from the caller's point of view.</p>
+<p>Vector search sidesteps the word-boundary problem entirely — the embedding model that turns a passage into a point in meaning-space is trained to place semantically similar text near each other regardless of language, which is part of why the two approaches complement rather than duplicate each other.</p>
+<h2 id="why-searches-feel-instant-even-under-load">Why searches feel instant even under load<a class="headerlink" href="#why-searches-feel-instant-even-under-load" title="Permanent link">&para;</a></h2>
+<p>Two techniques keep response times fast without sacrificing correctness:</p>
+<ul>
+<li><strong>Result caching.</strong> A meaningful fraction of enterprise search traffic is repetitive — the same or very similar questions asked by different people who share the same effective permissions. Synanton caches synthesized answers keyed not just by the question, but by the <em>access mask</em> of who's allowed to see what — so a cache hit is only ever served to a caller whose permissions genuinely match the cached result's, never to someone who happens to ask a similar question with different entitlements. When it hits, it can skip the entire retrieval-and-synthesis pipeline; when it doesn't, the search runs fully as described above.</li>
+<li><strong>Cost and safety limits.</strong> Every query carries a soft cap on how many candidate results it will consider before the platform starts trimming, and a hard cap beyond that where it stops outright rather than let a single unusually broad query monopolize shared infrastructure. This is invisible on a normal, well-scoped search and only becomes noticeable — as a "budget trimmed" warning rather than a silent truncation — on a query broad enough that trimming was inevitable anyway.</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently asked questions<a class="headerlink" href="#frequently-asked-questions" title="Permanent link">&para;</a></h2>
+<p><strong>Does a broader (more permissive) role always see more search results?</strong>
+Not necessarily more <em>hits</em> — a chunk containing only non-sensitive content looks identical to every caller regardless of role. A broader role sees more of the <em>content within</em> hits that do contain sensitive material (the unredacted figure instead of a placeholder), not additional documents that a narrower role can't find at all — unless the underlying resource-level permissions genuinely differ.</p>
+<p><strong>Can I tell whether a result was reranked or came from cache?</strong>
+Yes — every response includes an execution trace describing which stages ran (fusion, graph expansion, reranking) and whether any stage fell back to a degraded path. This is exposed to operators and developers; it's not meant to be surfaced directly to an end user in a typical search UI.</p>
+<p><strong>Why did my search return fewer results after a permissions change?</strong>
+If a resource-level grant or a classification-based grant was narrowed, previously visible content — or the unredacted version of it — can legitimately stop appearing, with no bug involved. See <a href="../troubleshooting-101/">Troubleshooting 101</a> for how to tell that apart from an actual malfunction.</p>
+<h2 id="go-deeper">Go Deeper<a class="headerlink" href="#go-deeper" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What's the exact step-by-step query execution pipeline (compile, plan, execute, fuse, rerank)?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §7 (Query Flow)</td>
+</tr>
+<tr>
+<td>How does GraphRAG combine vector retrieval with graph traversal?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §8</td>
+</tr>
+<tr>
+<td>How is access control compiled into the query instead of filtered after?</td>
+<td><code>docs/architecture/synanton-design-1.23.md</code> §3.3; <a href="../security-101/">Security 101</a></td>
+</tr>
+<tr>
+<td>What does the reverse index / vector store / graph actually store, mechanically?</td>
+<td><code>docs/book/Ingestion and security processing guide.md</code>, Part IV</td>
+</tr>
+<tr>
+<td>What are the search latency SLOs?</td>
+<td><code>docs/architecture/synanton-design-1.22.md</code> §7 ("SLOs")</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>
