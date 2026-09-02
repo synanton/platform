@@ -230,7 +230,7 @@ See `docs/implementation/content-extraction-plane/INDEX.md` for the detailed imp
 
 See `docs/implementation/semantic-chunking/INDEX.md` for the detailed implementation plan and `docs/architecture/synanton-design-1.22.md` for Part X.
 
-### Annotation, Derived Knowledge, Recalculation, Analytics & Reporting Plane track - v1.24/1.25 *(planned, not started)*
+### Annotation, Derived Knowledge, Recalculation, Analytics & Reporting Plane track - v1.24/1.25 *(in progress)*
 
 **Delivers:** first-class, versioned annotations with explicit dependencies and provenance; dependency-aware recalculation (**Resolutor** determines impact, **Equalix** executes it under priority/resource controls); and a downstream **Analytics and Reporting Plane** (events, facts, aggregates, metrics, reports).
 
