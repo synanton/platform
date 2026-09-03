@@ -153,9 +153,14 @@ services:
       context: ../../../content_extractor
       dockerfile: deployment/docker/extraction-gateway.Dockerfile
     depends_on:
+      postgres:
+        condition: service_healthy
       minio-init:
         condition: service_completed_successfully
     environment:
+      EXTRACTION_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-synanton}
+      EXTRACTION_DB_USER: ${POSTGRES_USER:-synanton}
+      EXTRACTION_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       EXTRACTION_GATEWAY_GRPC_PORT: 9091
       EXTRACTION_GATEWAY_HTTP_PORT: 8092
       EXTRACTION_OBJECTSTORE_ENDPOINT: http://minio:9000
