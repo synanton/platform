@@ -1,251 +1,469 @@
-# Synanton
+# Synanton Platform
 
-**Synanton** is an open-source, AI-native enterprise knowledge platform. It unifies full-text search, dense vector search, knowledge-graph reasoning and ontology management into a single modular system - ingesting enterprise content from heterogeneous sources, enriching it with LLMs and exposing it through REST, gRPC, MCP and agent-to-agent interfaces.
+**Open-source systems research for enterprise knowledge and reliable business execution.**
+
+Synanton is an AI-native enterprise knowledge platform exploring how enterprise knowledge can be **ingested, structured, secured, derived, searched, reasoned over and recalculated** as a coherent system rather than as a collection of disconnected AI components.
+
+The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
+
+> **Current architecture:** Design 1.25  
+> **Current focus:** annotations, derived knowledge, dependency-aware recalculation, analytics and reporting.
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 ---
 
-## What it does
+## What Synanton is investigating
 
+Enterprise AI systems increasingly combine search, vector retrieval, knowledge graphs, LLMs, agents and analytics. The difficult part is not adding another component. The difficult part is making the whole system **consistent, explainable, secure and recalculable** when its inputs and rules change.
+
+Synanton investigates several related questions:
+
+- How should heterogeneous enterprise content become structured, reusable knowledge?
+- How should semantic chunks preserve structure, provenance, citations and security?
+- How can keyword, vector, graph, ontology and LLM-based retrieval coexist behind one query-planning model?
+- How should derived knowledge be represented so that changes in models, rules, dictionaries, policies, or source data can trigger controlled recalculation?
+- How can analytics observe knowledge and platform activity without becoming a security side channel or a second source of truth?
+- How should expensive AI workloads be isolated from the CPU/control plane while preserving a stable execution contract?
+- How can enterprise security remain a property of the entire knowledge lifecycle rather than only of the API boundary?
+
+The project treats architecture as a research artifact: **design → implementation → experiment → evidence → architectural revision**.
+
+---
+
+## Core model
+
+The current architecture treats knowledge as **derived state**.
+
+```text
+                 SOURCE WORLD
+                     │
+                     ▼
+        ┌─────────────────────────┐
+        │ Acquisition / Extraction│
+        └────────────┬────────────┘
+                     ▼
+        ┌─────────────────────────┐
+        │ Semantic Content        │
+        │ + Semantic Chunks       │
+        └────────────┬────────────┘
+                     ▼
+        ┌─────────────────────────┐
+        │ Security Classification │
+        │ + Representation Policy │
+        └────────────┬────────────┘
+                     ▼
+        ┌─────────────────────────┐
+        │ Annotation              │
+        │ Provenance              │
+        │ Dependencies            │
+        └────────────┬────────────┘
+                     ▼
+        ┌─────────────────────────┐
+        │ Derived Knowledge       │
+        └──────┬──────┬──────┬───┘
+               │      │      │
+               ▼      ▼      ▼
+          Search    Graph   Vector
+               │      │      │
+               └──────┴──────┘
+                      │
+                      ▼
+                 Query / RAG
+                      │
+                      ▼
+                 Applications
+
+
+      Platform activity + knowledge
+                      │
+                      ▼
+          Protected Analytics Boundary
+                      │
+                      ▼
+          Events → Facts → Aggregates
+                      │
+                      ▼
+             Metrics → Reports
 ```
-         Documents / APIs / Databases / S3
-                          │
-                          ▼
-┌───────────────────────────────────────────────────────────┐
-│  Synvault (content store + tier manager)                  │
-│  Synflux  (acquire/extract/chunk/enrich/embed/persist)    │
-│  ingestion-cache (Cassandra artifact cache)               │
-└───────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌───────────────────────────────────────────────────────────┐
-│  Synquest  BM25 + HNSW hybrid search kernel               │
-│  Relix     GraphRAG engine (entity/relation graph)        │
-│  Syntology ontology management (SHACL + versioning)       │
-└───────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌───────────────────────────────────────────────────────────┐
-│  Planner  intent classification + query plan generation   │
-│  Gateway  plan execution + LLM synthesis + reranking      │
-│  Synapt   public REST/gRPC ingress + auth + rate limits   │
-└───────────────────────────────────────────────────────────┘
-                          │
-              REST / gRPC / MCP / ACP
+
+A central architectural rule is:
+
+> **Knowledge is derived state and analytics is derived state over knowledge and platform activity.**
+
+This makes recalculation a first-class architectural concern rather than an operational afterthought.
+
+---
+
+## Knowledge lifecycle
+
+The current lifecycle is:
+
+```text
+Source Content
+    ↓
+Extraction
+    ↓
+Semantic Content
+    ↓
+Semantic Chunks
+    ↓
+Security Classification
+    ↓
+Annotation
+    ↓
+Provenance / Processing Run / Dependencies
+    ↓
+Derived Knowledge
+    ↓
+Search / Vector / Graph Projections
+    ↓
+Applications
+    ↓
+Protected Analytics Boundary
+    ↓
+Analytics Events
+    ↓
+Analytical Facts
+    ↓
+Aggregates
+    ↓
+Metrics / Reports
 ```
 
-A single query (`POST /search`) traverses the full stack: content is retrieved from the hybrid index, graph context is woven in by Relix and the Gateway synthesises a natural-language answer citing the source chunks - all within per-tenant ACL boundaries.
+Changes to source content, annotation definitions, models, dictionaries, policies or other dependencies can trigger:
+
+```text
+Change
+  ↓
+Resolutor
+  ↓
+Dependency / Impact Analysis
+  ↓
+Recalculation Plan
+  ↓
+Equalix
+  ↓
+Controlled Execution
+  ↓
+Updated Derived Knowledge
+  ↓
+Updated Projections / Analytics
+```
+
+This separation is one of the main research directions of the platform.
 
 ---
 
-## Purpose
+## Architecture
 
-Enterprise knowledge sits scattered across document stores, wikis, databases and file shares. Extracting signal from it requires stitching together a search engine, an embedding pipeline, a graph database and an LLM - each maintained separately and integrated ad-hoc.
+Synanton is organized around independently testable services and explicit contracts.
 
-Synanton provides a single coherent platform for this problem:
+```text
+ Sources
+   │
+   ▼
+┌──────────────────────────────────────────────────────────────┐
+│ Ingestion                                                    │
+│                                                              │
+│  Synvault ── content storage / adapters                      │
+│  Synflux  ── acquire / extract / chunk / enrich / embed      │
+│  Extraction Plane ── structured content extraction           │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│ Knowledge                                                    │
+│                                                              │
+│  Synquest   ── BM25 + vector retrieval                       │
+│  Relix      ── graph reasoning / GraphRAG                    │
+│  Syntology  ── ontology / SHACL / versioning                 │
+│  Annotations ── definitions / provenance / dependencies      │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│ Query & Execution                                             │
+│                                                              │
+│  Planner ── intent classification / query plans              │
+│  Gateway ── plan execution / synthesis / reranking           │
+│  Synapt  ── REST / gRPC ingress / authentication             │
+│  MCP     ── external tool surface                            │
+└──────────────────────────────────────────────────────────────┘
 
-- **Ingest once.** A pluggable content adapter SPI handles S3, local filesystems, SharePoint, FileNET, OpenText, RDBMS, Kafka CDC feeds and webhooks. Raw content moves through a staged pipeline that extracts structure, semantically chunks, enriches (two-pass LLM chain-of-thought) and embeds every document.
-- **Query flexibly.** Hybrid BM25 + HNSW search, GraphRAG traversal, ontology-guided entity resolution and cross-encoder reranking are combined by a planner into the optimal query plan for each question.
-- **Answer accurately.** The Gateway synthesises a natural-language answer grounded in retrieved chunks, with citations, confidence scores and execution traces attached.
-- **Stay governed.** Per-tenant isolation, POSIX-backed ACL enforcement, GDPR erasure cascade, SHACL ontology validation and per-tenant cost attribution are first-class concerns - not afterthoughts.
+                    ┌──────────────────────┐
+                    │ GPU Execution Plane  │
+                    │ isolated GPU cluster │
+                    └──────────┬───────────┘
+                               │
+                         synanton.gpu.v1
+                               │
+                               ▼
+                         model serving
+
+
+                    ┌──────────────────────┐
+                    │ Analytics Plane      │
+                    │ events / facts /     │
+                    │ aggregates / reports │
+                    └──────────────────────┘
+```
+
+The CPU/control plane and production GPU workloads are separated by a versioned gRPC contract. This allows GPU capacity, scaling, scheduling and failure domains to evolve independently.
 
 ---
 
-## Who it is for
+## Research areas
 
-| Use target | What Synanton provides |
-|---|---|
-| **Enterprise search teams** | A drop-in search backend that combines keyword and semantic retrieval without maintaining three separate systems. |
-| **RAG application developers** | A managed ingestion pipeline (parse, chunk, enrich, embed) with a write-through artifact cache, plus a ready-made query-and-synthesis API. |
-| **Knowledge management platforms** | Ontology management (Syntology), versioned schemas, SHACL validation and a graph-based entity/relation store (Relix). |
-| **AI agent builders** | An MCP-compatible tool surface (Synanton-MCP) and an agent-to-agent API (ACP), so Synanton becomes a callable knowledge tool for Claude, GPT-based agents and custom agent frameworks. |
-| **Security-conscious enterprises** | POSIX-backed file permissions, JWT-gated REST APIs, compile-time ACL injection, multi-tenant isolation tiers and a full audit trail. |
-| **Platform engineers** | A monorepo of independent Spring Boot services with hexagonal architecture, contract-first SPIs, Docker Compose and Kubernetes deployment profiles and a GitOps-driven control plane. |
+### 1. Structured content and semantic chunking
+
+Traditional RAG pipelines often flatten documents into text and then apply fixed-size chunking.
+
+Synanton instead separates:
+
+```text
+raw source
+   ↓
+structured extraction
+   ↓
+semantic content
+   ↓
+semantic chunking
+```
+
+Semantic chunks retain information such as:
+
+- heading hierarchy
+- section paths
+- page coordinates
+- source elements
+- tables and figures
+- token counts
+- partial-section state
+- provenance
+
+The goal is to make the retrieval unit useful not only for embeddings, but also for citation, annotations, graph relationships, security, provenance and recalculation.
 
 ---
 
-## Module map
+### 2. Hybrid and graph retrieval
 
-| Module | Role | Status |
+`Synquest` provides the search kernel, combining lexical and semantic retrieval.
+
+`Relix` provides graph reasoning through a connector abstraction.
+
+`Syntology` provides ontology management and validation.
+
+The query layer can therefore combine:
+
+```text
+BM25
+  +
+Vector retrieval
+  +
+Graph traversal
+  +
+Ontology resolution
+  +
+Reranking
+  +
+LLM synthesis
+```
+
+The research question is not whether each technique works independently, but how they can be composed into a predictable query plan.
+
+---
+
+### 3. Secure derived knowledge
+
+Enterprise ACLs do not end at the source document.
+
+Security must survive:
+
+```text
+source
+ → extraction
+ → chunking
+ → annotation
+ → embedding
+ → graph
+ → search
+ → cache
+ → aggregation
+ → reporting
+```
+
+The architecture therefore treats classification, representation selection, storage, indexing, query planning, caching, aggregation and reporting as parts of one security pipeline.
+
+This is particularly important for semantic representations: an embedding or derived artifact must not become a new path around the original authorization boundary.
+
+---
+
+### 4. Annotations and derived knowledge
+
+Annotations are becoming first-class, versioned objects with:
+
+- definitions
+- versions
+- dependency DAGs
+- processing runs
+- provenance
+- derived outputs
+
+The important architectural distinction is between **canonical source knowledge** and **derived knowledge**.
+
+Derived knowledge can be regenerated.
+
+That enables controlled evolution when:
+
+- annotation definitions change
+- models change
+- dictionaries change
+- security policies change
+- source content changes
+- dependencies change
+
+---
+
+### 5. Dependency-aware recalculation
+
+Synanton uses two dedicated components for this problem:
+
+- **Resolutor** — determines what is affected by a change and produces a dependency-aware recalculation plan.
+- **Equalix** — executes recalculation under priority, resource and fairness constraints.
+
+The objective is to turn:
+
+> “Something changed; rebuild everything.”
+
+into:
+
+> “Something changed; determine exactly what became invalid and execute the required work under controlled resource constraints.”
+
+---
+
+### 6. Analytics as derived state
+
+Analytics is deliberately downstream of the knowledge/security boundary.
+
+```text
+Knowledge + Platform Activity
+             │
+             ▼
+   Protected Analytics Boundary
+             │
+             ▼
+      Analytics Events
+             │
+             ▼
+    Analytical Facts
+             │
+             ▼
+        Aggregates
+             │
+             ▼
+     Metrics / Reports
+```
+
+Analytics must:
+
+- preserve tenant and classification boundaries
+- avoid becoming authoritative knowledge
+- prevent aggregate-based security leakage
+- support idempotent processing
+- remain independently scalable
+- expose controlled APIs and MCP tools
+
+The current design evaluates ClickHouse as a candidate analytical backend.
+
+---
+
+### 7. Isolated AI execution
+
+Production GPU workloads run in a separate execution plane.
+
+The platform communicates through `synanton.gpu.v1`, providing an explicit boundary for:
+
+- model execution
+- embeddings
+- reranking
+- tenant assertions
+- idempotency
+- execution status
+- capacity
+- cancellation
+- observability
+
+The architecture is designed so GPU infrastructure can scale independently from the CPU/control plane.
+
+---
+
+## Modules
+
+| Module | Responsibility | Status |
 |---|---|---|
-| `shared/common` | JWT verifier, error model, `TenantContext`, `MockTenantFilter` | ✅ Done |
-| `ingestion-cache` | Cassandra DAO library - manifest (incl. `ingest_usage`), chunks, analysis, embeddings | ✅ Done |
-| `synanton-llm-client` | Provider-agnostic LLM + embedding client (OpenAI-compat) | ✅ Done |
-| `synvault` | Content store + adapter registry + MinIO/S3 facade | ✅ Done |
-| `synflux` | Ingestion pipeline - acquire → extract → semantic chunk → enrich → embed → persist; `UsageAccumulator` rolls ingest cost to search hits | ✅ Done (Phase 1+2; extraction client + semantic chunking v1.22) |
-| Lucentrix (sibling CLI) | Pluggable crawl CLI (web/dummy) that pushes raw bytes into synvault | ✅ Sibling repo |
-| `security` | AuthN/Z, JWT issuance, htpasswd IdP, `FsPermissionGuard` | ✅ Done |
-| `topology` | Org/ACL/policy store, `FilesystemAclSeeder`, JDBC repos | ✅ Done |
-| `syntology` | Ontology service - REST API, Jena storage, HCL→JSON IR→SHACL, versioning | ✅ Done (standalone) |
-| `syntology-admin` | React SPA - graph editor, login, grants view | ✅ Done (standalone) |
-| `synquest` | Hybrid search kernel - BM25 + HNSW + RRF; hits expose citation + `ingest_usage`; `query_usage` on response | ✅ Done (Phase 1) |
-| `relix` | GraphRAG engine - `GraphConnector` adapters (JGraphT / Neo4j / Nebula), MCP tools | ✅ Done (Phase 1; Neo4j/Nebula selectable) |
-| `planner` | Intent classifier + query plan generator | ✅ Done (Phase 1) |
-| `gateway` | Plan DAG executor + LLM synthesis + reranker + GPU execution client | ✅ Done (Phase 1+2; GPU client v1.20) |
-| `synapt` | Public REST/gRPC ingress, rate limiting, sanitisation | ✅ Done (Phase 1+2) |
-| `synflux-router` | Kafka-driven work distribution across synflux workers | ✅ Done (Phase 3) |
-| `control-plane` | Admin API, forecast engine, anomaly detection, GitOps | ✅ Done (Phase 3 - admin API + ModelServingDirectory) |
-| `synanton-mcp` | MCP protocol bridge - exposes platform tools to MCP clients | ✅ Done (Phase 3) |
-| `synreview` | Human-in-the-loop review queue for low-confidence entities | 🔲 Phase 5 |
-| `annotations` | Annotation registry - definitions, versions, dependency DAG, provenance, processing runs, Resolutor, Equalix | 🔶 AAP-1 + AAP-2 done (v1.24/1.25); analytics phases pending |
-| `analytics` | Analytics Plane - events, analytical facts, ClickHouse adapter, Analytics Registry, metrics/reports | 🔲 Not started (v1.24/1.25) |
+| `synvault` | Content storage and source adapters | ✅ |
+| `synflux` | Ingestion, extraction, chunking, enrichment, embeddings | ✅ |
+| `synquest` | Hybrid lexical/vector search | ✅ |
+| `relix` | GraphRAG and graph connectors | ✅ |
+| `syntology` | Ontology management and SHACL validation | ✅ |
+| `planner` | Query intent classification and plan generation | ✅ |
+| `gateway` | Query execution, synthesis and reranking | ✅ |
+| `synapt` | Public REST/gRPC ingress | ✅ |
+| `security` | Authentication, authorization and filesystem ACL enforcement | ✅ |
+| `topology` | Organization, grants and policy storage | ✅ |
+| `synflux-router` | Kafka-based ingestion distribution | ✅ |
+| `control-plane` | Administration and model-serving directory | ✅ |
+| `synanton-mcp` | MCP protocol bridge | ✅ |
+| `annotations` | Annotation registry, provenance and recalculation foundation | 🔶 In progress |
+| `analytics` | Events, facts, aggregates, metrics and reports | 🔲 Planned |
+| `gpu-contract` | Versioned GPU execution protobuf contract | ✅ |
+| `gpu-gateway` | GPU boundary and execution lifecycle | ✅ |
+| `extraction-contract` | Versioned structured extraction contract | ✅ |
+| `extraction-client` | Platform client and fallback policies | ✅ |
+| `synreview` | Human review of low-confidence knowledge | 🔲 Planned |
 
-**GPU Execution Plane** (modules `java/gpu-contract` + `java/gpu-gateway` in this repo; extracted to `synanton/gpu-execution-plane` for independent deployment):
-
-> Production GPU workloads (model serving, embedding, reranking) run in a physically isolated GPU cluster connected to this platform via the `synanton.gpu.v1` gRPC contract.
-
-| Component | Role | Status |
-|-----------|------|--------|
-| `java/gpu-contract` | `synanton.gpu.v1` protobuf - `Execute`, `Cancel`, `GetStatus`, `GetCapacity`; `org.synanton.gpu.v1`; `ErrorReason` catalogue; **byte-identical** with `gpu-runtime` | ✅ GPU-1 + mirror |
-| Contract mirror check | `scripts/verify-gpu-contract-mirror.sh` + `verifyGpuContractMirror`, wired into `check` and CI | ✅ Done |
-| `java/gpu-gateway` | GPU Gateway service - mTLS boundary, field validation, tenant assertion, idempotency store (PostgreSQL, fail-closed), `DirectDispatcher` → vLLM, execution lifecycle, Micrometer metrics | ✅ GPU-2 done |
-| `gateway` GPU client | `GpuExecutionClient` + `GpuSynthesisAdapter` - primary platform gRPC client + synthesis adapter with `MODEL_NOT_READY` retry, CPU degraded fallback, trace context propagation; `ModelServingDirectory` `isGpuBacked()` / `getGpuModels()` | ✅ GPU-3 done |
-| Consumer contract tests | `GpuContractTest` - in-process gRPC tests verifying all 4 RPCs, error shapes and `MODEL_NOT_READY` retryable flag | ✅ GPU-1 done |
-| `EqualixScheduler` | Optional fairness/quota scheduler (data-gated on GPU-4 evidence) | 🔲 GPU Phase 5 |
-
-**Structured Content Extraction Plane** (module `java/extraction-contract` in this repo; implementation in `synanton/content_extractor`):
-
-> Content extraction (PDF/text/EPUB/HTML now; audio, image and video later) runs behind the `synanton.extraction.v1` gRPC contract. Deployment topology - embedded, co-located, or an independently scaled cluster - is a scaling concern that does not change the contract.
-
-| Component | Role | Status |
-|-----------|------|--------|
-| `java/extraction-contract` | `synanton.extraction.v1` protobuf contract - 9 RPCs (submit, batch, sync, status poll, cursor completion poll, result, cancel, capacity, estimate, capabilities); 13-code error catalogue; explicit feature-state model; generated gRPC stubs | ✅ SCEP-1 done |
-| Contract mirror check | `scripts/verify-contract-mirror.sh` + `verifyContractMirror` Gradle task, wired into `check` and CI - fails when the protos diverge from `content_extractor` | ✅ SCEP-1 done |
-| Consumer contract tests | 43 tests: in-process gRPC round trip, idempotency replay, cursor polling, validation rules and descriptor-level black-box enforcement (`ContractOpacityTest`) | ✅ SCEP-1 done |
-| `content_extractor` gateway | Sync + async extraction, Flyway operation store, worker leases, Prometheus metrics | ✅ SCEP-2/4 done |
-| `java/extraction-client` | Dedicated client - sync/async extract, reconcile-after-timeout, `ExtractionFallbackPolicy`, local Tika fallback, metrics | ✅ SCEP-5 done |
-| `synflux` extraction wiring | `ExtractionStage` via `ExtractionPlaneClient`; `SemanticChunkStage`; provenance + `ingest_usage` on persist/index | ✅ Done |
+Supporting components live in sibling repositories, including the GPU execution plane, structured content extractor and Lucentrix ingestion CLI.
 
 ---
 
-## Roadmap
+## Architecture evolution
 
-The platform is being built in five phases, with a GPU execution plane track (v1.20), structured content extraction (v1.21) and semantic chunking (v1.22). **Current design pointer:** `docs/architecture/synanton-design-1.22.md` (`docs/VERSION` = 1.22). Each phase ships a runnable demo and is fully additive - Phase N never breaks Phase N-1.
+Synanton intentionally evolves through versioned architecture documents.
 
-### Phase 1 - Foundation *(complete)*
+| Version | Focus |
+|---|---|
+| 1.19 | Baseline platform architecture |
+| 1.20 | Isolated GPU Execution Plane |
+| 1.21 | Structured Content Extraction Plane |
+| 1.22 | Semantic Content Structuring / Chunking |
+| 1.23 | Secure semantic representations |
+| 1.24 | Annotation foundation |
+| **1.25** | **Annotations, derived knowledge, recalculation, analytics and reporting** |
 
-**Delivers:** crawl a local folder → hybrid + graph search → return ranked hits (no LLM yet).
+The architecture documents are part of the project, not merely implementation notes. They record decisions, constraints, interfaces, failure models, security boundaries and evaluation criteria.
 
-- [x] Monorepo scaffolding, shared library, ingestion-cache Cassandra schema
-- [x] `synvault` - `FilesystemAdapter`, MinIO object store, manifest REST API
-- [x] `synflux` - acquire → parse → chunk → persist pipeline, CLI + REST trigger
-- [x] `synquest` - Lucene BM25 + HNSW hybrid search, boot-time index build
-- [x] `relix` - `POST /graph/query`, three query shapes, `relix.graph.connector` (`memory` default, `neo4j`, `nebula`)
-- [x] `planner` - heuristic classifier (T1–T4), 4 plan templates, entity trie, `POST /plan`
-- [x] `gateway` - plan DAG executor, parallel step dispatch, RRF fusion, `POST /query`
-- [x] `synapt` - thin REST ingress, `MockTenantFilter`, Jakarta Validation, `POST /search`
-
-**DoD:** `curl -X POST :8080/search -d '{"query":"who supplies Acme?"}'` returns ranked hits.
-
-### Phase 2 - LLM online *(complete)*
-
-**Delivers:** same query now returns an LLM-synthesised answer citing the hits.
-
-- [x] `synanton-llm-client` - OpenAI-compat translator, retry logic, JSON schema validation
-- [x] `synflux` - `EnrichStage` (Pass 1 per-chunk + Pass 2 per-doc) + `EmbedStage` (batch 32)
-- [x] `ingestion-cache` - `analysis_cache`, `embedding_content_cache` schema + DAO extensions
-- [x] `planner` - optional LLM-driven intent classification (feature-flagged)
-- [x] `gateway` - LLM synthesis step, `answer` field in `QueryResponse` (enabled via `phase2` profile)
-- [x] `synapt` - JWT/API-key auth seams, `X-Trace-Id` propagation, mock-tenant filter
-- [x] `security` - first real implementation: JWT issuance, htpasswd backend, `FsPermissionGuard`
-- [x] `topology` - first real implementation: PostgreSQL schema, `FilesystemAclSeeder`, `TopologyMutationApi`
-
-**DoD:** `POST /search` returns `QueryResponse.answer` ≥ 20 words, coherent with hits.
-
-### Phase 3 - Multi-tenant, auth, router *(complete)*
-
-**Delivers:** multiple tenants, real users, Kafka-decoupled ingestion, MCP surface.
-
-- [x] Kafka-driven `synflux-router` - replaces inline crawl with topic-based dispatch
-- [x] `security` - RFC 8693 outbound auth broker, API key lifecycle (`ApiKeyController`, `TokenExchangeController`)
-- [x] `topology` - grant/revoke API, outbox dispatcher (`TopologyOutboxDispatcher`, `JdbcGrantRepository`)
-- [x] `control-plane` - first real implementation: admin API, `ModelServingDirectory`
-- [x] `synanton-mcp` - MCP STREAMABLE_HTTP: `search`, `graph_query`, `ontology_resolve`
-
-**DoD:** two-tenant demo, one API key per tenant, external MCP client (Claude Desktop) returns tenant-scoped hits.
-
-### Phase 4 - Production hardening 
-
-**Delivers:** enterprise security posture: ACL enforced everywhere, XSS protection, reranking, rate limits.
-
-- [x] Compile-time ACL injection (three-layer enforcement per §40)
-- [x] Global JSON sanitisation (OWASP Jackson deserialiser)
-- [x] CSP headers + `X-Frame-Options: DENY`
-- [x] Cross-encoder reranker (BGE reranker base, `VllmCrossEncoderRerankAdapter`)
-- [x] `synquest` - Cuckoo ACL filter, incremental index updates, hot-shard rebalancing
-- [x] Prometheus + Alertmanager + Grafana dashboards
-
-### Phase 5 - Scale + vision + DR *(planned)*
-
-**Delivers:** multimodal ingest, long-term storage tiering, Rust hot loop, GDPR erasure, disaster recovery.
-
-- Vision captioning stage (LLaVA / Qwen2-VL)
-- HOT → WARM → COLD → Glacier tier movement in `synvault`
-- `synquest` Rust hot loop migration (JNI boundary, drop-in replacement)
-- GDPR erasure cascade - tombstone + `source_ref_count` CAS
-- `synreview` - human-in-the-loop review queue, 24-hour staging, replay
-- Cross-region DR within RTO/RPO SLOs
-
-### GPU Execution Plane track - v1.20 *(in progress, separate repository)*
-
-**Delivers:** physically isolated GPU cluster with a versioned gRPC contract between the primary platform and GPU infrastructure.
-
-> **Note:** The Phase 2 Quick Start below runs vLLM locally for development and demo purposes. That is **not** the production GPU Execution Plane. Production GPU workloads use the `synanton/gpu-execution-plane` repository and connect via `synanton.gpu.v1` over mTLS.
-
-- **GPU-1** ✅ - `synanton.gpu.v1` (`java/gpu-contract`), mirrored in `gpu-runtime`, `ErrorReason` catalogue, `GpuContractTest`, `GpuExecutionClient`
-- **GPU-2** ✅ - in-repo `java/gpu-gateway` (`GpuExecutionServiceImpl`, `DirectDispatcher`, PostgreSQL idempotency). Production binary is `gpu-runtime`, which implements the same proto
-- **GPU-3** ✅ - `GpuSynthesisAdapter` (retry + CPU degraded fallback), `ModelServingDirectory` GPU flags, `gateway.gpu.*`
-- **GPU-4** 🔶 - gpu-runtime can serve platform clients (contract unified). Ingest embeddings still use HTTP `HttpLlmClient`. Security/hardening/dashboards still open
-- **GPU-5** 🔲 *(conditional)* - `EqualixScheduler` - only after GPU-4 operational evidence
-
-See `docs/implementation/gpu-execution-plane/INDEX.md` for the detailed implementation plan.
-
-### Structured Content Extraction Plane track - v1.21 *(in progress, separate repository)*
-
-**Delivers:** structured content extraction behind a deployment-neutral contract. Consumers receive reading order, headings, tables and page provenance instead of a flat string and never reparse the source to obtain text.
-
-> **Architectural decision:** the extraction plane is a black box. The platform specifies *what* to extract and under *what constraints*; the plane decides *how*. Which parser runs, whether OCR is local or remote and whether work is CPU-, GPU-, or accelerator-backed are invisible through the contract - so the implementation can grow from an embedded processor into a distributed cluster without a platform API change.
-
-- **SCEP-1** ✅ - `synanton.extraction.v1` contract (`java/extraction-contract`), byte-identical mirror in `synanton/content_extractor` with a drift check wired into `check` and CI, 13-code error catalogue with retryability verdicts, explicit feature-state model, 43 consumer contract tests
-- **SCEP-2** ✅ - Sync path DoD: pre-download reject, adapter timeout, ArchUnit domain isolation, Prometheus metrics, honest text feature states
-- **SCEP-3** 🔶 - PDF via OpenDataLoader HTTP sidecar; feature states derived from produced output (OCR/scene_analysis honest reporting)
-- **SCEP-4** ✅ - Async operations (Flyway + PostgreSQL idempotency store, worker with leases, full gRPC surface)
-- **SCEP-5** ✅ - `java/extraction-client` + synflux `ExtractionStage` with fallback policies
-- **SCEP-6** 🔲 - Topology equivalence proof + security hardening
-- **SCEP-7** 🔲 *(post-v1.21)* - Audio, image and video extraction
-
-See `docs/implementation/content-extraction-plane/INDEX.md` for the detailed implementation plan and `docs/implementation/content-extraction-plane/error-catalogue.md` for the error contract.
-
-### Semantic Content Structuring / Chunking track - v1.22 *(in progress)*
-
-**Delivers:** structure-aware chunks with heading hierarchy, atomic tables and full provenance for retrieval and citation-operating on normalized extraction output, not `flattenedText`.
-
-> **Architectural decision:** chunking is a separate layer from extraction. The extraction plane produces structured `elements`; `SemanticChunkStage` in `synflux` builds a section tree and emits semantically bounded chunks with `sectionPath`, `sourceElements` and page coordinates.
-
-- **SC-1** ✅ - Structure builder (`DocumentStructureBuilder`: elements → section tree)
-- **SC-2** ✅ - Semantic chunker (section boundaries, list/figure atomicity, `sectionPath` embed prefix)
-- **SC-3** 🔶 - Table and figure chunk types (atomic tables; figure+caption; structured table rows still thin)
-- **SC-4** ✅ - Persist + index citation fields (`section_path`, `source_elements`, `token_count`, `structured_content`, `is_partial_section`) and `ingest_usage` on search hits
-- **SC-5** 🔲 *(post-v1.22)* - Summarization hierarchy from chunk tree
-- **SC-6** 🔲 *(post-v1.22)* - Multimodal chunking (audio, image, video)
-
-See `docs/implementation/semantic-chunking/INDEX.md` for the detailed implementation plan and `docs/architecture/synanton-design-1.22.md` for Part X.
+---
 
 ### Annotation, Derived Knowledge, Recalculation, Analytics & Reporting Plane track - v1.24/1.25 *(in progress)*
 
-**Delivers:** first-class, versioned annotations with explicit dependencies and provenance; dependency-aware recalculation (**Resolutor** determines impact, **Equalix** executes it under priority/resource controls); and a downstream **Analytics and Reporting Plane** (events, facts, aggregates, metrics, reports).
+Synanton is intended to produce evidence, not just architecture diagrams.
 
-> **Architectural decision:** analytics is strictly downstream of the Design 1.23 classification/masking boundary - analytics events are emitted only after that decision, never before it. Analytics observes canonical knowledge and platform activity; it never becomes authoritative knowledge or a security side channel.
+Current validation mechanisms include:
 
-- **AAP-1** 🔶 - Annotation foundation: new `annotations` service (definitions, versions, dependency DAG, processing runs), new Cassandra `annotations` table, `synflux` `AnnotationStage` (flag-gated, `synflux.pipeline.annotation-enabled: false` by default)
-- **AAP-2** 🔶 - Recalculation: Resolutor (impact analysis) + Equalix (priority-scheduled controlled execution) in `annotations`, `POST /recalculate`; only definition-publish events are wired end-to-end so far
-- **AAP-3** 🔲 - Knowledge projections: annotation/definition-version provenance in `synquest`, embedding cache, `relix`
-- **AAP-4** 🔲 - Analytics PoC: `analytics_events` Kafka topic, new `analytics` service, ClickHouse adapter, initial facts/aggregates/metrics
-- **AAP-5** 🔲 - Analytics security: classification propagation, tenant/system scope isolation, aggregate protection, `test:analytics-security` CI tier
-- **AAP-6** 🔲 - Reporting: Analytics Registry, metric/report lifecycle, first end-to-end report (`daily-platform-processing`)
-- **AAP-7** 🔲 - Production hardening: ClickHouse PoC evaluation, retention, backup/restore, alerting, load testing
-- **AAP-8** 🔲 - MCP / external integration: `synanton-mcp` analytics tools, public Analytics API via `synapt`
+- runnable Docker-based demonstrations
+- unit and integration tests
+- gRPC contract tests
+- contract-mirror checks between repositories
+- security-focused test tiers
+- ingestion usage / benchmark ledgers
+- failure and degraded-mode tests
+- search and retrieval experiments
+- scalability and load evaluation
+- analytics correctness and isolation tests
+- architecture invariants
 
-See `docs/implementation/annotations-analytics-plane/INDEX.md` for the detailed implementation plan and `docs/architecture/synanton-design-1.25.md` for the full design.
+A useful experiment should answer a concrete question and produce evidence that can influence the next architecture revision.
 
 ---
 
@@ -372,156 +590,123 @@ cp .env.example .env   # set SYNANTON_JWT_SECRET and POSTGRES_PASSWORD
 
 ## Repository layout
 
-```
+```text
 java/
-  shared/common/        JWT verifier, error model, TenantContext (shared library)
-  ingestion-cache/      Cassandra DAO library - manifest, chunks, analysis, embeddings
-  synanton-llm-client/  Provider-agnostic LLM + embedding HTTP client
-  synvault/             Content store - FilesystemAdapter, MinIO facade, manifest REST
-  synflux/              Ingestion pipeline - stages, job runner, CLI, REST trigger
-  security/             AuthN/Z service - htpasswd + JWT issuance + FsPermissionGuard
-  topology/             Org/user/ACL store - JDBC repos, Flyway, FilesystemAclSeeder
-  syntology/            Ontology service - REST API + Jena TDB2 + SHACL
-  synquest/             Hybrid search kernel (Lucene 9 BM25 + HNSW)
-  relix/                GraphRAG engine (`GraphConnector` adapters, MCP tools)
-  planner/              Query intent classifier + plan generator
-  gateway/              Plan DAG executor + LLM synthesis
-  synapt/               Public REST/gRPC ingress, rate limiting
-  control-plane/        Admin API, forecast, anomaly, GitOps
-  synflux-router/       Kafka-driven ingestion work distributor
-  synanton-mcp/         MCP protocol bridge
-  gpu-contract/         synanton.gpu.v1 protobuf (mirrored in gpu-runtime)
-  gpu-gateway/          in-repo GPU gateway (not a substitute for gpu-runtime)
-  extraction-contract/  synanton.extraction.v1 protobuf (mirrored in content_extractor)
-  extraction-client/      Extraction plane client - sync/async, fallback policies, metrics
-  annotations/          Annotation registry - definitions, dependency DAG, Resolutor, Equalix (AAP-1+AAP-2 done, v1.24/1.25)
-  analytics/            Analytics Plane - events, facts, ClickHouse adapter, registry (planned, v1.24/1.25)
-
-rust/                   Future Rust components (synquest hot loop - Phase 5)
+  shared/common/
+  ingestion-cache/
+  synanton-llm-client/
+  synvault/
+  synflux/
+  security/
+  topology/
+  syntology/
+  synquest/
+  relix/
+  planner/
+  gateway/
+  synapt/
+  control-plane/
+  synflux-router/
+  synanton-mcp/
+  annotations/
+  analytics/
+  gpu-contract/
+  gpu-gateway/
+  extraction-contract/
+  extraction-client/
 
 ui/
-  syntology-admin/      React SPA - graph editor, login, grants view, SHACL panel
+  syntology-admin/
 
 deployment/
-  docker/               Docker Compose stack and Dockerfiles for all services
+  docker/
 
 docs/
-  architecture/         Current design 1.22; 1.21 extraction; 1.20 GPU Part VIII; 1.19 baseline
-  implementation/       Phase-by-phase implementation plans
-  proposals/            Versioned change proposals (v1.20 GPU, v1.21 extraction, v1.22 chunking)
+  architecture/
+  implementation/
+  proposals/
 
 scripts/
-  setup-dev.sh          Toolchain check (Java 21, Docker, Node 20)
-  run-demo.sh           Full demo stack via docker compose
-  run-extract-index-poc.sh  Ingest → extract → index → search (compose)
-  run-ingestion-demo.sh Ingestion-only demo (Phase 1 or Phase 2)
-  build-all.sh          Build every active module
-  verify-contract-mirror.sh      synanton.extraction.v1 vs content_extractor
-  verify-gpu-contract-mirror.sh  synanton.gpu.v1 vs gpu-runtime
-
 demo-data/
-  documents/            10 synthetic markdown/text files for ingestion demo
-  ontologies/           Sample Turtle/RDF files for syntology demo
-  users/                htpasswd seed file (alice, bob, admin)
-
 test/
-  e2e/                  Playwright acceptance tests (planned - Phase 1 DoD)
-```
-
----
-
-## Architecture overview
-
-Synanton follows a **hexagonal (ports-and-adapters)** architecture. Each module owns:
-
-- An **inbound port** - the REST/gRPC/MCP surface the module exposes.
-- A set of **outbound ports** - SPIs the module calls without knowing the implementation.
-- **Adapters** - concrete implementations of those SPIs (e.g. `FilesystemAdapter`, `MinioObjectStoreAdapter`, `JenaTdb2OntologyAdapter`).
-
-This means every adapter is swappable without touching domain logic. `FilesystemAdapter` is replaced by `S3Adapter` by configuration alone. Relix graph backends swap the same way: `relix.graph.connector=memory|neo4j|nebula` selects `InMemoryGraphConnector`, `Neo4jGraphConnector`, or `NebulaGraphConnector`. Phase 3 may still move that Java port behind gRPC; the in-process adapters do not wait on that work.
-
-**Key SPIs defined:**
-
-| SPI | Where | Purpose |
-|---|---|---|
-| `ContentAdapter` | `synvault` | Pluggable document source (filesystem, S3, SharePoint, webhooks) |
-| `OntologyAdapter` | `syntology` | Pluggable RDF store (Jena TDB2, GraphDB, RDF4J) |
-| `GraphConnector` | `relix` | Pluggable graph backend (`memory`, `neo4j`, `nebula`; add an adapter for Neptune/others) |
-| `RerankerPort` | `gateway` | Cross-encoder reranker (vLLM, Cohere, custom) |
-| `IdentityProviderPort` | `security` | IdP backend (htpasswd, Keycloak, OIDC) |
-| `LlmClient` | `synanton-llm-client` | LLM provider (vLLM, OpenAI, Anthropic, Bedrock) |
-
-**Cross-cutting concerns built in from day one:**
-- Multi-tenancy via `TenantContext` thread-local propagated on every request.
-- Compile-time ACL injection - search and graph queries carry a tenant-scope filter before reaching storage.
-- Per-tenant cost attribution - LLM calls, object-store bytes and index queries are metered and budgeted. Ingest path records a `ResourceUsage` benchmark ledger on each manifest (`ingest_usage` JSON) and copies it onto search hits; billing/rate cards are a later consumer of the same numbers.
-- GDPR erasure cascade - tombstoning a document propagates through manifest, chunks, embeddings, analysis and graph nodes.
-
----
-
-## Development
-
-### Prerequisites
-
-- Java 21 (Temurin recommended)
-- Docker 24+ with Compose V2
-- Node 20 + pnpm 9 (UI only)
-- NVIDIA Container Toolkit (Phase 2 GPU pipeline only)
-- `content_extractor` checked out as a sibling directory of this repo (`../content_extractor`) - `compose.yaml`'s `extraction-gateway` service builds from that checkout via a relative build context (`../../../content_extractor`)
-
-### Build
-
-```bash
-./gradlew build           # all active Java modules
-cd ui/syntology-admin && pnpm install && pnpm build
-```
-
-### Test
-
-```bash
-./gradlew test            # unit tests (no Docker required)
-./gradlew acceptanceTest  # acceptance tests (requires Docker)
-```
-
-### Environment
-
-Copy `.env.example` and set at minimum:
-
-```
-SYNANTON_JWT_SECRET=<at-least-32-random-bytes>
-POSTGRES_PASSWORD=<your-choice>
-MINIO_ROOT_PASSWORD=<your-choice>
 ```
 
 ---
 
 ## Documentation
 
-| Document | Location |
-|---|---|
-| Platform architecture (**current** 1.22) | `docs/architecture/synanton-design-1.22.md` |
-| Structured Content Extraction Plane (1.21 Part IX) | `docs/architecture/synanton-design-1.21.md` |
-| Semantic chunking (1.22 Part X) | `docs/implementation/semantic-chunking/INDEX.md` |
-| Annotation, recalculation, analytics & reporting plane (1.24/1.25) | `docs/implementation/annotations-analytics-plane/INDEX.md` |
-| GPU Execution Plane (1.20 Part VIII) | `docs/architecture/synanton-design-1.20.md` |
-| Core baseline (1.19, superseded pointer) | `docs/architecture/synanton-design-1.19.md` |
-| Extraction plane implementation plan | `docs/implementation/content-extraction-plane/INDEX.md` |
-| GPU Execution Plane implementation plan | `docs/implementation/gpu-execution-plane/INDEX.md` |
-| Phases master plan | `docs/implementation/synanton-phases-plan.md` |
-| Phase 1 ingestion plan | `docs/implementation/phase1/01-ingestion-pipeline.md` |
-| Phase 2 LLM enrichment plan | `docs/implementation/phase2/01-ingestion-pipeline.md` |
-| Syntology standalone demo | `docs/implementation/demo/standalone-syntology-demo.md` |
-| Lucentrix ingest CLI | `docs/implementation/lucentrix-ingest-cli.md` |
+Start here:
+
+- [Architecture — Synanton Design 1.25](docs/architecture/synanton-design-1.25.md)
+- [Annotations, Recalculation, Analytics & Reporting](docs/implementation/annotations-analytics-plane/INDEX.md)
+- [Semantic Chunking](docs/implementation/semantic-chunking/INDEX.md)
+- [Structured Content Extraction](docs/implementation/content-extraction-plane/INDEX.md)
+- [GPU Execution Plane](docs/implementation/gpu-execution-plane/INDEX.md)
+
+The broader project documentation is maintained separately and explains the architecture, concepts, use cases, operations, integrations and design history.
+
+For the research program and longer-term direction, see the [Synanton Roadmap](https://github.com/synanton/.github/blob/main/ROADMAP.md).
 
 ---
 
-## Contact
+## Design principles
 
-- **Research & general inquiries:** research@synanton.org
-- **Security reports:** security@synanton.org
+### Knowledge is derived state
+
+Derived knowledge should be reproducible from its inputs, definitions, dependencies and processing rules.
+
+### Security is a pipeline property
+
+Authorization must survive every transformation and projection of knowledge.
+
+### Contracts define boundaries
+
+Service and execution boundaries use explicit contracts so implementations can evolve independently.
+
+### Prefer incremental recomputation
+
+A change should invalidate the smallest correct portion of derived state rather than trigger unnecessary global rebuilds.
+
+### Make expensive work observable
+
+AI and distributed processing should expose execution metadata, resource usage, provenance and failure state.
+
+### Architecture must be testable
+
+Important architectural claims should have executable tests, contract checks, benchmarks, or other observable evidence.
+
+### Components should remain replaceable
+
+Storage engines, graph implementations, LLM providers, extraction implementations and execution backends should be replaceable behind stable ports or contracts.
+
+---
+
+## Project status
+
+Synanton is an **active open-source research and engineering project**.
+
+The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. Annotation/recalculation work is underway, while the analytics and reporting plane is the next major implementation area.
+
+The project is not presented as a finished enterprise product. The repository is intentionally used to explore architecture, implementation techniques, operational boundaries and measurable trade-offs.
+
+---
+
+## Related projects
+
+- **Lucentrix** — ingestion/crawling and distributed-search experiments
+- **Resolutor** — dependency-aware conflict and recalculation planning
+- **Equalix** — fair scheduling and resource-controlled execution
+- **Commitix** — durable execution and reliable business workflows
+- **GPU Execution Plane** — isolated GPU infrastructure for Synanton
+- **Structured Content Extractor** — deployment-neutral structured document extraction
 
 ---
 
 ## License
 
-Apache 2.0 - see [LICENSE](LICENSE).
+Apache 2.0 — see [LICENSE](LICENSE).
+
+## Contact
+
+- Research & general inquiries: research@synanton.org
+- Security reports: security@synanton.org
