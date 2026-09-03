@@ -497,7 +497,7 @@ export EXTRACTION_OPENDATALOADER_BASE_URL=http://opendataloader:8080
 ./scripts/run-extract-index-poc.sh
 ```
 
-GPU runtime is **not** on this path. Ingest embeddings still use `HttpLlmClient` when a GPU is present. Production GPU inference uses `synanton.gpu.v1` (mirrored with `gpu-runtime`); see GPU track below.
+GPU runtime is **not** on this path. Ingest embeddings still use `HttpLlmClient` when a GPU is present. Production GPU inference uses `synanton.gpu.v1` (mirrored with `gpu-runtime`); see "Isolated AI execution" above.
 
 ### Content extractor standalone (separate cluster)
 
@@ -629,6 +629,42 @@ docs/
 scripts/
 demo-data/
 test/
+```
+
+---
+
+## Development
+
+### Prerequisites
+
+- Java 21 (Temurin recommended)
+- Docker 24+ with Compose V2
+- Node 20 + pnpm 9 (UI only)
+- NVIDIA Container Toolkit (Phase 2 GPU pipeline only)
+- `content_extractor` checked out as a sibling directory of this repo (`../content_extractor`) - `compose.yaml`'s `extraction-gateway` service builds from that checkout via a relative build context (`../../../content_extractor`)
+
+### Build
+
+```bash
+./gradlew build           # all active Java modules
+cd ui/syntology-admin && pnpm install && pnpm build
+```
+
+### Test
+
+```bash
+./gradlew test            # unit tests (no Docker required)
+./gradlew acceptanceTest  # acceptance tests (requires Docker)
+```
+
+### Environment
+
+Copy `.env.example` and set at minimum:
+
+```
+SYNANTON_JWT_SECRET=<at-least-32-random-bytes>
+POSTGRES_PASSWORD=<your-choice>
+MINIO_ROOT_PASSWORD=<your-choice>
 ```
 
 ---
