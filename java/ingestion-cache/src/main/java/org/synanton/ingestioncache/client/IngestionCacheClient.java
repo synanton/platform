@@ -83,12 +83,13 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.chunks_payload " +
             "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
             "page_start, page_end, section_path, chunk_type, heading, " +
-            "source_elements, token_count, structured_content, is_partial_section) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "source_elements, token_count, structured_content, is_partial_section, classification) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             chunk.tenantId(), chunk.contentRefId(), chunk.chunkOrdinal(), chunk.chunkText(),
             chunk.chunkSha256(), chunk.pageStart(), chunk.pageEnd(), chunk.sectionPath(),
             chunk.chunkType(), chunk.heading(), chunk.sourceElementsJson(), chunk.tokenCount(),
-            chunk.structuredContentJson(), chunk.isPartialSection()
+            chunk.structuredContentJson(), chunk.isPartialSection(),
+            new java.util.HashSet<>(chunk.classification())
         ));
     }
 
@@ -99,12 +100,13 @@ public class IngestionCacheClient {
                 "INSERT INTO ingestion_cache.chunks_payload " +
                 "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
                 "page_start, page_end, section_path, chunk_type, heading, " +
-                "source_elements, token_count, structured_content, is_partial_section) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "source_elements, token_count, structured_content, is_partial_section, classification) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
                 c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
                 c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
-                c.structuredContentJson(), c.isPartialSection()
+                c.structuredContentJson(), c.isPartialSection(),
+                new java.util.HashSet<>(c.classification())
             ));
         }
         session.execute(batch);
@@ -129,7 +131,8 @@ public class IngestionCacheClient {
                 stringOrDefault(r, "source_elements", "[]"),
                 intOrDefault(r, "token_count", 0),
                 stringOrEmpty(r, "structured_content"),
-                boolOrDefault(r, "is_partial_section", false)
+                boolOrDefault(r, "is_partial_section", false),
+                setOrDefault(r, "classification", ChunkRow.PUBLIC_ONLY)
             ));
         }
         return rows;
@@ -172,6 +175,21 @@ public class IngestionCacheClient {
             return v == null ? "" : v;
         } catch (IllegalArgumentException e) {
             return "";
+        }
+    }
+
+    private static List<String> setOrDefault(Row r, String column, List<String> fallback) {
+        try {
+            if (r.isNull(column)) {
+                return fallback;
+            }
+            Set<String> values = r.getSet(column, String.class);
+            if (values == null || values.isEmpty()) {
+                return fallback;
+            }
+            return List.copyOf(values);
+        } catch (IllegalArgumentException e) {
+            return fallback;
         }
     }
 
@@ -328,6 +346,99 @@ public class IngestionCacheClient {
             r.getString("chunk_sha256"), embedding, r.getInt("embedding_dim"),
             r.getInstant("created_at")
         );
+    }
+
+    // ---- Annotations (v1.24/1.25 AAP-1) ----
+
+    public void insertAnnotation(AnnotationRow row) {
+        session.execute(annotationInsertStatement(row));
+    }
+
+    public void insertAnnotations(List<AnnotationRow> rows) {
+        var batch = BatchStatement.newInstance(DefaultBatchType.LOGGED);
+        for (AnnotationRow row : rows) {
+            batch = batch.add(annotationInsertStatement(row));
+        }
+        session.execute(batch);
+    }
+
+    private static SimpleStatement annotationInsertStatement(AnnotationRow row) {
+        return SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.annotations " +
+            "(tenant_id, target_type, target_id, annotation_id, definition_id, definition_version, " +
+            "annotation_type, namespace, name, value, producer, producer_version, confidence, " +
+            "source_classification, representation_used, provenance, processing_run_id, created_at, invalidated_at) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            row.tenantId(), row.targetType(), row.targetId(), row.annotationId(),
+            row.definitionId(), row.definitionVersion(), row.annotationType(), row.namespace(),
+            row.name(), row.value(), row.producer(), row.producerVersion(), row.confidence(),
+            new java.util.HashSet<>(row.sourceClassification()), row.representationUsed(),
+            row.provenance(), row.processingRunId(), row.createdAt(), row.invalidatedAt()
+        );
+    }
+
+    public List<AnnotationRow> readAnnotations(String tenantId, String targetType, String targetId) {
+        var result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.annotations WHERE tenant_id=? AND target_type=? AND target_id=?",
+            tenantId, targetType, targetId
+        ));
+        List<AnnotationRow> rows = new ArrayList<>();
+        for (Row r : result) {
+            rows.add(toAnnotationRow(r));
+        }
+        return rows;
+    }
+
+    /**
+     * All non-invalidated annotation instances for a definition, across every target -
+     * Resolutor's (AAP-2) entry point for building a recalculation plan. {@code definition_id}
+     * is not part of the partition key, so this scans within the tenant like
+     * {@link #readAnalysisByInputHash} does; acceptable at the current corpus scale (§49 of
+     * docs/implementation/annotations-analytics-plane/02-recalculation.md).
+     */
+    public List<AnnotationRow> readAnnotationsByDefinition(String tenantId, String definitionId) {
+        var result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.annotations WHERE tenant_id=? AND definition_id=? ALLOW FILTERING",
+            tenantId, definitionId
+        ));
+        List<AnnotationRow> rows = new ArrayList<>();
+        for (Row r : result) {
+            rows.add(toAnnotationRow(r));
+        }
+        return rows;
+    }
+
+    /** Marks a stale annotation instance superseded without deleting it (design §52, §75). */
+    public void invalidateAnnotation(String tenantId, String targetType, String targetId, UUID annotationId, Instant invalidatedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.annotations SET invalidated_at=? " +
+            "WHERE tenant_id=? AND target_type=? AND target_id=? AND annotation_id=?",
+            invalidatedAt, tenantId, targetType, targetId, annotationId
+        ));
+    }
+
+    private AnnotationRow toAnnotationRow(Row r) {
+        return new AnnotationRow(
+            r.getString("tenant_id"), r.getString("target_type"), r.getString("target_id"),
+            r.getUuid("annotation_id"), r.getString("definition_id"), intOrDefault(r, "definition_version", 0),
+            r.getString("annotation_type"), r.getString("namespace"), r.getString("name"),
+            r.getString("value"), r.getString("producer"), r.getString("producer_version"),
+            doubleOrDefault(r, "confidence", 0.0),
+            setOrDefault(r, "source_classification", AnnotationRow.PUBLIC_ONLY),
+            stringOrEmpty(r, "representation_used"), stringOrEmpty(r, "provenance"),
+            r.getUuid("processing_run_id"), r.getInstant("created_at"), r.getInstant("invalidated_at")
+        );
+    }
+
+    private static double doubleOrDefault(Row r, String column, double fallback) {
+        try {
+            if (r.isNull(column)) {
+                return fallback;
+            }
+            return r.getDouble(column);
+        } catch (IllegalArgumentException e) {
+            return fallback;
+        }
     }
 
     // ---- Outbox (Phase 3) ----

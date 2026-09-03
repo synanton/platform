@@ -2,8 +2,10 @@ package org.synanton.topology.app;
 
 import org.synanton.common.grpc.validation.PgvRuleCatalogue;
 import org.synanton.topology.domain.AckTracker;
+import org.synanton.topology.domain.ClassGrantMutationService;
 import org.synanton.topology.domain.GrantMutationService;
 import org.synanton.topology.domain.ResidencyPolicyValidator;
+import org.synanton.topology.infra.jdbc.JdbcClassGrantMutationStore;
 import org.synanton.topology.infra.jdbc.JdbcGrantMutationStore;
 import org.synanton.topology.infra.jdbc.JdbcOrganizationPolicyRepository;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -45,5 +47,15 @@ public class TopologyConfig {
             Clock clock
     ) {
         return new GrantMutationService(catalogue, store, store, store, policies::require, clock);
+    }
+
+    @Bean
+    ClassGrantMutationService classGrantMutationService(
+            PgvRuleCatalogue catalogue,
+            JdbcClassGrantMutationStore store,
+            JdbcOrganizationPolicyRepository policies,
+            Clock clock
+    ) {
+        return new ClassGrantMutationService(catalogue, store, store, store, policies::require, clock);
     }
 }

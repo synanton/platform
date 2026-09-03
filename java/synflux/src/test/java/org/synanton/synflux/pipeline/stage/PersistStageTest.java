@@ -39,14 +39,16 @@ class PersistStageTest {
         ParsedDocument parsed = new ParsedDocument(acquired, "hello", Map.of(), null);
         SemanticChunk chunk = new SemanticChunk(
                 "c0", refId.toString(), 0, SemanticChunk.ChunkType.SECTION, "hello", null,
-                List.of("Supply chain", "Europe"), "Europe", List.of("e1"), 2, 2, 1, false, Map.of(), "bb");
+                List.of("Supply chain", "Europe"), "Europe", List.of("e1"), 2, 2, 1, false, Map.of(),
+                SemanticChunk.PUBLIC_ONLY, "bb");
         ChunkedDocument doc = new ChunkedDocument(parsed, List.of(chunk));
 
         SynfluxProperties props = new SynfluxProperties(
                 new SynfluxProperties.Ingest(1, 1000, new SynfluxProperties.Ingest.Chunk("semantic-v1", 400, 50)),
-                new SynfluxProperties.Pipeline(false, false),
+                new SynfluxProperties.Pipeline(false, false, false),
                 new SynfluxProperties.Enrichment("http://x", "m", 1),
                 new SynfluxProperties.Embedding("http://x", "m", 1),
+                new SynfluxProperties.Annotation("http://x", "rule-engine", "1.0"),
                 new SynfluxProperties.Kafka(1, 1, 1)
         );
         stage.apply(doc, new StageContext("demo", "job", props));

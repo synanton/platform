@@ -199,6 +199,7 @@ public class SemanticChunker {
             estimateTokens(text),
             isPartial,
             Map.of(),
+            SemanticChunk.PUBLIC_ONLY,
             sha256(text)
         );
     }
@@ -237,6 +238,7 @@ public class SemanticChunker {
             estimateTokens(content),
             false,
             Map.of(),
+            SemanticChunk.PUBLIC_ONLY,
             sha256(content)
         );
     }
@@ -289,6 +291,7 @@ public class SemanticChunker {
             estimateTokens(content),
             isPartial,
             Map.of(),
+            SemanticChunk.PUBLIC_ONLY,
             sha256(content)
         );
     }
@@ -346,6 +349,7 @@ public class SemanticChunker {
             estimateTokens(content),
             false,
             Map.of(),
+            SemanticChunk.PUBLIC_ONLY,
             sha256(content)
         );
     }

@@ -10,8 +10,8 @@ This document is the **Part IX** extraction-plane pointer. The live architecture
 
 | Layer | Where to read it |
 |---|---|
-| Baseline (helper/wizard, query/ingest core, DR, security) | [`synanton-design-1.19.md`](./synanton-design-1.19.md) - **superseded as “the” current doc**, still the merged baseline for Parts I–VII |
-| GPU Execution Plane isolation (Part VIII, §50–§64) | [`synanton-design-1.20.md`](./synanton-design-1.20.md) |
+| Baseline (helper/wizard, query/ingest core, DR, security) | [`synanton-design-1.19.md`](synanton-design-1.19.md) - **superseded as “the” current doc**, still the merged baseline for Parts I–VII |
+| GPU Execution Plane isolation (Part VIII, §50–§64) | [`synanton-design-1.20.md`](synanton-design-1.20.md) |
 | Structured Content Extraction Plane (Part IX) | This document + [`../proposals/v1.21/`](../proposals/v1.21/) |
 
 Do not treat 1.19 as the live system description. GPU isolation and the extraction contract are in force.
@@ -55,7 +55,7 @@ synflux SemanticChunkStage → persist (page/section) → synquest
 **Out of scope for the PoC (still planned):** async operations, PostgreSQL operation store, dedicated `extraction-client`, SCEP-6 topology proof.
 
 Full contract text: [`../proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md`](../proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md).  
-Implementation plan: [`../implementation/content-extraction-plane/INDEX.md`](../implementation/content-extraction-plane/INDEX.md).
+Implementation plan: [`../implementation/content-extraction-plane/INDEX.md`](../../implementation/content-extraction-plane/INDEX.md).
 
 ---
 

@@ -1,0 +1,37 @@
+server:
+  port: 8095
+
+spring:
+  application:
+    name: synanton-annotations
+  datasource:
+    url: ${ANNOTATIONS_DB_URL:jdbc:postgresql://localhost:5432/synanton}
+    username: ${ANNOTATIONS_DB_USER:synanton}
+    password: ${ANNOTATIONS_DB_PASSWORD:synanton}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: annotations
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Resolutor (AAP-2) reads annotation instances across the corpus to build recalculation
+# plans, so this service also needs the Cassandra-backed ingestion-cache store.
+ingestion-cache:
+  contact-points: ${CASSANDRA_CONTACT_POINTS:localhost}
+  port: ${CASSANDRA_PORT:9042}
+  keyspace: ingestion_cache
+  local-dc: ${CASSANDRA_LOCAL_DC:datacenter1}
+
+annotations:
+  equalix:
+    pool-size: ${ANNOTATIONS_EQUALIX_POOL_SIZE:4}
+    poll-timeout-ms: 200
+
+logging:
+  level:
+    org.synanton.annotations: INFO

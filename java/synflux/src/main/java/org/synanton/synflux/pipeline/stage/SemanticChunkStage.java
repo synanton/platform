@@ -107,6 +107,7 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
             SemanticChunker.estimateTokens(text),
             false,
             Map.of(),
+            SemanticChunk.PUBLIC_ONLY,
             SemanticChunker.sha256(text)
         );
     }

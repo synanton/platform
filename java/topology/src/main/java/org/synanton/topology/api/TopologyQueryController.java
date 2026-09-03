@@ -3,20 +3,32 @@ package org.synanton.topology.api;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.synanton.topology.domain.model.ClassGrant;
 import org.synanton.topology.domain.model.OrganizationPolicy;
+import org.synanton.topology.infra.jdbc.JdbcClassGrantRepository;
 import org.synanton.topology.infra.jdbc.JdbcOrganizationPolicyRepository;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/topology")
 public class TopologyQueryController {
 
     private final JdbcOrganizationPolicyRepository policies;
+    private final JdbcClassGrantRepository classGrants;
 
-    public TopologyQueryController(JdbcOrganizationPolicyRepository policies) {
+    public TopologyQueryController(
+            JdbcOrganizationPolicyRepository policies,
+            JdbcClassGrantRepository classGrants
+    ) {
         this.policies = policies;
+        this.classGrants = classGrants;
     }
 
     @GetMapping("/tenants/{tenantId}/organization-policy")
@@ -55,5 +67,31 @@ public class TopologyQueryController {
     public Map<String, Object> getCrossRegionPenaltyMap(@PathVariable String tenantId) {
         OrganizationPolicy policy = policies.require(tenantId);
         return Map.of("tenant_id", tenantId, "penalty_ms", policy.crossRegionPenaltyMs());
+    }
+
+    @GetMapping("/tenants/{tenantId}/subjects/{subjectId}/classes")
+    public Map<String, Object> resolveCallerClasses(
+            @PathVariable String tenantId,
+            @PathVariable String subjectId,
+            @RequestParam(required = false) String groups
+    ) {
+        Set<String> groupKeys = new LinkedHashSet<>();
+        if (groups != null && !groups.isBlank()) {
+            Arrays.stream(groups.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .forEach(groupKeys::add);
+        }
+        Set<String> classes = classGrants.resolveCallerClasses(tenantId, subjectId, groupKeys);
+        return Map.of(
+                "tenant_id", tenantId,
+                "subject_id", subjectId,
+                "classes", classes
+        );
+    }
+
+    @GetMapping("/tenants/{tenantId}/class-grants")
+    public List<ClassGrant> listClassGrants(@PathVariable String tenantId) {
+        return classGrants.findActiveByTenant(tenantId);
     }
 }

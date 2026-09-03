@@ -3,7 +3,7 @@
 > **Document type:** Definitive engineering reference
 > **Version:** 1.20
 > **Date:** 2026-08-20
-> **Status:** Folded into the lineage. **Not** the current pointer - see [`synanton-design-1.21.md`](./synanton-design-1.21.md). This file remains the Part VIII (GPU Execution Plane) text.
+> **Status:** Folded into the lineage. **Not** the current pointer - see [`synanton-design-1.21.md`](synanton-design-1.21.md). This file remains the Part VIII (GPU Execution Plane) text.
 > **Audience:** Architects, module owners, SREs, security engineers, partner connector authors, UI/frontend leads, DevOps/platform engineers
 > **Philosophy:** Clean-slate · zero legacy · single API surface · no compatibility shims
 

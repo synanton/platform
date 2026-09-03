@@ -62,6 +62,7 @@ public class ChunkStage implements PipelineStage<ParsedDocument, ChunkedDocument
             Math.max(1, text.length() / 4),
             false,
             Map.of(),
+            SemanticChunk.PUBLIC_ONLY,
             sha256(text)
         );
     }
