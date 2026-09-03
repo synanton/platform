@@ -281,6 +281,27 @@ export EXTRACTION_OPENDATALOADER_BASE_URL=http://opendataloader:8080
 
 GPU runtime is **not** on this path. Ingest embeddings still use `HttpLlmClient` when a GPU is present. Production GPU inference uses `synanton.gpu.v1` (mirrored with `gpu-runtime`); see GPU track below.
 
+### Content extractor standalone (separate cluster)
+
+`extraction-gateway` lives in the sibling `content_extractor` repo and is built automatically as part of the demos above. Deployment topology - embedded, co-located, or an independently scaled cluster - is a scaling concern that doesn't change the `synanton.extraction.v1` contract, so it can also be built and run on its own, against its own Postgres/MinIO and network:
+
+```bash
+# From the content_extractor repo root (sibling of this repo)
+cd ../content_extractor
+docker build -f deployment/docker/extraction-gateway.Dockerfile -t synanton/extraction-gateway .
+
+docker run --rm -p 8092:8092 -p 9091:9091 \
+  -e EXTRACTION_DB_URL=jdbc:postgresql://<postgres-host>:5432/<db> \
+  -e EXTRACTION_DB_USER=<user> \
+  -e EXTRACTION_DB_PASSWORD=<password> \
+  -e EXTRACTION_OBJECTSTORE_ENDPOINT=http://<minio-host>:9000 \
+  -e EXTRACTION_OBJECTSTORE_ACCESS_KEY=<key> \
+  -e EXTRACTION_OBJECTSTORE_SECRET_KEY=<secret> \
+  synanton/extraction-gateway
+```
+
+Point synflux at it with `EXTRACTION_ENDPOINT=<host>:9091`.
+
 ### Graph engines (Relix)
 
 Relix query shapes (`entity_lookup`, `one_hop`, `k_hop_path`) go through a `GraphConnector` port. Switch backends without changing executors:
@@ -307,9 +328,9 @@ relix:
 # Prerequisites: Docker, Java 21, Gradle
 cp .env.example .env
 
-# Start Cassandra + MinIO + synvault + synflux
+# Start Cassandra + MinIO + extraction-gateway + synvault + synflux
 docker compose -f deployment/docker/compose.yaml up -d --build \
-  cassandra minio minio-init synvault synflux
+  cassandra minio minio-init extraction-gateway synvault synflux
 
 # Ingest demo-data/documents/
 ./scripts/run-ingestion-demo.sh --phase=1
@@ -446,6 +467,7 @@ This means every adapter is swappable without touching domain logic. `Filesystem
 - Docker 24+ with Compose V2
 - Node 20 + pnpm 9 (UI only)
 - NVIDIA Container Toolkit (Phase 2 GPU pipeline only)
+- `content_extractor` checked out as a sibling directory of this repo (`../content_extractor`) - `compose.yaml`'s `extraction-gateway` service builds from that checkout via a relative build context (`../../../content_extractor`)
 
 ### Build
 
