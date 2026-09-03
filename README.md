@@ -445,7 +445,7 @@ The architecture documents are part of the project, not merely implementation no
 
 ---
 
-## Experiments and evidence
+### Annotation, Derived Knowledge, Recalculation, Analytics & Reporting Plane track - v1.24/1.25 *(in progress)*
 
 Synanton is intended to produce evidence, not just architecture diagrams.
 
