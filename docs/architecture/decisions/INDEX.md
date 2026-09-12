@@ -1,19 +1,20 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-09-07"
+last_reviewed: "2026-09-12"
 ---
 
 # Architecture Decision Records (ADRs)
 
 **Purpose:** Captures significant architectural decisions with their context, rationale, and consequences.
 **Audience:** Architects, module owners
-**Last Updated:** 2026-09-07
+**Last Updated:** 2026-09-12
 
 ## Quick Links
 
 | Document | Decision |
 |----------|---------|
+| [ADR-012: Temporal Versioned Knowledge and Retrieval](./adr-012-temporal-versioned-knowledge-retrieval.md) | Cross-plane temporal semantics — version series owned by Ingestion (1.28), `current` as a set, correction classification, temporal eligibility as a pre-ranking search constraint (v1.34 approved 2026-09-12) |
 | [ADR-011: Synanton Platform Architecture 1.0](./adr-011-platform-architecture-1.0.md) | Capstone consolidation of Designs 1.22–1.33 into a single integration document (approved 2026-09-07) |
 | [ADR-010: Kubernetes Operator Readiness](./adr-010-kubernetes-operator-readiness.md) | Kubernetes lifecycle/compatibility contract and independent operators (`synanton-platform-operator`, `content-extractor-operator`, `gpu-runtime-operator`); no operator implementation (v1.33 approved 2026-09-07) |
 | [ADR-009: Platform API & Contract Architecture](./adr-009-platform-api-contract.md) | Stable, versioned, resource-oriented external Platform API; Operation/API semantics distinct from internal 1.27 eventing (v1.32 approved 2026-09-07) |

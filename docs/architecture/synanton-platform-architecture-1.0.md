@@ -4,22 +4,24 @@
 > **Version:** 1.0
 > **Document ID:** `synanton-platform-architecture-1.0`
 > **Date:** 2026-09-07
-> **Status:** Approved (architecture) — capstone document; implementation not started for 1.26–1.33, partial for 1.25 (see §14), furthest along for 1.22/1.23
-> **Basis:** [SNTP-14 / GitHub Issue #39](https://github.com/synanton/platform/issues/39); promoted from [`docs/architecture/proposals/synanton-platform-1.0-proposal.md`](./proposals/synanton-platform-1.0-proposal.md)
+> **Status:** Approved (architecture) — capstone document; implementation not started for 1.26–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
+> **Basis:** [SNTP-14 / GitHub Issue #39](https://github.com/synanton/platform/issues/39); promoted from [`docs/architecture/proposals/synanton-platform-1.0-proposal.md`](./proposals/synanton-platform-1.0-proposal.md); extended by SNTP-15 with Design 1.34 (Temporal Versioned Knowledge and Retrieval)
 > **Audience:** Architects, module owners, security engineers, SREs, platform engineers, technical decision makers
-> **Related docs:** [ADR-011](./decisions/adr-011-platform-architecture-1.0.md), [Architecture Review Resolution](./proposals/synanton-architecture-review-resolution.md), and every design document listed in §3
+> **Related docs:** [ADR-011](./decisions/adr-011-platform-architecture-1.0.md), [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md), [Architecture Review Resolution](./proposals/synanton-architecture-review-resolution.md), and every design document listed in §3
 
-> **Implementation principle:** This document does not introduce new architecture. It integrates and cross-references Designs 1.22–1.33, which remain the normative source for their respective planes. Where this document and a plane design document appear to disagree, the plane design document governs for its own domain and this document should be corrected.
+> **Implementation principle:** This document does not introduce new architecture. It integrates and cross-references Designs 1.22–1.34, which remain the normative source for their respective planes. Where this document and a plane design document appear to disagree, the plane design document governs for its own domain and this document should be corrected.
 
 ---
 
 ## 1. Executive Summary
 
-Synanton Platform 1.0 consolidates the architecture developed through Designs 1.22–1.33.
+Synanton Platform 1.0 consolidates the architecture developed through Designs 1.22–1.34.
 
 Design [1.22](./synanton-design-1.22.md) remains the **base architecture document**. Design [1.23](./synanton-design-1.23.md) is the **normative security and representation baseline**. Design 1.24 is not published independently; its annotation/derived-knowledge/recalculation content is consolidated into Design [1.25](./synanton-design-1.25.md).
 
 Designs [1.26](./synanton-design-1.26.md)–[1.33](./synanton-design-1.33.md) extend the base architecture with explicit content-cache, eventing/workflow, ingestion, identity, AI runtime, search, API and Kubernetes lifecycle contracts.
+
+Design [1.34](./synanton-design-1.34.md) adds a cross-plane **temporal versioning and point-in-time retrieval** capability — historical source versions, publication/observation/validity semantics, and temporal search eligibility — assigned to the existing owning planes (Ingestion 1.28, Knowledge 1.25, Search 1.31) rather than a new authority (see §10).
 
 The resulting architecture is:
 
@@ -92,8 +94,9 @@ Analytics           → derived observation
 | Retrieval | [1.31](./synanton-design-1.31.md) | Lexical/vector/hybrid/graph retrieval and ranking |
 | External contract | [1.32](./synanton-design-1.32.md) | Stable Platform API and compatibility |
 | Deployment lifecycle | [1.33](./synanton-design-1.33.md) | Kubernetes readiness and independent operators |
+| Cross-cutting temporal | [1.34](./synanton-design-1.34.md) | Temporal versioning and point-in-time retrieval; assigns responsibility across 1.28/1.25/1.31 rather than owning new state |
 
-Note on ordering: version numbers are assigned chronologically by when each proposal was authored, not by architectural dependency. Design 1.27 (Eventing and Workflow) is a **dependency of** 1.28–1.31, not a peer that happens to sit between 1.26 and 1.28 — see §6 and §13.
+Note on ordering: version numbers are assigned chronologically by when each proposal was authored, not by architectural dependency. Design 1.27 (Eventing and Workflow) is a **dependency of** 1.28–1.31, not a peer that happens to sit between 1.26 and 1.28 — see §6 and §14.
 
 ## 4. Normative Invariants
 
@@ -157,6 +160,19 @@ Note on ordering: version numbers are assigned chronologically by when each prop
 41. GPU infrastructure is physically isolated from the Main Platform.
 42. Operator reconciliation is idempotent and convergent.
 
+### Temporal
+
+Condensed from Design 1.34's full set of 29 invariants (see `synanton-design-1.34.md` §41 for the complete list); these are the ones with the broadest cross-plane consequence.
+
+43. Version-series authority belongs to Ingestion 1.28; Knowledge 1.25 and Search 1.31 consume it rather than owning a competing copy.
+44. A source version is immutable; corrections do not mutate it.
+45. Publication time, observation time and validity time are distinct and never collapsed into one timestamp.
+46. `current` may be a set of multiple independently eligible source versions, not one global version.
+47. Overlapping or conflicting validity is retained and flagged, never silently resolved.
+48. Corrections are classified as metadata-only or content-affecting before triggering any downstream work; only content-affecting corrections trigger Resolutor/Equalix recalculation.
+49. Temporal filtering occurs before ranking, joining security eligibility as a pre-ranking search constraint (invariant 33).
+50. Historical queries never silently fall back to current content; a missing or deleted historical state is returned as an explicit failure state.
+
 ## 5. End-to-End Lifecycle
 
 ```text
@@ -165,6 +181,7 @@ External Source
    ▼
 Ingestion 1.28
    │  SourceIdentity / SourceVersion / provenance
+   │  VersionSeries (1.34): published_at / observed_at / valid_from / valid_to
    ▼
 Content Cache 1.26
    │
@@ -280,7 +297,32 @@ Knowledge
 
 No search backend becomes authoritative. Security filtering happens at candidate-generation time — before ranking — not as a post-filter on already-ranked results, and metadata side channels (facet counts, autocomplete, highlighting) are held to the same eligibility rule so they cannot leak the existence or content of material the requester is not authorized to see.
 
-## 10. Platform API
+## 10. Temporal Versioning Boundary
+
+Design [1.34](./synanton-design-1.34.md) adds cross-plane temporal semantics — point-in-time retrieval, version series, and correction/lifecycle handling — without introducing a competing ownership model. It assigns responsibility to the same planes that already own the relevant state:
+
+```text
+Ingestion 1.28
+  owns VersionSeries / SourceVersion, published_at / observed_at / valid_from / valid_to,
+  source lifecycle state, and authoritative source-version history
+              │
+              ▼
+Knowledge 1.25
+  owns derived knowledge; knowledge remains derived from a specific source version
+              │
+              ▼
+Search 1.31
+  owns temporal retrieval behavior; temporal eligibility joins security eligibility
+  as a pre-ranking candidate constraint — never a post-ranking filter
+```
+
+Three temporal dimensions are kept distinct and never collapsed into one timestamp: `published_at` (when the source declared it), `observed_at` (when Synanton learned of it), and `valid_from`/`valid_to` (when it was applicable). `current` means the **set** of temporally eligible versions, not one global latest document — the same "no single global answer" discipline Design 1.31 already applies to search ranking (§9) and Design 1.25 applies to derived knowledge.
+
+A correction to a source version is classified before it triggers any downstream work: a metadata-only correction (e.g. a corrected `valid_from`) updates the affected search projection in place; a content-affecting correction triggers the full Resolutor/Equalix recalculation path already established by Design 1.25. This keeps temporal corrections from becoming an unnecessary recalculation cost, and keeps recalculation as the single mechanism for correcting derived knowledge rather than adding a second one.
+
+Legal hold and retention remain layered per plane (SourceVersion metadata → Content Cache 1.26 → derived knowledge 1.25 → search projections), consistent with each plane's existing retention/lifecycle ownership; Design 1.34 does not introduce a platform-wide retention authority.
+
+## 11. Platform API
 
 The external contract is resource-oriented and versioned.
 
@@ -305,7 +347,7 @@ OpenAPI/protobuf contracts and compatibility CI are part of the implementation b
 
 The public `Operation` resource (long-running acceptance/status) is the external contract for asynchronous work; it is distinct from — and does not duplicate — Design 1.27's internal event/command/workflow model. A single client-facing `Operation` may be backed by an arbitrarily complex internal workflow without that complexity becoming part of the public contract.
 
-## 11. Kubernetes Lifecycle
+## 12. Kubernetes Lifecycle
 
 Kubernetes is an optional deployment substrate.
 
@@ -325,7 +367,7 @@ Before implementation, each service must pass the 1.33 Kubernetes compatibility 
 
 CRDs are lifecycle/control-plane resources only; no Kubernetes object type appears inside a domain/business-logic contract in any plane document. The operator named `content-extractor-operator` is canonical; no `content_retrieval` operator is introduced anywhere in the design series.
 
-## 12. Compatibility and Conformance
+## 13. Compatibility and Conformance
 
 The 1.0 implementation baseline requires:
 
@@ -338,11 +380,12 @@ The 1.0 implementation baseline requires:
 - content cache conformance;
 - search benchmark/evaluation;
 - AI runtime conformance;
-- operator compatibility review.
+- operator compatibility review;
+- temporal retrieval/correction tests (version accuracy, temporal recall, temporal contamination rate — see Design 1.34 §38).
 
 Optional capabilities advertised by any plane (e.g. Content Cache 1.26 storage-backend capability flags) MUST be backed by that plane's own conformance test suite before being enabled in production — a capability claim without conformance evidence is not a supported claim.
 
-## 13. Implementation Sequence
+## 14. Implementation Sequence
 
 The architecture recommends this order:
 
@@ -359,7 +402,7 @@ The architecture recommends this order:
 
 Steps 1–2 are listed first because they are the two contracts every other plane depends on (external contract and internal async contract, respectively); this is the same dependency reasoning behind placing 1.27 ahead of 1.28–1.31 in §6.
 
-## 14. Current Implementation Status
+## 15. Current Implementation Status
 
 This section reflects the state of the codebase at the time this document was accepted, not a target state.
 
@@ -376,10 +419,11 @@ This section reflects the state of the codebase at the time this document was ac
 | 1.31 | Approved | Not started |
 | 1.32 | Approved | Not started |
 | 1.33 | Approved (contract/readiness review only) | No operator implementation exists; not in scope for this milestone |
+| 1.34 | Approved | Not started; per Design 1.34 §39, begins with a 1.28 (Ingestion) extension and should not precede 1.27/1.28 implementation |
 
-Accepting Designs 1.26–1.33 as architecture does not authorize skipping the implementation sequence in §13. In particular, no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen, per the ordering rationale in §6.
+Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence in §14. In particular, no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen, per the ordering rationale in §6.
 
-## 15. Acceptance Criteria for Platform 1.0
+## 16. Acceptance Criteria for Platform 1.0
 
 Platform 1.0 is architecturally complete when:
 
@@ -394,21 +438,22 @@ Platform 1.0 is architecturally complete when:
 - [x] 1.31 defines derived retrieval/search.
 - [x] 1.32 defines the stable external API and identity-management API.
 - [x] 1.33 defines Kubernetes readiness without Kubernetes leakage.
+- [x] 1.34 defines cross-plane temporal versioning and point-in-time retrieval without a competing ownership model.
 - [ ] Cross-plane security tests pass.
 - [ ] Cross-plane idempotency/recovery tests pass.
 - [ ] Compatibility CI is operational.
 - [ ] First end-to-end vertical slice is reproducible.
 
-The first eleven criteria are architecture-level and are satisfied by this document and Designs 1.22–1.33 as accepted. The remaining four are implementation-level and remain open — see §14; they are tracked as follow-on implementation work, not as blockers to accepting the architecture itself.
+The first twelve criteria are architecture-level and are satisfied by this document and Designs 1.22–1.34 as accepted. The remaining four are implementation-level and remain open — see §15; they are tracked as follow-on implementation work, not as blockers to accepting the architecture itself.
 
-## 16. Final Thesis
+## 17. Final Thesis
 
 Synanton Platform 1.0 is not a collection of independent services.
 
 It is a set of explicit architectural contracts with clear authority boundaries:
 
-> **Ingestion establishes source truth. Knowledge establishes derived meaning. Identity establishes who acts. Security establishes what may be revealed. Eventing coordinates change. AI Runtime executes computation. Search makes knowledge discoverable. Analytics measures derived state. The Platform API exposes stable capabilities. Kubernetes manages infrastructure lifecycle without becoming part of the domain model.**
+> **Ingestion establishes source truth. Knowledge establishes derived meaning. Identity establishes who acts. Security establishes what may be revealed. Eventing coordinates change. AI Runtime executes computation. Search makes knowledge discoverable. Analytics measures derived state. Temporal versioning establishes when it was true. The Platform API exposes stable capabilities. Kubernetes manages infrastructure lifecycle without becoming part of the domain model.**
 
 The architecture therefore remains:
 
-**security-first, provenance-aware, event-driven, recalculable, storage-independent, runtime-independent, search-derived, API-stable and deployment-independent.**
+**security-first, provenance-aware, event-driven, recalculable, storage-independent, runtime-independent, search-derived, temporally-aware, API-stable and deployment-independent.**

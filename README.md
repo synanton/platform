@@ -6,8 +6,8 @@ Synanton is an AI-native enterprise knowledge platform exploring how enterprise 
 
 The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
 
-> **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) — a capstone document integrating Designs 1.22–1.33, all now **Approved (architecture)**.  
-> **Current focus:** implementation is still concentrated on the 1.22 baseline, the 1.23 security model, and 1.25 annotations/recalculation (partial — AAP-1/AAP-2 landed). Designs 1.26–1.33 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle) are approved architecture with implementation not yet started.
+> **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) — a capstone document integrating Designs 1.22–1.34, all now **Approved (architecture)**.  
+> **Current focus:** implementation is still concentrated on the 1.22 baseline, the 1.23 security model, and 1.25 annotations/recalculation (partial — AAP-1/AAP-2 landed). Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture with implementation not yet started.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
@@ -448,9 +448,10 @@ Synanton intentionally evolves through versioned architecture documents.
 | [1.31](docs/architecture/synanton-design-1.31.md) | Search and Retrieval Plane | Approved (architecture); implementation not started |
 | [1.32](docs/architecture/synanton-design-1.32.md) | Platform API | Approved (architecture); implementation not started |
 | [1.33](docs/architecture/synanton-design-1.33.md) | Kubernetes Lifecycle, Compatibility and Multi-Operator Architecture | Approved (architecture — contract/readiness review only; no operator implementation exists) |
-| **[1.0](docs/architecture/synanton-platform-architecture-1.0.md)** | **Platform Architecture 1.0 — capstone integrating 1.22–1.33** | **Approved (architecture)**; see its §14 for the authoritative per-design implementation status |
+| [1.34](docs/architecture/synanton-design-1.34.md) | Temporal Versioned Knowledge and Retrieval | Approved (architecture); implementation not started |
+| **[1.0](docs/architecture/synanton-platform-architecture-1.0.md)** | **Platform Architecture 1.0 — capstone integrating 1.22–1.34** | **Approved (architecture)**; see its §15 for the authoritative per-design implementation status |
 
-The architecture documents are part of the project, not merely implementation notes. They record decisions, constraints, interfaces, failure models, security boundaries and evaluation criteria. Accepting Designs 1.26–1.33 as architecture does not authorize skipping the implementation sequence: no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen.
+The architecture documents are part of the project, not merely implementation notes. They record decisions, constraints, interfaces, failure models, security boundaries and evaluation criteria. Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence: no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen.
 
 ---
 
@@ -690,7 +691,7 @@ Start here:
 - [GPU Execution Plane](docs/implementation/gpu-execution-plane/INDEX.md)
 - [Cross-plane Architecture Review Resolution (1.26–1.33)](docs/architecture/proposals/synanton-architecture-review-resolution.md)
 
-Designs 1.26–1.33 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle) are approved architecture — see the table above for links to each, and their companion ADRs under [`docs/architecture/decisions/`](docs/architecture/decisions/). None of them has implementation started yet.
+Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture — see the table above for links to each, and their companion ADRs under [`docs/architecture/decisions/`](docs/architecture/decisions/). None of them has implementation started yet.
 
 The broader project documentation is maintained separately and explains the architecture, concepts, use cases, operations, integrations and design history.
 
@@ -734,7 +735,7 @@ Storage engines, graph implementations, LLM providers, extraction implementation
 
 Synanton is an **active open-source research and engineering project**.
 
-Architecturally, the design series is now well ahead of implementation: Designs 1.22–1.33 are all **Approved (architecture)**, integrated by the [Synanton Platform Architecture 1.0 capstone document](docs/architecture/synanton-platform-architecture-1.0.md). Implementation, however, remains concentrated where it has always been furthest along — the 1.22 baseline, the 1.23 security model, and 1.25's annotation foundation and recalculation (AAP-1/AAP-2). The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. The eight newly approved planes (1.26 content cache, 1.27 eventing/workflow, 1.28 ingestion, 1.29 identity, 1.30 AI runtime, 1.31 search/retrieval, 1.32 platform API, 1.33 Kubernetes lifecycle) have **no implementation started**; per the capstone document's implementation sequence, none of them should begin ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen.
+Architecturally, the design series is now well ahead of implementation: Designs 1.22–1.34 are all **Approved (architecture)**, integrated by the [Synanton Platform Architecture 1.0 capstone document](docs/architecture/synanton-platform-architecture-1.0.md). Implementation, however, remains concentrated where it has always been furthest along — the 1.22 baseline, the 1.23 security model, and 1.25's annotation foundation and recalculation (AAP-1/AAP-2). The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. The nine newly approved planes (1.26 content cache, 1.27 eventing/workflow, 1.28 ingestion, 1.29 identity, 1.30 AI runtime, 1.31 search/retrieval, 1.32 platform API, 1.33 Kubernetes lifecycle, 1.34 temporal versioning) have **no implementation started**; per the capstone document's implementation sequence, none of them should begin ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen.
 
 The project is not presented as a finished enterprise product. The repository is intentionally used to explore architecture, implementation techniques, operational boundaries and measurable trade-offs.
 
