@@ -1,19 +1,20 @@
 ---
 title: "Proposals"
 status: "current"
-last_reviewed: "2026-08-26"
+last_reviewed: "2026-09-12"
 ---
 
 # Proposals
 
 **Purpose:** Versioned change proposals and their approval records. Proposals are pre-design documents - they become part of the authoritative design once accepted and folded into the main design document.
 **Audience:** Architects, approvers
-**Last Updated:** 2026-08-26
+**Last Updated:** 2026-09-12
 
 ## Quick Links
 
 | Proposal             | Status                                                                  |
 |----------------------|-------------------------------------------------------------------------|
+| [`v1.34/`](v1.34/) | Folded into architecture 1.34 - Temporal Versioned Knowledge and Retrieval |
 | [`v1.33/`](v1.33/) | Folded into architecture 1.33 - Kubernetes readiness and independent operators |
 | [`v1.32/`](v1.32/) | Folded into architecture 1.32 - Stable Platform API and compatibility |
 | [`v1.31/`](v1.31/) | Folded into architecture 1.31 - Lexical/vector/hybrid/graph retrieval and ranking |
@@ -37,6 +38,7 @@ last_reviewed: "2026-08-26"
 
 | Directory | Purpose |
 |-----------|---------|
+| `v1.34/` | v1.34 proposal - Temporal Versioned Knowledge and Retrieval |
 | `v1.33/` | v1.33 proposal - Kubernetes readiness and independent operators |
 | `v1.32/` | v1.32 proposal - Stable Platform API and compatibility |
 | `v1.31/` | v1.31 proposal - Lexical/vector/hybrid/graph retrieval and ranking |
