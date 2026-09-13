@@ -1,4 +1,4 @@
-package synanton.extraction.v1;
+package org.synanton.extraction.v1.v1;
 
 import java.util.Map;
 

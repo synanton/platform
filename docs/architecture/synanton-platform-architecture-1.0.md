@@ -434,7 +434,7 @@ Platform 1.0 is architecturally complete when:
 - [x] 1.27 provides common event/workflow semantics.
 - [x] 1.28 defines source identity/version/deletion.
 - [x] 1.29 defines canonical principals and actor chains.
-- [x] 1.30 defines Platform-owned AI execution semantics.
+- [x] 1.30 defines platform-owned AI execution semantics.
 - [x] 1.31 defines derived retrieval/search.
 - [x] 1.32 defines the stable external API and identity-management API.
 - [x] 1.33 defines Kubernetes readiness without Kubernetes leakage.
