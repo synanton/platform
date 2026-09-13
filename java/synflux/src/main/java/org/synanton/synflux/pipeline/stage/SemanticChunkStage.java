@@ -14,7 +14,7 @@ import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synflux.pipeline.StageUsageTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import synanton.extraction.v1.DocumentPayload;
+import org.synanton.extraction.v1.DocumentPayload;
 
 import java.util.ArrayList;
 import java.util.Arrays;

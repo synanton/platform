@@ -2,8 +2,8 @@ package org.synanton.extraction.contract;
 
 import com.google.protobuf.Descriptors;
 import org.junit.jupiter.api.Test;
-import synanton.extraction.v1.ExtractionPayloadProto;
-import synanton.extraction.v1.ExtractionServiceProto;
+import org.synanton.extraction.v1.ExtractionPayloadProto;
+import org.synanton.extraction.v1.ExtractionServiceProto;
 
 import java.util.ArrayList;
 import java.util.List;

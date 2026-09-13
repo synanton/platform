@@ -1,4 +1,4 @@
-package org.synanton.extraction.v1.v1.validation;
+package org.synanton.extraction.v1.validation;
 
 /**
  * One field-level validation failure on a {@code synanton.extraction.v1} request.

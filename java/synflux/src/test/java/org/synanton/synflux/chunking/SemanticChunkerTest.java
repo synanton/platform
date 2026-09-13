@@ -3,8 +3,8 @@ package org.synanton.synflux.chunking;
 import org.junit.jupiter.api.Test;
 import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.domain.SemanticChunk;
-import synanton.extraction.v1.DocumentElement;
-import synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentElementType;
 
 import java.util.List;
 

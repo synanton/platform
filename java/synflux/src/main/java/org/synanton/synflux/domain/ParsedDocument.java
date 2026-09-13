@@ -1,6 +1,6 @@
 package org.synanton.synflux.domain;
 
-import synanton.extraction.v1.DocumentPayload;
+import org.synanton.extraction.v1.DocumentPayload;
 
 import java.util.Map;
 

@@ -15,7 +15,7 @@ import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synvault.adapter.MinioObjectStoreAdapter;
 import org.synanton.synvault.config.SynvaultObjectStoreProperties;
 import org.synanton.synvault.domain.ContentRef;
-import synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentElementType;
 
 import java.io.IOException;
 import java.net.Socket;
