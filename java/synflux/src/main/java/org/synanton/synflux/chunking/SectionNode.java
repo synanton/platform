@@ -1,6 +1,6 @@
 package org.synanton.synflux.chunking;
 
-import synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentElement;
 
 import java.util.List;
 

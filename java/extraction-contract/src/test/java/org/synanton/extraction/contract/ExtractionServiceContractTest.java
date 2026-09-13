@@ -9,23 +9,23 @@ import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import synanton.extraction.v1.ExtractionOperation;
-import synanton.extraction.v1.ExtractionResult;
-import synanton.extraction.v1.ExtractionServiceGrpc;
-import synanton.extraction.v1.ExtractionStatus;
-import synanton.extraction.v1.FeatureState;
-import synanton.extraction.v1.GetOperationsRequest;
-import synanton.extraction.v1.GetOperationsResponse;
-import synanton.extraction.v1.GetResultRequest;
-import synanton.extraction.v1.ListCompletedOperationsRequest;
-import synanton.extraction.v1.ListCompletedOperationsResponse;
-import synanton.extraction.v1.ObjectReference;
-import synanton.extraction.v1.PayloadDescriptor;
-import synanton.extraction.v1.PriorityClass;
-import synanton.extraction.v1.SerializationFormat;
-import synanton.extraction.v1.StructuredPayload;
-import synanton.extraction.v1.SubmitExtractionRequest;
-import synanton.extraction.v1.ExtractionRequestItem;
+import org.synanton.extraction.v1.ExtractionOperation;
+import org.synanton.extraction.v1.ExtractionResult;
+import org.synanton.extraction.v1.ExtractionServiceGrpc;
+import org.synanton.extraction.v1.ExtractionStatus;
+import org.synanton.extraction.v1.FeatureState;
+import org.synanton.extraction.v1.GetOperationsRequest;
+import org.synanton.extraction.v1.GetOperationsResponse;
+import org.synanton.extraction.v1.GetResultRequest;
+import org.synanton.extraction.v1.ListCompletedOperationsRequest;
+import org.synanton.extraction.v1.ListCompletedOperationsResponse;
+import org.synanton.extraction.v1.ObjectReference;
+import org.synanton.extraction.v1.PayloadDescriptor;
+import org.synanton.extraction.v1.PriorityClass;
+import org.synanton.extraction.v1.SerializationFormat;
+import org.synanton.extraction.v1.StructuredPayload;
+import org.synanton.extraction.v1.SubmitExtractionRequest;
+import org.synanton.extraction.v1.ExtractionRequestItem;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -345,7 +345,7 @@ class ExtractionServiceContractTest {
                     .setFlattenedText(flattened)
                     .putFeatureStates("text", FeatureState.FEATURE_APPLIED)
                     .putFeatureStates("ocr", FeatureState.FEATURE_NOT_APPLICABLE)
-                    .setProvenance(synanton.extraction.v1.ResultProvenance.newBuilder()
+                    .setProvenance(org.synanton.extraction.v1.ResultProvenance.newBuilder()
                             .setContentRefId(original.getItem().getContentRefId())
                             .setSourceSha256(original.getItem().getSource().getSha256())
                             .setSource(original.getItem().getSource()))

@@ -1,8 +1,8 @@
 package org.synanton.extraction.contract;
 
 import org.junit.jupiter.api.Test;
-import org.synanton.extraction.v1.v1.ExtractionErrorCatalogue;
-import synanton.extraction.v1.ExtractionErrorCode;
+import org.synanton.extraction.v1.ExtractionErrorCatalogue;
+import org.synanton.extraction.v1.ExtractionErrorCode;
 
 import java.util.Arrays;
 import java.util.List;

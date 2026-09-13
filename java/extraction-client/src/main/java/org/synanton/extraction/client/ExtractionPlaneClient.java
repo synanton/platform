@@ -6,14 +6,14 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import synanton.extraction.v1.ExtractionOperation;
-import synanton.extraction.v1.ExtractionResult;
-import synanton.extraction.v1.ExtractionServiceGrpc;
-import synanton.extraction.v1.ExtractionStatus;
-import synanton.extraction.v1.GetOperationsRequest;
-import synanton.extraction.v1.GetResultRequest;
-import synanton.extraction.v1.PriorityClass;
-import synanton.extraction.v1.SubmitExtractionRequest;
+import org.synanton.extraction.v1.ExtractionOperation;
+import org.synanton.extraction.v1.ExtractionResult;
+import org.synanton.extraction.v1.ExtractionServiceGrpc;
+import org.synanton.extraction.v1.ExtractionStatus;
+import org.synanton.extraction.v1.GetOperationsRequest;
+import org.synanton.extraction.v1.GetResultRequest;
+import org.synanton.extraction.v1.PriorityClass;
+import org.synanton.extraction.v1.SubmitExtractionRequest;
 
 import java.util.concurrent.TimeUnit;
 

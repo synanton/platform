@@ -2,16 +2,16 @@ package org.synanton.extraction.contract;
 
 import com.google.protobuf.Timestamp;
 import org.junit.jupiter.api.Test;
-import synanton.extraction.v1.ExtractionOptions;
-import synanton.extraction.v1.ExtractionRequestItem;
-import synanton.extraction.v1.GetOperationsRequest;
-import synanton.extraction.v1.ListCompletedOperationsRequest;
-import synanton.extraction.v1.ObjectReference;
-import synanton.extraction.v1.PriorityClass;
-import synanton.extraction.v1.SubmitExtractionBatchRequest;
-import synanton.extraction.v1.SubmitExtractionRequest;
-import org.synanton.extraction.v1.v1.validation.ExtractionRequestValidator;
-import org.synanton.extraction.v1.v1.validation.FieldViolation;
+import org.synanton.extraction.v1.ExtractionOptions;
+import org.synanton.extraction.v1.ExtractionRequestItem;
+import org.synanton.extraction.v1.GetOperationsRequest;
+import org.synanton.extraction.v1.ListCompletedOperationsRequest;
+import org.synanton.extraction.v1.ObjectReference;
+import org.synanton.extraction.v1.PriorityClass;
+import org.synanton.extraction.v1.SubmitExtractionBatchRequest;
+import org.synanton.extraction.v1.SubmitExtractionRequest;
+import org.synanton.extraction.v1.validation.ExtractionRequestValidator;
+import org.synanton.extraction.v1.validation.FieldViolation;
 
 import java.util.List;
 

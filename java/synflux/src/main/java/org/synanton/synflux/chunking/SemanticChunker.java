@@ -7,8 +7,8 @@ import org.synanton.synflux.domain.SemanticChunk.FigureContent;
 import org.synanton.synflux.domain.SemanticChunk.ListContent;
 import org.synanton.synflux.domain.SemanticChunk.StructuredContent;
 import org.synanton.synflux.domain.SemanticChunk.TableContent;
-import synanton.extraction.v1.DocumentElement;
-import synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentElementType;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

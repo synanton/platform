@@ -1,9 +1,9 @@
 package org.synanton.synflux.chunking;
 
 import org.junit.jupiter.api.Test;
-import synanton.extraction.v1.DocumentElement;
-import synanton.extraction.v1.DocumentElementType;
-import synanton.extraction.v1.ElementLocation;
+import org.synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.ElementLocation;
 
 import java.util.List;
 

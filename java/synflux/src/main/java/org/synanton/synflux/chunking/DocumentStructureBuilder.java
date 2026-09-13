@@ -1,7 +1,7 @@
 package org.synanton.synflux.chunking;
 
-import synanton.extraction.v1.DocumentElement;
-import synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentElementType;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

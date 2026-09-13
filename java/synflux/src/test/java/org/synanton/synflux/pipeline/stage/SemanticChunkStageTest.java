@@ -7,9 +7,9 @@ import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synvault.domain.ContentRef;
-import synanton.extraction.v1.DocumentElement;
-import synanton.extraction.v1.DocumentElementType;
-import synanton.extraction.v1.DocumentPayload;
+import org.synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentPayload;
 
 import java.time.Instant;
 import java.util.List;
