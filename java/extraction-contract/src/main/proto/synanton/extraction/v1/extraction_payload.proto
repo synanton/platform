@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package synanton.extraction.v1;
 
-option java_package = "synanton.extraction.v1";
+option java_package = "org.synanton.extraction.v1";
 option java_outer_classname = "ExtractionPayloadProto";
 option java_multiple_files = true;
 

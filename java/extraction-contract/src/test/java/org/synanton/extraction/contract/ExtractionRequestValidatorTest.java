@@ -10,8 +10,8 @@ import synanton.extraction.v1.ObjectReference;
 import synanton.extraction.v1.PriorityClass;
 import synanton.extraction.v1.SubmitExtractionBatchRequest;
 import synanton.extraction.v1.SubmitExtractionRequest;
-import synanton.extraction.v1.validation.ExtractionRequestValidator;
-import synanton.extraction.v1.validation.FieldViolation;
+import org.synanton.extraction.v1.v1.validation.ExtractionRequestValidator;
+import org.synanton.extraction.v1.v1.validation.FieldViolation;
 
 import java.util.List;
 

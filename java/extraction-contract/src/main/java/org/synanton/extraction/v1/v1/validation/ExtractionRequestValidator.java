@@ -1,4 +1,4 @@
-package synanton.extraction.v1.validation;
+package org.synanton.extraction.v1.v1.validation;
 
 import synanton.extraction.v1.ExtractionRequestItem;
 import synanton.extraction.v1.GetOperationsRequest;

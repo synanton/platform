@@ -5,7 +5,7 @@ package synanton.extraction.v1;
 import "google/protobuf/timestamp.proto";
 import "synanton/extraction/v1/extraction_payload.proto";
 
-option java_package = "synanton.extraction.v1";
+option java_package = "org.synanton.extraction.v1";
 option java_outer_classname = "ExtractionServiceProto";
 option java_multiple_files = true;
 
