@@ -441,12 +441,12 @@ Synanton intentionally evolves through versioned architecture documents.
 | 1.24 | Annotation foundation | Consolidated into 1.25 (no separate document was ever published) |
 | [1.25](docs/architecture/synanton-design-1.25.md) | Annotations, derived knowledge, recalculation, analytics and reporting | Approved (architecture); partial implementation — AAP-1/AAP-2 landed, AAP-3–AAP-8 not started |
 | [1.26](docs/architecture/synanton-design-1.26.md) | Content Cache Plane | Approved (architecture); implementation not started |
-| [1.27](docs/architecture/synanton-design-1.27.md) | Eventing and Workflow Plane — common execution fabric for 1.28–1.32 | Approved (architecture); implementation not started |
+| [1.27](docs/architecture/synanton-design-1.27.md) | Eventing and Workflow Plane — common execution fabric for 1.28–1.32 | Approved (architecture); **next implementation step** — see [implementation plan](docs/implementation/eventing-workflow-plane/INDEX.md) |
 | [1.28](docs/architecture/synanton-design-1.28.md) | Ingestion Plane | Approved (architecture); implementation not started |
 | [1.29](docs/architecture/synanton-design-1.29.md) | Identity, Tenant & Policy Plane | Approved (architecture); implementation not started |
 | [1.30](docs/architecture/synanton-design-1.30.md) | AI and Model Runtime Plane Contract | Approved (architecture); implementation not started |
 | [1.31](docs/architecture/synanton-design-1.31.md) | Search and Retrieval Plane | Approved (architecture); implementation not started |
-| [1.32](docs/architecture/synanton-design-1.32.md) | Platform API | Approved (architecture); implementation not started |
+| [1.32](docs/architecture/synanton-design-1.32.md) | Platform API | Approved (architecture); **next implementation step** — see [implementation plan](docs/implementation/platform-api-plane/INDEX.md) |
 | [1.33](docs/architecture/synanton-design-1.33.md) | Kubernetes Lifecycle, Compatibility and Multi-Operator Architecture | Approved (architecture — contract/readiness review only; no operator implementation exists) |
 | [1.34](docs/architecture/synanton-design-1.34.md) | Temporal Versioned Knowledge and Retrieval | Approved (architecture); implementation not started |
 | **[1.0](docs/architecture/synanton-platform-architecture-1.0.md)** | **Platform Architecture 1.0 — capstone integrating 1.22–1.34** | **Approved (architecture)**; see its §15 for the authoritative per-design implementation status |
@@ -489,9 +489,9 @@ The ingest → extract → index path is wired end to end. **Full Docker image b
 - Ingests `demo-data/documents` (markdown/text plus a sample PDF and a heading-structured markdown file).
 - Reindexes synquest and runs a search whose hits can include `source_uri`, `section_path`, `source_elements` and `ingest_usage`; the response may include `query_usage`.
 
-**Extraction plane (`content_extractor`).** Serves sync and async extraction over `synanton.extraction.v1`, reads objects from MinIO, routes by media type and enforces size/time/payload limits. Plain text and markdown use the Tika adapter with honest feature states. PDF uses the OpenDataLoader HTTP sidecar when `EXTRACTION_OPENDATALOADER_BASE_URL` is set; otherwise the PDF adapter reports unsupported and synflux applies the configured fallback policy (`FALLBACK_LOCAL_TIKA` by default).
+**Extraction plane (`content_extractor`).** Serves sync and async extraction over `synanton.extraction.v1`, reads objects from MinIO, routes by media type and enforces size/time/payload limits. Plain text and markdown use the Tika adapter with honest feature states. PDF extraction uses the embedded `org.opendataloader:opendataloader-pdf-core` library in-process (no external sidecar to run) and is on by default; toggle it with `EXTRACTION_OPENDATALOADER_ENABLED` (default `true`) - when disabled, the PDF adapter reports unsupported and synflux applies the configured fallback policy (`FALLBACK_LOCAL_TIKA` by default).
 
-**Platform client.** `java/extraction-client` wraps the gRPC contract with `ExtractionFallbackPolicy`, reconcile-after-timeout on async submit and Micrometer metrics. Configure via `synanton.extraction.client.*` in synflux `application.yml`.
+**Platform client.** `java/extraction-client` wraps the gRPC contract with `ExtractionFallbackPolicy`, reconcile-after-timeout on async submit and Micrometer metrics. Configure via `synanton.extraction.client.*` in synflux `application.yml`. Known limitation: the client only consumes inline payloads (`StructuredPayload.inline_content`) - if the gateway ever returns a large payload by reference (`PayloadReference`) instead, it currently falls back to Tika rather than fetching the referenced object; not hit by this demo's file sizes.
 
 **Chunking and search.** Synflux skips redundant Tika when structured extraction succeeds. `SemanticChunkStage` chunks from `elements` (not flat text). Chunks persist `page_start`, `page_end`, `section_path`, `chunk_type`, `heading`, `source_elements`, `token_count` and table `structured_content`. Manifests store a document-level `ingest_usage` JSON rollup (wall time, CPU time, model chars/tokens per stage - a benchmark ledger, not billing). Synquest indexes those fields with BM25; HNSW is optional. Search does not fail if query embedding is down; hits carry citation and usage metadata.
 
@@ -500,10 +500,10 @@ The ingest → extract → index path is wired end to end. **Full Docker image b
 ./scripts/run-extract-index-poc.sh
 ```
 
-Optional PDF OCR/structure sidecar:
+To exercise the Tika fallback path instead of PDF extraction, disable it before running:
 
 ```bash
-export EXTRACTION_OPENDATALOADER_BASE_URL=http://opendataloader:8080
+export EXTRACTION_OPENDATALOADER_ENABLED=false
 ./scripts/run-extract-index-poc.sh
 ```
 
@@ -689,9 +689,11 @@ Start here:
 - [Semantic Chunking](docs/implementation/semantic-chunking/INDEX.md)
 - [Structured Content Extraction](docs/implementation/content-extraction-plane/INDEX.md)
 - [GPU Execution Plane](docs/implementation/gpu-execution-plane/INDEX.md)
+- [Eventing and Workflow Plane (v1.27) — implementation plan, not started](docs/implementation/eventing-workflow-plane/INDEX.md)
+- [Platform API Plane (v1.32) — implementation plan, not started](docs/implementation/platform-api-plane/INDEX.md)
 - [Cross-plane Architecture Review Resolution (1.26–1.33)](docs/architecture/proposals/synanton-architecture-review-resolution.md)
 
-Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture — see the table above for links to each, and their companion ADRs under [`docs/architecture/decisions/`](docs/architecture/decisions/). None of them has implementation started yet.
+Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture — see the table above for links to each, and their companion ADRs under [`docs/architecture/decisions/`](docs/architecture/decisions/). None of them has implementation started yet; **1.27 and 1.32 are next** (see their implementation plans linked above) since the capstone's implementation sequence (§14) gates every other new plane on those two contracts being frozen first.
 
 The broader project documentation is maintained separately and explains the architecture, concepts, use cases, operations, integrations and design history.
 
@@ -736,6 +738,8 @@ Storage engines, graph implementations, LLM providers, extraction implementation
 Synanton is an **active open-source research and engineering project**.
 
 Architecturally, the design series is now well ahead of implementation: Designs 1.22–1.34 are all **Approved (architecture)**, integrated by the [Synanton Platform Architecture 1.0 capstone document](docs/architecture/synanton-platform-architecture-1.0.md). Implementation, however, remains concentrated where it has always been furthest along — the 1.22 baseline, the 1.23 security model, and 1.25's annotation foundation and recalculation (AAP-1/AAP-2). The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. The nine newly approved planes (1.26 content cache, 1.27 eventing/workflow, 1.28 ingestion, 1.29 identity, 1.30 AI runtime, 1.31 search/retrieval, 1.32 platform API, 1.33 Kubernetes lifecycle, 1.34 temporal versioning) have **no implementation started**; per the capstone document's implementation sequence, none of them should begin ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen.
+
+**Next implementation steps: 1.27 and 1.32.** Both are gating contracts every other unbuilt plane depends on, and both are ready to start — see their phased implementation plans: [Eventing and Workflow Plane](docs/implementation/eventing-workflow-plane/INDEX.md) and [Platform API Plane](docs/implementation/platform-api-plane/INDEX.md). Their foundational phases run in parallel (neither blocks the other's Phase 1); later integration phases wait on 1.26/1.28/1.30/1.31.
 
 The project is not presented as a finished enterprise product. The repository is intentionally used to explore architecture, implementation techniques, operational boundaries and measurable trade-offs.
 
