@@ -20,6 +20,8 @@ last_reviewed: "2026-08-26"
 | [`classification-aware-search/INDEX.md`](./classification-aware-search/INDEX.md) | Classification-Aware Semantic Search (v1.23) |
 | [`annotations-analytics-plane/INDEX.md`](./annotations-analytics-plane/INDEX.md) | Annotation, Derived Knowledge, Recalculation, Analytics & Reporting Plane (v1.24/1.25) |
 | [`gpu-execution-plane/INDEX.md`](./gpu-execution-plane/INDEX.md) | GPU Execution Plane (v1.20) |
+| [`eventing-workflow-plane/INDEX.md`](./eventing-workflow-plane/INDEX.md) | Eventing and Workflow Plane (v1.27) - not started; next implementation step alongside v1.32 |
+| [`platform-api-plane/INDEX.md`](./platform-api-plane/INDEX.md) | Platform API Plane (v1.32) - not started; next implementation step alongside v1.27 |
 | [`modules/helper.md`](./modules/helper.md) | `helper` module implementation plan |
 | [`modules/wizard.md`](./modules/wizard.md) | `wizard` module implementation plan |
 | [`demo/standalone-syntology-demo.md`](./demo/standalone-syntology-demo.md) | Standalone Syntology demo guide |
@@ -40,6 +42,8 @@ last_reviewed: "2026-08-26"
 | `classification-aware-search/` | v1.23 classification-aware search implementation plan |
 | `annotations-analytics-plane/` | v1.24/1.25 annotation, recalculation, analytics & reporting plane implementation plan |
 | `gpu-execution-plane/` | v1.20 GPU plane implementation plan |
+| `eventing-workflow-plane/` | v1.27 eventing/workflow plane implementation plan (not started) |
+| `platform-api-plane/` | v1.32 platform API plane implementation plan (not started) |
 | `modules/` | Module-specific deep-dive implementation plans |
 | `demo/` | Demo and standalone guides |
 

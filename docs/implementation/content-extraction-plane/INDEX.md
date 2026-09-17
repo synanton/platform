@@ -241,11 +241,11 @@ message DocumentElement {
                                     // TABLE, TABLE_CELL, IMAGE, FORMULA, CAPTION
   ElementLocation location = 3;     // page + bbox
   string text = 4;
-  int32 heading_level = 5;
-  TableStructure table = 6;
-  ImageDetail image = 7;
-  string formula_latex = 8;
-  repeated string child_ids = 9;
+  ContentProvenance provenance = 5; // EMBEDDED_TEXT, OCR, TAGGED_STRUCTURE, ...
+  int32 level = 6;                  // heading depth 1-6, or list nesting depth
+  repeated string child_ids = 7;
+  map<string, string> attributes = 8;       // processor-specific extras (e.g. table/caption data), opaque
+  string alternate_representation = 9;      // LaTeX for FORMULA, generated description for IMAGE
 }
 ```
 
