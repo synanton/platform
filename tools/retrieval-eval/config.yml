@@ -1,0 +1,29 @@
+# Local dataset configuration for the Retrieval Evaluation Benchmark (SNTP-9 / Issue #14).
+# See docs/research/retrieval-evaluation-benchmark-plan.md §4a for the full rationale.
+#
+# All paths below are relative to `datasets.root`. Nothing under that root is ever
+# copied into this repository - override the root with RETRIEVAL_BENCH_DATASETS_DIR
+# if datasets are staged somewhere other than the default.
+
+datasets:
+  root: ${RETRIEVAL_BENCH_DATASETS_DIR:-/home/aminin/workspace/synanton/testing}
+
+  pire:
+    path: PIRE
+    archive: pdf_files.zip           # not yet extracted; harness extracts on first use
+
+  rag_multi_corpus:
+    path: RAG-Multi-Corpus/datasets
+    queries: RAG-Multi-Corpus/datasets/Dataset categories - queries_01122025.csv
+    organizations:
+      - Aventro Motors
+      - Velvera Technologies
+      - ZX Bank
+      - CloudWay-24
+      - Cendara University
+
+  ohr_bench:
+    path: OHR-Bench
+    manifest: OHR-Bench_v2.parquet
+    pdfs_archive: pdfs.zip
+    retrieval_archive: retrieval.zip

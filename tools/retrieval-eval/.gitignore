@@ -1,0 +1,7 @@
+# Dataset archives referenced by config.yml live outside this repo (see
+# docs/research/retrieval-evaluation-benchmark-plan.md §4a). Anything extracted
+# or cached locally by the harness stays out of git - benchmark-run result
+# records belong under demo-data/eval/retrieval-benchmark/results/ instead,
+# which is not covered by this file.
+.cache/
+*.extracted/
