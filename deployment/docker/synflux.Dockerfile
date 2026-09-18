@@ -1,4 +1,5 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+# syntax=docker/dockerfile:1
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 COPY gradle ./gradle
 COPY gradlew build.gradle.kts settings.gradle.kts gradle.properties* ./
@@ -7,8 +8,10 @@ COPY java/ingestion-cache ./java/ingestion-cache
 COPY java/synvault ./java/synvault
 COPY java/synanton-llm-client ./java/synanton-llm-client
 COPY java/extraction-contract ./java/extraction-contract
+COPY java/extraction-client ./java/extraction-client
 COPY java/synflux ./java/synflux
-RUN ./gradlew :java:synflux:bootJar -x test --no-daemon
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew :java:synflux:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S synanton && adduser -S -G synanton synanton

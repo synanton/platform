@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  * on producer failure the row stays unpublished and is retried on the next cycle.
  */
 @Component
-@ConditionalOnBean(KafkaProducer.class)
+@ConditionalOnBean(type = "org.apache.kafka.clients.producer.KafkaProducer")
 public class OutboxPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(OutboxPublisher.class);

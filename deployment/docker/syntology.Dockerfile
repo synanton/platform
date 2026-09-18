@@ -1,12 +1,14 @@
+# syntax=docker/dockerfile:1
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /workspace
 
 COPY gradle/ gradle/
-COPY gradlew settings.gradle.kts ./
+COPY gradlew settings.gradle.kts gradle.properties* ./
 COPY java/shared/common/ java/shared/common/
 COPY java/syntology/ java/syntology/
 
-RUN ./gradlew :java:syntology:bootJar -PskipUi --no-daemon -q
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew :java:syntology:bootJar -PskipUi --no-daemon -q
 
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S synanton -g 2000 && adduser -S alice -G synanton -u 1001

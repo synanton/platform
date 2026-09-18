@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.maven
+
 rootProject.name = "synanton"
 
 pluginManagement {
@@ -10,6 +12,8 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/central") }
         mavenCentral()
     }
 }
