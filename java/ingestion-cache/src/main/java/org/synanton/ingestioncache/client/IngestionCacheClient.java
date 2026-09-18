@@ -54,7 +54,7 @@ public class IngestionCacheClient {
 
     public List<ManifestRow> listManifest(String tenantId, int limit) {
         var result = session.execute(SimpleStatement.newInstance(
-            "SELECT * FROM ingestion_cache.manifest WHERE tenant_id=? LIMIT ?",
+            "SELECT * FROM ingestion_cache.manifest WHERE tenant_id=? LIMIT ? ALLOW FILTERING",
             tenantId, limit
         ));
         List<ManifestRow> rows = new ArrayList<>();

@@ -8,9 +8,22 @@ TENANT="${TENANT:-demo}"
 
 echo "=== Synanton extract + index PoC ==="
 
-echo "[1/5] Starting Cassandra, MinIO, extraction-gateway, synvault, synflux, synquest..."
-docker compose -f "$COMPOSE_FILE" up -d --build \
-  cassandra minio minio-init extraction-gateway synvault synflux synquest
+echo "[1/5] Building synvault, synflux, synquest (sequentially to avoid saturating the network with concurrent Gradle dependency downloads)..."
+for svc in synvault synflux synquest; do
+  docker compose -f "$COMPOSE_FILE" build "$svc"
+done
+
+echo "[1/5] Starting Cassandra, MinIO, synvault, synflux, synquest..."
+docker compose -f "$COMPOSE_FILE" up -d \
+  cassandra minio minio-init synvault synflux synquest
+
+if ! docker ps --filter "name=^extraction-gateway$" --filter "status=running" --format '{{.Names}}' | grep -q extraction-gateway; then
+  echo "NOTE: extraction-gateway is not running. It's built/run separately from the"
+  echo "      content_extractor repo (see the comment above the removed service in"
+  echo "      deployment/docker/compose.yaml for the docker run command)."
+  echo "      Without it, synflux falls back to the local Tika extractor"
+  echo "      (EXTRACTION_CLIENT_ENABLED=true, fallback=FALLBACK_LOCAL_TIKA by default)."
+fi
 
 wait_healthy() {
   local svc="$1"
@@ -30,7 +43,6 @@ wait_healthy() {
   exit 1
 }
 
-wait_healthy extraction-gateway 36
 wait_healthy synflux 36
 wait_healthy synquest 36
 

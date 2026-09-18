@@ -1,0 +1,17 @@
+benchmark:
+  dataset_version: demo-data-documents-v1
+  knowledge_version: demo-data-documents-v1
+  search_config: hybrid-rrf
+  embedding_model: bge-base-en-v1.5
+  retrieval_strategy: hybrid
+  reranker: none
+recorded_at: '2026-09-18T08:54:55.566046+00:00'
+metrics:
+  query_count: 10
+  mean_recall_at_10: 0.0
+  mean_recall_at_100: 0.0
+  mean_precision_at_10: 0.0
+  mean_ndcg_at_10: 0.0
+  mean_mrr_at_10: 0.0
+  p50_latency_ms: 3536.529191000227
+  p95_latency_ms: 8537.992944000507

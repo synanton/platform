@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: retrieval-eval
+Version: 0.1.0
+Summary: Retrieval Evaluation Benchmark harness (SNTP-9 / Issue #14) - see docs/research/retrieval-evaluation-benchmark-plan.md
+Requires-Python: >=3.11
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: requests>=2.31
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
