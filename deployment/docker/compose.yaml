@@ -148,25 +148,34 @@ services:
              mc mb --ignore-existing local/synanton-hot"
     restart: "no"
 
-  # extraction-gateway is built and run from the separate content_extractor repo
-  # (the actual content extraction engine; this repo only ships its client library).
-  # It is NOT managed by this compose file. Build and run it there, joined to this
-  # compose's "synanton-demo" network, once postgres/minio below are up:
-  #
-  #   docker run -d --name extraction-gateway --network synanton-demo \
-  #     -e EXTRACTION_DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-synanton} \
-  #     -e EXTRACTION_DB_USER=${POSTGRES_USER:-synanton} \
-  #     -e EXTRACTION_DB_PASSWORD=${POSTGRES_PASSWORD:-changeme} \
-  #     -e EXTRACTION_GATEWAY_GRPC_PORT=9091 \
-  #     -e EXTRACTION_GATEWAY_HTTP_PORT=8092 \
-  #     -e EXTRACTION_OBJECTSTORE_ENDPOINT=http://minio:9000 \
-  #     -e EXTRACTION_OBJECTSTORE_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin} \
-  #     -e EXTRACTION_OBJECTSTORE_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin} \
-  #     -p 9091:9091 -p 8092:8092 \
-  #     docker-extraction-gateway
-  #
-  # synflux below reaches it at extraction-gateway:9091 by container name on that
-  # shared network.
+  extraction-gateway:
+    build:
+      context: ../../../content_extractor
+      dockerfile: deployment/docker/extraction-gateway.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      EXTRACTION_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-synanton}
+      EXTRACTION_DB_USER: ${POSTGRES_USER:-synanton}
+      EXTRACTION_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      EXTRACTION_GATEWAY_GRPC_PORT: 9091
+      EXTRACTION_GATEWAY_HTTP_PORT: 8092
+      EXTRACTION_OBJECTSTORE_ENDPOINT: http://minio:9000
+      EXTRACTION_OBJECTSTORE_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      EXTRACTION_OBJECTSTORE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      EXTRACTION_OPENDATALOADER_ENABLED: ${EXTRACTION_OPENDATALOADER_ENABLED:-true}
+    ports:
+      - "9091:9091"
+      - "8092:8092"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8092/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
 
   synvault:
     build:
