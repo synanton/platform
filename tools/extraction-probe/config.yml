@@ -1,0 +1,21 @@
+# Connection settings for the extraction-probe CLI.
+# All values are overridable via the matching environment variable - defaults here match
+# content_extractor's own extraction-gateway.Dockerfile / docker-compose.smoke-test.yml
+# conventions, and platform's compose.yaml MinIO defaults.
+
+extraction_gateway:
+  host: ${EXTRACTION_GATEWAY_HOST:-localhost}
+  grpc_port: ${EXTRACTION_GATEWAY_GRPC_PORT:-9091}
+
+objectstore:
+  endpoint: ${EXTRACTION_OBJECTSTORE_ENDPOINT:-http://localhost:9000}
+  access_key: ${EXTRACTION_OBJECTSTORE_ACCESS_KEY:-minioadmin}
+  secret_key: ${EXTRACTION_OBJECTSTORE_SECRET_KEY:-minioadmin}
+  bucket: ${EXTRACTION_PROBE_BUCKET:-extraction-probe}
+  region: ${EXTRACTION_OBJECTSTORE_REGION:-us-east-1}
+
+# Where the real synanton.extraction.v1 .proto files live, relative to this tool's
+# directory - stubs are generated from these on first use (see extraction_probe/stubs.py),
+# never committed, so they can never drift from the actual contract.
+proto:
+  source_dir: ../../java/extraction-contract/src/main/proto

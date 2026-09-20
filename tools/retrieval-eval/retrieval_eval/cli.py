@@ -63,6 +63,17 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_inspect(args: argparse.Namespace) -> int:
+    synquest_url = compose.synquest_base_url()
+    result = search(synquest_url, args.tenant, args.query, top_k=args.top_k)
+    for hit in result.hits:
+        print(f"{hit.chunk_id}")
+        print(f"  score={hit.score:.4f} score_dense={hit.score_dense:.4f} score_lexical={hit.score_lexical:.4f}")
+        print(f"  source_uri={hit.source_uri}")
+        print(f"  section_path={hit.section_path!r} heading={hit.heading!r}")
+    return 0
+
+
 def _cmd_evaluate(args: argparse.Namespace) -> int:
     synquest_url = compose.synquest_base_url()
     queries = load_gold_queries(args.queries)
@@ -72,7 +83,10 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
 
     per_query = []
     for gold in queries:
-        result = search(synquest_url, args.tenant, gold.question, top_k=max(10, 100))
+        result = search(
+            synquest_url, args.tenant, gold.question, top_k=max(10, 100),
+            top_k_dense=args.top_k_dense, top_k_lexical=args.top_k_lexical,
+        )
         retrieved_ids = [hit.chunk_id for hit in result.hits]
         qm = evaluate_query(
             QueryResult(
@@ -134,7 +148,15 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--retrieval-strategy", required=True)
     evaluate_parser.add_argument("--reranker", default="none")
     evaluate_parser.add_argument("--output-dir", type=Path, default=DEFAULT_RESULTS_DIR)
+    evaluate_parser.add_argument("--top-k-dense", type=int, default=None, help="Pass 0 to suppress dense (T01 BM25-only)")
+    evaluate_parser.add_argument("--top-k-lexical", type=int, default=None, help="Pass 1 to suppress lexical (T02 dense-only; synquest rejects 0)")
     evaluate_parser.set_defaults(func=_cmd_evaluate)
+
+    inspect_parser = subparsers.add_parser("inspect", help="Run a raw query and print every hit field (for gold-chunk-ID annotation)")
+    inspect_parser.add_argument("--tenant", required=True)
+    inspect_parser.add_argument("--query", required=True)
+    inspect_parser.add_argument("--top-k", type=int, default=10)
+    inspect_parser.set_defaults(func=_cmd_inspect)
 
     return parser
 

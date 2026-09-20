@@ -1,6 +1,6 @@
 ---
 title: "Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)"
-status: "in progress — Phase B0 harness scaffold done"
+status: "in progress — Phase B0 done; Phase B1 T01/T04 done, T02/T03 blocked on Phase 2 GPU profile"
 last_reviewed: "2026-09-17"
 ---
 
@@ -113,6 +113,18 @@ Condensed from Issue #14's T01-T14, re-scoped to what's real or genuinely new:
 ## 4. Corpus
 
 **Primary (default):** `demo-data/documents/` — the same corpus `flat-vs-semantic-chunks-research-plan.md` uses, extended with the gold query set that plan already defines (`demo-data/eval/flat-vs-semantic/queries.jsonl`) plus new questions targeting hierarchical/multi-hop and graph-relevant relationships (entity co-occurrence across `acme-corp-profile.md`, `globex-manufacturing.md`, `vendor-agreements.md` — these already reference overlapping named entities per the demo corpus design).
+
+**Update (2026-09-20): three real, spec-valid PDFs added.** The original 13-document corpus contains exactly one PDF (`quarterly-report.pdf`), which is spec-invalid (missing `xref`/`startxref` — confirmed via byte-level MinIO comparison during the `content_extractor` bug-fix pass; the fix belongs in this repo, not filed here). More importantly: **content_extractor's `TextModalityAdapter` (Tika-based, used for `.txt`/`.md`) does not parse markdown heading syntax into `HEADING` elements at all** — verified by direct gRPC probe against `structured-supply-chain.md`, the corpus's one file with real markdown headings: extraction succeeds (10 elements) but every element is `ELEMENT_PARAGRAPH`, none `ELEMENT_HEADING`. `SemanticChunkStage` therefore falls back to flat chunking (`chunk_type=FALLBACK`) for every text/markdown document in this corpus regardless of `extraction-gateway`'s health — meaning **no document in the original corpus can exercise real structure-aware chunking at all**, independent of any bug; this is documented, by-design behavior of the current text adapter (its own `feature_states` response reports `layout: FEATURE_NOT_APPLICABLE` for `text/markdown`).
+
+PDF extraction (`content_extractor`'s OpenDataLoader-backed `PdfModalityAdapter`) does **not** have this limitation — it performs real heading/table/list detection. Three real, spec-valid PDFs were added to give the corpus at least some documents where semantic chunking can genuinely diverge from flat chunking:
+
+| File | Source | Structure confirmed via direct probe |
+|---|---|---|
+| `mental-health-report-2010.pdf` | `testing/OHR-Bench/pdfs/academic/` | 11 headings (levels 1/2/3/5/6), 12 tables, 3 lists — 87 elements total |
+| `outsourcing-agreement.pdf` | `testing/OHR-Bench/pdfs/law/` | 47 numbered headings (e.g. "1.6 Applicable Law", "3.4 Production Capacity") |
+| `sks8300-web-interface-manual.pdf` | user-provided (`/mnt/WD4T/software/SKS8300/`) | 4 headings (numbered "I."/"II."/"III." sections), 21 images, 23 lists, 7 captions |
+
+Confirmed via Cassandra inspection: `mental-health-report-2010.pdf` under a tenant with `extraction-gateway` healthy produces real `SECTION`/`TABLE`/`LIST` chunk types with real `section_path` values (e.g. `"APPENDIX A: DATA SOURCE DESCRIPTIONS"`); the same file under a tenant with `extraction-gateway` down produces uniform `chunk_type=FALLBACK`, empty `section_path` — this is the first genuine, verified Fixed-vs-Semantic divergence in this benchmark. None of the *original* 10 gold queries (§9 below) target these three new files yet — annotating queries against them is tracked as an open follow-up, not yet done.
 
 **Optional extension (Phase B4):** the datasets below are already downloaded locally (not hypothetical — see §4a for exact paths) and can be adopted once the harness is validated on the primary corpus:
 
@@ -229,12 +241,29 @@ For a run against a local dataset from §4a, `dataset_version` is the archive's 
 ### Phase B0 — Harness (1 week)
 
 1. **Done.** `tools/retrieval-eval/` scaffold: config loader (`config.py`), metrics (`metrics.py`, unit-tested), gold-query loader (`gold.py`), benchmark-run record writer (`run_record.py`), ingest/query wrappers around the real `synflux`/`synquest` REST APIs (`ingest.py`/`query.py`, matching `run-extract-index-poc.sh` exactly), a compose-port resolver (`compose.py`), and a `retrieval-eval` CLI (`cli.py`) with `check-config`/`ingest`/`evaluate` subcommands. See `tools/retrieval-eval/README.md` for usage and an explicit list of what's real vs. stub.
-2. **Done (partially).** New `demo-data/eval/retrieval-benchmark/queries.jsonl` — 10 starter queries grounded in the real demo corpus (`acme-corp-profile.md`, `globex-manufacturing.md`, `vendor-agreements.txt`, `structured-supply-chain.md`), covering table-lookup, factual, multi-hop/graph-relevant, procedural, section-local (hierarchical), negative, and keyword categories. `flat-vs-semantic-chunks-research-plan.md`'s own `queries.jsonl` doesn't exist yet, so this file was created fresh rather than forked. **Not done:** `gold_chunk_ids` are all empty — `content_ref_id` is a UUID assigned at ingest time, so real gold labels require running `ingest` once and annotating from the resulting manifest; tracked in the harness README, not silently left incomplete.
-3. **Done.** §5's benchmark-run YAML record is implemented in `run_record.py` and exercised by `cli.py evaluate`.
+2. **Done.** New `demo-data/eval/retrieval-benchmark/queries.jsonl` — 10 starter queries grounded in the real demo corpus (`acme-corp-profile.md`, `globex-manufacturing.md`, `vendor-agreements.txt`, `structured-supply-chain.md`), covering table-lookup, factual, multi-hop/graph-relevant, procedural, section-local (hierarchical), negative, and keyword categories. `flat-vs-semantic-chunks-research-plan.md`'s own `queries.jsonl` doesn't exist yet, so this file was created fresh rather than forked. **Gold chunk IDs annotated** (2026-09-20) against real ingested tenants using the new `retrieval-eval inspect` CLI command — two per-tenant files, `queries.rb-fixed.jsonl` and `queries.rb-semantic.jsonl` (chunk IDs differ per tenant since `content_ref_id` is a fresh UUID per ingestion run, even for the same source file).
+3. **Done.** §5's benchmark-run YAML record is implemented in `run_record.py` and exercised by `cli.py evaluate`. `query.py`/`cli.py evaluate` also gained `--top-k-dense`/`--top-k-lexical` to isolate one side of the hybrid fusion (pass `0` to suppress dense; `1`, not `0`, to suppress lexical — `synquest`'s Lucene lexical path rejects `n=0`, confirmed empirically).
 
 ### Phase B1 — Retrieval-only benchmark, existing strategies (1 week)
 
+**Status: T01 and T04 done (2026-09-20); T02/T03 blocked, not run — see finding below.**
+
 Run T01-T04 (fixed/semantic chunking × BM25/dense/hybrid, no new code) — this validates the harness against **already-implemented** retrieval paths before any new-work items land, isolating harness bugs from feature gaps.
+
+**Finding: dense retrieval is unreachable in the Phase 1 stack.** `synquest`'s `QueryEmbedder` always calls out to `EMBED_BASE_URL` (vLLM's embedding service) with no fallback; that service only exists behind `docker compose --profile phase2`, which needs 2×8GB GPUs per the platform README and isn't running in the Phase 1 stack this benchmark uses. Every query in this environment reports `query_usage.embed_skipped=true`; `top_k_dense` has nothing to suppress. **T02 (dense) and T03 (hybrid) would therefore just duplicate T01's BM25-only results today** — running them as if they were real would misreport "hybrid adds nothing" when hybrid was never actually exercised.
+
+Decision (user-confirmed): run only the two genuinely distinct arms available in this environment —
+- **T01** — `rb-fixed`, BM25-only (`--top-k-dense 0`), flat/fallback chunking.
+- **T04** — `rb-semantic`, labeled "hybrid" but functionally BM25-only for the same reason as above; the arm's actual distinguishing variable is chunking strategy, not retrieval strategy, since none of the 10 gold queries target the 3 new structurally-rich PDFs yet (§4 update).
+
+**T02/T03 are blocked, not skipped** — pending either the Phase 2 GPU profile being started, or another reachable embedding endpoint. Results:
+
+| Run | Tenant | Recall@10 | NDCG@10 | p95 latency | Record |
+|---|---|---|---|---|---|
+| T01 | `rb-fixed` | 0.900 | 0.756 | 8549ms | `demo-data/eval/retrieval-benchmark/results/T01.yaml` |
+| T04 | `rb-semantic` | 0.900 | 0.736 | 8528ms | `demo-data/eval/retrieval-benchmark/results/T04.yaml` |
+
+Recall is identical (expected — every gold query's answer lives in a document that chunks identically, as one flat chunk, under both tenants; see §4 update). The small NDCG difference (0.756 vs 0.736) is not a meaningful structural signal — it reflects tie-breaking over different per-tenant chunk UUIDs, not a real quality difference, since no query in this set actually touches a document with real structural divergence. **A meaningful T01-vs-T04 comparison requires new gold queries against the 3 newly-added PDFs** (tracked as an open item, not yet done) — the corpus and harness are now capable of it, but the query set hasn't caught up yet.
 
 ### Phase B2 — New retrieval capability (2-3 weeks)
 
@@ -293,18 +322,22 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 |---|---|---|---|
 | 1 | Local dataset config template | `tools/retrieval-eval/config.yml` | Done |
 | 2 | `.gitignore` entry for harness-extracted/cached dataset content | `tools/retrieval-eval/.gitignore` | Done |
-| 3 | Benchmark harness (config, metrics, ingest/query wrappers, CLI) | `tools/retrieval-eval/` | Done (B0 scope; B2's new-capability wiring still pending) |
-| 4 | Gold query set | `demo-data/eval/retrieval-benchmark/queries.jsonl` | Done (10 starter queries; `gold_chunk_ids` still pending real-ingestion annotation) |
+| 3 | Benchmark harness (config, metrics, ingest/query wrappers, CLI incl. `inspect`, `--top-k-dense`/`--top-k-lexical`) | `tools/retrieval-eval/` | Done (B0/B1 scope; B2's new-capability wiring still pending) |
+| 4 | Gold query set, annotated per tenant | `demo-data/eval/retrieval-benchmark/queries.{jsonl,rb-fixed.jsonl,rb-semantic.jsonl}` | Done (10 queries, real chunk IDs annotated against live `rb-fixed`/`rb-semantic` tenants) |
 | 5 | `RerankerPort` SPI + one adapter | `java/gateway` | Not started (Phase B2) |
 | 6 | Hierarchical chunking strategy | `java/synflux` | Not started (Phase B2) |
 | 7 | Graph rank-fusion | `java/synquest` and/or `java/gateway` (decided during B2 implementation) | Not started (Phase B2) |
-| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Format implemented; no real runs recorded yet (needs a live stack) |
+| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); T02/T03 blocked on Phase 2 GPU profile, not started |
 | 9 | Decision memo | `docs/research/retrieval-evaluation-benchmark-results.md` (after B5) | Not started |
+| 10 | 3 real structurally-rich PDFs added to corpus | `demo-data/documents/{mental-health-report-2010,outsourcing-agreement,sks8300-web-interface-manual}.pdf` | Done (2026-09-20); gold queries against them not yet written |
 
 ---
 
 ## 10. Open Questions
 
+0. **Gold queries against the 3 new PDFs** — none of the 10 original queries target `mental-health-report-2010.pdf`, `outsourcing-agreement.pdf`, or `sks8300-web-interface-manual.pdf`, so T01-vs-T04's real structural divergence (confirmed via direct Cassandra inspection) isn't yet reflected in any Recall/NDCG number. Writing these is the most direct next step toward a *meaningful* T01-vs-T04 comparison.
+0a. **`content_extractor`'s markdown heading gap** — `TextModalityAdapter` treats `.md` files as flat prose (Tika `AutoDetectParser`, no markdown-aware parsing). Fixing this (a real feature addition, not a bug) would let the *original* corpus's text/markdown files also exercise real semantic chunking, not just the 3 added PDFs. Out of scope for this plan; noted for whoever owns `content_extractor` roadmap next.
+0b. **Starting the Phase 2 GPU profile, or standing up the real GPU Runtime instead** — needed before T02/T03 can run for real. The homelab k8s cluster (§7) is being recreated as a cluster dedicated to Synanton's GPU plane; see [`gpu-plane-integration-tickets.md`](./gpu-plane-integration-tickets.md) and `gpu-runtime/doc/k8s-reference-deployment-plan.md` for the full ticket backlog this depends on. Not this benchmark's own concern to execute, only to consume once it lands.
 1. **Cohere/Voyage embedding comparison** — in scope only if a translator gets built; not committed in this plan. Revisit after B3's self-hosted results — if self-hosted models already show a clear winner, the commercial comparison may not be worth the integration cost.
 2. **Where does graph rank-fusion belong** — inside `synquest`'s `RrfFusion` (treating graph as a third ranked list) or as a `gateway`-level re-ranking pass over already-fused hybrid results? Both are architecturally defensible; decide during B2 based on which keeps `synquest` and `relix` more independently testable.
 3. **`e5-mistral-7b-instruct` on consumer GPU** — feasibility unconfirmed; the smoke test in §3.3/§8 answers this before B3 commits to it.
