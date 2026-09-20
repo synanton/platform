@@ -131,31 +131,40 @@ docker start extraction-gateway 2>/dev/null || true
 
 ## What's implemented vs. what's a stub
 
-| Module | Status |
-|---|---|
-| `config.py` | Real - loads `config.yml`, resolves `${VAR:-default}`, validates dataset paths exist |
-| `metrics.py` | Real - Recall@k, Precision@k, MRR, NDCG@k, aggregation with p95 latency; unit-tested |
-| `run_record.py` | Real - writes the Design 1.31 §88 YAML record |
-| `gold.py` | Real - loads the same JSONL schema as `flat-vs-semantic-chunks-research-plan.md` |
-| `ingest.py` | Real - wraps `synflux`'s actual `/ingest/run` + `/ingest/jobs/{id}` + synquest `/reindex`, matching `run-extract-index-poc.sh` exactly |
-| `query.py` | Real - wraps `synquest`'s actual `/search`, using the real `Hit` DTO field names |
-| `compose.py` | Real - resolves host ports via `docker compose port`, falling back to the container port like the existing bash scripts do |
-| Chunking-strategy switching, reranking, graph rank-fusion | **Not implemented** - these are Phase B2 (see the plan's §2 Modules Touched); nothing in this harness invents them |
+| Module                                                    | Status                                                                                                                                 |
+|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `config.py`                                               | Real - loads `config.yml`, resolves `${VAR:-default}`, validates dataset paths exist                                                   |
+| `metrics.py`                                              | Real - Recall@k, Precision@k, MRR, NDCG@k, aggregation with p95 latency; unit-tested                                                   |
+| `run_record.py`                                           | Real - writes the Design 1.31 §88 YAML record                                                                                          |
+| `gold.py`                                                 | Real - loads the same JSONL schema as `flat-vs-semantic-chunks-research-plan.md`                                                       |
+| `ingest.py`                                               | Real - wraps `synflux`'s actual `/ingest/run` + `/ingest/jobs/{id}` + synquest `/reindex`, matching `run-extract-index-poc.sh` exactly |
+| `query.py`                                                | Real - wraps `synquest`'s actual `/search`, using the real `Hit` DTO field names                                                       |
+| `compose.py`                                              | Real - resolves host ports via `docker compose port`, falling back to the container port like the existing bash scripts do             |
+| Chunking-strategy switching, reranking, graph rank-fusion | **Not implemented** - these are Phase B2 (see the plan's §2 Modules Touched); nothing in this harness invents them                     |
 
 ## Known gaps in this scaffold (tracked, not silent)
 
-- `queries.jsonl`'s `gold_chunk_ids` are all empty. `content_ref_id` is a UUID
-  assigned at ingest time, so real gold chunk IDs can only be filled in after
-  running `ingest` once against a real stack and inspecting
-  `synvault`'s manifest - this is Phase B0 item 2 in the plan, not done here.
-  Until then, `evaluate`'s Recall/NDCG/MRR numbers will legitimately read as
-  0 (no gold labels to match), while `gold_section_paths` and latency are
-  already meaningful.
+- **Resolved (2026-09-20):** `gold_chunk_ids` are now annotated with real
+  chunk IDs against live `rb-fixed`/`rb-semantic` tenants - see
+  `demo-data/eval/retrieval-benchmark/queries.rb-fixed.jsonl` and
+  `queries.rb-semantic.jsonl` (the base `queries.jsonl` is the un-annotated
+  template; annotate against a fresh tenant with `retrieval-eval inspect`).
+  IDs differ per tenant since `content_ref_id` is a fresh UUID per ingestion
+  run, even for the same source file.
 - Chunking-strategy selection (`--search-config`) is currently a label you
   pass in, not something this harness switches for you - per
   `flat-vs-semantic-chunks-research-plan.md`, that still means separate
-  tenant IDs re-ingested under different `synflux` config today.
+  tenant IDs re-ingested under different conditions (`extraction-gateway`
+  up vs. down - see the research plan §4 for why that's the actual lever
+  today, not a `synflux` config flag).
 - `synquest`'s internal `SearchTrace` (`embedMs/denseMs/lexicalMs/fusionMs`)
   isn't exposed on the `/search` response yet, so `query.py` only measures
   coarse end-to-end latency. Exposing it is one of this plan's own §2
   deliverables.
+- **Dense retrieval is unreachable in the Phase 1 stack** - `EMBED_BASE_URL`
+  points at a vLLM service that only exists behind `--profile phase2`
+  (2×8GB GPUs). Every query reports `query_usage.embed_skipped=true`;
+  `--top-k-dense`/`--top-k-lexical` exist (pass `0` to suppress dense, `1`
+  - not `0` - to suppress lexical, since `synquest`'s Lucene lexical path
+  rejects `n=0`) but there's nothing for `--top-k-dense` to suppress until
+  Phase 2 is running.

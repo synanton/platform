@@ -745,6 +745,28 @@ The project is not presented as a finished enterprise product. The repository is
 
 ---
 
+## Current status & recent findings (2026-09-20)
+
+A cross-repo debugging and benchmarking pass this session (SNTP-9 retrieval evaluation work) surfaced several real, verified findings worth recording here rather than only in individual PR history.
+
+**`content_extractor` had a real, silent extraction bug — now fixed.** `extraction-gateway` failed every text/markdown extraction with a `NoSuchMethodError` (Spring Boot 3.3.5's dependency-management BOM was force-downgrading `commons-lang3` to `3.14.0`, below what Tika's parser modules actually need), and the failure was completely silent — `ExtractSyncService` had no logger anywhere, so nothing showed up without a manual gRPC probe. Fixed in `content_extractor`: a `commons-lang3.version` BOM override (same mechanism already used there for `testcontainers.version`), a new logger on every failure path, a regression test reproducing the exact failure, a real `docker build` validation (worked around this sandbox's flaky large-file-download network path once, via a one-off BuildKit cache seed — the committed fix is a portable `--mount=type=cache` Gradle cache, not the seed itself), and a new CI job (`docker-smoke-test`) that builds the image and runs a real extraction call, so a runtime-only classpath bug like this can't silently pass CI again.
+
+**Known limitation, not a bug: `content_extractor`'s text/markdown adapter never parses markdown headings.** It's a generic Tika `AutoDetectParser` that splits on blank lines into flat paragraphs — confirmed via direct gRPC probe against `structured-supply-chain.md` (the demo corpus's one hand-written file with real `#`/`##`/`###` headings): extraction succeeds, but every element comes back `PARAGRAPH`, none `HEADING`. PDF extraction (OpenDataLoader-backed) does **not** have this limitation. This means `SemanticChunkStage` can only ever produce real structure-aware chunks for PDF documents in this corpus today, not `.md`/`.txt` files — regardless of `extraction-gateway`'s health.
+
+**Corpus enriched with 3 real, structurally-rich PDFs** to make that distinction demonstrable: `demo-data/documents/{mental-health-report-2010,outsourcing-agreement,sks8300-web-interface-manual}.pdf` (11/47/4 real headings respectively, plus tables/lists/images) — sourced from the public `OHR-Bench` dataset and a user-provided technical manual. The corpus's original `quarterly-report.pdf` remains a known, separate, pre-existing defect (missing `xref`/`startxref` — invalid per spec) and is left as-is; it's a `platform` demo-data issue, not a `content_extractor` bug.
+
+**New tools:**
+- [`tools/retrieval-eval`](tools/retrieval-eval/README.md) — the SNTP-9 retrieval benchmark harness (config, metrics, ingest/query wrappers, CLI). Phase B0 (harness + gold-chunk annotation) and Phase B1's T01 (BM25, flat chunking) / T04 (hybrid-labeled, real structural chunking) baseline runs are done — see [the research plan](docs/research/retrieval-evaluation-benchmark-plan.md) and its [manual QA reproduction guide](docs/demos/retrieval-benchmark-b0-b1-demo.md).
+- [`tools/extraction-probe`](tools/extraction-probe/README.md) — a standalone CLI to upload a document to `extraction-gateway` and save its textual/structured response, independent of the platform's ingestion pipeline. Useful for diagnosing extraction issues directly.
+
+**Real finding: dense/hybrid retrieval is unreachable in the Phase 1 stack.** `synquest`'s embedding client has no fallback; it always calls the vLLM embedding service that only exists behind `docker compose --profile phase2` (2×8GB GPUs), which isn't running in the Phase 1 demo. Every search reports `query_usage.embed_skipped=true`. T02 (dense-only) and T03 (hybrid) from the benchmark's test matrix are **blocked, not run**, pending that profile.
+
+**Decided: the homelab [k8s cluster](docs/demos/cluster-as-built.md) will be created as a cluster dedicated to Synanton's GPU plane**. 4-node hardware (`node0` control-plane, no GPU; `node1`/`node2`/`node3` workers with one GPU each — GTX 1650 4GB, RTX 4060 Ti 16GB, RTX 5060 Ti 16GB; as-built reference: `docs/demos/cluster-as-built.md`), reproducing its proven bootstrap shape (Calico CNI, NVIDIA GPU Operator device plugin + `RuntimeClass nvidia`, Longhorn + `local-ssd` storage, a local registry at `local-registry:5000`). The sibling `gpu-runtime` repo (GPU-1 through GPU-3 complete, GPU-4 contract-unified-but-optional, **GPU-5 — Kubernetes deployment — a confirmed blank slate**) is what gets deployed there, to give `platform` a real, isolated embedding/inference endpoint instead of relying on the Docker Phase 2 profile.
+
+The full ticket backlog for this is written down, not left as an open question: [`gpu-runtime/doc/k8s-reference-deployment-plan.md`](../gpu-runtime/doc/k8s-reference-deployment-plan.md) (cluster bootstrap + GPU-5 workload deployment, 13 ticket-sized items) and [`docs/research/gpu-plane-integration-tickets.md`](docs/research/gpu-plane-integration-tickets.md) (what unblocks in `platform` once it lands). Nothing in either is executable yet — the cluster's nodes are currently shut down for the recreation, and this development environment has no GPU of its own — but three items are independent of the cluster and can proceed now: writing gold queries against the 3 newly-added PDFs (§ above), adding `OHR-Bench` PDFs as permanent `content_extractor` test fixtures, and B2 continuation on the retrieval benchmark (hierarchical chunking, reranker, graph rank-fusion).
+
+---
+
 ## Related projects
 
 - **Lucentrix** — ingestion/crawling and distributed-search experiments

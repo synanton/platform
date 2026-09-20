@@ -37,8 +37,19 @@ class SearchResult:
     query_usage_present: bool
 
 
-def search(synquest_base_url: str, tenant: str, query: str, top_k: int = 10) -> SearchResult:
+def search(
+    synquest_base_url: str,
+    tenant: str,
+    query: str,
+    top_k: int = 10,
+    top_k_dense: int | None = None,
+    top_k_lexical: int | None = None,
+) -> SearchResult:
     """POST /search and return hits mapped to chunk IDs, plus wall-clock latency.
+
+    `top_k_dense`/`top_k_lexical` isolate one side of the hybrid RRF fusion for
+    the T01 (BM25-only)/T02 (dense-only) matrix rows (plan §3.4) - pass `0` for
+    the side to suppress. Omit both (`None`) for full hybrid (T03/T04).
 
     `latency_ms` is measured client-side around the HTTP call - it is a
     coarser number than synquest's own internal SearchTrace
@@ -47,10 +58,16 @@ def search(synquest_base_url: str, tenant: str, query: str, top_k: int = 10) -> 
     docs/research/retrieval-evaluation-benchmark-plan.md §2). Use this for
     end-to-end p95 latency (§5) until that's wired through.
     """
+    request_body = {"tenant": tenant, "query": query, "top_k": top_k}
+    if top_k_dense is not None:
+        request_body["top_k_dense"] = top_k_dense
+    if top_k_lexical is not None:
+        request_body["top_k_lexical"] = top_k_lexical
+
     started = time.monotonic()
     response = requests.post(
         f"{synquest_base_url}/search",
-        json={"tenant": tenant, "query": query, "top_k": top_k},
+        json=request_body,
         timeout=30,
     )
     elapsed_ms = (time.monotonic() - started) * 1000
