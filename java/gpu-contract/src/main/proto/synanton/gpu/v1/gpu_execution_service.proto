@@ -37,6 +37,10 @@ service GPUExecutionService {
     // GetCapacity is advisory. A successful response does NOT reserve GPU capacity.
     // Admission is authoritative only at Execute time.
     rpc GetCapacity(GetCapacityRequest) returns (CapacityResponse);
+
+    // GetModels returns available models for the given operation and provider.
+    // Used by the primary platform for model selection and tracing.
+    rpc GetModels(GetModelsRequest) returns (GetModelsResponse);
 }
 
 // ─── Enumerations ────────────────────────────────────────────────────────────
@@ -47,6 +51,13 @@ enum Operation {
     SYNTHESIZE = 1;  // LLM text generation via /v1/chat/completions
     EMBED      = 2;  // Dense vector embedding via /v1/embeddings
     RERANK     = 3;  // Cross-encoder reranking
+}
+
+// Provider enumerates the supported inference providers.
+enum Provider {
+    PROVIDER_UNSPECIFIED = 0;
+    LOCAL       = 1;  // Local vLLM deployment (GPU-5)
+    OPENROUTER  = 2;  // OpenRouter.ai external provider (GPU-7)
 }
 
 // ExecutionState is the lifecycle of a single GPU execution attempt.
@@ -117,6 +128,10 @@ message ExecutionRequest {
     // trace_context carries OpenTelemetry W3C traceparent/tracestate headers
     // for cross-cluster trace propagation.
     map<string, string> trace_context = 8;
+
+    // provider specifies the inference provider to route the request to.
+    // If unspecified, defaults to LOCAL (GPU-5 local vLLM).
+    Provider provider = 9;
 }
 
 // ExecutionResponse is returned by the GPU Gateway after dispatch completes.
@@ -161,6 +176,31 @@ message ExecutionStatus {
 message GetCapacityRequest {
     string model    = 1;
     string gpu_type = 2;  // Optional; empty means any available GPU class
+}
+
+// GetModelsRequest requests available models for a specific operation and provider.
+message GetModelsRequest {
+    Operation operation = 1;
+    Provider  provider  = 2;
+    string    tenant_id = 3;  // Optional: filter models available to this tenant
+}
+
+// GetModelsResponse returns the list of available models for the operation.
+message GetModelsResponse {
+    repeated ModelInfo models = 1;
+}
+
+// ModelInfo describes a model available for a specific operation.
+message ModelInfo {
+    string model_id         = 1;  // Logical model ID (e.g., "llama-3.1-8b-instruct")
+    string display_name     = 2;  // Human-readable name
+    string provider         = 3;  // Provider name (LOCAL, OPENROUTER, etc.)
+    Operation operation     = 4;  // Operation this model supports
+    string provider_model_id = 5; // Provider-specific model ID (e.g., "meta-llama/llama-3.1-8b-instruct:free")
+    bool   is_default       = 6;  // Whether this is the default model for the operation
+    int32  max_input_tokens = 7;  // Maximum input tokens supported
+    int32  max_output_tokens = 8; // Maximum output tokens supported (for SYNTHESIZE)
+    int32  embedding_dim    = 9;  // Embedding dimension (for EMBED)
 }
 
 // CapacityResponse is advisory only. A successful response does NOT reserve capacity.

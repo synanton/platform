@@ -66,6 +66,7 @@ public class GpuSynthesisAdapter {
                 .setModelVersion(props.getModelVersion())
                 .setOperation(Operation.SYNTHESIZE)
                 .setPayload(com.google.protobuf.ByteString.copyFrom(payload))
+                .setProvider(resolveProviderForTenant(Operation.SYNTHESIZE))
                 .putAllTraceContext(traceContext)
                 .build();
 
@@ -201,6 +202,12 @@ public class GpuSynthesisAdapter {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private Provider resolveProviderForTenant(Operation operation) {
+        // For now return OPENROUTER if configured, otherwise LOCAL
+        // TODO: Implement tenant-specific provider mapping via ModelCatalogService
+        return Provider.OPENROUTER;
     }
 
     // ─── Internal OpenAI-compat JSON structures ───────────────────────────────

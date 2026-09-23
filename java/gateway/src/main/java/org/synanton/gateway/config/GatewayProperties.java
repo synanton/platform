@@ -11,7 +11,9 @@ public record GatewayProperties(
         Planner planner,
         Synquest synquest,
         Relix relix,
-        Synthesis synthesis
+        Synthesis synthesis,
+        Embedding embedding,
+        Rerank rerank
 ) {
     public record Executor(int parallelism) {}
     public record Fusion(String defaultMethod, double graphPromotionBonus) {}
@@ -28,6 +30,16 @@ public record GatewayProperties(
             String model,
             String baseUrl
     ) {}
+    public record Embedding(
+            boolean enabled,
+            String model,
+            int batchSize
+    ) {}
+    public record Rerank(
+            boolean enabled,
+            String model,
+            int topN
+    ) {}
 
     public GatewayProperties {
         if (executor == null) executor = new Executor(8);
@@ -39,6 +51,12 @@ public record GatewayProperties(
         if (relix == null) relix = new Relix("http://relix:8084", 5000);
         if (synthesis == null) synthesis = new Synthesis(
                 false, 10, 3000, 8000, 0.3, 150, "llama-3.1-8b-instruct", "http://vllm-llm:8000/v1"
+        );
+        if (embedding == null) embedding = new Embedding(
+                false, "text-embedding-3-small", 32
+        );
+        if (rerank == null) rerank = new Rerank(
+                false, "cross-encoder/ms-marco-MiniLM-L-6-v2", 20
         );
     }
 }

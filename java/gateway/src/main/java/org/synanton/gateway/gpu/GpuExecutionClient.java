@@ -38,6 +38,20 @@ public class GpuExecutionClient {
                 .execute(request);
     }
 
+    // executeEmbed dispatches an embedding workload.
+    public ExecutionResponse executeEmbed(ExecutionRequest request) {
+        ensureChannel();
+        return stub.withDeadlineAfter(properties.getTimeoutMs(), TimeUnit.MILLISECONDS)
+                .execute(request);
+    }
+
+    // executeRerank dispatches a reranking workload.
+    public ExecutionResponse executeRerank(ExecutionRequest request) {
+        ensureChannel();
+        return stub.withDeadlineAfter(properties.getTimeoutMs(), TimeUnit.MILLISECONDS)
+                .execute(request);
+    }
+
     public CancelResponse cancel(CancelRequest request) {
         ensureChannel();
         return stub.cancel(request);
@@ -53,6 +67,12 @@ public class GpuExecutionClient {
     public CapacityResponse getCapacity(GetCapacityRequest request) {
         ensureChannel();
         return stub.getCapacity(request);
+    }
+
+    // getModels returns available models for the given operation and provider.
+    public GetModelsResponse getModels(GetModelsRequest request) {
+        ensureChannel();
+        return stub.getModels(request);
     }
 
     public boolean isEnabled() {
