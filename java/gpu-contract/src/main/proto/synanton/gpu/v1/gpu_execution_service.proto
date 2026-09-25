@@ -51,6 +51,50 @@ service GPUExecutionService {
     rpc GetModels(GetModelsRequest) returns (GetModelsResponse);
 }
 
+// GPUControlService is the GPU-7 routing-control API (Deployment Plan §32/§33/§38,
+// T-K8S-38). Every RPC requires a caller principal with the "admin" role. Changes are
+// persisted in PostgreSQL, survive restarts, apply to all Gateway replicas, and are
+// audited (principal + reason). Configuration is the hard floor: routing or a provider
+// disabled in configuration can never be enabled at runtime.
+service GPUControlService {
+    rpc GetRoutingControl(GetRoutingControlRequest) returns (RoutingControlState);
+    // Runtime kill switch: enabled=false denies ALL external routing (routing_disabled).
+    rpc SetExternalRouting(SetExternalRoutingRequest) returns (RoutingControlState);
+    // Runtime provider enablement: enabled=false denies that provider (provider_unavailable).
+    rpc SetProviderEnabled(SetProviderEnabledRequest) returns (RoutingControlState);
+}
+
+message GetRoutingControlRequest {}
+
+message SetExternalRoutingRequest {
+    bool   enabled = 1;
+    string reason  = 2;  // required: recorded in the audit trail
+}
+
+message SetProviderEnabledRequest {
+    string provider_id = 1;
+    bool   enabled     = 2;
+    string reason      = 3;  // required: recorded in the audit trail
+}
+
+message RoutingControlState {
+    bool   external_routing_enabled        = 1;  // effective = configured AND runtime
+    bool   external_routing_config_enabled = 2;
+    string external_routing_updated_by     = 3;  // principal of the last runtime change
+    string external_routing_reason         = 4;
+    repeated ProviderControl providers     = 5;
+}
+
+message ProviderControl {
+    string provider_id    = 1;
+    bool   enabled        = 2;  // effective = configured AND runtime
+    bool   config_enabled = 3;
+    string updated_by     = 4;
+    string reason         = 5;
+    bool   healthy        = 6;  // last health probe (observed by the answering replica)
+    bool   circuit_open   = 7;  // circuit breaker (observed by the answering replica)
+}
+
 // ─── Enumerations ────────────────────────────────────────────────────────────
 
 // Operation enumerates the supported GPU workload types.
