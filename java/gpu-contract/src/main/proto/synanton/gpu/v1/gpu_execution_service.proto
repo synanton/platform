@@ -49,6 +49,14 @@ service GPUExecutionService {
     // GetModels returns available models for the given operation and provider.
     // Used by the primary platform for model selection and tracing.
     rpc GetModels(GetModelsRequest) returns (GetModelsResponse);
+
+    // GetResponse retrieves a stored Responses API response object (Plan §4.6).
+    // NOT_FOUND if unknown, deleted, or owned by a tenant the caller may not act for.
+    rpc GetResponse(GetResponseRequest) returns (StoredResponse);
+
+    // DeleteResponse deletes a stored response (the object is purged; later GetResponse
+    // returns NOT_FOUND). Same visibility rules as GetResponse.
+    rpc DeleteResponse(DeleteResponseRequest) returns (DeleteResponseResponse);
 }
 
 // GPUControlService is the GPU-7 routing-control API (Deployment Plan §32/§33/§38,
@@ -103,6 +111,10 @@ enum Operation {
     SYNTHESIZE = 1;  // LLM text generation via /v1/chat/completions
     EMBED      = 2;  // Dense vector embedding via /v1/embeddings
     RERANK     = 3;  // Cross-encoder reranking
+    // RESPOND: OpenAI Responses API "create" (GPU-7; Deployment Plan §4.6). payload is
+    // a Responses API request body; result is the response object, whose "id" is a
+    // Gateway-assigned response ID (resp_…) usable with GetResponse/DeleteResponse.
+    RESPOND    = 4;
 }
 
 // Provider enumerates the supported inference providers.
@@ -223,6 +235,27 @@ message ExecutionChunk {
         // Final message of the stream: exactly once, always last.
         ExecutionResponse terminal = 4;
     }
+}
+
+message GetResponseRequest {
+    string response_id = 1;
+}
+
+message StoredResponse {
+    string response_id    = 1;
+    string execution_id   = 2;
+    string request_id     = 3;
+    ExecutionState state  = 4;
+    bytes  response       = 5;  // Responses API response object (JSON), logical model ID
+}
+
+message DeleteResponseRequest {
+    string response_id = 1;
+}
+
+message DeleteResponseResponse {
+    string response_id = 1;
+    bool   deleted     = 2;
 }
 
 message CancelRequest {
