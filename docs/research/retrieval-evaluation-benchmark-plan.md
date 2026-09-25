@@ -93,8 +93,8 @@ Config-driven via `synanton-llm-client`, no new SDK integration required for the
 | Logical model (GPU-7 catalog) | Provider model (never exposed downstream) | Native dim | Context | Notes |
 |---|---|---|---|---|
 | `synanton-free-embedding` | `nvidia/nemotron-3-embed-1b:free` | 2048 | 32k | Primary GPU-7 arm (already in `gateway-external.yaml`) |
-| `synanton-free-embedding-nemotron-vl` | `nvidia/llama-nemotron-embed-vl-1b-v2:free` | 2048 (G0) | 131k | Second free arm for RQ4 |
-| `synanton-free-embedding-lfm` | `liquid/lfm-2.5-embedding-350m:free` | 1024 (G0) | **512 tokens** | Only valid where every chunk fits in 512 tokens; otherwise excluded, not silently truncated |
+| `synanton-free-embedding-nemotron-vl` | `nvidia/llama-nemotron-embed-vl-1b-v2:free` | 2048 (G0) | 131k | Second free arm for RQ4 (catalog: G3) |
+| `synanton-free-embedding-lfm` | `liquid/lfm-2.5-embedding-350m:free` | 1024 (G0) | **512 tokens** | Catalog: G3. Only valid where every chunk fits in 512 tokens; otherwise excluded, not silently truncated |
 
 Two constraints follow from the current code, both verified: Lucene 9.11.1 (`gradle/libs.versions.toml`) caps `KnnFloatVectorField` at **1024 dims** by default, and `synquest`'s `synquest.embedding.dim` is hard-coded to `768` (`java/synquest/src/main/resources/application.yml`). A 2048-dim arm therefore needs either a cut to ≤1024 dims plus L2 re-normalisation, or a per-field codec override raising the dimension cap. **G0 settled this:** every arm runs at 1024, cut client-side (§6 Phase B1-G, G0 findings). The chosen reduction is recorded in the run record's `embedding_model` field (e.g. `synanton-free-embedding@1024`).
 
@@ -299,7 +299,7 @@ Recall is identical (expected — every gold query's answer lives in a document 
 | G0 | **Done (2026-09-25)** — findings below. Read the key's rate limits (`GET /api/v1/key`; key never printed). One `EMBED` per free model via `tools/gpu7-check` to record native dim, whether the provider honours `dimensions`, and whether truncating to 1024/768 + re-normalising preserves neighbour order on a handful of gold chunks (Matryoshka check). Output: a short table appended to this section; decides the dimension per arm. | gpu-runtime tools |
 | G1 | **Done (2026-09-25)** — shared fail-closed gRPC embed client (`java/gpu-client`) + opt-in `gpu-plane` profile in `synquest`/`synflux`; details below the table. | platform |
 | G2 | **Done (2026-09-25)** — `EMBED_DIM` + `EMBED_TRUNCATE_DIM` in `synquest`, one truncation path for index build and query, startup validation, mismatch and coverage reporting; details below the table. | platform |
-| G3 | **Catalog + tenants.** Add `synanton-free-embedding-nemotron-vl` and `synanton-free-embedding-lfm` to `gateway-external.yaml`; authorise benchmark tenants (`rb-fixed-g`, `rb-semantic-g`, one pair per embedding arm) for `synanton-platform`. `tools/gpu7-package-check.py` and `gpu7-check` stay green. | gpu-runtime |
+| G3 | **Done (2026-09-25)** — two more free embedding arms in the GPU-7 catalog, and a least-privilege `synanton-benchmark` principal for the six benchmark tenants; live-verified through the gateway. Details below the table. | gpu-runtime |
 | G4 | **Harness.** `retrieval-eval` gains: a query-embedding cache keyed by (logical model, dim, query sha256) so re-scoring a run costs no requests; a request budget + throttle (default ≤ 15 req/min, hard stop at a configured daily budget) with resumable ingest; run-record fields `gpu_plane: gpu-7`, `provider_mode: external-free`, `embedding_dim`, `embed_requests`, `spend_before`/`spend_after`; and a run-validity check (any `embed_skipped` ⇒ invalid). | platform |
 | G5 | **Run T02-G/T03-G/T04-G** with `synanton-free-embedding`: re-ingest `rb-fixed-g`/`rb-semantic-g` (fresh tenants, new chunk UUIDs ⇒ gold chunk ids re-annotated with `retrieval-eval inspect`), then T02-G (`rb-fixed-g`, `--top-k-lexical 1`), T03-G (`rb-fixed-g`, full hybrid), T04-G (`rb-semantic-g`, full hybrid — the first *real* hybrid T04). Records `results/T02-G.yaml`, `T03-G.yaml`, `T04-G.yaml`. | platform |
 | G6 | **RQ4 on free models (B3 early subset).** Repeat T03-G/T04-G for the other free arms that pass G0. `lfm` runs only if no chunk in the tenant exceeds 512 tokens (checked, recorded); otherwise reported as excluded. | platform |
@@ -326,6 +326,27 @@ Recall is identical (expected — every gold query's answer lives in a document 
 - **Bug found and fixed along the way:** a second constructor on the `SynquestProperties.Embedding` record makes Spring Boot drop every `synquest.embedding.*` property silently, falling back to the built-in defaults. The record keeps a single constructor, and `GpuPlaneProfileWiringTest` now asserts that binding works.
 - **Tests:** `EmbeddingShapeTest` (5), `LuceneIndexBuilderDimensionTest` (3: a real Lucene index built with 1024-dim vectors from 2048-dim rows, mismatch counting, and failure under `required`), plus new cases in `QueryEmbedderTenantTest` and `GpuPlaneProfileWiringTest` (binding, and startup failure at `dim=2048`).
 - **Switching an arm's dimension:** set `EMBED_DIM`/`EMBED_TRUNCATE_DIM` on `synquest`, restart, `POST /reindex?tenant=…`, then check `/index/stats` for `vector_docs == doc_count`.
+
+**G3 implementation notes (2026-09-25; gpu-runtime `3bf36bb`).**
+- **Catalog** (`deployments/external/config/gateway-external.yaml`, EMBED):
+  - `synanton-free-embedding-nemotron-vl` → `nvidia/llama-nemotron-embed-vl-1b-v2:free`, `embedding-dim: 2048`.
+  - `synanton-free-embedding-lfm` → `liquid/lfm-2.5-embedding-350m:free`, `embedding-dim: 1024`, `max-input-tokens: 512`.
+  - Both are free and pass the gateway spend guard (`allowed-model-pattern: ".*:free"`). `max-input-tokens` is advertised in `GetModels`, not enforced: an over-long chunk to lfm fails upstream (`upstream_provider_error`), and fail-closed ingest then fails that document. That makes the G6 chunk-size check mandatory for lfm.
+- **Principal `synanton-benchmark`.** It is limited to exactly the benchmark tenants, never `*` and without admin role:
+
+  | Embedding arm (logical id) | Fixed-chunking tenant | Semantic-chunking tenant |
+  |---|---|---|
+  | `synanton-free-embedding` | `rb-fixed-g` | `rb-semantic-g` |
+  | `synanton-free-embedding-nemotron-vl` | `rb-fixed-g-vl` | `rb-semantic-g-vl` |
+  | `synanton-free-embedding-lfm` | `rb-fixed-g-lfm` | `rb-semantic-g-lfm` |
+
+  Benchmark runs use its certificate, not the platform's `*`/admin one: `GPU_TLS_CERT_PATH`/`GPU_TLS_KEY_PATH` → `certs/synanton-benchmark.{crt,key}`, which `gen-certs.sh` now issues by default. Gateway audit and cost-ledger rows therefore separate benchmark traffic from platform traffic.
+- **Budget, as defence in depth:** `tenant-daily-usd: 0.000001` for each benchmark tenant. Free calls (cost 0) never reach it, and a priced call would exhaust it at once (`budget_exceeded`).
+- **Checks:**
+  - `ExternalDeploymentConfigTest` (gpu-gateway) binds the shipped config with the real arm enabled, then runs `GatewayStartupValidator` and the `ProviderRouter` spend guard. It also asserts the arms, dims and principal scope.
+  - `tools/gpu7-check` now EMBEDs every real arm through the gateway and checks vector length == catalog `embedding-dim` (live: 2048 / 2048 / 1024). It also checks the benchmark principal: allowed for `rb-fixed-g`, `tenant_not_allowed` for other tenants.
+  - `tools/gpu7-package-check.py` rejects non-admin principals holding `*`.
+- **Verified:** gpu-runtime `./gradlew build` (170 tests, 0 failed); `gpu7-check --compose` 20/20 with spend unchanged ($0.00052275); `gpu7-package-check.py --live` 16/16 (packaged smoke 27/27).
 
 **G0 findings (2026-09-25).** Tool: `gpu-runtime/tools/gpu7-check/embed_probe.py`. Raw record: `demo-data/eval/retrieval-benchmark/results/G0-embed-probe.json`. 6 free requests, spend unchanged at $0.00052275.
 
@@ -430,7 +451,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | 7 | Graph rank-fusion | `java/synquest` and/or `java/gateway` (decided during B2 implementation) | Not started (Phase B2) |
 | 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); `T03.yaml` (2026-09-18) superseded/invalid; T02-G/T03-G/T04-G planned (§6 Phase B1-G); bge-base T02/T03 blocked on GPU-5 |
 | 11 | Shared gRPC embed client (fail-closed) + `gpu-plane` profile in `synquest`/`synflux`; configurable embedding dim | `java/` (new shared module), `java/synquest`, `java/synflux` | Done (G1 + G2, 2026-09-25) |
-| 12 | GPU-7 free embedding catalog arms + benchmark tenants | `gpu-runtime/deployments/external/config/gateway-external.yaml` | Planned (B1-G G3) |
+| 12 | GPU-7 free embedding catalog arms + benchmark tenants | `gpu-runtime/deployments/external/config/gateway-external.yaml` | Done (G3, 2026-09-25; gpu-runtime `3bf36bb`) |
 | 13 | Harness: query-embedding cache, request throttle/budget, GPU-7 run-record fields, validity check | `tools/retrieval-eval/` | Planned (B1-G G4) |
 | 9 | Decision memo | `docs/research/retrieval-evaluation-benchmark-results.md` (after B5) | Not started |
 | 10 | 3 real structurally-rich PDFs added to corpus | `demo-data/documents/{mental-health-report-2010,outsourcing-agreement,sks8300-web-interface-manual}.pdf` | Done (2026-09-20); gold queries against them not yet written |
