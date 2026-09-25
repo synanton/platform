@@ -11,6 +11,8 @@ synquest:
     # nemotron needs truncation (2048 -> 1024), lfm is native 1024 (truncation is a no-op).
     dim: ${EMBED_DIM:1024}
     truncate-dim: ${EMBED_TRUNCATE_DIM:1024}
+    # Re-running benchmark queries must not re-pay free-tier requests (G4); cleared on restart.
+    query-cache-size: ${EMBED_QUERY_CACHE_SIZE:10000}
     # Fail closed: a failed query embedding fails the search (HTTP 503), never a silent BM25 fallback.
     required: ${EMBED_REQUIRED:true}
 
@@ -18,6 +20,8 @@ gpu-plane:
   endpoint: ${GPU_PLANE_ENDPOINT:gpu-gateway:9090}
   model-version: ${GPU_PLANE_MODEL_VERSION:latest}
   timeout-ms: ${GPU_PLANE_TIMEOUT_MS:60000}
+  # Client-side pacing under the OpenRouter free-tier per-minute limit (~20/min); 0 = unlimited.
+  max-requests-per-minute: ${GPU_PLANE_MAX_RPM:15}
   tls:
     enabled: ${GPU_TLS_ENABLED:true}
     ca-path: ${GPU_TLS_CA_PATH:}
@@ -27,3 +31,4 @@ gpu-plane:
   retry:
     max-attempts: ${GPU_PLANE_RETRY_MAX_ATTEMPTS:3}
     backoff-base-ms: ${GPU_PLANE_RETRY_BACKOFF_MS:500}
+    rate-limited-backoff-ms: ${GPU_PLANE_RATE_LIMITED_BACKOFF_MS:15000}

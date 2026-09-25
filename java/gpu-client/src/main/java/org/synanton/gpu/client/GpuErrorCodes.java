@@ -59,10 +59,20 @@ public final class GpuErrorCodes {
         return e.getStatus().getCode() == Status.Code.UNAVAILABLE;
     }
 
-    /** A failed execution that may succeed on retry: retryable MODEL_NOT_READY / capacity. */
+    /** Canonical code of a provider 429 (gpu-runtime OpenAiProviderRuntime): retryable after a pause. */
+    public static final String PROVIDER_RATE_LIMITED = "provider_rate_limited";
+
+    /**
+     * A failed execution that may succeed on retry: retryable MODEL_NOT_READY, capacity, or
+     * a provider rate limit ({@value #PROVIDER_RATE_LIMITED}; the provider did not accept
+     * the request, so a retry never executes it twice).
+     */
     public static boolean isTransient(ExecutionResponse response) {
         if (!response.hasError() || !response.getError().getRetryable()) {
             return false;
+        }
+        if (PROVIDER_RATE_LIMITED.equals(response.getError().getCode())) {
+            return true;
         }
         ErrorReason r = response.getError().getReason();
         return r == ErrorReason.MODEL_NOT_READY || r == ErrorReason.GPU_CAPACITY_EXCEEDED;

@@ -300,7 +300,7 @@ Recall is identical (expected — every gold query's answer lives in a document 
 | G1 | **Done (2026-09-25)** — shared fail-closed gRPC embed client (`java/gpu-client`) + opt-in `gpu-plane` profile in `synquest`/`synflux`; details below the table. | platform |
 | G2 | **Done (2026-09-25)** — `EMBED_DIM` + `EMBED_TRUNCATE_DIM` in `synquest`, one truncation path for index build and query, startup validation, mismatch and coverage reporting; details below the table. | platform |
 | G3 | **Done (2026-09-25)** — two more free embedding arms in the GPU-7 catalog, and a least-privilege `synanton-benchmark` principal for the six benchmark tenants; live-verified through the gateway. Details below the table. | gpu-runtime |
-| G4 | **Harness.** `retrieval-eval` gains: a query-embedding cache keyed by (logical model, dim, query sha256) so re-scoring a run costs no requests; a request budget + throttle (default ≤ 15 req/min, hard stop at a configured daily budget) with resumable ingest; run-record fields `gpu_plane: gpu-7`, `provider_mode: external-free`, `embedding_dim`, `embed_requests`, `spend_before`/`spend_after`; and a run-validity check (any `embed_skipped` ⇒ invalid). | platform |
+| G4 | **Done (2026-09-25)** — harness pacing, daily request budget, spend check via gpu-runtime, run validity, `gpu_plane` record fields, `rescore`; plus a synquest query-embedding cache and GPU-plane client pacing and 429 retry. Details below the table. | platform |
 | G5 | **Run T02-G/T03-G/T04-G** with `synanton-free-embedding`: re-ingest `rb-fixed-g`/`rb-semantic-g` (fresh tenants, new chunk UUIDs ⇒ gold chunk ids re-annotated with `retrieval-eval inspect`), then T02-G (`rb-fixed-g`, `--top-k-lexical 1`), T03-G (`rb-fixed-g`, full hybrid), T04-G (`rb-semantic-g`, full hybrid — the first *real* hybrid T04). Records `results/T02-G.yaml`, `T03-G.yaml`, `T04-G.yaml`. | platform |
 | G6 | **RQ4 on free models (B3 early subset).** Repeat T03-G/T04-G for the other free arms that pass G0. `lfm` runs only if no chunk in the tenant exceeds 512 tokens (checked, recorded); otherwise reported as excluded. | platform |
 | G7 | **Report + docs.** Results table in this section; §9 deliverable 8; `gpu-plane-integration-tickets.md`; README status. | platform |
@@ -333,6 +333,23 @@ Recall is identical (expected — every gold query's answer lives in a document 
   - `synanton-free-embedding-lfm` → `liquid/lfm-2.5-embedding-350m:free`, `embedding-dim: 1024`, `max-input-tokens: 512`.
   - Both are free and pass the gateway spend guard (`allowed-model-pattern: ".*:free"`). `max-input-tokens` is advertised in `GetModels`, not enforced: an over-long chunk to lfm fails upstream (`upstream_provider_error`), and fail-closed ingest then fails that document. That makes the G6 chunk-size check mandatory for lfm.
 - **Principal `synanton-benchmark`.** It is limited to exactly the benchmark tenants, never `*` and without admin role:
+
+**G4 implementation notes (2026-09-25).**
+- **Query-embedding cache (synquest).** The plan put it in the harness, but the harness never embeds anything; synquest does. So it lives in synquest as `QueryEmbeddingCache`:
+  - an LRU keyed by (tenant, logical model, query text), holding the vector after `EmbeddingShape.fit`;
+  - `synquest.embedding.query-cache-size` = `EMBED_QUERY_CACHE_SIZE`: 0 (off) by default, 10,000 under `gpu-plane`;
+  - failures are never cached, and the tenant is part of the key, so the GPU plane still authorizes every tenant;
+  - `query_usage.embed_cached` says whether a request was made.
+- **Pacing and 429 (gpu-client).** `gpu-plane.max-requests-per-minute` (`GPU_PLANE_MAX_RPM`, 15 in both `gpu-plane` profiles) paces every GPU-plane call, including ingest bursts inside synflux, which the harness can't pace. A provider 429 (`provider_rate_limited`, retryable) is now retried after `rate-limited-backoff-ms` (15 s × attempt). The gateway also counts 429s toward its circuit breaker, so pacing is what keeps the circuit closed.
+- **Harness (`tools/retrieval-eval`):** `evaluate --gpu-plane gpu-7` adds:
+  - pacing: 15 searches/min;
+  - a daily request budget: 900 by default, with a local ledger in `.cache/`, measured for searches and estimated for ingest. The run stops before the limit; a stopped run is invalid;
+  - spend snapshots before and after, from `gpu-runtime/tools/gpu7-check/gpu7_check.py --usage` (new flag; it prints only spend and quota). The platform never holds the key;
+  - validity rules (`validity.py`): invalid on any `embed_skipped`, failed or 503 query, incomplete or mismatched index coverage (`/index/stats`, G2), a spend increase, or budget abort;
+  - record sections `gpu_plane`, `latency_breakdown` (query-embed p50/p95, plan §8) and `validity`. Invalid runs are written to `results/invalid/` and exit with code 2.
+  - Other additions: `ingest --retries N` (completed documents are skipped, so a re-run only re-pays failed ones), `rescore` (new gold, no searches, from `<run>.hits.json`) and `budget` (ledger + provider quota).
+- **Validity applies to legacy runs too.** Without `--gpu-plane`, a "hybrid" run whose queries all report `embed_skipped` is invalid. That is exactly the superseded `T03.yaml`. Existing T01/T04 records are unchanged. T04 as recorded would now be flagged, as §6 Phase B1 already says: it was functionally BM25-only.
+- **Tests:** harness 39 (`tests/test_gpu_plane_run.py` adds 22: ledger, throttle, spend parsing, every validity rule, end-to-end `evaluate`/`rescore` with synquest faked). gpu-client 21 (pacing, 429 retry). synquest `QueryEmbedderTenantTest` gains three cache cases. Platform `./gradlew check`: 401 tests, 0 failed.
 
   | Embedding arm (logical id) | Fixed-chunking tenant | Semantic-chunking tenant |
   |---|---|---|
@@ -376,7 +393,7 @@ Recall is identical (expected — every gold query's answer lives in a document 
 - **lfm's 512-token window isn't hit by this corpus** (largest passage about 850 characters, roughly 200 tokens). G6 still checks real `synflux` chunk token counts, because the PDF sections may be longer.
 - **Caveat.** This is a sanity check on a tiny sample (9 scored queries, 86 passages, answer-marker gold). It shows truncation isn't destructive; it doesn't rank the models. Model comparison is G6's job, on the real pipeline's chunks and annotated gold chunk ids.
 
-**Request budget (G0 actuals).** The quota is 1,000 free requests/day. The binding limit is now the per-minute rate: OpenRouter documents about 20/min for free models, so G4's default throttle (≤ 15/min) stays. Ingest is ~⌈chunks/32⌉ requests per tenant (`synflux` `batch-size: 32`; embeddings are cached in `ingestion-cache` per tenant, chunk hash and model, so resumed ingests don't re-pay); queries are 10 per run, and the G4 query cache means one pass per (tenant, model, dim) serves every run on that tenant. The whole of G5 and G6 fits comfortably in one day's quota: the probe embedded 96 inputs in a single request, so each tenant ingest is a handful of requests. The throttle stops a run rather than let it hit HTTP 429 partway.
+**Request budget (G0 actuals).** The quota is 1,000 free requests/day. The binding limit is now the per-minute rate: OpenRouter documents about 20/min for free models, so G4's default pacing (15/min, both searches and GPU-plane client calls) stays. Ingest is ~⌈chunks/32⌉ requests per tenant (`synflux` `batch-size: 32`; embeddings are cached in `ingestion-cache` per tenant, chunk hash and model, so resumed ingests don't re-pay); queries are 10 per run, and the G4 query cache means one pass per (tenant, model, dim) serves every run on that tenant. The whole of G5 and G6 fits comfortably in one day's quota: the probe embedded 96 inputs in a single request, so each tenant ingest is a handful of requests. The throttle stops a run rather than let it hit HTTP 429 partway.
 
 **What B1-G does not do.**
 - **Rerank (T10/T11):** OpenRouter has no free rerank model; GPU-7 returns `capability_not_supported` for `RERANK` on the real arm. Reranking stays on GPU-5 (`synanton-qwen3-reranker-0.6b`). The GPU-7 mock reranker is for wiring tests only and is never a benchmark row.
@@ -452,7 +469,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); `T03.yaml` (2026-09-18) superseded/invalid; T02-G/T03-G/T04-G planned (§6 Phase B1-G); bge-base T02/T03 blocked on GPU-5 |
 | 11 | Shared gRPC embed client (fail-closed) + `gpu-plane` profile in `synquest`/`synflux`; configurable embedding dim | `java/` (new shared module), `java/synquest`, `java/synflux` | Done (G1 + G2, 2026-09-25) |
 | 12 | GPU-7 free embedding catalog arms + benchmark tenants | `gpu-runtime/deployments/external/config/gateway-external.yaml` | Done (G3, 2026-09-25; gpu-runtime `3bf36bb`) |
-| 13 | Harness: query-embedding cache, request throttle/budget, GPU-7 run-record fields, validity check | `tools/retrieval-eval/` | Planned (B1-G G4) |
+| 13 | Harness: query-embedding cache, request throttle/budget, GPU-7 run-record fields, validity check | `tools/retrieval-eval/` | Done (G4, 2026-09-25) |
 | 9 | Decision memo | `docs/research/retrieval-evaluation-benchmark-results.md` (after B5) | Not started |
 | 10 | 3 real structurally-rich PDFs added to corpus | `demo-data/documents/{mental-health-report-2010,outsourcing-agreement,sks8300-web-interface-manual}.pdf` | Done (2026-09-20); gold queries against them not yet written |
 

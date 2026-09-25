@@ -35,6 +35,48 @@ class SearchResult:
     hits: list[SearchHit]
     latency_ms: float
     query_usage_present: bool
+    # From synquest's query_usage / trace. embed_skipped=True means dense retrieval never
+    # ran for this query; embed_cached=True means no embedding request was made (query cache).
+    embed_skipped: bool = False
+    embed_cached: bool = False
+    embed_ms: float | None = None
+
+
+class SearchUnavailable(RuntimeError):
+    """synquest returned 503. Under synquest.embedding.required this means the query
+    embedding or dense search failed (fail closed), not "BM25-only results"."""
+
+
+@dataclass(frozen=True)
+class IndexStats:
+    doc_count: int
+    embedding_model: str | None
+    embedding_dim: int | None
+    vector_docs: int | None
+    dim_mismatches: int | None
+    missing_vectors: int | None
+
+    @property
+    def fully_vectorised(self) -> bool | None:
+        """None when synquest didn't build the index in this process (no coverage report)."""
+        if self.vector_docs is None:
+            return None
+        return self.vector_docs == self.doc_count and not self.dim_mismatches and not self.missing_vectors
+
+
+def index_stats(synquest_base_url: str, tenant: str) -> IndexStats:
+    """GET /index/stats: doc count plus the embedding coverage report of the last build (G2)."""
+    response = requests.get(f"{synquest_base_url}/index/stats", params={"tenant": tenant}, timeout=30)
+    response.raise_for_status()
+    body = response.json()
+    return IndexStats(
+        doc_count=body.get("doc_count", 0),
+        embedding_model=body.get("embedding_model"),
+        embedding_dim=body.get("embedding_dim"),
+        vector_docs=body.get("vector_docs"),
+        dim_mismatches=body.get("dim_mismatches"),
+        missing_vectors=body.get("missing_vectors"),
+    )
 
 
 def search(
@@ -51,12 +93,9 @@ def search(
     the T01 (BM25-only)/T02 (dense-only) matrix rows (plan §3.4) - pass `0` for
     the side to suppress. Omit both (`None`) for full hybrid (T03/T04).
 
-    `latency_ms` is measured client-side around the HTTP call - it is a
-    coarser number than synquest's own internal SearchTrace
-    (embedMs/denseMs/lexicalMs/fusionMs), which is not yet exposed on the
-    response (tracked as new work in
-    docs/research/retrieval-evaluation-benchmark-plan.md §2). Use this for
-    end-to-end p95 latency (§5) until that's wired through.
+    `latency_ms` is measured client-side around the HTTP call (end-to-end p95,
+    §5). `embed_ms` is synquest's own `trace.query_embed_ms`, reported
+    separately because on GPU-7 it includes the WAN round trip (§8).
     """
     request_body = {"tenant": tenant, "query": query, "top_k": top_k}
     if top_k_dense is not None:
@@ -71,8 +110,12 @@ def search(
         timeout=30,
     )
     elapsed_ms = (time.monotonic() - started) * 1000
+    if response.status_code == 503:
+        raise SearchUnavailable(f"synquest 503 for tenant={tenant}: {response.text[:300]}")
     response.raise_for_status()
     body = response.json()
+    usage = body.get("query_usage") or {}
+    trace = body.get("trace") or {}
 
     hits = [
         SearchHit(
@@ -91,4 +134,7 @@ def search(
         hits=hits,
         latency_ms=elapsed_ms,
         query_usage_present=body.get("query_usage") is not None,
+        embed_skipped=bool(usage.get("embed_skipped", False)),
+        embed_cached=bool(usage.get("embed_cached", False)),
+        embed_ms=trace.get("query_embed_ms", usage.get("query_embed_ms")),
     )

@@ -12,6 +12,14 @@ public class GpuPlaneClientProperties {
     private int timeoutMs = 120_000;
     /** Tenant used by the tenant-less {@code LlmClient.embed(request)}; null means such calls fail. */
     private String defaultTenant;
+    /**
+     * Client-side request pacing: at most this many GPU-plane calls per minute from this
+     * client (0 = unlimited). Retries count. It keeps a bulk job (ingest, benchmark
+     * evaluation) under a provider's per-minute limit, e.g. OpenRouter free tier ≈ 20/min.
+     * A provider 429 also trips the gateway's circuit breaker, so bursting would soon fail
+     * closed with circuit_open.
+     */
+    private int maxRequestsPerMinute;
     private Tls tls = new Tls();
     private Retry retry = new Retry();
 
@@ -39,7 +47,11 @@ public class GpuPlaneClientProperties {
     public static class Retry {
         private int maxAttempts = 3;
         private int backoffBaseMs = 500;
+        /** Minimum wait before retrying provider_rate_limited (a provider 429). */
+        private int rateLimitedBackoffMs = 15_000;
 
+        public int getRateLimitedBackoffMs() { return rateLimitedBackoffMs; }
+        public void setRateLimitedBackoffMs(int rateLimitedBackoffMs) { this.rateLimitedBackoffMs = rateLimitedBackoffMs; }
         public int getMaxAttempts() { return maxAttempts; }
         public void setMaxAttempts(int maxAttempts) { this.maxAttempts = maxAttempts; }
         public int getBackoffBaseMs() { return backoffBaseMs; }
@@ -52,6 +64,8 @@ public class GpuPlaneClientProperties {
     public void setModelVersion(String modelVersion) { this.modelVersion = modelVersion; }
     public int getTimeoutMs() { return timeoutMs; }
     public void setTimeoutMs(int timeoutMs) { this.timeoutMs = timeoutMs; }
+    public int getMaxRequestsPerMinute() { return maxRequestsPerMinute; }
+    public void setMaxRequestsPerMinute(int maxRequestsPerMinute) { this.maxRequestsPerMinute = maxRequestsPerMinute; }
     public String getDefaultTenant() { return defaultTenant; }
     public void setDefaultTenant(String defaultTenant) { this.defaultTenant = defaultTenant; }
     public Tls getTls() { return tls; }

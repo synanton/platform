@@ -7,5 +7,7 @@ public record QueryUsage(
         @JsonProperty("query_embed_ms") long queryEmbedMs,
         @JsonProperty("query_input_chars") long queryInputChars,
         @JsonProperty("query_input_tokens") int queryInputTokens,
-        @JsonProperty("embed_skipped") boolean embedSkipped
+        @JsonProperty("embed_skipped") boolean embedSkipped,
+        /** true when the query vector came from the query-embedding cache (no embedding request made). */
+        @JsonProperty("embed_cached") boolean embedCached
 ) {}

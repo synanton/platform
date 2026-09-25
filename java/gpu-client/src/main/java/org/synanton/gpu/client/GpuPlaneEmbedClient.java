@@ -45,6 +45,7 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
     private final GpuEmbedCodec codec;
     private final ManagedChannel ownedChannel;
     private final GPUExecutionServiceGrpc.GPUExecutionServiceBlockingStub stub;
+    private final RequestPacer pacer;
 
     /** Builds (and owns) the channel. Invalid mTLS material fails here, at startup. */
     public GpuPlaneEmbedClient(GpuPlaneClientProperties props, ObjectMapper mapper) {
@@ -61,7 +62,9 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
         this.codec = new GpuEmbedCodec(mapper);
         this.ownedChannel = owned ? (ManagedChannel) channel : null;
         this.stub = GPUExecutionServiceGrpc.newBlockingStub(channel);
-        log.info("GPU plane embed client → {} (mTLS={}, fail-closed)", props.getEndpoint(), props.getTls().isEnabled());
+        this.pacer = new RequestPacer(props.getMaxRequestsPerMinute());
+        log.info("GPU plane embed client → {} (mTLS={}, fail-closed, max {} req/min)", props.getEndpoint(),
+                props.getTls().isEnabled(), props.getMaxRequestsPerMinute() > 0 ? props.getMaxRequestsPerMinute() : "∞");
     }
 
     @Override
@@ -97,6 +100,7 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
 
         int maxAttempts = Math.max(1, props.getRetry().getMaxAttempts());
         for (int attempt = 1; ; attempt++) {
+            pacer.acquire();
             long start = System.currentTimeMillis();
             ExecutionResponse response;
             try {
@@ -124,7 +128,11 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
             }
             if (GpuErrorCodes.isTransient(response) && attempt < maxAttempts) {
                 retryLog(exec, code, attempt, maxAttempts);
-                sleep(backoff(attempt));
+                long wait = backoff(attempt);
+                if (GpuErrorCodes.PROVIDER_RATE_LIMITED.equals(code)) {
+                    wait = Math.max(wait, (long) props.getRetry().getRateLimitedBackoffMs() * attempt);
+                }
+                sleep(wait);
                 continue;
             }
             log.warn("GPU plane EMBED failed: state={} code={} reason={} upstream_request_id={} request={} tenant={} model={}",

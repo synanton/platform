@@ -70,6 +70,55 @@ class QueryEmbedderTenantTest {
     }
 
     @Test
+    void cacheServesRepeatedQueriesPerTenantWithoutAnotherRequest() {
+        int[] calls = {0};
+        TenantAwareLlmClient client = new TenantAwareLlmClient() {
+            @Override public EmbedResponse embed(EmbedRequest r, String tenant) { calls[0]++; return new EmbedResponse(List.of(new float[]{3f, 4f})); }
+            @Override public EmbedResponse embed(EmbedRequest r) { throw new AssertionError(); }
+            @Override public CompletionResponse complete(CompletionRequest r) { return null; }
+        };
+        var e = new QueryEmbedder(client, PROPS, true, new EmbeddingShape(PROPS), new QueryEmbeddingCache(10));
+
+        assertThat(e.embedForSearch("q", "rb-fixed-g").cached()).isFalse();
+        var again = e.embedForSearch("q", "rb-fixed-g");
+        assertThat(again.cached()).isTrue();
+        assertThat(again.vector()).containsExactly(0.6f, 0.8f);
+        assertThat(calls[0]).isEqualTo(1);
+        // another tenant is a cache miss: the GPU plane authorizes each tenant itself
+        assertThat(e.embedForSearch("q", "rb-semantic-g").cached()).isFalse();
+        assertThat(calls[0]).isEqualTo(2);
+    }
+
+    @Test
+    void cacheIsOffByDefaultAndEvictsLeastRecentlyUsed() {
+        var off = new QueryEmbeddingCache(0);
+        off.put("t", "m", "q", new float[]{1f});
+        assertThat(off.get("t", "m", "q")).isEmpty();
+
+        var lru = new QueryEmbeddingCache(2);
+        lru.put("t", "m", "a", new float[]{1f});
+        lru.put("t", "m", "b", new float[]{2f});
+        lru.get("t", "m", "a");
+        lru.put("t", "m", "c", new float[]{3f});
+        assertThat(lru.get("t", "m", "b")).isEmpty();
+        assertThat(lru.get("t", "m", "a")).isPresent();
+        assertThat(lru.size()).isEqualTo(2);
+    }
+
+    @Test
+    void failuresAreNotCached() {
+        int[] calls = {0};
+        LlmClient failing = new LlmClient() {
+            @Override public EmbedResponse embed(EmbedRequest r) { calls[0]++; throw new IllegalStateException("circuit_open"); }
+            @Override public CompletionResponse complete(CompletionRequest r) { return null; }
+        };
+        var e = new QueryEmbedder(failing, PROPS, true, new EmbeddingShape(PROPS), new QueryEmbeddingCache(10));
+        assertThatThrownBy(() -> e.embedForSearch("q", "t")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> e.embedForSearch("q", "t")).isInstanceOf(IllegalStateException.class);
+        assertThat(calls[0]).isEqualTo(2);
+    }
+
+    @Test
     void emptyResultIsAFailureNotAMissingVector() {
         LlmClient empty = new LlmClient() {
             @Override public EmbedResponse embed(EmbedRequest r) { return new EmbedResponse(List.of()); }

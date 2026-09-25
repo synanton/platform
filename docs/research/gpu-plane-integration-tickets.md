@@ -35,7 +35,7 @@ Once the new cluster and `gpu-runtime`'s GPU-5 deployment exist, decide how `pla
 Per `docs/research/retrieval-evaluation-benchmark-plan.md` §6 Phase B1, T01 (BM25, `rb-fixed`) and T04 (hybrid-labeled, `rb-semantic`) are done with real recorded results (`demo-data/eval/retrieval-benchmark/results/T01.yaml`, `T04.yaml`). T02/T03 are blocked, not run. Once a real embedding endpoint is reachable (via T-INT-1), run them for real using the same harness (`retrieval-eval evaluate ... --top-k-lexical 1` to isolate dense, or full hybrid for T03) and add their run records alongside the existing two.
 
 **Update (2026-09-25):** split into two parts.
-- **T-INT-2a (GPU-7, in progress: G0–G3 done 2026-09-25; G4 harness next):** T02-G/T03-G/T04-G on OpenRouter free embedding models through GPU-7 — steps G0–G7 in the benchmark plan's §6 Phase B1-G. These are separate rows, not the bge-base T02/T03.
+- **T-INT-2a (GPU-7, in progress: G0–G4 done 2026-09-25; G5 runs next):** T02-G/T03-G/T04-G on OpenRouter free embedding models through GPU-7 — steps G0–G7 in the benchmark plan's §6 Phase B1-G. These are separate rows, not the bge-base T02/T03.
 - **T-INT-2b (GPU-5, blocked on T-K8S-6a):** the original bge-base T02/T03, using the same client with the logical model set to `synanton-bge-base-embedding`.
 
 The old `results/T03.yaml` (2026-09-18, all metrics 0.0, dataset v1) is superseded and invalid.

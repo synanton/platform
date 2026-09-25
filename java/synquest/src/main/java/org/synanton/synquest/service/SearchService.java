@@ -80,9 +80,12 @@ public class SearchService {
         float[] queryVec = null;
         long embedMs = 0;
         boolean embedSkipped = false;
+        boolean embedCached = false;
         try {
             long embedStart = System.currentTimeMillis();
-            queryVec = queryEmbedder.embed(req.query(), tenant);
+            QueryEmbedder.QueryVector qv = queryEmbedder.embedForSearch(req.query(), tenant);
+            queryVec = qv.vector();
+            embedCached = qv.cached();
             embedMs = System.currentTimeMillis() - embedStart;
         } catch (Exception e) {
             if (queryEmbedder.required()) {
@@ -159,7 +162,7 @@ public class SearchService {
             long totalMs = System.currentTimeMillis() - t0;
             SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
                     searcher.generation());
-            QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped);
+            QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped, embedCached);
             return new SearchResponse(hits, trace, queryUsage);
 
         } catch (ExecutionException e) {

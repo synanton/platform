@@ -80,6 +80,7 @@ class GpuPlaneEmbedClientTest {
         p.getTls().setEnabled(false);
         p.getRetry().setMaxAttempts(3);
         p.getRetry().setBackoffBaseMs(1);
+        p.getRetry().setRateLimitedBackoffMs(1);
         return p;
     }
 
@@ -231,6 +232,34 @@ class GpuPlaneEmbedClientTest {
 
         assertThat(c.embed(REQ, "rb-fixed-g").embeddings()).hasSize(2);
         assertThat(calls.get()).isEqualTo(2);
+    }
+
+    @Test
+    void providerRateLimitIsRetriedAfterAPause() throws Exception {
+        GpuPlaneEmbedClient c = client((n, o) -> {
+            if (n == 1) failed(o, ErrorReason.EXECUTION_FAILED, GpuErrorCodes.PROVIDER_RATE_LIMITED, true);
+            else success(o, 2);
+        });
+
+        assertThat(c.embed(REQ, "rb-fixed-g").embeddings()).hasSize(2);
+        assertThat(calls.get()).isEqualTo(2);
+    }
+
+    @Test
+    void nonRetryableRateLimitFailsClosed() throws Exception {
+        GpuPlaneEmbedClient c = client((n, o) -> failed(o, ErrorReason.EXECUTION_FAILED, GpuErrorCodes.PROVIDER_RATE_LIMITED, false));
+        assertThatThrownBy(() -> c.embed(REQ, "rb-fixed-g")).isInstanceOf(GpuPlaneException.class);
+        assertThat(calls.get()).isEqualTo(1);
+    }
+
+    @Test
+    void pacerSpacesCallsToTheConfiguredRate() {
+        RequestPacer pacer = new RequestPacer(600); // one slot per 100 ms
+        long start = System.nanoTime();
+        for (int i = 0; i < 4; i++) pacer.acquire();
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+        assertThat(elapsedMs).isBetween(280L, 2_000L); // 3 intervals after the first free slot
+        assertThat(new RequestPacer(0).acquire()).isZero();
     }
 
     // ─── mTLS ────────────────────────────────────────────────────────────────

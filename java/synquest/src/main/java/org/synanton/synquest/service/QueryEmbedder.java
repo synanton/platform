@@ -16,6 +16,7 @@ public class QueryEmbedder {
     private final String model;
     private final boolean required;
     private final EmbeddingShape shape;
+    private final QueryEmbeddingCache cache;
 
     /**
      * @param required {@code synquest.embedding.required}: when true, a failed query embedding
@@ -27,16 +28,21 @@ public class QueryEmbedder {
     public QueryEmbedder(LlmClient llmClient,
                          org.synanton.synquest.config.SynquestProperties props,
                          @Value("${synquest.embedding.required:false}") boolean required,
-                         EmbeddingShape shape) {
+                         EmbeddingShape shape,
+                         QueryEmbeddingCache cache) {
         this.llmClient = llmClient;
         this.model = props.embedding().model();
         this.required = required;
         this.shape = shape;
+        this.cache = cache;
     }
 
     public QueryEmbedder(LlmClient llmClient, org.synanton.synquest.config.SynquestProperties props, boolean required) {
-        this(llmClient, props, required, new EmbeddingShape(props));
+        this(llmClient, props, required, new EmbeddingShape(props), new QueryEmbeddingCache(0));
     }
+
+    /** A query vector, and whether it came from {@link QueryEmbeddingCache} (no GPU-plane request). */
+    public record QueryVector(float[] vector, boolean cached) {}
 
     public float[] embed(String query) {
         return embed(query, null);
@@ -44,13 +50,23 @@ public class QueryEmbedder {
 
     /** Tenant-scoped embedding: the GPU plane authorizes tenant_id; HTTP clients ignore it. */
     public float[] embed(String query, String tenant) {
+        return embedForSearch(query, tenant).vector();
+    }
+
+    public QueryVector embedForSearch(String query, String tenant) {
+        var hit = cache.get(tenant, model, query);
+        if (hit.isPresent()) {
+            return new QueryVector(hit.get(), true);
+        }
         var response = TenantAwareLlmClient.embed(llmClient, new EmbedRequest(model, List.of(query)), tenant);
         if (response == null || response.embeddings() == null || response.embeddings().isEmpty()) {
             throw new IllegalStateException("query embedding returned no vector");
         }
         // Same truncation + normalisation as the index build (EmbeddingShape); a vector that
         // can't be made index-sized throws, so it's never silently dropped from the dense side.
-        return shape.fit(response.embeddings().get(0));
+        float[] v = shape.fit(response.embeddings().get(0));
+        cache.put(tenant, model, query, v);
+        return new QueryVector(v, false);
     }
 
     public boolean required() {

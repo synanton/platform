@@ -32,6 +32,8 @@ synquest:
     # 0 = off; else must equal dim: cut longer (Matryoshka) vectors to dim + L2-renormalise,
     # identically at index build and query time. Ingest stores native vectors.
     truncate-dim: ${EMBED_TRUNCATE_DIM:0}
+    # LRU query-vector cache per (tenant, model, query); 0 = off.
+    query-cache-size: ${EMBED_QUERY_CACHE_SIZE:0}
     normalise-l2: true
 
 llm-client:

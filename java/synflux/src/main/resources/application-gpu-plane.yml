@@ -15,6 +15,9 @@ gpu-plane:
   endpoint: ${GPU_PLANE_ENDPOINT:gpu-gateway:9090}
   model-version: ${GPU_PLANE_MODEL_VERSION:latest}
   timeout-ms: ${GPU_PLANE_TIMEOUT_MS:120000}
+  # Client-side pacing under the OpenRouter free-tier per-minute limit (~20/min); 0 = unlimited.
+  # Ingest bursts (parallel documents × batches) would otherwise hit 429 and trip the circuit.
+  max-requests-per-minute: ${GPU_PLANE_MAX_RPM:15}
   tls:
     enabled: ${GPU_TLS_ENABLED:true}
     ca-path: ${GPU_TLS_CA_PATH:}
@@ -24,3 +27,4 @@ gpu-plane:
   retry:
     max-attempts: ${GPU_PLANE_RETRY_MAX_ATTEMPTS:3}
     backoff-base-ms: ${GPU_PLANE_RETRY_BACKOFF_MS:500}
+    rate-limited-backoff-ms: ${GPU_PLANE_RATE_LIMITED_BACKOFF_MS:15000}
