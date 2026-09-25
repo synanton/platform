@@ -1,0 +1,26 @@
+# Opt-in profile: ingest embeddings via the GPU plane (gRPC synanton.gpu.v1 over mTLS).
+# Activate with SPRING_PROFILES_ACTIVE=gpu-plane. Retrieval benchmark plan §6 Phase B1-G.
+#
+# EMBED_MODEL_ID must be a LOGICAL model ID from the GPU Gateway catalog (GPU-7:
+# synanton-free-embedding; GPU-5: synanton-bge-base-embedding), and must equal
+# synquest's EMBED_MODEL. The embedding cache is keyed by (tenant, chunk hash, model ID).
+synflux:
+  pipeline:
+    embedding-enabled: true
+  embedding:
+    model-id: ${EMBED_MODEL_ID:synanton-free-embedding}
+    batch-size: ${EMBED_BATCH_SIZE:32}
+
+gpu-plane:
+  endpoint: ${GPU_PLANE_ENDPOINT:gpu-gateway:9090}
+  model-version: ${GPU_PLANE_MODEL_VERSION:latest}
+  timeout-ms: ${GPU_PLANE_TIMEOUT_MS:120000}
+  tls:
+    enabled: ${GPU_TLS_ENABLED:true}
+    ca-path: ${GPU_TLS_CA_PATH:}
+    cert-path: ${GPU_TLS_CERT_PATH:}
+    key-path: ${GPU_TLS_KEY_PATH:}
+    authority: ${GPU_TLS_AUTHORITY:}
+  retry:
+    max-attempts: ${GPU_PLANE_RETRY_MAX_ATTEMPTS:3}
+    backoff-base-ms: ${GPU_PLANE_RETRY_BACKOFF_MS:500}

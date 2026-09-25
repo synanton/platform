@@ -164,26 +164,11 @@ public class GpuEmbeddingAdapter implements LlmClient {
 
     private EmbedResponse handleSuccess(ExecutionResponse response, long latencyMs, int inputCount) {
         try {
-            byte[] resultBytes = response.getResult().toByteArray();
-            OpenAiEmbeddingResponse parsed = objectMapper.readValue(resultBytes, OpenAiEmbeddingResponse.class);
-
-            List<float[]> embeddings = new java.util.ArrayList<>();
-            if (parsed.data() != null) {
-                for (OpenAiEmbeddingResponse.DataItem item : parsed.data()) {
-                    float[] emb = new float[item.embedding().size()];
-                    for (int i = 0; i < item.embedding().size(); i++) {
-                        emb[i] = item.embedding().get(i);
-                    }
-                    embeddings.add(emb);
-                }
-            }
-
-            int promptTokens = 0;
-            if (parsed.usage() != null) {
-                promptTokens = parsed.usage().prompt_tokens();
-            }
-
-            return new EmbedResponse(embeddings, 0, 0, latencyMs, promptTokens, 0);
+            // Shared codec (gpu-client): vectors ordered by data[].index, count checked, so
+            // a short or garbled result degrades to the CPU path instead of leaking partial data.
+            var parsed = new org.synanton.gpu.client.GpuEmbedCodec(objectMapper)
+                    .parse(response.getResult().toByteArray(), inputCount);
+            return new EmbedResponse(parsed.embeddings(), 0, 0, latencyMs, parsed.promptTokens(), 0);
         } catch (Exception e) {
             log.warn("GPU embedding: response parse error: {}", e.getMessage());
             return new EmbedResponse(List.of(), 0, 0, latencyMs, 0, 0);
@@ -195,13 +180,9 @@ public class GpuEmbeddingAdapter implements LlmClient {
         return new EmbedResponse(List.of(), 0, 0, 0, 0, 0);
     }
 
-    private byte[] buildPayload(EmbedRequest request, String tenantId) throws Exception {
+    private byte[] buildPayload(EmbedRequest request, String tenantId) {
         String model = modelResolver.resolveModel(tenantId, Operation.EMBED);
-        OpenAiEmbeddingRequest embeddingRequest = new OpenAiEmbeddingRequest(
-                model,
-                request.inputs()
-        );
-        return objectMapper.writeValueAsBytes(embeddingRequest);
+        return new org.synanton.gpu.client.GpuEmbedCodec(objectMapper).payload(model, request.inputs());
     }
 
     @Override
@@ -220,31 +201,5 @@ public class GpuEmbeddingAdapter implements LlmClient {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }
-    }
-
-    // ─── Internal OpenAI-compat JSON structures ───────────────────────────────
-
-    private record OpenAiEmbeddingRequest(
-            String model,
-            List<String> input
-    ) {}
-
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
-    private record OpenAiEmbeddingResponse(
-            List<DataItem> data,
-            Usage usage
-    ) {
-        @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
-        record DataItem(
-                List<Float> embedding,
-                int index,
-                String object
-        ) {}
-
-        @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
-        record Usage(
-                int prompt_tokens,
-                int total_tokens
-        ) {}
     }
 }

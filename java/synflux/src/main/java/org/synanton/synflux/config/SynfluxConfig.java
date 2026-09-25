@@ -5,6 +5,7 @@ import org.synanton.extraction.client.ExtractionClientProperties;
 import org.synanton.extraction.client.ExtractionPlaneClient;
 import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.gpu.client.GpuPlaneEmbedClient;
 import org.synanton.llm.HttpLlmClient;
 import org.synanton.llm.LlmClient;
 import org.synanton.synflux.annotation.AnnotationRule;
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import java.util.Optional;
 
 @Configuration
 @EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class})
@@ -70,7 +72,13 @@ public class SynfluxConfig {
 
     @Bean
     public PipelineStage<ChunkedDocument, ChunkedDocument> embedStage(
-            SynfluxProperties props, IngestionCacheClient cacheClient) {
+            SynfluxProperties props, IngestionCacheClient cacheClient,
+            Optional<GpuPlaneEmbedClient> gpuPlaneEmbedClient) {
+        if (props.pipeline().embeddingEnabled() && gpuPlaneEmbedClient.isPresent()) {
+            // gpu-plane profile: gRPC synanton.gpu.v1 (mTLS), tenant-scoped, fail-closed per document.
+            return new EmbedStage(gpuPlaneEmbedClient.get(), cacheClient,
+                props.embedding().modelId(), props.embedding().batchSize(), true);
+        }
         if (props.pipeline().embeddingEnabled()) {
             LlmClient embedClient = new HttpLlmClient(props.embedding().embedBaseUrl(), 3);
             return new EmbedStage(embedClient, cacheClient,

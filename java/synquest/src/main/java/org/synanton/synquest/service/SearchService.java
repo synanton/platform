@@ -82,9 +82,12 @@ public class SearchService {
         boolean embedSkipped = false;
         try {
             long embedStart = System.currentTimeMillis();
-            queryVec = queryEmbedder.embed(req.query());
+            queryVec = queryEmbedder.embed(req.query(), tenant);
             embedMs = System.currentTimeMillis() - embedStart;
         } catch (Exception e) {
+            if (queryEmbedder.required()) {
+                throw new EmbeddingUnavailableException(e);
+            }
             embedSkipped = true;
             log.warn("Query embedding unavailable, using BM25 only: {}", e.getMessage());
         }

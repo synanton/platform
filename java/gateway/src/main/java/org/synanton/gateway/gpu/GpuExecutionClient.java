@@ -1,13 +1,11 @@
 package org.synanton.gateway.gpu;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.synanton.gpu.v1.*;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
@@ -65,32 +63,21 @@ public class GpuExecutionClient {
                 .executeStream(request);
     }
 
-    // Canonical error code of a pre-execution denial (Plan §16.1): the
-    // x-synanton-error-code trailer, e.g. "tenant_not_allowed", "budget_exceeded".
+    // Canonical error codes (Plan §16.1): delegates to the shared gpu-client GpuErrorCodes,
+    // so gateway, synquest and synflux classify denials identically.
     public static String canonicalCode(io.grpc.StatusRuntimeException e) {
-        io.grpc.Metadata trailers = e.getTrailers();
-        String code = trailers == null ? null : trailers.get(ERROR_CODE_KEY);
-        return code != null ? code : "status_" + e.getStatus().getCode().name().toLowerCase();
+        return org.synanton.gpu.client.GpuErrorCodes.canonicalCode(e);
     }
 
-    // Canonical error code of a failed execution (ErrorInfo.code), or null on success.
     public static String canonicalCode(ExecutionResponse response) {
-        return response.hasError() && !response.getError().getCode().isEmpty()
-                ? response.getError().getCode() : null;
+        return org.synanton.gpu.client.GpuErrorCodes.canonicalCode(response);
     }
 
-    // Whether a pre-execution denial may succeed on retry. Only capacity-type denials are
-    // transient; security/policy/validation denials (tenant_not_allowed, budget_exceeded,
-    // sensitive_model_external_blocked, model_not_found, …) never succeed on retry.
     public static boolean isRetryableDenial(io.grpc.StatusRuntimeException e) {
-        return switch (canonicalCode(e)) {
-            case "concurrency_limit_reached", "capacity_exceeded" -> true;
-            default -> e.getTrailers() == null || e.getTrailers().get(ERROR_CODE_KEY) == null; // legacy gateway: keep old behaviour
-        };
+        return org.synanton.gpu.client.GpuErrorCodes.isRetryableDenial(e);
     }
 
-    static final io.grpc.Metadata.Key<String> ERROR_CODE_KEY =
-            io.grpc.Metadata.Key.of("x-synanton-error-code", io.grpc.Metadata.ASCII_STRING_MARSHALLER);
+    static final io.grpc.Metadata.Key<String> ERROR_CODE_KEY = org.synanton.gpu.client.GpuErrorCodes.ERROR_CODE_KEY;
 
     public CancelResponse cancel(CancelRequest request) {
         ensureChannel();
@@ -136,36 +123,13 @@ public class GpuExecutionClient {
     // the principal the Gateway authorizes for tenant_id (Deployment Plan §13,
     // gpu-runtime doc/GPU Plane mTLS Setup.md). Missing TLS files fail closed at connect.
     ManagedChannel buildChannel() {
-        String[] parts = properties.getEndpoint().split(":", 2);
-        String host = parts[0];
-        int port = parts.length > 1 ? Integer.parseInt(parts[1]) : 9090;
-
         GpuExecutionClientProperties.Tls tls = properties.getTls();
-        if (!tls.isEnabled()) {
-            log.warn("GPU execution client uses PLAINTEXT gRPC to {} — only valid against a gateway "
-                    + "in security.mode=insecure-plaintext (tests/loopback)", properties.getEndpoint());
-            return ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
-        }
-        for (String[] f : new String[][]{{"ca-path", tls.getCaPath()}, {"cert-path", tls.getCertPath()},
-                {"key-path", tls.getKeyPath()}}) {
-            if (f[1] == null || !new File(f[1]).canRead()) {
-                throw new IllegalStateException("gateway.gpu.tls." + f[0] + " is not a readable file "
-                        + "(mTLS is required when gateway.gpu.tls.enabled=true)");
-            }
-        }
-        try {
-            var ssl = io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts.forClient()
-                    .trustManager(new File(tls.getCaPath()))
-                    .keyManager(new File(tls.getCertPath()), new File(tls.getKeyPath()))
-                    .build();
-            var builder = io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder.forAddress(host, port)
-                    .sslContext(ssl);
-            if (tls.getAuthority() != null && !tls.getAuthority().isBlank()) {
-                builder.overrideAuthority(tls.getAuthority()); // match a server-certificate SAN
-            }
-            return builder.build();
-        } catch (javax.net.ssl.SSLException e) {
-            throw new IllegalStateException("Invalid GPU gateway TLS material", e);
-        }
+        var shared = new org.synanton.gpu.client.GpuPlaneClientProperties.Tls();
+        shared.setEnabled(tls.isEnabled());
+        shared.setCaPath(tls.getCaPath());
+        shared.setCertPath(tls.getCertPath());
+        shared.setKeyPath(tls.getKeyPath());
+        shared.setAuthority(tls.getAuthority());
+        return org.synanton.gpu.client.GpuPlaneChannels.build(properties.getEndpoint(), shared, "gateway.gpu.tls");
     }
 }

@@ -297,13 +297,23 @@ Recall is identical (expected — every gold query's answer lives in a document 
 | Step | Work | Repo |
 |---|---|---|
 | G0 | **Done (2026-09-25)** — findings below. Read the key's rate limits (`GET /api/v1/key`; key never printed). One `EMBED` per free model via `tools/gpu7-check` to record native dim, whether the provider honours `dimensions`, and whether truncating to 1024/768 + re-normalising preserves neighbour order on a handful of gold chunks (Matryoshka check). Output: a short table appended to this section; decides the dimension per arm. | gpu-runtime tools |
-| G1 | **Shared gRPC embed client.** Extract the EMBED path of `GpuEmbeddingAdapter` into a small shared module (e.g. `java/gpu-client`, depending on `gpu-contract`) implementing `org.synanton.llm.LlmClient`, with mTLS config (`GPU_TLS_*`, principal `synanton-platform`), per-call `tenant_id`, canonical error codes and a `fail-closed` mode. `gateway` keeps its current degrade behaviour by wrapping it. Opt-in `gpu-plane` Spring profile in `synquest` and `synflux` selects it instead of `HttpLlmClient`. Tests: in-process gRPC server, mTLS, fail-closed on `circuit_open`/`budget_exceeded`/`routing_disabled`. | platform |
+| G1 | **Done (2026-09-25)** — shared fail-closed gRPC embed client (`java/gpu-client`) + opt-in `gpu-plane` profile in `synquest`/`synflux`; details below the table. | platform |
 | G2 | **Configurable dimension.** `EMBED_DIM` for `synquest.embedding.dim` and a matching truncation (`EMBED_TRUNCATE_DIM`, then L2 re-normalise; required for the 2048-dim nemotron arms per G0) applied identically at ingest (`EmbedStage`) and query time (`QueryEmbedder`); startup fails if the configured dim exceeds the Lucene cap. `synflux` `embedding.model-id` becomes env-driven (`EMBED_MODEL_ID` already exists in `application-phase2.yml`; hoist it). | platform |
 | G3 | **Catalog + tenants.** Add `synanton-free-embedding-nemotron-vl` and `synanton-free-embedding-lfm` to `gateway-external.yaml`; authorise benchmark tenants (`rb-fixed-g`, `rb-semantic-g`, one pair per embedding arm) for `synanton-platform`. `tools/gpu7-package-check.py` and `gpu7-check` stay green. | gpu-runtime |
 | G4 | **Harness.** `retrieval-eval` gains: a query-embedding cache keyed by (logical model, dim, query sha256) so re-scoring a run costs no requests; a request budget + throttle (default ≤ 15 req/min, hard stop at a configured daily budget) with resumable ingest; run-record fields `gpu_plane: gpu-7`, `provider_mode: external-free`, `embedding_dim`, `embed_requests`, `spend_before`/`spend_after`; and a run-validity check (any `embed_skipped` ⇒ invalid). | platform |
 | G5 | **Run T02-G/T03-G/T04-G** with `synanton-free-embedding`: re-ingest `rb-fixed-g`/`rb-semantic-g` (fresh tenants, new chunk UUIDs ⇒ gold chunk ids re-annotated with `retrieval-eval inspect`), then T02-G (`rb-fixed-g`, `--top-k-lexical 1`), T03-G (`rb-fixed-g`, full hybrid), T04-G (`rb-semantic-g`, full hybrid — the first *real* hybrid T04). Records `results/T02-G.yaml`, `T03-G.yaml`, `T04-G.yaml`. | platform |
 | G6 | **RQ4 on free models (B3 early subset).** Repeat T03-G/T04-G for the other free arms that pass G0. `lfm` runs only if no chunk in the tenant exceeds 512 tokens (checked, recorded); otherwise reported as excluded. | platform |
 | G7 | **Report + docs.** Results table in this section; §9 deliverable 8; `gpu-plane-integration-tickets.md`; README status. | platform |
+
+**G1 implementation notes (2026-09-25).** New `java/gpu-client` module:
+- `GpuPlaneEmbedClient` implements `TenantAwareLlmClient`, a new sub-interface of `LlmClient` in `synanton-llm-client`. It fails closed: every failure throws `GpuPlaneException` with the canonical code.
+- Only transient outcomes are retried: capacity denials, transport `UNAVAILABLE`, and a retryable `MODEL_NOT_READY`.
+- `GpuPlaneChannels` builds the mTLS channel; `GpuErrorCodes` and `GpuEmbedCodec` provide the error codes and the payload codec (vectors ordered by `index`, count checked).
+- The gateway module now delegates its channel, error-code and codec logic to the shared module and keeps its degrade-to-CPU `GpuEmbeddingAdapter`.
+- The opt-in `gpu-plane` profile (`application-gpu-plane.yml`) is added in `synquest` and `synflux`. `synquest` passes the search tenant and sets `synquest.embedding.required=true`: a failed embed returns HTTP 503, never BM25-only. `synflux` passes the job tenant and runs `EmbedStage(failOnError=true)`: a failed batch fails the document, which is counted as a job error and not persisted.
+- Environment variables: `GPU_PLANE_ENDPOINT`, `GPU_TLS_{ENABLED,CA_PATH,CERT_PATH,KEY_PATH,AUTHORITY}`, `EMBED_MODEL` (synquest) = `EMBED_MODEL_ID` (synflux), both logical IDs, default `synanton-free-embedding`.
+- Tests: `GpuPlaneEmbedClientTest` (18, real Netty gRPC server including mTLS with a required client certificate), `GpuPlaneProfileWiringTest`, `QueryEmbedderTenantTest`, `EmbedStageGpuPlaneTest`.
+- The embedding dimension is still 768 under this profile; G2 is needed before a 2048-dim arm can index.
 
 **G0 findings (2026-09-25).** Tool: `gpu-runtime/tools/gpu7-check/embed_probe.py`. Raw record: `demo-data/eval/retrieval-benchmark/results/G0-embed-probe.json`. 6 free requests, spend unchanged at $0.00052275.
 
@@ -407,7 +417,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | 6 | Hierarchical chunking strategy | `java/synflux` | Not started (Phase B2) |
 | 7 | Graph rank-fusion | `java/synquest` and/or `java/gateway` (decided during B2 implementation) | Not started (Phase B2) |
 | 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); `T03.yaml` (2026-09-18) superseded/invalid; T02-G/T03-G/T04-G planned (§6 Phase B1-G); bge-base T02/T03 blocked on GPU-5 |
-| 11 | Shared gRPC embed client (fail-closed) + `gpu-plane` profile in `synquest`/`synflux`; configurable embedding dim | `java/` (new shared module), `java/synquest`, `java/synflux` | Planned (B1-G G1/G2) |
+| 11 | Shared gRPC embed client (fail-closed) + `gpu-plane` profile in `synquest`/`synflux`; configurable embedding dim | `java/` (new shared module), `java/synquest`, `java/synflux` | Client + profile done (G1, 2026-09-25); configurable dim pending (G2) |
 | 12 | GPU-7 free embedding catalog arms + benchmark tenants | `gpu-runtime/deployments/external/config/gateway-external.yaml` | Planned (B1-G G3) |
 | 13 | Harness: query-embedding cache, request throttle/budget, GPU-7 run-record fields, validity check | `tools/retrieval-eval/` | Planned (B1-G G4) |
 | 9 | Decision memo | `docs/research/retrieval-evaluation-benchmark-results.md` (after B5) | Not started |

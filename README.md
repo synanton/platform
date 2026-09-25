@@ -418,6 +418,7 @@ The architecture is designed so GPU infrastructure can scale independently from 
 | `annotations` | Annotation registry, provenance and recalculation foundation | 🔶 In progress |
 | `analytics` | Events, facts, aggregates, metrics and reports | 🔲 Planned |
 | `gpu-contract` | Versioned GPU execution protobuf contract | ✅ |
+| `gpu-client` | Shared GPU-plane client: mTLS channel, canonical error codes, fail-closed tenant-aware EMBED client (`gpu-plane` profile in `synquest`/`synflux`) | ✅ |
 | `gpu-gateway` | GPU boundary and execution lifecycle | ✅ |
 | `extraction-contract` | Versioned structured extraction contract | ✅ |
 | `extraction-client` | Platform client and fallback policies | ✅ |

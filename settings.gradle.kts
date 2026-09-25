@@ -41,6 +41,7 @@ include(
     "java:synapt",
     "java:synanton-llm-client",
     "java:gpu-contract",
+    "java:gpu-client",
     "java:gpu-gateway",
     "java:extraction-contract",
     "java:extraction-client",

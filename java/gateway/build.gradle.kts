@@ -7,6 +7,7 @@ plugins {
 dependencies {
     implementation(project(":java:synanton-llm-client"))
     implementation(project(":java:gpu-contract"))
+    implementation(project(":java:gpu-client"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.webflux)

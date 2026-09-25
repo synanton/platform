@@ -5,6 +5,7 @@ import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.llm.LlmClient;
 import org.synanton.llm.EmbedRequest;
 import org.synanton.llm.EmbedResponse;
+import org.synanton.llm.TenantAwareLlmClient;
 import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.StageUsage;
@@ -28,12 +29,27 @@ public class EmbedStage implements PipelineStage<ChunkedDocument, ChunkedDocumen
     private final IngestionCacheClient cacheClient;
     private final String modelId;
     private final int batchSize;
+    private final boolean failOnError;
 
     public EmbedStage(LlmClient embedClient, IngestionCacheClient cacheClient, String modelId, int batchSize) {
+        this(embedClient, cacheClient, modelId, batchSize, false);
+    }
+
+    /**
+     * @param failOnError when true, a failed batch fails the document, so it isn't persisted
+     *                    and the job counts an error. When false (the legacy behaviour), a
+     *                    failed batch is logged and the document is persisted without those
+     *                    vectors. The gpu-plane profile sets it to true, so a benchmark tenant
+     *                    can never be silently missing its dense vectors
+     *                    (retrieval benchmark plan §6 Phase B1-G).
+     */
+    public EmbedStage(LlmClient embedClient, IngestionCacheClient cacheClient, String modelId, int batchSize,
+                      boolean failOnError) {
         this.embedClient = embedClient;
         this.cacheClient = cacheClient;
         this.modelId = modelId;
         this.batchSize = batchSize;
+        this.failOnError = failOnError;
     }
 
     @Override
@@ -84,7 +100,11 @@ public class EmbedStage implements PipelineStage<ChunkedDocument, ChunkedDocumen
             List<String> texts = batch.stream().map(SemanticChunk::text).collect(Collectors.toList());
             int batchInputChars = texts.stream().mapToInt(String::length).sum();
             try {
-                EmbedResponse resp = embedClient.embed(new EmbedRequest(modelId, texts));
+                EmbedResponse resp = TenantAwareLlmClient.embed(embedClient, new EmbedRequest(modelId, texts), tenantId);
+                if (resp.embeddings() == null || resp.embeddings().size() != batch.size()) {
+                    throw new IllegalStateException("embedding returned "
+                        + (resp.embeddings() == null ? 0 : resp.embeddings().size()) + " vectors for " + batch.size() + " chunks");
+                }
                 inputChars.addAndGet(resp.inputChars() > 0 ? resp.inputChars() : batchInputChars);
                 outputChars.addAndGet(resp.outputChars());
                 inputTokens.addAndGet(resp.inputTokens());
@@ -99,6 +119,11 @@ public class EmbedStage implements PipelineStage<ChunkedDocument, ChunkedDocumen
                     ));
                 }
             } catch (Exception e) {
+                if (failOnError) {
+                    log.warn("Embedding failed for batch at offset {} (ref={}): {} — failing the document",
+                        i, contentRefId, e.getMessage());
+                    throw new IllegalStateException("embedding failed for ref=" + contentRefId + ": " + e.getMessage(), e);
+                }
                 log.warn("Embedding failed for batch at offset {}: {}", i, e.getMessage());
             }
         }
