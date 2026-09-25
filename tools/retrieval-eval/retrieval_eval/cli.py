@@ -336,6 +336,19 @@ def _cmd_remap_gold(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_annotate_markers(args: argparse.Namespace) -> int:
+    """Gold chunk IDs for rows with gold_markers: chunks of gold_source whose text contains a marker."""
+    from .annotate import annotate, docker_copy_export
+    rows = [json.loads(line) for line in Path(args.queries).read_text().splitlines() if line.strip()]
+    out_rows, report = annotate(rows, docker_copy_export(args.cassandra_container)(args.tenant), args.tenant)
+    Path(args.out).write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in out_rows))
+    print(f"tenant={args.tenant}: {report.annotated} rows annotated by marker, {report.kept} kept as-is; wrote {args.out}")
+    if report.unmatched:
+        print(f"  no chunk matched the markers of: {', '.join(report.unmatched)}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _cmd_budget(args: argparse.Namespace) -> int:
     ledger = RequestLedger(args.ledger)
     print(f"ledger {ledger.path}: {args.gpu_plane} requests today = {ledger.used_today(args.gpu_plane)}")
@@ -412,6 +425,14 @@ def build_parser() -> argparse.ArgumentParser:
     remap_parser.add_argument("--cassandra-container", default="docker-cassandra-1")
     remap_parser.add_argument("--strict", action="store_true", help="exit 1 if any ID can't be carried over")
     remap_parser.set_defaults(func=_cmd_remap_gold)
+
+    annotate_parser = subparsers.add_parser(
+        "annotate-markers", help="Annotate gold chunk IDs from gold_markers/gold_source for one tenant")
+    annotate_parser.add_argument("--tenant", required=True)
+    annotate_parser.add_argument("--queries", type=Path, required=True)
+    annotate_parser.add_argument("--out", type=Path, required=True)
+    annotate_parser.add_argument("--cassandra-container", default="docker-cassandra-1")
+    annotate_parser.set_defaults(func=_cmd_annotate_markers)
 
     budget_parser = subparsers.add_parser("budget", help="Show today's request ledger and provider spend/quota")
     _add_plane_args(budget_parser)
