@@ -172,32 +172,14 @@ public class SearchService {
             var stored = searcher.storedFields();
             List<Hit> hits = new ArrayList<>(fused.size());
             List<String> texts = new ArrayList<>(fused.size());
+            java.util.Map<String, Integer> docIdByChunk = new java.util.HashMap<>();
             for (RrfFusion.FusedHit fh : fused) {
                 Document doc = stored.document(fh.docId());
-                String contentRefId = doc.get("content_ref_id");
-                int chunkOrdinal = Integer.parseInt(Objects.requireNonNullElse(doc.get("chunk_ordinal"), "0"));
                 String text = doc.get("text");
                 texts.add(text == null ? "" : text);
-                String snippet = text != null && text.length() > 200 ? text.substring(0, 200) + "…" : text;
-                hits.add(new Hit(
-                        UUID.fromString(contentRefId),
-                        chunkOrdinal,
-                        fh.rrfScore(),
-                        fh.denseScore(),
-                        fh.lexicalScore(),
-                        fh.rankDense(),
-                        fh.rankLexical(),
-                        snippet,
-                        doc.get("source_uri"),
-                        parseInt(doc.get("page_start"), -1),
-                        parseInt(doc.get("page_end"), -1),
-                        doc.get("section_path"),
-                        doc.get("heading"),
-                        parseSourceElements(doc.get("source_elements")),
-                        parseInt(doc.get("token_count"), 0),
-                        emptyToNull(doc.get("structured_content")),
-                        parseBoolean(doc.get("is_partial_section")),
-                        emptyToNull(doc.get("ingest_usage"))));
+                Hit h = toHit(doc, fh.rrfScore(), fh.denseScore(), fh.lexicalScore(), fh.rankDense(), fh.rankLexical());
+                docIdByChunk.put(h.chunkId(), fh.docId());
+                hits.add(h);
             }
 
             Long rerankMs = null;
@@ -222,6 +204,13 @@ public class SearchService {
                 rerankMs = System.currentTimeMillis() - rerankStart;
             }
 
+            if ("section".equalsIgnoreCase(req.expand())) {
+                int maxPerSection = req.expandMaxChunks() != null && req.expandMaxChunks() > 0 ? req.expandMaxChunks() : 8;
+                hits = expandSections(hits, docIdByChunk, searcher, stored, topK, maxPerSection);
+            } else if (req.expand() != null && !req.expand().isBlank()) {
+                throw new IllegalArgumentException("unsupported expand '" + req.expand() + "' (supported: section)");
+            }
+
             long totalMs = System.currentTimeMillis() - t0;
             SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
                     searcher.generation(), rerankMs, rerankRequested ? fused.size() : null);
@@ -244,6 +233,73 @@ public class SearchService {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Search interrupted", e);
         }
+    }
+
+    /**
+     * B2/T05 small-to-big: walk the ranked hits. Each hit with a section contributes its whole
+     * section in reading order, capped at {@code maxPerSection}; a larger section is windowed
+     * around the hit. Added siblings inherit the hit's score and carry {@code expanded_from}.
+     * Chunks without a section (flat/fallback) pass through unchanged. The result is cut at topK.
+     */
+    private List<Hit> expandSections(List<Hit> ranked, java.util.Map<String, Integer> docIdByChunk,
+                                     HybridSearcher searcher, org.apache.lucene.index.StoredFields stored,
+                                     int topK, int maxPerSection) throws IOException {
+        List<Hit> out = new ArrayList<>();
+        java.util.Set<String> emitted = new java.util.HashSet<>();
+        for (Hit hit : ranked) {
+            if (out.size() >= topK) break;
+            if (emitted.contains(hit.chunkId())) continue;
+            if (hit.sectionId() == null || hit.sectionId().isEmpty()) {
+                out.add(hit);
+                emitted.add(hit.chunkId());
+                continue;
+            }
+            List<Integer> members = searcher.sectionMembers(hit.contentRefId() + "|" + hit.sectionId(), 1000);
+            List<Hit> section = new ArrayList<>(members.size());
+            int self = -1;
+            for (int docId : members) {
+                Hit m = toHit(stored.document(docId), 0, 0, 0, -1, -1);
+                if (m.chunkId().equals(hit.chunkId())) self = section.size();
+                section.add(m);
+            }
+            if (self < 0) {          // index/section mismatch: keep the hit itself
+                section = List.of(hit);
+                self = 0;
+            }
+            int from = Math.max(0, Math.min(self - maxPerSection / 2, section.size() - maxPerSection));
+            int to = Math.min(section.size(), from + maxPerSection);
+            for (int k = from; k < to && out.size() < topK; k++) {
+                Hit m = section.get(k);
+                if (emitted.contains(m.chunkId())) continue;
+                out.add(k == self ? hit : m.withExpansion(hit.score(), hit.scoreRerank(), hit.chunkId()));
+                emitted.add(m.chunkId());
+            }
+        }
+        return out;
+    }
+
+    private Hit toHit(Document doc, double score, double dense, double lexical, int rankDense, int rankLexical) {
+        String text = doc.get("text");
+        String snippet = text != null && text.length() > 200 ? text.substring(0, 200) + "…" : text;
+        String sectionId = doc.get("section_id");
+        return new Hit(
+                UUID.fromString(doc.get("content_ref_id")),
+                Integer.parseInt(Objects.requireNonNullElse(doc.get("chunk_ordinal"), "0")),
+                score, dense, lexical, rankDense, rankLexical,
+                snippet,
+                doc.get("source_uri"),
+                parseInt(doc.get("page_start"), -1),
+                parseInt(doc.get("page_end"), -1),
+                doc.get("section_path"),
+                doc.get("heading"),
+                parseSourceElements(doc.get("source_elements")),
+                parseInt(doc.get("token_count"), 0),
+                emptyToNull(doc.get("structured_content")),
+                parseBoolean(doc.get("is_partial_section")),
+                emptyToNull(doc.get("ingest_usage")),
+                null,
+                sectionId == null || sectionId.isEmpty() ? null : sectionId,
+                null);
     }
 
     public void reindex(String tenant) throws IOException {
@@ -273,7 +329,7 @@ public class SearchService {
         }
         return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready",
                 report.embeddingModel(), report.embeddingDim(), report.truncated(),
-                report.vectorDocs(), report.dimMismatches(), report.missingVectors());
+                report.vectorDocs(), report.dimMismatches(), report.missingVectors(), report.sectionDocs());
     }
 
     public Status getStatus() {

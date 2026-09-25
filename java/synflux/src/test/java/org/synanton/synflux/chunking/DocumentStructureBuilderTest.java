@@ -150,17 +150,27 @@ class DocumentStructureBuilderTest {
     // ─── Elements before first heading ────────────────────────────────────────
 
     @Test
-    void elementsBeforeFirstHeadingAreIgnoredAsOrphanedRoot() {
-        // Elements before any heading attach to the synthetic root and do not appear
-        // as a named section - this is intentional (they are preamble content).
+    void elementsBeforeFirstHeadingBecomeASyntheticPreambleSection() {
+        // Changed with B2/T05 (hierarchical chunking): preamble content before the first
+        // heading used to be dropped silently (never chunked, never searchable). It is now kept
+        // as the synthetic top-level section "s-pre" (no heading, empty section path).
         var sections = builder.build(List.of(
             para("p0", "Preamble before any heading."),
             heading("Chapter 1", 1),
             para("p1", "Chapter body.")
         ));
 
-        // Only the named chapter appears as a top-level section.
-        assertThat(sections).hasSize(1);
-        assertThat(sections.get(0).heading()).isEqualTo("Chapter 1");
+        assertThat(sections).hasSize(2);
+        assertThat(sections.get(0).id()).isEqualTo("s-pre");
+        assertThat(sections.get(0).heading()).isNull();
+        assertThat(sections.get(0).sectionPath()).isEmpty();
+        assertThat(sections.get(0).elements()).hasSize(1);
+        assertThat(sections.get(1).heading()).isEqualTo("Chapter 1");
+    }
+
+    @Test
+    void documentsWithoutHeadingsStillProduceNoSections() {
+        // unchanged: no heading at all -> empty structure -> SemanticChunkStage falls back to flat chunks
+        assertThat(builder.build(List.of(para("p0", "Just text.")))).isEmpty();
     }
 }

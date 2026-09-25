@@ -32,18 +32,20 @@ public class SemanticChunker {
         List<SemanticChunk> result = new ArrayList<>();
         AtomicInteger ordinal = new AtomicInteger();
         for (SectionNode section : sections) {
-            chunkSection(section, documentId, config, result, ordinal);
+            chunkSection(section, "", documentId, config, result, ordinal);
         }
         return Collections.unmodifiableList(result);
     }
 
     private void chunkSection(
             SectionNode section,
+            String parentSectionId,
             String documentId,
             ChunkerConfig config,
             List<SemanticChunk> out,
             AtomicInteger ordinal) {
 
+        int firstOwn = out.size();
         List<DocumentElement> elements = section.elements();
         List<DocumentElement> batch = new ArrayList<>();
         int batchTokens = 0;
@@ -104,8 +106,18 @@ public class SemanticChunker {
 
         flushBatch(batch, headingPrefix, section, documentId, config, out, ordinal);
 
+        // B2/T05: tag this section's own chunks (children tag theirs) with the hierarchy, and
+        // mark paragraph batches partial when the section's text spans more than one of them.
+        long batches = out.subList(firstOwn, out.size()).stream()
+            .filter(c -> c.type() == ChunkType.SECTION || c.type() == ChunkType.SUBSECTION).count();
+        for (int k = firstOwn; k < out.size(); k++) {
+            SemanticChunk c = out.get(k);
+            boolean isBatch = c.type() == ChunkType.SECTION || c.type() == ChunkType.SUBSECTION;
+            out.set(k, c.withHierarchy(section.id(), parentSectionId, section.headingLevel(),
+                c.isPartialSection() || (isBatch && batches > 1)));
+        }
         for (SectionNode child : section.children()) {
-            chunkSection(child, documentId, config, out, ordinal);
+            chunkSection(child, section.id(), documentId, config, out, ordinal);
         }
     }
 

@@ -186,6 +186,7 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
                 synquest_url, args.tenant, gold.question, top_k=max(10, 100),
                 top_k_dense=args.top_k_dense, top_k_lexical=args.top_k_lexical,
                 rerank=args.rerank, rerank_candidates=args.rerank_candidates,
+                expand=args.expand, expand_max_chunks=args.expand_max_chunks,
             )
         except (SearchUnavailable, requests.RequestException) as exc:
             failed.append(gold.query_id)
@@ -235,6 +236,9 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
         spend_after=spend_after.usage_usd if spend_after else None,
         free_only=free_only, aborted=aborted,
     )
+    if args.expand and (stats is None or not stats.section_docs):
+        validity.fail(f"expand={args.expand} requested but the index has no section hierarchy "
+                      f"(section_docs={None if stats is None else stats.section_docs}); re-ingest with hierarchical chunking")
     if not_reranked:
         validity.fail(f"rerank requested but not applied for {len(not_reranked)} queries: {', '.join(not_reranked)}")
 
@@ -412,6 +416,9 @@ def build_parser() -> argparse.ArgumentParser:
                                  help="rerank fused candidates with synquest's cross-encoder (B2/T10); needs --reranker <model>")
     evaluate_parser.add_argument("--rerank-candidates", type=int, default=None,
                                  help="fused candidates to rerank before cutting to top_k (default: synquest's)")
+    evaluate_parser.add_argument("--expand", choices=["section"], default=None,
+                                 help="small-to-big: each hit pulls in its whole document section (B2/T05)")
+    evaluate_parser.add_argument("--expand-max-chunks", type=int, default=None, help="max chunks per expanded section")
     evaluate_parser.add_argument("--provider-mode", default=None, help="default: gpu-7→external-free, gpu-5→local")
     evaluate_parser.add_argument("--embedding-dim", type=int, default=None, help="default: from /index/stats")
     evaluate_parser.add_argument("--max-rpm", type=int, default=None, help="searches per minute (default 15 on gpu-7; 0 = unthrottled)")

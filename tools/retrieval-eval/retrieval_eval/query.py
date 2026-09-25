@@ -57,6 +57,7 @@ class IndexStats:
     vector_docs: int | None
     dim_mismatches: int | None
     missing_vectors: int | None
+    section_docs: int | None = None      # chunks with a section hierarchy (B2/T05)
 
     @property
     def fully_vectorised(self) -> bool | None:
@@ -81,6 +82,7 @@ def index_stats(synquest_base_url: str, tenant: str) -> IndexStats:
         vector_docs=body.get("vector_docs"),
         dim_mismatches=body.get("dim_mismatches"),
         missing_vectors=body.get("missing_vectors"),
+        section_docs=body.get("section_docs"),
     )
 
 
@@ -93,6 +95,8 @@ def search(
     top_k_lexical: int | None = None,
     rerank: bool = False,
     rerank_candidates: int | None = None,
+    expand: str | None = None,
+    expand_max_chunks: int | None = None,
 ) -> SearchResult:
     """POST /search and return hits mapped to chunk IDs, plus wall-clock latency.
 
@@ -109,6 +113,10 @@ def search(
         request_body["top_k_dense"] = top_k_dense
     if top_k_lexical is not None:
         request_body["top_k_lexical"] = top_k_lexical
+    if expand:
+        request_body["expand"] = expand
+        if expand_max_chunks is not None:
+            request_body["expand_max_chunks"] = expand_max_chunks
     if rerank:
         request_body["rerank"] = True
         if rerank_candidates is not None:

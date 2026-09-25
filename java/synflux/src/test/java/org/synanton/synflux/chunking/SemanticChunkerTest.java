@@ -284,4 +284,43 @@ class SemanticChunkerTest {
 
         assertThat(chunks).allSatisfy(c -> assertThat(c.sha256()).hasSize(64));
     }
+
+    // ─── B2/T05 hierarchy ─────────────────────────────────────────────────────
+
+    @Test
+    void chunksCarrySectionParentAndLevelIncludingThePreamble() {
+        var chunks = chunkElements(List.of(
+            para("p0", "Preamble."),
+            heading("Appendix C", 1),
+            para("p1", "Intro to the appendix."),
+            heading("Medications for Substance Use Disorders", 2),
+            table("t1", "Acamprosate | Disulfiram | Naltrexone")
+        ), ChunkerConfig.defaults());
+
+        var pre = chunks.stream().filter(c -> c.content().contains("Preamble")).findFirst().orElseThrow();
+        assertThat(pre.sectionId()).isEqualTo("s-pre");
+        assertThat(pre.parentSectionId()).isEmpty();
+
+        var intro = chunks.stream().filter(c -> c.content().contains("Intro to the appendix")).findFirst().orElseThrow();
+        var table = chunks.stream().filter(c -> c.type() == SemanticChunk.ChunkType.TABLE).findFirst().orElseThrow();
+        assertThat(intro.headingLevel()).isEqualTo(1);
+        assertThat(intro.parentSectionId()).isEmpty();
+        assertThat(table.headingLevel()).isEqualTo(2);
+        assertThat(table.parentSectionId()).isEqualTo(intro.sectionId());   // child of Appendix C
+        assertThat(table.sectionId()).isNotEqualTo(intro.sectionId());
+        assertThat(chunks).allMatch(c -> c.sectionId() != null && !c.sectionId().isEmpty());
+    }
+
+    @Test
+    void aSectionSplitAcrossBatchesIsMarkedPartial() {
+        String longPara = "word ".repeat(300);
+        var chunks = chunkElements(List.of(
+            heading("Long section", 1), para("a", longPara), para("b", longPara), para("c", longPara)
+        ), ChunkerConfig.of(200));
+        var batches = chunks.stream().filter(c -> c.type() == SemanticChunk.ChunkType.SECTION).toList();
+        assertThat(batches).hasSizeGreaterThan(1).allMatch(SemanticChunk::isPartialSection);
+
+        var single = chunkElements(List.of(heading("Short", 1), para("a", "tiny")), ChunkerConfig.defaults());
+        assertThat(single.get(0).isPartialSection()).isFalse();
+    }
 }

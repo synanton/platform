@@ -81,7 +81,10 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             c.tokenCount(),
             toJson(c.structuredContent()),
             c.isPartialSection(),
-            c.classification() == null ? SemanticChunk.PUBLIC_ONLY : c.classification()
+            c.classification() == null ? SemanticChunk.PUBLIC_ONLY : c.classification(),
+            c.sectionId() == null ? "" : c.sectionId(),
+            c.parentSectionId() == null ? "" : c.parentSectionId(),
+            c.headingLevel()
         );
     }
 

@@ -62,7 +62,19 @@ public class DocumentStructureBuilder {
             }
         }
 
-        return root.children.stream().map(MutableSection::toNode).toList();
+        // Content before the first heading used to be dropped. It becomes a synthetic top-level
+        // section "s-pre" (no heading, empty section path), so nothing is lost and the
+        // hierarchy stays complete (B2/T05).
+        List<SectionNode> out = new ArrayList<>();
+        if (!root.elements.isEmpty() && !root.children.isEmpty()) {
+            MutableSection pre = new MutableSection(null, 0, List.of(), "s-pre");
+            pre.elements.addAll(root.elements);
+            pre.pageStart = root.pageStart;
+            pre.pageEnd = root.pageEnd;
+            out.add(pre.toNode());
+        }
+        root.children.stream().map(MutableSection::toNode).forEach(out::add);
+        return List.copyOf(out);
     }
 
     private static int pageOf(DocumentElement el) {

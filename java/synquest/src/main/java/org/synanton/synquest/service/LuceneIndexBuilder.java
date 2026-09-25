@@ -37,6 +37,12 @@ public class LuceneIndexBuilder {
     private static final String FIELD_CLASSIFICATION = "classification";
     private static final String FIELD_INGEST_USAGE = "ingest_usage";
     private static final String FIELD_INGEST_WALL_MS = "ingest_wall_ms";
+    // B2/T05 hierarchy: section_key = "<content_ref_id>|<section_id>" (sibling lookup for expand=section)
+    static final String FIELD_SECTION_KEY = "section_key";
+    static final String FIELD_SECTION_ID = "section_id";
+    private static final String FIELD_PARENT_SECTION_ID = "parent_section_id";
+    private static final String FIELD_HEADING_LEVEL = "heading_level";
+    private static final String FIELD_CHUNK_TYPE = "chunk_type";
 
     private static final java.util.Set<String> INDEXABLE_STATES =
             java.util.Set.of("CHUNKED", "ENRICHED", "EMBEDDED");
@@ -54,7 +60,7 @@ public class LuceneIndexBuilder {
      * and no missing vectors.
      */
     public record BuildReport(String embeddingModel, int embeddingDim, boolean truncated,
-                              int docs, int vectorDocs, int dimMismatches, int missingVectors) {}
+                              int docs, int vectorDocs, int dimMismatches, int missingVectors, int sectionDocs) {}
 
     @org.springframework.beans.factory.annotation.Autowired
     public LuceneIndexBuilder(IngestionCacheClient cacheClient,
@@ -105,6 +111,7 @@ public class LuceneIndexBuilder {
         int vectorDocs = 0;
         int dimMismatches = 0;
         int missingVectors = 0;
+        int sectionDocs = 0;
 
         try (FSDirectory dir = FSDirectory.open(path);
              IndexWriter writer = new IndexWriter(dir, config)) {
@@ -148,6 +155,18 @@ public class LuceneIndexBuilder {
                         doc.add(new StringField(FIELD_CLASSIFICATION, cls, Field.Store.YES));
                     }
                     doc.add(new StoredField(FIELD_INGEST_USAGE, ingestUsage));
+                    if (chunk.chunkType() != null && !chunk.chunkType().isEmpty()) {
+                        doc.add(new StringField(FIELD_CHUNK_TYPE, chunk.chunkType(), Field.Store.YES));
+                    }
+                    if (chunk.sectionId() != null && !chunk.sectionId().isEmpty()) {
+                        doc.add(new StringField(FIELD_SECTION_KEY,
+                                manifest.contentRefId() + "|" + chunk.sectionId(), Field.Store.NO));
+                        doc.add(new StoredField(FIELD_SECTION_ID, chunk.sectionId()));
+                        doc.add(new StoredField(FIELD_PARENT_SECTION_ID,
+                                chunk.parentSectionId() == null ? "" : chunk.parentSectionId()));
+                        doc.add(new StoredField(FIELD_HEADING_LEVEL, chunk.headingLevel()));
+                        sectionDocs++;
+                    }
                     doc.add(new StoredField(FIELD_INGEST_WALL_MS, ingestWallMs));
 
                     if (embOpt.isPresent()) {
@@ -176,7 +195,7 @@ public class LuceneIndexBuilder {
         }
 
         BuildReport report = new BuildReport(embeddingModel, shape.dim(), shape.truncates(),
-                docCount, vectorDocs, dimMismatches, missingVectors);
+                docCount, vectorDocs, dimMismatches, missingVectors, sectionDocs);
         lastReports.put(tenant, report);
         log.info("Built Lucene index for tenant '{}': {} docs indexed ({} with {}-dim vectors of model '{}', "
                         + "{} dim mismatches, {} without a vector), {} manifests skipped",

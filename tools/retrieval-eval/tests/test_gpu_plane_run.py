@@ -248,3 +248,10 @@ def test_rerank_requires_a_label_and_must_be_applied(tmp_path, queries, monkeypa
     assert _evaluate(tmp_path, queries, "--rerank", "--reranker", "synanton-qwen3-reranker-0.6b") == 2
     rec = yaml.safe_load((tmp_path / "results" / "invalid" / "T03-G.yaml").read_text())
     assert any("rerank requested but not applied" in r for r in rec["validity"]["reasons"])
+
+
+def test_expand_requires_a_hierarchical_index(tmp_path, queries, monkeypatch):
+    _fake(monkeypatch)  # FULL stats: section_docs None → no hierarchy
+    assert _evaluate(tmp_path, queries, "--expand", "section") == 2
+    rec = yaml.safe_load((tmp_path / "results" / "invalid" / "T03-G.yaml").read_text())
+    assert any("no section hierarchy" in r for r in rec["validity"]["reasons"])

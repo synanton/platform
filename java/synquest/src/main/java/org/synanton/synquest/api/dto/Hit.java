@@ -26,7 +26,13 @@ public record Hit(
         @JsonProperty("ingest_usage") String ingestUsage,
         /** Cross-encoder relevance when the search was reranked; hits are then ordered by it. */
         @JsonProperty("score_rerank") @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
-        Double scoreRerank
+        Double scoreRerank,
+        /** Document section of the chunk (B2/T05 hierarchy), when the index has one. */
+        @JsonProperty("section_id") @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        String sectionId,
+        /** Set on chunks added by expand=section: the chunk ID ("ref#ordinal") of the hit that pulled them in. */
+        @JsonProperty("expanded_from") @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        String expandedFrom
 ) {
     public Hit(UUID contentRefId, int chunkOrdinal, double score, double scoreDense, double scoreLexical, int rankDense,
                int rankLexical, String snippet, String sourceUri, int pageStart, int pageEnd, String sectionPath,
@@ -34,12 +40,22 @@ public record Hit(
                boolean isPartialSection, String ingestUsage) {
         this(contentRefId, chunkOrdinal, score, scoreDense, scoreLexical, rankDense, rankLexical, snippet, sourceUri,
                 pageStart, pageEnd, sectionPath, heading, sourceElements, tokenCount, structuredContent,
-                isPartialSection, ingestUsage, null);
+                isPartialSection, ingestUsage, null, null, null);
     }
 
     public Hit withScoreRerank(double s) {
         return new Hit(contentRefId, chunkOrdinal, score, scoreDense, scoreLexical, rankDense, rankLexical, snippet,
                 sourceUri, pageStart, pageEnd, sectionPath, heading, sourceElements, tokenCount, structuredContent,
-                isPartialSection, ingestUsage, s);
+                isPartialSection, ingestUsage, s, sectionId, expandedFrom);
+    }
+
+    public Hit withExpansion(double inheritedScore, Double inheritedRerank, String from) {
+        return new Hit(contentRefId, chunkOrdinal, inheritedScore, scoreDense, scoreLexical, rankDense, rankLexical,
+                snippet, sourceUri, pageStart, pageEnd, sectionPath, heading, sourceElements, tokenCount,
+                structuredContent, isPartialSection, ingestUsage, inheritedRerank, sectionId, from);
+    }
+
+    public String chunkId() {
+        return contentRefId + "#" + chunkOrdinal;
     }
 }
