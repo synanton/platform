@@ -7,6 +7,9 @@ COPY java/shared ./java/shared
 COPY java/ingestion-cache ./java/ingestion-cache
 COPY java/synvault ./java/synvault
 COPY java/synanton-llm-client ./java/synanton-llm-client
+# synanton.gpu.v1 contract + shared GPU-plane client (gpu-plane profile / GpuExecutionClient)
+COPY java/gpu-contract ./java/gpu-contract
+COPY java/gpu-client ./java/gpu-client
 COPY java/extraction-contract ./java/extraction-contract
 COPY java/extraction-client ./java/extraction-client
 COPY java/synflux ./java/synflux
