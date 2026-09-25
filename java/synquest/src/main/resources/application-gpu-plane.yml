@@ -16,6 +16,14 @@ synquest:
     # Fail closed: a failed query embedding fails the search (HTTP 503), never a silent BM25 fallback.
     required: ${EMBED_REQUIRED:true}
 
+  # Cross-encoder reranking after RRF (retrieval benchmark B2, T10), via the GPU plane RERANK op.
+  # prompt-format QWEN3 is required for Qwen3-Reranker (scores invert without the template).
+  rerank:
+    enabled: ${RERANK_ENABLED:false}
+    model: ${RERANK_MODEL:synanton-qwen3-reranker-0.6b}
+    prompt-format: ${RERANK_PROMPT_FORMAT:QWEN3}
+    default-candidates: ${RERANK_CANDIDATES:50}
+
 gpu-plane:
   endpoint: ${GPU_PLANE_ENDPOINT:gpu-gateway:9090}
   model-version: ${GPU_PLANE_MODEL_VERSION:latest}

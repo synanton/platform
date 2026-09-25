@@ -4,12 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
-import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.synanton.gpu.v1.ExecutionRequest;
-import org.synanton.gpu.v1.ExecutionResponse;
-import org.synanton.gpu.v1.ExecutionState;
 import org.synanton.gpu.v1.GPUExecutionServiceGrpc;
 import org.synanton.gpu.v1.Operation;
 import org.synanton.llm.CompletionRequest;
@@ -19,7 +16,6 @@ import org.synanton.llm.EmbedResponse;
 import org.synanton.llm.TenantAwareLlmClient;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Fail-closed embedding client for the GPU plane ({@code Operation.EMBED} over gRPC
@@ -44,8 +40,7 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
     private final GpuPlaneClientProperties props;
     private final GpuEmbedCodec codec;
     private final ManagedChannel ownedChannel;
-    private final GPUExecutionServiceGrpc.GPUExecutionServiceBlockingStub stub;
-    private final RequestPacer pacer;
+    private final GpuPlaneExecutor executor;
 
     /** Builds (and owns) the channel. Invalid mTLS material fails here, at startup. */
     public GpuPlaneEmbedClient(GpuPlaneClientProperties props, ObjectMapper mapper) {
@@ -61,8 +56,7 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
         this.props = props;
         this.codec = new GpuEmbedCodec(mapper);
         this.ownedChannel = owned ? (ManagedChannel) channel : null;
-        this.stub = GPUExecutionServiceGrpc.newBlockingStub(channel);
-        this.pacer = new RequestPacer(props.getMaxRequestsPerMinute());
+        this.executor = new GpuPlaneExecutor(props, GPUExecutionServiceGrpc.newBlockingStub(channel));
         log.info("GPU plane embed client → {} (mTLS={}, fail-closed, max {} req/min)", props.getEndpoint(),
                 props.getTls().isEnabled(), props.getMaxRequestsPerMinute() > 0 ? props.getMaxRequestsPerMinute() : "∞");
     }
@@ -98,48 +92,9 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
                 .build();
         int inputChars = request.inputs().stream().mapToInt(String::length).sum();
 
-        int maxAttempts = Math.max(1, props.getRetry().getMaxAttempts());
-        for (int attempt = 1; ; attempt++) {
-            pacer.acquire();
-            long start = System.currentTimeMillis();
-            ExecutionResponse response;
-            try {
-                response = stub.withDeadlineAfter(props.getTimeoutMs(), TimeUnit.MILLISECONDS).execute(exec);
-            } catch (StatusRuntimeException e) {
-                String code = GpuErrorCodes.canonicalCode(e);
-                if (GpuErrorCodes.isTransient(e) && attempt < maxAttempts) {
-                    retryLog(exec, code, attempt, maxAttempts);
-                    sleep(backoff(attempt));
-                    continue;
-                }
-                log.warn("GPU plane EMBED denied: code={} grpc={} request={} tenant={} model={}",
-                        code, e.getStatus().getCode(), exec.getRequestId(), tenantId, request.model());
-                throw new GpuPlaneException(code, "GPU plane EMBED failed (" + e.getStatus().getCode() + ")", e);
-            }
-            long latencyMs = System.currentTimeMillis() - start;
-
-            if (response.getState() == ExecutionState.SUCCESS) {
-                GpuEmbedCodec.Result r = codec.parse(response.getResult().toByteArray(), request.inputs().size());
-                return new EmbedResponse(r.embeddings(), inputChars, 0, latencyMs, r.promptTokens(), 0);
-            }
-            String code = GpuErrorCodes.canonicalCode(response);
-            if (code == null) {
-                code = "state_" + response.getState().name().toLowerCase();
-            }
-            if (GpuErrorCodes.isTransient(response) && attempt < maxAttempts) {
-                retryLog(exec, code, attempt, maxAttempts);
-                long wait = backoff(attempt);
-                if (GpuErrorCodes.PROVIDER_RATE_LIMITED.equals(code)) {
-                    wait = Math.max(wait, (long) props.getRetry().getRateLimitedBackoffMs() * attempt);
-                }
-                sleep(wait);
-                continue;
-            }
-            log.warn("GPU plane EMBED failed: state={} code={} reason={} upstream_request_id={} request={} tenant={} model={}",
-                    response.getState(), code, response.getError().getReason(), response.getUpstreamRequestId(),
-                    exec.getRequestId(), tenantId, request.model());
-            throw new GpuPlaneException(code, "GPU plane EMBED " + response.getState());
-        }
+        GpuPlaneExecutor.Outcome outcome = executor.execute(exec);
+        GpuEmbedCodec.Result r = codec.parse(outcome.response().getResult().toByteArray(), request.inputs().size());
+        return new EmbedResponse(r.embeddings(), inputChars, 0, outcome.latencyMs(), r.promptTokens(), 0);
     }
 
     @Override
@@ -151,23 +106,6 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
     public void close() {
         if (ownedChannel != null) {
             ownedChannel.shutdown();
-        }
-    }
-
-    private void retryLog(ExecutionRequest exec, String code, int attempt, int max) {
-        log.info("GPU plane EMBED transient code={} request={} — retry {}/{}", code, exec.getRequestId(), attempt, max - 1);
-    }
-
-    private long backoff(int attempt) {
-        return (long) (props.getRetry().getBackoffBaseMs() * Math.pow(2, attempt - 1));
-    }
-
-    private static void sleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw new GpuPlaneException("cancelled", "interrupted while backing off");
         }
     }
 }

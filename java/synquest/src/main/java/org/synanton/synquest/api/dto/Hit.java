@@ -23,5 +23,23 @@ public record Hit(
         @JsonProperty("token_count") int tokenCount,
         @JsonProperty("structured_content") String structuredContent,
         @JsonProperty("is_partial_section") boolean isPartialSection,
-        @JsonProperty("ingest_usage") String ingestUsage
-) {}
+        @JsonProperty("ingest_usage") String ingestUsage,
+        /** Cross-encoder relevance when the search was reranked; hits are then ordered by it. */
+        @JsonProperty("score_rerank") @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        Double scoreRerank
+) {
+    public Hit(UUID contentRefId, int chunkOrdinal, double score, double scoreDense, double scoreLexical, int rankDense,
+               int rankLexical, String snippet, String sourceUri, int pageStart, int pageEnd, String sectionPath,
+               String heading, List<String> sourceElements, int tokenCount, String structuredContent,
+               boolean isPartialSection, String ingestUsage) {
+        this(contentRefId, chunkOrdinal, score, scoreDense, scoreLexical, rankDense, rankLexical, snippet, sourceUri,
+                pageStart, pageEnd, sectionPath, heading, sourceElements, tokenCount, structuredContent,
+                isPartialSection, ingestUsage, null);
+    }
+
+    public Hit withScoreRerank(double s) {
+        return new Hit(contentRefId, chunkOrdinal, score, scoreDense, scoreLexical, rankDense, rankLexical, snippet,
+                sourceUri, pageStart, pageEnd, sectionPath, heading, sourceElements, tokenCount, structuredContent,
+                isPartialSection, ingestUsage, s);
+    }
+}

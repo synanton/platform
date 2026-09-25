@@ -31,7 +31,8 @@ public class SearchController {
         String tenant = req.tenant() != null ? req.tenant()
                 : (String) httpReq.getAttribute("tenant");
         SearchRequest effective = req.tenant() != null ? req
-                : new SearchRequest(tenant, req.query(), req.topK(), req.topKDense(), req.topKLexical(), req.rrfK());
+                : new SearchRequest(tenant, req.query(), req.topK(), req.topKDense(), req.topKLexical(), req.rrfK(),
+                        req.rerank(), req.rerankCandidates());
         return ResponseEntity.ok(searchService.search(effective));
     }
 

@@ -40,6 +40,8 @@ class SearchResult:
     embed_skipped: bool = False
     embed_cached: bool = False
     embed_ms: float | None = None
+    # B2/T10: set when synquest reranked this search (trace.rerank_ms present)
+    rerank_ms: float | None = None
 
 
 class SearchUnavailable(RuntimeError):
@@ -89,6 +91,8 @@ def search(
     top_k: int = 10,
     top_k_dense: int | None = None,
     top_k_lexical: int | None = None,
+    rerank: bool = False,
+    rerank_candidates: int | None = None,
 ) -> SearchResult:
     """POST /search and return hits mapped to chunk IDs, plus wall-clock latency.
 
@@ -105,6 +109,10 @@ def search(
         request_body["top_k_dense"] = top_k_dense
     if top_k_lexical is not None:
         request_body["top_k_lexical"] = top_k_lexical
+    if rerank:
+        request_body["rerank"] = True
+        if rerank_candidates is not None:
+            request_body["rerank_candidates"] = rerank_candidates
 
     started = time.monotonic()
     response = requests.post(
@@ -140,4 +148,5 @@ def search(
         embed_skipped=bool(usage.get("embed_skipped", False)),
         embed_cached=bool(usage.get("embed_cached", False)),
         embed_ms=trace.get("query_embed_ms", usage.get("query_embed_ms")),
+        rerank_ms=trace.get("rerank_ms"),
     )

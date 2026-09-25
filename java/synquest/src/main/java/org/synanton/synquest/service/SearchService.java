@@ -36,12 +36,34 @@ public class SearchService {
     private final ExecutorService searchPool = Executors.newFixedThreadPool(
             Math.max(2, Runtime.getRuntime().availableProcessors()));
 
+    private final SearchReranker reranker;
+    private final org.synanton.synquest.config.SynquestRerankProperties rerankProps;
+
     public SearchService(LuceneIndexBuilder indexBuilder,
                          QueryEmbedder queryEmbedder,
                          SynquestProperties props) {
+        this(indexBuilder, queryEmbedder, props, (SearchReranker) null, new org.synanton.synquest.config.SynquestRerankProperties());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public SearchService(LuceneIndexBuilder indexBuilder,
+                         QueryEmbedder queryEmbedder,
+                         SynquestProperties props,
+                         org.springframework.beans.factory.ObjectProvider<SearchReranker> reranker,
+                         org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
+        this(indexBuilder, queryEmbedder, props, reranker.getIfAvailable(), rerankProps);
+    }
+
+    public SearchService(LuceneIndexBuilder indexBuilder,
+                         QueryEmbedder queryEmbedder,
+                         SynquestProperties props,
+                         SearchReranker reranker,
+                         org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
         this.indexBuilder = indexBuilder;
         this.queryEmbedder = queryEmbedder;
         this.props = props;
+        this.reranker = reranker;
+        this.rerankProps = rerankProps;
     }
 
     public void initTenant(String tenant) {
@@ -130,17 +152,32 @@ public class SearchService {
             lexicalResults = lexicalFuture.get();
             long lexicalMs = System.currentTimeMillis() - lexicalStart;
 
+            // Rerank (B2/T10): fuse a wider candidate list, score full chunk text with the
+            // cross-encoder, reorder, cut to top_k. Fail closed: never return RRF order as "reranked".
+            boolean rerankRequested = Boolean.TRUE.equals(req.rerank());
+            int candidates = topK;
+            if (rerankRequested) {
+                if (reranker == null) {
+                    throw new RerankUnavailableException(
+                            "rerank requested but synquest.rerank is not enabled (gpu-plane profile)", null);
+                }
+                int asked = req.rerankCandidates() != null ? req.rerankCandidates() : rerankProps.getDefaultCandidates();
+                candidates = Math.max(topK, Math.min(asked, rerankProps.getMaxCandidates()));
+            }
+
             long fusionStart = System.currentTimeMillis();
-            List<RrfFusion.FusedHit> fused = RrfFusion.combine(denseResults, lexicalResults, topK, rrfK);
+            List<RrfFusion.FusedHit> fused = RrfFusion.combine(denseResults, lexicalResults, candidates, rrfK);
             long fusionMs = System.currentTimeMillis() - fusionStart;
 
             var stored = searcher.storedFields();
             List<Hit> hits = new ArrayList<>(fused.size());
+            List<String> texts = new ArrayList<>(fused.size());
             for (RrfFusion.FusedHit fh : fused) {
                 Document doc = stored.document(fh.docId());
                 String contentRefId = doc.get("content_ref_id");
                 int chunkOrdinal = Integer.parseInt(Objects.requireNonNullElse(doc.get("chunk_ordinal"), "0"));
                 String text = doc.get("text");
+                texts.add(text == null ? "" : text);
                 String snippet = text != null && text.length() > 200 ? text.substring(0, 200) + "…" : text;
                 hits.add(new Hit(
                         UUID.fromString(contentRefId),
@@ -163,9 +200,31 @@ public class SearchService {
                         emptyToNull(doc.get("ingest_usage"))));
             }
 
+            Long rerankMs = null;
+            if (rerankRequested && !hits.isEmpty()) {
+                long rerankStart = System.currentTimeMillis();
+                int maxChars = rerankProps.getMaxPassageChars();
+                List<String> passages = texts.stream()
+                        .map(t -> t.length() > maxChars ? t.substring(0, maxChars) : t).toList();
+                double[] scores;
+                try {
+                    scores = reranker.scores(tenant, req.query(), passages);
+                } catch (RuntimeException e) {
+                    throw new RerankUnavailableException("rerank failed: " + e.getMessage(), e);
+                }
+                List<Hit> reranked = new ArrayList<>(hits.size());
+                for (int i = 0; i < hits.size(); i++) {
+                    reranked.add(hits.get(i).withScoreRerank(scores[i]));
+                }
+                // stable sort: equal rerank scores keep RRF order
+                reranked.sort(java.util.Comparator.comparingDouble((Hit h) -> h.scoreRerank()).reversed());
+                hits = new ArrayList<>(reranked.subList(0, Math.min(topK, reranked.size())));
+                rerankMs = System.currentTimeMillis() - rerankStart;
+            }
+
             long totalMs = System.currentTimeMillis() - t0;
             SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
-                    searcher.generation());
+                    searcher.generation(), rerankMs, rerankRequested ? fused.size() : null);
             QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped, embedCached);
             return new SearchResponse(hits, trace, queryUsage);
 
@@ -176,6 +235,9 @@ public class SearchService {
             }
             if (cause instanceof EmbeddingUnavailableException eue) {
                 throw eue;
+            }
+            if (cause instanceof RerankUnavailableException rue) {
+                throw rue;
             }
             throw new RuntimeException("Search failed", cause);
         } catch (InterruptedException e) {

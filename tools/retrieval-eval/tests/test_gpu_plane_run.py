@@ -238,3 +238,13 @@ def test_index_stats_sends_the_tenant_header(monkeypatch):
     st = query.index_stats("http://synquest", "rb-fixed-g5")
     assert seen["headers"] == {"X-Tenant": "rb-fixed-g5"}
     assert st.fully_vectorised is True and st.embedding_dim == 768
+
+
+def test_rerank_requires_a_label_and_must_be_applied(tmp_path, queries, monkeypatch):
+    _fake(monkeypatch)
+    # labelled reranker 'none' with --rerank → refused before running
+    assert _evaluate(tmp_path, queries, "--rerank") == 1
+    # rerank requested but synquest didn't rerank (no trace.rerank_ms) → invalid
+    assert _evaluate(tmp_path, queries, "--rerank", "--reranker", "synanton-qwen3-reranker-0.6b") == 2
+    rec = yaml.safe_load((tmp_path / "results" / "invalid" / "T03-G.yaml").read_text())
+    assert any("rerank requested but not applied" in r for r in rec["validity"]["reasons"])

@@ -49,6 +49,7 @@ case "$PLANE" in
     export EMBED_DIM="${EMBED_DIM:-768}"
     export EMBED_TRUNCATE_DIM="${EMBED_TRUNCATE_DIM:-0}"
     export GPU_PLANE_MAX_RPM="${GPU_PLANE_MAX_RPM:-0}"
+    export RERANK_ENABLED="${RERANK_ENABLED:-true}"   # GPU-5 serves synanton-qwen3-reranker-0.6b (node2)
     ;;
   gpu7)
     : "${GPU_PLANE_PKI_DIR:=$RUNTIME/deployments/external/certs}"

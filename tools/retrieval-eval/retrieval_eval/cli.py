@@ -129,6 +129,9 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
 
 def _cmd_evaluate(args: argparse.Namespace) -> int:
+    if args.rerank and args.reranker == "none":
+        print("--rerank needs --reranker <logical model id> so the run record names the reranker", file=sys.stderr)
+        return 1
     synquest_url = compose.synquest_base_url()
     queries = load_gold_queries(args.queries)
     if not queries:
@@ -165,7 +168,7 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
     throttle = Throttle(max_rpm)
     counts_requests = plane != "none" and dense
 
-    per_query, raw, failed, skipped = [], [], [], []
+    per_query, raw, failed, skipped, not_reranked = [], [], [], [], []
     embed_requests = embed_cached = 0
     embed_ms_values: list[float] = []
     aborted = None
@@ -182,6 +185,7 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
             result = search(
                 synquest_url, args.tenant, gold.question, top_k=max(10, 100),
                 top_k_dense=args.top_k_dense, top_k_lexical=args.top_k_lexical,
+                rerank=args.rerank, rerank_candidates=args.rerank_candidates,
             )
         except (SearchUnavailable, requests.RequestException) as exc:
             failed.append(gold.query_id)
@@ -198,6 +202,8 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
         embed_cached += int(result.embed_cached)
         if result.embed_skipped:
             skipped.append(gold.query_id)
+        if args.rerank and result.rerank_ms is None:
+            not_reranked.append(gold.query_id)
         if result.embed_ms is not None and not result.embed_cached:
             embed_ms_values.append(float(result.embed_ms))
 
@@ -207,7 +213,7 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
         per_query.append(qm)
         raw.append({"query_id": gold.query_id, "retrieved": retrieved_ids, "latency_ms": result.latency_ms,
                     "embed_ms": result.embed_ms, "embed_cached": result.embed_cached,
-                    "embed_skipped": result.embed_skipped})
+                    "embed_skipped": result.embed_skipped, "rerank_ms": result.rerank_ms})
         print(
             f"  {gold.query_id} [{gold.category}]: "
             f"recall@10={qm.recall_at_10:.2f} ndcg@10={qm.ndcg_at_10:.2f} "
@@ -229,6 +235,8 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
         spend_after=spend_after.usage_usd if spend_after else None,
         free_only=free_only, aborted=aborted,
     )
+    if not_reranked:
+        validity.fail(f"rerank requested but not applied for {len(not_reranked)} queries: {', '.join(not_reranked)}")
 
     if not per_query:
         print("No query completed; nothing to score. " + "; ".join(validity.reasons), file=sys.stderr)
@@ -400,6 +408,10 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--top-k-dense", type=int, default=None, help="Pass 0 to suppress dense (T01 BM25-only)")
     evaluate_parser.add_argument("--top-k-lexical", type=int, default=None, help="Pass 1 to suppress lexical (T02 dense-only; synquest rejects 0)")
     _add_plane_args(evaluate_parser)
+    evaluate_parser.add_argument("--rerank", action="store_true",
+                                 help="rerank fused candidates with synquest's cross-encoder (B2/T10); needs --reranker <model>")
+    evaluate_parser.add_argument("--rerank-candidates", type=int, default=None,
+                                 help="fused candidates to rerank before cutting to top_k (default: synquest's)")
     evaluate_parser.add_argument("--provider-mode", default=None, help="default: gpu-7→external-free, gpu-5→local")
     evaluate_parser.add_argument("--embedding-dim", type=int, default=None, help="default: from /index/stats")
     evaluate_parser.add_argument("--max-rpm", type=int, default=None, help="searches per minute (default 15 on gpu-7; 0 = unthrottled)")

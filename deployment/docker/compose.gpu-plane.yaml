@@ -51,6 +51,9 @@ services:
       EMBED_DIM: ${EMBED_DIM:-1024}
       EMBED_TRUNCATE_DIM: ${EMBED_TRUNCATE_DIM:-1024}
       GPU_PLANE_MAX_RPM: ${GPU_PLANE_MAX_RPM:-15}
+      # B2/T10 cross-encoder reranking via the GPU plane (gpu5: synanton-qwen3-reranker-0.6b)
+      RERANK_ENABLED: ${RERANK_ENABLED:-false}
+      RERANK_MODEL: ${RERANK_MODEL:-synanton-qwen3-reranker-0.6b}
     volumes:
       - ${GPU_PLANE_TLS_DIR:?GPU_PLANE_TLS_DIR must point at ca.crt/client.crt/client.key}:/etc/gpu-plane/tls:ro
 
