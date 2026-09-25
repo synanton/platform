@@ -199,4 +199,39 @@ class GpuSynthesisAdapterTest {
 
         assertThat(result).isPresent();
     }
+
+    private static io.grpc.StatusRuntimeException denial(io.grpc.Status status, String code) {
+        io.grpc.Metadata trailers = new io.grpc.Metadata();
+        trailers.put(io.grpc.Metadata.Key.of("x-synanton-error-code", io.grpc.Metadata.ASCII_STRING_MARSHALLER), code);
+        return status.withDescription(code + ": denied").asRuntimeException(trailers);
+    }
+
+    @Test
+    void synthesise_nonRetryableDenial_isAttemptedOnce() {
+        // gpu-runtime PR #15: security/policy denials never succeed on retry
+        when(client.execute(any())).thenThrow(denial(io.grpc.Status.PERMISSION_DENIED, "tenant_not_allowed"));
+
+        Optional<SynthesisResult> result = adapter.synthesise(INPUT, "tenant-1", Map.of());
+
+        assertThat(result).isPresent().get().isInstanceOf(SynthesisResult.Error.class);
+        verify(client, times(1)).execute(any());
+    }
+
+    @Test
+    void synthesise_budgetExceeded_isNotRetried() {
+        when(client.execute(any())).thenThrow(denial(io.grpc.Status.RESOURCE_EXHAUSTED, "budget_exceeded"));
+
+        adapter.synthesise(INPUT, "tenant-1", Map.of());
+
+        verify(client, times(1)).execute(any());
+    }
+
+    @Test
+    void synthesise_concurrencyDenial_isRetried() {
+        when(client.execute(any())).thenThrow(denial(io.grpc.Status.RESOURCE_EXHAUSTED, "concurrency_limit_reached"));
+
+        adapter.synthesise(INPUT, "tenant-1", Map.of());
+
+        verify(client, times(3)).execute(any());
+    }
 }

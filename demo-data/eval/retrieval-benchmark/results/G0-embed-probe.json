@@ -1,0 +1,242 @@
+{
+  "probe": "G0-embed-probe",
+  "recorded_at": "2026-09-25T08:05:22.045126+00:00",
+  "corpus": {
+    "documents": "demo-data/documents (*.md, *.txt)",
+    "passages": 86,
+    "passage_unit": "markdown heading section / text blank-line paragraph",
+    "queries": "demo-data/eval/retrieval-benchmark/queries.jsonl",
+    "query_count": 10,
+    "gold": "hand-mapped answer markers (embed_probe.GOLD_MARKERS); rb009 negative excluded"
+  },
+  "key_limits_before": {
+    "is_free_tier": false,
+    "limit": 1,
+    "limit_reset": "daily",
+    "limit_remaining": 1,
+    "usage": 0.00052275,
+    "usage_daily": 0,
+    "free_model_daily_requests": {
+      "used": 50,
+      "limit": 1000,
+      "remaining": 950
+    }
+  },
+  "key_limits_after": {
+    "is_free_tier": false,
+    "limit": 1,
+    "limit_reset": "daily",
+    "limit_remaining": 1,
+    "usage": 0.00052275,
+    "usage_daily": 0,
+    "free_model_daily_requests": {
+      "used": 50,
+      "limit": 1000,
+      "remaining": 950
+    }
+  },
+  "spend_unchanged": true,
+  "models": [
+    {
+      "model": "nvidia/nemotron-3-embed-1b:free",
+      "batch_inputs": 96,
+      "batch_latency_ms": 3126,
+      "native_dim": 2048,
+      "returned_l2_norm": 1.0,
+      "usage": {
+        "prompt_tokens": 5600,
+        "total_tokens": 5600,
+        "cost": 0,
+        "is_byok": false,
+        "cost_details": {
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0,
+          "upstream_inference_completions_cost": 0
+        }
+      },
+      "truncation": [
+        {
+          "dim": 2048,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.604
+        },
+        {
+          "dim": 1024,
+          "queries_scored": 9,
+          "hit_at_1": 0.556,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.681,
+          "top10_overlap_vs_native": 0.95,
+          "top1_agreement_vs_native": 0.8
+        },
+        {
+          "dim": 768,
+          "queries_scored": 9,
+          "hit_at_1": 0.556,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.681,
+          "top10_overlap_vs_native": 0.87,
+          "top1_agreement_vs_native": 0.9
+        },
+        {
+          "dim": 512,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.778,
+          "mrr_at_10": 0.606,
+          "top10_overlap_vs_native": 0.9,
+          "top1_agreement_vs_native": 0.8
+        },
+        {
+          "dim": 384,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.778,
+          "mrr_at_10": 0.625,
+          "top10_overlap_vs_native": 0.88,
+          "top1_agreement_vs_native": 0.9
+        }
+      ],
+      "dimensions_param": {
+        "requested": 768,
+        "error": {
+          "status": 400,
+          "body": "{\"error\":{\"message\":\"HTTP 400: {\\\"object\\\":\\\"error\\\",\\\"message\\\":\\\"dimensions must be one of 2048\\\",\\\"type\\\":\\\"invalid_request_error\\\"}\",\"code\":400}}"
+        }
+      }
+    },
+    {
+      "model": "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+      "batch_inputs": 96,
+      "batch_latency_ms": 2343,
+      "native_dim": 2048,
+      "returned_l2_norm": 1.0001,
+      "usage": {
+        "prompt_tokens": 5310,
+        "total_tokens": 5310,
+        "cost": 0,
+        "is_byok": false,
+        "cost_details": {
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0,
+          "upstream_inference_completions_cost": 0
+        }
+      },
+      "truncation": [
+        {
+          "dim": 2048,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.63
+        },
+        {
+          "dim": 1024,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.611,
+          "top10_overlap_vs_native": 0.93,
+          "top1_agreement_vs_native": 1.0
+        },
+        {
+          "dim": 768,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.63,
+          "top10_overlap_vs_native": 0.9,
+          "top1_agreement_vs_native": 1.0
+        },
+        {
+          "dim": 512,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.611,
+          "top10_overlap_vs_native": 0.9,
+          "top1_agreement_vs_native": 1.0
+        },
+        {
+          "dim": 384,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.602,
+          "top10_overlap_vs_native": 0.83,
+          "top1_agreement_vs_native": 1.0
+        }
+      ],
+      "dimensions_param": {
+        "requested": 768,
+        "returned_dim": 768,
+        "honoured": true,
+        "cosine_vs_client_cut": 0.9966,
+        "latency_ms": 805
+      }
+    },
+    {
+      "model": "liquid/lfm-2.5-embedding-350m:free",
+      "batch_inputs": 96,
+      "batch_latency_ms": 4491,
+      "native_dim": 1024,
+      "returned_l2_norm": 1.0,
+      "usage": {
+        "prompt_tokens": 5417,
+        "total_tokens": 5417,
+        "cost": 0,
+        "is_byok": false,
+        "cost_details": {
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0,
+          "upstream_inference_completions_cost": 0
+        }
+      },
+      "truncation": [
+        {
+          "dim": 1024,
+          "queries_scored": 9,
+          "hit_at_1": 0.667,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.741
+        },
+        {
+          "dim": 768,
+          "queries_scored": 9,
+          "hit_at_1": 0.556,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.689,
+          "top10_overlap_vs_native": 0.93,
+          "top1_agreement_vs_native": 0.9
+        },
+        {
+          "dim": 512,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.643,
+          "top10_overlap_vs_native": 0.89,
+          "top1_agreement_vs_native": 0.8
+        },
+        {
+          "dim": 384,
+          "queries_scored": 9,
+          "hit_at_1": 0.444,
+          "hit_at_5": 0.889,
+          "mrr_at_10": 0.606,
+          "top10_overlap_vs_native": 0.86,
+          "top1_agreement_vs_native": 0.8
+        }
+      ],
+      "dimensions_param": {
+        "requested": 768,
+        "error": {
+          "status": 400,
+          "body": "{\"error\":{\"message\":\"HTTP 400: {\\\"error\\\":{\\\"message\\\":\\\"The model `openrouter:LiquidAI/LFM2.5-Embedding-350M:free` produces 1024-dimensional embeddings.\\\",\\\"type\\\":\\\"invalid_request_error\\\",\\\"param\\\":\\\"dimensions\\\",\\\"code\\\":null}}\",\"code\":400}}"
+        }
+      }
+    }
+  ]
+}

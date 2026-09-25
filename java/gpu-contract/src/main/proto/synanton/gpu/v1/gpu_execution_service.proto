@@ -27,6 +27,14 @@ service GPUExecutionService {
     // to reconcile any timed-out or disconnected Execute call.
     rpc Execute(ExecutionRequest) returns (ExecutionResponse);
 
+    // ExecuteStream dispatches a SYNTHESIZE workload in streaming mode.
+    // Zero or more ExecutionChunk.data messages (one per provider stream chunk,
+    // logical model ID restored) are followed by EXACTLY ONE ExecutionChunk.terminal
+    // carrying the final state, usage and error. The terminal message replaces the
+    // SSE "data: [DONE]" marker. An idempotent replay of a completed request returns
+    // only the terminal message (streamed content is not retained).
+    rpc ExecuteStream(ExecutionRequest) returns (stream ExecutionChunk);
+
     // Cancel is best-effort. Does not imply rollback of primary-platform business state.
     rpc Cancel(CancelRequest) returns (CancelResponse);
 
@@ -37,6 +45,62 @@ service GPUExecutionService {
     // GetCapacity is advisory. A successful response does NOT reserve GPU capacity.
     // Admission is authoritative only at Execute time.
     rpc GetCapacity(GetCapacityRequest) returns (CapacityResponse);
+
+    // GetModels returns available models for the given operation and provider.
+    // Used by the primary platform for model selection and tracing.
+    rpc GetModels(GetModelsRequest) returns (GetModelsResponse);
+
+    // GetResponse retrieves a stored Responses API response object (Plan §4.6).
+    // NOT_FOUND if unknown, deleted, or owned by a tenant the caller may not act for.
+    rpc GetResponse(GetResponseRequest) returns (StoredResponse);
+
+    // DeleteResponse deletes a stored response (the object is purged; later GetResponse
+    // returns NOT_FOUND). Same visibility rules as GetResponse.
+    rpc DeleteResponse(DeleteResponseRequest) returns (DeleteResponseResponse);
+}
+
+// GPUControlService is the GPU-7 routing-control API (Deployment Plan §32/§33/§38,
+// T-K8S-38). Every RPC requires a caller principal with the "admin" role. Changes are
+// persisted in PostgreSQL, survive restarts, apply to all Gateway replicas, and are
+// audited (principal + reason). Configuration is the hard floor: routing or a provider
+// disabled in configuration can never be enabled at runtime.
+service GPUControlService {
+    rpc GetRoutingControl(GetRoutingControlRequest) returns (RoutingControlState);
+    // Runtime kill switch: enabled=false denies ALL external routing (routing_disabled).
+    rpc SetExternalRouting(SetExternalRoutingRequest) returns (RoutingControlState);
+    // Runtime provider enablement: enabled=false denies that provider (provider_unavailable).
+    rpc SetProviderEnabled(SetProviderEnabledRequest) returns (RoutingControlState);
+}
+
+message GetRoutingControlRequest {}
+
+message SetExternalRoutingRequest {
+    bool   enabled = 1;
+    string reason  = 2;  // required: recorded in the audit trail
+}
+
+message SetProviderEnabledRequest {
+    string provider_id = 1;
+    bool   enabled     = 2;
+    string reason      = 3;  // required: recorded in the audit trail
+}
+
+message RoutingControlState {
+    bool   external_routing_enabled        = 1;  // effective = configured AND runtime
+    bool   external_routing_config_enabled = 2;
+    string external_routing_updated_by     = 3;  // principal of the last runtime change
+    string external_routing_reason         = 4;
+    repeated ProviderControl providers     = 5;
+}
+
+message ProviderControl {
+    string provider_id    = 1;
+    bool   enabled        = 2;  // effective = configured AND runtime
+    bool   config_enabled = 3;
+    string updated_by     = 4;
+    string reason         = 5;
+    bool   healthy        = 6;  // last health probe (observed by the answering replica)
+    bool   circuit_open   = 7;  // circuit breaker (observed by the answering replica)
 }
 
 // ─── Enumerations ────────────────────────────────────────────────────────────
@@ -47,6 +111,17 @@ enum Operation {
     SYNTHESIZE = 1;  // LLM text generation via /v1/chat/completions
     EMBED      = 2;  // Dense vector embedding via /v1/embeddings
     RERANK     = 3;  // Cross-encoder reranking
+    // RESPOND: OpenAI Responses API "create" (GPU-7; Deployment Plan §4.6). payload is
+    // a Responses API request body; result is the response object, whose "id" is a
+    // Gateway-assigned response ID (resp_…) usable with GetResponse/DeleteResponse.
+    RESPOND    = 4;
+}
+
+// Provider enumerates the supported inference providers.
+enum Provider {
+    PROVIDER_UNSPECIFIED = 0;
+    LOCAL       = 1;  // Local vLLM deployment (GPU-5)
+    OPENAI  = 2;  // openrouter.ai, opencode.ai external provider (GPU-7)
 }
 
 // ExecutionState is the lifecycle of a single GPU execution attempt.
@@ -117,6 +192,16 @@ message ExecutionRequest {
     // trace_context carries OpenTelemetry W3C traceparent/tracestate headers
     // for cross-cluster trace propagation.
     map<string, string> trace_context = 8;
+
+    // provider specifies the inference provider to route the request to.
+    // If unspecified, defaults to LOCAL (GPU-5 local vLLM).
+    Provider provider = 9;
+
+    // data_tags are sensitivity labels the platform assigns to this request's data
+    // (e.g. "pii", "sensitive"). When any tag is in the Gateway's
+    // gpu-gateway.sensitivity.block-external-tags, external (GPU-7) routing is denied
+    // with code sensitive_model_external_blocked — fail closed, never rerouted.
+    repeated string data_tags = 10;
 }
 
 // ExecutionResponse is returned by the GPU Gateway after dispatch completes.
@@ -132,6 +217,45 @@ message ExecutionResponse {
 
     ErrorInfo   error = 5;
     UsageReport usage = 6;
+
+    // upstream_request_id is the external provider's request ID (GPU-7), preserved
+    // for support correlation. Empty for local (GPU-5) executions.
+    string upstream_request_id = 7;
+}
+
+// ExecutionChunk is one message of an ExecuteStream response stream.
+message ExecutionChunk {
+    string request_id   = 1;
+    string execution_id = 2;
+    oneof event {
+        // One OpenAI-compatible chat.completion.chunk JSON object, as streamed by the
+        // runtime, with the provider model ID replaced by the logical model ID.
+        // A usage-bearing chunk (stream_options.include_usage) is forwarded as data.
+        bytes data = 3;
+        // Final message of the stream: exactly once, always last.
+        ExecutionResponse terminal = 4;
+    }
+}
+
+message GetResponseRequest {
+    string response_id = 1;
+}
+
+message StoredResponse {
+    string response_id    = 1;
+    string execution_id   = 2;
+    string request_id     = 3;
+    ExecutionState state  = 4;
+    bytes  response       = 5;  // Responses API response object (JSON), logical model ID
+}
+
+message DeleteResponseRequest {
+    string response_id = 1;
+}
+
+message DeleteResponseResponse {
+    string response_id = 1;
+    bool   deleted     = 2;
 }
 
 message CancelRequest {
@@ -156,11 +280,39 @@ message ExecutionStatus {
     ExecutionState state = 3;
     ErrorInfo   error = 4;
     UsageReport usage = 5;
+    string upstream_request_id = 6;  // see ExecutionResponse.upstream_request_id
 }
 
 message GetCapacityRequest {
     string model    = 1;
     string gpu_type = 2;  // Optional; empty means any available GPU class
+}
+
+// GetModelsRequest requests available models for a specific operation and provider.
+message GetModelsRequest {
+    Operation operation = 1;
+    Provider  provider  = 2;
+    string    tenant_id = 3;  // Optional: filter models available to this tenant
+}
+
+// GetModelsResponse returns the list of available models for the operation.
+message GetModelsResponse {
+    repeated ModelInfo models = 1;
+}
+
+// ModelInfo describes a model available for a specific operation.
+message ModelInfo {
+    string model_id         = 1;  // Logical model ID (e.g., "llama-3.1-8b-instruct")
+    string display_name     = 2;  // Human-readable name
+    string provider         = 3;  // Provider name (LOCAL, OPENAI, etc.)
+    Operation operation     = 4;  // Operation this model supports
+    // DEPRECATED — never populated. Provider model IDs are an internal routing detail
+    // and are never exposed downstream; the field number is kept for wire compatibility.
+    string provider_model_id = 5 [deprecated = true];
+    bool   is_default       = 6;  // Whether this is the default model for the operation
+    int32  max_input_tokens = 7;  // Maximum input tokens supported
+    int32  max_output_tokens = 8; // Maximum output tokens supported (for SYNTHESIZE)
+    int32  embedding_dim    = 9;  // Embedding dimension (for EMBED)
 }
 
 // CapacityResponse is advisory only. A successful response does NOT reserve capacity.
@@ -182,6 +334,10 @@ message ErrorInfo {
     ErrorReason reason   = 1;
     string      message  = 2;  // Diagnostic only; NOT for user-facing rendering
     bool        retryable = 3;
+    // code is the canonical fine-grained error code (e.g. "upstream_provider_error",
+    // "upstream_provider_timeout", "budget_exceeded", "capability_not_supported").
+    // reason is the coarse category; code is authoritative for machine handling.
+    string      code     = 4;
 }
 
 // UsageReport captures GPU execution measurements for cost attribution.

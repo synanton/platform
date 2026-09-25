@@ -43,15 +43,39 @@ public class LuceneIndexBuilder {
 
     private final IngestionCacheClient cacheClient;
     private final String indexBasePath;
-    private final int embeddingDim;
+    private final EmbeddingShape shape;
     private final String embeddingModel;
+    private final boolean embeddingRequired;
+    private final java.util.Map<String, BuildReport> lastReports = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Outcome of the last {@link #build} per tenant, surfaced on {@code /index/stats}. A dense
+     * benchmark run is only valid when {@code vectorDocs == docs}, i.e. no dimension mismatches
+     * and no missing vectors.
+     */
+    public record BuildReport(String embeddingModel, int embeddingDim, boolean truncated,
+                              int docs, int vectorDocs, int dimMismatches, int missingVectors) {}
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public LuceneIndexBuilder(IngestionCacheClient cacheClient,
+                              org.synanton.synquest.config.SynquestProperties props,
+                              EmbeddingShape shape,
+                              @org.springframework.beans.factory.annotation.Value("${synquest.embedding.required:false}")
+                              boolean embeddingRequired) {
+        this.cacheClient = cacheClient;
+        this.indexBasePath = props.index().path();
+        this.shape = shape;
+        this.embeddingModel = props.embedding().model();
+        this.embeddingRequired = embeddingRequired;
+    }
 
     public LuceneIndexBuilder(IngestionCacheClient cacheClient,
                               org.synanton.synquest.config.SynquestProperties props) {
-        this.cacheClient = cacheClient;
-        this.indexBasePath = props.index().path();
-        this.embeddingDim = props.embedding().dim();
-        this.embeddingModel = props.embedding().model();
+        this(cacheClient, props, new EmbeddingShape(props), false);
+    }
+
+    public java.util.Optional<BuildReport> lastReport(String tenant) {
+        return java.util.Optional.ofNullable(lastReports.get(tenant));
     }
 
     public Path indexPath(String tenant) {
@@ -78,6 +102,9 @@ public class LuceneIndexBuilder {
 
         int docCount = 0;
         int skipCount = 0;
+        int vectorDocs = 0;
+        int dimMismatches = 0;
+        int missingVectors = 0;
 
         try (FSDirectory dir = FSDirectory.open(path);
              IndexWriter writer = new IndexWriter(dir, config)) {
@@ -125,14 +152,19 @@ public class LuceneIndexBuilder {
 
                     if (embOpt.isPresent()) {
                         EmbeddingRow emb = embOpt.get();
-                        float[] vec = emb.embedding();
-                        if (vec.length == embeddingDim) {
-                            vec = QueryEmbedder.normalise(vec);
+                        try {
+                            float[] vec = shape.fit(emb.embedding());
                             doc.add(new KnnFloatVectorField(FIELD_EMBEDDING, vec, VectorSimilarityFunction.COSINE));
-                        } else {
-                            log.warn("Embedding dim mismatch for {}#{}: expected {} got {}",
-                                    manifest.contentRefId(), chunk.chunkOrdinal(), embeddingDim, vec.length);
+                            vectorDocs++;
+                        } catch (EmbeddingShape.DimensionMismatchException e) {
+                            dimMismatches++;
+                            if (dimMismatches <= 5) {
+                                log.warn("Embedding dim mismatch for {}#{}: {}",
+                                        manifest.contentRefId(), chunk.chunkOrdinal(), e.getMessage());
+                            }
                         }
+                    } else {
+                        missingVectors++;
                     }
 
                     writer.addDocument(doc);
@@ -143,8 +175,19 @@ public class LuceneIndexBuilder {
             writer.commit();
         }
 
-        log.info("Built Lucene index for tenant '{}': {} docs indexed, {} manifests skipped",
-                tenant, docCount, skipCount);
+        BuildReport report = new BuildReport(embeddingModel, shape.dim(), shape.truncates(),
+                docCount, vectorDocs, dimMismatches, missingVectors);
+        lastReports.put(tenant, report);
+        log.info("Built Lucene index for tenant '{}': {} docs indexed ({} with {}-dim vectors of model '{}', "
+                        + "{} dim mismatches, {} without a vector), {} manifests skipped",
+                tenant, docCount, vectorDocs, shape.describe(), embeddingModel, dimMismatches, missingVectors, skipCount);
+        if (embeddingRequired && (dimMismatches > 0 || missingVectors > 0)) {
+            // Fail closed: under synquest.embedding.required a partly-vectorised index would make
+            // a "dense"/"hybrid" run silently lexical for the affected chunks.
+            throw new IllegalStateException("index for tenant '" + tenant + "' is not fully vectorised with model '"
+                    + embeddingModel + "' at dim " + shape.describe() + ": " + dimMismatches + " dim mismatches, "
+                    + missingVectors + " chunks without a vector (synquest.embedding.required=true)");
+        }
     }
 
     private static long parseIngestWallMs(String ingestUsageJson) {

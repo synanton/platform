@@ -80,11 +80,17 @@ public class SearchService {
         float[] queryVec = null;
         long embedMs = 0;
         boolean embedSkipped = false;
+        boolean embedCached = false;
         try {
             long embedStart = System.currentTimeMillis();
-            queryVec = queryEmbedder.embed(req.query());
+            QueryEmbedder.QueryVector qv = queryEmbedder.embedForSearch(req.query(), tenant);
+            queryVec = qv.vector();
+            embedCached = qv.cached();
             embedMs = System.currentTimeMillis() - embedStart;
         } catch (Exception e) {
+            if (queryEmbedder.required()) {
+                throw new EmbeddingUnavailableException(e);
+            }
             embedSkipped = true;
             log.warn("Query embedding unavailable, using BM25 only: {}", e.getMessage());
         }
@@ -98,6 +104,10 @@ public class SearchService {
             try {
                 return searcher.dense(denseVec, topKDense);
             } catch (Exception e) {
+                if (queryEmbedder.required()) {
+                    // e.g. an index built at another dimension: never degrade silently to BM25-only
+                    throw new EmbeddingUnavailableException(e);
+                }
                 log.warn("Dense search skipped: {}", e.getMessage());
                 return new TopDocs(new org.apache.lucene.search.TotalHits(0,
                         org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
@@ -152,13 +162,16 @@ public class SearchService {
             long totalMs = System.currentTimeMillis() - t0;
             SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
                     searcher.generation());
-            QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped);
+            QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped, embedCached);
             return new SearchResponse(hits, trace, queryUsage);
 
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof IOException ioe) {
                 throw ioe;
+            }
+            if (cause instanceof EmbeddingUnavailableException eue) {
+                throw eue;
             }
             throw new RuntimeException("Search failed", cause);
         } catch (InterruptedException e) {
@@ -188,7 +201,13 @@ public class SearchService {
         if (searcher == null) {
             return new IndexStats(tenant, 0, -1, status.name().toLowerCase());
         }
-        return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready");
+        var report = indexBuilder.lastReport(tenant).orElse(null);
+        if (report == null) {
+            return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready");
+        }
+        return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready",
+                report.embeddingModel(), report.embeddingDim(), report.truncated(),
+                report.vectorDocs(), report.dimMismatches(), report.missingVectors());
     }
 
     public Status getStatus() {

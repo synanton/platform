@@ -10,17 +10,22 @@ import org.synanton.gateway.domain.GraphResult;
 import org.synanton.gateway.domain.Hit;
 import org.synanton.gateway.domain.StepOutcome;
 import org.synanton.gateway.domain.StepTrace;
+import org.synanton.gateway.gpu.GpuRerankAdapter;
+import org.synanton.llm.RerankRequest;
+import org.synanton.llm.RerankResponse;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 public class PlanExecutor {
 
@@ -31,19 +36,22 @@ public class PlanExecutor {
     private final FusionEngine fusionEngine;
     private final ExecutorService executor;
     private final GatewayProperties props;
+    private final Optional<GpuRerankAdapter> gpuRerankAdapter;
 
     public PlanExecutor(
             SynquestClient synquestClient,
             RelixClient relixClient,
             FusionEngine fusionEngine,
             ExecutorService executor,
-            GatewayProperties props
+            GatewayProperties props,
+            Optional<GpuRerankAdapter> gpuRerankAdapter
     ) {
         this.synquestClient = synquestClient;
         this.relixClient = relixClient;
         this.fusionEngine = fusionEngine;
         this.executor = executor;
         this.props = props;
+        this.gpuRerankAdapter = gpuRerankAdapter;
     }
 
     public ExecutionResult execute(
@@ -109,10 +117,77 @@ public class PlanExecutor {
             fused = hits.stream().limit(topK).toList();
         }
         long fuseDuration = System.currentTimeMillis() - fuseStart;
-        long totalMs = System.currentTimeMillis() - globalStart;
 
         traces.add(new StepTrace("step-fusion", "gateway", fuseStart - globalStart, fuseDuration, StepOutcome.OK, null));
-        return new ExecutionResult(fused, graph, traces, warnings, totalMs, false);
+
+        // Rerank step (Phase 4): use GPU rerank if available
+        List<Hit> reranked = rerankIfAvailable(tenant, query, fused, fuseStart, globalStart, traces, warnings);
+
+        long totalMs = System.currentTimeMillis() - globalStart;
+        return new ExecutionResult(reranked, graph, traces, warnings, totalMs, false);
+    }
+
+    private List<Hit> rerankIfAvailable(
+            String tenant,
+            String query,
+            List<Hit> hits,
+            long stepStart,
+            long globalStart,
+            List<StepTrace> traces,
+            List<String> warnings
+    ) {
+        if (gpuRerankAdapter.isEmpty() || hits.isEmpty()) {
+            return hits;
+        }
+
+        long rerankStart = System.currentTimeMillis();
+        try {
+            List<String> passages = hits.stream()
+                    .map(h -> h.snippet() != null ? h.snippet() : "")
+                    .collect(Collectors.toList());
+
+            // Model will be resolved by adapter based on tenant
+            RerankRequest request = new RerankRequest(
+                    null, // model - resolved by adapter
+                    query,
+                    passages,
+                    props.rerank().topN()
+            );
+
+            RerankResponse response = gpuRerankAdapter.get().rerank(request, tenant);
+
+            if (response.results() != null && !response.results().isEmpty()) {
+                // Reorder hits based on rerank scores
+                List<Hit> reranked = new ArrayList<>();
+                for (RerankResponse.RerankResult result : response.results()) {
+                    int idx = result.index();
+                    if (idx >= 0 && idx < hits.size()) {
+                        Hit original = hits.get(idx);
+                        reranked.add(original.withScore(result.score()));
+                    }
+                }
+                // Add any hits that weren't in rerank results (shouldn't happen but safety)
+                if (reranked.size() < hits.size()) {
+                    for (Hit hit : hits) {
+                        boolean found = reranked.stream().anyMatch(h -> h.contentRefId().equals(hit.contentRefId()));
+                        if (!found) {
+                            reranked.add(hit);
+                        }
+                    }
+                }
+
+                long duration = System.currentTimeMillis() - rerankStart;
+                traces.add(new StepTrace("step-rerank", "gpu", stepStart - globalStart, duration, StepOutcome.OK, null));
+                log.debug("GPU rerank completed: {} hits reranked in {}ms", reranked.size(), duration);
+                return reranked;
+            }
+        } catch (Exception e) {
+            long duration = System.currentTimeMillis() - rerankStart;
+            log.warn("GPU rerank failed, using original order: {}", e.getMessage());
+            traces.add(new StepTrace("step-rerank", "gpu", stepStart - globalStart, duration, StepOutcome.FAILED, e.getMessage()));
+            warnings.add("rerank_failed");
+        }
+        return hits;
     }
 
     private ExecutionResult executeGraphOnly(

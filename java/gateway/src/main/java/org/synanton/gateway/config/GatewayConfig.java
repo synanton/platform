@@ -9,9 +9,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.synanton.gateway.client.PlannerClient;
 import org.synanton.gateway.client.RelixClient;
 import org.synanton.gateway.client.SynquestClient;
+import org.synanton.gateway.gpu.GpuEmbeddingAdapter;
 import org.synanton.gateway.gpu.GpuExecutionClient;
 import org.synanton.gateway.gpu.GpuExecutionClientProperties;
+import org.synanton.gateway.gpu.GpuRerankAdapter;
 import org.synanton.gateway.gpu.GpuSynthesisAdapter;
+import org.synanton.gateway.gpu.ModelResolver;
 import org.synanton.gateway.plan.FusionEngine;
 import org.synanton.gateway.plan.PlanExecutor;
 import org.synanton.gateway.synthesis.PromptBuilder;
@@ -56,14 +59,20 @@ public class GatewayConfig {
     }
 
     @Bean
+    public ModelResolver modelResolver() {
+        return new ModelResolver();
+    }
+
+    @Bean
     public PlanExecutor planExecutor(
             SynquestClient synquestClient,
             RelixClient relixClient,
             FusionEngine fusionEngine,
             ExecutorService gatewayExecutor,
-            GatewayProperties props
+            GatewayProperties props,
+            Optional<GpuRerankAdapter> gpuRerankAdapter
     ) {
-        return new PlanExecutor(synquestClient, relixClient, fusionEngine, gatewayExecutor, props);
+        return new PlanExecutor(synquestClient, relixClient, fusionEngine, gatewayExecutor, props, gpuRerankAdapter);
     }
 
     @Bean
@@ -93,6 +102,36 @@ public class GatewayConfig {
         }
         return Optional.of(new GpuSynthesisAdapter(
                 gpuExecutionClient, gpuProps, gatewayProps.synthesis(), objectMapper));
+    }
+
+    @Bean
+    public Optional<GpuEmbeddingAdapter> gpuEmbeddingAdapter(
+            GpuExecutionClientProperties gpuProps,
+            GpuExecutionClient gpuExecutionClient,
+            GatewayProperties gatewayProps,
+            ObjectMapper objectMapper,
+            ModelResolver modelResolver
+    ) {
+        if (!gpuProps.isEnabled() || !gatewayProps.embedding().enabled()) {
+            return Optional.empty();
+        }
+        return Optional.of(new GpuEmbeddingAdapter(
+                gpuExecutionClient, gpuProps, gatewayProps.embedding(), objectMapper, modelResolver));
+    }
+
+    @Bean
+    public Optional<GpuRerankAdapter> gpuRerankAdapter(
+            GpuExecutionClientProperties gpuProps,
+            GpuExecutionClient gpuExecutionClient,
+            GatewayProperties gatewayProps,
+            ObjectMapper objectMapper,
+            ModelResolver modelResolver
+    ) {
+        if (!gpuProps.isEnabled() || !gatewayProps.rerank().enabled()) {
+            return Optional.empty();
+        }
+        return Optional.of(new GpuRerankAdapter(
+                gpuExecutionClient, gpuProps, gatewayProps.rerank(), objectMapper, modelResolver));
     }
 
     @Bean

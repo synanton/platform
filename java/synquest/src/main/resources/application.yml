@@ -27,7 +27,13 @@ synquest:
     dense-similarity: COSINE
   embedding:
     model: ${EMBED_MODEL:bge-base-en-v1.5}
-    dim: 768
+    # Dense index dimension (<= 1024, the Lucene 9.11 KNN cap). Changing it needs a /reindex.
+    dim: ${EMBED_DIM:768}
+    # 0 = off; else must equal dim: cut longer (Matryoshka) vectors to dim + L2-renormalise,
+    # identically at index build and query time. Ingest stores native vectors.
+    truncate-dim: ${EMBED_TRUNCATE_DIM:0}
+    # LRU query-vector cache per (tenant, model, query); 0 = off.
+    query-cache-size: ${EMBED_QUERY_CACHE_SIZE:0}
     normalise-l2: true
 
 llm-client:

@@ -1,7 +1,7 @@
 ---
 title: "GPU Plane Integration — Ticket Backlog"
-status: "backlog — blocked on gpu-runtime GPU-5"
-last_reviewed: "2026-09-20"
+status: "backlog — T-INT-1 decided; T-INT-2 planned against GPU-7 (free models); bge-base rows blocked on gpu-runtime GPU-5 (T-K8S-6a)"
+last_reviewed: "2026-09-25"
 ---
 
 # GPU Plane Integration — Ticket Backlog
@@ -28,9 +28,17 @@ Once the new cluster and `gpu-runtime`'s GPU-5 deployment exist, decide how `pla
 
 **Decide before touching `EMBED_BASE_URL`/`LLM_BASE_URL`** — don't assume the same env var contract applies to both cases; the k8s deployment fronts `gpu-gateway` (a different service, `synanton.gpu.v1`) rather than vLLM directly, so `platform`'s existing `LlmClient`/`QueryEmbedder` HTTP-to-vLLM assumption may not even apply to Option A without its own adapter work.
 
+**Decided (2026-09-25): Option A, via a shared gRPC `LlmClient`.** The GPU plane is gRPC `synanton.gpu.v1` over mTLS only, with no REST façade (Deployment Plan v3.1.0), so the HTTP `EMBED_BASE_URL` contract doesn't apply. The EMBED path of `gateway.gpu.GpuEmbeddingAdapter` gets extracted into a shared module and selected in `synquest`/`synflux` by an opt-in `gpu-plane` profile, in fail-closed mode (no silent CPU fallback). The same client serves GPU-7 (external, available now) and GPU-5 (local, once T-K8S-6a lands); only the logical model id differs. Rejected: a benchmark-only HTTP→gRPC shim (a de-facto REST façade) and calling OpenRouter directly from the platform (bypasses the GPU plane's guards and puts the key in the platform). Full plan: [retrieval-evaluation-benchmark-plan.md §6 Phase B1-G](./retrieval-evaluation-benchmark-plan.md).
+
 ### T-INT-2 — Re-run T02 (dense-only) and T03 (hybrid)
 
 Per `docs/research/retrieval-evaluation-benchmark-plan.md` §6 Phase B1, T01 (BM25, `rb-fixed`) and T04 (hybrid-labeled, `rb-semantic`) are done with real recorded results (`demo-data/eval/retrieval-benchmark/results/T01.yaml`, `T04.yaml`). T02/T03 are blocked, not run. Once a real embedding endpoint is reachable (via T-INT-1), run them for real using the same harness (`retrieval-eval evaluate ... --top-k-lexical 1` to isolate dense, or full hybrid for T03) and add their run records alongside the existing two.
+
+**Update (2026-09-25):** split into two parts.
+- **T-INT-2a (GPU-7, in progress: G0–G4 done 2026-09-25; G5 runs next):** T02-G/T03-G/T04-G on OpenRouter free embedding models through GPU-7 — steps G0–G7 in the benchmark plan's §6 Phase B1-G. These are separate rows, not the bge-base T02/T03.
+- **T-INT-2b (GPU-5, blocked on T-K8S-6a):** the original bge-base T02/T03, using the same client with the logical model set to `synanton-bge-base-embedding`.
+
+The old `results/T03.yaml` (2026-09-18, all metrics 0.0, dataset v1) is superseded and invalid.
 
 ### T-INT-3 — Write gold queries against the 3 newly-added structurally-rich PDFs
 
@@ -57,9 +65,8 @@ Per `docs/research/retrieval-evaluation-benchmark-plan.md` §6 Phase B2: hierarc
 ## Dependency summary
 
 ```text
-gpu-runtime GPU-5 (k8s deployment) ──┐
-                                     ├──> T-INT-1 (integration path decision) ──> T-INT-2 (run T02/T03)
-new dedicated cluster stood up ──────┘
+T-INT-1 (decided: shared gRPC LlmClient) ──┬──> T-INT-2a (T02-G/T03-G/T04-G on GPU-7 free models) — unblocked
+                                           └──> T-INT-2b (bge-base T02/T03 on GPU-5) — blocked on gpu-runtime T-K8S-6a
 
 T-INT-3 (gold queries for new PDFs)         — independent, do any time
 T-INT-4 (OHR-Bench fixtures for content_extractor) — independent, do any time

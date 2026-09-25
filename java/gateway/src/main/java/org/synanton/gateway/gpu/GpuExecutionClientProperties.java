@@ -17,6 +17,11 @@ public class GpuExecutionClientProperties {
         private String certPath;
         private String keyPath;
         private String caPath;
+        /** Optional TLS authority override (a server-certificate SAN, e.g. gpu-gateway). */
+        private String authority;
+
+        public String getAuthority() { return authority; }
+        public void setAuthority(String authority) { this.authority = authority; }
 
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean enabled) { this.enabled = enabled; }

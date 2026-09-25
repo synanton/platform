@@ -46,8 +46,12 @@ gateway:
     endpoint: ${GPU_GATEWAY_ENDPOINT:localhost:9090}
     model-version: ${GPU_MODEL_VERSION:latest}
     timeout-ms: ${GPU_TIMEOUT_MS:120000}
-    tls:
+    tls:                                   # mTLS to the GPU Gateway (gpu-runtime doc/GPU Plane mTLS Setup.md)
       enabled: ${GPU_TLS_ENABLED:false}
+      ca-path: ${GPU_TLS_CA_PATH:}           # Gateway's self-signed CA (ca.crt)
+      cert-path: ${GPU_TLS_CERT_PATH:}       # client cert, CN = principal (synanton-platform.crt)
+      key-path: ${GPU_TLS_KEY_PATH:}
+      authority: ${GPU_TLS_AUTHORITY:}       # optional SAN override (e.g. gpu-gateway)
     retry:
       max-attempts: ${GPU_RETRY_MAX_ATTEMPTS:3}
       backoff-base-ms: ${GPU_RETRY_BACKOFF_BASE_MS:500}
