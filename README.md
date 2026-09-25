@@ -773,7 +773,7 @@ The full ticket backlog for this is written down, not left as an open question: 
 | Implementation | One workload per GPU (node1 TEI/BGE-base embedding, node2 vLLM Qwen3-Reranker, node3 vLLM Qwen3-4B); **missing execution-JWT signing (T-K8S-6a)** | Provider registry, logical→provider rewrite, streaming, canonical errors, circuit breaker, health, cost ledger, budget, sensitivity, kill switch; not implemented: persisted runtime control state (T-K8S-38), mTLS |
 | Acceptance | **Blocked** on T-K8S-6a (Envoy fails closed) and a PoC run | **Passing**: acceptance suite 17/17, packaged smoke 23/23 incl. live OpenRouter free models |
 
-Retrieval benchmark impact: **T02/T03 can now run against GPU-7** (mock provider, or the OpenRouter free embedding arm `synanton-free-embedding` via gRPC `Execute` EMBED); against local GPU-5 they stay blocked until T-K8S-6a. Model state: Qwen3 weights in place; `bge-base-en-v1.5` complete on all nodes; downloads via `uv` venv + `HF_ENDPOINT=https://hf-mirror.com`.
+Retrieval benchmark impact: **T02/T03 can now run against GPU-7** (mock provider, or the OpenRouter free embedding arm `synanton-free-embedding` via gRPC `Execute` EMBED); against local GPU-5 they stay blocked until T-K8S-6a. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes; downloads via `uv` venv + `HF_ENDPOINT=https://hf-mirror.com`.
 
 ---
 
