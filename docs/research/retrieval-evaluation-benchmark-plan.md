@@ -1,6 +1,6 @@
 ---
 title: "Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)"
-status: "in progress — Phase B0 done; Phase B1 T01/T04 done; T02/T03/T04-v2 planned on GPU-5 home k8s (§6 Phase B1-K); B1-G (GPU-7 free models) blocked on OpenRouter reachability"
+status: "in progress — B0 done; B1 done on GPU-5 (T02/T03/T04-v2, §6 Phase B1-K); RQ1 needs gold queries on the PDFs (T-INT-3); B1-G blocked on OpenRouter reachability"
 last_reviewed: "2026-09-25"
 ---
 
@@ -271,7 +271,7 @@ Decision (user-confirmed): run only the two genuinely distinct arms available in
 - **T01** — `rb-fixed`, BM25-only (`--top-k-dense 0`), flat/fallback chunking.
 - **T04** — `rb-semantic`, labeled "hybrid" but functionally BM25-only for the same reason as above; the arm's actual distinguishing variable is chunking strategy, not retrieval strategy, since none of the 10 gold queries target the 3 new structurally-rich PDFs yet (§4 update).
 
-**T02/T03 are blocked, not skipped** — pending either the Phase 2 GPU profile being started, or another reachable embedding endpoint. The reachable endpoint now exists — the GPU plane's GPU-7 external mode — and the plan for using it is §6 Phase B1-G. `results/T03.yaml` (recorded 2026-09-18 against `demo-data-documents-v1`, every metric `0.0`) predates the gold-chunk annotation and was never a valid hybrid run; it is **superseded** and must not be cited. Results:
+**Update 2026-09-25: T02, T03 and a real T04 (T04-v2) have now run on GPU-5; see §6 Phase B1-K.** The rest of this paragraph is the original 2026-09-20 finding. **T02/T03 are blocked, not skipped** — pending either the Phase 2 GPU profile being started, or another reachable embedding endpoint. The reachable endpoint now exists — the GPU plane's GPU-7 external mode — and the plan for using it is §6 Phase B1-G. `results/T03.yaml` (recorded 2026-09-18 against `demo-data-documents-v1`, every metric `0.0`) predates the gold-chunk annotation and was never a valid hybrid run; it is **superseded** and must not be cited. Results:
 
 | Run | Tenant | Recall@10 | NDCG@10 | p95 latency | Record |
 |---|---|---|---|---|---|
@@ -400,7 +400,7 @@ Recall is identical (expected — every gold query's answer lives in a document 
 - **Latency comparability:** GPU-7 latency includes the WAN round trip and shared free-tier queueing. `embedMs` from `SearchTrace` is reported separately, and B1-G p95 numbers are never compared with GPU-5 or Phase 2 rows. Recall/NDCG comparisons are valid; latency comparisons across planes are not.
 - **bge-base rows:** T02/T03 as defined in §3.4 (bge-base) still require GPU-5; B1-G adds `-G` rows alongside them and doesn't close them.
 
-### Phase B1-K — bge-base T02/T03/T04 on the home k8s GPU plane (GPU-5), planned 2026-09-25
+### Phase B1-K — bge-base T02/T03/T04 on the home k8s GPU plane (GPU-5): done 2026-09-25
 
 **Why now.** GPU-5 passed cluster phase 5 on 2026-09-25 (gpu-runtime T-K8S-6a). `synanton-bge-base-embedding` (TEI, node1) and `synanton-qwen3-reranker-0.6b` (vLLM, node2) answer end to end through Gateway → Envoy (JWT) → GPU. Measured single-request latency: EMBED 166 ms, RERANK 74 ms (the README GPU plane table has the full results).
 
@@ -436,6 +436,37 @@ For `--gpu-plane gpu-5` the harness uses `provider_mode: local`: no spend check,
 | K7 | **Fixed tenant:** ingest `rb-fixed-g5` (extraction-gateway down, `--gpu-plane gpu-5 --retries 2`), remap gold from `rb-fixed`, then run **T02** and **T03** (`--gpu-plane gpu-5 --embedding-model synanton-bge-base-embedding --embedding-dim 768`). | run |
 | K8 | **Semantic tenant:** start the extraction gateway (`docker-extraction-gateway`), ingest `rb-semantic-g5`, remap gold from `rb-semantic`, then run **T04-v2**. | run |
 | K9 | **Report:** results table here (with T01 as the BM25 baseline), §9 deliverable 8, tickets T-INT-2b, README. The query-embedding latency (`latency_breakdown`) is LAN + GTX 1650 and not comparable with GPU-7 rows (§8). | platform docs |
+
+**Results (2026-09-25).**
+- Corpus: `demo-data-documents-v2-16docs`, 10 gold queries (rb009 is the negative query, so Recall@10 is capped at 0.9).
+- Embeddings: `synanton-bge-base-embedding` (768) on GPU-5 via Gateway → Envoy (execution JWT) → TEI on node1.
+- Every run is **valid**: every chunk vectorised, no embedding skipped, same model and dimension in the index and the run.
+- Records: `demo-data/eval/retrieval-benchmark/results/{T02,T03,T04-v2}.yaml` (+ `.hits.json`).
+
+| Run | Tenant (chunks) | Retrieval | Recall@10 | NDCG@10 | MRR@10 | P@10 | p50 / p95 latency | Query-embed p50 / p95 |
+|---|---|---|---|---|---|---|---|---|
+| T01 (baseline, 2026-09-20) | `rb-fixed` | BM25 | 0.900 | 0.756 | 0.714 | 0.155 | 3523 / 8549 ms (Phase 1 stack) | — (embedding unavailable) |
+| **T02** | `rb-fixed-g5` (81) | dense only | 0.833 | 0.736 | 0.750 | 0.090 | 90 / 109 ms | 62 / 85 ms |
+| **T03** | `rb-fixed-g5` (81) | hybrid RRF | **0.900** | **0.789** | 0.750 | 0.110 | 8 / 21 ms† | cached† |
+| **T04-v2** | `rb-semantic-g5` (99) | hybrid RRF | **0.900** | **0.789** | 0.750 | 0.110 | 70 / 103 ms | 51 / 76 ms |
+
+† T03 ran right after T02 on the same tenant with the same queries, so synquest's query-embedding cache served all 10 vectors (`embed_cached: 10`). Its latency therefore excludes embedding and isn't comparable. T04-v2 (a different tenant, uncached) shows the real hybrid latency.
+
+**Findings:**
+1. **Hybrid beats either side alone (RQ2).** T03 matches BM25's recall and improves NDCG@10 from 0.756 (T01) to 0.789. Dense alone (T02) is weaker: 0.833 / 0.736. It half-misses the exact-term query rb010 ("IATF 16949", recall 0.33), and hybrid recovers it (1.0).
+2. **Chunking strategy is still unmeasured (RQ1).** T04-v2 equals T03 on every metric. All gold queries target the markdown and text documents, which chunk identically under both strategies (one flat chunk each; §4 update). The three structure-rich PDFs *are* chunked differently (99 vs 81 chunks) but have no gold queries. **T-INT-3 (gold queries on the PDFs) is now the blocking item for RQ1.**
+3. **Latency (RQ5, same plane only).** Query embedding on the GTX 1650 across the LAN takes p50 51–62 ms and p95 76–85 ms; the first cold request took 461 ms in the dry run. End-to-end hybrid search takes p50 70 ms and p95 103 ms. T01's seconds-long latency came from the Phase 1 stack, where the embedding service was unreachable; it isn't a BM25 cost.
+4. **Harness bug found and fixed in the K6 dry run.** `index_stats` didn't send `X-Tenant`, so synquest reported the `demo` tenant (commit `2e34afd`). The G4 coverage check would otherwise have compared the wrong index.
+
+**Step status:**
+- ✅ K1: NodePort `gpu-gateway-external` 192.168.10.31:30990, `ipBlock` allow-list (gpu-runtime `e46da65`).
+- ✅ K2: `synanton-benchmark` principal on GPU-5 plus `issue-client-cert.sh` (`fab85a6`).
+- ✅ K3: kept TEI **strict**. The dry run ingested all 16 documents with 0 errors, so no chunk exceeded 512 tokens.
+- ✅ K4: overlay `--plane gpu5` (`c4fadfe`).
+- ✅ K5: `remap-gold` (`9ed1047`). 11/11 gold IDs carried over for both tenants, with identical chunk hashes.
+- ✅ K6: dry run (`rb-dryrun-g5`: 81/81 vectors, valid).
+- ✅ K7, K8: runs above.
+- ✅ K9: this report.
 
 **Out of scope for B1-K, but unblocked by it:**
 - **T10/T11 (reranker):** the GPU-5 reranker works, but the platform-side `RerankerPort` and adapter (B2) don't exist yet.
@@ -512,7 +543,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | 5 | `RerankerPort` SPI + one adapter | `java/gateway` | Not started (Phase B2) |
 | 6 | Hierarchical chunking strategy | `java/synflux` | Not started (Phase B2) |
 | 7 | Graph rank-fusion | `java/synquest` and/or `java/gateway` (decided during B2 implementation) | Not started (Phase B2) |
-| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); `T03.yaml` (2026-09-18) superseded/invalid; T02-G/T03-G/T04-G planned (§6 Phase B1-G); bge-base T02/T03 blocked on GPU-5 |
+| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | T01, T04 (2026-09-20, T04 functionally BM25-only). **T02, T03, T04-v2 on GPU-5 (2026-09-25, all valid; §6 Phase B1-K).** The old all-zero `T03.yaml` has been replaced. B1-G `-G` rows are blocked (OpenRouter). |
 | 11 | Shared gRPC embed client (fail-closed) + `gpu-plane` profile in `synquest`/`synflux`; configurable embedding dim | `java/` (new shared module), `java/synquest`, `java/synflux` | Done (G1 + G2, 2026-09-25) |
 | 12 | GPU-7 free embedding catalog arms + benchmark tenants | `gpu-runtime/deployments/external/config/gateway-external.yaml` | Done (G3, 2026-09-25; gpu-runtime `3bf36bb`) |
 | 13 | Harness: query-embedding cache, request throttle/budget, GPU-7 run-record fields, validity check | `tools/retrieval-eval/` | Done (G4, 2026-09-25) |

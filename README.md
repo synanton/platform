@@ -792,7 +792,12 @@ Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on
 - `synquest`/`synflux` still embed over HTTP, while the GPU plane is gRPC-only. The decided fix is a shared, fail-closed gRPC `LlmClient`, selected by an opt-in `gpu-plane` profile.
 - Embedding dimension is configurable (`EMBED_DIM`, `EMBED_TRUNCATE_DIM`; the free models are 2048-dim and Lucene 9.11's cap is 1024). `synquest` truncates at index and query time, and `/index/stats` reports vector coverage.
 - The GPU-7 catalog has all three free embedding arms, and a least-privilege `synanton-benchmark` principal covers the six benchmark tenants (G3). The harness paces searches, enforces a daily request budget, checks spend via gpu-runtime, and refuses to report invalid runs. synquest caches query embeddings (G4).
-- No free rerank model exists, so T10/T11 stay on GPU-5. GPU-5 now serves bge-base and the reranker end to end (T-K8S-6a done). Remaining platform-side work before the benchmark runs on GPU-5: expose the Gateway to the workstation (it is `ClusterIP`; NodePort or port-forward, `GPU_TLS_AUTHORITY=gpu-gateway`), add a `synanton-benchmark` principal on GPU-5, a GPU-5 mode for the compose overlay (bge-base, `EMBED_DIM=768`, no truncation), and finish `remap-gold`.
+- **Dense and hybrid runs have happened on GPU-5** (benchmark plan §6 Phase B1-K), with bge-base via Gateway → Envoy → TEI:
+  - T02 dense: Recall@10 0.833, NDCG@10 0.736;
+  - T03 hybrid: 0.900 / **0.789**;
+  - T04-v2 semantic + hybrid: 0.900 / 0.789.
+  - Hybrid beats BM25 (T01, NDCG 0.756) and dense alone. Chunking strategy is still unmeasured, because no gold query targets the PDFs (T-INT-3).
+  - The reranker rows (T10/T11) need the B2 `RerankerPort`; the GPU-5 reranker itself works.
 - The old `results/T03.yaml` (all 0.0) is superseded. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.
 
 ---
