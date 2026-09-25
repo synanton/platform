@@ -1,6 +1,6 @@
 ---
 title: "Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)"
-status: "in progress — B0 done; B1 done on GPU-5 (T02/T03/T04-v2, §6 Phase B1-K); RQ1 needs gold queries on the PDFs (T-INT-3); B1-G blocked on OpenRouter reachability"
+status: "in progress — B0, B1 (GPU-5) and T-INT-3 done; B2 next (reranker T10, hierarchical T05, graph T08/T09); B1-G blocked on OpenRouter reachability"
 last_reviewed: "2026-09-25"
 ---
 
@@ -477,6 +477,43 @@ For `--gpu-plane gpu-5` the harness uses `provider_mode: local`: no spend check,
 - **Shared GPU plane:** don't run a load test while benchmark runs are in progress.
 - **Semantic chunking depends on the extraction gateway:** the extraction-gateway state must match the tenant (down for `rb-fixed-g5`, up for `rb-semantic-g5`), exactly as in B1.
 
+### T-INT-3 — gold queries on the structure-rich PDFs + full arm matrix (done 2026-09-25)
+
+**Query set v2** (`demo-data/eval/retrieval-benchmark/queries-v2.jsonl`; per tenant: `queries-v2.rb-{fixed,semantic}-g5.jsonl`) has 25 queries: the original 10 plus 15 new ones targeting the three PDFs:
+
+| Source | Queries | Topics |
+|---|---|---|
+| `mental-health-report-2010.pdf` | 7 | data-source table rows, glossary definitions, medication table, advisory panel date |
+| `sks8300-web-interface-manual.pdf` | 3 | default IP, HTTPS port and ciphers, firmware upgrade |
+| `outsourcing-agreement.pdf` | 5 | parties and date, change-of-control threshold, forecast cadence, lab-testing costs, shipment certificates |
+
+**Gold is objective:** `retrieval-eval annotate-markers` marks as relevant every chunk of `gold_source` whose normalised text contains a `gold_marker`. The same query therefore gets the right chunk IDs in each tenant, however that tenant chunked the file, and every PDF query resolves in both tenants.
+
+The original 10 keep their hand annotation, carried over by `remap-gold`.
+
+**Runs:** every run is valid, on GPU-5 with bge-base 768. Records: `results/{T01,T02,T03,T04b,T04d,T04}-q25.yaml`.
+
+| Run | Chunking | Arm | All 25: Recall@10 / NDCG@10 | Original 10: R / NDCG / MRR | **PDF 15: R / NDCG / MRR** |
+|---|---|---|---|---|---|
+| T01-q25 | fixed | BM25 | 0.960 / 0.824 | 0.900 / 0.756 / 0.714 | 1.000 / 0.869 / 0.833 |
+| T02-q25 | fixed | dense | 0.893 / 0.805 | 0.833 / 0.736 / 0.750 | 0.933 / 0.851 / 0.822 |
+| T03-q25 | fixed | hybrid | **0.960 / 0.859** | 0.900 / 0.789 / 0.750 | **1.000 / 0.905** / 0.875 |
+| T04b-q25 | semantic | BM25 | 0.920 / 0.801 | 0.900 / 0.756 / 0.714 | 0.933 / 0.831 / 0.807 |
+| T04d-q25 | semantic | dense | 0.893 / 0.800 | 0.833 / 0.736 / 0.750 | 0.933 / 0.842 / 0.811 |
+| T04-q25 | semantic | hybrid | 0.920 / 0.856 | 0.900 / 0.789 / 0.750 | 0.933 / 0.900 / **0.889** |
+
+Latency: hybrid, uncached, p95 93–94 ms. The dense and BM25 rows reused cached query vectors, or needed none, so their latency isn't comparable.
+
+**Findings:**
+1. **RQ2 holds on the larger set.** Hybrid is the best arm under both chunking strategies: NDCG@10 0.859 fixed, 0.856 semantic. Dense alone is the weakest on recall.
+2. **RQ1: fixed vs semantic is within noise on this corpus.** With 15 PDF queries, one query is worth 0.067 recall. The three PDF queries that differ between strategies each have an identifiable mechanism:
+   - **pdf002** (data-source table row), *semantic better*: NDCG 0.63 → 1.00. The row sits in a clean table chunk.
+   - **pdf005** (medication table), *semantic worse*: NDCG 0.63 → 0.50. Semantic chunking split the heading "Medications for Substance Use Disorders" into its own 115-character chunk (#25), away from its table (#26). This is **the case hierarchical chunking (T05, parent/child) targets.**
+   - **pdf011** (parties and date), *missed by semantic*: every page of the agreement repeats a long "PARATEK PHARMACEUTICALS… REDACTED" boilerplate header, which crowds the cover chunk out of the top 10. This is a noise effect, and a **reranker (T10)** is the direct lever.
+3. **Two fixes found while running:**
+   - synquest returned 503 for BM25-only searches under `embedding.required` (Lucene k=0; `9ed868c`);
+   - the harness `index_stats` used the wrong tenant (`2e34afd`, in B1-K).
+
 ### Phase B2 — New retrieval capability (2-3 weeks)
 
 1. Hierarchical chunking (T05).
@@ -554,7 +591,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 
 ## 10. Open Questions
 
-0. **Gold queries against the 3 new PDFs** — none of the 10 original queries target `mental-health-report-2010.pdf`, `outsourcing-agreement.pdf`, or `sks8300-web-interface-manual.pdf`, so T01-vs-T04's real structural divergence (confirmed via direct Cassandra inspection) isn't yet reflected in any Recall/NDCG number. Writing these is the most direct next step toward a *meaningful* T01-vs-T04 comparison.
+0. **Gold queries against the 3 new PDFs.** Done 2026-09-25 (T-INT-3 section in §6): 15 marker-annotated PDF queries in query set v2 plus the full arm matrix. Fixed vs semantic is within noise, and the three differing queries point at T05 (heading split from its table) and T10 (boilerplate crowding).
 0a. **`content_extractor`'s markdown heading gap** — `TextModalityAdapter` treats `.md` files as flat prose (Tika `AutoDetectParser`, no markdown-aware parsing). Fixing this (a real feature addition, not a bug) would let the *original* corpus's text/markdown files also exercise real semantic chunking, not just the 3 added PDFs. Out of scope for this plan; noted for whoever owns `content_extractor` roadmap next.
 0b. **Starting the Phase 2 GPU profile, or standing up the real GPU Runtime instead** — needed before T02/T03 can run for real. The homelab k8s cluster (§7) is being recreated as a cluster dedicated to Synanton's GPU plane; see [`gpu-plane-integration-tickets.md`](./gpu-plane-integration-tickets.md) and `gpu-runtime/doc/k8s-reference-deployment-plan.md` for the full ticket backlog this depends on. Not this benchmark's own concern to execute, only to consume once it lands. **Update 2026-09-25:** GPU-5 is deployed-shape-complete but blocked on execution-JWT signing (`gpu-runtime` T-K8S-6a). GPU-7 (external mode) is complete, so dense/hybrid now proceeds there first (§6 Phase B1-G), and the integration path is decided: a shared gRPC `LlmClient`, not HTTP. The bge-base rows move to GPU-5 once T-K8S-6a lands, reusing the same client with the logical model changed to `synanton-bge-base-embedding`.
 1. **Cohere/Voyage embedding comparison** — in scope only if a translator gets built; not committed in this plan. Revisit after B3's self-hosted results — if self-hosted models already show a clear winner, the commercial comparison may not be worth the integration cost.

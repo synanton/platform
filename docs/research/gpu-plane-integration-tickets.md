@@ -1,6 +1,6 @@
 ---
 title: "GPU Plane Integration — Ticket Backlog"
-status: "T-INT-1 decided; T-INT-2b DONE on GPU-5 (T02/T03/T04-v2); T-INT-2a blocked (OpenRouter unreachable); T-INT-3 next"
+status: "T-INT-1 decided; T-INT-2b DONE on GPU-5 (T02/T03/T04-v2); T-INT-2a blocked (OpenRouter unreachable); T-INT-3 done; B2 next"
 last_reviewed: "2026-09-25"
 ---
 
@@ -40,7 +40,9 @@ Per `docs/research/retrieval-evaluation-benchmark-plan.md` §6 Phase B1, T01 (BM
 
 The old `results/T03.yaml` (2026-09-18, all metrics 0.0, dataset v1) is superseded and invalid.
 
-### T-INT-3 — Write gold queries against the 3 newly-added structurally-rich PDFs
+### T-INT-3 — Write gold queries against the 3 newly-added structurally-rich PDFs (DONE 2026-09-25)
+
+**Done:** 15 marker-annotated PDF queries in query set v2 (25 total), full BM25/dense/hybrid × fixed/semantic matrix on GPU-5. Results and findings: benchmark plan §6, "T-INT-3" section.
 
 Independent of the GPU plane — can be done sooner, doesn't need to wait on T-INT-1/T-INT-2.
 
