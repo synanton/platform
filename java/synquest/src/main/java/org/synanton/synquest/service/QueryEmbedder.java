@@ -14,8 +14,8 @@ public class QueryEmbedder {
 
     private final LlmClient llmClient;
     private final String model;
-    private final boolean normaliseL2;
     private final boolean required;
+    private final EmbeddingShape shape;
 
     /**
      * @param required {@code synquest.embedding.required}: when true, a failed query embedding
@@ -23,13 +23,19 @@ public class QueryEmbedder {
      *                 Set under the gpu-plane profile, so a "dense" benchmark run can never be
      *                 secretly lexical (retrieval benchmark plan §6 Phase B1-G).
      */
+    @org.springframework.beans.factory.annotation.Autowired
     public QueryEmbedder(LlmClient llmClient,
                          org.synanton.synquest.config.SynquestProperties props,
-                         @Value("${synquest.embedding.required:false}") boolean required) {
+                         @Value("${synquest.embedding.required:false}") boolean required,
+                         EmbeddingShape shape) {
         this.llmClient = llmClient;
         this.model = props.embedding().model();
-        this.normaliseL2 = props.embedding().normaliseL2();
         this.required = required;
+        this.shape = shape;
+    }
+
+    public QueryEmbedder(LlmClient llmClient, org.synanton.synquest.config.SynquestProperties props, boolean required) {
+        this(llmClient, props, required, new EmbeddingShape(props));
     }
 
     public float[] embed(String query) {
@@ -42,8 +48,9 @@ public class QueryEmbedder {
         if (response == null || response.embeddings() == null || response.embeddings().isEmpty()) {
             throw new IllegalStateException("query embedding returned no vector");
         }
-        float[] vec = response.embeddings().get(0);
-        return normaliseL2 ? normalise(vec) : vec;
+        // Same truncation + normalisation as the index build (EmbeddingShape); a vector that
+        // can't be made index-sized throws, so it's never silently dropped from the dense side.
+        return shape.fit(response.embeddings().get(0));
     }
 
     public boolean required() {

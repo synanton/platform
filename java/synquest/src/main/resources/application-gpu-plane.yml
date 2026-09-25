@@ -7,6 +7,10 @@
 synquest:
   embedding:
     model: ${EMBED_MODEL:synanton-free-embedding}
+    # GPU-7 free models are 2048-dim (nemotron) or 1024 (lfm); G0 chose 1024 for every arm:
+    # nemotron needs truncation (2048 -> 1024), lfm is native 1024 (truncation is a no-op).
+    dim: ${EMBED_DIM:1024}
+    truncate-dim: ${EMBED_TRUNCATE_DIM:1024}
     # Fail closed: a failed query embedding fails the search (HTTP 503), never a silent BM25 fallback.
     required: ${EMBED_REQUIRED:true}
 

@@ -778,7 +778,7 @@ Platform client (`java/gateway/.../gpu/GpuExecutionClient`): mTLS channel (`GPU_
 
 Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on OpenRouter free embedding models** ([benchmark plan §6 Phase B1-G](docs/research/retrieval-evaluation-benchmark-plan.md)). These are new rows T02-G/T03-G/T04-G, separate from bge-base.
 - `synquest`/`synflux` still embed over HTTP, while the GPU plane is gRPC-only. The decided fix is a shared, fail-closed gRPC `LlmClient`, selected by an opt-in `gpu-plane` profile.
-- Embedding dimension must become configurable: the free models are 2048-dim, and Lucene 9.11's default vector cap is 1024.
+- Embedding dimension is configurable (`EMBED_DIM`, `EMBED_TRUNCATE_DIM`; the free models are 2048-dim and Lucene 9.11's cap is 1024). `synquest` truncates at index and query time, and `/index/stats` reports vector coverage.
 - The harness needs free-tier throttling and a query-embedding cache.
 - No free rerank model exists, so T10/T11 stay on GPU-5, and bge-base T02/T03 stay blocked until T-K8S-6a.
 - The old `results/T03.yaml` (all 0.0) is superseded. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.

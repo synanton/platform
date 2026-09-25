@@ -35,6 +35,26 @@ class GpuPlaneProfileWiringTest {
     }
 
     @Test
+    void embeddingDimAndTruncationBindFromConfiguration() {
+        runner.withBean(org.synanton.synquest.service.EmbeddingShape.class)
+                .withPropertyValues("synquest.embedding.model=m", "synquest.embedding.dim=1024",
+                        "synquest.embedding.truncate-dim=1024", "synquest.embedding.normalise-l2=true")
+                .run(ctx -> {
+                    assertThat(ctx).hasNotFailed();
+                    var shape = ctx.getBean(org.synanton.synquest.service.EmbeddingShape.class);
+                    assertThat(shape.dim()).isEqualTo(1024);
+                    assertThat(shape.truncates()).isTrue();
+                });
+    }
+
+    @Test
+    void dimAboveTheLuceneCapFailsAtStartup() {
+        runner.withBean(org.synanton.synquest.service.EmbeddingShape.class)
+                .withPropertyValues("synquest.embedding.model=m", "synquest.embedding.dim=2048")
+                .run(ctx -> assertThat(ctx).hasFailed());
+    }
+
+    @Test
     void gpuPlaneProfileWithMissingTlsFilesFailsAtStartup() {
         runner.withPropertyValues("spring.profiles.active=gpu-plane", "gpu-plane.tls.enabled=true",
                         "gpu-plane.tls.ca-path=/nonexistent/ca.crt")

@@ -101,6 +101,10 @@ public class SearchService {
             try {
                 return searcher.dense(denseVec, topKDense);
             } catch (Exception e) {
+                if (queryEmbedder.required()) {
+                    // e.g. an index built at another dimension: never degrade silently to BM25-only
+                    throw new EmbeddingUnavailableException(e);
+                }
                 log.warn("Dense search skipped: {}", e.getMessage());
                 return new TopDocs(new org.apache.lucene.search.TotalHits(0,
                         org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
@@ -163,6 +167,9 @@ public class SearchService {
             if (cause instanceof IOException ioe) {
                 throw ioe;
             }
+            if (cause instanceof EmbeddingUnavailableException eue) {
+                throw eue;
+            }
             throw new RuntimeException("Search failed", cause);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -191,7 +198,13 @@ public class SearchService {
         if (searcher == null) {
             return new IndexStats(tenant, 0, -1, status.name().toLowerCase());
         }
-        return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready");
+        var report = indexBuilder.lastReport(tenant).orElse(null);
+        if (report == null) {
+            return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready");
+        }
+        return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready",
+                report.embeddingModel(), report.embeddingDim(), report.truncated(),
+                report.vectorDocs(), report.dimMismatches(), report.missingVectors());
     }
 
     public Status getStatus() {

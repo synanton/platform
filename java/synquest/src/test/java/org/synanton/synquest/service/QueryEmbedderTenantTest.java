@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class QueryEmbedderTenantTest {
 
     private static final SynquestProperties PROPS = new SynquestProperties(null, null,
-            new SynquestProperties.Embedding("synanton-free-embedding", 2, true));
+            new SynquestProperties.Embedding("synanton-free-embedding", 2, true, 0));
 
     @Test
     void tenantReachesTenantAwareClientWithTheLogicalModel() {
@@ -47,6 +47,26 @@ class QueryEmbedderTenantTest {
         QueryEmbedder e = new QueryEmbedder(http, PROPS, false);
         assertThat(e.embed("q", "any")).containsExactly(1f, 0f);
         assertThat(e.required()).isFalse();
+    }
+
+    @Test
+    void queryVectorsGetTheSameTruncationAsTheIndex() {
+        LlmClient native2048 = new LlmClient() {
+            @Override public EmbedResponse embed(EmbedRequest r) {
+                float[] v = new float[2048];
+                v[0] = 3f; v[1] = 4f; v[2000] = 100f; // the tail beyond 1024 must be cut, not folded in
+                return new EmbedResponse(List.of(v));
+            }
+            @Override public CompletionResponse complete(CompletionRequest r) { return null; }
+        };
+        var truncating = new SynquestProperties(null, null, new SynquestProperties.Embedding("m", 1024, true, 1024));
+        float[] v = new QueryEmbedder(native2048, truncating, true).embed("q", "t");
+        assertThat(v).hasSize(1024);
+        assertThat(v[0]).isEqualTo(0.6f);
+
+        var strict = new SynquestProperties(null, null, new SynquestProperties.Embedding("m", 768, true, 0));
+        assertThatThrownBy(() -> new QueryEmbedder(native2048, strict, true).embed("q", "t"))
+                .isInstanceOf(EmbeddingShape.DimensionMismatchException.class);
     }
 
     @Test
