@@ -66,7 +66,10 @@ class IndexStats:
 
 def index_stats(synquest_base_url: str, tenant: str) -> IndexStats:
     """GET /index/stats: doc count plus the embedding coverage report of the last build (G2)."""
-    response = requests.get(f"{synquest_base_url}/index/stats", params={"tenant": tenant}, timeout=30)
+    # synquest's MockTenantFilter takes the tenant from X-Tenant (default "demo") and it wins
+    # over ?tenant=, so without the header this silently reported the demo tenant's index
+    response = requests.get(f"{synquest_base_url}/index/stats", params={"tenant": tenant},
+                            headers={"X-Tenant": tenant}, timeout=30)
     response.raise_for_status()
     body = response.json()
     return IndexStats(
