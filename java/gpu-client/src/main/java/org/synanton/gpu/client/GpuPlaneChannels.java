@@ -4,6 +4,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +46,10 @@ public final class GpuPlaneChannels {
             }
         }
         try {
-            var ssl = GrpcSslContexts.forClient()
+            // JDK TLS provider, not netty-tcnative: the shaded BoringSSL library is glibc-built
+            // and crashes the JVM (SIGSEGV in JNI_OnLoad) on the musl/Alpine runtime images the
+            // platform services use. GrpcSslContexts.forClient() would probe OpenSSL and load it.
+            var ssl = GrpcSslContexts.configure(SslContextBuilder.forClient(), SslProvider.JDK)
                     .trustManager(new File(tls.getCaPath()))
                     .keyManager(new File(tls.getCertPath()), new File(tls.getKeyPath()))
                     .build();
