@@ -797,6 +797,7 @@ Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on
   - T03 hybrid: 0.900 / **0.789**;
   - T04-v2 semantic + hybrid: 0.900 / 0.789.
   - Hybrid beats BM25 (T01, NDCG 0.756) and dense alone.
+  - **B2.1 reranking (T10):** synquest reranks fused candidates with `synanton-qwen3-reranker-0.6b` on GPU-5 (Qwen3 prompt template required). NDCG@10 rises from 0.859 to **0.893** (fixed) and from 0.856 to 0.871 (semantic), and PDF MRR from 0.875 to 0.967. The cost is about 1.5 s per query for 50 candidates.
   - **T-INT-3 (25 queries incl. 15 on the PDFs):** hybrid is best under both chunking strategies (NDCG@10 0.859 fixed / 0.856 semantic). Fixed vs semantic is within noise; the differing queries point at hierarchical chunking (T05) and reranking (T10).
   - The reranker rows (T10/T11) need the B2 `RerankerPort`; the GPU-5 reranker itself works.
 - The old `results/T03.yaml` (all 0.0) is superseded. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.

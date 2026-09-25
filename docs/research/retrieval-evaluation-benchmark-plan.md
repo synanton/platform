@@ -1,6 +1,6 @@
 ---
 title: "Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)"
-status: "in progress — B0, B1 (GPU-5) and T-INT-3 done; B2 next (reranker T10, hierarchical T05, graph T08/T09); B1-G blocked on OpenRouter reachability"
+status: "in progress — B0, B1 (GPU-5), T-INT-3 and B2.1 rerank done; B2.2 hierarchical (T05) next, then graph (T08/T09); B1-G blocked on OpenRouter reachability"
 last_reviewed: "2026-09-25"
 ---
 
@@ -516,6 +516,49 @@ Latency: hybrid, uncached, p95 93–94 ms. The dense and BM25 rows reused cached
 
 ### Phase B2 — New retrieval capability (2-3 weeks)
 
+**B2 order and scope (user-confirmed 2026-09-25):**
+1. **Rerank (T10):** in synquest, post-RRF.
+2. **Hierarchical chunking (T05):** proper parent/child IDs.
+3. **Graph (T08/T09):** full chunk-level graph.
+
+Each is benchmarked as soon as it lands.
+
+#### B2.1 Reranking (T10) — done 2026-09-25
+
+**Correction to §0 / §2.** Reranking wasn't *only* a policy stub. The gateway's `PlanExecutor` already called `GpuRerankAdapter`, but:
+- it's off by default and runs only for template T2;
+- it reranks 200-character snippets;
+- it sends Qwen3-Reranker raw text, which (next paragraph) inverts scores;
+- it silently keeps RRF order on failure.
+
+synquest, which the benchmark queries, had no reranking at all. The adapter's template gap is a gateway follow-up; the benchmark path below doesn't use it.
+
+**Implementation (platform `ffaf195`):**
+- synquest `/search` gets `rerank` and `rerank_candidates`. It fuses a wider RRF candidate list (default 50, max 100), reranks the **full stored chunk text** (up to 6000 chars) through the GPU plane (`GpuPlaneRerankClient`, RERANK op, `synanton-qwen3-reranker-0.6b` on GPU-5 node2), reorders, and cuts to `top_k`.
+- Fail closed: an unconfigured or failing reranker returns 503, never RRF order labelled as reranked.
+- The harness `evaluate --rerank` makes the run invalid if any response lacks `trace.rerank_ms`.
+
+**Prompt format matters.** Qwen3-Reranker must receive its chat template (`RerankPromptFormat.QWEN3`). Measured through the GPU plane, with no template the scores **invert**: relevant 0.354 against distractors 0.681 and 0.769. With the template: 1.0 against 0.005 and 0.001.
+
+**Results** (query set v2, bge-base 768, GPU-5; all valid; `results/{T03R,T04R}-q25.yaml`). Rerank@50 compared with hybrid RRF on the same tenant:
+
+| Run | Chunking | All 25: R@10 / NDCG@10 / MRR@10 | Original 10: NDCG | PDF 15: R / NDCG / MRR | p50 / p95 latency |
+|---|---|---|---|---|---|
+| T03-q25 | fixed | 0.960 / 0.859 / 0.825 | 0.789 | 1.000 / 0.905 / 0.875 | 80 / 93 ms |
+| **T03R-q25** | fixed | 0.960 / **0.893** / **0.880** | 0.786 | 1.000 / **0.965 / 0.967** | 1590 / 1657 ms |
+| T04-q25 | semantic | 0.920 / 0.856 / 0.833 | 0.789 | 0.933 / 0.900 / 0.889 | 81 / 94 ms |
+| **T04R-q25** | semantic | **0.960** / 0.871 / 0.853 | 0.780 | 1.000 / 0.931 / 0.922 | 1559 / 1609 ms |
+
+**Findings:**
+1. **Reranking is the largest quality gain so far.** NDCG@10 rises by 0.034 on fixed and 0.015 on semantic. On the PDFs, fixed goes from 0.905 to 0.965 NDCG and from 0.875 to 0.967 MRR. It recovers exactly the cases T-INT-3 predicted:
+   - **pdf011**, the boilerplate-crowded cover chunk: 0.32 → 1.00 on fixed; missed → rank 1 on semantic, where it restores semantic recall to 0.960;
+   - **pdf005**, heading split from its table: 0.63 → 1.00 on fixed.
+2. **It isn't monotone.** rb008 and pdf012 drop from 1.00 to 0.63, and rb010, pdf010 and pdf014 dip slightly. The cross-encoder prefers a neighbouring chunk. Per-query-type defaults (B5) should account for this.
+3. **Cost.** About 1.5 s p50 per query to rerank 50 full chunks on the RTX 4060 Ti, against about 80 ms for hybrid alone, so roughly 20×. Fewer candidates or shorter passages trade quality for latency; that sweep hasn't been run.
+
+**Follow-up (gateway):** give `GpuRerankAdapter` the prompt-format option and full chunk text. Until then, enabling `gateway.rerank` with Qwen3-Reranker would *degrade* ranking.
+
+
 1. Hierarchical chunking (T05).
 2. Graph rank-fusion into `synquest`/`gateway` (T08, T09).
 3. Reranker `RerankerPort` + adapter (T10, T11).
@@ -577,7 +620,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | 2 | `.gitignore` entry for harness-extracted/cached dataset content | `tools/retrieval-eval/.gitignore` | Done |
 | 3 | Benchmark harness (config, metrics, ingest/query wrappers, CLI incl. `inspect`, `--top-k-dense`/`--top-k-lexical`) | `tools/retrieval-eval/` | Done (B0/B1 scope; B2's new-capability wiring still pending) |
 | 4 | Gold query set, annotated per tenant | `demo-data/eval/retrieval-benchmark/queries.{jsonl,rb-fixed.jsonl,rb-semantic.jsonl}` | Done (10 queries, real chunk IDs annotated against live `rb-fixed`/`rb-semantic` tenants) |
-| 5 | `RerankerPort` SPI + one adapter | `java/gateway` | Not started (Phase B2) |
+| 5 | Reranking (T10): synquest post-RRF rerank + `GpuPlaneRerankClient` (GPU plane RERANK, Qwen3 template) | `java/synquest`, `java/gpu-client` | **Done (B2.1, 2026-09-25)**; the gateway adapter template gap is a follow-up |
 | 6 | Hierarchical chunking strategy | `java/synflux` | Not started (Phase B2) |
 | 7 | Graph rank-fusion | `java/synquest` and/or `java/gateway` (decided during B2 implementation) | Not started (Phase B2) |
 | 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | T01, T04 (2026-09-20, T04 functionally BM25-only). **T02, T03, T04-v2 on GPU-5 (2026-09-25, all valid; §6 Phase B1-K).** The old all-zero `T03.yaml` has been replaced. B1-G `-G` rows are blocked (OpenRouter). |
