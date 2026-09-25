@@ -93,10 +93,10 @@ Config-driven via `synanton-llm-client`, no new SDK integration required for the
 | Logical model (GPU-7 catalog) | Provider model (never exposed downstream) | Native dim | Context | Notes |
 |---|---|---|---|---|
 | `synanton-free-embedding` | `nvidia/nemotron-3-embed-1b:free` | 2048 | 32k | Primary GPU-7 arm (already in `gateway-external.yaml`) |
-| `synanton-free-embedding-nemotron-vl` | `nvidia/llama-nemotron-embed-vl-1b-v2:free` | 2048 (to confirm, G0) | 131k | Second free arm for RQ4 |
-| `synanton-free-embedding-lfm` | `liquid/lfm-2.5-embedding-350m:free` | to confirm (G0) | **512 tokens** | Only valid where every chunk fits in 512 tokens; otherwise excluded, not silently truncated |
+| `synanton-free-embedding-nemotron-vl` | `nvidia/llama-nemotron-embed-vl-1b-v2:free` | 2048 (G0) | 131k | Second free arm for RQ4 |
+| `synanton-free-embedding-lfm` | `liquid/lfm-2.5-embedding-350m:free` | 1024 (G0) | **512 tokens** | Only valid where every chunk fits in 512 tokens; otherwise excluded, not silently truncated |
 
-Two constraints follow from the current code, both verified: Lucene 9.11.1 (`gradle/libs.versions.toml`) caps `KnnFloatVectorField` at **1024 dims** by default, and `synquest`'s `synquest.embedding.dim` is hard-coded to `768` (`java/synquest/src/main/resources/application.yml`). A 2048-dim arm therefore needs either Matryoshka truncation to ≤1024 + L2 re-normalisation (valid only if the model is Matryoshka-trained — confirmed empirically in G0, not assumed) or a per-field codec override raising the dimension cap. The chosen reduction is recorded in the run record's `embedding_model` field (e.g. `synanton-free-embedding@1024`).
+Two constraints follow from the current code, both verified: Lucene 9.11.1 (`gradle/libs.versions.toml`) caps `KnnFloatVectorField` at **1024 dims** by default, and `synquest`'s `synquest.embedding.dim` is hard-coded to `768` (`java/synquest/src/main/resources/application.yml`). A 2048-dim arm therefore needs either a cut to ≤1024 dims plus L2 re-normalisation, or a per-field codec override raising the dimension cap. **G0 settled this:** every arm runs at 1024, cut client-side (§6 Phase B1-G, G0 findings). The chosen reduction is recorded in the run record's `embedding_model` field (e.g. `synanton-free-embedding@1024`).
 
 Cohere `embed-v3` and Voyage `voyage-2` are **out of scope for the baseline matrix** (no existing translator; would need new vendor-specific integration work with no current justification) — tracked as an Open Question (§10), not silently dropped.
 
@@ -296,16 +296,44 @@ Recall is identical (expected — every gold query's answer lives in a document 
 
 | Step | Work | Repo |
 |---|---|---|
-| G0 | **Probe, no code.** Read the key's rate limits (`GET /api/v1/key`; key never printed). One `EMBED` per free model via `tools/gpu7-check` to record native dim, whether the provider honours `dimensions`, and whether truncating to 1024/768 + re-normalising preserves neighbour order on a handful of gold chunks (Matryoshka check). Output: a short table appended to this section; decides the dimension per arm. | gpu-runtime tools |
+| G0 | **Done (2026-09-25)** — findings below. Read the key's rate limits (`GET /api/v1/key`; key never printed). One `EMBED` per free model via `tools/gpu7-check` to record native dim, whether the provider honours `dimensions`, and whether truncating to 1024/768 + re-normalising preserves neighbour order on a handful of gold chunks (Matryoshka check). Output: a short table appended to this section; decides the dimension per arm. | gpu-runtime tools |
 | G1 | **Shared gRPC embed client.** Extract the EMBED path of `GpuEmbeddingAdapter` into a small shared module (e.g. `java/gpu-client`, depending on `gpu-contract`) implementing `org.synanton.llm.LlmClient`, with mTLS config (`GPU_TLS_*`, principal `synanton-platform`), per-call `tenant_id`, canonical error codes and a `fail-closed` mode. `gateway` keeps its current degrade behaviour by wrapping it. Opt-in `gpu-plane` Spring profile in `synquest` and `synflux` selects it instead of `HttpLlmClient`. Tests: in-process gRPC server, mTLS, fail-closed on `circuit_open`/`budget_exceeded`/`routing_disabled`. | platform |
-| G2 | **Configurable dimension.** `EMBED_DIM` for `synquest.embedding.dim` and a matching optional truncation (`EMBED_TRUNCATE_DIM`, then L2 re-normalise) applied identically at ingest (`EmbedStage`) and query time (`QueryEmbedder`); startup fails if the configured dim exceeds the Lucene cap. `synflux` `embedding.model-id` becomes env-driven (`EMBED_MODEL_ID` already exists in `application-phase2.yml`; hoist it). | platform |
+| G2 | **Configurable dimension.** `EMBED_DIM` for `synquest.embedding.dim` and a matching truncation (`EMBED_TRUNCATE_DIM`, then L2 re-normalise; required for the 2048-dim nemotron arms per G0) applied identically at ingest (`EmbedStage`) and query time (`QueryEmbedder`); startup fails if the configured dim exceeds the Lucene cap. `synflux` `embedding.model-id` becomes env-driven (`EMBED_MODEL_ID` already exists in `application-phase2.yml`; hoist it). | platform |
 | G3 | **Catalog + tenants.** Add `synanton-free-embedding-nemotron-vl` and `synanton-free-embedding-lfm` to `gateway-external.yaml`; authorise benchmark tenants (`rb-fixed-g`, `rb-semantic-g`, one pair per embedding arm) for `synanton-platform`. `tools/gpu7-package-check.py` and `gpu7-check` stay green. | gpu-runtime |
 | G4 | **Harness.** `retrieval-eval` gains: a query-embedding cache keyed by (logical model, dim, query sha256) so re-scoring a run costs no requests; a request budget + throttle (default ≤ 15 req/min, hard stop at a configured daily budget) with resumable ingest; run-record fields `gpu_plane: gpu-7`, `provider_mode: external-free`, `embedding_dim`, `embed_requests`, `spend_before`/`spend_after`; and a run-validity check (any `embed_skipped` ⇒ invalid). | platform |
 | G5 | **Run T02-G/T03-G/T04-G** with `synanton-free-embedding`: re-ingest `rb-fixed-g`/`rb-semantic-g` (fresh tenants, new chunk UUIDs ⇒ gold chunk ids re-annotated with `retrieval-eval inspect`), then T02-G (`rb-fixed-g`, `--top-k-lexical 1`), T03-G (`rb-fixed-g`, full hybrid), T04-G (`rb-semantic-g`, full hybrid — the first *real* hybrid T04). Records `results/T02-G.yaml`, `T03-G.yaml`, `T04-G.yaml`. | platform |
 | G6 | **RQ4 on free models (B3 early subset).** Repeat T03-G/T04-G for the other free arms that pass G0. `lfm` runs only if no chunk in the tenant exceeds 512 tokens (checked, recorded); otherwise reported as excluded. | platform |
 | G7 | **Report + docs.** Results table in this section; §9 deliverable 8; `gpu-plane-integration-tickets.md`; README status. | platform |
 
-**Request budget (estimate — replaced by G0/G5 actuals).** OpenRouter's documented free-model limits are ~20 requests/min and **50 requests/day** for accounts with under $10 of purchased credit (1,000/day above that); the capped key is assumed to be in the lower tier until G0 says otherwise. Ingest is ~⌈chunks/32⌉ requests per tenant (`synflux` `batch-size: 32`; embeddings are cached in `ingestion-cache` per tenant, chunk hash and model, so resumed ingests don't re-pay); queries are 10 per run, and the G4 query cache means one pass per (tenant, model, dim) serves every run on that tenant. Expect G5 to fit in one day and each G6 arm in about one more; the throttle stops a run rather than let it hit HTTP 429 mid-way.
+**G0 findings (2026-09-25).** Tool: `gpu-runtime/tools/gpu7-check/embed_probe.py`. Raw record: `demo-data/eval/retrieval-benchmark/results/G0-embed-probe.json`. 6 free requests, spend unchanged at $0.00052275.
+
+*Key limits.* `is_free_tier: false`. The free-model quota is **1,000 requests/day**, not the assumed 50 (`free_model_daily_requests`). The $1 spend limit resets daily. The `used` counter didn't move during the probe, so it lags and can't be the harness's only budget signal; G4 counts its own requests.
+
+*Models.* Tested with one batched request of 96 inputs (86 corpus passages + 10 gold queries). Passages are markdown heading sections or text paragraphs from the 12 `.md`/`.txt` demo documents, at most about 850 characters. A passage counts as relevant if it contains a hand-mapped gold-answer marker (`embed_probe.GOLD_MARKERS`). 9 queries are scored; rb009, the negative query, is excluded.
+
+| Provider model (planned logical id) | Native dim | Provider `dimensions` field | Context | Batch latency (96 inputs) | Hit@1 / Hit@5 / MRR@10 at native |
+|---|---|---|---|---|---|
+| `nvidia/nemotron-3-embed-1b:free` (`synanton-free-embedding`) | 2048 | **Rejected** (HTTP 400, "dimensions must be one of 2048") | 32k | 3.1 s | 0.444 / 0.889 / 0.604 |
+| `nvidia/llama-nemotron-embed-vl-1b-v2:free` (`…-nemotron-vl`) | 2048 | Honoured; result matches a client-side cut (cosine 0.9966 at 768) | 131k | 2.3 s | 0.444 / 0.889 / 0.630 |
+| `liquid/lfm-2.5-embedding-350m:free` (`…-lfm`) | **1024** | Rejected (fixed at 1024) | 512 tok | 4.5 s | 0.667 / 0.889 / 0.741 |
+
+*Matryoshka check.* The client-side cut is the first *d* components, then L2-renormalised. Overlap is the top-10 overlap with the native ranking, averaged over all 10 queries.
+
+| Model | 1024: MRR / overlap / top-1 agree | 768 | 512 | 384 |
+|---|---|---|---|---|
+| nemotron-3 | 0.681 / 0.95 / 0.8 | 0.681 / 0.87 / 0.9 | 0.606 / 0.90 / 0.8 | 0.625 / 0.88 / 0.9 |
+| nemotron-vl | 0.611 / 0.93 / 1.0 | 0.630 / 0.90 / 1.0 | 0.611 / 0.90 / 1.0 | 0.602 / 0.83 / 1.0 |
+| lfm (native 1024) | — | 0.689 / 0.93 / 0.9 | 0.643 / 0.89 / 0.8 | 0.606 / 0.86 / 0.8 |
+
+*Decisions.*
+- **All three models pass G0 and go on to G5/G6.**
+- **Every arm uses 1024 dims.** That is Lucene's default cap, so no codec override is needed. For both nemotron models, cutting 2048 → 1024 keeps quality within noise: one query is worth 0.111 Hit@1 on this 9-query sample. Top-10 overlap stays ≥ 0.93. lfm runs at its native 1024, where it scores best.
+- **768 is an optional secondary variant** for direct comparability with bge-base (also 768), not the primary.
+- **Truncation happens client-side**, in `EmbedStage` and `QueryEmbedder` (G2), not through the provider's `dimensions` field. nemotron-3 and lfm reject that field, and one code path for all arms keeps ingest and query vectors identical. G2's `EMBED_TRUNCATE_DIM` is therefore required, not optional.
+- **lfm's 512-token window isn't hit by this corpus** (largest passage about 850 characters, roughly 200 tokens). G6 still checks real `synflux` chunk token counts, because the PDF sections may be longer.
+- **Caveat.** This is a sanity check on a tiny sample (9 scored queries, 86 passages, answer-marker gold). It shows truncation isn't destructive; it doesn't rank the models. Model comparison is G6's job, on the real pipeline's chunks and annotated gold chunk ids.
+
+**Request budget (G0 actuals).** The quota is 1,000 free requests/day. The binding limit is now the per-minute rate: OpenRouter documents about 20/min for free models, so G4's default throttle (≤ 15/min) stays. Ingest is ~⌈chunks/32⌉ requests per tenant (`synflux` `batch-size: 32`; embeddings are cached in `ingestion-cache` per tenant, chunk hash and model, so resumed ingests don't re-pay); queries are 10 per run, and the G4 query cache means one pass per (tenant, model, dim) serves every run on that tenant. The whole of G5 and G6 fits comfortably in one day's quota: the probe embedded 96 inputs in a single request, so each tenant ingest is a handful of requests. The throttle stops a run rather than let it hit HTTP 429 partway.
 
 **What B1-G does not do.**
 - **Rerank (T10/T11):** OpenRouter has no free rerank model; GPU-7 returns `capability_not_supported` for `RERANK` on the real arm. Reranking stays on GPU-5 (`synanton-qwen3-reranker-0.6b`). The GPU-7 mock reranker is for wiring tests only and is never a benchmark row.
