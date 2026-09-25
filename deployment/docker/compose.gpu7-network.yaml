@@ -1,0 +1,14 @@
+# Add to compose.gpu-plane.yaml when the GPU plane is the local GPU-7 compose stack
+# (gpu-runtime deployments/external). synflux and synquest join its Docker network and reach
+# the Gateway as `gateway:9090` (a SAN of its dev server certificate).
+# scripts/run-benchmark-gpu-plane.sh --plane gpu7 adds this file.
+services:
+  synflux:
+    networks: [default, gpu-plane]
+  synquest:
+    networks: [default, gpu-plane]
+
+networks:
+  gpu-plane:
+    external: true
+    name: ${GPU_PLANE_NETWORK:-gpu-7-external_default}
