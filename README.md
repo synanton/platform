@@ -765,15 +765,17 @@ A cross-repo debugging and benchmarking pass this session (SNTP-9 retrieval eval
 
 The full ticket backlog for this is written down, not left as an open question: [`gpu-runtime/deployments/homelab/gpu-5-implementation-plan.md`](../gpu-runtime/deployments/homelab/gpu-5-implementation-plan.md) (phased GPU-5 bring-up, decisions D1–D7, acceptance) and [`docs/research/gpu-plane-integration-tickets.md`](docs/research/gpu-plane-integration-tickets.md) (what unblocks in `platform` once it lands). Three items were independent of the cluster and proceeded in the meantime: writing gold queries against the 3 newly-added PDFs (§ above), adding `OHR-Bench` PDFs as permanent `content_extractor` test fixtures, and B2 continuation on the retrieval benchmark (hierarchical chunking, reranker, graph rank-fusion).
 
-**GPU plane update (2026-09-25, gpu-runtime PR #15):** the platform↔GPU-plane transport is formally **gRPC `synanton.gpu.v1`** (the byte-identical contract `GpuExecutionClient` already uses; Deployment Plan v3.0.0 §4) — the OpenAI-REST surface the spec used to describe was removed, the Responses API deferred. Contract additions mirrored here: `ExecuteStream`, `upstream_request_id`, `ErrorInfo.code`, `ExecutionRequest.data_tags`.
+**GPU plane update (2026-09-25, gpu-runtime PR #15):** the platform↔GPU-plane transport is **gRPC `synanton.gpu.v1` over mTLS** (Deployment Plan v3.1.0 §4, §13). The byte-identical contract mirrored here now includes `ExecuteStream`, the Responses API (`Operation.RESPOND`, `GetResponse`, `DeleteResponse`), the admin `GPUControlService`, `upstream_request_id`, `ErrorInfo.code` and `ExecutionRequest.data_tags`.
 
 | | GPU-5 (homelab k8s) | GPU-7 (external providers) |
 | --- | --- | --- |
-| Deployment contract | Defined | Defined |
-| Implementation | One workload per GPU (node1 TEI/BGE-base embedding, node2 vLLM Qwen3-Reranker, node3 vLLM Qwen3-4B); **missing execution-JWT signing (T-K8S-6a)** | Provider registry, logical→provider rewrite, streaming, canonical errors, circuit breaker, health, cost ledger, budget, sensitivity, kill switch; not implemented: persisted runtime control state (T-K8S-38), mTLS |
-| Acceptance | **Blocked** on T-K8S-6a (Envoy fails closed) and a PoC run | **Passing**: acceptance suite 17/17, packaged smoke 23/23 incl. live OpenRouter free models |
+| Deployment contract | Defined | Defined (v3.1.0) |
+| Implementation | One workload per GPU (node1 TEI/BGE-base embedding, node2 vLLM Qwen3-Reranker, node3 vLLM Qwen3-4B); mTLS; **missing execution-JWT signing (T-K8S-6a)** | **Complete:** mTLS + tenant authorization, provider registry and rewrite, streaming, Responses API, circuit breaker, health, cost ledger, budget, sensitivity, runtime kill switch, multi-provider failover |
+| Acceptance | **Blocked** on T-K8S-6a (Envoy fails closed) and a PoC run | **Passing** (acceptance suite 31/31, packaged smoke, live OpenRouter free-model check, §46 checklist); freeze attestation pending sign-off |
 
-Retrieval benchmark impact: **T02/T03 can now run against GPU-7** (mock provider, or the OpenRouter free embedding arm `synanton-free-embedding` via gRPC `Execute` EMBED); against local GPU-5 they stay blocked until T-K8S-6a. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes; downloads via `uv` venv + `HF_ENDPOINT=https://hf-mirror.com`.
+Platform client (`java/gateway/.../gpu/GpuExecutionClient`): mTLS channel (`GPU_TLS_ENABLED`, `GPU_TLS_CA_PATH`, `GPU_TLS_CERT_PATH`, `GPU_TLS_KEY_PATH`; principal `synanton-platform`), `executeStream()`, canonical error codes, and no retry of non-retryable denials (`tenant_not_allowed`, `budget_exceeded`, …). Adapters do not yet set `data_tags` from the platform's classification (a platform-side follow-up).
+
+Retrieval benchmark impact: **T02/T03 can run against GPU-7** (mock provider, or the OpenRouter free embedding arm `synanton-free-embedding`); against local GPU-5 they stay blocked until T-K8S-6a. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.
 
 ---
 
