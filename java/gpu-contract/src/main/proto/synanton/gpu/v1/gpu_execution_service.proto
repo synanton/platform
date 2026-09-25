@@ -27,6 +27,14 @@ service GPUExecutionService {
     // to reconcile any timed-out or disconnected Execute call.
     rpc Execute(ExecutionRequest) returns (ExecutionResponse);
 
+    // ExecuteStream dispatches a SYNTHESIZE workload in streaming mode.
+    // Zero or more ExecutionChunk.data messages (one per provider stream chunk,
+    // logical model ID restored) are followed by EXACTLY ONE ExecutionChunk.terminal
+    // carrying the final state, usage and error. The terminal message replaces the
+    // SSE "data: [DONE]" marker. An idempotent replay of a completed request returns
+    // only the terminal message (streamed content is not retained).
+    rpc ExecuteStream(ExecutionRequest) returns (stream ExecutionChunk);
+
     // Cancel is best-effort. Does not imply rollback of primary-platform business state.
     rpc Cancel(CancelRequest) returns (CancelResponse);
 
@@ -147,6 +155,24 @@ message ExecutionResponse {
 
     ErrorInfo   error = 5;
     UsageReport usage = 6;
+
+    // upstream_request_id is the external provider's request ID (GPU-7), preserved
+    // for support correlation. Empty for local (GPU-5) executions.
+    string upstream_request_id = 7;
+}
+
+// ExecutionChunk is one message of an ExecuteStream response stream.
+message ExecutionChunk {
+    string request_id   = 1;
+    string execution_id = 2;
+    oneof event {
+        // One OpenAI-compatible chat.completion.chunk JSON object, as streamed by the
+        // runtime, with the provider model ID replaced by the logical model ID.
+        // A usage-bearing chunk (stream_options.include_usage) is forwarded as data.
+        bytes data = 3;
+        // Final message of the stream: exactly once, always last.
+        ExecutionResponse terminal = 4;
+    }
 }
 
 message CancelRequest {
@@ -171,6 +197,7 @@ message ExecutionStatus {
     ExecutionState state = 3;
     ErrorInfo   error = 4;
     UsageReport usage = 5;
+    string upstream_request_id = 6;  // see ExecutionResponse.upstream_request_id
 }
 
 message GetCapacityRequest {
@@ -196,7 +223,9 @@ message ModelInfo {
     string display_name     = 2;  // Human-readable name
     string provider         = 3;  // Provider name (LOCAL, OPENAI, etc.)
     Operation operation     = 4;  // Operation this model supports
-    string provider_model_id = 5; // Provider-specific model ID (e.g., "meta-llama/llama-3.1-8b-instruct:free")
+    // DEPRECATED — never populated. Provider model IDs are an internal routing detail
+    // and are never exposed downstream; the field number is kept for wire compatibility.
+    string provider_model_id = 5 [deprecated = true];
     bool   is_default       = 6;  // Whether this is the default model for the operation
     int32  max_input_tokens = 7;  // Maximum input tokens supported
     int32  max_output_tokens = 8; // Maximum output tokens supported (for SYNTHESIZE)
@@ -222,6 +251,10 @@ message ErrorInfo {
     ErrorReason reason   = 1;
     string      message  = 2;  // Diagnostic only; NOT for user-facing rendering
     bool        retryable = 3;
+    // code is the canonical fine-grained error code (e.g. "upstream_provider_error",
+    // "upstream_provider_timeout", "budget_exceeded", "capability_not_supported").
+    // reason is the coarse category; code is authoritative for machine handling.
+    string      code     = 4;
 }
 
 // UsageReport captures GPU execution measurements for cost attribution.
