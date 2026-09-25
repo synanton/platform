@@ -27,19 +27,19 @@ public class ModelResolver {
             Operation.SYNTHESIZE, new OperationModels(
                 "llama-3.1-8b-instruct",
                 Map.of(
-                    "llama-3.1-8b-instruct", new ModelInfo("meta-llama/llama-3.1-8b-instruct:free", "Llama 3.1 8B Instruct", "OPENROUTER", true, 8192, 2048, 0)
+                    "llama-3.1-8b-instruct", new ModelInfo("meta-llama/llama-3.1-8b-instruct:free", "Llama 3.1 8B Instruct", "OPENAI", true, 8192, 2048, 0)
                 )
             ),
             Operation.EMBED, new OperationModels(
                 "text-embedding-3-small",
                 Map.of(
-                    "text-embedding-3-small", new ModelInfo("text-embedding-3-small", "OpenAI text-embedding-3-small", "OPENROUTER", true, 8192, 0, 1536)
+                    "text-embedding-3-small", new ModelInfo("text-embedding-3-small", "OpenAI text-embedding-3-small", "OPENAI", true, 8192, 0, 1536)
                 )
             ),
             Operation.RERANK, new OperationModels(
                 "ms-marco-MiniLM-L-6-v2",
                 Map.of(
-                    "ms-marco-MiniLM-L-6-v2", new ModelInfo("cross-encoder/ms-marco-MiniLM-L-6-v2", "MS MARCO MiniLM L6 v2", "OPENROUTER", true, 512, 0, 0)
+                    "ms-marco-MiniLM-L-6-v2", new ModelInfo("cross-encoder/ms-marco-MiniLM-L-6-v2", "MS MARCO MiniLM L6 v2", "OPENAI", true, 512, 0, 0)
                 )
             )
         );
@@ -79,11 +79,11 @@ public class ModelResolver {
                 try {
                     return Provider.valueOf(modelInfo.provider());
                 } catch (IllegalArgumentException e) {
-                    return Provider.OPENROUTER;
+                    return Provider.OPENAI;
                 }
             }
         }
-        return Provider.OPENROUTER;
+        return Provider.OPENAI;
     }
 
     public record ModelInfo(

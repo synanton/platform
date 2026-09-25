@@ -57,7 +57,7 @@ enum Operation {
 enum Provider {
     PROVIDER_UNSPECIFIED = 0;
     LOCAL       = 1;  // Local vLLM deployment (GPU-5)
-    OPENROUTER  = 2;  // OpenRouter.ai external provider (GPU-7)
+    OPENAI  = 2;  // openrouter.ai, opencode.ai external provider (GPU-7)
 }
 
 // ExecutionState is the lifecycle of a single GPU execution attempt.
@@ -194,7 +194,7 @@ message GetModelsResponse {
 message ModelInfo {
     string model_id         = 1;  // Logical model ID (e.g., "llama-3.1-8b-instruct")
     string display_name     = 2;  // Human-readable name
-    string provider         = 3;  // Provider name (LOCAL, OPENROUTER, etc.)
+    string provider         = 3;  // Provider name (LOCAL, OPENAI, etc.)
     Operation operation     = 4;  // Operation this model supports
     string provider_model_id = 5; // Provider-specific model ID (e.g., "meta-llama/llama-3.1-8b-instruct:free")
     bool   is_default       = 6;  // Whether this is the default model for the operation

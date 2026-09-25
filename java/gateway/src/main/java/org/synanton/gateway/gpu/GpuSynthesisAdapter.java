@@ -205,9 +205,9 @@ public class GpuSynthesisAdapter {
     }
 
     private Provider resolveProviderForTenant(Operation operation) {
-        // For now return OPENROUTER if configured, otherwise LOCAL
+        // For now return OPENAI if configured, otherwise LOCAL
         // TODO: Implement tenant-specific provider mapping via ModelCatalogService
-        return Provider.OPENROUTER;
+        return Provider.OPENAI;
     }
 
     // ─── Internal OpenAI-compat JSON structures ───────────────────────────────
