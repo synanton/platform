@@ -1,6 +1,6 @@
 ---
 title: "Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)"
-status: "in progress — Phase B0 done; Phase B1 T01/T04 done; T02/T03 planned against GPU-7 free models (§6 Phase B1-G)"
+status: "in progress — Phase B0 done; Phase B1 T01/T04 done; T02/T03/T04-v2 planned on GPU-5 home k8s (§6 Phase B1-K); B1-G (GPU-7 free models) blocked on OpenRouter reachability"
 last_reviewed: "2026-09-25"
 ---
 
@@ -399,6 +399,52 @@ Recall is identical (expected — every gold query's answer lives in a document 
 - **Rerank (T10/T11):** OpenRouter has no free rerank model; GPU-7 returns `capability_not_supported` for `RERANK` on the real arm. Reranking stays on GPU-5 (`synanton-qwen3-reranker-0.6b`). The GPU-7 mock reranker is for wiring tests only and is never a benchmark row.
 - **Latency comparability:** GPU-7 latency includes the WAN round trip and shared free-tier queueing. `embedMs` from `SearchTrace` is reported separately, and B1-G p95 numbers are never compared with GPU-5 or Phase 2 rows. Recall/NDCG comparisons are valid; latency comparisons across planes are not.
 - **bge-base rows:** T02/T03 as defined in §3.4 (bge-base) still require GPU-5; B1-G adds `-G` rows alongside them and doesn't close them.
+
+### Phase B1-K — bge-base T02/T03/T04 on the home k8s GPU plane (GPU-5), planned 2026-09-25
+
+**Why now.** GPU-5 passed cluster phase 5 on 2026-09-25 (gpu-runtime T-K8S-6a). `synanton-bge-base-embedding` (TEI, node1) and `synanton-qwen3-reranker-0.6b` (vLLM, node2) answer end to end through Gateway → Envoy (JWT) → GPU. Measured single-request latency: EMBED 166 ms, RERANK 74 ms (the README GPU plane table has the full results).
+
+That makes the **original** §3.4 rows possible: T02 (fixed, dense, bge-base) and T03 (fixed, hybrid, bge-base). It also allows a **real** T04: the recorded `T04.yaml` was functionally BM25-only (§6 Phase B1).
+
+B1-G (GPU-7 free models) stays blocked: OpenRouter is unreachable, and opencode.ai has no embeddings. B1-K doesn't depend on it.
+
+**What carries over unchanged from B1-G:**
+- G1: the fail-closed gRPC embed client and the `gpu-plane` profile;
+- G2: configurable dimension, run here at `EMBED_DIM=768` with no truncation;
+- G4: harness validity rules, run records, `rescore`.
+
+For `--gpu-plane gpu-5` the harness uses `provider_mode: local`: no spend check, no daily budget, no pacing.
+
+**Run IDs and tenants:**
+
+| Run ID | Tenant | Chunking | Retrieval | Embedding | Note |
+|---|---|---|---|---|---|
+| `T02` | `rb-fixed-g5` | fixed (extraction-gateway **down**) | dense (`--top-k-lexical 1`) | bge-base 768 | Original §3.4 row, first real run |
+| `T03` | `rb-fixed-g5` | fixed | hybrid RRF | bge-base 768 | Replaces the superseded all-zero `T03.yaml` |
+| `T04-v2` | `rb-semantic-g5` | semantic (extraction-gateway **up**) | hybrid RRF | bge-base 768 | First T04 with a real dense side. `T04.yaml` stays as the historical BM25-only record. |
+
+**Steps (one commit each unless marked operator):**
+
+| Step | Work | Repo / who |
+|---|---|---|
+| K1 | **Expose the Gateway to the workstation.** Add a NodePort Service `gpu-gateway-external` (gRPC 9090 → node1 `192.168.10.31:30990`, `externalTrafficPolicy: Local` so the client source IP survives). Add a NetworkPolicy ingress rule limiting 9090 to the workstation's IP block. Blueprint + Helm. mTLS still authenticates every call. Dev alternative: `kubectl port-forward --address <docker-bridge-ip>`. | gpu-runtime |
+| K2 | **Benchmark principal on GPU-5.** Add `synanton-benchmark` to `gateway-local.yaml` + Helm, with tenants `rb-fixed-g5` and `rb-semantic-g5` only (no `*`, no admin). New `scripts/issue-client-cert.sh <cn>` that signs a client certificate with the **existing** GPU-5 CA (`git-ignored/gpu5-pki/ca.key`). `gen-certs.sh` would make a new CA and break the `gpu-gateway-tls` Secret. | gpu-runtime; **operator** runs the script (CA key) |
+| K3 | **TEI input limit.** bge-base accepts 512 tokens. TEI runs without `--auto-truncate`, and the Gateway doesn't enforce `max-input-tokens`, so an over-long chunk would fail its whole document under fail-closed ingest. Decide: add `--auto-truncate` to TEI (blueprint + Helm; silent truncation, recorded in the run record) **or** keep it strict and treat failures as invalid runs. Recommended: keep it strict, and use the K5 dry run to measure how many chunks exceed 512 tokens. | gpu-runtime (if changed) + decision |
+| K4 | **Platform overlay GPU-5 mode.** Split the GPU-7 network join out of `compose.gpu-plane.yaml` into `compose.gpu7-network.yaml`. `run-benchmark-gpu-plane.sh up --plane gpu5` then sets `GPU_PLANE_ENDPOINT=192.168.10.31:30990`, `GPU_TLS_AUTHORITY=gpu-gateway`, the PKI from `gpu-runtime/git-ignored/gpu5-pki` with client `synanton-benchmark`, `EMBED_MODEL(_ID)=synanton-bge-base-embedding`, `EMBED_DIM=768`, `EMBED_TRUNCATE_DIM=0` and `GPU_PLANE_MAX_RPM=0` (no free-tier limit). | platform |
+| K5 | **Finish `remap-gold`.** Wire `retrieval_eval/remap.py` into the CLI (`retrieval-eval remap-gold --from-tenant rb-fixed --to-tenant rb-fixed-g5 --queries … --out …`) and add unit tests with a fake cqlsh. Changed chunks are reported for re-annotation with `inspect`, never guessed. | platform |
+| K6 | **Dry run** on a throwaway tenant: ingest through the GPU plane; `/index/stats` must show `vector_docs == doc_count` and `embedding_dim` 768. Measure the chunk token distribution against TEI's 512 limit (K3). Run one `evaluate` to check validity end to end. | run |
+| K7 | **Fixed tenant:** ingest `rb-fixed-g5` (extraction-gateway down, `--gpu-plane gpu-5 --retries 2`), remap gold from `rb-fixed`, then run **T02** and **T03** (`--gpu-plane gpu-5 --embedding-model synanton-bge-base-embedding --embedding-dim 768`). | run |
+| K8 | **Semantic tenant:** start the extraction gateway (`docker-extraction-gateway`), ingest `rb-semantic-g5`, remap gold from `rb-semantic`, then run **T04-v2**. | run |
+| K9 | **Report:** results table here (with T01 as the BM25 baseline), §9 deliverable 8, tickets T-INT-2b, README. The query-embedding latency (`latency_breakdown`) is LAN + GTX 1650 and not comparable with GPU-7 rows (§8). | platform docs |
+
+**Out of scope for B1-K, but unblocked by it:**
+- **T10/T11 (reranker):** the GPU-5 reranker works, but the platform-side `RerankerPort` and adapter (B2) don't exist yet.
+- **B3 larger embedding models:** each GPU already runs exactly one workload, so this would need a model swap on a node. It isn't part of this phase.
+
+**Confounds specific to B1-K:**
+- **LAN latency:** the network hop and the GTX 1650 dominate `embedMs`.
+- **Shared GPU plane:** don't run a load test while benchmark runs are in progress.
+- **Semantic chunking depends on the extraction gateway:** the extraction-gateway state must match the tenant (down for `rb-fixed-g5`, up for `rb-semantic-g5`), exactly as in B1.
 
 ### Phase B2 — New retrieval capability (2-3 weeks)
 
