@@ -99,8 +99,11 @@ public class GpuSynthesisAdapter {
                     return Optional.empty();
                 }
 
-                log.warn("GPU synthesis gRPC error {} (request={}) attempt {}/{}",
-                        code, request.getRequestId(), attempt + 1, maxAttempts);
+                if (!GpuExecutionClient.isRetryableDenial(e)) {
+                    attempt = maxAttempts - 1; // non-retryable denial (Plan §16): fail now, never retry
+                }
+                log.warn("GPU synthesis gRPC error {} code={} (request={}) attempt {}/{}",
+                        code, GpuExecutionClient.canonicalCode(e), request.getRequestId(), attempt + 1, maxAttempts);
                 if (attempt == maxAttempts - 1) {
                     return Optional.of(new SynthesisResult.Error(
                             "GPU synthesis gRPC error: " + e.getStatus().getDescription(), latencyMs));
@@ -138,8 +141,9 @@ public class GpuSynthesisAdapter {
                 }
 
                 // Terminal failure
-                log.warn("GPU synthesis terminal failure (reason={}, request={})",
-                        reason, request.getRequestId());
+                log.warn("GPU synthesis terminal failure (reason={}, code={}, upstream_request_id={}, request={})",
+                        reason, GpuExecutionClient.canonicalCode(response), response.getUpstreamRequestId(),
+                        request.getRequestId());
                 return Optional.of(new SynthesisResult.Error(
                         "GPU execution failed: " + response.getError().getMessage(), latencyMs));
             }

@@ -110,8 +110,11 @@ public class GpuEmbeddingAdapter implements LlmClient {
                     return fallbackEmbed(null);
                 }
 
-                log.warn("GPU embedding gRPC error {} (request={}) attempt {}/{}",
-                        code, request.getRequestId(), attempt + 1, maxAttempts);
+                if (!GpuExecutionClient.isRetryableDenial(e)) {
+                    attempt = maxAttempts - 1; // non-retryable denial (Plan §16): fail now, never retry
+                }
+                log.warn("GPU embedding gRPC error {} code={} (request={}) attempt {}/{}",
+                        code, GpuExecutionClient.canonicalCode(e), request.getRequestId(), attempt + 1, maxAttempts);
                 if (attempt == maxAttempts - 1) {
                     return new EmbedResponse(List.of(), 0, 0, latencyMs, 0, 0);
                 }
@@ -147,8 +150,9 @@ public class GpuEmbeddingAdapter implements LlmClient {
                     continue;
                 }
 
-                log.warn("GPU embedding terminal failure (reason={}, request={})",
-                        reason, request.getRequestId());
+                log.warn("GPU embedding terminal failure (reason={}, code={}, upstream_request_id={}, request={})",
+                        reason, GpuExecutionClient.canonicalCode(response), response.getUpstreamRequestId(),
+                        request.getRequestId());
                 return new EmbedResponse(List.of(), 0, 0, latencyMs, 0, 0);
             }
 

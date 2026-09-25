@@ -105,8 +105,11 @@ public class GpuRerankAdapter implements RerankClient {
                     return fallbackRerank(null);
                 }
 
-                log.warn("GPU rerank gRPC error {} (request={}) attempt {}/{}",
-                        code, request.getRequestId(), attempt + 1, maxAttempts);
+                if (!GpuExecutionClient.isRetryableDenial(e)) {
+                    attempt = maxAttempts - 1; // non-retryable denial (Plan §16): fail now, never retry
+                }
+                log.warn("GPU rerank gRPC error {} code={} (request={}) attempt {}/{}",
+                        code, GpuExecutionClient.canonicalCode(e), request.getRequestId(), attempt + 1, maxAttempts);
                 if (attempt == maxAttempts - 1) {
                     return new RerankResponse(List.of(), 0, 0, latencyMs, 0, 0);
                 }
@@ -142,8 +145,9 @@ public class GpuRerankAdapter implements RerankClient {
                     continue;
                 }
 
-                log.warn("GPU rerank terminal failure (reason={}, request={})",
-                        reason, request.getRequestId());
+                log.warn("GPU rerank terminal failure (reason={}, code={}, upstream_request_id={}, request={})",
+                        reason, GpuExecutionClient.canonicalCode(response), response.getUpstreamRequestId(),
+                        request.getRequestId());
                 return new RerankResponse(List.of(), 0, 0, latencyMs, 0, 0);
             }
 
