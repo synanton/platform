@@ -140,6 +140,12 @@ message ExecutionRequest {
     // provider specifies the inference provider to route the request to.
     // If unspecified, defaults to LOCAL (GPU-5 local vLLM).
     Provider provider = 9;
+
+    // data_tags are sensitivity labels the platform assigns to this request's data
+    // (e.g. "pii", "sensitive"). When any tag is in the Gateway's
+    // gpu-gateway.sensitivity.block-external-tags, external (GPU-7) routing is denied
+    // with code sensitive_model_external_blocked — fail closed, never rerouted.
+    repeated string data_tags = 10;
 }
 
 // ExecutionResponse is returned by the GPU Gateway after dispatch completes.
