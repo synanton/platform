@@ -759,7 +759,7 @@ A cross-repo debugging and benchmarking pass this session (SNTP-9 retrieval eval
 - [`tools/retrieval-eval`](tools/retrieval-eval/README.md) — the SNTP-9 retrieval benchmark harness (config, metrics, ingest/query wrappers, CLI). Phase B0 (harness + gold-chunk annotation) and Phase B1's T01 (BM25, flat chunking) / T04 (hybrid-labeled, real structural chunking) baseline runs are done — see [the research plan](docs/research/retrieval-evaluation-benchmark-plan.md) and its [manual QA reproduction guide](docs/demos/retrieval-benchmark-b0-b1-demo.md).
 - [`tools/extraction-probe`](tools/extraction-probe/README.md) — a standalone CLI to upload a document to `extraction-gateway` and save its textual/structured response, independent of the platform's ingestion pipeline. Useful for diagnosing extraction issues directly.
 
-**Real finding: dense/hybrid retrieval is unreachable in the Phase 1 stack.** `synquest`'s embedding client has no fallback; it always calls the vLLM embedding service that only exists behind `docker compose --profile phase2` (2×8GB GPUs), which isn't running in the Phase 1 demo. Every search reports `query_usage.embed_skipped=true`. T02 (dense-only) and T03 (hybrid) from the benchmark's test matrix are **blocked, not run**, pending that profile.
+**Real finding: dense/hybrid retrieval is unreachable in the Phase 1 stack.** `synquest`'s embedding client has no fallback; it always calls the vLLM embedding service that only exists behind `docker compose --profile phase2` (2×8GB GPUs), which isn't running in the Phase 1 demo. Every search reports `query_usage.embed_skipped=true`. T02 (dense-only) and T03 (hybrid) from the benchmark's test matrix are **blocked, not run**, pending that profile. (Superseded 2026-09-25: see the GPU plane update below; dense/hybrid now goes through GPU-7 first.)
 
 **Decided: the homelab [k8s cluster](docs/demos/cluster-as-built.md) will be created as a cluster dedicated to Synanton's GPU plane**. 4-node hardware (`node0` control-plane, no GPU; `node1`/`node2`/`node3` workers with one GPU each — GTX 1650 4GB, RTX 4060 Ti 16GB, RTX 5060 Ti 16GB; as-built reference: `docs/demos/cluster-as-built.md`), reproducing its proven bootstrap shape (Calico CNI, NVIDIA GPU Operator device plugin + `RuntimeClass nvidia`, Longhorn + `local-ssd` storage, a local registry at `local-registry:5000`). The sibling `gpu-runtime` repo (GPU-1 through GPU-3 complete, GPU-4 contract-unified-but-optional, **GPU-5 — Kubernetes deployment**) is what gets deployed there, to give `platform` a real, isolated embedding/inference endpoint instead of relying on the Docker Phase 2 profile.
 
@@ -775,7 +775,12 @@ The full ticket backlog for this is written down, not left as an open question: 
 
 Platform client (`java/gateway/.../gpu/GpuExecutionClient`): mTLS channel (`GPU_TLS_ENABLED`, `GPU_TLS_CA_PATH`, `GPU_TLS_CERT_PATH`, `GPU_TLS_KEY_PATH`; principal `synanton-platform`), `executeStream()`, canonical error codes, and no retry of non-retryable denials (`tenant_not_allowed`, `budget_exceeded`, …). Adapters do not yet set `data_tags` from the platform's classification (a platform-side follow-up).
 
-Retrieval benchmark impact: **T02/T03 can run against GPU-7** (mock provider, or the OpenRouter free embedding arm `synanton-free-embedding`); against local GPU-5 they stay blocked until T-K8S-6a. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.
+Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on OpenRouter free embedding models** ([benchmark plan §6 Phase B1-G](docs/research/retrieval-evaluation-benchmark-plan.md)). These are new rows T02-G/T03-G/T04-G, separate from bge-base.
+- `synquest`/`synflux` still embed over HTTP, while the GPU plane is gRPC-only. The decided fix is a shared, fail-closed gRPC `LlmClient`, selected by an opt-in `gpu-plane` profile.
+- Embedding dimension must become configurable: the free models are 2048-dim, and Lucene 9.11's default vector cap is 1024.
+- The harness needs free-tier throttling and a query-embedding cache.
+- No free rerank model exists, so T10/T11 stay on GPU-5, and bge-base T02/T03 stay blocked until T-K8S-6a.
+- The old `results/T03.yaml` (all 0.0) is superseded. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)"
-status: "in progress — Phase B0 done; Phase B1 T01/T04 done, T02/T03 blocked on Phase 2 GPU profile"
-last_reviewed: "2026-09-17"
+status: "in progress — Phase B0 done; Phase B1 T01/T04 done; T02/T03 planned against GPU-7 free models (§6 Phase B1-G)"
+last_reviewed: "2026-09-25"
 ---
 
 # Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)
@@ -88,6 +88,16 @@ Config-driven via `synanton-llm-client`, no new SDK integration required for the
 | `e5-mistral-7b-instruct` | self-hosted, quantized | 4096 | Largest model the RTX 4060 Ti/5060 Ti (16GB) nodes can plausibly serve; confirm via a smoke test before committing it to the full matrix |
 | `text-embedding-3-small` (OpenAI-compat) | external API | 1536 | Optional — `OpenAiCompatTranslator` already supports it; incurs real external cost, gate behind an explicit opt-in env var |
 
+**GPU-7 free-model arms (added 2026-09-25, §6 Phase B1-G).** Until GPU-5 serves `bge-base` for real (blocked on `gpu-runtime` T-K8S-6a), dense retrieval runs through the GPU plane's external-provider mode (GPU-7) against **OpenRouter free embedding models only** — the only embedding models the capped test key may call (`allowed-model-pattern: ".*:free"`). None of them is `bge-base`, so these arms change the embedding variable and are reported as their own rows (`T02-G`/`T03-G`/`T04-G`), never as substitutes for the bge-base rows of §3.4:
+
+| Logical model (GPU-7 catalog) | Provider model (never exposed downstream) | Native dim | Context | Notes |
+|---|---|---|---|---|
+| `synanton-free-embedding` | `nvidia/nemotron-3-embed-1b:free` | 2048 | 32k | Primary GPU-7 arm (already in `gateway-external.yaml`) |
+| `synanton-free-embedding-nemotron-vl` | `nvidia/llama-nemotron-embed-vl-1b-v2:free` | 2048 (to confirm, G0) | 131k | Second free arm for RQ4 |
+| `synanton-free-embedding-lfm` | `liquid/lfm-2.5-embedding-350m:free` | to confirm (G0) | **512 tokens** | Only valid where every chunk fits in 512 tokens; otherwise excluded, not silently truncated |
+
+Two constraints follow from the current code, both verified: Lucene 9.11.1 (`gradle/libs.versions.toml`) caps `KnnFloatVectorField` at **1024 dims** by default, and `synquest`'s `synquest.embedding.dim` is hard-coded to `768` (`java/synquest/src/main/resources/application.yml`). A 2048-dim arm therefore needs either Matryoshka truncation to ≤1024 + L2 re-normalisation (valid only if the model is Matryoshka-trained — confirmed empirically in G0, not assumed) or a per-field codec override raising the dimension cap. The chosen reduction is recorded in the run record's `embedding_model` field (e.g. `synanton-free-embedding@1024`).
+
 Cohere `embed-v3` and Voyage `voyage-2` are **out of scope for the baseline matrix** (no existing translator; would need new vendor-specific integration work with no current justification) — tracked as an Open Question (§10), not silently dropped.
 
 ### 3.4 Test matrix
@@ -107,6 +117,11 @@ Condensed from Issue #14's T01-T14, re-scoped to what's real or genuinely new:
 | T09 | Semantic | Hybrid RRF | bge-base | Knowledge | — | Graph rank-fusion (§2) |
 | T10 | Semantic | Hybrid RRF | bge-base | Knowledge | ✓ | Reranker (§2) + graph rank-fusion |
 | T11 | Hierarchical | Hybrid RRF | bge-base | Knowledge | ✓ | Both new-work items together — run last |
+| T02-G | Fixed | Dense | GPU-7 free (`synanton-free-embedding`) | — | — | §6 Phase B1-G (G1-G4) |
+| T03-G | Fixed | Hybrid RRF | GPU-7 free | — | — | §6 Phase B1-G |
+| T04-G | Semantic | Hybrid RRF | GPU-7 free | — | — | §6 Phase B1-G — first run where T04's "hybrid" actually includes dense |
+
+`-G` rows run through the GPU plane's external mode (GPU-7) on OpenRouter free models. They answer RQ2 (does hybrid beat BM25?) and give RQ4 an early free-model subset. They don't replace the bge-base rows, and their latency isn't compared across planes (§8).
 
 ---
 
@@ -256,7 +271,7 @@ Decision (user-confirmed): run only the two genuinely distinct arms available in
 - **T01** — `rb-fixed`, BM25-only (`--top-k-dense 0`), flat/fallback chunking.
 - **T04** — `rb-semantic`, labeled "hybrid" but functionally BM25-only for the same reason as above; the arm's actual distinguishing variable is chunking strategy, not retrieval strategy, since none of the 10 gold queries target the 3 new structurally-rich PDFs yet (§4 update).
 
-**T02/T03 are blocked, not skipped** — pending either the Phase 2 GPU profile being started, or another reachable embedding endpoint. Results:
+**T02/T03 are blocked, not skipped** — pending either the Phase 2 GPU profile being started, or another reachable embedding endpoint. The reachable endpoint now exists — the GPU plane's GPU-7 external mode — and the plan for using it is §6 Phase B1-G. `results/T03.yaml` (recorded 2026-09-18 against `demo-data-documents-v1`, every metric `0.0`) predates the gold-chunk annotation and was never a valid hybrid run; it is **superseded** and must not be cited. Results:
 
 | Run | Tenant | Recall@10 | NDCG@10 | p95 latency | Record |
 |---|---|---|---|---|---|
@@ -264,6 +279,38 @@ Decision (user-confirmed): run only the two genuinely distinct arms available in
 | T04 | `rb-semantic` | 0.900 | 0.736 | 8528ms | `demo-data/eval/retrieval-benchmark/results/T04.yaml` |
 
 Recall is identical (expected — every gold query's answer lives in a document that chunks identically, as one flat chunk, under both tenants; see §4 update). The small NDCG difference (0.756 vs 0.736) is not a meaningful structural signal — it reflects tie-breaking over different per-tenant chunk UUIDs, not a real quality difference, since no query in this set actually touches a document with real structural divergence. **A meaningful T01-vs-T04 comparison requires new gold queries against the 3 newly-added PDFs** (tracked as an open item, not yet done) — the corpus and harness are now capable of it, but the query set hasn't caught up yet.
+
+### Phase B1-G — Dense/hybrid via GPU-7 and free models (planned 2026-09-25)
+
+**Why GPU-7.** `gpu-runtime`'s external-provider mode (GPU-7, Deployment Plan v3.1.0) is complete and passing acceptance; local GPU-5 is blocked on execution-JWT signing (T-K8S-6a). GPU-7 serves `Operation.EMBED` through the same `synanton.gpu.v1` contract GPU-5 will, so everything built here carries over to GPU-5 unchanged — only the catalog's logical model id changes (`synanton-bge-base-embedding`).
+
+**Integration decision (user-confirmed, closes T-INT-1 for this benchmark): shared gRPC `LlmClient`.** `synquest.QueryEmbedder` and `synflux.EmbedStage` today call an OpenAI-compatible HTTP `/v1/embeddings` (`EMBED_BASE_URL`/`VLLM_EMBED_BASE_URL`); the GPU plane is gRPC-only over mTLS with no REST façade. Rejected alternatives: a benchmark-only HTTP→gRPC shim (a de-facto REST façade, adds latency skew) and pointing `EMBED_BASE_URL` straight at OpenRouter (bypasses the GPU plane's free-model guard, budget, kill switch and model-id rewrite, and puts the provider key in the platform).
+
+**Invariants for every B1-G run:**
+- **Fail closed, no silent CPU fallback.** The existing `gateway.gpu.GpuEmbeddingAdapter` degrades to the CPU `LlmClient` on failure; the benchmark path must not — a failed embed aborts the run (ingest) or is counted as a failed query, never an unembedded "dense" result. `query_usage.embed_skipped=true` on any query invalidates the run.
+- **Free models only.** Only `*:free` provider models; spend on the key must be unchanged after each run (checked before/after, recorded).
+- **Logical ids only on the platform side.** Platform config and run records name `synanton-free-embedding*`, never the provider model id.
+- **One embedding model per index.** Changing model or dimension means re-ingest into a fresh tenant; embeddings are never mixed across models.
+
+**Steps (one commit per step; code steps get their own tests):**
+
+| Step | Work | Repo |
+|---|---|---|
+| G0 | **Probe, no code.** Read the key's rate limits (`GET /api/v1/key`; key never printed). One `EMBED` per free model via `tools/gpu7-check` to record native dim, whether the provider honours `dimensions`, and whether truncating to 1024/768 + re-normalising preserves neighbour order on a handful of gold chunks (Matryoshka check). Output: a short table appended to this section; decides the dimension per arm. | gpu-runtime tools |
+| G1 | **Shared gRPC embed client.** Extract the EMBED path of `GpuEmbeddingAdapter` into a small shared module (e.g. `java/gpu-client`, depending on `gpu-contract`) implementing `org.synanton.llm.LlmClient`, with mTLS config (`GPU_TLS_*`, principal `synanton-platform`), per-call `tenant_id`, canonical error codes and a `fail-closed` mode. `gateway` keeps its current degrade behaviour by wrapping it. Opt-in `gpu-plane` Spring profile in `synquest` and `synflux` selects it instead of `HttpLlmClient`. Tests: in-process gRPC server, mTLS, fail-closed on `circuit_open`/`budget_exceeded`/`routing_disabled`. | platform |
+| G2 | **Configurable dimension.** `EMBED_DIM` for `synquest.embedding.dim` and a matching optional truncation (`EMBED_TRUNCATE_DIM`, then L2 re-normalise) applied identically at ingest (`EmbedStage`) and query time (`QueryEmbedder`); startup fails if the configured dim exceeds the Lucene cap. `synflux` `embedding.model-id` becomes env-driven (`EMBED_MODEL_ID` already exists in `application-phase2.yml`; hoist it). | platform |
+| G3 | **Catalog + tenants.** Add `synanton-free-embedding-nemotron-vl` and `synanton-free-embedding-lfm` to `gateway-external.yaml`; authorise benchmark tenants (`rb-fixed-g`, `rb-semantic-g`, one pair per embedding arm) for `synanton-platform`. `tools/gpu7-package-check.py` and `gpu7-check` stay green. | gpu-runtime |
+| G4 | **Harness.** `retrieval-eval` gains: a query-embedding cache keyed by (logical model, dim, query sha256) so re-scoring a run costs no requests; a request budget + throttle (default ≤ 15 req/min, hard stop at a configured daily budget) with resumable ingest; run-record fields `gpu_plane: gpu-7`, `provider_mode: external-free`, `embedding_dim`, `embed_requests`, `spend_before`/`spend_after`; and a run-validity check (any `embed_skipped` ⇒ invalid). | platform |
+| G5 | **Run T02-G/T03-G/T04-G** with `synanton-free-embedding`: re-ingest `rb-fixed-g`/`rb-semantic-g` (fresh tenants, new chunk UUIDs ⇒ gold chunk ids re-annotated with `retrieval-eval inspect`), then T02-G (`rb-fixed-g`, `--top-k-lexical 1`), T03-G (`rb-fixed-g`, full hybrid), T04-G (`rb-semantic-g`, full hybrid — the first *real* hybrid T04). Records `results/T02-G.yaml`, `T03-G.yaml`, `T04-G.yaml`. | platform |
+| G6 | **RQ4 on free models (B3 early subset).** Repeat T03-G/T04-G for the other free arms that pass G0. `lfm` runs only if no chunk in the tenant exceeds 512 tokens (checked, recorded); otherwise reported as excluded. | platform |
+| G7 | **Report + docs.** Results table in this section; §9 deliverable 8; `gpu-plane-integration-tickets.md`; README status. | platform |
+
+**Request budget (estimate — replaced by G0/G5 actuals).** OpenRouter's documented free-model limits are ~20 requests/min and **50 requests/day** for accounts with under $10 of purchased credit (1,000/day above that); the capped key is assumed to be in the lower tier until G0 says otherwise. Ingest is ~⌈chunks/32⌉ requests per tenant (`synflux` `batch-size: 32`; embeddings are cached in `ingestion-cache` per tenant, chunk hash and model, so resumed ingests don't re-pay); queries are 10 per run, and the G4 query cache means one pass per (tenant, model, dim) serves every run on that tenant. Expect G5 to fit in one day and each G6 arm in about one more; the throttle stops a run rather than let it hit HTTP 429 mid-way.
+
+**What B1-G does not do.**
+- **Rerank (T10/T11):** OpenRouter has no free rerank model; GPU-7 returns `capability_not_supported` for `RERANK` on the real arm. Reranking stays on GPU-5 (`synanton-qwen3-reranker-0.6b`). The GPU-7 mock reranker is for wiring tests only and is never a benchmark row.
+- **Latency comparability:** GPU-7 latency includes the WAN round trip and shared free-tier queueing. `embedMs` from `SearchTrace` is reported separately, and B1-G p95 numbers are never compared with GPU-5 or Phase 2 rows. Recall/NDCG comparisons are valid; latency comparisons across planes are not.
+- **bge-base rows:** T02/T03 as defined in §3.4 (bge-base) still require GPU-5; B1-G adds `-G` rows alongside them and doesn't close them.
 
 ### Phase B2 — New retrieval capability (2-3 weeks)
 
@@ -312,6 +359,10 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | `e5-mistral-7b` may not fit comfortably on a 16GB consumer GPU alongside other services | Smoke-test in isolation before committing T07 to the full matrix; drop it from the baseline matrix (keep in Open Questions) if it doesn't fit |
 | External embedding API (`text-embedding-3-small`) introduces cost and a network dependency the rest of the benchmark doesn't have | Gated behind explicit opt-in; excluded from the primary Recall@10/NDCG@10/p95 comparison table, reported separately |
 | Reusing `flat-vs-semantic`'s gold queries for RQ1's hierarchical arm without adding hierarchy-specific questions | Extend the query set explicitly (§6 Phase B0 item 2) rather than reuse as-is and claim hierarchical coverage that isn't there |
+| GPU-7 free-tier latency (WAN + shared queueing) mistaken for model/strategy latency | `-G` rows report `embedMs` separately; their p95 is never compared with GPU-5/Phase 2 rows (§6 Phase B1-G) |
+| Silent CPU fallback or skipped embeds making a "dense" run secretly BM25-only (the exact failure that invalidated the old `T03.yaml`) | The benchmark embed client fails closed; any `embed_skipped=true` invalidates the run (G1, G4) |
+| Dimension reduction (2048 → ≤1024, Lucene cap) degrading a free model | Matryoshka check in G0 before any run; the dim is recorded in `embedding_model`; if a model fails the check, use a codec dimension override or drop the arm |
+| Free-tier rate limits cutting off a run partway | Throttle, daily budget and resumable ingest in the harness (G4); a partial run is invalid, not reported |
 | External dataset content changes between download and use (RAG-Multi-Corpus is a live git clone) | Pin `dataset_version` to a commit hash at the time of use (§5), not "whatever's on disk today" |
 
 ---
@@ -327,7 +378,10 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | 5 | `RerankerPort` SPI + one adapter | `java/gateway` | Not started (Phase B2) |
 | 6 | Hierarchical chunking strategy | `java/synflux` | Not started (Phase B2) |
 | 7 | Graph rank-fusion | `java/synquest` and/or `java/gateway` (decided during B2 implementation) | Not started (Phase B2) |
-| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); T02/T03 blocked on Phase 2 GPU profile, not started |
+| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); `T03.yaml` (2026-09-18) superseded/invalid; T02-G/T03-G/T04-G planned (§6 Phase B1-G); bge-base T02/T03 blocked on GPU-5 |
+| 11 | Shared gRPC embed client (fail-closed) + `gpu-plane` profile in `synquest`/`synflux`; configurable embedding dim | `java/` (new shared module), `java/synquest`, `java/synflux` | Planned (B1-G G1/G2) |
+| 12 | GPU-7 free embedding catalog arms + benchmark tenants | `gpu-runtime/deployments/external/config/gateway-external.yaml` | Planned (B1-G G3) |
+| 13 | Harness: query-embedding cache, request throttle/budget, GPU-7 run-record fields, validity check | `tools/retrieval-eval/` | Planned (B1-G G4) |
 | 9 | Decision memo | `docs/research/retrieval-evaluation-benchmark-results.md` (after B5) | Not started |
 | 10 | 3 real structurally-rich PDFs added to corpus | `demo-data/documents/{mental-health-report-2010,outsourcing-agreement,sks8300-web-interface-manual}.pdf` | Done (2026-09-20); gold queries against them not yet written |
 
@@ -337,7 +391,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 
 0. **Gold queries against the 3 new PDFs** — none of the 10 original queries target `mental-health-report-2010.pdf`, `outsourcing-agreement.pdf`, or `sks8300-web-interface-manual.pdf`, so T01-vs-T04's real structural divergence (confirmed via direct Cassandra inspection) isn't yet reflected in any Recall/NDCG number. Writing these is the most direct next step toward a *meaningful* T01-vs-T04 comparison.
 0a. **`content_extractor`'s markdown heading gap** — `TextModalityAdapter` treats `.md` files as flat prose (Tika `AutoDetectParser`, no markdown-aware parsing). Fixing this (a real feature addition, not a bug) would let the *original* corpus's text/markdown files also exercise real semantic chunking, not just the 3 added PDFs. Out of scope for this plan; noted for whoever owns `content_extractor` roadmap next.
-0b. **Starting the Phase 2 GPU profile, or standing up the real GPU Runtime instead** — needed before T02/T03 can run for real. The homelab k8s cluster (§7) is being recreated as a cluster dedicated to Synanton's GPU plane; see [`gpu-plane-integration-tickets.md`](./gpu-plane-integration-tickets.md) and `gpu-runtime/doc/k8s-reference-deployment-plan.md` for the full ticket backlog this depends on. Not this benchmark's own concern to execute, only to consume once it lands.
+0b. **Starting the Phase 2 GPU profile, or standing up the real GPU Runtime instead** — needed before T02/T03 can run for real. The homelab k8s cluster (§7) is being recreated as a cluster dedicated to Synanton's GPU plane; see [`gpu-plane-integration-tickets.md`](./gpu-plane-integration-tickets.md) and `gpu-runtime/doc/k8s-reference-deployment-plan.md` for the full ticket backlog this depends on. Not this benchmark's own concern to execute, only to consume once it lands. **Update 2026-09-25:** GPU-5 is deployed-shape-complete but blocked on execution-JWT signing (`gpu-runtime` T-K8S-6a). GPU-7 (external mode) is complete, so dense/hybrid now proceeds there first (§6 Phase B1-G), and the integration path is decided: a shared gRPC `LlmClient`, not HTTP. The bge-base rows move to GPU-5 once T-K8S-6a lands, reusing the same client with the logical model changed to `synanton-bge-base-embedding`.
 1. **Cohere/Voyage embedding comparison** — in scope only if a translator gets built; not committed in this plan. Revisit after B3's self-hosted results — if self-hosted models already show a clear winner, the commercial comparison may not be worth the integration cost.
 2. **Where does graph rank-fusion belong** — inside `synquest`'s `RrfFusion` (treating graph as a third ranked list) or as a `gateway`-level re-ranking pass over already-fused hybrid results? Both are architecturally defensible; decide during B2 based on which keeps `synquest` and `relix` more independently testable.
 3. **`e5-mistral-7b-instruct` on consumer GPU** — feasibility unconfirmed; the smoke test in §3.3/§8 answers this before B3 commits to it.
