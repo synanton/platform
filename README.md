@@ -771,8 +771,8 @@ The full ticket backlog for this is written down, not left as an open question: 
 | | GPU-5 (homelab k8s) | GPU-7 (external providers) |
 | --- | --- | --- |
 | Deployment contract | Defined | Defined (v3.1.0) |
-| Implementation | One workload per GPU (node1 TEI/BGE-base embedding, node2 vLLM Qwen3-Reranker, node3 vLLM Qwen3-4B); mTLS; **missing execution-JWT signing (T-K8S-6a)** | **Complete:** mTLS + tenant authorization, provider registry and rewrite, streaming, Responses API, circuit breaker, health, cost ledger, budget, sensitivity, runtime kill switch, multi-provider failover |
-| Acceptance | **Blocked** on T-K8S-6a (Envoy fails closed) and a PoC run | **Passing** (acceptance suite 31/31, packaged smoke, live OpenRouter free-model check, §46 checklist); freeze attestation pending sign-off |
+| Implementation | One workload per GPU (node1 TEI/BGE-base embedding, node2 vLLM Qwen3-Reranker, node3 vLLM Qwen3-4B); mTLS; execution-JWT signing + JWKS (T-K8S-6a) | **Complete:** mTLS + tenant authorization, provider registry and rewrite, streaming, Responses API, circuit breaker, health, cost ledger, budget, sensitivity, runtime kill switch, multi-provider failover |
+| Acceptance | **Cluster phase 5 passed (2026-09-25):** EMBED/SYNTHESIZE/stream/RERANK through Gateway → Envoy → GPUs; load baselines pending | **Passing** (acceptance suite 31/31, packaged smoke, live OpenRouter free-model check, §46 checklist); freeze attestation pending sign-off |
 
 Platform client (`java/gateway/.../gpu/GpuExecutionClient`): mTLS channel (`GPU_TLS_ENABLED`, `GPU_TLS_CA_PATH`, `GPU_TLS_CERT_PATH`, `GPU_TLS_KEY_PATH`; principal `synanton-platform`), `executeStream()`, canonical error codes, and no retry of non-retryable denials (`tenant_not_allowed`, `budget_exceeded`, …). Adapters do not yet set `data_tags` from the platform's classification (a platform-side follow-up).
 
@@ -780,7 +780,7 @@ Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on
 - `synquest`/`synflux` still embed over HTTP, while the GPU plane is gRPC-only. The decided fix is a shared, fail-closed gRPC `LlmClient`, selected by an opt-in `gpu-plane` profile.
 - Embedding dimension is configurable (`EMBED_DIM`, `EMBED_TRUNCATE_DIM`; the free models are 2048-dim and Lucene 9.11's cap is 1024). `synquest` truncates at index and query time, and `/index/stats` reports vector coverage.
 - The GPU-7 catalog has all three free embedding arms, and a least-privilege `synanton-benchmark` principal covers the six benchmark tenants (G3). The harness paces searches, enforces a daily request budget, checks spend via gpu-runtime, and refuses to report invalid runs. synquest caches query embeddings (G4).
-- No free rerank model exists, so T10/T11 stay on GPU-5, and bge-base T02/T03 stay blocked until T-K8S-6a.
+- No free rerank model exists, so T10/T11 stay on GPU-5. GPU-5 now serves bge-base and the reranker end to end (T-K8S-6a done). Remaining platform-side work before the benchmark runs on GPU-5: expose the Gateway to the workstation (it is `ClusterIP`; NodePort or port-forward, `GPU_TLS_AUTHORITY=gpu-gateway`), add a `synanton-benchmark` principal on GPU-5, a GPU-5 mode for the compose overlay (bge-base, `EMBED_DIM=768`, no truncation), and finish `remap-gold`.
 - The old `results/T03.yaml` (all 0.0) is superseded. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.
 
 ---

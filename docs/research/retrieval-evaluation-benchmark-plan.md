@@ -88,7 +88,7 @@ Config-driven via `synanton-llm-client`, no new SDK integration required for the
 | `e5-mistral-7b-instruct` | self-hosted, quantized | 4096 | Largest model the RTX 4060 Ti/5060 Ti (16GB) nodes can plausibly serve; confirm via a smoke test before committing it to the full matrix |
 | `text-embedding-3-small` (OpenAI-compat) | external API | 1536 | Optional — `OpenAiCompatTranslator` already supports it; incurs real external cost, gate behind an explicit opt-in env var |
 
-**GPU-7 free-model arms (added 2026-09-25, §6 Phase B1-G).** Until GPU-5 serves `bge-base` for real (blocked on `gpu-runtime` T-K8S-6a), dense retrieval runs through the GPU plane's external-provider mode (GPU-7) against **OpenRouter free embedding models only** — the only embedding models the capped test key may call (`allowed-model-pattern: ".*:free"`). None of them is `bge-base`, so these arms change the embedding variable and are reported as their own rows (`T02-G`/`T03-G`/`T04-G`), never as substitutes for the bge-base rows of §3.4:
+**GPU-7 free-model arms (added 2026-09-25, §6 Phase B1-G).** Until GPU-5 served `bge-base` for real (T-K8S-6a; done 2026-09-25, cluster phase 5 passed), dense retrieval runs through the GPU plane's external-provider mode (GPU-7) against **OpenRouter free embedding models only** — the only embedding models the capped test key may call (`allowed-model-pattern: ".*:free"`). None of them is `bge-base`, so these arms change the embedding variable and are reported as their own rows (`T02-G`/`T03-G`/`T04-G`), never as substitutes for the bge-base rows of §3.4:
 
 | Logical model (GPU-7 catalog) | Provider model (never exposed downstream) | Native dim | Context | Notes |
 |---|---|---|---|---|
