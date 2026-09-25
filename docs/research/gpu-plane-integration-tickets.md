@@ -1,6 +1,6 @@
 ---
 title: "GPU Plane Integration — Ticket Backlog"
-status: "backlog — T-INT-1 decided; T-INT-2 planned against GPU-7 (free models); bge-base rows blocked on gpu-runtime GPU-5 (T-K8S-6a)"
+status: "T-INT-1 decided; T-INT-2b DONE on GPU-5 (T02/T03/T04-v2); T-INT-2a blocked (OpenRouter unreachable); T-INT-3 done; B2 next"
 last_reviewed: "2026-09-25"
 ---
 
@@ -36,11 +36,13 @@ Per `docs/research/retrieval-evaluation-benchmark-plan.md` §6 Phase B1, T01 (BM
 
 **Update (2026-09-25):** split into two parts.
 - **T-INT-2a (GPU-7, in progress: G0–G4 done 2026-09-25; G5 runs next):** T02-G/T03-G/T04-G on OpenRouter free embedding models through GPU-7 — steps G0–G7 in the benchmark plan's §6 Phase B1-G. These are separate rows, not the bge-base T02/T03.
-- **T-INT-2b (GPU-5, blocked on T-K8S-6a):** the original bge-base T02/T03, using the same client with the logical model set to `synanton-bge-base-embedding`.
+- **T-INT-2b (GPU-5): DONE 2026-09-25.** T02 (dense, 0.833 / 0.736), T03 (hybrid, 0.900 / 0.789) and T04-v2 (semantic + hybrid, 0.900 / 0.789) ran on bge-base via GPU-5, all valid (benchmark plan §6 Phase B1-K). Next, needed for RQ1: T-INT-3. Remaining platform-side work before the benchmark runs on GPU-5: expose the Gateway to the workstation (it is `ClusterIP`; NodePort or port-forward, `GPU_TLS_AUTHORITY=gpu-gateway`), add a `synanton-benchmark` principal on GPU-5, a GPU-5 mode for the compose overlay (bge-base, `EMBED_DIM=768`, no truncation), and finish `remap-gold`. the original bge-base T02/T03, using the same client with the logical model set to `synanton-bge-base-embedding`.
 
 The old `results/T03.yaml` (2026-09-18, all metrics 0.0, dataset v1) is superseded and invalid.
 
-### T-INT-3 — Write gold queries against the 3 newly-added structurally-rich PDFs
+### T-INT-3 — Write gold queries against the 3 newly-added structurally-rich PDFs (DONE 2026-09-25)
+
+**Done:** 15 marker-annotated PDF queries in query set v2 (25 total), full BM25/dense/hybrid × fixed/semantic matrix on GPU-5. Results and findings: benchmark plan §6, "T-INT-3" section.
 
 Independent of the GPU plane — can be done sooner, doesn't need to wait on T-INT-1/T-INT-2.
 
@@ -66,7 +68,7 @@ Per `docs/research/retrieval-evaluation-benchmark-plan.md` §6 Phase B2: hierarc
 
 ```text
 T-INT-1 (decided: shared gRPC LlmClient) ──┬──> T-INT-2a (T02-G/T03-G/T04-G on GPU-7 free models) — unblocked
-                                           └──> T-INT-2b (bge-base T02/T03 on GPU-5) — blocked on gpu-runtime T-K8S-6a
+                                           └──> T-INT-2b (bge-base T02/T03 on GPU-5) — GPU side ready; platform wiring pending
 
 T-INT-3 (gold queries for new PDFs)         — independent, do any time
 T-INT-4 (OHR-Bench fixtures for content_extractor) — independent, do any time

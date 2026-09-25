@@ -18,6 +18,7 @@ match.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -128,6 +129,9 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
 
 def _cmd_evaluate(args: argparse.Namespace) -> int:
+    if args.rerank and args.reranker == "none":
+        print("--rerank needs --reranker <logical model id> so the run record names the reranker", file=sys.stderr)
+        return 1
     synquest_url = compose.synquest_base_url()
     queries = load_gold_queries(args.queries)
     if not queries:
@@ -164,7 +168,7 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
     throttle = Throttle(max_rpm)
     counts_requests = plane != "none" and dense
 
-    per_query, raw, failed, skipped = [], [], [], []
+    per_query, raw, failed, skipped, not_reranked = [], [], [], [], []
     embed_requests = embed_cached = 0
     embed_ms_values: list[float] = []
     aborted = None
@@ -181,6 +185,8 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
             result = search(
                 synquest_url, args.tenant, gold.question, top_k=max(10, 100),
                 top_k_dense=args.top_k_dense, top_k_lexical=args.top_k_lexical,
+                rerank=args.rerank, rerank_candidates=args.rerank_candidates,
+                expand=args.expand, expand_max_chunks=args.expand_max_chunks,
             )
         except (SearchUnavailable, requests.RequestException) as exc:
             failed.append(gold.query_id)
@@ -197,6 +203,8 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
         embed_cached += int(result.embed_cached)
         if result.embed_skipped:
             skipped.append(gold.query_id)
+        if args.rerank and result.rerank_ms is None:
+            not_reranked.append(gold.query_id)
         if result.embed_ms is not None and not result.embed_cached:
             embed_ms_values.append(float(result.embed_ms))
 
@@ -206,7 +214,7 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
         per_query.append(qm)
         raw.append({"query_id": gold.query_id, "retrieved": retrieved_ids, "latency_ms": result.latency_ms,
                     "embed_ms": result.embed_ms, "embed_cached": result.embed_cached,
-                    "embed_skipped": result.embed_skipped})
+                    "embed_skipped": result.embed_skipped, "rerank_ms": result.rerank_ms})
         print(
             f"  {gold.query_id} [{gold.category}]: "
             f"recall@10={qm.recall_at_10:.2f} ndcg@10={qm.ndcg_at_10:.2f} "
@@ -228,6 +236,11 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
         spend_after=spend_after.usage_usd if spend_after else None,
         free_only=free_only, aborted=aborted,
     )
+    if args.expand and (stats is None or not stats.section_docs):
+        validity.fail(f"expand={args.expand} requested but the index has no section hierarchy "
+                      f"(section_docs={None if stats is None else stats.section_docs}); re-ingest with hierarchical chunking")
+    if not_reranked:
+        validity.fail(f"rerank requested but not applied for {len(not_reranked)} queries: {', '.join(not_reranked)}")
 
     if not per_query:
         print("No query completed; nothing to score. " + "; ".join(validity.reasons), file=sys.stderr)
@@ -320,6 +333,34 @@ def _cmd_rescore(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_remap_gold(args: argparse.Namespace) -> int:
+    """Carry gold chunk IDs to a re-ingested tenant by (source_uri, chunk_ordinal) + identical chunk_sha256."""
+    from .remap import docker_cqlsh, remap_queries
+    rows = [json.loads(line) for line in Path(args.queries).read_text().splitlines() if line.strip()]
+    out_rows, report = remap_queries(rows, docker_cqlsh(args.cassandra_container), args.from_tenant, args.to_tenant)
+    Path(args.out).write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in out_rows))
+    print(f"{report.mapped} gold chunk IDs remapped {args.from_tenant} → {args.to_tenant}; wrote {args.out}")
+    for u in report.unmapped:
+        print(f"  UNMAPPED {u}", file=sys.stderr)
+    if report.unmapped:
+        print(f"{len(report.unmapped)} IDs need manual re-annotation (retrieval-eval inspect)", file=sys.stderr)
+        return 1 if args.strict else 0
+    return 0
+
+
+def _cmd_annotate_markers(args: argparse.Namespace) -> int:
+    """Gold chunk IDs for rows with gold_markers: chunks of gold_source whose text contains a marker."""
+    from .annotate import annotate, docker_copy_export
+    rows = [json.loads(line) for line in Path(args.queries).read_text().splitlines() if line.strip()]
+    out_rows, report = annotate(rows, docker_copy_export(args.cassandra_container)(args.tenant), args.tenant)
+    Path(args.out).write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in out_rows))
+    print(f"tenant={args.tenant}: {report.annotated} rows annotated by marker, {report.kept} kept as-is; wrote {args.out}")
+    if report.unmatched:
+        print(f"  no chunk matched the markers of: {', '.join(report.unmatched)}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _cmd_budget(args: argparse.Namespace) -> int:
     ledger = RequestLedger(args.ledger)
     print(f"ledger {ledger.path}: {args.gpu_plane} requests today = {ledger.used_today(args.gpu_plane)}")
@@ -371,6 +412,13 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--top-k-dense", type=int, default=None, help="Pass 0 to suppress dense (T01 BM25-only)")
     evaluate_parser.add_argument("--top-k-lexical", type=int, default=None, help="Pass 1 to suppress lexical (T02 dense-only; synquest rejects 0)")
     _add_plane_args(evaluate_parser)
+    evaluate_parser.add_argument("--rerank", action="store_true",
+                                 help="rerank fused candidates with synquest's cross-encoder (B2/T10); needs --reranker <model>")
+    evaluate_parser.add_argument("--rerank-candidates", type=int, default=None,
+                                 help="fused candidates to rerank before cutting to top_k (default: synquest's)")
+    evaluate_parser.add_argument("--expand", choices=["section"], default=None,
+                                 help="small-to-big: each hit pulls in its whole document section (B2/T05)")
+    evaluate_parser.add_argument("--expand-max-chunks", type=int, default=None, help="max chunks per expanded section")
     evaluate_parser.add_argument("--provider-mode", default=None, help="default: gpu-7→external-free, gpu-5→local")
     evaluate_parser.add_argument("--embedding-dim", type=int, default=None, help="default: from /index/stats")
     evaluate_parser.add_argument("--max-rpm", type=int, default=None, help="searches per minute (default 15 on gpu-7; 0 = unthrottled)")
@@ -386,6 +434,24 @@ def build_parser() -> argparse.ArgumentParser:
     rescore_parser.add_argument("--run-id", required=True)
     rescore_parser.add_argument("--output-dir", type=Path, default=DEFAULT_RESULTS_DIR)
     rescore_parser.set_defaults(func=_cmd_rescore)
+
+    remap_parser = subparsers.add_parser(
+        "remap-gold", help="Carry gold chunk IDs to a re-ingested tenant (same source files, identical chunks)")
+    remap_parser.add_argument("--from-tenant", required=True)
+    remap_parser.add_argument("--to-tenant", required=True)
+    remap_parser.add_argument("--queries", type=Path, required=True, help="annotated gold file of --from-tenant")
+    remap_parser.add_argument("--out", type=Path, required=True)
+    remap_parser.add_argument("--cassandra-container", default="docker-cassandra-1")
+    remap_parser.add_argument("--strict", action="store_true", help="exit 1 if any ID can't be carried over")
+    remap_parser.set_defaults(func=_cmd_remap_gold)
+
+    annotate_parser = subparsers.add_parser(
+        "annotate-markers", help="Annotate gold chunk IDs from gold_markers/gold_source for one tenant")
+    annotate_parser.add_argument("--tenant", required=True)
+    annotate_parser.add_argument("--queries", type=Path, required=True)
+    annotate_parser.add_argument("--out", type=Path, required=True)
+    annotate_parser.add_argument("--cassandra-container", default="docker-cassandra-1")
+    annotate_parser.set_defaults(func=_cmd_annotate_markers)
 
     budget_parser = subparsers.add_parser("budget", help="Show today's request ledger and provider spend/quota")
     _add_plane_args(budget_parser)

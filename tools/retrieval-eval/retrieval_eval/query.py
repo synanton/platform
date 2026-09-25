@@ -40,6 +40,8 @@ class SearchResult:
     embed_skipped: bool = False
     embed_cached: bool = False
     embed_ms: float | None = None
+    # B2/T10: set when synquest reranked this search (trace.rerank_ms present)
+    rerank_ms: float | None = None
 
 
 class SearchUnavailable(RuntimeError):
@@ -55,6 +57,7 @@ class IndexStats:
     vector_docs: int | None
     dim_mismatches: int | None
     missing_vectors: int | None
+    section_docs: int | None = None      # chunks with a section hierarchy (B2/T05)
 
     @property
     def fully_vectorised(self) -> bool | None:
@@ -66,7 +69,10 @@ class IndexStats:
 
 def index_stats(synquest_base_url: str, tenant: str) -> IndexStats:
     """GET /index/stats: doc count plus the embedding coverage report of the last build (G2)."""
-    response = requests.get(f"{synquest_base_url}/index/stats", params={"tenant": tenant}, timeout=30)
+    # synquest's MockTenantFilter takes the tenant from X-Tenant (default "demo") and it wins
+    # over ?tenant=, so without the header this silently reported the demo tenant's index
+    response = requests.get(f"{synquest_base_url}/index/stats", params={"tenant": tenant},
+                            headers={"X-Tenant": tenant}, timeout=30)
     response.raise_for_status()
     body = response.json()
     return IndexStats(
@@ -76,6 +82,7 @@ def index_stats(synquest_base_url: str, tenant: str) -> IndexStats:
         vector_docs=body.get("vector_docs"),
         dim_mismatches=body.get("dim_mismatches"),
         missing_vectors=body.get("missing_vectors"),
+        section_docs=body.get("section_docs"),
     )
 
 
@@ -86,6 +93,10 @@ def search(
     top_k: int = 10,
     top_k_dense: int | None = None,
     top_k_lexical: int | None = None,
+    rerank: bool = False,
+    rerank_candidates: int | None = None,
+    expand: str | None = None,
+    expand_max_chunks: int | None = None,
 ) -> SearchResult:
     """POST /search and return hits mapped to chunk IDs, plus wall-clock latency.
 
@@ -102,6 +113,14 @@ def search(
         request_body["top_k_dense"] = top_k_dense
     if top_k_lexical is not None:
         request_body["top_k_lexical"] = top_k_lexical
+    if expand:
+        request_body["expand"] = expand
+        if expand_max_chunks is not None:
+            request_body["expand_max_chunks"] = expand_max_chunks
+    if rerank:
+        request_body["rerank"] = True
+        if rerank_candidates is not None:
+            request_body["rerank_candidates"] = rerank_candidates
 
     started = time.monotonic()
     response = requests.post(
@@ -137,4 +156,5 @@ def search(
         embed_skipped=bool(usage.get("embed_skipped", False)),
         embed_cached=bool(usage.get("embed_cached", False)),
         embed_ms=trace.get("query_embed_ms", usage.get("query_embed_ms")),
+        rerank_ms=trace.get("rerank_ms"),
     )

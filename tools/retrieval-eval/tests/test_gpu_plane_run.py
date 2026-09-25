@@ -218,3 +218,40 @@ def test_legacy_runs_keep_their_record_shape(tmp_path, queries, monkeypatch):
     assert "gpu_plane" not in rec
     assert rec["validity"]["valid"] is True
     assert RequestLedger(tmp_path / "ledger.json").used_today("none") == 0
+
+
+def test_index_stats_sends_the_tenant_header(monkeypatch):
+    """synquest resolves /index/stats' tenant from X-Tenant (default 'demo'), not from ?tenant=."""
+    from retrieval_eval import query
+    seen = {}
+
+    class R:
+        def raise_for_status(self): pass
+        def json(self): return {"tenant": "rb-fixed-g5", "doc_count": 3, "vector_docs": 3, "dim_mismatches": 0,
+                                "missing_vectors": 0, "embedding_model": "m", "embedding_dim": 768}
+
+    def get(url, params=None, headers=None, timeout=None):
+        seen.update(params=params, headers=headers)
+        return R()
+
+    monkeypatch.setattr(query.requests, "get", get)
+    st = query.index_stats("http://synquest", "rb-fixed-g5")
+    assert seen["headers"] == {"X-Tenant": "rb-fixed-g5"}
+    assert st.fully_vectorised is True and st.embedding_dim == 768
+
+
+def test_rerank_requires_a_label_and_must_be_applied(tmp_path, queries, monkeypatch):
+    _fake(monkeypatch)
+    # labelled reranker 'none' with --rerank → refused before running
+    assert _evaluate(tmp_path, queries, "--rerank") == 1
+    # rerank requested but synquest didn't rerank (no trace.rerank_ms) → invalid
+    assert _evaluate(tmp_path, queries, "--rerank", "--reranker", "synanton-qwen3-reranker-0.6b") == 2
+    rec = yaml.safe_load((tmp_path / "results" / "invalid" / "T03-G.yaml").read_text())
+    assert any("rerank requested but not applied" in r for r in rec["validity"]["reasons"])
+
+
+def test_expand_requires_a_hierarchical_index(tmp_path, queries, monkeypatch):
+    _fake(monkeypatch)  # FULL stats: section_docs None → no hierarchy
+    assert _evaluate(tmp_path, queries, "--expand", "section") == 2
+    rec = yaml.safe_load((tmp_path / "results" / "invalid" / "T03-G.yaml").read_text())
+    assert any("no section hierarchy" in r for r in rec["validity"]["reasons"])

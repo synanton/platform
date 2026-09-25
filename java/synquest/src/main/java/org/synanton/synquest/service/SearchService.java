@@ -36,12 +36,34 @@ public class SearchService {
     private final ExecutorService searchPool = Executors.newFixedThreadPool(
             Math.max(2, Runtime.getRuntime().availableProcessors()));
 
+    private final SearchReranker reranker;
+    private final org.synanton.synquest.config.SynquestRerankProperties rerankProps;
+
     public SearchService(LuceneIndexBuilder indexBuilder,
                          QueryEmbedder queryEmbedder,
                          SynquestProperties props) {
+        this(indexBuilder, queryEmbedder, props, (SearchReranker) null, new org.synanton.synquest.config.SynquestRerankProperties());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public SearchService(LuceneIndexBuilder indexBuilder,
+                         QueryEmbedder queryEmbedder,
+                         SynquestProperties props,
+                         org.springframework.beans.factory.ObjectProvider<SearchReranker> reranker,
+                         org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
+        this(indexBuilder, queryEmbedder, props, reranker.getIfAvailable(), rerankProps);
+    }
+
+    public SearchService(LuceneIndexBuilder indexBuilder,
+                         QueryEmbedder queryEmbedder,
+                         SynquestProperties props,
+                         SearchReranker reranker,
+                         org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
         this.indexBuilder = indexBuilder;
         this.queryEmbedder = queryEmbedder;
         this.props = props;
+        this.reranker = reranker;
+        this.rerankProps = rerankProps;
     }
 
     public void initTenant(String tenant) {
@@ -81,7 +103,11 @@ public class SearchService {
         long embedMs = 0;
         boolean embedSkipped = false;
         boolean embedCached = false;
-        try {
+        // top_k_dense <= 0 means "no dense side" (BM25-only rows such as T01): don't embed the query
+        // and don't run KNN. Lucene rejects k=0, which under synquest.embedding.required would have
+        // turned an intentionally lexical search into a 503.
+        boolean denseRequested = topKDense > 0;
+        if (denseRequested) try {
             long embedStart = System.currentTimeMillis();
             QueryEmbedder.QueryVector qv = queryEmbedder.embedForSearch(req.query(), tenant);
             queryVec = qv.vector();
@@ -97,7 +123,7 @@ public class SearchService {
 
         final float[] denseVec = queryVec;
         Future<TopDocs> denseFuture = searchPool.submit(() -> {
-            if (denseVec == null) {
+            if (!denseRequested || denseVec == null) {
                 return new TopDocs(new org.apache.lucene.search.TotalHits(0,
                         org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
             }
@@ -126,42 +152,68 @@ public class SearchService {
             lexicalResults = lexicalFuture.get();
             long lexicalMs = System.currentTimeMillis() - lexicalStart;
 
+            // Rerank (B2/T10): fuse a wider candidate list, score full chunk text with the
+            // cross-encoder, reorder, cut to top_k. Fail closed: never return RRF order as "reranked".
+            boolean rerankRequested = Boolean.TRUE.equals(req.rerank());
+            int candidates = topK;
+            if (rerankRequested) {
+                if (reranker == null) {
+                    throw new RerankUnavailableException(
+                            "rerank requested but synquest.rerank is not enabled (gpu-plane profile)", null);
+                }
+                int asked = req.rerankCandidates() != null ? req.rerankCandidates() : rerankProps.getDefaultCandidates();
+                candidates = Math.max(topK, Math.min(asked, rerankProps.getMaxCandidates()));
+            }
+
             long fusionStart = System.currentTimeMillis();
-            List<RrfFusion.FusedHit> fused = RrfFusion.combine(denseResults, lexicalResults, topK, rrfK);
+            List<RrfFusion.FusedHit> fused = RrfFusion.combine(denseResults, lexicalResults, candidates, rrfK);
             long fusionMs = System.currentTimeMillis() - fusionStart;
 
             var stored = searcher.storedFields();
             List<Hit> hits = new ArrayList<>(fused.size());
+            List<String> texts = new ArrayList<>(fused.size());
+            java.util.Map<String, Integer> docIdByChunk = new java.util.HashMap<>();
             for (RrfFusion.FusedHit fh : fused) {
                 Document doc = stored.document(fh.docId());
-                String contentRefId = doc.get("content_ref_id");
-                int chunkOrdinal = Integer.parseInt(Objects.requireNonNullElse(doc.get("chunk_ordinal"), "0"));
                 String text = doc.get("text");
-                String snippet = text != null && text.length() > 200 ? text.substring(0, 200) + "…" : text;
-                hits.add(new Hit(
-                        UUID.fromString(contentRefId),
-                        chunkOrdinal,
-                        fh.rrfScore(),
-                        fh.denseScore(),
-                        fh.lexicalScore(),
-                        fh.rankDense(),
-                        fh.rankLexical(),
-                        snippet,
-                        doc.get("source_uri"),
-                        parseInt(doc.get("page_start"), -1),
-                        parseInt(doc.get("page_end"), -1),
-                        doc.get("section_path"),
-                        doc.get("heading"),
-                        parseSourceElements(doc.get("source_elements")),
-                        parseInt(doc.get("token_count"), 0),
-                        emptyToNull(doc.get("structured_content")),
-                        parseBoolean(doc.get("is_partial_section")),
-                        emptyToNull(doc.get("ingest_usage"))));
+                texts.add(text == null ? "" : text);
+                Hit h = toHit(doc, fh.rrfScore(), fh.denseScore(), fh.lexicalScore(), fh.rankDense(), fh.rankLexical());
+                docIdByChunk.put(h.chunkId(), fh.docId());
+                hits.add(h);
+            }
+
+            Long rerankMs = null;
+            if (rerankRequested && !hits.isEmpty()) {
+                long rerankStart = System.currentTimeMillis();
+                int maxChars = rerankProps.getMaxPassageChars();
+                List<String> passages = texts.stream()
+                        .map(t -> t.length() > maxChars ? t.substring(0, maxChars) : t).toList();
+                double[] scores;
+                try {
+                    scores = reranker.scores(tenant, req.query(), passages);
+                } catch (RuntimeException e) {
+                    throw new RerankUnavailableException("rerank failed: " + e.getMessage(), e);
+                }
+                List<Hit> reranked = new ArrayList<>(hits.size());
+                for (int i = 0; i < hits.size(); i++) {
+                    reranked.add(hits.get(i).withScoreRerank(scores[i]));
+                }
+                // stable sort: equal rerank scores keep RRF order
+                reranked.sort(java.util.Comparator.comparingDouble((Hit h) -> h.scoreRerank()).reversed());
+                hits = new ArrayList<>(reranked.subList(0, Math.min(topK, reranked.size())));
+                rerankMs = System.currentTimeMillis() - rerankStart;
+            }
+
+            if ("section".equalsIgnoreCase(req.expand())) {
+                int maxPerSection = req.expandMaxChunks() != null && req.expandMaxChunks() > 0 ? req.expandMaxChunks() : 8;
+                hits = expandSections(hits, docIdByChunk, searcher, stored, topK, maxPerSection);
+            } else if (req.expand() != null && !req.expand().isBlank()) {
+                throw new IllegalArgumentException("unsupported expand '" + req.expand() + "' (supported: section)");
             }
 
             long totalMs = System.currentTimeMillis() - t0;
             SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
-                    searcher.generation());
+                    searcher.generation(), rerankMs, rerankRequested ? fused.size() : null);
             QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped, embedCached);
             return new SearchResponse(hits, trace, queryUsage);
 
@@ -173,11 +225,81 @@ public class SearchService {
             if (cause instanceof EmbeddingUnavailableException eue) {
                 throw eue;
             }
+            if (cause instanceof RerankUnavailableException rue) {
+                throw rue;
+            }
             throw new RuntimeException("Search failed", cause);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Search interrupted", e);
         }
+    }
+
+    /**
+     * B2/T05 small-to-big: walk the ranked hits. Each hit with a section contributes its whole
+     * section in reading order, capped at {@code maxPerSection}; a larger section is windowed
+     * around the hit. Added siblings inherit the hit's score and carry {@code expanded_from}.
+     * Chunks without a section (flat/fallback) pass through unchanged. The result is cut at topK.
+     */
+    private List<Hit> expandSections(List<Hit> ranked, java.util.Map<String, Integer> docIdByChunk,
+                                     HybridSearcher searcher, org.apache.lucene.index.StoredFields stored,
+                                     int topK, int maxPerSection) throws IOException {
+        List<Hit> out = new ArrayList<>();
+        java.util.Set<String> emitted = new java.util.HashSet<>();
+        for (Hit hit : ranked) {
+            if (out.size() >= topK) break;
+            if (emitted.contains(hit.chunkId())) continue;
+            if (hit.sectionId() == null || hit.sectionId().isEmpty()) {
+                out.add(hit);
+                emitted.add(hit.chunkId());
+                continue;
+            }
+            List<Integer> members = searcher.sectionMembers(hit.contentRefId() + "|" + hit.sectionId(), 1000);
+            List<Hit> section = new ArrayList<>(members.size());
+            int self = -1;
+            for (int docId : members) {
+                Hit m = toHit(stored.document(docId), 0, 0, 0, -1, -1);
+                if (m.chunkId().equals(hit.chunkId())) self = section.size();
+                section.add(m);
+            }
+            if (self < 0) {          // index/section mismatch: keep the hit itself
+                section = List.of(hit);
+                self = 0;
+            }
+            int from = Math.max(0, Math.min(self - maxPerSection / 2, section.size() - maxPerSection));
+            int to = Math.min(section.size(), from + maxPerSection);
+            for (int k = from; k < to && out.size() < topK; k++) {
+                Hit m = section.get(k);
+                if (emitted.contains(m.chunkId())) continue;
+                out.add(k == self ? hit : m.withExpansion(hit.score(), hit.scoreRerank(), hit.chunkId()));
+                emitted.add(m.chunkId());
+            }
+        }
+        return out;
+    }
+
+    private Hit toHit(Document doc, double score, double dense, double lexical, int rankDense, int rankLexical) {
+        String text = doc.get("text");
+        String snippet = text != null && text.length() > 200 ? text.substring(0, 200) + "…" : text;
+        String sectionId = doc.get("section_id");
+        return new Hit(
+                UUID.fromString(doc.get("content_ref_id")),
+                Integer.parseInt(Objects.requireNonNullElse(doc.get("chunk_ordinal"), "0")),
+                score, dense, lexical, rankDense, rankLexical,
+                snippet,
+                doc.get("source_uri"),
+                parseInt(doc.get("page_start"), -1),
+                parseInt(doc.get("page_end"), -1),
+                doc.get("section_path"),
+                doc.get("heading"),
+                parseSourceElements(doc.get("source_elements")),
+                parseInt(doc.get("token_count"), 0),
+                emptyToNull(doc.get("structured_content")),
+                parseBoolean(doc.get("is_partial_section")),
+                emptyToNull(doc.get("ingest_usage")),
+                null,
+                sectionId == null || sectionId.isEmpty() ? null : sectionId,
+                null);
     }
 
     public void reindex(String tenant) throws IOException {
@@ -207,7 +329,7 @@ public class SearchService {
         }
         return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready",
                 report.embeddingModel(), report.embeddingDim(), report.truncated(),
-                report.vectorDocs(), report.dimMismatches(), report.missingVectors());
+                report.vectorDocs(), report.dimMismatches(), report.missingVectors(), report.sectionDocs());
     }
 
     public Status getStatus() {

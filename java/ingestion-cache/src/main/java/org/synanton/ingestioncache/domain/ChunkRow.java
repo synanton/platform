@@ -18,9 +18,22 @@ public record ChunkRow(
     int tokenCount,
     String structuredContentJson,
     boolean isPartialSection,
-    List<String> classification
+    List<String> classification,
+    /** Document section of the chunk (B2/T05); "" when the chunk has no section (flat/fallback). */
+    String sectionId,
+    String parentSectionId,
+    int headingLevel
 ) {
     public static final List<String> PUBLIC_ONLY = List.of("PUBLIC");
+
+    public ChunkRow(
+            String tenantId, UUID contentRefId, int chunkOrdinal, String chunkText, String chunkSha256,
+            int pageStart, int pageEnd, String sectionPath, String chunkType, String heading,
+            String sourceElementsJson, int tokenCount, String structuredContentJson, boolean isPartialSection,
+            List<String> classification) {
+        this(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256, pageStart, pageEnd, sectionPath, chunkType,
+            heading, sourceElementsJson, tokenCount, structuredContentJson, isPartialSection, classification, "", "", 0);
+    }
 
     public ChunkRow(
             String tenantId,

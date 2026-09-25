@@ -19,9 +19,11 @@ public record IndexStats(
         @JsonProperty("embedding_truncated") Boolean embeddingTruncated,
         @JsonProperty("vector_docs") Integer vectorDocs,
         @JsonProperty("dim_mismatches") Integer dimMismatches,
-        @JsonProperty("missing_vectors") Integer missingVectors
+        @JsonProperty("missing_vectors") Integer missingVectors,
+        /** Chunks carrying a section hierarchy (B2/T05); expand=section needs this > 0. */
+        @JsonProperty("section_docs") Integer sectionDocs
 ) {
     public IndexStats(String tenant, int docCount, long indexGeneration, String status) {
-        this(tenant, docCount, indexGeneration, status, null, null, null, null, null, null);
+        this(tenant, docCount, indexGeneration, status, null, null, null, null, null, null, null);
     }
 }

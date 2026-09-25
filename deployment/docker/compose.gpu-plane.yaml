@@ -1,0 +1,59 @@
+# Opt-in overlay: synflux + synquest get embeddings from the GPU plane (gRPC synanton.gpu.v1
+# over mTLS) instead of vLLM over HTTP. It activates their `gpu-plane` Spring profile
+# (application-gpu-plane.yml). Retrieval benchmark plan §6 Phase B1-G.
+#
+#   docker compose -f compose.yaml -f compose.gpu-plane.yaml [-f compose.gpu7-network.yaml] up -d \
+#     cassandra minio minio-init synvault synflux synquest
+#
+# Two GPU planes (scripts/run-benchmark-gpu-plane.sh --plane gpu7|gpu5 sets everything below):
+#   gpu7  GPU-7 compose stack on this host. Also add compose.gpu7-network.yaml (joins its
+#         Docker network; endpoint gateway:9090).
+#   gpu5  GPU-5 on the homelab k8s cluster, via NodePort gpu-gateway-external:
+#         GPU_PLANE_ENDPOINT=192.168.10.31:30990, GPU_TLS_AUTHORITY=gpu-gateway (server-cert SAN).
+#
+# Normally started by scripts/run-benchmark-gpu-plane.sh, which also prepares GPU_PLANE_TLS_DIR.
+# Prerequisite: GPU_PLANE_TLS_DIR, a directory with ca.crt, client.crt and client.key. The
+# client is the `synanton-benchmark` principal: explicit rb-* tenants only, never "*".
+#
+# EMBED_MODEL is a LOGICAL model ID from the gateway catalog, shared by synflux (ingest) and
+# synquest (index + query). Use one tenant per model; see the tenant/arm table in the plan.
+services:
+  # The GPU-7 gateway publishes its actuator on 127.0.0.1:8091, which clashes with synvault's
+  # host port. The benchmark talks to synvault only inside the network, so its host port moves.
+  synvault:
+    ports: !override
+      - "${SYNVAULT_HOST_PORT:-18091}:8091"
+
+  synflux:
+    environment:
+      SPRING_PROFILES_ACTIVE: gpu-plane
+      GPU_PLANE_ENDPOINT: ${GPU_PLANE_ENDPOINT:-gateway:9090}
+      GPU_TLS_ENABLED: "true"
+      GPU_TLS_CA_PATH: /etc/gpu-plane/tls/ca.crt
+      GPU_TLS_CERT_PATH: /etc/gpu-plane/tls/client.crt
+      GPU_TLS_KEY_PATH: /etc/gpu-plane/tls/client.key
+      GPU_TLS_AUTHORITY: ${GPU_TLS_AUTHORITY:-}
+      EMBED_MODEL_ID: ${EMBED_MODEL:-synanton-free-embedding}
+      GPU_PLANE_MAX_RPM: ${GPU_PLANE_MAX_RPM:-15}
+    volumes:
+      - ${GPU_PLANE_TLS_DIR:?GPU_PLANE_TLS_DIR must point at ca.crt/client.crt/client.key}:/etc/gpu-plane/tls:ro
+
+  synquest:
+    environment:
+      SPRING_PROFILES_ACTIVE: gpu-plane
+      GPU_PLANE_ENDPOINT: ${GPU_PLANE_ENDPOINT:-gateway:9090}
+      GPU_TLS_ENABLED: "true"
+      GPU_TLS_CA_PATH: /etc/gpu-plane/tls/ca.crt
+      GPU_TLS_CERT_PATH: /etc/gpu-plane/tls/client.crt
+      GPU_TLS_KEY_PATH: /etc/gpu-plane/tls/client.key
+      GPU_TLS_AUTHORITY: ${GPU_TLS_AUTHORITY:-}
+      EMBED_MODEL: ${EMBED_MODEL:-synanton-free-embedding}
+      EMBED_DIM: ${EMBED_DIM:-1024}
+      EMBED_TRUNCATE_DIM: ${EMBED_TRUNCATE_DIM:-1024}
+      GPU_PLANE_MAX_RPM: ${GPU_PLANE_MAX_RPM:-15}
+      # B2/T10 cross-encoder reranking via the GPU plane (gpu5: synanton-qwen3-reranker-0.6b)
+      RERANK_ENABLED: ${RERANK_ENABLED:-false}
+      RERANK_MODEL: ${RERANK_MODEL:-synanton-qwen3-reranker-0.6b}
+    volumes:
+      - ${GPU_PLANE_TLS_DIR:?GPU_PLANE_TLS_DIR must point at ca.crt/client.crt/client.key}:/etc/gpu-plane/tls:ro
+

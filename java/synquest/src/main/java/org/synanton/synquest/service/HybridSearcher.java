@@ -57,6 +57,25 @@ public class HybridSearcher implements Closeable {
         }
     }
 
+    /**
+     * Doc IDs of every chunk in one document section (B2/T05), in reading order (chunk ordinal).
+     * The key is "<content_ref_id>|<section_id>".
+     */
+    public java.util.List<Integer> sectionMembers(String sectionKey, int max) throws IOException {
+        IndexSearcher searcher = searcherManager.acquire();
+        try {
+            var sort = new org.apache.lucene.search.Sort(
+                    new org.apache.lucene.search.SortField("chunk_ordinal", org.apache.lucene.search.SortField.Type.INT));
+            TopDocs td = searcher.search(new org.apache.lucene.search.TermQuery(
+                    new org.apache.lucene.index.Term("section_key", sectionKey)), Math.max(1, max), sort);
+            java.util.List<Integer> ids = new java.util.ArrayList<>(td.scoreDocs.length);
+            for (var sd : td.scoreDocs) ids.add(sd.doc);
+            return ids;
+        } finally {
+            searcherManager.release(searcher);
+        }
+    }
+
     public StoredFields storedFields() throws IOException {
         IndexSearcher searcher = searcherManager.acquire();
         try {

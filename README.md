@@ -771,8 +771,20 @@ The full ticket backlog for this is written down, not left as an open question: 
 | | GPU-5 (homelab k8s) | GPU-7 (external providers) |
 | --- | --- | --- |
 | Deployment contract | Defined | Defined (v3.1.0) |
-| Implementation | One workload per GPU (node1 TEI/BGE-base embedding, node2 vLLM Qwen3-Reranker, node3 vLLM Qwen3-4B); mTLS; **missing execution-JWT signing (T-K8S-6a)** | **Complete:** mTLS + tenant authorization, provider registry and rewrite, streaming, Responses API, circuit breaker, health, cost ledger, budget, sensitivity, runtime kill switch, multi-provider failover |
-| Acceptance | **Blocked** on T-K8S-6a (Envoy fails closed) and a PoC run | **Passing** (acceptance suite 31/31, packaged smoke, live OpenRouter free-model check, §46 checklist); freeze attestation pending sign-off |
+| Implementation | One workload per GPU (node1 TEI/BGE-base embedding, node2 vLLM Qwen3-Reranker, node3 vLLM Qwen3-4B); mTLS; execution-JWT signing + JWKS (T-K8S-6a) | **Complete:** mTLS + tenant authorization, provider registry and rewrite, streaming, Responses API, circuit breaker, health, cost ledger, budget, sensitivity, runtime kill switch, multi-provider failover |
+| Acceptance | **Cluster phase 5 passed (2026-09-25):** EMBED/SYNTHESIZE/stream/RERANK through Gateway → Envoy → GPUs; load baselines pending | **Passing** (acceptance suite 31/31, packaged smoke, live OpenRouter free-model check, §46 checklist); freeze attestation pending sign-off |
+
+**GPU-5 cluster phase 5 run (2026-09-25).** Single requests go through Gateway (gRPC mTLS, principal `synanton-platform`) → Envoy (ES256 execution JWT verified) → the GPU backends. Gateway image `gpu-gateway:0.1.0@sha256:8a747eb…`.
+
+| Operation | Backend | Result | Latency |
+|---|---|---|---|
+| EMBED | TEI `synanton-bge-base-embedding` (node1, GTX 1650) | 2 vectors × 768 dim | 166 ms |
+| SYNTHESIZE | vLLM `synanton-qwen3-4b-synthesis` (node3, RTX 5060 Ti) | "OK", logical model ID returned, usage 12 in / 2 out | 91 ms |
+| ExecuteStream | vLLM `synanton-qwen3-4b-synthesis` (node3) | 12 data chunks + exactly 1 SUCCESS terminal | 282 ms |
+| RERANK | vLLM `synanton-qwen3-reranker-0.6b` (node2, RTX 4060 Ti) | correct order: Paris 0.98 > bananas 0.898 | 74 ms |
+| Negative | Envoy / NetworkPolicy | unsigned request → 401; TEI, vLLM and JWKS unreachable from a non-Envoy pod | — |
+
+Idle VRAM after model load: node1 471 / 4096 MiB, node2 6229 / 16380 MiB, node3 13689 / 16311 MiB (vLLM preallocates KV cache at `--gpu-memory-utilization 0.90`). Load baselines are pending (`deployments/homelab/gpu-5-implementation-plan.md` §11).
 
 Platform client (`java/gateway/.../gpu/GpuExecutionClient`): mTLS channel (`GPU_TLS_ENABLED`, `GPU_TLS_CA_PATH`, `GPU_TLS_CERT_PATH`, `GPU_TLS_KEY_PATH`; principal `synanton-platform`), `executeStream()`, canonical error codes, and no retry of non-retryable denials (`tenant_not_allowed`, `budget_exceeded`, …). Adapters do not yet set `data_tags` from the platform's classification (a platform-side follow-up).
 
@@ -780,7 +792,14 @@ Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on
 - `synquest`/`synflux` still embed over HTTP, while the GPU plane is gRPC-only. The decided fix is a shared, fail-closed gRPC `LlmClient`, selected by an opt-in `gpu-plane` profile.
 - Embedding dimension is configurable (`EMBED_DIM`, `EMBED_TRUNCATE_DIM`; the free models are 2048-dim and Lucene 9.11's cap is 1024). `synquest` truncates at index and query time, and `/index/stats` reports vector coverage.
 - The GPU-7 catalog has all three free embedding arms, and a least-privilege `synanton-benchmark` principal covers the six benchmark tenants (G3). The harness paces searches, enforces a daily request budget, checks spend via gpu-runtime, and refuses to report invalid runs. synquest caches query embeddings (G4).
-- No free rerank model exists, so T10/T11 stay on GPU-5, and bge-base T02/T03 stay blocked until T-K8S-6a.
+- **Dense and hybrid runs have happened on GPU-5** (benchmark plan §6 Phase B1-K), with bge-base via Gateway → Envoy → TEI:
+  - T02 dense: Recall@10 0.833, NDCG@10 0.736;
+  - T03 hybrid: 0.900 / **0.789**;
+  - T04-v2 semantic + hybrid: 0.900 / 0.789.
+  - Hybrid beats BM25 (T01, NDCG 0.756) and dense alone.
+  - **B2.1 reranking (T10):** synquest reranks fused candidates with `synanton-qwen3-reranker-0.6b` on GPU-5 (Qwen3 prompt template required). NDCG@10 rises from 0.859 to **0.893** (fixed) and from 0.856 to 0.871 (semantic), and PDF MRR from 0.875 to 0.967. The cost is about 1.5 s per query for 50 candidates.
+  - **T-INT-3 (25 queries incl. 15 on the PDFs):** hybrid is best under both chunking strategies (NDCG@10 0.859 fixed / 0.856 semantic). Fixed vs semantic is within noise; the differing queries point at hierarchical chunking (T05) and reranking (T10).
+  - The reranker rows (T10/T11) need the B2 `RerankerPort`; the GPU-5 reranker itself works.
 - The old `results/T03.yaml` (all 0.0) is superseded. Model state: Qwen3 weights in place; `bge-base-en-v1.5` and the `bge-small-en-v1.5` fallback complete on all nodes.
 
 ---

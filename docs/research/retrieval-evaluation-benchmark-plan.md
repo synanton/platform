@@ -1,6 +1,6 @@
 ---
 title: "Retrieval Evaluation Benchmark — Research Plan (SNTP-9 / Issue #14)"
-status: "in progress — Phase B0 done; Phase B1 T01/T04 done; T02/T03 planned against GPU-7 free models (§6 Phase B1-G)"
+status: "in progress — B0, B1 (GPU-5), T-INT-3 and B2.1 rerank done; B2.2 hierarchical (T05) next, then graph (T08/T09); B1-G blocked on OpenRouter reachability"
 last_reviewed: "2026-09-25"
 ---
 
@@ -88,7 +88,7 @@ Config-driven via `synanton-llm-client`, no new SDK integration required for the
 | `e5-mistral-7b-instruct` | self-hosted, quantized | 4096 | Largest model the RTX 4060 Ti/5060 Ti (16GB) nodes can plausibly serve; confirm via a smoke test before committing it to the full matrix |
 | `text-embedding-3-small` (OpenAI-compat) | external API | 1536 | Optional — `OpenAiCompatTranslator` already supports it; incurs real external cost, gate behind an explicit opt-in env var |
 
-**GPU-7 free-model arms (added 2026-09-25, §6 Phase B1-G).** Until GPU-5 serves `bge-base` for real (blocked on `gpu-runtime` T-K8S-6a), dense retrieval runs through the GPU plane's external-provider mode (GPU-7) against **OpenRouter free embedding models only** — the only embedding models the capped test key may call (`allowed-model-pattern: ".*:free"`). None of them is `bge-base`, so these arms change the embedding variable and are reported as their own rows (`T02-G`/`T03-G`/`T04-G`), never as substitutes for the bge-base rows of §3.4:
+**GPU-7 free-model arms (added 2026-09-25, §6 Phase B1-G).** Until GPU-5 served `bge-base` for real (T-K8S-6a; done 2026-09-25, cluster phase 5 passed), dense retrieval runs through the GPU plane's external-provider mode (GPU-7) against **OpenRouter free embedding models only** — the only embedding models the capped test key may call (`allowed-model-pattern: ".*:free"`). None of them is `bge-base`, so these arms change the embedding variable and are reported as their own rows (`T02-G`/`T03-G`/`T04-G`), never as substitutes for the bge-base rows of §3.4:
 
 | Logical model (GPU-7 catalog) | Provider model (never exposed downstream) | Native dim | Context | Notes |
 |---|---|---|---|---|
@@ -271,7 +271,7 @@ Decision (user-confirmed): run only the two genuinely distinct arms available in
 - **T01** — `rb-fixed`, BM25-only (`--top-k-dense 0`), flat/fallback chunking.
 - **T04** — `rb-semantic`, labeled "hybrid" but functionally BM25-only for the same reason as above; the arm's actual distinguishing variable is chunking strategy, not retrieval strategy, since none of the 10 gold queries target the 3 new structurally-rich PDFs yet (§4 update).
 
-**T02/T03 are blocked, not skipped** — pending either the Phase 2 GPU profile being started, or another reachable embedding endpoint. The reachable endpoint now exists — the GPU plane's GPU-7 external mode — and the plan for using it is §6 Phase B1-G. `results/T03.yaml` (recorded 2026-09-18 against `demo-data-documents-v1`, every metric `0.0`) predates the gold-chunk annotation and was never a valid hybrid run; it is **superseded** and must not be cited. Results:
+**Update 2026-09-25: T02, T03 and a real T04 (T04-v2) have now run on GPU-5; see §6 Phase B1-K.** The rest of this paragraph is the original 2026-09-20 finding. **T02/T03 are blocked, not skipped** — pending either the Phase 2 GPU profile being started, or another reachable embedding endpoint. The reachable endpoint now exists — the GPU plane's GPU-7 external mode — and the plan for using it is §6 Phase B1-G. `results/T03.yaml` (recorded 2026-09-18 against `demo-data-documents-v1`, every metric `0.0`) predates the gold-chunk annotation and was never a valid hybrid run; it is **superseded** and must not be cited. Results:
 
 | Run | Tenant | Recall@10 | NDCG@10 | p95 latency | Record |
 |---|---|---|---|---|---|
@@ -301,7 +301,7 @@ Recall is identical (expected — every gold query's answer lives in a document 
 | G2 | **Done (2026-09-25)** — `EMBED_DIM` + `EMBED_TRUNCATE_DIM` in `synquest`, one truncation path for index build and query, startup validation, mismatch and coverage reporting; details below the table. | platform |
 | G3 | **Done (2026-09-25)** — two more free embedding arms in the GPU-7 catalog, and a least-privilege `synanton-benchmark` principal for the six benchmark tenants; live-verified through the gateway. Details below the table. | gpu-runtime |
 | G4 | **Done (2026-09-25)** — harness pacing, daily request budget, spend check via gpu-runtime, run validity, `gpu_plane` record fields, `rescore`; plus a synquest query-embedding cache and GPU-plane client pacing and 429 retry. Details below the table. | platform |
-| G5 | **Run T02-G/T03-G/T04-G** with `synanton-free-embedding`: re-ingest `rb-fixed-g`/`rb-semantic-g` (fresh tenants, new chunk UUIDs ⇒ gold chunk ids re-annotated with `retrieval-eval inspect`), then T02-G (`rb-fixed-g`, `--top-k-lexical 1`), T03-G (`rb-fixed-g`, full hybrid), T04-G (`rb-semantic-g`, full hybrid — the first *real* hybrid T04). Records `results/T02-G.yaml`, `T03-G.yaml`, `T04-G.yaml`. | platform |
+| G5 | **Blocked (2026-09-25): OpenRouter unreachable from this network** (Cloudflare 403 "Access denied by security policy", even unauthenticated). opencode.ai, now GPU-7's current test arm, has no `/embeddings` endpoint, so it can't replace OpenRouter for dense runs. Unblocks when OpenRouter is reachable again, or on GPU-5. **Run T02-G/T03-G/T04-G** with `synanton-free-embedding`: re-ingest `rb-fixed-g`/`rb-semantic-g` (fresh tenants, new chunk UUIDs ⇒ gold chunk ids re-annotated with `retrieval-eval inspect`), then T02-G (`rb-fixed-g`, `--top-k-lexical 1`), T03-G (`rb-fixed-g`, full hybrid), T04-G (`rb-semantic-g`, full hybrid — the first *real* hybrid T04). Records `results/T02-G.yaml`, `T03-G.yaml`, `T04-G.yaml`. | platform |
 | G6 | **RQ4 on free models (B3 early subset).** Repeat T03-G/T04-G for the other free arms that pass G0. `lfm` runs only if no chunk in the tenant exceeds 512 tokens (checked, recorded); otherwise reported as excluded. | platform |
 | G7 | **Report + docs.** Results table in this section; §9 deliverable 8; `gpu-plane-integration-tickets.md`; README status. | platform |
 
@@ -400,7 +400,164 @@ Recall is identical (expected — every gold query's answer lives in a document 
 - **Latency comparability:** GPU-7 latency includes the WAN round trip and shared free-tier queueing. `embedMs` from `SearchTrace` is reported separately, and B1-G p95 numbers are never compared with GPU-5 or Phase 2 rows. Recall/NDCG comparisons are valid; latency comparisons across planes are not.
 - **bge-base rows:** T02/T03 as defined in §3.4 (bge-base) still require GPU-5; B1-G adds `-G` rows alongside them and doesn't close them.
 
+### Phase B1-K — bge-base T02/T03/T04 on the home k8s GPU plane (GPU-5): done 2026-09-25
+
+**Why now.** GPU-5 passed cluster phase 5 on 2026-09-25 (gpu-runtime T-K8S-6a). `synanton-bge-base-embedding` (TEI, node1) and `synanton-qwen3-reranker-0.6b` (vLLM, node2) answer end to end through Gateway → Envoy (JWT) → GPU. Measured single-request latency: EMBED 166 ms, RERANK 74 ms (the README GPU plane table has the full results).
+
+That makes the **original** §3.4 rows possible: T02 (fixed, dense, bge-base) and T03 (fixed, hybrid, bge-base). It also allows a **real** T04: the recorded `T04.yaml` was functionally BM25-only (§6 Phase B1).
+
+B1-G (GPU-7 free models) stays blocked: OpenRouter is unreachable, and opencode.ai has no embeddings. B1-K doesn't depend on it.
+
+**What carries over unchanged from B1-G:**
+- G1: the fail-closed gRPC embed client and the `gpu-plane` profile;
+- G2: configurable dimension, run here at `EMBED_DIM=768` with no truncation;
+- G4: harness validity rules, run records, `rescore`.
+
+For `--gpu-plane gpu-5` the harness uses `provider_mode: local`: no spend check, no daily budget, no pacing.
+
+**Run IDs and tenants:**
+
+| Run ID | Tenant | Chunking | Retrieval | Embedding | Note |
+|---|---|---|---|---|---|
+| `T02` | `rb-fixed-g5` | fixed (extraction-gateway **down**) | dense (`--top-k-lexical 1`) | bge-base 768 | Original §3.4 row, first real run |
+| `T03` | `rb-fixed-g5` | fixed | hybrid RRF | bge-base 768 | Replaces the superseded all-zero `T03.yaml` |
+| `T04-v2` | `rb-semantic-g5` | semantic (extraction-gateway **up**) | hybrid RRF | bge-base 768 | First T04 with a real dense side. `T04.yaml` stays as the historical BM25-only record. |
+
+**Steps (one commit each unless marked operator):**
+
+| Step | Work | Repo / who |
+|---|---|---|
+| K1 | **Expose the Gateway to the workstation.** Add a NodePort Service `gpu-gateway-external` (gRPC 9090 → node1 `192.168.10.31:30990`, `externalTrafficPolicy: Local` so the client source IP survives). Add a NetworkPolicy ingress rule limiting 9090 to the workstation's IP block. Blueprint + Helm. mTLS still authenticates every call. Dev alternative: `kubectl port-forward --address <docker-bridge-ip>`. | gpu-runtime |
+| K2 | **Benchmark principal on GPU-5.** Add `synanton-benchmark` to `gateway-local.yaml` + Helm, with tenants `rb-fixed-g5` and `rb-semantic-g5` only (no `*`, no admin). New `scripts/issue-client-cert.sh <cn>` that signs a client certificate with the **existing** GPU-5 CA (`git-ignored/gpu5-pki/ca.key`). `gen-certs.sh` would make a new CA and break the `gpu-gateway-tls` Secret. | gpu-runtime; **operator** runs the script (CA key) |
+| K3 | **TEI input limit.** bge-base accepts 512 tokens. TEI runs without `--auto-truncate`, and the Gateway doesn't enforce `max-input-tokens`, so an over-long chunk would fail its whole document under fail-closed ingest. Decide: add `--auto-truncate` to TEI (blueprint + Helm; silent truncation, recorded in the run record) **or** keep it strict and treat failures as invalid runs. Recommended: keep it strict, and use the K5 dry run to measure how many chunks exceed 512 tokens. | gpu-runtime (if changed) + decision |
+| K4 | **Platform overlay GPU-5 mode.** Split the GPU-7 network join out of `compose.gpu-plane.yaml` into `compose.gpu7-network.yaml`. `run-benchmark-gpu-plane.sh up --plane gpu5` then sets `GPU_PLANE_ENDPOINT=192.168.10.31:30990`, `GPU_TLS_AUTHORITY=gpu-gateway`, the PKI from `gpu-runtime/git-ignored/gpu5-pki` with client `synanton-benchmark`, `EMBED_MODEL(_ID)=synanton-bge-base-embedding`, `EMBED_DIM=768`, `EMBED_TRUNCATE_DIM=0` and `GPU_PLANE_MAX_RPM=0` (no free-tier limit). | platform |
+| K5 | **Finish `remap-gold`.** Wire `retrieval_eval/remap.py` into the CLI (`retrieval-eval remap-gold --from-tenant rb-fixed --to-tenant rb-fixed-g5 --queries … --out …`) and add unit tests with a fake cqlsh. Changed chunks are reported for re-annotation with `inspect`, never guessed. | platform |
+| K6 | **Dry run** on a throwaway tenant: ingest through the GPU plane; `/index/stats` must show `vector_docs == doc_count` and `embedding_dim` 768. Measure the chunk token distribution against TEI's 512 limit (K3). Run one `evaluate` to check validity end to end. | run |
+| K7 | **Fixed tenant:** ingest `rb-fixed-g5` (extraction-gateway down, `--gpu-plane gpu-5 --retries 2`), remap gold from `rb-fixed`, then run **T02** and **T03** (`--gpu-plane gpu-5 --embedding-model synanton-bge-base-embedding --embedding-dim 768`). | run |
+| K8 | **Semantic tenant:** start the extraction gateway (`docker-extraction-gateway`), ingest `rb-semantic-g5`, remap gold from `rb-semantic`, then run **T04-v2**. | run |
+| K9 | **Report:** results table here (with T01 as the BM25 baseline), §9 deliverable 8, tickets T-INT-2b, README. The query-embedding latency (`latency_breakdown`) is LAN + GTX 1650 and not comparable with GPU-7 rows (§8). | platform docs |
+
+**Results (2026-09-25).**
+- Corpus: `demo-data-documents-v2-16docs`, 10 gold queries (rb009 is the negative query, so Recall@10 is capped at 0.9).
+- Embeddings: `synanton-bge-base-embedding` (768) on GPU-5 via Gateway → Envoy (execution JWT) → TEI on node1.
+- Every run is **valid**: every chunk vectorised, no embedding skipped, same model and dimension in the index and the run.
+- Records: `demo-data/eval/retrieval-benchmark/results/{T02,T03,T04-v2}.yaml` (+ `.hits.json`).
+
+| Run | Tenant (chunks) | Retrieval | Recall@10 | NDCG@10 | MRR@10 | P@10 | p50 / p95 latency | Query-embed p50 / p95 |
+|---|---|---|---|---|---|---|---|---|
+| T01 (baseline, 2026-09-20) | `rb-fixed` | BM25 | 0.900 | 0.756 | 0.714 | 0.155 | 3523 / 8549 ms (Phase 1 stack) | — (embedding unavailable) |
+| **T02** | `rb-fixed-g5` (81) | dense only | 0.833 | 0.736 | 0.750 | 0.090 | 90 / 109 ms | 62 / 85 ms |
+| **T03** | `rb-fixed-g5` (81) | hybrid RRF | **0.900** | **0.789** | 0.750 | 0.110 | 8 / 21 ms† | cached† |
+| **T04-v2** | `rb-semantic-g5` (99) | hybrid RRF | **0.900** | **0.789** | 0.750 | 0.110 | 70 / 103 ms | 51 / 76 ms |
+
+† T03 ran right after T02 on the same tenant with the same queries, so synquest's query-embedding cache served all 10 vectors (`embed_cached: 10`). Its latency therefore excludes embedding and isn't comparable. T04-v2 (a different tenant, uncached) shows the real hybrid latency.
+
+**Findings:**
+1. **Hybrid beats either side alone (RQ2).** T03 matches BM25's recall and improves NDCG@10 from 0.756 (T01) to 0.789. Dense alone (T02) is weaker: 0.833 / 0.736. It half-misses the exact-term query rb010 ("IATF 16949", recall 0.33), and hybrid recovers it (1.0).
+2. **Chunking strategy is still unmeasured (RQ1).** T04-v2 equals T03 on every metric. All gold queries target the markdown and text documents, which chunk identically under both strategies (one flat chunk each; §4 update). The three structure-rich PDFs *are* chunked differently (99 vs 81 chunks) but have no gold queries. **T-INT-3 (gold queries on the PDFs) is now the blocking item for RQ1.**
+3. **Latency (RQ5, same plane only).** Query embedding on the GTX 1650 across the LAN takes p50 51–62 ms and p95 76–85 ms; the first cold request took 461 ms in the dry run. End-to-end hybrid search takes p50 70 ms and p95 103 ms. T01's seconds-long latency came from the Phase 1 stack, where the embedding service was unreachable; it isn't a BM25 cost.
+4. **Harness bug found and fixed in the K6 dry run.** `index_stats` didn't send `X-Tenant`, so synquest reported the `demo` tenant (commit `2e34afd`). The G4 coverage check would otherwise have compared the wrong index.
+
+**Step status:**
+- ✅ K1: NodePort `gpu-gateway-external` 192.168.10.31:30990, `ipBlock` allow-list (gpu-runtime `e46da65`).
+- ✅ K2: `synanton-benchmark` principal on GPU-5 plus `issue-client-cert.sh` (`fab85a6`).
+- ✅ K3: kept TEI **strict**. The dry run ingested all 16 documents with 0 errors, so no chunk exceeded 512 tokens.
+- ✅ K4: overlay `--plane gpu5` (`c4fadfe`).
+- ✅ K5: `remap-gold` (`9ed1047`). 11/11 gold IDs carried over for both tenants, with identical chunk hashes.
+- ✅ K6: dry run (`rb-dryrun-g5`: 81/81 vectors, valid).
+- ✅ K7, K8: runs above.
+- ✅ K9: this report.
+
+**Out of scope for B1-K, but unblocked by it:**
+- **T10/T11 (reranker):** the GPU-5 reranker works, but the platform-side `RerankerPort` and adapter (B2) don't exist yet.
+- **B3 larger embedding models:** each GPU already runs exactly one workload, so this would need a model swap on a node. It isn't part of this phase.
+
+**Confounds specific to B1-K:**
+- **LAN latency:** the network hop and the GTX 1650 dominate `embedMs`.
+- **Shared GPU plane:** don't run a load test while benchmark runs are in progress.
+- **Semantic chunking depends on the extraction gateway:** the extraction-gateway state must match the tenant (down for `rb-fixed-g5`, up for `rb-semantic-g5`), exactly as in B1.
+
+### T-INT-3 — gold queries on the structure-rich PDFs + full arm matrix (done 2026-09-25)
+
+**Query set v2** (`demo-data/eval/retrieval-benchmark/queries-v2.jsonl`; per tenant: `queries-v2.rb-{fixed,semantic}-g5.jsonl`) has 25 queries: the original 10 plus 15 new ones targeting the three PDFs:
+
+| Source | Queries | Topics |
+|---|---|---|
+| `mental-health-report-2010.pdf` | 7 | data-source table rows, glossary definitions, medication table, advisory panel date |
+| `sks8300-web-interface-manual.pdf` | 3 | default IP, HTTPS port and ciphers, firmware upgrade |
+| `outsourcing-agreement.pdf` | 5 | parties and date, change-of-control threshold, forecast cadence, lab-testing costs, shipment certificates |
+
+**Gold is objective:** `retrieval-eval annotate-markers` marks as relevant every chunk of `gold_source` whose normalised text contains a `gold_marker`. The same query therefore gets the right chunk IDs in each tenant, however that tenant chunked the file, and every PDF query resolves in both tenants.
+
+The original 10 keep their hand annotation, carried over by `remap-gold`.
+
+**Runs:** every run is valid, on GPU-5 with bge-base 768. Records: `results/{T01,T02,T03,T04b,T04d,T04}-q25.yaml`.
+
+| Run | Chunking | Arm | All 25: Recall@10 / NDCG@10 | Original 10: R / NDCG / MRR | **PDF 15: R / NDCG / MRR** |
+|---|---|---|---|---|---|
+| T01-q25 | fixed | BM25 | 0.960 / 0.824 | 0.900 / 0.756 / 0.714 | 1.000 / 0.869 / 0.833 |
+| T02-q25 | fixed | dense | 0.893 / 0.805 | 0.833 / 0.736 / 0.750 | 0.933 / 0.851 / 0.822 |
+| T03-q25 | fixed | hybrid | **0.960 / 0.859** | 0.900 / 0.789 / 0.750 | **1.000 / 0.905** / 0.875 |
+| T04b-q25 | semantic | BM25 | 0.920 / 0.801 | 0.900 / 0.756 / 0.714 | 0.933 / 0.831 / 0.807 |
+| T04d-q25 | semantic | dense | 0.893 / 0.800 | 0.833 / 0.736 / 0.750 | 0.933 / 0.842 / 0.811 |
+| T04-q25 | semantic | hybrid | 0.920 / 0.856 | 0.900 / 0.789 / 0.750 | 0.933 / 0.900 / **0.889** |
+
+Latency: hybrid, uncached, p95 93–94 ms. The dense and BM25 rows reused cached query vectors, or needed none, so their latency isn't comparable.
+
+**Findings:**
+1. **RQ2 holds on the larger set.** Hybrid is the best arm under both chunking strategies: NDCG@10 0.859 fixed, 0.856 semantic. Dense alone is the weakest on recall.
+2. **RQ1: fixed vs semantic is within noise on this corpus.** With 15 PDF queries, one query is worth 0.067 recall. The three PDF queries that differ between strategies each have an identifiable mechanism:
+   - **pdf002** (data-source table row), *semantic better*: NDCG 0.63 → 1.00. The row sits in a clean table chunk.
+   - **pdf005** (medication table), *semantic worse*: NDCG 0.63 → 0.50. Semantic chunking split the heading "Medications for Substance Use Disorders" into its own 115-character chunk (#25), away from its table (#26). This is **the case hierarchical chunking (T05, parent/child) targets.**
+   - **pdf011** (parties and date), *missed by semantic*: every page of the agreement repeats a long "PARATEK PHARMACEUTICALS… REDACTED" boilerplate header, which crowds the cover chunk out of the top 10. This is a noise effect, and a **reranker (T10)** is the direct lever.
+3. **Two fixes found while running:**
+   - synquest returned 503 for BM25-only searches under `embedding.required` (Lucene k=0; `9ed868c`);
+   - the harness `index_stats` used the wrong tenant (`2e34afd`, in B1-K).
+
 ### Phase B2 — New retrieval capability (2-3 weeks)
+
+**B2 order and scope (user-confirmed 2026-09-25):**
+1. **Rerank (T10):** in synquest, post-RRF.
+2. **Hierarchical chunking (T05):** proper parent/child IDs.
+3. **Graph (T08/T09):** full chunk-level graph.
+
+Each is benchmarked as soon as it lands.
+
+#### B2.1 Reranking (T10) — done 2026-09-25
+
+**Correction to §0 / §2.** Reranking wasn't *only* a policy stub. The gateway's `PlanExecutor` already called `GpuRerankAdapter`, but:
+- it's off by default and runs only for template T2;
+- it reranks 200-character snippets;
+- it sends Qwen3-Reranker raw text, which (next paragraph) inverts scores;
+- it silently keeps RRF order on failure.
+
+synquest, which the benchmark queries, had no reranking at all. The adapter's template gap is a gateway follow-up; the benchmark path below doesn't use it.
+
+**Implementation (platform `ffaf195`):**
+- synquest `/search` gets `rerank` and `rerank_candidates`. It fuses a wider RRF candidate list (default 50, max 100), reranks the **full stored chunk text** (up to 6000 chars) through the GPU plane (`GpuPlaneRerankClient`, RERANK op, `synanton-qwen3-reranker-0.6b` on GPU-5 node2), reorders, and cuts to `top_k`.
+- Fail closed: an unconfigured or failing reranker returns 503, never RRF order labelled as reranked.
+- The harness `evaluate --rerank` makes the run invalid if any response lacks `trace.rerank_ms`.
+
+**Prompt format matters.** Qwen3-Reranker must receive its chat template (`RerankPromptFormat.QWEN3`). Measured through the GPU plane, with no template the scores **invert**: relevant 0.354 against distractors 0.681 and 0.769. With the template: 1.0 against 0.005 and 0.001.
+
+**Results** (query set v2, bge-base 768, GPU-5; all valid; `results/{T03R,T04R}-q25.yaml`). Rerank@50 compared with hybrid RRF on the same tenant:
+
+| Run | Chunking | All 25: R@10 / NDCG@10 / MRR@10 | Original 10: NDCG | PDF 15: R / NDCG / MRR | p50 / p95 latency |
+|---|---|---|---|---|---|
+| T03-q25 | fixed | 0.960 / 0.859 / 0.825 | 0.789 | 1.000 / 0.905 / 0.875 | 80 / 93 ms |
+| **T03R-q25** | fixed | 0.960 / **0.893** / **0.880** | 0.786 | 1.000 / **0.965 / 0.967** | 1590 / 1657 ms |
+| T04-q25 | semantic | 0.920 / 0.856 / 0.833 | 0.789 | 0.933 / 0.900 / 0.889 | 81 / 94 ms |
+| **T04R-q25** | semantic | **0.960** / 0.871 / 0.853 | 0.780 | 1.000 / 0.931 / 0.922 | 1559 / 1609 ms |
+
+**Findings:**
+1. **Reranking is the largest quality gain so far.** NDCG@10 rises by 0.034 on fixed and 0.015 on semantic. On the PDFs, fixed goes from 0.905 to 0.965 NDCG and from 0.875 to 0.967 MRR. It recovers exactly the cases T-INT-3 predicted:
+   - **pdf011**, the boilerplate-crowded cover chunk: 0.32 → 1.00 on fixed; missed → rank 1 on semantic, where it restores semantic recall to 0.960;
+   - **pdf005**, heading split from its table: 0.63 → 1.00 on fixed.
+2. **It isn't monotone.** rb008 and pdf012 drop from 1.00 to 0.63, and rb010, pdf010 and pdf014 dip slightly. The cross-encoder prefers a neighbouring chunk. Per-query-type defaults (B5) should account for this.
+3. **Cost.** About 1.5 s p50 per query to rerank 50 full chunks on the RTX 4060 Ti, against about 80 ms for hybrid alone, so roughly 20×. Fewer candidates or shorter passages trade quality for latency; that sweep hasn't been run.
+
+**Follow-up (gateway):** give `GpuRerankAdapter` the prompt-format option and full chunk text. Until then, enabling `gateway.rerank` with Qwen3-Reranker would *degrade* ranking.
+
 
 1. Hierarchical chunking (T05).
 2. Graph rank-fusion into `synquest`/`gateway` (T08, T09).
@@ -463,10 +620,10 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 | 2 | `.gitignore` entry for harness-extracted/cached dataset content | `tools/retrieval-eval/.gitignore` | Done |
 | 3 | Benchmark harness (config, metrics, ingest/query wrappers, CLI incl. `inspect`, `--top-k-dense`/`--top-k-lexical`) | `tools/retrieval-eval/` | Done (B0/B1 scope; B2's new-capability wiring still pending) |
 | 4 | Gold query set, annotated per tenant | `demo-data/eval/retrieval-benchmark/queries.{jsonl,rb-fixed.jsonl,rb-semantic.jsonl}` | Done (10 queries, real chunk IDs annotated against live `rb-fixed`/`rb-semantic` tenants) |
-| 5 | `RerankerPort` SPI + one adapter | `java/gateway` | Not started (Phase B2) |
+| 5 | Reranking (T10): synquest post-RRF rerank + `GpuPlaneRerankClient` (GPU plane RERANK, Qwen3 template) | `java/synquest`, `java/gpu-client` | **Done (B2.1, 2026-09-25)**; the gateway adapter template gap is a follow-up |
 | 6 | Hierarchical chunking strategy | `java/synflux` | Not started (Phase B2) |
 | 7 | Graph rank-fusion | `java/synquest` and/or `java/gateway` (decided during B2 implementation) | Not started (Phase B2) |
-| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | Done for T01, T04 (2026-09-20); `T03.yaml` (2026-09-18) superseded/invalid; T02-G/T03-G/T04-G planned (§6 Phase B1-G); bge-base T02/T03 blocked on GPU-5 |
+| 8 | Benchmark-run records (§5 YAML) per run | `demo-data/eval/retrieval-benchmark/results/` | T01, T04 (2026-09-20, T04 functionally BM25-only). **T02, T03, T04-v2 on GPU-5 (2026-09-25, all valid; §6 Phase B1-K).** The old all-zero `T03.yaml` has been replaced. B1-G `-G` rows are blocked (OpenRouter). |
 | 11 | Shared gRPC embed client (fail-closed) + `gpu-plane` profile in `synquest`/`synflux`; configurable embedding dim | `java/` (new shared module), `java/synquest`, `java/synflux` | Done (G1 + G2, 2026-09-25) |
 | 12 | GPU-7 free embedding catalog arms + benchmark tenants | `gpu-runtime/deployments/external/config/gateway-external.yaml` | Done (G3, 2026-09-25; gpu-runtime `3bf36bb`) |
 | 13 | Harness: query-embedding cache, request throttle/budget, GPU-7 run-record fields, validity check | `tools/retrieval-eval/` | Done (G4, 2026-09-25) |
@@ -477,7 +634,7 @@ Any B2/B3 phase needing more than one GPU concurrently (e.g. comparing two self-
 
 ## 10. Open Questions
 
-0. **Gold queries against the 3 new PDFs** — none of the 10 original queries target `mental-health-report-2010.pdf`, `outsourcing-agreement.pdf`, or `sks8300-web-interface-manual.pdf`, so T01-vs-T04's real structural divergence (confirmed via direct Cassandra inspection) isn't yet reflected in any Recall/NDCG number. Writing these is the most direct next step toward a *meaningful* T01-vs-T04 comparison.
+0. **Gold queries against the 3 new PDFs.** Done 2026-09-25 (T-INT-3 section in §6): 15 marker-annotated PDF queries in query set v2 plus the full arm matrix. Fixed vs semantic is within noise, and the three differing queries point at T05 (heading split from its table) and T10 (boilerplate crowding).
 0a. **`content_extractor`'s markdown heading gap** — `TextModalityAdapter` treats `.md` files as flat prose (Tika `AutoDetectParser`, no markdown-aware parsing). Fixing this (a real feature addition, not a bug) would let the *original* corpus's text/markdown files also exercise real semantic chunking, not just the 3 added PDFs. Out of scope for this plan; noted for whoever owns `content_extractor` roadmap next.
 0b. **Starting the Phase 2 GPU profile, or standing up the real GPU Runtime instead** — needed before T02/T03 can run for real. The homelab k8s cluster (§7) is being recreated as a cluster dedicated to Synanton's GPU plane; see [`gpu-plane-integration-tickets.md`](./gpu-plane-integration-tickets.md) and `gpu-runtime/doc/k8s-reference-deployment-plan.md` for the full ticket backlog this depends on. Not this benchmark's own concern to execute, only to consume once it lands. **Update 2026-09-25:** GPU-5 is deployed-shape-complete but blocked on execution-JWT signing (`gpu-runtime` T-K8S-6a). GPU-7 (external mode) is complete, so dense/hybrid now proceeds there first (§6 Phase B1-G), and the integration path is decided: a shared gRPC `LlmClient`, not HTTP. The bge-base rows move to GPU-5 once T-K8S-6a lands, reusing the same client with the logical model changed to `synanton-bge-base-embedding`.
 1. **Cohere/Voyage embedding comparison** — in scope only if a translator gets built; not committed in this plan. Revisit after B3's self-hosted results — if self-hosted models already show a clear winner, the commercial comparison may not be worth the integration cost.

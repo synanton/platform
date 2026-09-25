@@ -55,6 +55,20 @@ class GpuPlaneProfileWiringTest {
     }
 
     @Test
+    void rerankBeansExistOnlyWhenEnabledUnderGpuPlane() {
+        runner.withPropertyValues("spring.profiles.active=gpu-plane", "gpu-plane.endpoint=localhost:1",
+                        "gpu-plane.tls.enabled=false", "synquest.rerank.enabled=true", "synquest.rerank.prompt-format=QWEN3")
+                .run(ctx -> {
+                    assertThat(ctx).hasSingleBean(org.synanton.gpu.client.GpuPlaneRerankClient.class);
+                    assertThat(ctx.getBean(org.synanton.synquest.service.SearchReranker.class).model())
+                            .isEqualTo("synanton-qwen3-reranker-0.6b");
+                });
+        runner.withPropertyValues("spring.profiles.active=gpu-plane", "gpu-plane.endpoint=localhost:1",
+                        "gpu-plane.tls.enabled=false")
+                .run(ctx -> assertThat(ctx).doesNotHaveBean(org.synanton.synquest.service.SearchReranker.class));
+    }
+
+    @Test
     void gpuPlaneProfileWithMissingTlsFilesFailsAtStartup() {
         runner.withPropertyValues("spring.profiles.active=gpu-plane", "gpu-plane.tls.enabled=true",
                         "gpu-plane.tls.ca-path=/nonexistent/ca.crt")

@@ -1,0 +1,45 @@
+benchmark:
+  dataset_version: demo-data-documents-v2-16docs+queries-v2-25
+  knowledge_version: rb-semantic-g5-2026-09-25
+  search_config: hybrid-rrf
+  embedding_model: synanton-bge-base-embedding
+  retrieval_strategy: hybrid
+  reranker: none
+recorded_at: '2026-09-25T18:57:17.385099+00:00'
+metrics:
+  query_count: 25
+  mean_recall_at_10: 0.92
+  mean_recall_at_100: 0.96
+  mean_precision_at_10: 0.10800000000000001
+  mean_ndcg_at_10: 0.8557115704285749
+  mean_mrr_at_10: 0.8333333333333333
+  p50_latency_ms: 81.38917900214437
+  p95_latency_ms: 94.04379600164248
+gpu_plane:
+  plane: gpu-5
+  provider_mode: local
+  embedding_dim: 768
+  embed_requests: 25
+  embed_cached: 0
+  embed_skipped: 0
+  max_searches_per_minute: 0
+  daily_request_budget: 0
+  ledger_used_today: 149
+  spend_before: null
+  spend_after: null
+  index:
+    doc_count: 99
+    vector_docs: 99
+    dim_mismatches: 0
+    missing_vectors: 0
+    embedding_model: synanton-bge-base-embedding
+    embedding_dim: 768
+latency_breakdown:
+  note: "query embedding only, uncached queries; on GPU-7 includes the WAN round trip\
+    \ \u2014 not comparable across planes (plan \xA78)"
+  queries: 25
+  p50_embed_ms: 61.0
+  p95_embed_ms: 68.0
+validity:
+  valid: true
+  reasons: []

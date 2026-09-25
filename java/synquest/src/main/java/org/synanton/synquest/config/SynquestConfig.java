@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@EnableConfigurationProperties(SynquestProperties.class)
+@EnableConfigurationProperties({SynquestProperties.class, SynquestRerankProperties.class})
 public class SynquestConfig {
 
     /** HTTP (OpenAI-compatible) query embedding; replaced by the GPU plane under the gpu-plane profile. */

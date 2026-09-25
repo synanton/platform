@@ -1,17 +1,39 @@
 benchmark:
-  dataset_version: demo-data-documents-v1
-  knowledge_version: demo-data-documents-v1
+  dataset_version: demo-data-documents-v2-16docs
+  knowledge_version: rb-fixed-g5-2026-09-25
   search_config: hybrid-rrf
-  embedding_model: bge-base-en-v1.5
+  embedding_model: synanton-bge-base-embedding
   retrieval_strategy: hybrid
   reranker: none
-recorded_at: '2026-09-18T08:54:55.566046+00:00'
+recorded_at: '2026-09-25T18:47:29.262543+00:00'
 metrics:
   query_count: 10
-  mean_recall_at_10: 0.0
-  mean_recall_at_100: 0.0
-  mean_precision_at_10: 0.0
-  mean_ndcg_at_10: 0.0
-  mean_mrr_at_10: 0.0
-  p50_latency_ms: 3536.529191000227
-  p95_latency_ms: 8537.992944000507
+  mean_recall_at_10: 0.9
+  mean_recall_at_100: 0.9
+  mean_precision_at_10: 0.11000000000000001
+  mean_ndcg_at_10: 0.7892789260714372
+  mean_mrr_at_10: 0.75
+  p50_latency_ms: 8.057966995693278
+  p95_latency_ms: 20.661634996940847
+gpu_plane:
+  plane: gpu-5
+  provider_mode: local
+  embedding_dim: 768
+  embed_requests: 0
+  embed_cached: 10
+  embed_skipped: 0
+  max_searches_per_minute: 0
+  daily_request_budget: 0
+  ledger_used_today: 39
+  spend_before: null
+  spend_after: null
+  index:
+    doc_count: 81
+    vector_docs: 81
+    dim_mismatches: 0
+    missing_vectors: 0
+    embedding_model: synanton-bge-base-embedding
+    embedding_dim: 768
+validity:
+  valid: true
+  reasons: []
