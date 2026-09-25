@@ -81,7 +81,11 @@ public class SearchService {
         long embedMs = 0;
         boolean embedSkipped = false;
         boolean embedCached = false;
-        try {
+        // top_k_dense <= 0 means "no dense side" (BM25-only rows such as T01): don't embed the query
+        // and don't run KNN. Lucene rejects k=0, which under synquest.embedding.required would have
+        // turned an intentionally lexical search into a 503.
+        boolean denseRequested = topKDense > 0;
+        if (denseRequested) try {
             long embedStart = System.currentTimeMillis();
             QueryEmbedder.QueryVector qv = queryEmbedder.embedForSearch(req.query(), tenant);
             queryVec = qv.vector();
@@ -97,7 +101,7 @@ public class SearchService {
 
         final float[] denseVec = queryVec;
         Future<TopDocs> denseFuture = searchPool.submit(() -> {
-            if (denseVec == null) {
+            if (!denseRequested || denseVec == null) {
                 return new TopDocs(new org.apache.lucene.search.TotalHits(0,
                         org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
             }
