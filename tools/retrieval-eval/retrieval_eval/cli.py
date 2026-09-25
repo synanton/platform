@@ -18,6 +18,7 @@ match.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -320,6 +321,21 @@ def _cmd_rescore(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_remap_gold(args: argparse.Namespace) -> int:
+    """Carry gold chunk IDs to a re-ingested tenant by (source_uri, chunk_ordinal) + identical chunk_sha256."""
+    from .remap import docker_cqlsh, remap_queries
+    rows = [json.loads(line) for line in Path(args.queries).read_text().splitlines() if line.strip()]
+    out_rows, report = remap_queries(rows, docker_cqlsh(args.cassandra_container), args.from_tenant, args.to_tenant)
+    Path(args.out).write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in out_rows))
+    print(f"{report.mapped} gold chunk IDs remapped {args.from_tenant} → {args.to_tenant}; wrote {args.out}")
+    for u in report.unmapped:
+        print(f"  UNMAPPED {u}", file=sys.stderr)
+    if report.unmapped:
+        print(f"{len(report.unmapped)} IDs need manual re-annotation (retrieval-eval inspect)", file=sys.stderr)
+        return 1 if args.strict else 0
+    return 0
+
+
 def _cmd_budget(args: argparse.Namespace) -> int:
     ledger = RequestLedger(args.ledger)
     print(f"ledger {ledger.path}: {args.gpu_plane} requests today = {ledger.used_today(args.gpu_plane)}")
@@ -386,6 +402,16 @@ def build_parser() -> argparse.ArgumentParser:
     rescore_parser.add_argument("--run-id", required=True)
     rescore_parser.add_argument("--output-dir", type=Path, default=DEFAULT_RESULTS_DIR)
     rescore_parser.set_defaults(func=_cmd_rescore)
+
+    remap_parser = subparsers.add_parser(
+        "remap-gold", help="Carry gold chunk IDs to a re-ingested tenant (same source files, identical chunks)")
+    remap_parser.add_argument("--from-tenant", required=True)
+    remap_parser.add_argument("--to-tenant", required=True)
+    remap_parser.add_argument("--queries", type=Path, required=True, help="annotated gold file of --from-tenant")
+    remap_parser.add_argument("--out", type=Path, required=True)
+    remap_parser.add_argument("--cassandra-container", default="docker-cassandra-1")
+    remap_parser.add_argument("--strict", action="store_true", help="exit 1 if any ID can't be carried over")
+    remap_parser.set_defaults(func=_cmd_remap_gold)
 
     budget_parser = subparsers.add_parser("budget", help="Show today's request ledger and provider spend/quota")
     _add_plane_args(budget_parser)
