@@ -100,6 +100,8 @@ class BaselineBench {
         }
 
         HybridSearcher searcher = new HybridSearcher(path, DIM);
+        // Mirror SearchService: dense + lexical run concurrently, fusion after both join.
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(2);
         List<Double> lexLat = new ArrayList<>();
         List<Double> vecLat = new ArrayList<>();
         List<Double> hybLat = new ArrayList<>();
@@ -121,9 +123,15 @@ class BaselineBench {
                 vecLat.add((System.nanoTime() - s) / 1_000_000.0);
             }
             TopDocs dense = searcher.dense(queryVec, TOP_DENSE);
-            long s = System.nanoTime();
-            List<RrfFusion.FusedHit> fused = RrfFusion.combine(dense, lex, TOP_K, RRF_K);
-            hybLat.add((System.nanoTime() - s) / 1_000_000.0);
+            // Full hybrid pipeline as one timed unit: concurrent legs + fusion
+            // (mirrors SearchService; previously only combine() was timed — see 006).
+            for (int r = 0; r < REPS; r++) {
+                long hs = System.nanoTime();
+                var denseFuture = pool.submit(() -> searcher.dense(queryVec, TOP_DENSE));
+                var lexFuture = pool.submit(() -> searcher.lexical(query, TOP_LEX));
+                RrfFusion.combine(denseFuture.get(), lexFuture.get(), TOP_K, RRF_K);
+                hybLat.add((System.nanoTime() - hs) / 1_000_000.0);
+            }
 
             // Lexical Recall@10 against planted relevance.
             var stored = searcher.storedFields();
@@ -143,6 +151,7 @@ class BaselineBench {
             long hit = retrieved.stream().filter(rel::contains).count();
             recallSum += (double) hit / rel.size();
         }
+        pool.shutdown();
         searcher.close();
 
         System.out.println("BENCH lex_ms_p50=" + p50(lexLat) + " lex_ms_p95=" + p95(lexLat)

@@ -6,6 +6,8 @@
 
 **Gating rule (Phase 6 correctness): Must rows gate against the requirement, not against the baseline. Baseline non-conformance is recorded, not inherited.** A Must row where the baseline is absent or unspecified (highlights, metadata operators, tie-breaking) cannot be closed by "YDB matches baseline" — YDB must meet the requirement or record an approved alternative.
 
+**Unmeasured-metric rule (same principle, metrics): where the baseline has no measured number, Phase 6 gates YDB against an absolute requirement, never against the null.** Applies to vector Recall@10 (baseline unmeasured — absolute bar ≥ 0.95, ratify at exit review) and to index freshness until the relay run lands. "YDB matches baseline" is unmeasurable there and closes nothing.
+
 Evidence pointers are file-level; all under `java/synquest/src/main`.
 
 | Feature | Current behavior (frozen) | Requirement | YDB behavior | Status |

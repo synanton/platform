@@ -24,23 +24,29 @@
 
 ## Measured absolutes — v1-corpus scale (160k chunks, this machine, 2026-09-26)
 
-`BENCH lex_ms_p50=0.287 lex_ms_p95=0.829 vec_ms_p50=6.844 vec_ms_p95=9.767 hyb_ms_p50=0.102 hyb_ms_p95=0.331 lex_recall10=1.000 chunks=160000`
+`BENCH lex_ms_p50=0.196 lex_ms_p95=0.594 vec_ms_p50=5.349 vec_ms_p95=7.864 hyb_ms_p50=5.656 hyb_ms_p95=7.749 lex_recall10=1.000 chunks=160000`
 
 Run: `BaselineBench` with `-Dydb.bench.docs=20000 -Dydb.bench.chunks=8`, seed 42,
 40 golden queries × 5 planted relevant, production `HybridSearcher` + `RrfFusion`
-(lexical/dense top 100, RRF k=60, topK 20). Vector leg latency-only (synthetic
-384-d vectors carry no relevance); vector **recall** absolute still needs the
-real embedding pipeline — the single open measurement, tracked here.
+(lexical/dense top 100, RRF k=60, topK 20). Hybrid is timed as one unit over
+concurrent legs + fusion (mirrors `SearchService`); vector leg latency-only
+(synthetic 384-d vectors carry no relevance); vector **recall** absolute still needs
+the real embedding pipeline — gated absolute below.
+
+**Correction history:** the first v1 run timed only `RrfFusion.combine`
+(hybrid p95 0.33ms — faster than its inputs, impossible for the real pipeline).
+Re-measured with the full concurrent pipeline; the combine-only number is void
+and must not be cited. Lesson recorded: hybrid timing boundary = legs + fusion.
 
 ## Frozen thresholds (absolute)
 
 | Metric | Baseline | Threshold (rule applied) |
 |---|---|---|
-| p95 lexical latency | 0.829 ms | ≤ **1.0 ms** (×1.20) |
-| p95 vector latency | 9.767 ms | ≤ **11.8 ms** (×1.20) |
-| p95 hybrid latency | 0.331 ms | ≤ **0.40 ms** (×1.20) |
+| p95 lexical latency | 0.594 ms | ≤ **0.72 ms** (×1.20) |
+| p95 vector latency | 7.864 ms | ≤ **9.5 ms** (×1.20) |
+| p95 hybrid latency (concurrent legs + fusion) | 7.749 ms | ≤ **9.3 ms** (×1.20) |
 | Lexical Recall@10 | 1.000 | ≥ **0.98** (−0.02) |
-| Vector Recall@10 | pending embedding pipeline | ≥ baseline − 0.02 once measured |
+| Vector Recall@10 | unmeasured (no embedding pipeline) | ≥ **0.95 absolute** (Option B below — not baseline-relative) |
 | Index freshness | pending relay (029) | ≤ baseline × 1.20 once measured |
 | Error rate | 0 observed | ≤ baseline under equivalent load |
 

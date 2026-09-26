@@ -17,7 +17,9 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 011 | `011-cql-exception.md` — transitional CQL-in-ingestion-cache exception | Open → 040 |
 | 040 | `040-call-site-rewire.md` — owner: Platform Eng YDB-PoC workstream (named human countersigns at Phase-0 exit); target 021/024 close | Open |
 | 004+006 | `004-parity-matrix.md` (frozen: current Lucene behavior per Must row, meet-or-justify flags, tie-break rule) + `006-baseline-thresholds.md` (protocol + rules frozen, preliminary operating points measured, absolutes gate on v1-corpus run) + `BaselineBench` (`-Dydb.bench=true`, excluded from PR) — landed as one unit | Closed |
-| 038 | `038-observability-contract.md` — taxonomy + wiring (metrics default-on in-memory, Noop+injectable on Cassandra, freshness types for 029, Micrometer deferred) | Closed |
+| 038 | `038-observability-contract.md` — taxonomy + wiring (metrics default-on everywhere incl. Cassandra per Option A symmetry; Noop reserved for metrics-disabled profiles; freshness types for 029; Micrometer deferred) | Closed |
+| 010 | `010-escalation.md` — written ask (freeze vs throwaway), decision date 2026-10-03, fallback cost ≤2d; silence defaults to throwaway | Escalated |
+| — | 004 gating extended to unmeasured metrics (vector Recall@10 ≥ 0.95 absolute); 006 hybrid re-measured as full concurrent pipeline (combine-only number void) | Done |
 | 020 | Machine-readable `ConformanceMatrix`/`Conformant` in `storage-contract`; per-adapter matrices (Cassandra revision/delete UNSUPPORTED per 008); gating suites green (flags vs matrix vs loadable evidence) | Closed |
 | 039 | `java/storage-provider` — config selection + `StartupValidator` (incl. 008 fail-fast with provider+capability+reason); `describe()` for 038 shape; contract tests green | Closed |
 | — | `ActiveProviders` typed snapshot in `storage-contract` (038/039 shared; mixing explicitly supported per Outcome 3, tested); live-test policy (`live-test-policy.md`: PR cadence, shared container, no auto-retry, runner pin); 008 appendix (flag was unused) | Done |
