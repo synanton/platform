@@ -1,7 +1,9 @@
 # YDB-POC-011 — Provisional API Surfaces (YDB-POC-010 follow-up)
 
-**Status:** Open — re-validated when 1.27 / 1.32 freeze (then this file closes)
-**Gate:** YDB-POC-010 (throwaway scope until freeze confirmed)
+**Status: ACTIVE — trigger condition occurred (1.27/1.32 unfrozen at 010
+resolution, 2026-09-26). This file is now active, not pending.**
+**Gate:** YDB-POC-010 resolved throwaway-scoped. Re-validated if/when 1.27 /
+1.32 freeze (then this file closes).
 
 Per §0.1, Phase 0B proceeds while 1.27/1.32 are unfrozen, but the surfaces below are
 explicitly **not** committed domain APIs. Each carries `@Provisional` in code.

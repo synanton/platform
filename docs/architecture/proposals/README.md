@@ -9,7 +9,7 @@ up this branch after 010 flips (either way). Orient in ten minutes.
 |---|---|---|
 | YDB backend proposal (Rev 6 + branch amendments) | Draft proposal, subordinate to Arch 1.0 | `Design Proposal Evaluate YDB as a SynvaultSynquest Backend.md` |
 | **Provisional surfaces — load-bearing until 010 flips** | **Open, do not close in transition** | `../implementation/ydb-poc/011-provisional-followup.md` |
-| **010 escalation (decision by 2026-10-03)** | **Escalated; silence defaults to throwaway** | `../implementation/ydb-poc/010-escalation.md` |
+| **010 escalation — RESOLVED throwaway-scoped (2026-09-26)** | **Closed; 021/024 run evaluation-only** | `../implementation/ydb-poc/010-escalation.md` |
 | Phase-0 exit checklist | Engineering done; formalities + gate outstanding | `../implementation/ydb-poc/phase0-exit-checklist.md` |
 | Implementation plan + ticket tracker (40 tickets) | Current — status note at top | `../implementation/ydb-poc-implementation-plan.md` |
 | Phase-0 closeout summary | Closed | `../implementation/ydb-poc/phase0-closeout.md` |

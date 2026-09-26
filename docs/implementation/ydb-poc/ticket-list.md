@@ -14,7 +14,7 @@ IDs 001–039 per the updated list; 024 split 024A/024B (no new number); 040 add
 | 007 | Scope Cassandra pub-log track (~16d) | Closed → `007-cassandra-publog-scope.md` |
 | 009 | Cross-tenant relay decision (none; exception path defined) | Closed → `009-relay-decision.md` |
 | 010a | Gate determination (unfrozen → throwaway-scoped) | Closed → `010-gate-status.md` |
-| 010b | Escalation (decision by 2026-10-03) | Escalated → `010-escalation.md` |
+| 010b | Escalation — **resolved throwaway-scoped (2026-09-26)** | Closed → `010-escalation.md` |
 | 037 | Shared port-types home (`java/storage-contract`) | Closed |
 
 ## Phase 0B/C — extraction + must-holds
@@ -35,7 +35,7 @@ IDs 001–039 per the updated list; 024 split 024A/024B (no new number); 040 add
 | 006 | Baseline thresholds (measured absolutes; sign-off at exit review) | Closed → `006-baseline-thresholds.md` |
 | 008 | Cassandra revision-path decision (option b: non-conforming) | Closed → `008-cassandra-revision-decision.md` |
 
-## Phase 1–6 — gated on 010 (not started)
+## Phase 1–6 — open throwaway-scoped (010 resolved; evaluation-only, no production pre-commit)
 
 021, 022, 023 · 024A, 024B, 025, 026, 027, 028 · 029, 030, 031 · 032, 033, 034 ·
 035 · 036. Cross-cutting: 040 (owner assigned, target 021/024 close).

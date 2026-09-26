@@ -1,6 +1,11 @@
 # YDB-POC-010 — Escalation packet (Architecture §14–15 gate)
 
-**Status:** Escalated 2026-09-26 — decision requested by **2026-10-03**
+**Status: Resolved — throwaway-scoped (2026-09-26)**
+**Resolution:** 1.27/1.32 remain unfrozen; the PoC proceeds in **throwaway scope**
+(no domain-API pre-commitment) per §0.1 option (b).
+**Effect:** 021/024A/024B run evaluation-only behind the provisional file;
+`011-provisional-followup.md` is load-bearing until a future freeze re-opens it.
+The 2026-10-03 deadline is vacated by this decision (no drift guard needed).
 **Owner (driver):** Platform Engineering, YDB-PoC workstream
 **Decider:** Architecture (1.27 event-schema owner + 1.32 contract owner)
 

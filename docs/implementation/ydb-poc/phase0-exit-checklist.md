@@ -10,7 +10,10 @@
   ownership recorded in `040-call-site-rewire.md`.
 - [ ] 010 resolution recorded below (frozen or throwaway).
 
-## 010 date-drift guard
+## 010 date-drift guard — vacated (resolved 2026-09-26, throwaway-scoped)
+
+The guard below is retained for the record but no longer operative: the decision
+arrived before the deadline, so no activation was needed.
 
 If 2026-10-03 passes with no Architecture decision, the date must not drift into
 implicit throwaway. The driver (Platform Eng, YDB-PoC workstream) **formally
