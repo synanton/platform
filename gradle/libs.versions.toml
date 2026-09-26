@@ -127,6 +127,10 @@ kafka-clients            = { module = "org.apache.kafka:kafka-clients",         
 # Testcontainers extras
 testcontainers-cassandra = { module = "org.testcontainers:cassandra" }
 
+# YDB Java SDK (PoC-pinned, see ydb-poc/001-version-manifest.md)
+ydb-sdk-table           = { module = "tech.ydb:ydb-sdk-table",             version = "2.4.11" }
+ydb-sdk-core            = { module = "tech.ydb:ydb-sdk-core",              version = "2.4.11" }
+
 # Phase 4 security / sanitisation
 owasp-java-html-sanitizer = { module = "com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer", version.ref = "owaspSanitizer" }
 pgv-java-stub             = { module = "build.buf.protoc-gen-validate:pgv-java-stub", version.ref = "pgvJavaStub" }
