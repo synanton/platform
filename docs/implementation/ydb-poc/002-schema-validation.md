@@ -45,3 +45,25 @@ Working DDL is **not** produced here (no live instance in Phase 0A); the accepta
   (feature flag); confirm enablement path before the hybrid leg. Vector
   dimension fixed per index (`vector_dimension`) — model-migration constraint
   stands (018).
+
+## Hybrid flag resolution (2026-09-26 — go, with a production note)
+
+- The flag is **cluster-level**: `table_service_config: enable_hybrid_search: true`
+  in the cluster YAML. Enabled on the PoC container (config survives restart);
+  `HybridRank` with tenant equality returns eligible-only ranked rows.
+- GA status: 26.3 RC lists hybrid under "Disabled functionality — not enabled by
+  default" → treat as **non-GA-by-default**. Production deployments must set the
+  flag explicitly (recorded in 003 as a production-readiness item, not a blocker).
+- Hybrid composes with `WHERE tenant=…` on the base table (no `VIEW`; indexes
+  resolve from `HybridRank` args). Prefixed vector indexes unsupported by
+  `HybridRank` — 024B uses non-prefixed vector index + predicate, as probed.
+
+## Knowledge vs adapter-requirement marking
+
+Recorded knowledge (this doc): syntax ladder results, flag names, format quirks.
+Adapter-contract requirements for 024B (must be encoded as tests, not re-read
+from here): `Untag(ToBinaryStringFloat)` writes; `String`≠`Utf8` params;
+`VIEW`-mandatory + alias-form `FulltextScore`; unfiltered-FT + equality
+fallback as default with logged path; indexes built AFTER data (Suite asserts
+usage, see preflight); `KMeansTreeSearchTopSize` value recorded with recall
+runs; hybrid flag presence asserted at suite setup.

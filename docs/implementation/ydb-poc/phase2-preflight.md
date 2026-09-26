@@ -6,7 +6,13 @@ benchmark, scale, or freshness run in Phase 2 may start until it passes.
 
 ## Gate 0: eligibility correctness before anything else
 
-**Verdict 2026-09-26: PASS on both legs (live YDB 26.3 local build).**
+**Verdict 2026-09-26: PASS on both legs (live YDB 26.3 local build), hybrid
+flag resolved go (cluster-level `table_service_config.enable_hybrid_search`,
+proven on the PoC container with tenant-scoped `HybridRank`).**
+Filtered vector index `ON (tenant, embedding)` + mandatory tenant equality
+returns only eligible rows, correctly ranked; unfiltered `fulltext_relevance`
++ tenant equality + alias-form `FulltextScore` likewise. 024B may proceed to
+engine work and benchmarks. Standing caveats below remain in force for 024B.
 Filtered vector index `ON (tenant, embedding)` + mandatory tenant equality
 returns only eligible rows, correctly ranked; unfiltered `fulltext_relevance`
 + tenant equality + alias-form `FulltextScore` likewise. 024B may proceed to
@@ -28,7 +34,6 @@ If none holds, 024B fails a Must requirement and the Synquest PoC collapses
 regardless of latency. That is the correct outcome — do not benchmark past it.
 
 ## 028 pre-flight: 024A convergence check
-
 024A mirrors the baseline's field schema; it does not reuse its code
 (`LuceneIndexBuilder` is a Spring `@Component` in a service module whose plain
 jar is disabled — service modules are not libraries, so no clean reuse exists;
@@ -45,6 +50,20 @@ RRF-60 formula, tenant-dir isolation. Divergent: metadata stored as `meta_*`
 fields vs the service's individual stored fields; hybrid scores normalized by
 max vs raw RRF; no section-expansion/rerank paths; fixed top-100 legs (service
 allows per-request overrides).
+
+## 028 pre-flight caveats (Gate 0 probe findings)
+
+- **Empty-table degradation:** YDB vector indexes built on empty tables degrade
+  to scans. The benchmark corpus must be fully built **before** indexes, in the
+  harness and in 024B setup — assert index usage in results, not just latency.
+- **Filtered-fallback latency:** selective-predicate lexical legs run on the
+  unfiltered-FT + equality fallback (prefixed FT is flag-disabled on this
+  build), not on a native filtered index. If fallback latency differs from
+  native, 028's lexical numbers measure the fallback — note it per-leg in
+  results rather than silently comparing against native-filtered expectations.
+- **Hybrid runs flagged:** the 028 hybrid leg executes with
+  `enable_hybrid_search=true` set (non-default). Results carry that annotation
+  for production-readiness review.
 
 ## Collapse scope: Gate 0 fails 024B, not Phase 2
 

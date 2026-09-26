@@ -65,8 +65,7 @@ class YdbGate0Probe {
     }
 
     @Test
-    void eligibilityComposesAtPlanLevel() {
-        YdbTestBase.ensureStarted();
+    void eligibilityComposesAtPlanLevel() {        YdbTestBase.ensureStarted();
         String table = "`gate0_" + YdbTestBase.randomPrefix() + "`";
         try (Session session = YdbTestBase.session()) {
             scheme(session, "create",
@@ -191,6 +190,78 @@ class YdbGate0Probe {
             System.out.println("GATE0 VERDICT=PASS(plan-level eligibility composition demonstrated)");
             scheme(session, "cleanup", "DROP TABLE " + table + ";");
             scheme(session, "cleanup-ft", "DROP TABLE " + ftTable + ";");
+        }
+    }
+
+    @Test
+    void hybridRankAvailability() {
+        YdbTestBase.ensureStarted();
+        String table = "`hyb_" + YdbTestBase.randomPrefix() + "`";
+        try (Session session = YdbTestBase.session()) {
+            scheme(session, "hyb-create",
+                    "CREATE TABLE " + table + " (id Uint64 NOT NULL, tenant Utf8 NOT NULL,"
+                            + " chunk_text Utf8 NOT NULL, embedding String NOT NULL,"
+                            + " PRIMARY KEY (id));");
+            Object[][] rows = {
+                {1L, "tenant_a", "alpha migration plan", new float[] {1, 0, 0, 0}},
+                {2L, "tenant_a", "alpha rollback steps", new float[] {0.9f, 0.1f, 0, 0}},
+                {3L, "tenant_b", "alpha migration plan", new float[] {1, 0, 0, 0}},
+            };
+            for (Object[] row : rows) {
+                data(session,
+                        "DECLARE $id AS Uint64; DECLARE $t AS Utf8; DECLARE $x AS Utf8;"
+                                + "UPSERT INTO " + table + " (id, tenant, chunk_text, embedding)"
+                                + " VALUES ($id, $t, $x, Untag(Knn::ToBinaryStringFloat(["
+                                + floats((float[]) row[3]) + "]), 'FloatVector'));",
+                        Params.create()
+                                .put("$id", PrimitiveValue.newUint64((Long) row[0]))
+                                .put("$t", PrimitiveValue.newText((String) row[1]))
+                                .put("$x", PrimitiveValue.newText((String) row[2])));
+            }
+            scheme(session, "hyb-ft",
+                    "ALTER TABLE " + table + " ADD INDEX `h_ft` GLOBAL USING fulltext_relevance"
+                            + " ON (`chunk_text`)"
+                            + " WITH (tokenizer=standard, use_filter_lowercase=true);");
+            scheme(session, "hyb-vec",
+                    "ALTER TABLE " + table + " ADD INDEX `h_vec` GLOBAL USING vector_kmeans_tree"
+                            + " ON (`embedding`)"
+                            + " WITH (distance=cosine, vector_type=\"float\", vector_dimension=4);");
+            String hybrid =
+                    "SELECT id, tenant FROM " + table
+                            + " WHERE tenant=\"tenant_a\""
+                            + " ORDER BY HybridRank(FulltextScore(chunk_text, \"migration\"),"
+                            + " Knn::CosineDistance(embedding,"
+                            + " Knn::ToBinaryStringFloat([" + floats(new float[] {1, 0, 0, 0}) + "])))"
+                            + " LIMIT 10;";
+            String outcome = "";
+            for (int attempt = 0; attempt < 15; attempt++) {
+                try {
+                    DataQueryResult result = data(session, hybrid, Params.empty());
+                    ResultSetReader rs = result.getResultSet(0);
+                    StringBuilder sb = new StringBuilder();
+                    while (rs.next()) {
+                        sb.append(rs.getColumn("id").getUint64())
+                                .append('|')
+                                .append(rs.getColumn("tenant").getText())
+                                .append(',');
+                    }
+                    outcome = "[" + sb + "]";
+                    if (!outcome.equals("[]")) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    outcome = "threw " + e.getMessage();
+                    break;
+                }
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+            System.out.println("GATE0 hybrid-tenant-a -> " + outcome);
+            scheme(session, "hyb-cleanup", "DROP TABLE " + table + ";");
         }
     }
 
