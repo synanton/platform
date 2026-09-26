@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.storage.testkit.SynvaultStoreContract;
@@ -61,5 +62,28 @@ class CassandraSynvaultStoreTest extends SynvaultStoreContract {
     @Override
     protected SynvaultStore newStore() {
         return new CassandraSynvaultStore(client, "test-" + UUID.randomUUID());
+    }
+
+    @Test
+    void startupValidationRejectsCassandraWhereRevisionRequired() {
+        // 008 decision, enforced through 039: the REAL matrix (not a stub) must fail
+        // fast when the deployment requires revision semantics.
+        var registry = new org.synanton.storage.provider.ProviderRegistry();
+        var adapter = new CassandraSynvaultStore(client, "test-" + UUID.randomUUID());
+        registry.register(org.synanton.storage.provider.ProviderRegistry.PORT_SYNVAULT, "cassandra", adapter);
+        var quest = new org.synanton.synquest.inmemory.InMemorySynquestEngine();
+        registry.register(org.synanton.storage.provider.ProviderRegistry.PORT_SYNQUEST, "inmemory", quest);
+        registry.register(org.synanton.storage.provider.ProviderRegistry.PORT_WRITER, "inmemory", quest);
+        registry.register(org.synanton.storage.provider.ProviderRegistry.PORT_ADMIN, "inmemory", quest);
+        org.synanton.storage.provider.ProviderSelection selection =
+                new org.synanton.storage.provider.ProviderSelection("cassandra", "inmemory", "inmemory", "inmemory");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () ->
+                                registry.validate(
+                                        selection,
+                                        org.synanton.storage.provider.DeploymentRequirements.fullRevision(false)))
+                .isInstanceOf(org.synanton.storage.contract.ProviderIncompatibleException.class)
+                .hasMessageContaining("cassandra")
+                .hasMessageContaining(org.synanton.storage.contract.Capabilities.SYNVAULT_REVISION);
     }
 }

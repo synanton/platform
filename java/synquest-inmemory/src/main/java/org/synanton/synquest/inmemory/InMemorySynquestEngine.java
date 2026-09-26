@@ -11,7 +11,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import org.synanton.storage.contract.Capabilities;
 import org.synanton.storage.contract.ChunkId;
+import org.synanton.storage.contract.Conformant;
+import org.synanton.storage.contract.ConformanceEntry;
+import org.synanton.storage.contract.ConformanceMatrix;
 import org.synanton.storage.contract.GenerationId;
 import org.synanton.storage.contract.SecurityContext;
 import org.synanton.storage.contract.StorageErrorKind;
@@ -33,7 +37,7 @@ import org.synanton.synquest.api.SynquestIndexWriter;
  * strict pre-ranking eligibility: a candidate is eligible only when its tenant matches
  * the caller's validated tenant scope (service contexts see all tenants).
  */
-public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWriter, SynquestIndexAdmin {
+public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWriter, SynquestIndexAdmin, Conformant {
 
     private final ConcurrentHashMap<String, ProjectionEntry> projections = new ConcurrentHashMap<>();
     private volatile GenerationId activeGeneration = GenerationId.initial();
@@ -120,6 +124,34 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
     @Override
     public SearchCapabilities capabilities() {
         return SearchCapabilities.pocBaseline();
+    }
+
+    @Override
+    public String adapterName() {
+        return "inmemory";
+    }
+
+    @Override
+    public String adapterVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public ConformanceMatrix conformance() {
+        String evidence = "org.synanton.synquest.inmemory.InMemorySynquestEngineTest";
+        return new ConformanceMatrix(
+                adapterName(),
+                adapterVersion(),
+                List.of(
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_LEXICAL, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_VECTOR, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_HIGHLIGHTS, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_ELIGIBILITY, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_TEMPORAL_REJECTION, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_ORDERING, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_GENERATION_DELETE, evidence)));
     }
 
     @Override

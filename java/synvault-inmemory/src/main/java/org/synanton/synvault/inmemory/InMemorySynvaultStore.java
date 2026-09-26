@@ -9,6 +9,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import org.synanton.storage.contract.Capabilities;
+import org.synanton.storage.contract.Conformant;
+import org.synanton.storage.contract.ConformanceEntry;
+import org.synanton.storage.contract.ConformanceMatrix;
 import org.synanton.storage.contract.DocumentId;
 import org.synanton.storage.contract.PageRequest;
 import org.synanton.storage.contract.SecurityContext;
@@ -31,7 +35,7 @@ import org.synanton.synvault.api.SynvaultStore;
  * In-memory {@link SynvaultStore} for tests and lightweight development.
  * Fully transactional (single-JVM lock); supports revisions, OCC, and cursor pagination.
  */
-public class InMemorySynvaultStore implements SynvaultStore {
+public class InMemorySynvaultStore implements SynvaultStore, Conformant {
 
     private record Key(String tenantId, String documentId) {}
 
@@ -149,6 +153,32 @@ public class InMemorySynvaultStore implements SynvaultStore {
     @Override
     public StoreCapabilities capabilities() {
         return new StoreCapabilities(true, ConsistencyLevel.STRONG, false, true, true, true);
+    }
+
+    @Override
+    public String adapterName() {
+        return "inmemory";
+    }
+
+    @Override
+    public String adapterVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public ConformanceMatrix conformance() {
+        String evidence = "org.synanton.synvault.inmemory.InMemorySynvaultStoreTest";
+        return new ConformanceMatrix(
+                adapterName(),
+                adapterVersion(),
+                List.of(
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_REVISION, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_DELETE, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_DOCUMENT, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_CHUNKS, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_PROVENANCE, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_PAGINATION, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_OCC, evidence)));
     }
 
     private static Key key(SecurityContext context, DocumentId id) {

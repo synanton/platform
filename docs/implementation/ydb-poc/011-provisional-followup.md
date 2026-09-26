@@ -13,6 +13,7 @@ explicitly **not** committed domain APIs. Each carries `@Provisional` in code.
 | `PublicationIntent` (event payload shape) | `synvault-api` | 1.27 event schema | May change with no deprecation; relay in §12.2 re-targeted |
 | `StorageErrorKind` (error taxonomy) | `storage-contract` | 1.32 Operation/error contract | Kinds may be renamed/merged/extended |
 | `StorageException` (error shape) | `storage-contract` | 1.32 Operation/error contract | Shape may change with the taxonomy |
+| `ProviderIncompatibleException` (startup-error shape) | `storage-contract` | 1.32 Operation/error contract | Shape may change with the taxonomy; specificity requirement (provider + capability + reason) is stable |
 
 ## Stable (port-owned, not provisional)
 

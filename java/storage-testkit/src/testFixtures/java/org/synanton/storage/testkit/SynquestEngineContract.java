@@ -52,13 +52,18 @@ public abstract class SynquestEngineContract {
     }
 
     protected static ChunkProjection projection(String tenant, String chunk, String text, long orderingKey) {
+        return projection(tenant, chunk, text, orderingKey, new float[] {1.0f, 0.0f});
+    }
+
+    protected static ChunkProjection projection(
+            String tenant, String chunk, String text, long orderingKey, float[] embedding) {
         return new ChunkProjection(
                 ChunkId.of(chunk),
                 DocumentId.of("doc-" + chunk),
                 tenant,
                 text,
                 Map.of("type", "note"),
-                new float[] {1.0f, 0.0f},
+                embedding,
                 MODEL,
                 orderingKey,
                 GEN);
@@ -89,6 +94,63 @@ public abstract class SynquestEngineContract {
                         .join();
         assertThat(result.hits()).isNotEmpty();
         assertThat(result.hits().get(0).chunkId().value()).isEqualTo("c1");
+    }
+
+    @Test
+    void vectorRetrievalRanksByEmbedding() {
+        SynquestEngine engine = newEngine();
+        if (!engine.capabilities().vector()) {
+            return;
+        }
+        newWriter()
+                .upsert(
+                        List.of(
+                                projection("tenant_a", "near", "orthogonal topic", 1, new float[] {1.0f, 0.0f}),
+                                projection("tenant_a", "far", "orthogonal topic", 1, new float[] {0.0f, 1.0f})))
+                .toCompletableFuture()
+                .join();
+        SearchRequest request =
+                new SearchRequest(
+                        "query",
+                        Optional.of(new float[] {1.0f, 0.0f}),
+                        Optional.of(MODEL),
+                        SearchMode.VECTOR,
+                        eligibility(TENANT_A),
+                        RelevanceFilters.none(),
+                        TemporalExtension.empty(),
+                        10,
+                        0.0);
+        SearchResult result = engine.search(ctx(TENANT_A), request).toCompletableFuture().join();
+        assertThat(result.hits()).isNotEmpty();
+        assertThat(result.hits().get(0).chunkId().value()).isEqualTo("near");
+    }
+
+    @Test
+    void hybridRetrievalCombinesLexicalAndVector() {
+        SynquestEngine engine = newEngine();
+        if (!engine.capabilities().hybrid()) {
+            return;
+        }
+        newWriter()
+                .upsert(
+                        List.of(
+                                projection("tenant_a", "lex", "hybrid fusion calibration", 1, new float[] {0.0f, 1.0f}),
+                                projection("tenant_a", "vec", "unrelated wording here", 1, new float[] {1.0f, 0.0f})))
+                .toCompletableFuture()
+                .join();
+        SearchRequest request =
+                new SearchRequest(
+                        "fusion calibration",
+                        Optional.of(new float[] {1.0f, 0.0f}),
+                        Optional.of(MODEL),
+                        SearchMode.HYBRID,
+                        eligibility(TENANT_A),
+                        RelevanceFilters.none(),
+                        TemporalExtension.empty(),
+                        10,
+                        0.0);
+        SearchResult result = engine.search(ctx(TENANT_A), request).toCompletableFuture().join();
+        assertThat(result.hits()).hasSize(2);
     }
 
     @Test

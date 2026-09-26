@@ -14,7 +14,11 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.AnnotationRow;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.storage.contract.Capabilities;
 import org.synanton.storage.contract.ChunkId;
+import org.synanton.storage.contract.Conformant;
+import org.synanton.storage.contract.ConformanceEntry;
+import org.synanton.storage.contract.ConformanceMatrix;
 import org.synanton.storage.contract.DocumentId;
 import org.synanton.storage.contract.PageRequest;
 import org.synanton.storage.contract.SecurityContext;
@@ -58,7 +62,7 @@ import org.synanton.synvault.api.SynvaultStore;
  * values written by this adapter are adapter-internal dedup hints, never content
  * digests (source identity vs content digest stay distinct per invariant 9).
  */
-public class CassandraSynvaultStore implements SynvaultStore {
+public class CassandraSynvaultStore implements SynvaultStore, Conformant {
 
     /** Annotation target type for chunk provenance written through this port. */
     static final String PROVENANCE_TARGET_TYPE = "synvault-chunk";
@@ -184,7 +188,41 @@ public class CassandraSynvaultStore implements SynvaultStore {
 
     @Override
     public StoreCapabilities capabilities() {
-        return new StoreCapabilities(false, ConsistencyLevel.EVENTUAL, false, true, true, true);
+        // supportsStorageRevisions is false: OCC is undemonstrable while revisions are
+        // UNSUPPORTED (008). Flags advertise demonstrated capabilities only.
+        return new StoreCapabilities(false, ConsistencyLevel.EVENTUAL, false, false, true, true);
+    }
+
+    @Override
+    public String adapterName() {
+        return "cassandra";
+    }
+
+    @Override
+    public String adapterVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public ConformanceMatrix conformance() {
+        String evidence = "org.synanton.synvault.cassandra.CassandraSynvaultStoreTest";
+        return new ConformanceMatrix(
+                adapterName(),
+                adapterVersion(),
+                List.of(
+                        ConformanceEntry.unsupported(
+                                Capabilities.SYNVAULT_REVISION,
+                                "008: multi-table atomicity unavailable on Cassandra"),
+                        ConformanceEntry.unsupported(
+                                Capabilities.SYNVAULT_DELETE,
+                                "008: no delete mapping until YDB-POC-021"),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_DOCUMENT, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_CHUNKS, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_PROVENANCE, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNVAULT_PAGINATION, evidence),
+                        ConformanceEntry.unsupported(
+                                Capabilities.SYNVAULT_OCC,
+                                "008: OCC undemonstrable while revisions are unsupported")));
     }
 
     private String tenant(SecurityContext context) {
