@@ -7,6 +7,10 @@ import java.util.Objects;
  * adapter per port; a single deployment switches providers without code change.
  * Resolution and compatibility checks happen in {@link StartupValidator}.
  *
+ * <p><strong>Mixed-provider configurations are explicitly supported</strong>
+ * (Outcome 3: persistence on one backend, retrieval on another). Each port
+ * validates independently against its own matrix; no uniformity rule is enforced.
+ *
  * @param synvault provider name for {@code SynvaultStore} (e.g. cassandra, ydb, inmemory)
  * @param synquest provider name for {@code SynquestEngine}
  * @param writer   provider name for {@code SynquestIndexWriter}

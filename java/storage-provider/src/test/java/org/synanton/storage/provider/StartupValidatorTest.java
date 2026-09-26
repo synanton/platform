@@ -82,6 +82,20 @@ class StartupValidatorTest {
     }
 
     @Test
+    void mixedProviderCombinationSucceeds() {
+        // Outcome 3: persistence and retrieval may live on different backends.
+        // Mixing is decided policy (see ProviderSelection), not incidental.
+        ProviderRegistry registry = registry(cassandraLike(), full("inmemory"));
+        var validated =
+                registry.validate(
+                        new ProviderSelection("cassandra", "inmemory", "inmemory", "inmemory"),
+                        DeploymentRequirements.metadataOnly(false));
+        assertThat(validated.activeProviders().byPort())
+                .containsEntry("synvault", "cassandra@test-1")
+                .containsEntry("synquest", "inmemory@test-1");
+    }
+
+    @Test
     void unknownProviderFailsWithAvailableList() {
         ProviderRegistry registry = registry(full("inmemory"), full("inmemory"));
         assertThatThrownBy(
@@ -173,6 +187,8 @@ class StartupValidatorTest {
         var validated =
                 registry.validate(ProviderSelection.uniform("inmemory"), DeploymentRequirements.fullRevision(false));
         assertThat(validated.describe())
-                .isEqualTo("synvault=inmemory@1.0.0, synquest=inmemory@1.0.0, writer=inmemory@1.0.0, admin=inmemory@1.0.0");
+                .isEqualTo("admin=inmemory@1.0.0, synquest=inmemory@1.0.0, synvault=inmemory@1.0.0, writer=inmemory@1.0.0");
+        assertThat(validated.activeProviders().byPort())
+                .containsEntry("synvault", "inmemory@1.0.0");
     }
 }

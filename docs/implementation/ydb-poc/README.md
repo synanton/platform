@@ -18,6 +18,7 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 040 | `040-call-site-rewire.md` — rewire call sites, retire exception; owner TBD, target 021/024 close | Open |
 | 020 | Machine-readable `ConformanceMatrix`/`Conformant` in `storage-contract`; per-adapter matrices (Cassandra revision/delete UNSUPPORTED per 008); gating suites green (flags vs matrix vs loadable evidence) | Closed |
 | 039 | `java/storage-provider` — config selection + `StartupValidator` (incl. 008 fail-fast with provider+capability+reason); `describe()` for 038 shape; contract tests green | Closed |
+| — | `ActiveProviders` typed snapshot in `storage-contract` (038/039 shared; mixing explicitly supported per Outcome 3, tested); live-test policy (`live-test-policy.md`: PR cadence, shared container, no auto-retry, runner pin); 008 appendix (flag was unused) | Done |
 | 011 | Ports extracted: `synvault-api`, `synquest-api`, `storage-testkit`, `synvault-inmemory`, `synquest-inmemory`, `synvault-cassandra`; 34/34 tests green (incl. 8 live-Cassandra). Provisional surfaces tracked in `011-provisional-followup.md`. `synquest-cassandra` deferred to 024 (no pre-existing Cassandra search impl; current search is Lucene). Existing manifest/index service call sites stay on `ingestion-cache` until 021/024 rewire (port surface itself is Cassandra-free). | Closed |
 | — | Build fix: `testcontainers` 1.20.3 → 1.21.4 (`gradle/libs.versions.toml`; test-scope only). 1.20.3's docker-java 3.4.0 speaks API 1.32; local Docker 29.x requires ≥1.40. | Done |
 

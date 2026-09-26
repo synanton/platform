@@ -1,10 +1,10 @@
 package org.synanton.storage.provider;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.synanton.storage.contract.ActiveProviders;
 import org.synanton.storage.contract.Capabilities;
 import org.synanton.storage.contract.Conformant;
 import org.synanton.storage.contract.ConformanceMatrix;
@@ -110,14 +110,14 @@ public final class ProviderRegistry {
             Conformant writer,
             Conformant admin) {
 
-        /** One-line active-provider summary for the observability contract (038 shape). */
+        /** Typed snapshot for the observability contract (038 consumes this type). */
+        public ActiveProviders activeProviders() {
+            return ActiveProviders.of(id(synvault), id(synquest), id(writer), id(admin));
+        }
+
+        /** One-line active-provider summary for logs and health endpoints. */
         public String describe() {
-            List<String> parts = new ArrayList<>();
-            parts.add(PORT_SYNVAULT + "=" + id(synvault));
-            parts.add(PORT_SYNQUEST + "=" + id(synquest));
-            parts.add(PORT_WRITER + "=" + id(writer));
-            parts.add(PORT_ADMIN + "=" + id(admin));
-            return String.join(", ", parts);
+            return activeProviders().describe();
         }
 
         private static String id(Conformant adapter) {

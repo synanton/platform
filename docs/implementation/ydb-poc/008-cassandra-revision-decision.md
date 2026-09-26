@@ -32,3 +32,11 @@ with `UNSUPPORTED` instead of silently weakening the guarantee (implemented in
 
 If a future Cassandra lightweight-transaction design is proposed, this file reopens
 and the adapter's `UNSUPPORTED` behavior is re-verified (not silently replaced).
+
+## Appendix (2026-09-26): flag was unused, not just corrected
+
+`grep` over `java/synvault`, `java/synquest`, `java/ingestion-cache` (services,
+call sites, dashboards): nothing branched on `supportsStorageRevisions` or
+`supportsTransactions` before the 020 gating work. The `true → false` correction
+for Cassandra changed no runtime branch — it closed an undemonstrated claim, which
+is exactly the §9.3 mechanism working as designed.
