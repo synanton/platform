@@ -5,7 +5,10 @@ import java.util.Objects;
 /**
  * Port-level storage failure. Carries a {@link StorageErrorKind} so domain code can
  * branch on failure semantics without importing any backend-specific exception type.
+ *
+ * <p>{@link Provisional} {@code 1.32}: see {@link StorageErrorKind}.
  */
+@Provisional(value = "1.32", reason = "Error shape binds to the 1.32 Operation/error contract at freeze")
 public class StorageException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;

@@ -47,6 +47,12 @@ include(
     "java:extraction-client",
     "java:annotations",
     "java:storage-contract",
+    "java:synvault-api",
+    "java:synquest-api",
+    "java:storage-testkit",
+    "java:synvault-inmemory",
+    "java:synquest-inmemory",
+    "java:synvault-cassandra",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)
