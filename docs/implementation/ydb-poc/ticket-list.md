@@ -43,3 +43,8 @@ IDs 001–039 per the updated list; 024 split 024A/024B (no new number); 040 add
 Status: 021 closed; 022 write-path bench measured (search legs await 024A/024B);
 024A implemented + contract/gating green (benchmark legs pending); 024B opens
 behind Gate 0 (eligibility probe first, per preflight).
+
+034 input (filed for Phase 4, not Phase 2/3): Cassandra metadata-write benchmark
+on the same shapes as the 022 YDB numbers — required for the §16.1 cost model.
+Without it YDB metadata writes have no comparator. Not urgent; must exist
+before 034 closes.

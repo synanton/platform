@@ -6,6 +6,12 @@ benchmark, scale, or freshness run in Phase 2 may start until it passes.
 
 ## Gate 0: eligibility correctness before anything else
 
+**Verdict 2026-09-26: PASS on both legs (live YDB 26.3 local build).**
+Filtered vector index `ON (tenant, embedding)` + mandatory tenant equality
+returns only eligible rows, correctly ranked; unfiltered `fulltext_relevance`
++ tenant equality + alias-form `FulltextScore` likewise. 024B may proceed to
+engine work and benchmarks. Standing caveats below remain in force for 024B.
+
 First test on the YDB adapter, before benchmarks: a query with a **highly
 selective eligibility predicate** against the YDB vector index — correctness
 first, latency second. Three structurally different outcomes, decided up front:
@@ -20,6 +26,25 @@ first, latency second. Three structurally different outcomes, decided up front:
 
 If none holds, 024B fails a Must requirement and the Synquest PoC collapses
 regardless of latency. That is the correct outcome — do not benchmark past it.
+
+## 028 pre-flight: 024A convergence check
+
+024A mirrors the baseline's field schema; it does not reuse its code
+(`LuceneIndexBuilder` is a Spring `@Component` in a service module whose plain
+jar is disabled — service modules are not libraries, so no clean reuse exists;
+Phase 5 must either mirror or extract a shared core). Before any three-legged
+comparison: run 024A against the frozen corpus and require results within
+tolerance of the baseline legs (same metric shape). **Verify the comparator
+before comparing against it.** If convergence fails, 028 needs a fourth leg or
+the three-legged framing is revised — Phase 6 must never have to distinguish
+"adapter overhead" from "mirror drift" after the fact.
+
+Known 024A divergences (convergent core, divergent edges — the check quantifies):
+convergent: same index tech, `StandardAnalyzer`, BM25 defaults, KNN cosine,
+RRF-60 formula, tenant-dir isolation. Divergent: metadata stored as `meta_*`
+fields vs the service's individual stored fields; hybrid scores normalized by
+max vs raw RRF; no section-expansion/rerank paths; fixed top-100 legs (service
+allows per-request overrides).
 
 ## Collapse scope: Gate 0 fails 024B, not Phase 2
 
