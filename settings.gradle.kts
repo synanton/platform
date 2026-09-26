@@ -46,6 +46,7 @@ include(
     "java:extraction-contract",
     "java:extraction-client",
     "java:annotations",
+    "java:storage-contract",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)
