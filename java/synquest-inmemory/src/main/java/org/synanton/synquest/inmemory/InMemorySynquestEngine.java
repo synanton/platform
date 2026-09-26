@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import org.synanton.storage.contract.AdapterMetrics;
 import org.synanton.storage.contract.Capabilities;
 import org.synanton.storage.contract.ChunkId;
 import org.synanton.storage.contract.Conformant;
@@ -41,6 +42,21 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
 
     private final ConcurrentHashMap<String, ProjectionEntry> projections = new ConcurrentHashMap<>();
     private volatile GenerationId activeGeneration = GenerationId.initial();
+    private final AdapterMetrics metrics;
+
+    public InMemorySynquestEngine() {
+        this(new org.synanton.storage.contract.InMemoryAdapterMetrics("inmemory@1.0.0"));
+    }
+
+    public InMemorySynquestEngine(AdapterMetrics metrics) {
+        this.metrics = metrics;
+    }
+
+    private <T> CompletionStage<T> track(String operation, CompletionStage<T> stage) {
+        long start = System.nanoTime();
+        return stage.whenComplete(
+                (value, error) -> metrics.record(operation, System.nanoTime() - start, error == null));
+    }
 
     private record ProjectionEntry(ChunkProjection projection) {}
 
@@ -58,7 +74,7 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
                         return new ProjectionEntry(current);
                     });
         }
-        return CompletableFuture.completedFuture(null);
+        return track(AdapterMetrics.SYNQUEST_UPSERT, CompletableFuture.completedFuture(null));
     }
 
     @Override
@@ -69,16 +85,18 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
                     (key, existing) ->
                             existing.projection().generationId().equals(generationId) ? null : existing);
         }
-        return CompletableFuture.completedFuture(null);
+        return track(AdapterMetrics.SYNQUEST_DELETE, CompletableFuture.completedFuture(null));
     }
 
     @Override
     public CompletionStage<SearchResult> search(SecurityContext context, SearchRequest request) {
         if (!request.temporal().isEmpty() && !capabilities().temporal()) {
-            return CompletableFuture.failedFuture(
-                    new StorageException(
-                            StorageErrorKind.UNSUPPORTED,
-                            "UNSUPPORTED: temporal retrieval not supported by this adapter"));
+            return track(
+                    AdapterMetrics.SYNQUEST_SEARCH,
+                    CompletableFuture.failedFuture(
+                            new StorageException(
+                                    StorageErrorKind.UNSUPPORTED,
+                                    "UNSUPPORTED: temporal retrieval not supported by this adapter")));
         }
         List<Scored> eligible = new ArrayList<>();
         for (ProjectionEntry entry : projections.values()) {
@@ -117,8 +135,10 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
         for (SearchHit hit : hits) {
             highlights.put(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
-        return CompletableFuture.completedFuture(
-                new SearchResult(hits, eligible.size(), highlights));
+        return track(
+                AdapterMetrics.SYNQUEST_SEARCH,
+                CompletableFuture.completedFuture(
+                        new SearchResult(hits, eligible.size(), highlights)));
     }
 
     @Override
@@ -165,7 +185,7 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
         if (options.full()) {
             projections.clear();
         }
-        return CompletableFuture.completedFuture(null);
+        return track(AdapterMetrics.SYNQUEST_REBUILD, CompletableFuture.completedFuture(null));
     }
 
     @Override

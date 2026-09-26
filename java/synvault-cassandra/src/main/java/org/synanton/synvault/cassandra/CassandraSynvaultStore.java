@@ -14,6 +14,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.AnnotationRow;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.storage.contract.AdapterMetrics;
 import org.synanton.storage.contract.Capabilities;
 import org.synanton.storage.contract.ChunkId;
 import org.synanton.storage.contract.Conformant;
@@ -71,9 +72,14 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
 
     private final IngestionCacheClient client;
     private final String namespace;
+    private final AdapterMetrics metrics;
 
     public CassandraSynvaultStore(IngestionCacheClient client) {
-        this(client, "");
+        this(client, "", org.synanton.storage.contract.NoopAdapterMetrics.INSTANCE);
+    }
+
+    public CassandraSynvaultStore(IngestionCacheClient client, AdapterMetrics metrics) {
+        this(client, "", metrics);
     }
 
     /**
@@ -81,17 +87,39 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
      * (e.g. per-test contract instances) stay isolated without schema changes.
      */
     public CassandraSynvaultStore(IngestionCacheClient client, String namespace) {
+        this(client, namespace, org.synanton.storage.contract.NoopAdapterMetrics.INSTANCE);
+    }
+
+    public CassandraSynvaultStore(
+            IngestionCacheClient client, String namespace, AdapterMetrics metrics) {
         this.client = client;
         this.namespace = namespace == null ? "" : namespace;
+        this.metrics = metrics;
+    }
+
+    private <T> CompletionStage<T> track(String operation, CompletionStage<T> stage) {
+        return trackAt(operation, stage, System.nanoTime());
+    }
+
+    private <T> CompletionStage<T> trackAt(String operation, CompletionStage<T> stage, long start) {
+        return stage.whenComplete(
+                (value, error) -> metrics.record(operation, System.nanoTime() - start, error == null));
+    }
+
+    private <T> CompletionStage<T> failed(String operation, long start, StorageException e) {
+        metrics.record(operation, System.nanoTime() - start, false);
+        return CompletableFuture.failedFuture(e);
     }
 
     @Override
     public CompletionStage<Document> putDocument(
             SecurityContext context, Document document, DocumentWriteOptions options) {
-        String tenant = tenant(context);
-        UUID ref = ref(tenant, document.id());
-        long revision =
-                client.readManifest(tenant, ref).map(row -> Codec.revision(row.ingestUsage())).orElse(0L);
+        long start = System.nanoTime();
+        try {
+            String tenant = tenant(context);
+            UUID ref = ref(tenant, document.id());
+            long revision =
+                    client.readManifest(tenant, ref).map(row -> Codec.revision(row.ingestUsage())).orElse(0L);
         Instant now = Instant.now();
         ManifestRow row =
                 new ManifestRow(
@@ -121,20 +149,37 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
                         revision,
                         now,
                         now);
-        return CompletableFuture.completedFuture(stored);
+        return trackAt(
+                AdapterMetrics.SYNVAULT_PUT, CompletableFuture.completedFuture(stored), start);
+        } catch (RuntimeException e) {
+            metrics.record(AdapterMetrics.SYNVAULT_PUT, System.nanoTime() - start, false);
+            throw e;
+        }
     }
 
     @Override
     public CompletionStage<Optional<Document>> getDocument(SecurityContext context, DocumentId id) {
-        String tenant = tenant(context);
-        return CompletableFuture.completedFuture(
-                client.readManifest(tenant, ref(tenant, id))
-                        .map(row -> Codec.toDocument(id, row)));
+        long start = System.nanoTime();
+        try {
+            String tenant = tenant(context);
+            return trackAt(
+                    AdapterMetrics.SYNVAULT_GET,
+                    CompletableFuture.completedFuture(
+                            client.readManifest(tenant, ref(tenant, id))
+                                    .map(row -> Codec.toDocument(id, row))),
+                    start);
+        } catch (RuntimeException e) {
+            metrics.record(AdapterMetrics.SYNVAULT_GET, System.nanoTime() - start, false);
+            throw e;
+        }
     }
 
     @Override
     public CompletionStage<Void> deleteDocument(SecurityContext context, DocumentId id) {
-        return CompletableFuture.failedFuture(
+        long start = System.nanoTime();
+        return failed(
+                AdapterMetrics.SYNVAULT_DELETE,
+                start,
                 new StorageException(
                         StorageErrorKind.UNSUPPORTED,
                         "UNSUPPORTED: deleteDocument has no Cassandra mapping until YDB-POC-021"));
@@ -143,7 +188,9 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
     @Override
     public CompletionStage<ChunkPage> getChunks(
             SecurityContext context, DocumentId documentId, ChunkQuery query, PageRequest page) {
-        String tenant = tenant(context);
+        long start = System.nanoTime();
+        try {
+            String tenant = tenant(context);
         List<Chunk> filtered =
                 client.readChunks(tenant, ref(tenant, documentId)).stream()
                         .map(row -> toChunk(documentId, row))
@@ -158,13 +205,23 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
                 window.size() > items.size()
                         ? Optional.of(String.valueOf(items.get(items.size() - 1).ordinal()))
                         : Optional.empty();
-        return CompletableFuture.completedFuture(new ChunkPage(items, nextCursor));
+        return trackAt(
+                AdapterMetrics.SYNVAULT_CHUNKS,
+                CompletableFuture.completedFuture(new ChunkPage(items, nextCursor)),
+                start);
+        } catch (RuntimeException e) {
+            metrics.record(AdapterMetrics.SYNVAULT_CHUNKS, System.nanoTime() - start, false);
+            throw e;
+        }
     }
 
     @Override
     public CompletionStage<Void> putDocumentRevision(
             SecurityContext context, DocumentRevision revision, RevisionWriteOptions options) {
-        return CompletableFuture.failedFuture(
+        long start = System.nanoTime();
+        return failed(
+                AdapterMetrics.SYNVAULT_REVISION,
+                start,
                 new StorageException(
                         StorageErrorKind.UNSUPPORTED,
                         "UNSUPPORTED: putDocumentRevision requires multi-table atomicity "
@@ -173,7 +230,9 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
 
     @Override
     public CompletionStage<List<ProvenanceRecord>> getProvenance(SecurityContext context, DocumentId id) {
-        String tenant = tenant(context);
+        long start = System.nanoTime();
+        try {
+            String tenant = tenant(context);
         UUID ref = ref(tenant, id);
         List<ProvenanceRecord> out = new ArrayList<>();
         for (ChunkRow chunk : client.readChunks(tenant, ref)) {
@@ -183,7 +242,12 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
                 Codec.toProvenance(chunkId, row).ifPresent(out::add);
             }
         }
-        return CompletableFuture.completedFuture(out);
+        return trackAt(
+                AdapterMetrics.SYNVAULT_PROVENANCE, CompletableFuture.completedFuture(out), start);
+        } catch (RuntimeException e) {
+            metrics.record(AdapterMetrics.SYNVAULT_PROVENANCE, System.nanoTime() - start, false);
+            throw e;
+        }
     }
 
     @Override

@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import org.synanton.storage.contract.AdapterMetrics;
 import org.synanton.storage.contract.Capabilities;
 import org.synanton.storage.contract.Conformant;
 import org.synanton.storage.contract.ConformanceEntry;
@@ -47,6 +48,21 @@ public class InMemorySynvaultStore implements SynvaultStore, Conformant {
     }
 
     private final ConcurrentHashMap<Key, DocState> states = new ConcurrentHashMap<>();
+    private final AdapterMetrics metrics;
+
+    public InMemorySynvaultStore() {
+        this(new org.synanton.storage.contract.InMemoryAdapterMetrics("inmemory@1.0.0"));
+    }
+
+    public InMemorySynvaultStore(AdapterMetrics metrics) {
+        this.metrics = metrics;
+    }
+
+    private <T> CompletionStage<T> track(String operation, CompletionStage<T> stage) {
+        long start = System.nanoTime();
+        return stage.whenComplete(
+                (value, error) -> metrics.record(operation, System.nanoTime() - start, error == null));
+    }
 
     @Override
     public CompletionStage<Document> putDocument(
@@ -64,21 +80,23 @@ public class InMemorySynvaultStore implements SynvaultStore, Conformant {
                             state.document == null ? Instant.now() : state.document.createdAt(),
                             Instant.now());
             state.document = stored;
-            return CompletableFuture.completedFuture(stored);
+            return track(AdapterMetrics.SYNVAULT_PUT, CompletableFuture.completedFuture(stored));
         }
     }
 
     @Override
     public CompletionStage<Optional<Document>> getDocument(SecurityContext context, DocumentId id) {
         DocState state = states.get(key(context, id));
-        return CompletableFuture.completedFuture(
-                Optional.ofNullable(state == null ? null : state.document));
+        return track(
+                AdapterMetrics.SYNVAULT_GET,
+                CompletableFuture.completedFuture(
+                        Optional.ofNullable(state == null ? null : state.document)));
     }
 
     @Override
     public CompletionStage<Void> deleteDocument(SecurityContext context, DocumentId id) {
         states.remove(key(context, id));
-        return CompletableFuture.completedFuture(null);
+        return track(AdapterMetrics.SYNVAULT_DELETE, CompletableFuture.completedFuture(null));
     }
 
     @Override
@@ -86,7 +104,9 @@ public class InMemorySynvaultStore implements SynvaultStore, Conformant {
             SecurityContext context, DocumentId documentId, ChunkQuery query, PageRequest page) {
         DocState state = states.get(key(context, documentId));
         if (state == null) {
-            return CompletableFuture.completedFuture(new ChunkPage(List.of(), Optional.empty()));
+            return track(
+                    AdapterMetrics.SYNVAULT_CHUNKS,
+                    CompletableFuture.completedFuture(new ChunkPage(List.of(), Optional.empty())));
         }
         List<Chunk> filtered;
         synchronized (state) {
@@ -105,7 +125,9 @@ public class InMemorySynvaultStore implements SynvaultStore, Conformant {
                 window.size() > items.size()
                         ? Optional.of(String.valueOf(items.get(items.size() - 1).ordinal()))
                         : Optional.empty();
-        return CompletableFuture.completedFuture(new ChunkPage(items, nextCursor));
+        return track(
+                AdapterMetrics.SYNVAULT_CHUNKS,
+                CompletableFuture.completedFuture(new ChunkPage(items, nextCursor)));
     }
 
     @Override
@@ -117,13 +139,15 @@ public class InMemorySynvaultStore implements SynvaultStore, Conformant {
             long current = state.document == null ? 0 : state.document.storageRevision();
             if (options.expectedRevision().isPresent()
                     && options.expectedRevision().get() != current) {
-                return CompletableFuture.failedFuture(
-                        new StorageException(
-                                StorageErrorKind.CONFLICT,
-                                "CONFLICT: expected revision "
-                                        + options.expectedRevision().get()
-                                        + " but stored is "
-                                        + current));
+                return track(
+                        AdapterMetrics.SYNVAULT_REVISION,
+                        CompletableFuture.failedFuture(
+                                new StorageException(
+                                        StorageErrorKind.CONFLICT,
+                                        "CONFLICT: expected revision "
+                                                + options.expectedRevision().get()
+                                                + " but stored is "
+                                                + current)));
             }
             long committed = current + 1;
             Instant now = Instant.now();
@@ -139,15 +163,17 @@ public class InMemorySynvaultStore implements SynvaultStore, Conformant {
             state.chunks = List.copyOf(revision.chunks());
             state.provenance = List.copyOf(revision.provenance());
             state.publication = revision.publication();
-            return CompletableFuture.completedFuture(null);
+            return track(AdapterMetrics.SYNVAULT_REVISION, CompletableFuture.completedFuture(null));
         }
     }
 
     @Override
     public CompletionStage<List<ProvenanceRecord>> getProvenance(SecurityContext context, DocumentId id) {
         DocState state = states.get(key(context, id));
-        return CompletableFuture.completedFuture(
-                state == null ? List.of() : List.copyOf(state.provenance));
+        return track(
+                AdapterMetrics.SYNVAULT_PROVENANCE,
+                CompletableFuture.completedFuture(
+                        state == null ? List.of() : List.copyOf(state.provenance)));
     }
 
     @Override

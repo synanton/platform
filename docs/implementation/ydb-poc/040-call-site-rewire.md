@@ -1,7 +1,9 @@
 # YDB-POC-040 — Rewire call sites off ingestion-cache; retire CQL exception
 
 **Status:** Open (target: 021/024 close)
-**Owner:** TBD — assign before Phase 1 starts, or 021/024 stall on invisible debt
+**Owner: Platform Engineering, YDB-PoC workstream** — assigned 2026-09-26.
+A named human countersigns at Phase-0 exit review; until then the workstream owns
+the target. If unowned at Phase-1 entry, 021/024 do not start (escalate, do not drift).
 **Tracks:** `011-cql-exception.md`
 
 ## Scope

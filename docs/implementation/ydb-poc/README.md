@@ -15,7 +15,9 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 008 | `008-cassandra-revision-decision.md` — option (b): Cassandra non-conforming for revision/delete; Outcome 4 qualified; 039 rejects Cassandra where revision semantics required | Closed |
 | 024 | `024-scope-split.md` — 024A (Cassandra engine, new) / 024B (YDB engine); baseline = ingestion-cache path for 004/006 | Recorded |
 | 011 | `011-cql-exception.md` — transitional CQL-in-ingestion-cache exception | Open → 040 |
-| 040 | `040-call-site-rewire.md` — rewire call sites, retire exception; owner TBD, target 021/024 close | Open |
+| 040 | `040-call-site-rewire.md` — owner: Platform Eng YDB-PoC workstream (named human countersigns at Phase-0 exit); target 021/024 close | Open |
+| 004+006 | `004-parity-matrix.md` (frozen: current Lucene behavior per Must row, meet-or-justify flags, tie-break rule) + `006-baseline-thresholds.md` (protocol + rules frozen, preliminary operating points measured, absolutes gate on v1-corpus run) + `BaselineBench` (`-Dydb.bench=true`, excluded from PR) — landed as one unit | Closed |
+| 038 | `038-observability-contract.md` — taxonomy + wiring (metrics default-on in-memory, Noop+injectable on Cassandra, freshness types for 029, Micrometer deferred) | Closed |
 | 020 | Machine-readable `ConformanceMatrix`/`Conformant` in `storage-contract`; per-adapter matrices (Cassandra revision/delete UNSUPPORTED per 008); gating suites green (flags vs matrix vs loadable evidence) | Closed |
 | 039 | `java/storage-provider` — config selection + `StartupValidator` (incl. 008 fail-fast with provider+capability+reason); `describe()` for 038 shape; contract tests green | Closed |
 | — | `ActiveProviders` typed snapshot in `storage-contract` (038/039 shared; mixing explicitly supported per Outcome 3, tested); live-test policy (`live-test-policy.md`: PR cadence, shared container, no auto-retry, runner pin); 008 appendix (flag was unused) | Done |
