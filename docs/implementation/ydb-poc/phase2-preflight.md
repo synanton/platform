@@ -72,10 +72,20 @@ allows per-request overrides).
   vectors is meaningless: 028's vector leg produces a latency number for 024B
   and **no recall number**; the ≥0.95 gate waits on the real pipeline. A report
   showing "vector leg run" without this note will be misread as recall tested.
-- **Dimension bias (latency itself):** ANN cost scales with dimension, so a
-  384-d 024B leg is intrinsically cheaper than a 768-d baseline leg. Either
+- **Dimension bias (latency itself):** ANN cost scales with dimension, so a  384-d 024B leg is intrinsically cheaper than a 768-d baseline leg. Either
   match dims (re-index one side) or annotate every vector-leg number with both
   dims and the direction of bias. Phase 6 must not over-read the gap.
+- **minScore semantics differ per leg:** baseline minScore lives in BM25 score
+  space; 024B hybrid minScore lives in rank-score space (1/(60+position)).
+  The same numeric value filters differently on each side. 028 runs with
+  **minScore=0 on all legs** (neutral filter); any non-zero cutoff is
+  normalized per-leg in the harness and recorded as such. Never compare
+  "baseline at minScore=X" with "YDB at minScore=X" as if X meant one thing.
+- **024A convergence gate (blocking for 028):** before the three-legged run,
+  024A and the baseline service run the frozen corpus and top-K results must
+  agree within tolerance (same metric shape). If convergent, 028 is valid; if
+  not, the frame is revised (fourth leg or re-scope) — adapter overhead vs
+  mirror drift must never be disentangled after the fact.
 
 ## Collapse scope: Gate 0 fails 024B, not Phase 2
 

@@ -31,6 +31,11 @@ for index eligibility, 024B may migrate instead — but the migration procedure
 then becomes explicit 024B scope, reviewed before execution. Default holds
 unless proven otherwise during the Gate 0 probe.
 
+Key derivation (clean, recorded): vectors rows address chunks as
+`tenant|chunk_id`, derived losslessly from 021's `(tenant_id, chunk_id)` —
+no join, no divergence. 021's "final" status stands; the vectors table holds a
+superset (text + embedding) keyed differently for HybridRank's single-PK rule.
+
 ## Embedding pipeline status (recorded 2026-09-26): not available here
 
 No live embedding endpoint in this environment (no vLLM/Ollama; GPU-plane
