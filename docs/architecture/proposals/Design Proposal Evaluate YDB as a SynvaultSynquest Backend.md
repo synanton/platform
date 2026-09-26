@@ -1,10 +1,25 @@
-# Design Proposal: Evaluate YDB as a Synvault/Synquest Backend and Hide Storage Behind Stable Interfaces
+# Design Proposal: Evaluate YDB as a Synvault/Synquest Persistence Backend
 
-**Status:** Final Draft for Architecture Review
-**Scope:** Synanton platform — storage/search layer
-**Candidate:** YDB 26.3.x; exact server and Java SDK versions must be pinned for the PoC
-**Related components:** `Synvault`, `Synquest`, `Relix`, `extraction-gateway`
-**Non-goals:** Replacing MinIO object storage, replacing the graph engine, or replacing all PostgreSQL/other service databases.
+**Status:** Draft for Architecture Review (Revision 4)
+**Governing document:** Synanton Platform Architecture 1.0 (Approved — capstone)
+**Scope:** Persistence port and YDB adapter for Knowledge 1.25 and Search 1.31
+**Candidate:** YDB 26.3.x; exact server and Java SDK versions to be pinned in Phase 0
+**Related platform designs:** 1.23 (Security), 1.25 (Knowledge), 1.26 (Content Cache), 1.27 (Eventing), 1.28 (Ingestion), 1.29 (Identity), 1.31 (Search), 1.34 (Temporal Versioning)
+**Non-goals:** Replacing MinIO object storage, replacing the graph engine, replacing all PostgreSQL/other service databases, redefining ownership or semantics established by the designs above.
+
+------
+
+## 0. Architectural Dependency
+
+This proposal is an **implementation/storage-layer proposal** under Synanton Platform Architecture 1.0. It does not redefine ownership or semantics established by Designs 1.23, 1.25, 1.26, 1.27, 1.28, 1.29, 1.31, or 1.34.
+
+Where this proposal concerns security, eventing, canonical knowledge, source versioning, temporal semantics, or search behavior, **the corresponding normative platform design governs**. This document only defines:
+
+- a **persistence port** (`SynvaultStore`) used by Knowledge 1.25 to store canonical knowledge;
+- a **retrieval port** (`SynquestEngine`) used by Search 1.31;
+- a **YDB adapter** as one candidate implementation behind those ports.
+
+In case of conflict between this proposal and any approved platform design, the approved design prevails.
 
 ------
 
@@ -12,47 +27,75 @@
 
 This proposal has two related but independent objectives.
 
-### Objective A — Establish stable storage/search ports
+### Objective A — Establish a stable persistence/retrieval port
 
 Define stable Synanton interfaces for:
 
-1. **Synvault** — persistent storage of semantic documents, chunks, metadata, provenance, and versions.
-2. **Synquest** — lexical, vector, and hybrid search over semantic chunks.
+1. **`SynvaultStore`** — a **persistence port** used by Knowledge 1.25 to persist canonical knowledge (documents, chunks, metadata, provenance, storage revisions).
+2. **`SynquestEngine`** — a **retrieval port** used by Search 1.31 for lexical, vector, and hybrid retrieval over derived search projections.
 
-The domain and application layers must depend on these interfaces rather than on Cassandra, YDB, or another storage/search implementation.
+The domain and application layers must depend on these ports rather than on Cassandra, YDB, or another storage/search implementation.
 
-The proposed architecture is defined in §8, with in-memory implementations for tests and lightweight development.
+The proposed architecture is defined in §8. In-memory implementations are provided for tests and lightweight development.
 
 ### Objective B — Evaluate YDB as one implementation
 
-Evaluate YDB as a candidate implementation for Synvault and Synquest.
+Evaluate YDB as a candidate implementation behind these ports.
 
-The proposal does **not** make a production migration decision. The YDB PoC must establish whether YDB meets Synanton requirements for:
+This proposal does **not** make a production migration decision. The YDB PoC must establish whether YDB meets Synanton requirements for:
 
-- transactional metadata/document storage;
-- lexical search;
-- vector search;
-- hybrid search;
-- filtered enterprise search;
+- transactional persistence of canonical knowledge;
+- lexical, vector, and hybrid retrieval;
+- **pre-ranking security and tenant eligibility**;
 - index update behavior;
-- recall;
-- latency and throughput;
+- recall, latency, throughput;
 - operational characteristics;
 - cost.
 
-The primary architectural decision is therefore:
+The primary architectural decision is:
 
-> **Define Synvault/Synquest ports first, then evaluate YDB as one adapter behind those ports.**
+> **Define persistence and retrieval ports first, then evaluate YDB as one adapter behind those ports.**
 
-YDB is not proposed as a universal storage replacement. MinIO remains object storage, and `Relix` remains a specialized graph engine.
+YDB is not proposed as a universal storage replacement. MinIO remains object storage; `Relix` remains the graph engine; Eventing 1.27 remains the async fabric.
 
 ------
 
-## 2. Existing Synanton Architectural Precedent
+## 2. Relationship to Platform Architecture 1.0
 
-The storage abstraction follows an existing Synanton platform pattern rather than introducing a new architectural style.
+### 2.1 Plane mapping
 
-The proposal should be consistent with the existing `gpu-runtime` and `content-extractor` components:
+The proposal introduces no new platform planes. It implements persistence and retrieval within planes that Architecture 1.0 already defines.
+
+| Proposal component    | Architecture plane                | Authority                                                    |
+| --------------------- | --------------------------------- | ------------------------------------------------------------ |
+| `SynvaultStore`       | Knowledge 1.25 (persistence)      | Persists canonical knowledge owned by Knowledge 1.25. Does not own source-version authority. |
+| `SynquestEngine`      | Search 1.31 (retrieval)           | Reads derived search projections owned by Search 1.31. Never authoritative. |
+| `SynvaultOutbox`      | Adapter-internal mechanism        | Bridges a Synvault persistence transaction to Eventing 1.27. Not a competing event substrate. |
+| `SynquestIndexWriter` | Search 1.31 (projection mutation) | Applies derived-projection changes consumed from Eventing 1.27. |
+
+### 2.2 Ownership statement
+
+> **`SynvaultStore` is a persistence port, not a competing domain authority.** It persists state owned by the relevant platform plane. In particular, source-version authority remains with **Ingestion 1.28**, canonical knowledge remains owned by **Knowledge 1.25**, and derived search projections remain owned by **Search 1.31**.
+
+Search remains a **derived projection**: it is never a second source of truth.
+
+### 2.3 Eventing is authoritative
+
+Event delivery, retry, ordering, replay classification, and consumer idempotency are governed by **Design 1.27**. This proposal does not define an independent asynchronous contract.
+
+### 2.4 Security is authoritative
+
+Tenant scope and authorization are derived from a **validated identity context** (Identity 1.29 + Security 1.23). Storage-level tenant keys are an implementation mechanism, not the source of authorization truth. Search eligibility is enforced **before ranking**, as required by Search 1.31.
+
+### 2.5 Temporal semantics are authoritative
+
+Where Knowledge 1.25 persists versioned state, temporal semantics follow **Design 1.34** (source version, version series, publication time, observation time, validity intervals, multiple simultaneously eligible current versions). Storage revisions in this proposal are an internal optimistic-concurrency mechanism and are **not** the platform's semantic version.
+
+------
+
+## 3. Existing Synanton Architectural Precedent
+
+The ports/adapters approach follows an established Synanton platform pattern:
 
 text
 
@@ -72,7 +115,7 @@ SynquestEngine
 
 
 
-The existing components establish the intended platform convention:
+Conventions carried over:
 
 - stable domain-facing ports;
 - provider-specific implementations in separate modules;
@@ -80,35 +123,34 @@ The existing components establish the intended platform convention:
 - capability discovery for infrastructure validation;
 - testable implementations behind common contracts.
 
-`SynvaultStore` and `SynquestEngine` should follow the same module naming and provider-selection conventions. Any lessons learned from the existing capability-discovery implementations should be applied consistently rather than creating a storage-specific mechanism.
+Any lessons learned from the existing capability-discovery implementations should be applied consistently rather than creating a storage-specific mechanism.
 
 ------
 
-## 3. Motivation
+## 4. Motivation
 
 Today, Cassandra is used for content metadata, semantic chunks, and hybrid search indexing. This creates several architectural concerns:
 
 - Domain services may depend on Cassandra-specific concepts.
 - Search logic is coupled to Cassandra's vector/search implementation.
 - Consistency semantics are backend-specific.
-- Analytical workloads may require a separate backend.
 - Replacing Cassandra later would require invasive changes.
 
-The architectural response should be independent of the YDB decision:
+The architectural response is independent of the YDB decision:
 
 > **The domain should depend on Synanton storage/search semantics, not on the physical database.**
 
-YDB is a candidate because current YDB releases provide distributed transactional storage together with native full-text, vector, and hybrid-search capabilities.
+YDB is a candidate because current YDB releases combine distributed transactional storage with native full-text, vector, and hybrid-search capabilities in a single system, which maps unusually well to the specific experiment of consolidating Synvault and Synquest persistence behind one operational platform.
 
-However, feature availability alone does not establish suitability for Synanton. The PoC must validate the actual workload.
+Feature availability alone does not establish suitability. The PoC must validate the actual workload.
 
 ------
 
-## 4. Goals
+## 5. Goals
 
-### 4.1 Architecture
+### 5.1 Architecture
 
-- Define `SynvaultStore` and `SynquestEngine` interfaces.
+- Define `SynvaultStore` and `SynquestEngine` ports.
 - Refactor Cassandra access behind adapters.
 - Add in-memory implementations for tests.
 - Add YDB implementations as PoC candidates.
@@ -116,19 +158,19 @@ However, feature availability alone does not establish suitability for Synanton.
 - Provide contract tests shared by all implementations.
 - Prevent CQL/YQL leakage outside adapter modules.
 
-### 4.2 YDB evaluation
+### 5.2 YDB evaluation
 
 Evaluate:
 
-- document and chunk CRUD;
-- transactional document revisions;
+- document and chunk persistence;
+- transactional document revision commits;
 - metadata filtering;
-- provenance;
-- versioning;
-- lexical/BM25 search;
-- vector ANN search;
-- hybrid search;
-- tenant filtering;
+- provenance storage;
+- storage-revision concurrency;
+- lexical/BM25 retrieval;
+- vector ANN retrieval;
+- hybrid retrieval;
+- **pre-ranking security and tenant eligibility**;
 - complex metadata filtering;
 - index update latency;
 - recall@10;
@@ -138,7 +180,19 @@ Evaluate:
 - operational complexity;
 - total cost of ownership.
 
-### 4.3 Migration readiness
+### 5.3 Scope boundary
+
+The YDB `SynquestEngine` PoC evaluates only the **lexical/vector/hybrid subset** of Search 1.31.
+
+**Explicitly out of scope for this PoC:**
+
+- **graph retrieval** (owned by Search 1.31 and delegated to `Relix`);
+- **temporal retrieval** (owned by Search 1.31 under Design 1.34);
+- **version-series eligibility** as a search candidate constraint beyond what is needed to preserve the port shape.
+
+The `SynquestEngine` port is expected to accommodate graph and temporal retrieval in a later design or PoC without redesign. This PoC does not evaluate YDB for those capabilities.
+
+### 5.4 Migration readiness
 
 If the PoC succeeds:
 
@@ -149,113 +203,80 @@ If the PoC succeeds:
 
 ------
 
-## 5. Non-Goals
+## 6. Non-Goals
 
 - Replacing MinIO or S3-compatible object storage.
 - Replacing `Relix` graph computation.
+- Replacing Content Cache 1.26.
 - Migrating all PostgreSQL or other service databases.
 - Deciding that YDB replaces ClickHouse.
-- Using YDB as the primary message queue or stream processor.
+- Redefining Eventing 1.27 semantics.
+- Redefining Identity 1.29 / Security 1.23 semantics.
+- Redefining Temporal Versioning 1.34 semantics.
 - Committing to production YDB before PoC results.
 - Designing the entire Synanton persistence model around YDB-specific features.
 
 ------
 
-## 6. Architecture Principles
+## 7. Architecture Principles
 
-### 6.1 Synvault is authoritative; Synquest is a derived projection
+### 7.1 Ownership follows Architecture 1.0
 
-The preferred model is:
+The persistence model is:
 
 text
 
 ```
-                 Synvault
-              source of truth
+Ingestion 1.28
+    owns SourceVersion / VersionSeries
+             ↓
+Knowledge 1.25
+    owns canonical knowledge / chunks / derived knowledge
+             ↓
+Synvault persistence port
+    physical persistence implementation
+             ↓
+Cassandra / YDB / ...
+             ↓
+Search 1.31
+    owns derived search projections
+             ↓
+Synquest retrieval port
+```
+
+
+
+### 7.2 Synvault is authoritative for persisted Knowledge state; Synquest is a derived projection
+
+text
+
+```
+                 Synvault (Knowledge 1.25 persistence)
+              source of truth for canonical state
                    |
-             committed revision
+             committed storage revision
                    |
-                 outbox
+             durable publication record
                    |
-             projection/indexer
+                 Eventing 1.27
+                   |
+             projection consumer
                    |
                    v
-                Synquest
-             derived search index
+             Synquest (Search 1.31 projection)
 ```
 
 
 
-A search index must not become a second source of truth.
+A search index must not become a second source of truth. Search visibility may be eventually consistent.
 
-This provides a clean consistency model:
+### 7.3 Ports before providers
 
-- Synvault owns document/chunk state.
-- Synquest owns search projections.
-- Search visibility can be eventually consistent.
-- Projection updates are idempotent.
-- Rebuilding Synquest does not require changing source data.
+Domain code must not know whether the implementation is Cassandra, YDB, in-memory, or a future dedicated vector/search engine.
 
-### 6.2 Ports before providers
+### 7.4 Capability discovery must not become backend leakage
 
-Domain code must not know whether the implementation is:
-
-- Cassandra;
-- YDB;
-- an in-memory implementation;
-- or a future dedicated vector/search engine.
-
-### 6.3 Capability discovery must not become backend leakage
-
-Capabilities are useful for deployment validation, diagnostics, and feature negotiation.
-
-They must not turn into pervasive application code such as:
-
-java
-
-```
-if (store.capabilities().supportsX()) {
-    // Cassandra-specific/YDB-specific behavior
-}
-```
-
-
-
-Core domain semantics should remain common across implementations.
-
-------
-
-## 7. Candidate Evaluation: Cassandra vs YDB
-
-| Criterion        | Cassandra (current)                         | YDB (candidate)                               | Evaluation                                   |
-| ---------------- | ------------------------------------------- | --------------------------------------------- | -------------------------------------------- |
-| Data model       | Wide-column NoSQL                           | Relational + JSON                             | Validate fit for Synvault                    |
-| Consistency      | Existing Cassandra semantics                | Transactional/strong consistency capabilities | Validate required guarantees                 |
-| Transactions     | Limited/lightweight transaction model       | Distributed transactions                      | Test document-revision atomicity             |
-| Full-text        | Existing/custom implementation              | Native full-text/BM25 capabilities            | Compare relevance and latency                |
-| Vector search    | Current HNSW implementation                 | Native vector ANN                             | Compare recall/latency                       |
-| Hybrid search    | Custom composition                          | Native hybrid ranking capabilities            | Validate against Synquest semantics          |
-| Filtering        | Existing Cassandra/query model              | SQL/YQL + metadata filtering                  | Benchmark enterprise-style filters           |
-| Scaling          | Known current behavior                      | Distributed sharding/rebalancing              | Benchmark target topology                    |
-| Analytics        | Separate analytical backend may be required | OLAP capabilities exist                       | Outside current migration decision           |
-| Ecosystem        | Mature CQL ecosystem                        | YQL/YDB SDK ecosystem                         | Evaluate migration effort                    |
-| Operational risk | Known current behavior                      | New platform dependency                       | PoC required                                 |
-| Vendor lock-in   | Existing dependency                         | New dependency                                | Ports/adapters mitigate application coupling |
-
-### 7.1 Important distinction
-
-The PoC must distinguish:
-
-1. **Feature exists**
-2. **Feature implements the required semantics**
-3. **Feature performs adequately at Synanton scale**
-4. **Feature is operationally acceptable**
-
-Passing (1) does not imply passing (2)–(4).
-
-### 7.2 Alternatives considered
-
-YDB is the candidate being PoC'd now because the evaluation can test a potential consolidation of transactional storage and search capabilities behind the same Synanton ports. The architecture review should also recognize established alternatives such as PostgreSQL + pgvector, Elasticsearch/OpenSearch, Qdrant, Weaviate, Milvus, and Vespa, as well as keeping Cassandra plus a dedicated search/vector backend. These alternatives are not evaluated in this PoC; if YDB fails a required gate, the same ports provide the boundary for a subsequent workload-specific comparison.
+Capabilities are claims, not descriptive metadata. They are used for deployment validation, diagnostics, and feature negotiation, and are subject to the conformance principle in §9.3.
 
 ------
 
@@ -263,15 +284,12 @@ YDB is the candidate being PoC'd now because the evaluation can test a potential
 
 ### 8.1 Layering
 
-Use a ports-and-adapters / hexagonal architecture.
-
 text
 
 ```
 +------------------------------------------------------+
 |                  Synanton Domain                     |
-|                                                      |
-|  DocumentRevision     Chunk     SearchRequest        |
+|  (Knowledge 1.25 / Search 1.31 application layers)   |
 +----------------------------+-------------------------+
                              |
                  +-----------+-----------+
@@ -308,7 +326,7 @@ synanton-storage-testkit
 
 Rules:
 
-- `*-api` contains interfaces, domain-facing DTOs, capabilities, and exceptions.
+- `*-api` contains ports, domain-facing DTOs, capability contracts, and exceptions.
 - `*-cassandra`, `*-ydb`, and `*-inmemory` contain implementation-specific code.
 - Domain modules depend only on `*-api`.
 - No CQL outside Cassandra adapters.
@@ -318,36 +336,44 @@ Rules:
 
 ### 8.3 Observability and Operational Contract
 
-Every storage/search adapter must expose enough operational information to identify the active provider and diagnose failures without inspecting provider-specific internals. The minimum contract is:
+Every adapter must expose:
 
 - active adapter/provider name and implementation version;
 - request/write/read error counts and latency distributions;
 - Synvault transaction failures and retries;
-- outbox backlog depth and oldest-event age;
-- Synvault commit-to-Synquest search-visible freshness/lag;
+- publication-record backlog depth and oldest-record age;
+- Synvault commit → Synquest search-visible freshness/lag;
 - index build/rebuild status and duration;
-- tracing that can follow a revision through `Synvault → outbox → indexer → Synquest`;
-- adapter-specific health/readiness signals, including dependency connectivity and schema/index readiness.
+- tracing that follows a revision through `Synvault → Eventing 1.27 → indexer → Synquest`;
+- adapter-specific health/readiness signals.
 
-Metrics and traces should use provider-neutral names at the platform boundary; provider-specific diagnostics may be added inside adapters.
+Metrics and traces use provider-neutral names at the platform boundary.
 
 ### 8.4 Security and Multi-Tenancy
 
-Tenant isolation is a platform invariant, not merely a query convention. Each adapter must document where isolation is enforced:
+`SynvaultStore` and `SynquestEngine` **consume an already validated security and tenant context** defined by Identity 1.29 and Security 1.23. Storage-level tenant keys are an implementation mechanism, not the source of authorization truth.
 
-- adapter-level authorization/query construction;
-- schema/key-space/index isolation; or
-- an equivalent database-native isolation mechanism, if available.
+Invariants:
 
-The minimum security contract includes:
+- Security context cannot weaken across async boundaries (per Architecture 1.0).
+- **Security eligibility is applied during candidate generation, before ranking.** The YDB adapter must not rely on post-ranking filtering.
+- Ranking cannot override authorization.
+- Metadata side channels (highlights, facets, autocomplete, counts) obey the same eligibility rule.
+- Temporal eligibility (when in scope) is a pre-ranking constraint, not a post-filter.
+
+Each adapter must document where isolation is enforced:
+
+- eligibility predicate composed into the query before ranking;
+- schema/keyspace/index isolation; or
+- an equivalent database-native mechanism aligned with the above.
+
+Minimum security contract:
 
 - encryption in transit for all adapter/database connections;
-- encryption at rest according to the deployment's security baseline;
-- audit logging for security-relevant reads, writes, deletes, and administrative/index operations where required by the platform;
-- explicit data-residency constraints and deployment-region requirements where applicable;
-- cross-tenant leakage tests covering reads, writes, lexical/vector/hybrid search, filtering, and index rebuild/replay paths.
-
-Security controls must be identified as enforced by the platform, adapter, or infrastructure rather than assumed to be equivalent across providers.
+- encryption at rest per deployment baseline;
+- audit logging for security-relevant reads/writes/deletes/index operations;
+- explicit data-residency constraints;
+- cross-tenant leakage tests covering reads, writes, lexical/vector/hybrid search, filtering, side channels, and index rebuild/replay paths.
 
 ------
 
@@ -355,21 +381,15 @@ Security controls must be identified as enforced by the platform, adapter, or in
 
 ### 9.1 SynvaultStore
 
-Synvault is responsible for authoritative semantic-document state.
+`SynvaultStore` is the persistence port used by Knowledge 1.25.
 
 Responsibilities:
 
-- store documents;
-- store chunks;
-- store metadata;
-- store provenance;
-- manage document revisions;
+- persist documents, chunks, metadata, provenance, storage revisions;
 - retrieve by ID;
 - retrieve chunks by document;
 - support required filtering;
 - provide the transaction boundary required by the domain.
-
-A preferred interface shape is:
 
 java
 
@@ -405,11 +425,7 @@ public interface SynvaultStore {
 
 
 
-The transaction boundary is part of the domain contract; it must not be left for each adapter to define.
-
 #### Required atomicity contract
-
-The minimum `SynvaultStore` contract is:
 
 text
 
@@ -418,7 +434,7 @@ putDocumentRevision(
     document,
     chunks,
     provenance,
-    outbox event
+    durable publication record
 ) is atomic.
 ```
 
@@ -426,36 +442,16 @@ putDocumentRevision(
 
 Specifically:
 
-- The document revision, its chunks, provenance records, and the corresponding projection/outbox event are committed atomically when the selected backend supports the required transaction semantics.
-- Chunk-level writes that are not part of a document revision are not required to be atomic with each other.
+- The document revision, its chunks, provenance records, and the **durable publication record** are committed atomically when the selected backend supports the required transaction semantics.
+- **Provenance is mandatory for derived state** (Architecture 1.0 invariant 12). A document revision without provenance is invalid and must be rejected.
+- Chunk-level writes not part of a document revision are not required to be atomic with each other.
 - Cross-document writes are not part of the base atomicity contract.
 - An adapter that cannot satisfy the required atomicity contract must report incompatibility during startup validation; it must not silently weaken the domain contract.
-- On commit failure or client disconnect mid-commit, the result must be either a fully committed revision or no revision at all. Partial persistence of a revision is a contract violation.
+- On commit failure or client disconnect mid-commit, the result is either a fully committed revision or no revision at all.
 
-This is important because otherwise the least capable adapter establishes the effective platform semantics and YDB's stronger transaction model cannot be used safely.
-
-A document revision may contain:
-
-text
-
-```
-Document
-  + metadata
-  + chunks
-  + provenance
-  + version
-  + outbox event
-```
-
-
-
-`putDocument` is a convenience operation for document state that is not creating a revision with chunks/provenance. It must not be used as an implicit alternative to the revision transaction contract; revision writes use `putDocumentRevision` and the atomic boundary defined above.
-
-The adapter must implement this transaction boundary or fail startup validation; it must not redefine the atomicity semantics.
+`putDocument` is a convenience operation for document state that does not create a revision with chunks/provenance. It must not be used as an implicit alternative to the revision transaction contract.
 
 ### 9.2 StoreCapabilities
-
-Capabilities should describe infrastructure characteristics, not expose provider-specific behavior.
 
 java
 
@@ -464,28 +460,27 @@ public record StoreCapabilities(
     boolean supportsTransactions,
     ConsistencyLevel consistency,
     boolean supportsJsonFilters,
-    boolean supportsVersioning,
+    boolean supportsStorageRevisions,
     boolean supportsProvenance
 ) {}
 ```
 
 
 
-Capabilities should primarily be used for:
-
-- startup validation;
-- diagnostics;
-- contract-test selection;
-- deployment compatibility checks.
-
 Capability enforcement requires a mechanism, not only a policy:
 
 - an ArchUnit (or equivalent) rule must prohibit domain/application modules from calling `capabilities()` outside designated `*Configuration` / `*Provider` classes;
 - contract tests must execute for every capability combination claimed by each adapter;
-- provider-selection/configuration code is responsible for rejecting an incompatible adapter at startup;
-- the code-review checklist must include a check that capability checks have not been introduced into domain behavior.
+- provider-selection/configuration code rejects an incompatible adapter at startup;
+- the code-review checklist checks that capability checks have not been introduced into domain behavior.
 
-Capabilities must not become a mechanism for embedding backend-specific branches in domain logic.
+### 9.3 Capability claims require conformance evidence
+
+Consistent with Platform Architecture 1.0 §13:
+
+> **A capability claim without conformance evidence is not a supported claim.**
+
+Each capability flag is a claim gated by the adapter's own conformance/contract test suite before production enablement. Until conformance evidence exists, the flag must be reported as `false` (or `UNVERIFIED`, if the record supports it).
 
 ------
 
@@ -493,7 +488,7 @@ Capabilities must not become a mechanism for embedding backend-specific branches
 
 ### 10.1 Search API
 
-`SynquestEngine` represents the search semantics exposed to the platform.
+`SynquestEngine` is the retrieval port used by Search 1.31. It is **purely query-facing**. Projection mutation is separated (see §10.3).
 
 java
 
@@ -502,10 +497,6 @@ public interface SynquestEngine {
 
     CompletionStage<SearchResult> search(
         SearchRequest request
-    );
-
-    CompletionStage<Void> delete(
-        Collection<ChunkId> ids
     );
 
     SearchCapabilities capabilities();
@@ -523,14 +514,17 @@ public record SearchRequest(
     String queryText,
     Optional<float[]> queryEmbedding,
     Optional<String> embeddingModelId,
-    SearchMode mode,          // LEXICAL, VECTOR, HYBRID
-    Map<String, Object> filters,
+    SearchMode mode,                 // LEXICAL, VECTOR, HYBRID
+    EligibilityConstraints eligibility, // security + temporal, pre-ranking, mandatory
+    RelevanceFilters filters,           // metadata, optional, ranking-time
     int topK,
     double minScore
 ) {}
 ```
 
 
+
+`EligibilityConstraints` is mandatory and applied during candidate generation. A post-ranking implementation is a contract violation.
 
 `SearchCapabilities`:
 
@@ -542,55 +536,54 @@ public record SearchCapabilities(
     boolean vector,
     boolean hybrid,
     boolean filters,
-    boolean highlights,
-    boolean explanation // true only when explanation is part of the approved feature-parity contract
+    boolean highlights,          // true only when highlight eligibility is enforced
+    boolean explanation          // true only when part of the approved feature-parity contract
 ) {}
 ```
 
 
 
-### 10.2 Separate index administration from search semantics
+`SearchCapabilities` flags are subject to §9.3.
 
-Physical index creation and lifecycle should not be part of the core search port.
+### 10.2 Search scope for this PoC
 
-Where required, use a separate administrative interface:
+The port is designed to accommodate lexical, vector, hybrid, graph, and temporal retrieval. This PoC evaluates only the lexical/vector/hybrid subset. Graph and temporal retrieval remain the responsibility of Search 1.31 and are addressed in later designs.
+
+### 10.3 Projection mutation is a separate port
+
+Projection mutation is not a search semantic. It is separated:
 
 java
 
 ```
+public interface SynquestIndexWriter {
+
+    CompletionStage<Void> upsert(
+        List<ChunkProjection> projections
+    );
+
+    CompletionStage<Void> delete(
+        Collection<ChunkId> ids
+    );
+}
+
 public interface SynquestIndexAdmin {
 
-    CompletionStage<Void> ensureSchema(
-        SchemaOptions options
-    );
-
-    CompletionStage<Void> index(
-        List<Chunk> chunks,
-        IndexOptions options
-    );
-
-    CompletionStage<Void> rebuild(
-        RebuildOptions options
-    );
-
+    CompletionStage<Void> ensureSchema(SchemaOptions options);
+    CompletionStage<Void> rebuild(RebuildOptions options);
     CompletionStage<IndexStatus> status();
 }
 ```
 
 
 
-This keeps:
-
-- search semantics in `SynquestEngine`;
-- physical index lifecycle in infrastructure/operations.
+Consumers read from Eventing 1.27 and apply changes through `SynquestIndexWriter`. Index lifecycle is administered through `SynquestIndexAdmin`.
 
 ------
 
 ## 11. YDB Implementation Sketch
 
-### 11.1 Candidate Schema
-
-A starting point for the PoC is:
+### 11.1 Candidate schema
 
 sql
 
@@ -598,10 +591,10 @@ sql
 CREATE TABLE documents (
     tenant_id Utf8,
     doc_id Utf8,
-    source_uri Utf8,
+    source_uri Utf8,                 -- reference into Content Cache 1.26 or external source
     title Utf8,
     metadata Json,
-    version Uint64,
+    storage_revision Uint64,         -- internal optimistic-concurrency, not semantic version
     created_at Timestamp,
     updated_at Timestamp,
     PRIMARY KEY (tenant_id, doc_id)
@@ -615,7 +608,7 @@ CREATE TABLE chunks (
     text Utf8,
     token_count Uint32,
     metadata Json,
-    embedding ...,
+    embedding ...,                   -- type/dimension pinned in Phase 0
     PRIMARY KEY (tenant_id, chunk_id)
 );
 
@@ -623,220 +616,213 @@ CREATE TABLE provenance (
     tenant_id Utf8,
     chunk_id Utf8,
     extractor Utf8,
+    source_version_id Utf8,          -- references Ingestion 1.28 SourceVersion
     page Uint32,
     start_offset Uint32,
     end_offset Uint32,
     PRIMARY KEY (tenant_id, chunk_id)
 );
+
+CREATE TABLE publication_log (
+    tenant_id Utf8,
+    revision_id Utf8,
+    payload Json,
+    created_at Timestamp,
+    published_at Timestamp NULL,     -- NULL until successfully handed to Eventing 1.27
+    PRIMARY KEY (tenant_id, revision_id)
+);
 ```
 
 
 
-The exact YDB vector column/index syntax and parameters must be finalized against the selected YDB 26.3.x release during the PoC. The selected vector type, dimension, distance metric, index kind, and relevant index parameters must be recorded explicitly; dimension must match the benchmark embedding model. Whether the dimension is fixed at table creation (and therefore constrained during embedding-model migrations) must also be documented.
+Notes:
 
-The PoC must record the selected YDB Java SDK version and its maturity/support status.
+- `storage_revision` is an **internal persistence/concurrency number**, not the platform semantic version. Semantic versioning (`SourceVersionId`, `VersionSeriesId`, `published_at`, `observed_at`, `valid_from`, `valid_to`) is owned by Ingestion 1.28 / Knowledge 1.25 / Design 1.34 and persisted as domain fields, not by this table.
+- The exact YDB vector column/index syntax, dimension, distance metric, index kind, and parameters must be finalized against the selected YDB 26.3.x release in Phase 0. Whether the dimension is fixed at table creation (and therefore constrains embedding-model migrations) must be documented.
+- The YDB Java SDK version and its maturity/support status must be recorded.
+- Index creation strategy, online/offline build behavior, build/rebuild duration, resource consumption, and impact on concurrent traffic must be measured.
 
-The PoC must also measure index creation strategy, online/offline build behavior where applicable, initial build duration, rebuild duration, resource consumption during builds, and operational impact on concurrent search/write traffic.
+This schema is a **PoC starting point, not production DDL**.
 
-The schema above is therefore a **PoC starting point, not production DDL**.
+### 11.2 Boundary with Content Cache 1.26
 
-### 11.2 Indexes to Validate
+`SynvaultStore` persists canonical knowledge (chunks, metadata, provenance, storage revisions). It does **not** store original binary artifacts — those remain in Content Cache 1.26. `source_uri` is a reference, not a duplicate; provenance links chunks back to the Content Cache artifact and to the Ingestion 1.28 `SourceVersion` they were derived from.
 
-The PoC must validate:
+### 11.3 Indexes to validate
 
 - full-text index on `chunks.text`;
 - vector ANN index on `chunks.embedding`;
 - secondary/index access by `doc_id`;
 - metadata/JSON filtering;
-- tenant filtering;
-- interaction between filtering and vector/hybrid search.
+- **eligibility-filtered** vector/hybrid retrieval;
+- interaction between eligibility and ranking.
 
-### 11.3 Search Capabilities to Validate
-
-The YDB PoC should explicitly test:
+### 11.4 Retrieval capabilities to validate
 
 - lexical BM25/full-text relevance;
-- vector ANN search;
+- vector ANN retrieval;
 - hybrid ranking;
 - reciprocal-rank fusion where applicable;
 - weighted/linear fusion where applicable;
 - metadata filters;
-- highlights;
+- **pre-ranking eligibility enforcement** (security + tenant);
+- **side-channel eligibility** (highlights/counts);
 - returned scores;
-- explanations, where explanations are part of the approved Synquest feature-parity matrix.
+- explanations, where part of the approved feature-parity matrix.
 
-The existence of these features is not sufficient: Synquest must verify that their semantics and performance meet platform requirements.
+The existence of a feature is not sufficient. Semantics and performance must meet platform requirements.
 
 ------
 
 ## 12. Consistency Strategy
 
-The preferred model is:
+### 12.1 Write path
 
 text
 
 ```
-                 one authoritative transaction
-                           |
-             +-------------+-------------+
-             |             |             |
-          document       chunks       metadata
-             |             |             |
-             +-------------+-------------+
-                           |
-                        outbox
-                           |
-                           v
-                    Synquest indexer
-                           |
-                      idempotent
-                           |
-                           v
-                     search index
+       one authoritative Synvault transaction
+                     |
+       +-------------+-------------+
+       |             |             |
+    document       chunks       provenance
+       |             |             |
+       +-------------+-------------+
+                     |
+         durable publication record
+                     |
+              Eventing 1.27
+                     |
+             projection consumer
+                     |
+              Synquest projection
 ```
 
 
 
-The write path should:
+Steps:
 
 1. create/update the document revision;
 2. write chunks and metadata;
-3. write provenance as required;
-4. record an outbox event;
+3. write provenance (mandatory);
+4. write a **durable publication record**;
 5. commit atomically.
 
-The indexer then:
+The publication record is then handed to **Eventing 1.27**, which publishes the immutable event. Eventing 1.27 — not this proposal — defines delivery, retry, ordering, replay, and consumer idempotency.
 
-1. reads the event;
-2. loads the required authoritative state;
-3. updates the search projection;
-4. records successful processing;
-5. retries failures safely.
+### 12.2 SynvaultOutbox is an adapter mechanism, not a platform port
 
-### 12.1 Outbox ownership
+`SynvaultOutbox` is **not** a domain-facing port and **not** a competing event substrate. It is an adapter-internal mechanism that bridges a Synvault persistence transaction to Eventing 1.27.
 
-The outbox is a separate architectural concern and should not be hidden accidentally inside `SynvaultStore`.
-
-Prefer a dedicated port:
+Illustrative shape (internal to the persistence adapter):
 
 java
 
 ```
-public interface SynvaultOutbox {
-    CompletionStage<Void> publish(DocumentRevisionEvent event);
-    CompletionStage<List<DocumentRevisionEvent>> readBatch(OutboxCursor cursor, int limit);
-    CompletionStage<Void> acknowledge(EventId eventId);
+interface PublicationLog {
+    CompletionStage<Void> record(PublicationIntent intent); // transactional
+    CompletionStage<List<PublicationIntent>> pending(int limit);
+    CompletionStage<Void> markPublished(PublicationId id);
 }
 ```
 
 
 
-The implementation may use:
+A separate **Eventing 1.27 client** consumes `pending()` and publishes. Delivery semantics, retry, ordering, replay classification, and idempotent consumption remain governed by Design 1.27.
 
-- a transactionally coupled backend outbox when the storage backend supports it;
-- a dedicated Kafka/Pulsar-style stream;
-- another durable event mechanism.
+For Cassandra, if the existing implementation cannot provide the same atomicity between authoritative state and the publication record, the adapter must expose that limitation explicitly, and the architecture must define accepted delivery semantics rather than silently claiming equivalent guarantees.
 
-For YDB, the preferred PoC implementation is a transactionally coupled outbox record so the revision and event share the same atomic transaction.
+**Scope note:** the publication-log mechanism is new infrastructure. Its introduction may require new work in the existing Cassandra adapter; this is not assumed to be a pure refactor. Cassandra publication-log implementation is tracked separately from the YDB implementation and must be explicitly scoped and estimated in Phase 0. This work is independent of the YDB PoC decision.
 
-For Cassandra, if the existing implementation cannot provide the same atomicity, the adapter must expose that limitation explicitly and the architecture must define the accepted delivery semantics rather than silently claiming equivalent guarantees.
+### 12.3 Projection generations and regression prevention
 
-The platform contract should therefore distinguish **authoritative revision commit** from **event delivery semantics**.
+Consistent with Architecture 1.0 invariants 35–36:
 
-**Scope note:** `SynvaultOutbox` is new infrastructure. Its introduction may require new work in the existing Cassandra adapter; this is not assumed to be a pure refactor. Cassandra outbox implementation is tracked separately from the YDB implementation and must be explicitly scoped and estimated in Phase 0 before implementation begins. This work is independent of the YDB PoC decision.
+- **Projection generations are reproducible.** Each index build/rebuild is identified by a **generation ID**. A rebuild produces a new generation; a generation is fully derived from authoritative Synvault state and can be reproduced deterministically.
+- **Out-of-order events cannot regress search state.** Each projection update carries a monotonic ordering key per `(tenant, doc, chunk)`. The projection writer applies an update only if the incoming ordering key is greater than the currently applied key. Events with an older key are discarded as no-ops.
 
-The design must tolerate:
+The ordering key is derived from the Synvault commit sequence (publication record), not from wall-clock time.
 
-- duplicate events;
-- out-of-order events;
-- retries;
-- indexer restarts;
-- partial search-index updates;
-- complete index rebuilds.
+### 12.4 Tolerance requirements
+
+The design tolerates:
+
+- duplicate events (idempotent projection writer);
+- out-of-order events (monotonic ordering key);
+- retries (idempotent);
+- indexer restarts (resumable cursor over Eventing 1.27);
+- partial projection updates (generation-scoped rebuild);
+- complete index rebuilds (new generation).
 
 ------
 
 ## 13. YDB PoC Plan
 
-### Phase 0 — Interface Extraction
+### Phase 0 — Interface Extraction and Reconciliation
 
-- Create `synanton-synvault-api`.
-- Create `synanton-synquest-api`.
+- Create `synanton-synvault-api`, `synanton-synquest-api`.
 - Move Cassandra implementation into adapters.
 - Add in-memory implementations.
 - Add contract tests.
 - Remove Cassandra dependencies from domain/application modules.
-- Scope and estimate the new `SynvaultOutbox` work for the Cassandra adapter separately from the YDB PoC.
+- Scope and estimate the new publication-log work for the Cassandra adapter separately from the YDB PoC.
 
 **Deliverables:**
 
 - domain code is provider-independent;
-- current Synquest feature-parity matrix;
+- Synquest feature-parity matrix (current implementation behavior);
 - frozen benchmark corpus and golden-query set;
 - agreed acceptance thresholds;
 - YDB feature stability inventory;
-- scoped and estimated Cassandra `SynvaultOutbox` work plan.
+- scoped and estimated Cassandra publication-log work plan.
 
-#### Synquest feature-parity matrix
+#### Feature-parity matrix
 
-Before implementing the YDB search adapter, document the actual current Cassandra/Synquest behavior:
+| Feature                              | Current behavior | Requirement  | YDB behavior | Status |
+| ------------------------------------ | ---------------- | ------------ | ------------ | ------ |
+| BM25/scoring formula                 | TBD              | Must         | TBD          | TBD    |
+| Highlight offsets (eligibility-safe) | TBD              | Must         | TBD          | TBD    |
+| Sparse+dense fusion                  | TBD              | Must         | TBD          | TBD    |
+| Per-tenant index isolation           | TBD              | Must         | TBD          | TBD    |
+| **Pre-ranking eligibility**          | TBD              | Must         | TBD          | TBD    |
+| Metadata operators                   | TBD              | Must         | TBD          | TBD    |
+| Score normalization                  | TBD              | Must         | TBD          | TBD    |
+| Result ordering/tie-breaking         | TBD              | Must         | TBD          | TBD    |
+| Delete semantics                     | TBD              | Must         | TBD          | TBD    |
+| Update semantics                     | TBD              | Must         | TBD          | TBD    |
+| Explainability                       | TBD              | May          | TBD          | TBD    |
+| Graph retrieval                      | N/A              | Out of scope | —            | —      |
+| Temporal retrieval                   | N/A              | Out of scope | —            | —      |
 
-| Feature                      | Current behavior                | Requirement | YDB behavior | Status |
-| ---------------------------- | ------------------------------- | ----------- | ------------ | ------ |
-| BM25/scoring formula         | TBD from current implementation | Must        | TBD          | TBD    |
-| Highlight offsets            | TBD                             | Should      | TBD          | TBD    |
-| Sparse+dense fusion          | TBD: RRF/weighted/etc.          | Must        | TBD          | TBD    |
-| Per-tenant index isolation   | TBD                             | Must        | TBD          | TBD    |
-| Metadata operators           | eq/in/range/etc.                | Must        | TBD          | TBD    |
-| Score normalization          | TBD                             | Must        | TBD          | TBD    |
-| Result ordering/tie-breaking | TBD                             | Must        | TBD          | TBD    |
-| Delete semantics             | TBD                             | Must        | TBD          | TBD    |
-| Update semantics             | TBD                             | Must        | TBD          | TBD    |
-| Explainability               | TBD                             | May         | TBD          | TBD    |
-
-The PoC cannot declare YDB a replacement until every `Must` capability has either equivalent semantics or an explicitly approved architectural alternative.
+The PoC cannot declare YDB a replacement until every `Must` capability has equivalent semantics or an explicitly approved architectural alternative.
 
 #### Frozen benchmark corpus
 
-Phase 0 must define a reproducible corpus:
-
-- N documents;
-- M chunks;
-- K golden queries;
-- relevance labels for Recall@10 evaluation;
+- N documents; M chunks; K golden queries;
+- relevance labels for Recall@10;
 - representative tenant distribution;
 - representative metadata cardinalities;
-- representative embedding model and dimension.
+- representative embedding model and dimension;
+- **eligibility fixtures**: validated security/tenant contexts for cross-tenant and side-channel tests.
 
-The corpus must be versioned so Cassandra and YDB comparisons are reproducible.
+The corpus is versioned so Cassandra and YDB comparisons are reproducible.
 
 #### YDB feature stability inventory
 
-For every YDB feature used by the PoC, record:
+For every YDB feature used: exact YDB release, SDK version, GA/Preview/Beta/Experimental status, production-readiness implications, known limitations, upgrade compatibility. Preview/Beta/Experimental dependencies are flagged as production risk.
 
-- exact YDB release;
-- SDK version;
-- GA / Preview / Beta / Experimental status;
-- production-readiness implications;
-- known limitations;
-- upgrade compatibility expectations.
-
-A PoC that depends on Preview/Beta/Experimental search functionality must explicitly flag that dependency as a production risk.
-
-The feature-stability inventory must be re-validated at the end of the PoC, including if the YDB server or Java SDK version changes during the evaluation.
+Re-validated at the end of the PoC, including if the YDB server or Java SDK version changes during the evaluation.
 
 #### Initial benchmark thresholds
 
-Final thresholds should be approved in Phase 0, but the PoC starts with these strawman relative targets:
+- p95 lexical latency: ≤ current Cassandra p95 × 1.20;
+- p95 vector latency: ≤ current Cassandra p95 × 1.20;
+- p95 hybrid latency: ≤ current Cassandra p95 × 1.20;
+- Recall@10: no worse than current by more than 2 percentage points;
+- index freshness: no worse than agreed baseline by more than 20%;
+- error rate: no higher than current under equivalent load.
 
-- p95 lexical latency: no worse than current Cassandra p95 × 1.20;
-- p95 vector latency: no worse than current Cassandra p95 × 1.20;
-- p95 hybrid latency: no worse than current Cassandra p95 × 1.20;
-- Recall@10: no worse than current implementation by more than 2 percentage points;
-- index freshness: no worse than the agreed current baseline by more than 20%;
-- error rate: no higher than the current implementation under equivalent load.
-
-Absolute targets should be added once the current production/test baseline is measured.
+Absolute targets added once the current baseline is measured.
 
 ### Phase 1 — YDB Synvault PoC
 
@@ -845,41 +831,28 @@ Implement:
 - document CRUD;
 - chunks;
 - metadata;
-- provenance;
+- provenance (mandatory);
 - document revisions;
 - transactional writes;
-- versioning;
+- storage revisions (optimistic concurrency);
 - tenant isolation;
 - representative filtering.
 
-Compare against Cassandra for:
-
-- write throughput;
-- read latency;
-- update latency;
-- transaction behavior;
-- resource consumption.
+Compare against Cassandra for write throughput, read latency, update latency, transaction behavior, resource consumption.
 
 ### Phase 2 — YDB Synquest PoC
 
 Implement and benchmark:
 
-- lexical search;
-- vector search;
-- hybrid search;
-- tenant filtering;
+- lexical retrieval;
+- vector retrieval;
+- hybrid retrieval;
+- **pre-ranking eligibility enforcement** (security + tenant);
 - metadata filtering;
-- filtered vector search;
-- filtered hybrid search.
+- eligibility-filtered vector/hybrid retrieval;
+- **side-channel eligibility** (highlights/counts).
 
-Compare against the current implementation for:
-
-- Recall@10;
-- p50/p95/p99 latency;
-- QPS;
-- ranking quality;
-- index build time;
-- index update latency.
+Compare against current implementation for Recall@10, p50/p95/p99 latency, QPS, ranking quality, index build time, index update latency.
 
 ### Phase 3 — Projection Consistency
 
@@ -892,72 +865,38 @@ source update
     ↓
 Synvault commit
     ↓
-outbox
+durable publication record
     ↓
-indexer
+Eventing 1.27
+    ↓
+projection consumer
     ↓
 search-visible update
 ```
 
 
 
-Measure:
-
-**Synvault commit → Synquest search-visible latency**
-
-under concurrent writes and searches.
+Measure: **Synvault commit → Synquest search-visible latency** under concurrent writes and searches.
 
 Test:
 
-- updates;
-- deletes;
-- retries;
-- stale events;
-- out-of-order events;
-- replay;
-- reprocessing.
+- updates, deletes;
+- retries, stale events, out-of-order events;
+- replay, reprocessing;
+- generation-scoped rebuild;
+- regression prevention (older events discarded).
 
 ### Phase 4 — Scale, Failure, and Cost Testing
 
-Use a representative Synanton workload.
+Benchmark definition includes: documents, chunks, chunks/document, embedding dimension, metadata cardinality, tenant count, write QPS, search QPS, update/delete rate, topK, eligibility cardinality, filter selectivity.
 
-The benchmark definition should include:
+Test: steady state; ingestion bursts; concurrent search; node failure; restart/recovery; index rebuild; high-cardinality tenants; highly selective filters (≈0.1%, 1%); medium/low-selectivity filters (≈10%, 100%).
 
-text
-
-```
-documents
-chunks
-average chunks/document
-embedding dimension
-metadata cardinality
-tenant count
-write QPS
-search QPS
-update/delete rate
-topK
-filter selectivity
-```
-
-
-
-Test:
-
-- steady state;
-- ingestion bursts;
-- concurrent search;
-- node failure;
-- restart/recovery;
-- index rebuild;
-- high-cardinality tenants;
-- highly selective filters (approximately 0.1% and 1% where the corpus permits);
-- medium/low-selectivity filters (approximately 10% and 100% where the corpus permits).
-
-Produce the cost model defined in §16.1.
+Produce the cost model defined in §15.1.
 
 ### Phase 5 — PoC Migration Tooling
 
-Only if YDB passes the preceding functional/performance gates, implement limited PoC-scope migration tooling:
+Only if YDB passes functional/performance gates:
 
 - Cassandra → YDB migration for the frozen benchmark dataset;
 - validation/checksum tooling;
@@ -966,7 +905,7 @@ Only if YDB passes the preceding functional/performance gates, implement limited
 - rollback procedure for the PoC;
 - operational runbook draft.
 
-This phase does **not** constitute approval for production migration.
+This phase does not constitute approval for production migration.
 
 ### Phase 6 — Decision
 
@@ -974,49 +913,31 @@ Possible outcomes:
 
 1. YDB becomes the implementation for both Synvault and Synquest.
 2. YDB becomes the implementation for Synvault only.
-3. YDB becomes the implementation for metadata while search remains separate.
+3. YDB becomes the implementation for persistence while retrieval remains separate.
 4. Cassandra remains the implementation.
 5. A dedicated search/vector backend remains necessary for part of Synquest.
 
-The decision must be based on measured results rather than feature availability alone.
+Decision based on measured results, not feature availability.
 
 ------
 
 ## 14. Benchmark Methodology
 
-The benchmark must not reduce the evaluation to raw vector-search latency.
+Enterprise search behavior depends heavily on eligibility, filtering, tenant isolation, ingestion concurrency, and index freshness.
 
-Enterprise search behavior is highly dependent on filtering, tenant isolation, ingestion concurrency, and index freshness.
+| Search  | Filter      | Selectivity   | Metrics                |
+| ------- | ----------- | ------------- | ---------------------- |
+| Lexical | None        | —             | p50/p95/p99, Recall@10 |
+| Lexical | Eligibility | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
+| Lexical | Metadata    | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
+| Vector  | None        | —             | p50/p95/p99, Recall@10 |
+| Vector  | Eligibility | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
+| Vector  | Metadata    | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
+| Hybrid  | None        | —             | p50/p95/p99, Recall@10 |
+| Hybrid  | Eligibility | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
+| Hybrid  | Metadata    | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
 
-The minimum matrix should include:
-
-| Search  | Filter   | Selectivity   | Metrics                |
-| ------- | -------- | ------------- | ---------------------- |
-| Lexical | None     | —             | p50/p95/p99, Recall@10 |
-| Lexical | Tenant   | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
-| Lexical | Metadata | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
-| Vector  | None     | —             | p50/p95/p99, Recall@10 |
-| Vector  | Tenant   | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
-| Vector  | Metadata | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
-| Hybrid  | None     | —             | p50/p95/p99, Recall@10 |
-| Hybrid  | Tenant   | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
-| Hybrid  | Metadata | 0.1/1/10/100% | p50/p95/p99, Recall@10 |
-
-Filter selectivity must be tested at representative levels, including approximately 0.1%, 1%, 10%, and 100% of the candidate population where the workload permits.
-
-Also measure:
-
-- ingestion throughput;
-- update throughput;
-- delete throughput;
-- index build time;
-- index update time;
-- search-visible update latency;
-- CPU;
-- memory;
-- storage;
-- network;
-- operational overhead.
+Also measure: ingestion throughput; update throughput; delete throughput; index build time; index update time; search-visible update latency; CPU; memory; storage; network; operational overhead.
 
 ------
 
@@ -1025,139 +946,131 @@ Also measure:
 ### Architecture
 
 - All domain modules compile without Cassandra or YDB dependencies.
-- CQL exists only in Cassandra adapters.
-- YQL exists only in YDB adapters.
-- Contract tests pass for all three implementations: Cassandra, YDB, and in-memory.
-- Search contract tests use semantic tolerances rather than requiring byte-for-byte result parity.
+- CQL exists only in Cassandra adapters; YQL exists only in YDB adapters.
+- Contract tests pass for Cassandra, YDB, and in-memory implementations.
+- Search contract tests use semantic tolerances rather than byte-for-byte parity.
 - Provider selection is configuration-driven.
-- The defined ArchUnit/equivalent capability-boundary rule passes, and startup validation rejects adapters whose claimed capabilities do not satisfy the required contract.
-- Current Synquest feature-parity matrix has no unresolved `Must` capability.
+- Capability-boundary rule passes; startup validation rejects adapters whose claimed capabilities do not satisfy the required contract.
+- Feature-parity matrix has no unresolved `Must` capability.
+- Security eligibility is enforced before ranking in all adapters.
+- Provenance is mandatory in all adapters.
+- Projection generations and out-of-order regression prevention are demonstrated.
 
 ### Synvault
 
-- Document revision writes satisfy the defined atomicity requirements.
-- Versioning semantics are deterministic.
+- Document revision writes satisfy the atomicity contract.
+- Storage revisions are deterministic.
 - Tenant isolation is demonstrated.
-- Cross-tenant leakage tests pass.
+- Cross-tenant leakage tests pass (reads, writes, search, side channels, rebuild).
 - Required metadata/provenance queries are supported.
-- The required document-revision atomicity contract is demonstrated.
+- Provenance is mandatory and validated.
 
 ### Synquest
 
-- Lexical search satisfies the required relevance behavior.
-- Vector search meets the defined Recall@10 target.
-- Hybrid search meets the defined Recall@10 target.
-- Filtered vector/hybrid search meets the defined latency target.
-- Search results expose the required score/metadata fields.
-- Search-visible update latency is within the defined target.
+- Lexical retrieval satisfies required relevance behavior.
+- Vector retrieval meets Recall@10 target.
+- Hybrid retrieval meets Recall@10 target.
+- Eligibility-filtered vector/hybrid retrieval meets latency target.
+- Search results expose required score/metadata fields.
+- Search-visible update latency is within target.
+- Highlights and side channels obey eligibility.
 
 ### Performance
 
-The PoC must establish explicit thresholds for:
-
-- p95 search latency;
-- p99 search latency;
-- ingestion throughput;
-- update throughput;
-- Recall@10;
-- index update latency;
-- resource utilization.
-
-Thresholds should be agreed before final benchmark interpretation.
+Explicit thresholds for: p95/p99 search latency; ingestion throughput; update throughput; Recall@10; index update latency; resource utilization. Thresholds agreed before final interpretation.
 
 ### Operations
 
-- Active adapter/provider identity is visible.
-- Required adapter metrics, tracing, freshness/lag, and health/readiness signals are available.
-- Recovery behavior is documented.
-- Index rebuild is documented and tested.
-- PoC-scope migration and rollback are documented.
-- Failure/retry behavior is tested.
-- Operational monitoring requirements are identified.
+- Active adapter identity is visible.
+- Required adapter metrics, tracing, freshness/lag, and health signals are available.
+- Recovery behavior documented.
+- Index rebuild documented and tested.
+- PoC-scope migration and rollback documented.
+- Failure/retry behavior tested.
+- Operational monitoring requirements identified.
 
 ### Cost
 
-- The §16.1 cost model is produced for the target workload.
+- The §15.1 cost model is produced for the target workload.
 - Cost per stored document, write, and search is compared against the current Cassandra implementation at equivalent scale.
+
+### Deferred requirements (explicitly out of scope for this PoC)
+
+- Temporal retrieval and correction semantics (Design 1.34).
+- Graph retrieval (Search 1.31 / `Relix`).
+- Version-series eligibility beyond port shape preservation.
+- ClickHouse replacement.
+- PostgreSQL migration.
+- MinIO replacement.
 
 ------
 
 ## 16. Risks and Mitigations
 
-| Risk                                                         | Mitigation                                                   |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| YDB search features differ from required Synquest semantics  | Validate exact behavior in PoC                               |
-| Vector recall/latency is insufficient                        | Benchmark against current HNSW implementation                |
-| Filtering significantly changes vector/hybrid performance    | Include filtered workloads in benchmark matrix               |
-| Index update latency is too high                             | Measure commit-to-search-visible latency                     |
-| Search projection becomes inconsistent                       | Authoritative Synvault + transactional outbox + idempotent indexer |
-| YQL migration effort is high                                 | Isolate YDB behind adapter and use contract tests            |
-| YDB operational model is unfamiliar                          | Run failure/recovery and operational PoC                     |
-| Cost is uncertain                                            | Measure resource consumption and build TCO model (§16.1)     |
-| Backend-specific features leak into domain                   | Enforce module dependency rules                              |
-| Capability API becomes backend leakage                       | Enforce the mechanism defined in §9.2                        |
-| Cassandra adapter outbox implementation is more work than expected | Track it separately from the YDB PoC, scope/estimate it explicitly in Phase 0, and do not assume it is a pure refactor |
-| YDB cannot satisfy all search requirements                   | Keep Cassandra and/or allow dedicated search implementation  |
-| Analytics requirements are conflated with storage decision   | Keep ClickHouse replacement explicitly outside current decision |
-| Vendor lock-in                                               | Ports/adapters and provider-independent domain model         |
+| Risk                                                        | Mitigation                                               |
+| ----------------------------------------------------------- | -------------------------------------------------------- |
+| YDB search semantics differ from required Synquest behavior | Validate exact behavior in PoC                           |
+| Vector recall/latency insufficient                          | Benchmark against current HNSW implementation            |
+| Eligibility filtering changes vector/hybrid performance     | Include eligibility workloads in benchmark matrix        |
+| Index update latency too high                               | Measure commit-to-search-visible latency                 |
+| Projection regresses due to out-of-order events             | Monotonic ordering key + generation-scoped rebuild       |
+| YQL migration effort high                                   | Isolate YDB behind adapter; contract tests               |
+| YDB operational model unfamiliar                            | Failure/recovery and operational PoC                     |
+| Cost uncertain                                              | Measure resource consumption; build TCO model (§15.1)    |
+| Backend-specific features leak into domain                  | Enforce module dependency rules                          |
+| Capability API becomes backend leakage                      | Enforce mechanism in §9.2; §9.3 conformance principle    |
+| Cassandra publication-log work exceeds estimate             | Track separately from YDB PoC; scope/estimate in Phase 0 |
+| YDB cannot satisfy all search requirements                  | Keep Cassandra and/or dedicated search backend           |
+| Analytics conflated with storage decision                   | Keep ClickHouse replacement explicitly out of scope      |
+| Vendor lock-in                                              | Ports/adapters; provider-independent domain model        |
+| Proposal drifts from Architecture 1.0                       | §0 dependency statement; normative references throughout |
 
 ### 16.1 Cost model
 
-The PoC should produce a normalized cost sketch for the target workload, at minimum:
+Produce a normalized cost sketch for the target workload:
 
 - cost per 1M documents stored per month;
 - cost per 1M writes/updates;
 - cost per 1M searches, split by lexical/vector/hybrid where materially different;
 - storage growth and replication overhead;
-- compute required for indexing, ingestion, and search;
-- operational/management overhead where it materially differs from Cassandra, including operational headcount implications where relevant.
+- compute required for indexing, ingestion, and retrieval;
+- operational/management overhead where it materially differs from Cassandra, including headcount implications where relevant.
 
-The model should state the assumed topology, retention, replication, workload rates, and pricing basis so the comparison is reproducible.
+State assumed topology, retention, replication, workload rates, and pricing basis so the comparison is reproducible.
 
 ------
 
-## 17. Decisions Requested
+## 17. Alternatives Considered
 
-Architecture review should approve the following independently.
+YDB is the **first candidate** because it combines, in one operational platform:
+
+- transactional distributed storage;
+- native full-text retrieval;
+- native vector ANN retrieval;
+- hybrid ranking;
+- distributed deployment.
+
+This combination maps unusually well to the specific experiment of consolidating Synvault persistence and Synquest lexical/vector/hybrid retrieval behind one backend.
+
+Established alternatives (PostgreSQL + pgvector, Elasticsearch/OpenSearch, Qdrant, Weaviate, Milvus, Vespa, and Cassandra plus a dedicated search/vector backend) are **not** evaluated in this PoC. They remain fallback comparison candidates if YDB fails a required gate. If YDB fails, the same ports provide the boundary for a subsequent workload-specific comparison without redesigning the domain model.
+
+A full competitive benchmark is out of scope for this document.
+
+------
+
+## 18. Decisions Requested
 
 ### Decision 1 — Stable ports
 
-Approve:
-
-text
-
-```
-SynvaultStore
-SynquestEngine
-```
-
-
-
-as platform-facing abstractions.
+Approve `SynvaultStore` and `SynquestEngine` as **persistence and retrieval ports** under Architecture 1.0, with the ownership framing in §0 and §2.
 
 ### Decision 2 — Adapter architecture
 
-Approve:
-
-text
-
-```
-synanton-synvault-api
-synanton-synvault-cassandra
-synanton-synvault-ydb
-synanton-synvault-inmemory
-
-synanton-synquest-api
-synanton-synquest-cassandra
-synanton-synquest-ydb
-synanton-synquest-inmemory
-```
-
-
+Approve the module structure in §8.2.
 
 ### Decision 3 — YDB PoC
 
-Approve a time-boxed evaluation of YDB 26.3.x as an implementation candidate, with the exact YDB server and Java SDK versions pinned and recorded in the PoC plan.
+Approve a time-boxed evaluation of YDB 26.3.x as an implementation candidate behind the ports, with exact YDB server and Java SDK versions pinned and recorded in Phase 0.
 
 ### Decision 4 — No production migration yet
 
@@ -1169,15 +1082,15 @@ Production migration remains blocked until all of the following criteria are sat
 
 - □  
 
-  acceptable metadata performance;
+  acceptable persistence performance;
 
 - □  
 
-  acceptable lexical/vector/hybrid search quality;
+  acceptable lexical/vector/hybrid retrieval quality;
 
 - □  
 
-  acceptable filtered-search latency;
+  acceptable eligibility-filtered retrieval latency;
 
 - □  
 
@@ -1189,7 +1102,15 @@ Production migration remains blocked until all of the following criteria are sat
 
 - □  
 
-  security, encryption, audit, data-residency, and tenant-isolation requirements are satisfied and tested;
+  security, encryption, audit, data-residency, and tenant-isolation requirements satisfied and tested;
+
+- □  
+
+  pre-ranking eligibility enforcement demonstrated;
+
+- □  
+
+  provenance-mandatory and regression-prevention invariants demonstrated;
 
 - □  
 
@@ -1199,11 +1120,13 @@ Production migration remains blocked until all of the following criteria are sat
 
   feasible PoC-scope migration and rollback.
 
+### Decision 5 — Relationship to Platform Architecture 1.0
+
+Acknowledge that this proposal is subordinate to Platform Architecture 1.0 and its normative designs (1.23, 1.25, 1.26, 1.27, 1.28, 1.29, 1.31, 1.34), and that conflicts are resolved in favor of those designs.
+
 ------
 
-## 18. Explicitly Out of Scope for This Decision
-
-The following must not be inferred from a successful YDB Synvault/Synquest PoC:
+## 19. Explicitly Out of Scope for This Decision
 
 text
 
@@ -1224,6 +1147,10 @@ YDB succeeds for Synquest
         ≠
 YDB replaces every search engine
 
+YDB succeeds for Synquest (lexical/vector/hybrid)
+        ≠
+YDB evaluated for graph or temporal retrieval
+
 YDB supports OLAP
         ≠
 YDB replaces ClickHouse
@@ -1235,6 +1162,14 @@ YDB replaces MinIO
 YDB supports graph-related data
         ≠
 YDB replaces Relix
+
+YDB stores chunks
+        ≠
+YDB replaces Content Cache 1.26
+
+YDB publication record
+        ≠
+YDB defines event-delivery semantics; Eventing 1.27 governs
 ```
 
 
@@ -1243,26 +1178,25 @@ Each of these would require a separate workload-specific architectural evaluatio
 
 ------
 
-## 19. Recommendation
+## 20. Recommendation
 
-Approve a **time-boxed YDB PoC behind stable Synvault/Synquest interfaces**.
+Approve a **time-boxed YDB PoC behind stable Synvault/Synquest ports**, subordinate to Platform Architecture 1.0.
 
-The architectural abstraction should proceed independently of the YDB decision because it reduces future storage/search coupling regardless of the PoC outcome.
+The port abstraction should proceed independently of the YDB decision; it reduces future storage/search coupling regardless of the PoC outcome.
 
-The YDB decision should remain empirical.
-
-The critical evaluation is not whether YDB has the required feature checklist. It is whether YDB can provide Synanton's actual enterprise-knowledge workload with acceptable:
+The YDB decision should remain empirical. The critical evaluation is whether YDB can provide Synanton's enterprise-knowledge workload with acceptable:
 
 - correctness;
-- transactional semantics;
-- filtered lexical/vector/hybrid search;
+- transactional persistence semantics;
+- pre-ranking eligibility enforcement;
+- filtered lexical/vector/hybrid retrieval;
 - Recall@10;
 - p95/p99 latency;
 - ingestion and update throughput;
-- index freshness;
+- index freshness and regression prevention;
 - operational complexity;
 - cost.
 
-If YDB passes these tests, it can become an implementation of Synvault and/or Synquest without requiring another domain-level redesign.
+If YDB passes these tests, it can become an implementation behind `SynvaultStore` and/or `SynquestEngine` without domain-level redesign.
 
 If it does not, the same ports allow Synanton to retain Cassandra or introduce another specialized implementation without coupling the domain model to the decision.
