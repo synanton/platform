@@ -416,9 +416,63 @@ public class YdbSynvaultStore implements SynvaultStore, Conformant {
         }
     }
 
+    /**
+     * Relay seam for the 029 projection consumer (and the future 1.27 client):
+     * publication records committed but not yet handed to eventing, tenant-scoped
+     * (031) — a relay must never scan across tenants. Ordered oldest-first.
+     */
+    public CompletionStage<List<PublicationIntent>> pendingPublications(
+            SecurityContext context, int limit) {
+        try (Session session = session()) {
+            String tenant = tenant(context);
+            DataQueryResult result =
+                    query(
+                            session,
+                            "DECLARE $t AS Utf8; DECLARE $n AS Uint32;"
+                                    + "SELECT revision_id, payload_json, created_at FROM " + pubs()
+                                    + " WHERE tenant_id=$t AND published_at IS NULL"
+                                    + " ORDER BY created_at LIMIT $n;",
+                            Params.create()
+                                    .put("$t", PrimitiveValue.newText(tenant))
+                                    .put("$n", PrimitiveValue.newUint32(limit)),
+                            TxControl.snapshotRo().setCommitTx(true));
+            List<PublicationIntent> out = new ArrayList<>();
+            ResultSetReader rs = result.getResultSet(0);
+            while (rs.next()) {
+                out.add(
+                        new PublicationIntent(
+                                rs.getColumn("revision_id").getText(),
+                                tenant,
+                                rs.getColumn("payload_json").getJson()));
+            }
+            return CompletableFuture.completedFuture(out);
+        } catch (RuntimeException e) {
+            throw map(e);
+        }
+    }
+
+    /**
+     * Marks a publication record handed to eventing (sets {@code published_at}).
+     * Idempotent: re-marking an already-published record is a no-op match.
+     */
+    public CompletionStage<Void> markPublished(SecurityContext context, String revisionId) {
+        try (Session session = session()) {
+            exec(
+                    session,
+                    "DECLARE $t AS Utf8; DECLARE $r AS Utf8;"
+                            + "UPDATE " + pubs() + " SET published_at=CurrentUtcTimestamp()"
+                            + " WHERE tenant_id=$t AND revision_id=$r;",
+                    Params.create()
+                            .put("$t", PrimitiveValue.newText(tenant(context)))
+                            .put("$r", PrimitiveValue.newText(revisionId)));
+            return CompletableFuture.completedFuture(null);
+        } catch (RuntimeException e) {
+            throw map(e);
+        }
+    }
+
     @Override
-    public CompletionStage<List<ProvenanceRecord>> getProvenance(SecurityContext context, DocumentId id) {
-        long start = System.nanoTime();
+    public CompletionStage<List<ProvenanceRecord>> getProvenance(SecurityContext context, DocumentId id) {        long start = System.nanoTime();
         try (Session session = session()) {
             String tenant = tenant(context);
             DataQueryResult result =

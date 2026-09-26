@@ -81,11 +81,22 @@ allows per-request overrides).
   **minScore=0 on all legs** (neutral filter); any non-zero cutoff is
   normalized per-leg in the harness and recorded as such. Never compare
   "baseline at minScore=X" with "YDB at minScore=X" as if X meant one thing.
-- **024A convergence gate (blocking for 028):** before the three-legged run,
-  024A and the baseline service run the frozen corpus and top-K results must
-  agree within tolerance (same metric shape). If convergent, 028 is valid; if
-  not, the frame is revised (fourth leg or re-scope) — adapter overhead vs
-  mirror drift must never be disentangled after the fact.
+- **024A convergence gate — leg-scoped and blocking for 028 (not a task):**
+  run only when the baseline service is up; per-leg rules, tolerances fixed
+  BEFORE running (deciding after seeing numbers is a false-positive gate):
+  - Lexical (convergent core): top-K ordering agreement; failure = stop and
+    investigate (structural).
+  - Vector (dimension-biased): gate on top-K overlap only (≥90%), never scores;
+    annotate both dims + bias direction.
+  - Hybrid (score-space divergent): gate on top-K ordering, never raw scores.
+  - Metadata-filtered (divergent shape): gate on **eligible-set identity**
+    (same candidate set), then top-K — ranking agreement alone can mask a
+    divergent eligible set ({A,B,C} vs {A,B,D}).
+  - Eligibility-filtered (convergent pattern): gate on eligible-set identity;
+    any cross-tenant leakage = hard fail, not tolerance.
+  - Harness: pinned corpus slice + frozen K queries; per-leg capture of
+    (query, top-K, scores, eligible set) for baseline, 024A, and later 024B;
+    automated comparison as a test, not a manual diff.
 
 ## Collapse scope: Gate 0 fails 024B, not Phase 2
 

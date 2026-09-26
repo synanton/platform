@@ -15,8 +15,7 @@ public final class YdbSchema {
 
     private YdbSchema() {}
 
-    public static void ensureSchema(TableClient client, String prefix) {
-        String docs = "`" + prefix + "_documents`";
+    public static void ensureSchema(TableClient client, String prefix) {        String docs = "`" + prefix + "_documents`";
         String chunks = "`" + prefix + "_chunks`";
         String prov = "`" + prefix + "_provenance`";
         String pubs = "`" + prefix + "_publications`";
@@ -52,6 +51,14 @@ public final class YdbSchema {
                             + " payload_json Json NOT NULL, created_at Timestamp NOT NULL,"
                             + " published_at Timestamp,"
                             + " PRIMARY KEY (tenant_id, revision_id));");
+        }
+    }
+
+    /** Ad-hoc DDL for tests that own their schema (e.g. relay search tables). */
+    public static void ddl(TableClient client, String yql) {
+        try (Session session =
+                client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
+            execute(session, yql);
         }
     }
 

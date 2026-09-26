@@ -7,6 +7,7 @@ dependencies {
     api(libs.ydb.sdk.table)
 
     testImplementation(project(":java:synvault-api"))
+    testImplementation(project(":java:synquest-ydb"))
     testImplementation(project(":java:synquest-inmemory"))
     testImplementation(project(":java:storage-provider"))
     testImplementation(testFixtures(project(":java:storage-testkit")))
