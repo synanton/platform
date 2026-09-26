@@ -31,6 +31,14 @@ for index eligibility, 024B may migrate instead — but the migration procedure
 then becomes explicit 024B scope, reviewed before execution. Default holds
 unless proven otherwise during the Gate 0 probe.
 
+## Embedding pipeline status (recorded 2026-09-26): not available here
+
+No live embedding endpoint in this environment (no vLLM/Ollama; GPU-plane
+embedder is opt-in and fails closed without the plane). 024B therefore builds
+structure, timing, and eligibility mechanics on synthetic 384-d vectors per the
+corpus spec — the recall-quality gate (≥0.95) waits on the real pipeline and is
+not claimed by 024B's contract runs.
+
 ## Baseline correction (004 / 006)
 
 "Current behavior" in the parity matrix (004) and the measured baseline (006) is the

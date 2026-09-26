@@ -58,6 +58,24 @@ Working DDL is **not** produced here (no live instance in Phase 0A); the accepta
   resolve from `HybridRank` args). Prefixed vector indexes unsupported by
   `HybridRank` — 024B uses non-prefixed vector index + predicate, as probed.
 
+## Cluster flags required on the PoC build (2026-09-26, all proven)
+
+```yaml
+table_service_config:
+  enable_hybrid_search: true
+feature_flags:
+  enable_fulltext_index_row_id: true   # FT on non-integer-PK tables
+  enable_fulltext_index_prefix: true   # filtered (prefixed) FT indexes
+  enable_add_unique_index: true        # __ydb_row_id provisioning machinery
+  enable_online_add_unique_index: true
+```
+
+Without the row-id/unique pair, FT creation on composite-PK tables fails
+(`Auto-provisioning '__ydb_row_id' ... requires the unique-index feature`);
+without the prefix flag, filtered FT fails. All four set via container config
++ restart; config survives restart. Any fresh PoC container needs the same
+four lines — see `dev-guide-tests.md`.
+
 ## Knowledge vs adapter-requirement marking
 
 Recorded knowledge (this doc): syntax ladder results, flag names, format quirks.

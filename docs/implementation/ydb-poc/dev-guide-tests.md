@@ -29,6 +29,20 @@ Boundary tests (`ApiBoundaryTest`, `ProviderBoundaryTest`,
 `ProviderIsolationTest`) run inside the unit suite — they enforce the
 no-provider-imports rule until the ArchUnit rule (012) lands.
 
+## YDB PoC container (021/024B)
+
+```bash
+docker run -d --name ydb-poc -h localhost -p 2135:2135 -p 2136:2136 -p 8765:8765 \
+  ydbplatform/local-ydb:stable-26-3-1-path-aliases
+docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem   # gRPCS-only image (YDB_CA_PATH)
+# Required cluster flags (see 002-schema-validation.md for why each):
+docker exec ydb-poc sed -i \
+  -e 's/^table_service_config:/table_service_config:\n  enable_hybrid_search: true/' \
+  -e 's/^feature_flags:/feature_flags:\n  enable_fulltext_index_row_id: true\n  enable_fulltext_index_prefix: true\n  enable_add_unique_index: true\n  enable_online_add_unique_index: true/' \
+  /ydb_data/cluster/kikimr_configs/config.yaml
+docker restart ydb-poc
+```
+
 ## Flake policy (from `live-test-policy.md`)
 
 - Live suite runs on **every PR** (shared container keeps it ~40s).
