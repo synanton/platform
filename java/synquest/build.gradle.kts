@@ -29,3 +29,10 @@ tasks.named<BootJar>("bootJar") {
     archiveBaseName.set("synquest")
 }
 tasks.named<Jar>("jar") { enabled = false }
+
+// Opt-in benchmark gate (YDB-POC-006): -Dydb.bench=true runs BaselineBench; unset skips it.
+tasks.named<Test>("test") {
+    systemProperty("ydb.bench", providers.systemProperty("ydb.bench").getOrElse(""))
+    systemProperty("ydb.bench.docs", providers.systemProperty("ydb.bench.docs").getOrElse("2000"))
+    systemProperty("ydb.bench.chunks", providers.systemProperty("ydb.bench.chunks").getOrElse("8"))
+}
