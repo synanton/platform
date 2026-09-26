@@ -28,6 +28,36 @@ server build before any production-track claim (Phase 6).
 - SDK 2.4.11 notes: `executeSchemeQuery` returns `Status` (no `getValue`);
   `SELECT` via the scheme endpoint fails — data queries go through the data
   path. YQL DDL confirmed: ``CREATE TABLE `t` (… Utf8 …, PRIMARY KEY (…))``.
+- Modern tx path: `beginTransaction(TxMode.SERIALIZABLE_RW)` →
+  `TableTransaction` (per-statement `executeDataQuery`, no-arg `commit()` /
+  `rollback()`); the older `Transaction.Mode` API returns the deprecated type.
+
+## TLS scope (021 review answers)
+
+- TLS-only is a **PoC-image configuration** (local-ydb ships grpcs), not a
+  proven production constraint. The adapter already accepts CA bytes at
+  construction, so a TLS-or-plaintext production surface is a config choice,
+  not a redesign.
+- `YDB_CA_PATH` handling is **test-only**. Production takes CA material via
+  deployment config when 021 hardens; no `DeploymentRequirements` change
+  (transport config is not a capability gate).
+
+## §11.1 schema deviations (021, as built)
+
+Tables carry a per-deployment prefix (`<prefix>_documents|_chunks|_provenance|
+_publications`); per-store tenant namespaces isolate tests without DDL churn.
+
+- chunks PK `(tenant_id, doc_id, chunk_ordinal)` (not `(tenant, chunk)`) — ordered
+  pagination without a secondary index.
+- provenance PK `(tenant_id, doc_id, chunk_id)` (not `(tenant, chunk)`) —
+  doc-scoped delete without a secondary index.
+- `text` → `chunk_text`, `ordinal` → `chunk_ordinal`, `page` → `page_num`
+  (YQL reserved words).
+- JSON content in `Json` columns (as §11.1); no DB-side JSON ops
+  (`supportsJsonFilters=false`).
+- Embeddings as Base64 `Utf8` + `embedding_dim Uint32`; native vector type and
+  index syntax pinned in 024B.
+- `published_at` nullable (plain `Timestamp`); all other columns `NOT NULL`.
 
 ## Notes
 
