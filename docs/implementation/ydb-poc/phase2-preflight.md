@@ -62,7 +62,9 @@ allows per-request overrides).
   results rather than silently comparing against native-filtered expectations.
 - **Hybrid runs flagged:** the 028 hybrid leg executes with
   `enable_hybrid_search=true` set (non-default). Results carry that annotation
-  for production-readiness review.
+  for production-readiness review. Hybrid numbers are PoC-valid,
+  production-pending: 26.3 RC semantics may change on GA, so Phase 6 must not
+  read hybrid latency as a production-ready figure.
 - **Synthetic vectors: latency measurable, recall unclaimed.** 024B runs on
   synthetic 384-d vectors per the corpus spec; the baseline runs whatever dim
   its embedder produced (service default 768). Vector-leg latency compares only
@@ -70,6 +72,10 @@ allows per-request overrides).
   vectors is meaningless: 028's vector leg produces a latency number for 024B
   and **no recall number**; the ≥0.95 gate waits on the real pipeline. A report
   showing "vector leg run" without this note will be misread as recall tested.
+- **Dimension bias (latency itself):** ANN cost scales with dimension, so a
+  384-d 024B leg is intrinsically cheaper than a 768-d baseline leg. Either
+  match dims (re-index one side) or annotate every vector-leg number with both
+  dims and the direction of bias. Phase 6 must not over-read the gap.
 
 ## Collapse scope: Gate 0 fails 024B, not Phase 2
 

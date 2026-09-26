@@ -77,6 +77,14 @@ public class YdbSynquestEngine
         return "`" + prefix + "_vectors`";
     }
 
+    /**
+     * Single-column PK value for the vectors table (HybridRank requires a
+     * single-column primary key). Chunk/doc ids in this PoC never contain '|'.
+     */
+    static String keyOf(String tenant, ChunkId chunkId) {
+        return tenant + "|" + chunkId.value();
+    }
+
     // ---- writer ----
 
     @Override
@@ -109,18 +117,21 @@ public class YdbSynquestEngine
                 if (p.embedding() != null) {
                     exec(
                             session,
-                            "DECLARE $t AS Utf8; DECLARE $c AS Utf8; DECLARE $d AS Utf8;"
-                                    + " DECLARE $m AS Json; DECLARE $o AS Uint64; DECLARE $g AS Utf8;"
+                            "DECLARE $k AS Utf8; DECLARE $t AS Utf8; DECLARE $c AS Utf8; DECLARE $d AS Utf8;"
+                                    + " DECLARE $x AS Utf8; DECLARE $m AS Json;"
+                                    + " DECLARE $o AS Uint64; DECLARE $g AS Utf8;"
                                     + "UPSERT INTO " + vectors()
-                                    + " (tenant_id, chunk_id, doc_id, metadata_json, embedding,"
+                                    + " (key, tenant_id, chunk_id, doc_id, chunk_text, metadata_json, embedding,"
                                     + " ordering_key, generation) VALUES"
-                                    + " ($t, $c, $d, $m, Untag(Knn::ToBinaryStringFloat(["
+                                    + " ($k, $t, $c, $d, $x, $m, Untag(Knn::ToBinaryStringFloat(["
                                     + floatList(p.embedding()) + "]), 'FloatVector'),"
                                     + " $o, $g);",
                             Params.create()
+                                    .put("$k", PrimitiveValue.newText(keyOf(tenant, p.chunkId())))
                                     .put("$t", PrimitiveValue.newText(tenant))
                                     .put("$c", PrimitiveValue.newText(p.chunkId().value()))
                                     .put("$d", PrimitiveValue.newText(p.documentId().value()))
+                                    .put("$x", PrimitiveValue.newText(p.text()))
                                     .put("$m", PrimitiveValue.newJson(YdbJson.toJson(p.metadata())))
                                     .put("$o", PrimitiveValue.newUint64(p.orderingKey()))
                                     .put("$g", PrimitiveValue.newText(p.generationId().value())));
@@ -151,11 +162,10 @@ public class YdbSynquestEngine
                                         .put("$c", PrimitiveValue.newText(id.value())));
                         exec(
                                 session,
-                                "DECLARE $t AS Utf8; DECLARE $c AS Utf8;"
-                                        + "DELETE FROM " + vectors() + " WHERE tenant_id=$t AND chunk_id=$c;",
+                                "DECLARE $k AS Utf8;"
+                                        + "DELETE FROM " + vectors() + " WHERE key=$k;",
                                 Params.create()
-                                        .put("$t", PrimitiveValue.newText(tenant))
-                                        .put("$c", PrimitiveValue.newText(id.value())));
+                                        .put("$k", PrimitiveValue.newText(keyOf(tenant, id))));
                     }
                 }
             }
@@ -181,15 +191,11 @@ public class YdbSynquestEngine
                             StorageErrorKind.UNSUPPORTED,
                             "UNSUPPORTED: temporal retrieval not supported by this adapter"));
         }
-        if (request.mode() == SearchMode.HYBRID) {
-            metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, false);
-            return CompletableFuture.failedFuture(
-                    new StorageException(
-                            StorageErrorKind.UNSUPPORTED,
-                            "UNSUPPORTED: HYBRID lands in 024B commit 3"));
-        }
         try (Session session = session()) {
             String tenant = tenant(context, request);
+            if (request.mode() == SearchMode.HYBRID) {
+                return hybridSearch(session, tenant, request, start);
+            }
             SearchResult result =
                     request.mode() == SearchMode.VECTOR
                             ? vectorSearch(session, tenant, request)
@@ -200,6 +206,78 @@ public class YdbSynquestEngine
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, false);
             throw map(e);
         }
+    }
+
+    private CompletionStage<SearchResult> hybridSearch(
+            Session session, String tenant, SearchRequest request, long start) {
+        try {
+            String terms = escapeQuotes(request.queryText());
+            String queryVec =
+                    request.queryEmbedding().isPresent()
+                            ? floatList(request.queryEmbedding().get())
+                            : null;
+            if (queryVec == null) {
+                metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, false);
+                return CompletableFuture.failedFuture(
+                        new StorageException(
+                                StorageErrorKind.UNSUPPORTED,
+                                "UNSUPPORTED: hybrid requires a query embedding"));
+            }
+            DataQueryResult result =
+                    query(
+                            session,
+                            "DECLARE $t AS Utf8;"
+                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json FROM "
+                                    + vectors()
+                                    + " WHERE tenant_id=$t"
+                                    + " ORDER BY HybridRank(FulltextScore(chunk_text, \"" + terms + "\"),"
+                                    + " Knn::CosineDistance(embedding,"
+                                    + " Knn::ToBinaryStringFloat([" + queryVec + "])),"
+                                    + " (\"v_ft\", \"v_hyb\") AS Indexes)"
+                                    + " LIMIT " + (request.topK() + 1) + ";",
+                            Params.create().put("$t", PrimitiveValue.newText(tenant)),
+                            TxControl.snapshotRo().setCommitTx(true));
+            SearchResult collected = collectHybrid(request, result);
+            metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, true);
+            return CompletableFuture.completedFuture(collected);
+        } catch (RuntimeException e) {
+            metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, false);
+            throw map(e);
+        }
+    }
+
+    private SearchResult collectHybrid(SearchRequest request, DataQueryResult result) {
+        List<SearchHit> hits = new ArrayList<>();
+        Map<ChunkId, String> highlights = new java.util.HashMap<>();
+        ResultSetReader rs = result.getResultSet(0);
+        int eligible = 0;
+        int position = 0;
+        while (rs.next()) {
+            eligible++;
+            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+            if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                continue;
+            }
+            // Rank-derived RRF-shape score (K=60 default): HybridRank cannot be projected.
+            double score = 1.0 / (60.0 + position);
+            position++;
+            if (score < request.minScore()) {
+                continue;
+            }
+            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+            String text = rs.getColumn("chunk_text").getText();
+            hits.add(
+                    new SearchHit(
+                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
+            if (hits.size() >= request.topK()) {
+                break;
+            }
+            highlights.put(chunkId, snippet(text, request.queryText()));
+        }
+        for (SearchHit hit : hits) {
+            highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
+        }
+        return new SearchResult(hits, eligible, highlights);
     }
 
     private SearchResult lexicalSearch(Session session, String tenant, SearchRequest request) {
@@ -338,8 +416,8 @@ public class YdbSynquestEngine
 
     @Override
     public SearchCapabilities capabilities() {
-        // Commit 2: lexical + vector. Hybrid flips with commit 3 + evidence.
-        return new SearchCapabilities(true, true, false, true, true, false, false, false);
+        // Commit 3: all three legs. Temporal/graph stay out of PoC scope.
+        return new SearchCapabilities(true, true, true, true, true, false, false, false);
     }
 
     // ---- admin ----
@@ -418,6 +496,7 @@ public class YdbSynquestEngine
                 List.of(
                         ConformanceEntry.supported(Capabilities.SYNQUEST_LEXICAL, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_VECTOR, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HIGHLIGHTS, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_ELIGIBILITY, evidence),

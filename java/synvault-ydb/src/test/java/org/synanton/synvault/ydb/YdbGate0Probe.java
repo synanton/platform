@@ -193,9 +193,8 @@ class YdbGate0Probe {
         }
     }
 
-    @Test
-    void hybridRankAvailability() {
-        YdbTestBase.ensureStarted();
+        @Test
+    void hybridRankAvailability() {        YdbTestBase.ensureStarted();
         String table = "`hyb_" + YdbTestBase.randomPrefix() + "`";
         try (Session session = YdbTestBase.session()) {
             scheme(session, "hyb-create",

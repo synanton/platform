@@ -33,16 +33,28 @@ public final class YdbSearchSchema {
             execute(
                     session,
                     "CREATE TABLE " + vectors + " ("
-                            + "tenant_id Utf8 NOT NULL, chunk_id Utf8 NOT NULL, doc_id Utf8 NOT NULL,"
+                            + "key Utf8 NOT NULL, tenant_id Utf8 NOT NULL, chunk_id Utf8 NOT NULL,"
+                            + " doc_id Utf8 NOT NULL, chunk_text Utf8 NOT NULL,"
                             + " metadata_json Json NOT NULL, embedding String NOT NULL,"
                             + " ordering_key Uint64 NOT NULL, generation Utf8 NOT NULL,"
-                            + " PRIMARY KEY (tenant_id, chunk_id));");
+                            + " PRIMARY KEY (key));");
             execute(
                     session,
                     "ALTER TABLE " + vectors + " ADD INDEX `v_vec` GLOBAL USING vector_kmeans_tree"
                             + " ON (`tenant_id`, `embedding`)"
                             + " WITH (distance=cosine, vector_type=\"float\","
                             + " vector_dimension=" + embeddingDim + ");");
+            execute(
+                    session,
+                    "ALTER TABLE " + vectors + " ADD INDEX `v_hyb` GLOBAL USING vector_kmeans_tree"
+                            + " ON (`embedding`)"
+                            + " WITH (distance=cosine, vector_type=\"float\","
+                            + " vector_dimension=" + embeddingDim + ");");
+            execute(
+                    session,
+                    "ALTER TABLE " + vectors + " ADD INDEX `v_ft` GLOBAL USING fulltext_relevance"
+                            + " ON (`chunk_text`)"
+                            + " WITH (tokenizer=standard, use_filter_lowercase=true);");
         }
     }
 
