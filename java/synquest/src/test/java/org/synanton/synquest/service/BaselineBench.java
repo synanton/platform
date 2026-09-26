@@ -41,8 +41,8 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 @EnabledIfSystemProperty(named = "ydb.bench", matches = "true")
 class BaselineBench {
 
-    private static final int DOCS = 2_000;
-    private static final int CHUNKS_PER_DOC = 8;
+    private static final int DOCS = Integer.getInteger("ydb.bench.docs", 2_000);
+    private static final int CHUNKS_PER_DOC = Integer.getInteger("ydb.bench.chunks", 8);
     private static final int DIM = 384;
     private static final int QUERIES = 40;
     private static final int REPS = 5;
@@ -100,9 +100,9 @@ class BaselineBench {
         }
 
         HybridSearcher searcher = new HybridSearcher(path, DIM);
-        List<Long> lexLat = new ArrayList<>();
-        List<Long> vecLat = new ArrayList<>();
-        List<Long> hybLat = new ArrayList<>();
+        List<Double> lexLat = new ArrayList<>();
+        List<Double> vecLat = new ArrayList<>();
+        List<Double> hybLat = new ArrayList<>();
         double recallSum = 0.0;
         float[] queryVec = randomVec(new Random(7));
         for (int q = 0; q < QUERIES; q++) {
@@ -113,17 +113,17 @@ class BaselineBench {
             for (int r = 0; r < REPS; r++) {
                 long s = System.nanoTime();
                 lex = searcher.lexical(query, TOP_LEX);
-                lexLat.add((System.nanoTime() - s) / 1_000_000);
+                lexLat.add((System.nanoTime() - s) / 1_000_000.0);
             }
             for (int r = 0; r < REPS; r++) {
                 long s = System.nanoTime();
                 searcher.dense(queryVec, TOP_DENSE);
-                vecLat.add((System.nanoTime() - s) / 1_000_000);
+                vecLat.add((System.nanoTime() - s) / 1_000_000.0);
             }
             TopDocs dense = searcher.dense(queryVec, TOP_DENSE);
             long s = System.nanoTime();
             List<RrfFusion.FusedHit> fused = RrfFusion.combine(dense, lex, TOP_K, RRF_K);
-            hybLat.add((System.nanoTime() - s) / 1_000_000);
+            hybLat.add((System.nanoTime() - s) / 1_000_000.0);
 
             // Lexical Recall@10 against planted relevance.
             var stored = searcher.storedFields();
@@ -160,22 +160,23 @@ class BaselineBench {
             norm += v[i] * v[i];
         }
         norm = Math.sqrt(norm);
+        float scale = (float) norm;
         for (int i = 0; i < DIM; i++) {
-            v[i] /= norm;
+            v[i] /= scale;
         }
         return v;
     }
 
-    private static long p50(List<Long> xs) {
+    private static double p50(List<Double> xs) {
         return pct(xs, 50);
     }
 
-    private static long p95(List<Long> xs) {
+    private static double p95(List<Double> xs) {
         return pct(xs, 95);
     }
 
-    private static long pct(List<Long> xs, int p) {
-        List<Long> sorted = xs.stream().sorted(Comparator.naturalOrder()).toList();
+    private static double pct(List<Double> xs, int p) {
+        List<Double> sorted = xs.stream().sorted(Comparator.naturalOrder()).toList();
         return sorted.get(Math.min(sorted.size() - 1, (int) (sorted.size() * p / 100.0)));
     }
 }

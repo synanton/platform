@@ -4,18 +4,20 @@
 **Date:** 2026-09-26
 **Baseline label:** "current behavior" = ingestion-cache-backed Lucene path (proposal §13 note)
 
+**Gating rule (Phase 6 correctness): Must rows gate against the requirement, not against the baseline. Baseline non-conformance is recorded, not inherited.** A Must row where the baseline is absent or unspecified (highlights, metadata operators, tie-breaking) cannot be closed by "YDB matches baseline" — YDB must meet the requirement or record an approved alternative.
+
 Evidence pointers are file-level; all under `java/synquest/src/main`.
 
 | Feature | Current behavior (frozen) | Requirement | YDB behavior | Status |
 |---|---|---|---|---|
 | BM25/scoring formula | Lucene `BM25Similarity` defaults (k1=1.2, b=0.75), `StandardAnalyzer` on field `text`; query escaped via `MultiFieldQueryParser.escape` (`HybridSearcher.lexical`) | Must | TBD (024B) | Open |
-| Highlight offsets (eligibility-safe) | **Not implemented** — no highlighter/snippet path anywhere in the service | Must meet-or-justify: implement or record approved alternative before Phase 6 | TBD (024B) | Open |
+| Highlight offsets (eligibility-safe) | **Not implemented** — no highlighter/snippet path anywhere in the service. **Baseline non-conforming** (gating rule above applies) | Must meet-or-justify: implement or record approved alternative before Phase 6 | TBD (024B) | Open |
 | Sparse+dense fusion | RRF `1/(rrfK+rank+1)` per list, defaults topK 20 / dense 100 / lexical 100 / rrfK 60 (`RrfFusion`, `SearchService`, `application.yml`) | Must | TBD (024B) | Open |
 | Per-tenant index isolation | Physical: one Lucene `FSDirectory` per tenant (`SearchService.initTenant`); candidate sets disjoint by construction | Must | TBD (024B) | Open |
 | Pre-ranking eligibility | Tenant isolation only. `CuckooAclFilter` exists but is **not wired** into `SearchService`; no classification-level candidate filtering | Must | TBD (024B) | Open |
-| Metadata operators | **None** — no metadata term/filter query on the search path (section-expansion helper only) | Must meet-or-justify | TBD (024B) | Open |
+| Metadata operators | **None** — no metadata term/filter query on the search path (section-expansion helper only). **Baseline non-conforming** (gating rule above applies) | Must meet-or-justify | TBD (024B) | Open |
 | Score normalization | **None** — raw RRF scores returned | Must | TBD (024B) | Open |
-| Result ordering/tie-breaking | RRF score desc; ties fall through to stream (insertion) order — **unspecified** | Must (specify) | TBD (024B) | Open |
+| Result ordering/tie-breaking | RRF score desc; ties fall through to stream (insertion) order — **unspecified, baseline non-conforming** (gating rule above applies) | Must (specify) | TBD (024B) | Open |
 | Delete semantics | **Full tenant reindex** (`LuceneIndexBuilder.build` + commit); no per-doc delete path | Must | TBD (024B) | Open |
 | Update semantics | **Full tenant reindex**; no per-doc update path | Must | TBD (024B) | Open |
 | Explainability | Partial: per-hit dense/lexical scores + ranks exposed (`Hit`); no full explanation trace | May | TBD (024B) | Open |

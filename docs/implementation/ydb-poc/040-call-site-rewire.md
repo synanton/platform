@@ -6,6 +6,16 @@ A named human countersigns at Phase-0 exit review; until then the workstream own
 the target. If unowned at Phase-1 entry, 021/024 do not start (escalate, do not drift).
 **Tracks:** `011-cql-exception.md`
 
+## Countersign (Phase-0 exit, recorded in-commit 2026-09-26)
+
+- Workstream accepts the target (complete by 021/024 close) and the constraints
+  (bugfix-only `ingestion-cache`, no new importers — review-enforced from this commit).
+- Remaining formality: a named human re-confirms at the Phase-0 exit review.
+  That confirmation is a checklist line in the exit review, not a new ticket —
+  if the review happens without it, the exit is not declared.
+- If 021/024 open while this countersign is still workstream-only, the opening
+  decision must name the human owner explicitly. No silent carry-over.
+
 ## Scope
 
 1. Rewire `ManifestController` / `SynvaultApplication` (synvault) and

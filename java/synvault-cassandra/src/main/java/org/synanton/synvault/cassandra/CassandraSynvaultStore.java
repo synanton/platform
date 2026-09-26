@@ -75,7 +75,7 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
     private final AdapterMetrics metrics;
 
     public CassandraSynvaultStore(IngestionCacheClient client) {
-        this(client, "", org.synanton.storage.contract.NoopAdapterMetrics.INSTANCE);
+        this(client, "", new org.synanton.storage.contract.InMemoryAdapterMetrics("cassandra@1.0.0"));
     }
 
     public CassandraSynvaultStore(IngestionCacheClient client, AdapterMetrics metrics) {
@@ -87,7 +87,7 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
      * (e.g. per-test contract instances) stay isolated without schema changes.
      */
     public CassandraSynvaultStore(IngestionCacheClient client, String namespace) {
-        this(client, namespace, org.synanton.storage.contract.NoopAdapterMetrics.INSTANCE);
+        this(client, namespace, new org.synanton.storage.contract.InMemoryAdapterMetrics("cassandra@1.0.0"));
     }
 
     public CassandraSynvaultStore(
@@ -97,8 +97,7 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
         this.metrics = metrics;
     }
 
-    private <T> CompletionStage<T> track(String operation, CompletionStage<T> stage) {
-        return trackAt(operation, stage, System.nanoTime());
+    private <T> CompletionStage<T> track(String operation, CompletionStage<T> stage) {        return trackAt(operation, stage, System.nanoTime());
     }
 
     private <T> CompletionStage<T> trackAt(String operation, CompletionStage<T> stage, long start) {
@@ -109,6 +108,11 @@ public class CassandraSynvaultStore implements SynvaultStore, Conformant {
     private <T> CompletionStage<T> failed(String operation, long start, StorageException e) {
         metrics.record(operation, System.nanoTime() - start, false);
         return CompletableFuture.failedFuture(e);
+    }
+
+    /** Test hook: the metrics sink this adapter records into. */
+    AdapterMetrics metricsForTesting() {
+        return metrics;
     }
 
     @Override

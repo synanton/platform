@@ -24,6 +24,26 @@ class CassandraSynvaultStoreTest extends SynvaultStoreContract {
     }
 
     @Test
+    void operationsAreRecordedByDefault() {
+        var store = new CassandraSynvaultStore(CassandraTestBase.client, "test-" + UUID.randomUUID());
+        var ctx =
+                new org.synanton.storage.contract.SecurityContext(
+                        org.synanton.storage.contract.TenantScope.of("tenant_a"),
+                        java.util.List.of(org.synanton.storage.contract.PrincipalRef.user("u-1")),
+                        org.synanton.storage.contract.PolicyContext.of("p", "r1"),
+                        true,
+                        false);
+        store.getDocument(ctx, org.synanton.storage.contract.DocumentId.of("missing"))
+                .toCompletableFuture()
+                .join();
+        org.assertj.core.api.Assertions.assertThat(
+                        store.metricsForTesting().snapshot().operations()
+                                .get(org.synanton.storage.contract.AdapterMetrics.SYNVAULT_GET)
+                                .count())
+                .isEqualTo(1);
+    }
+
+    @Test
     void startupValidationRejectsCassandraWhereRevisionRequired() {
         // 008 decision, enforced through 039: the REAL matrix (not a stub) must fail
         // fast when the deployment requires revision semantics.

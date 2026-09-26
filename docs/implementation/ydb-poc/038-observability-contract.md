@@ -23,13 +23,19 @@ Types (all in `storage-contract`, shared with 039/029):
 | `FreshnessTracker` / `InMemoryFreshnessTracker` / `FreshnessLag` | commit→visible pairing; relay wiring in 029 |
 | `ActiveProviders` | typed active-provider snapshot (shared with 039) |
 
-## Wiring (this batch)
+## Wiring (this batch; symmetric per 004/006 review)
 
 - In-memory adapters default to a live `InMemoryAdapterMetrics` (dev-visible out
   of the box); every port op records timing + success (verified by
   `AdapterMetricsWiringTest`).
-- Cassandra adapter defaults to `NoopAdapterMetrics` with an injectable ctor;
-  failed paths (UNSUPPORTED revision/delete) record errors, not silence.
+- **Cassandra adapter also defaults to recording** (`InMemoryAdapterMetrics`),
+  not Noop — Option A from the Phase-0 review: cross-adapter Phase 3/4
+  comparisons must be symmetric in observability quality, not just numbers.
+  Recording cost is a few atomics + a bounded 1024-sample reservoir per op,
+  negligible next to Cassandra RTT. Deployments may still inject a
+  Micrometer-backed implementation; `NoopAdapterMetrics` remains for
+  metrics-disabled profiles only.
+- Failed paths (UNSUPPORTED revision/delete) record errors, not silence.
 - Health: `SynquestIndexAdmin.status()` + `ActiveProviders.describe()` cover the
   §8.3 build-status and provider-identity rows; dashboards consume these types.
 

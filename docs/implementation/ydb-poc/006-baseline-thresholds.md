@@ -16,28 +16,36 @@
   Vector-leg numbers are **latency only** (synthetic 384-d vectors carry no relevance).
 - Reporting: `BENCH` line in test stdout; warm-up 1 rep, 5 measured reps per query.
 
-## Preliminary operating points (this machine, 16k chunks)
+## Preliminary operating points (superseded — see absolutes below)
 
+16k-chunk run (same harness, defaults):
 `BENCH lex_ms_p50=0 lex_ms_p95=0 vec_ms_p50=3 vec_ms_p95=5 hyb_ms_p50=0 hyb_ms_p95=0 lex_recall10=1.000 chunks=16000`
+(ms resolution; kept for scale-trend reference only.)
 
-- Lexical/hybrid sub-millisecond at this scale (ms resolution; re-measure at
-  v1-corpus scale with µs reporting).
-- Lexical Recall@10 = 1.000 on planted relevance (sanity: the path retrieves
-  what it indexes).
+## Measured absolutes — v1-corpus scale (160k chunks, this machine, 2026-09-26)
 
-## Frozen threshold rules (absolute computation)
+`BENCH lex_ms_p50=0.287 lex_ms_p95=0.829 vec_ms_p50=6.844 vec_ms_p95=9.767 hyb_ms_p50=0.102 hyb_ms_p95=0.331 lex_recall10=1.000 chunks=160000`
 
-With `B_*` = agreed baseline row (preliminary row above until the v1-corpus run):
+Run: `BaselineBench` with `-Dydb.bench.docs=20000 -Dydb.bench.chunks=8`, seed 42,
+40 golden queries × 5 planted relevant, production `HybridSearcher` + `RrfFusion`
+(lexical/dense top 100, RRF k=60, topK 20). Vector leg latency-only (synthetic
+384-d vectors carry no relevance); vector **recall** absolute still needs the
+real embedding pipeline — the single open measurement, tracked here.
 
-- p95 lexical/vector/hybrid latency ≤ `B_p95 × 1.20`
-- Recall@10 ≥ `B_recall − 0.02`
-- Index freshness (commit → search-visible) ≤ `B_fresh × 1.20`
-- Error rate ≤ baseline under equivalent load
+## Frozen thresholds (absolute)
 
-## Agreed-absolute gate (single remaining item, tracked here)
+| Metric | Baseline | Threshold (rule applied) |
+|---|---|---|
+| p95 lexical latency | 0.829 ms | ≤ **1.0 ms** (×1.20) |
+| p95 vector latency | 9.767 ms | ≤ **11.8 ms** (×1.20) |
+| p95 hybrid latency | 0.331 ms | ≤ **0.40 ms** (×1.20) |
+| Lexical Recall@10 | 1.000 | ≥ **0.98** (−0.02) |
+| Vector Recall@10 | pending embedding pipeline | ≥ baseline − 0.02 once measured |
+| Index freshness | pending relay (029) | ≤ baseline × 1.20 once measured |
+| Error rate | 0 observed | ≤ baseline under equivalent load |
 
-Absolute sign-off (Search Eng + Platform) happens on the **v1-corpus run**
-(160k chunks, corpus spec in `005-corpus-definition.md`), which needs the corpus
-generator + embedding pipeline (Phase 0D/Phase 1 entry work). Until then the
-preliminary row above is the comparison baseline and the rules above are frozen —
-no second matrix edit is needed when absolutes land, only the numbers row.
+## Sign-off
+
+Numbers above are measured and committed. Formal sign-off (Search Eng + Platform)
+is an exit-review checklist line. The rules are frozen — sign-off changes no
+threshold, only records agreement.
