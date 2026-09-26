@@ -76,32 +76,51 @@ Phase-0 exit = **001–011 + 037 + 039 closed, 004 closed after 011**.
 - **022** Benchmark vs Cassandra on frozen corpus. Depends: 006, 021.
 - **023** Tenant isolation + leakage tests (steady-state and under load). Depends: 021.
 
-### Phase 2 — Synquest PoC
+### Phase 2 — Synquest PoC (split 024A / 024B — see `024-scope-split.md`)
 
-- **024** Implement `YdbSynquestEngine`. Depends: 001, 002, 010, 011, 037, 039.
-- **025** Pre-ranking eligibility proof (B8). Depends: 024.
-- **026** Side-channel eligibility (B11-adjacent). Depends: 024.
-- **027** Temporal rejection behavior (B11). Depends: 024.
-- **028** Benchmark vs Cassandra (Recall@10, p50/p95/p99, QPS, build/update latency). Depends: 006, 024.
+- **024A** `CassandraSynquestEngine` (new code over the ingestion-cache-backed path). Depends: 001, 002, 010, 011, 037, 039.
+- **024B** `YdbSynquestEngine` (original 024 scope). Depends: 001, 002, 010, 011, 037, 039.
+- **025** Pre-ranking eligibility proof (B8). Depends: 024A, 024B (both adapters).
+- **026** Side-channel eligibility (B11-adjacent). Depends: 024A, 024B.
+- **027** Temporal rejection behavior (B11). Depends: 024A, 024B.
+- **028** Benchmarks: ingestion-cache baseline (006) vs 024A vs 024B. Depends: 006, 024A, 024B.
 
 ### Phase 3 — Projection consistency
 
-- **029** Updates/deletes/retries/replay/rebuild; commit→visible latency. Depends: 024, 038.
-- **030** Regression prevention (ordering + generation). Depends: 016, 024.
+- **029** Updates/deletes/retries/replay/rebuild; commit→visible latency. Depends: 024A, 024B, 038.
+- **030** Regression prevention (ordering + generation). Depends: 016, 024A, 024B.
 - **031** Tenant-scoped `pending()` consumption. Depends: 007, 021.
+
+### Cross-cutting
+
+- **040** Rewire manifest/index call sites off `ingestion-cache`; retire the CQL exception (`011-cql-exception.md`). Owner TBD — assign before Phase 1. Target: 021/024 close. Until then, `ingestion-cache` is bugfix-only and no new production code imports it.
 
 ### Phase 4 — Scale, failure, cost
 
-- **032** Scale + failure matrix (§13 Phase 4, §14). Depends: 021, 024, 029, 038.
+- **032** Scale + failure matrix (§13 Phase 4, §14). Depends: 021, 024A, 024B, 029, 038.
 - **033** Leakage + rebuild/replay under load. Depends: 023, 030.
 - **034** Cost model (§16.1). Depends: 022, 028, 032.
 
 ### Phase 5–6 — Migration tooling and decision (conditional)
 
-- **035** PoC-scope migration + rollback (frozen dataset only). Depends: 021, 024, 029, 032. Only on green Phases 1–4.
+- **035** PoC-scope migration + rollback (frozen dataset only). Depends: 021, 024A, 024B, 029, 032. Only on green Phases 1–4.
 - **036** Decision package vs Decision-4 checklist; Outcomes 2–5 retained. Depends: 022, 028, 029, 032, 034, 035.
 
-Counts: Phase 0 = 13 (001–011 + 037 + 039) · Must-holds = 10 (012–020 + 038) · P1 = 3 · P2 = 5 · P3 = 3 · P4 = 3 · P5 = 1 · P6 = 1 · **Total 39**.
+Counts: Phase 0 = 13 (001–011 + 037 + 039) · Must-holds = 10 (012–020 + 038) · P1 = 3 · P2 = 6 (024A/024B + 025–028) · P3 = 3 · P4 = 3 · P5 = 1 · P6 = 1 · Cross-cutting = 1 (040) · **Total 40**.
+
+## 010 status and next-step order (confirmed 2026-09-26)
+
+**010 is unresolved** (1.27/1.32 approved-architecture, unfrozen — see `010-gate-status.md`).
+Concretely:
+
+- **020 + 039 proceed now, in parallel with 010 escalation.** Neither depends on 010.
+- **021 / 024A / 024B stay gated on 010** (frozen contracts) or explicit throwaway
+  re-scoping per §0.1. The provisional markings from 011
+  (`011-provisional-followup.md`) are load-bearing until the gate flips — they are
+  tracked follow-ups, not footnotes.
+- **008 is closed** with option (b) recorded (`008-cassandra-revision-decision.md`):
+  Cassandra non-conforming for revision/delete; Outcome 4 qualified; 039 must
+  reject Cassandra where revision semantics are required.
 
 ---
 
@@ -147,7 +166,7 @@ Critical path:
               → 032 (scale) ──┘
 ```
 
-Long pole: `011 → 021/024 → 028/029 → 032 → 034 → 036`. Hard external gates: **010** (§14–15 freeze) can block Phase 1/2 indefinitely; **006** (measured baseline) required before any benchmark conclusion.
+Long pole: `011 → 021/024A/024B → 028/029 → 032 → 034 → 036`. Hard external gates: **010** (§14–15 freeze) blocks Phase 1/2 (020/039 proceed in parallel with escalation); **006** (measured baseline) required before any benchmark conclusion.
 
 ---
 

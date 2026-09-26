@@ -340,10 +340,10 @@ Rules:
 - `*-api` contains ports, domain-facing DTOs, capability contracts, and exceptions.
 - `*-cassandra`, `*-ydb`, and `*-inmemory` contain implementation-specific code.
 - Domain modules depend only on `*-api`.
-- No CQL outside Cassandra adapters.
+- No CQL outside Cassandra adapters (transitional exception: `ingestion-cache` CQL predating the ports, tracked for removal in YDB-POC-040; no new CQL there without Architecture sign-off).
 - No YQL outside YDB adapters.
 - Provider selection happens at startup/configuration.
-- Contract tests run against every implementation.
+- Contract tests run against every implementation over its supported operations (per-adapter conformance matrix; `UNSUPPORTED` instead of silent weakening).
 
 ### 8.3 Observability and Operational Contract
 
@@ -871,6 +871,8 @@ The design tolerates:
 
 The PoC cannot declare YDB a replacement until every `Must` capability has equivalent semantics or an explicitly approved architectural alternative.
 
+**Baseline label.** "Current behavior" in this matrix is the **ingestion-cache-backed path**: Lucene + `ingestion-cache` for search legs (no Cassandra search implementation exists), Cassandra manifest/chunk rows for persistence legs. Thresholds below compare against the same legs.
+
 #### Frozen benchmark corpus
 
 - N documents; M chunks; K golden queries;
@@ -1028,8 +1030,8 @@ Also measure: ingestion throughput; update throughput; delete throughput; index 
 ### Architecture
 
 - All domain modules compile without Cassandra or YDB dependencies.
-- CQL exists only in Cassandra adapters; YQL exists only in YDB adapters.
-- Contract tests pass for Cassandra, YDB, and in-memory implementations.
+- CQL exists only in Cassandra adapters (plus the transitional `ingestion-cache` exception tracked in YDB-POC-040); YQL exists only in YDB adapters.
+- Contract tests pass for every adapter over its supported operations (per-adapter conformance matrix per YDB-POC-008; revision/delete paths are non-conforming on Cassandra by recorded decision).
 - Search contract tests use semantic tolerances rather than byte-for-byte parity.
 - Provider selection is configuration-driven.
 - Capability-boundary rule passes; startup validation rejects adapters whose claimed capabilities do not satisfy the required contract.
@@ -1101,7 +1103,7 @@ Explicit thresholds for: p95/p99 search latency; ingestion throughput; update th
 | Risk                                                        | Mitigation                                                   |
 | ----------------------------------------------------------- | ------------------------------------------------------------ |
 | YDB search semantics differ from required Synquest behavior | Validate exact behavior in PoC                               |
-| Vector recall/latency insufficient                          | Benchmark against current HNSW implementation                |
+| Vector recall/latency insufficient                          | Benchmark against the current ingestion-cache-backed search path (Lucene + ingestion-cache; no Cassandra search impl exists) |
 | Eligibility filtering changes vector/hybrid performance     | Include eligibility workloads in benchmark matrix            |
 | Index update latency too high                               | Measure commit-to-search-visible latency                     |
 | Projection regresses due to out-of-order events             | Monotonic ordering key + generation-scoped rebuild; enforced via `ChunkProjection` fields |

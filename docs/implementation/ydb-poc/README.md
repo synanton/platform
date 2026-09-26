@@ -12,6 +12,10 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 009 | `009-relay-decision.md` — no cross-tenant relay; exception path defined | Closed |
 | 010 | `010-gate-status.md` — 1.27/1.32 unfrozen → PoC throwaway-scoped | Closed |
 | 037 | `java/storage-contract/` — shared port-types module (see its README) | Closed |
+| 008 | `008-cassandra-revision-decision.md` — option (b): Cassandra non-conforming for revision/delete; Outcome 4 qualified; 039 rejects Cassandra where revision semantics required | Closed |
+| 024 | `024-scope-split.md` — 024A (Cassandra engine, new) / 024B (YDB engine); baseline = ingestion-cache path for 004/006 | Recorded |
+| 011 | `011-cql-exception.md` — transitional CQL-in-ingestion-cache exception | Open → 040 |
+| 040 | `040-call-site-rewire.md` — rewire call sites, retire exception; owner TBD, target 021/024 close | Open |
 | 011 | Ports extracted: `synvault-api`, `synquest-api`, `storage-testkit`, `synvault-inmemory`, `synquest-inmemory`, `synvault-cassandra`; 34/34 tests green (incl. 8 live-Cassandra). Provisional surfaces tracked in `011-provisional-followup.md`. `synquest-cassandra` deferred to 024 (no pre-existing Cassandra search impl; current search is Lucene). Existing manifest/index service call sites stay on `ingestion-cache` until 021/024 rewire (port surface itself is Cassandra-free). | Closed |
 | — | Build fix: `testcontainers` 1.20.3 → 1.21.4 (`gradle/libs.versions.toml`; test-scope only). 1.20.3's docker-java 3.4.0 speaks API 1.32; local Docker 29.x requires ≥1.40. | Done |
 
