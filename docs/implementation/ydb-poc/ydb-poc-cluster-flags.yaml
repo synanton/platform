@@ -1,0 +1,11 @@
+# YDB PoC cluster flags — apply to table_service_config / feature_flags and restart
+# See version-coupled-assumptions.md. Any fresh PoC container needs these four lines.
+
+table_service_config:
+  enable_hybrid_search: true
+
+feature_flags:
+  enable_fulltext_index_row_id: true
+  enable_fulltext_index_prefix: true
+  enable_add_unique_index: true
+  enable_online_add_unique_index: true

@@ -16,7 +16,7 @@ class YdbSynquestEngineTest extends SynquestEngineContract {
         if (engine == null) {
             YdbSearchTestBase.ensureStarted();
             String prefix = YdbSearchTestBase.randomPrefix();
-            YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix);
+            YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
             engine = new YdbSynquestEngine(YdbSearchTestBase.client(), prefix);
         }
         return engine;

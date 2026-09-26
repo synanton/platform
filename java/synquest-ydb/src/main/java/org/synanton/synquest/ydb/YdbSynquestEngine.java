@@ -73,6 +73,10 @@ public class YdbSynquestEngine
         return "`" + prefix + "_projections`";
     }
 
+    private String vectors() {
+        return "`" + prefix + "_vectors`";
+    }
+
     // ---- writer ----
 
     @Override
@@ -102,6 +106,25 @@ public class YdbSynquestEngine
                                 .put("$m", PrimitiveValue.newJson(YdbJson.toJson(p.metadata())))
                                 .put("$o", PrimitiveValue.newUint64(p.orderingKey()))
                                 .put("$g", PrimitiveValue.newText(p.generationId().value())));
+                if (p.embedding() != null) {
+                    exec(
+                            session,
+                            "DECLARE $t AS Utf8; DECLARE $c AS Utf8; DECLARE $d AS Utf8;"
+                                    + " DECLARE $m AS Json; DECLARE $o AS Uint64; DECLARE $g AS Utf8;"
+                                    + "UPSERT INTO " + vectors()
+                                    + " (tenant_id, chunk_id, doc_id, metadata_json, embedding,"
+                                    + " ordering_key, generation) VALUES"
+                                    + " ($t, $c, $d, $m, Untag(Knn::ToBinaryStringFloat(["
+                                    + floatList(p.embedding()) + "]), 'FloatVector'),"
+                                    + " $o, $g);",
+                            Params.create()
+                                    .put("$t", PrimitiveValue.newText(tenant))
+                                    .put("$c", PrimitiveValue.newText(p.chunkId().value()))
+                                    .put("$d", PrimitiveValue.newText(p.documentId().value()))
+                                    .put("$m", PrimitiveValue.newJson(YdbJson.toJson(p.metadata())))
+                                    .put("$o", PrimitiveValue.newUint64(p.orderingKey()))
+                                    .put("$g", PrimitiveValue.newText(p.generationId().value())));
+                }
             }
             metrics.record(AdapterMetrics.SYNQUEST_UPSERT, System.nanoTime() - start, true);
             return CompletableFuture.completedFuture(null);
@@ -126,6 +149,13 @@ public class YdbSynquestEngine
                                 Params.create()
                                         .put("$t", PrimitiveValue.newText(tenant))
                                         .put("$c", PrimitiveValue.newText(id.value())));
+                        exec(
+                                session,
+                                "DECLARE $t AS Utf8; DECLARE $c AS Utf8;"
+                                        + "DELETE FROM " + vectors() + " WHERE tenant_id=$t AND chunk_id=$c;",
+                                Params.create()
+                                        .put("$t", PrimitiveValue.newText(tenant))
+                                        .put("$c", PrimitiveValue.newText(id.value())));
                     }
                 }
             }
@@ -139,6 +169,8 @@ public class YdbSynquestEngine
 
     // ---- retrieval (commit 1: lexical only) ----
 
+    // ---- retrieval (commit 2: lexical + vector; hybrid in commit 3) ----
+
     @Override
     public CompletionStage<SearchResult> search(SecurityContext context, SearchRequest request) {
         long start = System.nanoTime();
@@ -149,67 +181,165 @@ public class YdbSynquestEngine
                             StorageErrorKind.UNSUPPORTED,
                             "UNSUPPORTED: temporal retrieval not supported by this adapter"));
         }
-        if (request.mode() != SearchMode.LEXICAL) {
+        if (request.mode() == SearchMode.HYBRID) {
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, false);
             return CompletableFuture.failedFuture(
                     new StorageException(
                             StorageErrorKind.UNSUPPORTED,
-                            "UNSUPPORTED: " + request.mode() + " lands in 024B commits 2-3"));
+                            "UNSUPPORTED: HYBRID lands in 024B commit 3"));
         }
         try (Session session = session()) {
             String tenant = tenant(context, request);
-            String terms = escapeQuotes(request.queryText());
-            DataQueryResult result =
-                    query(
-                            session,
-                            "DECLARE $t AS Utf8;"
-                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json,"
-                                    + " FulltextScore(chunk_text, \"" + terms + "\") AS relevance FROM "
-                                    + table() + " VIEW `ft`"
-                                    + " WHERE tenant_id=$t AND FulltextScore(chunk_text, \"" + terms + "\") > 0"
-                                    + " ORDER BY relevance DESC LIMIT " + (request.topK() + 1) + ";",
-                            Params.create().put("$t", PrimitiveValue.newText(tenant)),
-                            TxControl.snapshotRo().setCommitTx(true));
-            List<SearchHit> hits = new ArrayList<>();
-            Map<ChunkId, String> highlights = new java.util.HashMap<>();
-            ResultSetReader rs = result.getResultSet(0);
-            int eligible = 0;
-            while (rs.next()) {
-                eligible++;
-                Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
-                if (!matches(metadata, request.filters().mustMatchMetadata())) {
-                    continue;
-                }
-                double score = rs.getColumn("relevance").getDouble();
-                if (score < request.minScore()) {
-                    continue;
-                }
-                ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
-                String text = rs.getColumn("chunk_text").getText();
-                hits.add(
-                        new SearchHit(
-                                chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
-                if (hits.size() >= request.topK()) {
-                    break;
-                }
-                highlights.put(chunkId, snippet(text, request.queryText()));
-            }
-            // Highlights for the last hit when topK-bounded above.
-            for (SearchHit hit : hits) {
-                highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
-            }
+            SearchResult result =
+                    request.mode() == SearchMode.VECTOR
+                            ? vectorSearch(session, tenant, request)
+                            : lexicalSearch(session, tenant, request);
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, true);
-            return CompletableFuture.completedFuture(new SearchResult(hits, eligible, highlights));
+            return CompletableFuture.completedFuture(result);
         } catch (RuntimeException e) {
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, false);
             throw map(e);
         }
     }
 
+    private SearchResult lexicalSearch(Session session, String tenant, SearchRequest request) {
+        String terms = escapeQuotes(request.queryText());
+        DataQueryResult result =
+                query(
+                        session,
+                        "DECLARE $t AS Utf8;"
+                                + "SELECT chunk_id, doc_id, chunk_text, metadata_json,"
+                                + " FulltextScore(chunk_text, \"" + terms + "\") AS relevance FROM "
+                                + table() + " VIEW `ft`"
+                                + " WHERE tenant_id=$t AND FulltextScore(chunk_text, \"" + terms + "\") > 0"
+                                + " ORDER BY relevance DESC LIMIT " + (request.topK() + 1) + ";",
+                        Params.create().put("$t", PrimitiveValue.newText(tenant)),
+                        TxControl.snapshotRo().setCommitTx(true));
+        return collect(session, request, result);
+    }
+
+    private SearchResult vectorSearch(Session session, String tenant, SearchRequest request) {
+        if (request.queryEmbedding().isEmpty()) {
+            return new SearchResult(List.of(), 0, Map.of());
+        }
+        String similarity =
+                "Knn::CosineSimilarity(embedding,"
+                        + " Knn::ToBinaryStringFloat([" + floatList(request.queryEmbedding().get()) + "]))";
+        DataQueryResult result =
+                query(
+                        session,
+                        "DECLARE $t AS Utf8;"
+                                + "SELECT chunk_id, doc_id, metadata_json, " + similarity + " AS relevance FROM "
+                                + vectors() + " VIEW `v_vec`"
+                                + " WHERE tenant_id=$t"
+                                + " ORDER BY " + similarity + " DESC LIMIT " + (request.topK() + 1) + ";",
+                        Params.create().put("$t", PrimitiveValue.newText(tenant)),
+                        TxControl.snapshotRo().setCommitTx(true));
+        List<SearchHit> hits = new ArrayList<>();
+        Map<ChunkId, String> highlights = new java.util.HashMap<>();
+        ResultSetReader rs = result.getResultSet(0);
+        int eligible = 0;
+        while (rs.next()) {
+            eligible++;
+            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+            if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                continue;
+            }
+            double score = readRelevance(rs);
+            if (score < request.minScore()) {
+                continue;
+            }
+            // Text lives in the projections table; vector rows carry ids + metadata.
+            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+            String text = readText(session, tenant, chunkId);
+            hits.add(
+                    new SearchHit(
+                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
+            if (hits.size() >= request.topK()) {
+                break;
+            }
+            highlights.put(chunkId, snippet(text, request.queryText()));
+        }
+        for (SearchHit hit : hits) {
+            highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
+        }
+        return new SearchResult(hits, eligible, highlights);
+    }
+
+    /**
+     * Reads the similarity score tolerantly: the planner may return it as Double
+     * or Float depending on the index path taken.
+     */
+    private static double readRelevance(ResultSetReader rs) {
+        try {
+            return rs.getColumn("relevance").getDouble();
+        } catch (RuntimeException e) {
+            return rs.getColumn("relevance").getFloat();
+        }
+    }
+
+    private SearchResult collect(Session session, SearchRequest request, DataQueryResult result) {
+        List<SearchHit> hits = new ArrayList<>();
+        Map<ChunkId, String> highlights = new java.util.HashMap<>();
+        ResultSetReader rs = result.getResultSet(0);
+        int eligible = 0;
+        while (rs.next()) {
+            eligible++;
+            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+            if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                continue;
+            }
+            double score = rs.getColumn("relevance").getDouble();
+            if (score < request.minScore()) {
+                continue;
+            }
+            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+            String text = rs.getColumn("chunk_text").getText();
+            hits.add(
+                    new SearchHit(
+                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
+            if (hits.size() >= request.topK()) {
+                break;
+            }
+            highlights.put(chunkId, snippet(text, request.queryText()));
+        }
+        // Highlights for the last hit when topK-bounded above.
+        for (SearchHit hit : hits) {
+            highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
+        }
+        return new SearchResult(hits, eligible, highlights);
+    }
+
+    private String readText(Session session, String tenant, ChunkId chunkId) {
+        DataQueryResult result =
+                query(
+                        session,
+                        "DECLARE $t AS Utf8; DECLARE $c AS Utf8;"
+                                + "SELECT chunk_text FROM " + table()
+                                + " WHERE tenant_id=$t AND chunk_id=$c;",
+                        Params.create()
+                                .put("$t", PrimitiveValue.newText(tenant))
+                                .put("$c", PrimitiveValue.newText(chunkId.value())),
+                        TxControl.snapshotRo().setCommitTx(true));
+        ResultSetReader rs = result.getResultSet(0);
+        return rs.next() ? rs.getColumn("chunk_text").getText() : "";
+    }
+
+    static String floatList(float[] values) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append("CAST(").append(Float.toString(values[i])).append(" AS Float)");
+        }
+        return sb.toString();
+    }
+
     @Override
     public SearchCapabilities capabilities() {
-        // Commit 1: lexical only. Vector/hybrid flip with commits 2–3 + evidence.
-        return new SearchCapabilities(true, false, false, true, true, false, false, false);
+        // Commit 2: lexical + vector. Hybrid flips with commit 3 + evidence.
+        return new SearchCapabilities(true, true, false, true, true, false, false, false);
     }
 
     // ---- admin ----
@@ -287,6 +417,7 @@ public class YdbSynquestEngine
                 adapterVersion(),
                 List.of(
                         ConformanceEntry.supported(Capabilities.SYNQUEST_LEXICAL, evidence),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_VECTOR, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HIGHLIGHTS, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_ELIGIBILITY, evidence),

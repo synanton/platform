@@ -52,7 +52,6 @@ max vs raw RRF; no section-expansion/rerank paths; fixed top-100 legs (service
 allows per-request overrides).
 
 ## 028 pre-flight caveats (Gate 0 probe findings)
-
 - **Empty-table degradation:** YDB vector indexes built on empty tables degrade
   to scans. The benchmark corpus must be fully built **before** indexes, in the
   harness and in 024B setup — assert index usage in results, not just latency.
@@ -64,6 +63,13 @@ allows per-request overrides).
 - **Hybrid runs flagged:** the 028 hybrid leg executes with
   `enable_hybrid_search=true` set (non-default). Results carry that annotation
   for production-readiness review.
+- **Synthetic vectors: latency measurable, recall unclaimed.** 024B runs on
+  synthetic 384-d vectors per the corpus spec; the baseline runs whatever dim
+  its embedder produced (service default 768). Vector-leg latency compares only
+  at matched dims — record both dims with every number. Recall on synthetic
+  vectors is meaningless: 028's vector leg produces a latency number for 024B
+  and **no recall number**; the ≥0.95 gate waits on the real pipeline. A report
+  showing "vector leg run" without this note will be misread as recall tested.
 
 ## Collapse scope: Gate 0 fails 024B, not Phase 2
 

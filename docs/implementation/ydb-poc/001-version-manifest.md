@@ -42,15 +42,10 @@ server build before any production-track claim (Phase 6).
   deployment config when 021 hardens; no `DeploymentRequirements` change
   (transport config is not a capability gate).
 
-## Version-coupled assumptions (re-validate on any YDB version change)
+## Version-coupled assumptions
 
-- OCC conflict detection relies on YDB error code **400040 (ABORTED)** observed
-  on 26.3.x (`YdbSynvaultStore.map`). Same discipline as 003 preview flags.
-- `HybridRank` in 26.3 is RC disabled-by-default: ranking, fusion parameters,
-  and eligibility composition must be re-validated on version change (GA may
-  alter fusion semantics and silently invalidate 028 hybrid numbers).
-- Prefixed table names are **PoC-scoping** (collision avoidance in the shared
-  `/local` database), not a production convention — a Phase-5 migration item.
+Consolidated in `version-coupled-assumptions.md` (single list, single
+re-validation trigger). Do not add version-coupled notes elsewhere.
 
 ## §11.1 schema deviations (021, as built)
 
