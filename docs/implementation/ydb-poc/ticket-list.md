@@ -43,12 +43,20 @@ IDs 001–039 per the updated list; 024 split 024A/024B (no new number); 040 add
 Status: 021 closed; 022 write-path bench measured (search legs await 024A/024B);
 024A implemented + contract/gating green (benchmark legs pending); 024B lexical +
 vector + hybrid implemented, contract/gating green (Gate 0 passed).
+032 write-path subtests green: 20-way burst 77.6 rps all-complete; container
+restart preserves committed revisions + pending publications (genuine recovery:
+restart landed mid-test, reads after).
 029 opened: tenant-scoped relay seam (`pendingPublications`/`markPublished`) +
 harness relay test — first freshness number `commit_to_visible_ms=487,
-pending=0` (test round-trips included; relay stands in for the 1.27 client).
+pending=0` (single update, steady-state, single-tenant single-writer — NOT
+p50/p95, NOT the 1.27 path; real path adds client+bus+delivery lag, re-validate
+on 1.27 landing; freshness gate explicitly unclaimed until then — see 006).
 030 covered by contract ordering/generation suites on both adapters + orderingKey
-= commit-sequence assertion in the relay test. 031 covered by tenant-scoped
-pending test (no cross-tenant scan).
+== per-doc `storage_revision` monotonic counter (not timestamp) asserted in the
+relay test; relay restart resumes from the pending-set scan (no cursor), and
+reprocessing is idempotent via the ordering guard.
+031 covered structurally (no unscoped `pending` overload exists — cross-tenant
+scan is inexpressible) and behaviorally (tenant-scoped pending test).
 
 034 input (filed for Phase 4, not Phase 2/3): Cassandra metadata-write benchmark
 on the same shapes as the 022 YDB numbers — required for the §16.1 cost model.

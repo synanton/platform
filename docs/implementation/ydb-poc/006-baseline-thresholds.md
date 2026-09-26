@@ -49,6 +49,7 @@ and must not be cited. Lesson recorded: hybrid timing boundary = legs + fusion.
 | Vector Recall@10 | unmeasured (no embedding pipeline) | ≥ **0.95 absolute** (Option B below — not baseline-relative) |
 | Index freshness | pending relay (029) | ≤ baseline × 1.20 once measured |
 | Error rate | 0 observed | ≤ baseline under equivalent load |
+| Index freshness (commit → search-visible) | **Unclaimed** — measured 487ms on the harness relay (single update, steady-state, single-tenant single-writer; NOT p50/p95, NOT the 1.27 path) | **No gate until the 1.27 client lands** (explicit, Option-B-style: nothing baseline-relative to compare). Re-validate end-to-end then; if the PoC stays throwaway, the gate defers post-PoC — cleanly, not silently |
 
 ## Sign-off
 
