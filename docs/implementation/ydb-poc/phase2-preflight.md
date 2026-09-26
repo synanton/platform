@@ -21,7 +21,21 @@ first, latency second. Three structurally different outcomes, decided up front:
 If none holds, 024B fails a Must requirement and the Synquest PoC collapses
 regardless of latency. That is the correct outcome — do not benchmark past it.
 
+## Collapse scope: Gate 0 fails 024B, not Phase 2
+
+- **024B (YdbSynquestEngine)** — collapses. Correct.
+- **028 as a YDB comparison** — collapses with it. Correct.
+- **024A (Cassandra port over ingestion-cache/Lucene)** — unaffected. It does not
+  depend on Gate 0; it runs to completion and still produces a baseline-vs-024A
+  comparison.
+- **Phase 6 Outcome 5** ("dedicated search/vector backend remains necessary") —
+  becomes the reachable outcome. Gate 0 failure is a decision with a named
+  outcome, not a stop: YDB's search path fails a Must, the adapter path still
+  gets evaluated, Phase 6 selects from Outcomes 2–5.
+
 ## Capability unknowns (validate explicitly, not mid-benchmark)
+
+Pass/fail rows — each gets a binary entry in the Phase-2 report:
 
 - Vector ANN under high-selectivity filters (0.1% leg): degradation mode?
 - Full-text ranking vs frozen Lucene BM25 defaults (k1=1.2, b=0.75,
@@ -33,5 +47,11 @@ regardless of latency. That is the correct outcome — do not benchmark past it.
 - Vector index build time at 160k chunks (Phase 5 feasibility input)?
 - Ordering-key + generation rejection without per-projection read-before-write?
 
-Each gets a pass/fail entry in the Phase-2 report. Unknowns, not defects —
-until proven otherwise.
+Annotation rows — risk notes attached to the pass/fail rows they qualify, never
+gates themselves:
+
+- Preview/beta status of any YDB feature a pass/fail row depends on (from the
+  003 stability inventory). A preview-flagged dependency records production
+  risk for Phase 6 to weigh; it neither fails nor passes the row.
+
+Unknowns, not defects — until proven otherwise.
