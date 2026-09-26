@@ -54,9 +54,12 @@ on 1.27 landing; freshness gate explicitly unclaimed until then — see 006).
 030 covered by contract ordering/generation suites on both adapters + orderingKey
 == per-doc `storage_revision` monotonic counter (not timestamp) asserted in the
 relay test; relay restart resumes from the pending-set scan (no cursor), and
-reprocessing is idempotent via the ordering guard.
+reprocessing is idempotent via the ordering guard. Cursorless is a resilience
+property, not a simplification: no cursor state exists to lose on relay
+restart; resume position derives from committed state.
 031 covered structurally (no unscoped `pending` overload exists — cross-tenant
-scan is inexpressible) and behaviorally (tenant-scoped pending test).
+scan is inexpressible, the strongest form; future tenant-scoped interfaces
+follow this pattern) and behaviorally (tenant-scoped pending test).
 
 034 input (filed for Phase 4, not Phase 2/3): Cassandra metadata-write benchmark
 on the same shapes as the 022 YDB numbers — required for the §16.1 cost model.

@@ -65,5 +65,8 @@ Single-threaded, 3-chunk revisions with provenance + publication, same machine/
 instance as the baseline runs. These are **operating points for Phase-6 cost
 input, not gates**: no frozen write absolutes exist because Cassandra cannot
 perform revisions (nothing baseline-relative to gate against — the Option B
-pattern). Sustained rate ≈ 28 atomic revisions/s single-threaded; concurrency
-scaling is a Phase-4 question.
+pattern). Sustained rate ≈ 28 atomic revisions/s single-threaded; burst
+77.6 rps at 20-way concurrency with zero partials (capability demonstration,
+not comparison — keep out of comparison tables until paired with a matching
+Cassandra metadata-only number for scale context); concurrency scaling is a
+Phase-4 question.

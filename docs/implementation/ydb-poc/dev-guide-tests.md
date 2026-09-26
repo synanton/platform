@@ -43,6 +43,17 @@ docker exec ydb-poc sed -i \
 docker restart ydb-poc
 ```
 
+## Harness pattern: stable store identity in lifecycle tests (false-negative guard)
+
+Audit 2026-09-26: every suite test holds one store identity per test — except the
+restart-recovery test, which briefly recreated its store mid-test with a fresh
+namespace and then "passed" by reading empty state from the wrong keyspace.
+Rule: **lifecycle tests (restart, replay, multi-phase) must hold store identity
+stable across phases**; per-test randomness belongs in setup, never between
+write and verify. A green assertion against the wrong identity is a
+false-negative factory. Verified by container-start-time cross-check when a
+lifecycle boundary is involved.
+
 ## Flake policy (from `live-test-policy.md`)
 
 - Live suite runs on **every PR** (shared container keeps it ~40s).
