@@ -1,6 +1,6 @@
 # Design Proposal: Evaluate YDB as a Synvault/Synquest Persistence Backend
 
-**Status:** Draft for Architecture Review (Revision 6 — final polish)
+**Status:** Draft for Architecture Review (Revision 6 — final polish; pending 010 gate resolution, decision by 2026-10-03 — not approved)
 **Governing document:** Synanton Platform Architecture 1.0 (Approved — capstone)
 **Scope:** Persistence port and YDB adapter for Knowledge 1.25 and Search 1.31
 **Candidate:** YDB 26.3.x; exact server and Java SDK versions to be pinned in Phase 0

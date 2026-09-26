@@ -5,15 +5,15 @@
 **Governing docs:**
 - `platform/docs/architecture/synanton-platform-architecture-1.0.md` (capstone, approved)
 - `platform/docs/architecture/proposals/Design Proposal Evaluate YDB as a SynvaultSynquest Backend.md` (Rev 6, draft)
-- YDB-POC Ticket List — Updated (001–039, supersedes 001–036)
+- YDB-POC Ticket List (`../ydb-poc/ticket-list.md`, 001–040 — governing tracker)
 **Scope:** Ports (`SynvaultStore`, `SynquestEngine`, `SynquestIndexWriter/Admin`) + time-boxed YDB 26.3.x evaluation. No production migration.
 **Non-goals:** MinIO / Content Cache 1.26, Relix graph, ClickHouse, PostgreSQL, temporal/graph retrieval evaluation, 1.27/1.32 redefinition.
 
 ---
 
-## 1. Ticket review verdict (001–039)
+## 1. Ticket review verdict (001–040)
 
-**Verdict: accept as authoritative. Prior corrections closed, 037–039 correctly integrated.**
+**Verdict: accept as authoritative. Prior corrections closed, 037–040 correctly integrated.**
 
 Verified against proposal Rev 6:
 
@@ -22,8 +22,7 @@ Verified against proposal Rev 6:
 - **039 as Phase-0 blocker.** Provider selection + startup validation (depends 011, 020) gating 021/024 — correct; closes the wiring gap.
 - **038 as must-hold.** §8.3 observability owned; 029/032 now depend on it — correct, freshness/lag becomes a usable hard gate.
 - **021/024 deps extended** to 037 + 039 in addition to 001/002/010/011 — correct.
-- **Traceability, phased sequencing (0A–0D), critical path, done-criteria** added in the updated list — adopt as-is.
-- Fences use ```` ```text ```` — correct.
+- **Traceability, phased sequencing (0A–0D), critical path, done-criteria** added in the updated list — adopt as-is. Full table in `ticket-list.md`.
 
 Residual notes (non-blocking, for execution):
 
@@ -33,7 +32,7 @@ Residual notes (non-blocking, for execution):
 
 ---
 
-## 2. Ticket plan (39)
+## 2. Ticket plan (40 — full list in `ticket-list.md`)
 
 ### Phase 0 — Reconciliation and preconditions (gate: all green before Phase 1/2)
 

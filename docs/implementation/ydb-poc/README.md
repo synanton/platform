@@ -10,7 +10,7 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 005 | `005-corpus-definition.md` — `ydb-poc-corpus-v1` frozen spec | Closed |
 | 007 | `007-cassandra-publog-scope.md` — separate track, ~16 d estimate | Closed |
 | 009 | `009-relay-decision.md` — no cross-tenant relay; exception path defined | Closed |
-| 010 | `010-gate-status.md` — 1.27/1.32 unfrozen → PoC throwaway-scoped | Closed |
+| 010a | `010-gate-status.md` — gate determination (1.27/1.32 unfrozen → PoC throwaway-scoped) | Closed |
 | 037 | `java/storage-contract/` — shared port-types module (see its README) | Closed |
 | 008 | `008-cassandra-revision-decision.md` — option (b): Cassandra non-conforming for revision/delete; Outcome 4 qualified; 039 rejects Cassandra where revision semantics required | Closed |
 | 024 | `024-scope-split.md` — 024A (Cassandra engine, new) / 024B (YDB engine); baseline = ingestion-cache path for 004/006 | Recorded |
@@ -18,7 +18,7 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 040 | `040-call-site-rewire.md` — owner: Platform Eng YDB-PoC workstream (named human countersigns at Phase-0 exit); target 021/024 close | Open |
 | 004+006 | `004-parity-matrix.md` (frozen: current Lucene behavior per Must row, meet-or-justify flags, tie-break rule) + `006-baseline-thresholds.md` (protocol + rules frozen, preliminary operating points measured, absolutes gate on v1-corpus run) + `BaselineBench` (`-Dydb.bench=true`, excluded from PR) — landed as one unit | Closed |
 | 038 | `038-observability-contract.md` — taxonomy + wiring (metrics default-on everywhere incl. Cassandra per Option A symmetry; Noop reserved for metrics-disabled profiles; freshness types for 029; Micrometer deferred) | Closed |
-| 010 | `010-escalation.md` — written ask (freeze vs throwaway), decision date 2026-10-03, fallback cost ≤2d; silence defaults to throwaway | Escalated |
+| 010b | `010-escalation.md` — escalation (decision by 2026-10-03, fallback cost ≤2d; silence defaults to throwaway) | Escalated |
 | — | 004 gating extended to unmeasured metrics (vector Recall@10 ≥ 0.95 absolute); 006 hybrid re-measured as full concurrent pipeline (combine-only number void) | Done |
 | — | `benchmark-execution-plan.md` — three-legged spec (baseline vs 024A vs 024B); conforming/non-conforming separation; three outputs (gates, adjusted perf, capability cost); five excluded failure modes. Execution gated on 010 via 021/024 | Specified |
 | 020 | Machine-readable `ConformanceMatrix`/`Conformant` in `storage-contract`; per-adapter matrices (Cassandra revision/delete UNSUPPORTED per 008); gating suites green (flags vs matrix vs loadable evidence) | Closed |
