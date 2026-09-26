@@ -6,6 +6,12 @@ spec, not authorization to start implementation)
 **Inputs:** `004-parity-matrix.md` (frozen), `006-baseline-thresholds.md` (frozen),
 corpus `ydb-poc-corpus-v1` (005)
 
+**Outcome independence:** this spec survives either 010 outcome. On frozen, results
+carry full weight against the frozen thresholds; on throwaway (or expired-silence
+activation), the same spec executes and conclusions carry reduced commitment with
+no production pre-commit. Nothing here needs rewriting per outcome — only Phase 6
+interpretation changes.
+
 ## Purpose (recorded to prevent scope drift)
 
 Not "is YDB faster than Cassandra." The question for Phase 6 is whether YDB meets
@@ -38,6 +44,28 @@ operations; revision atomicity is YDB-measured-against-absolute.
    reads/writes, non-transactional search); informs cost/capacity planning.
 3. **Capability-cost annotation** — cost of operations only YDB performs (atomic
    revisions): data for whether the architecture's guarantees are worth it.
+
+## Harness reproducibility (frozen with the spec)
+
+Thresholds are absolute, so the harness must be too — two teams running this spec
+must produce comparable numbers:
+
+- Container images pinned by digest (same pattern as the `cassandra:4.1` test pin;
+  YDB image pinned when 021 lands).
+- JVM version and flags pinned and recorded with results (baseline ran OpenJDK 21).
+- Warmup: ≥1 full pass over the query set discarded before measurement
+  (baseline: 1 warmup + 5 measured reps per query).
+- Steady-state: measurement begins after warmup with no outstanding compactions /
+  index builds; record the check used.
+- Client concurrency fixed and recorded (baseline: single-threaded legs, 2-thread
+  pool for hybrid mirroring `SearchService`).
+- Machine class (CPU, memory, disk type): TBD at Phase 2 open, recorded with results.
+
+## Threshold-drift rule
+
+If any frozen absolute threshold changes after Phase 2 measurement begins, all
+affected measurements must be re-run against the new threshold before use in
+Phase 6. Same category as the YDB stability re-validation rule.
 
 ## Failure modes (explicitly excluded)
 
