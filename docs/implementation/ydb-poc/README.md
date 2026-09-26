@@ -20,6 +20,7 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 038 | `038-observability-contract.md` — taxonomy + wiring (metrics default-on everywhere incl. Cassandra per Option A symmetry; Noop reserved for metrics-disabled profiles; freshness types for 029; Micrometer deferred) | Closed |
 | 010 | `010-escalation.md` — written ask (freeze vs throwaway), decision date 2026-10-03, fallback cost ≤2d; silence defaults to throwaway | Escalated |
 | — | 004 gating extended to unmeasured metrics (vector Recall@10 ≥ 0.95 absolute); 006 hybrid re-measured as full concurrent pipeline (combine-only number void) | Done |
+| — | `benchmark-execution-plan.md` — three-legged spec (baseline vs 024A vs 024B); conforming/non-conforming separation; three outputs (gates, adjusted perf, capability cost); five excluded failure modes. Execution gated on 010 via 021/024 | Specified |
 | 020 | Machine-readable `ConformanceMatrix`/`Conformant` in `storage-contract`; per-adapter matrices (Cassandra revision/delete UNSUPPORTED per 008); gating suites green (flags vs matrix vs loadable evidence) | Closed |
 | 039 | `java/storage-provider` — config selection + `StartupValidator` (incl. 008 fail-fast with provider+capability+reason); `describe()` for 038 shape; contract tests green | Closed |
 | — | `ActiveProviders` typed snapshot in `storage-contract` (038/039 shared; mixing explicitly supported per Outcome 3, tested); live-test policy (`live-test-policy.md`: PR cadence, shared container, no auto-retry, runner pin); 008 appendix (flag was unused) | Done |
