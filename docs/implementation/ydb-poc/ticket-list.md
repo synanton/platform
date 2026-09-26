@@ -39,3 +39,7 @@ IDs 001–039 per the updated list; 024 split 024A/024B (no new number); 040 add
 
 021, 022, 023 · 024A, 024B, 025, 026, 027, 028 · 029, 030, 031 · 032, 033, 034 ·
 035 · 036. Cross-cutting: 040 (owner assigned, target 021/024 close).
+
+Status: 021 closed; 022 write-path bench measured (search legs await 024A/024B);
+024A implemented + contract/gating green (benchmark legs pending); 024B opens
+behind Gate 0 (eligibility probe first, per preflight).

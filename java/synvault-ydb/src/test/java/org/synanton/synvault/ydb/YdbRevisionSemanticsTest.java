@@ -171,6 +171,23 @@ class YdbRevisionSemanticsTest {
         // The loser surfaces as CONFLICT either via the Java OCC check or via the YDB
         // serializable abort mapping — retry-after-reread is correct in both cases.
         assertThat(String.valueOf(loser.getMessage())).contains("CONFLICT");
+        // Prescribed recovery: re-read the new expected revision and retry — must commit.
+        long reread =
+                store.getDocument(ctx(), DocumentId.of("d-race")).toCompletableFuture().join().orElseThrow()
+                        .storageRevision();
+        store.putDocumentRevision(
+                        ctx(), revision(store, "d-race", 2), RevisionWriteOptions.expectRevision(reread))
+                .toCompletableFuture()
+                .join();
+        // Final state: latest revision complete, no partial state from any attempt.
+        assertThat(
+                        store.getChunks(ctx(), DocumentId.of("d-race"), ChunkQuery.all(), PageRequest.first(10))
+                                .toCompletableFuture()
+                                .join()
+                                .items())
+                .hasSize(2);
+        assertThat(store.getProvenance(ctx(), DocumentId.of("d-race")).toCompletableFuture().join())
+                .hasSize(2);
         // Winner is complete: doc + all chunks + all provenance.
         assertThat(store.getDocument(ctx(), DocumentId.of("d-race")).toCompletableFuture().join())
                 .isPresent();

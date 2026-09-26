@@ -20,6 +20,17 @@ current search runs on the ingestion-cache-backed Lucene path. 024 therefore del
 **both** adapters. The §14 benchmark matrix compares three legs: ingestion-cache
 baseline (006) vs 024A vs 024B.
 
+## 024B schema decision (recorded 2026-09-26): separate index structure
+
+When 024B introduces the native vector type, it uses a **separate index table**
+for the vector search path — 021's `chunks` schema (Base64 embedding + dim) is
+final and is not migrated. Rationale: keeps the demonstrated 021 contract stable
+while 024B experiments; migration risk stays out of the critical path.
+Exception: if YDB 26.3 requires the vector column to live in the source table
+for index eligibility, 024B may migrate instead — but the migration procedure
+then becomes explicit 024B scope, reviewed before execution. Default holds
+unless proven otherwise during the Gate 0 probe.
+
 ## Baseline correction (004 / 006)
 
 "Current behavior" in the parity matrix (004) and the measured baseline (006) is the

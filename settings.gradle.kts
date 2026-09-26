@@ -55,6 +55,7 @@ include(
     "java:synvault-cassandra",
     "java:storage-provider",
     "java:synvault-ydb",
+    "java:synquest-cassandra",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)

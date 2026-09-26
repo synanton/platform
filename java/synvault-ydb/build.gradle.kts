@@ -15,3 +15,8 @@ dependencies {
     testImplementation(libs.assertj.core)
     testImplementation(libs.logback.classic)
 }
+
+// Opt-in benchmark gate (YDB-POC-022): -Dydb.bench=true runs YdbWriteBench; unset skips it.
+tasks.named<Test>("test") {
+    systemProperty("ydb.bench", providers.systemProperty("ydb.bench").getOrElse(""))
+}

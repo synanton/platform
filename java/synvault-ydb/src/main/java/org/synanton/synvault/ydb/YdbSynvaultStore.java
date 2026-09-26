@@ -544,8 +544,9 @@ public class YdbSynvaultStore implements SynvaultStore, Conformant {
         }
         String message = String.valueOf(e.getMessage());
         if (message.contains("ABORTED")) {
-            // YDB serializable validation rejected a concurrent writer: optimistic-concurrency
-            // conflict, not a transport fault. Callers re-read and retry, same as CONFLICT.
+            // Version-coupled: YDB OCC conflict detection relies on ABORTED (observed as
+            // code 400040 on 26.3.x). Re-validate this mapping on any YDB version change
+            // (same discipline as preview-feature flags in 003).
             return new StorageException(StorageErrorKind.CONFLICT, "CONFLICT: YDB serialization abort: " + message);
         }
         return new StorageException(StorageErrorKind.TRANSIENT, "YDB failure: " + message);

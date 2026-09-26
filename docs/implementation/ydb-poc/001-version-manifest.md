@@ -42,6 +42,13 @@ server build before any production-track claim (Phase 6).
   deployment config when 021 hardens; no `DeploymentRequirements` change
   (transport config is not a capability gate).
 
+## Version-coupled assumptions (re-validate on any YDB version change)
+
+- OCC conflict detection relies on YDB error code **400040 (ABORTED)** observed
+  on 26.3.x (`YdbSynvaultStore.map`). Same discipline as 003 preview flags.
+- Prefixed table names are **PoC-scoping** (collision avoidance in the shared
+  `/local` database), not a production convention — a Phase-5 migration item.
+
 ## §11.1 schema deviations (021, as built)
 
 Tables carry a per-deployment prefix (`<prefix>_documents|_chunks|_provenance|
