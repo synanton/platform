@@ -126,7 +126,17 @@ truthful.
 
 ## 8. Co-signature (D6 gate)
 
-- 028a implementer (corpus half): ________________ (this branch author so far)
-- PG comparator owner (Q3 half = parser, verified): ________________
-- YDB workstream sign-off: ________________
+Signatures attest different things — recorded here so a future reader can
+distinguish verification from rubber-stamp:
+
+- 028a implementer (corpus half): ________________ (this branch author so far).
+  Attests authorship of §§1–6c. Recorded above.
+- PG comparator owner (Q3 half = parser, verified): ________________. Attests
+  that §8's Q3 description matches the parser's accepted schema — evidenced by
+  the `ConvergenceRunnerTest` fixture suite passing against `RunOutput`
+  (pass/fail/empty/all-ties/mismatch cases green on branch
+  `DESIGN-PostgreSQL`). A name without that evidence is not a signature.
+- YDB workstream sign-off: ________________. Attests commitment: this is the
+  corpus funded for implementation. A workstream decision, not a technical
+  verification.
 - 028a implementation does not start until all three lines are filled.
