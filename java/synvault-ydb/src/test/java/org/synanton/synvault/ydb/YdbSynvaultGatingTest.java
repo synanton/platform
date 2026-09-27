@@ -17,7 +17,7 @@ class YdbSynvaultGatingTest extends ConformanceGatingContract {
     static void ensureSchema() {
         YdbTestBase.ensureStarted();
         prefix = YdbTestBase.randomPrefix();
-        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbTestBase.trackedSchema(prefix);
         store = new YdbSynvaultStore(YdbTestBase.client(), prefix, "gating-" + UUID.randomUUID());
     }
 

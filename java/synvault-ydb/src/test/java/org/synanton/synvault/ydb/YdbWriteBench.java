@@ -78,7 +78,7 @@ class YdbWriteBench {
     void measureWriteOperatingPoints() {
         YdbTestBase.ensureStarted();
         String prefix = YdbTestBase.randomPrefix();
-        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbTestBase.trackedSchema(prefix);
         YdbSynvaultStore store = new YdbSynvaultStore(YdbTestBase.client(), prefix, "bench");
 
         List<Double> revLat = new ArrayList<>();

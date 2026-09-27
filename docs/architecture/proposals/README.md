@@ -1,13 +1,14 @@
 # Proposals index — YDB PoC branch
 
-Branch: `DESIGN-YDB-as-backend-behind-interface`. Start here if you are picking
+Branch: `DESIGN-YDB-as-backend-behind-interface` (merged to main; history below
+refers to branch commits). Start here if you are picking
 up this branch after 010 flips (either way). Orient in ten minutes.
 
 ## Status per artifact
 
 | Artifact | Status | Lives at |
 |---|---|---|
-| YDB backend proposal (Rev 6 + branch amendments) | Draft proposal, subordinate to Arch 1.0 | `Design Proposal Evaluate YDB as a SynvaultSynquest Backend.md` |
+| YDB backend proposal (Rev 6 + branch amendments) | Merged PoC record, subordinate to Arch 1.0 (reviewed, not approved) | `Design Proposal Evaluate YDB as a SynvaultSynquest Backend.md` |
 | **Provisional surfaces — load-bearing until 010 flips** | **Open, do not close in transition** | `../implementation/ydb-poc/011-provisional-followup.md` |
 | **010 escalation — RESOLVED throwaway-scoped (2026-09-26)** | **Closed; 021/024 run evaluation-only** | `../implementation/ydb-poc/010-escalation.md` |
 | Phase-0 exit checklist | Engineering done; formalities + gate outstanding | `../implementation/ydb-poc/phase0-exit-checklist.md` |

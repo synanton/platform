@@ -55,6 +55,23 @@ public final class YdbSchema {
     }
 
     /** Ad-hoc DDL for tests that own their schema (e.g. relay search tables). */
+    /** Best-effort cleanup (tables + implicit index paths). Never throws. */
+    public static void dropSchema(TableClient client, String prefix) {
+        for (String name :
+                java.util.List.of(
+                        prefix + "_documents",
+                        prefix + "_chunks",
+                        prefix + "_provenance",
+                        prefix + "_publications")) {
+            try (Session session =
+                    client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
+                session.executeSchemeQuery("DROP TABLE `" + name + "`;").join();
+            } catch (Exception ignored) {
+                // Best effort: cleanup must never fail a test run.
+            }
+        }
+    }
+
     public static void ddl(TableClient client, String yql) {
         try (Session session =
                 client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {

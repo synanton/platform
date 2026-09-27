@@ -25,6 +25,8 @@ last_reviewed: "2026-08-26"
 | [`modules/helper.md`](./modules/helper.md) | `helper` module implementation plan |
 | [`modules/wizard.md`](./modules/wizard.md) | `wizard` module implementation plan |
 | [`demo/standalone-syntology-demo.md`](./demo/standalone-syntology-demo.md) | Standalone Syntology demo guide |
+| [`ydb-poc-implementation-plan.md`](./ydb-poc-implementation-plan.md) | YDB PoC implementation plan + ticket tracker (merged PoC record; throwaway-scoped, 010 resolved) |
+| [`ydb-poc/README.md`](./ydb-poc/README.md) | YDB PoC artifact index — ports, contracts, specs, decision records |
 | [`../demos/INDEX.md`](../demos/INDEX.md) | End-to-end demo scenarios (v1.23 classification demo, etc.) |
 | [`../demo/INDEX.md`](../demo/INDEX.md) | Research plans and benchmark designs |
 
@@ -46,6 +48,7 @@ last_reviewed: "2026-08-26"
 | `platform-api-plane/` | v1.32 platform API plane implementation plan (not started) |
 | `modules/` | Module-specific deep-dive implementation plans |
 | `demo/` | Demo and standalone guides |
+| `ydb-poc/` | YDB PoC decision records, specs, and test artifacts (merged PoC record) |
 
 ## How to Contribute
 

@@ -35,7 +35,7 @@ class AdapterMetricsWiringTest {
     void searchOperationsAreRecorded() {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         InMemoryAdapterMetrics metrics = new InMemoryAdapterMetrics("ydb@1.0.0");
         YdbSynquestEngine engine = engine(metrics, prefix);
         SecurityContext ctx = SecurityContext.user(TENANT, PrincipalRef.user("u-1"), POLICY);

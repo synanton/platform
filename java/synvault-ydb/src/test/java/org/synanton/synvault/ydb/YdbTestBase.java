@@ -70,4 +70,22 @@ abstract class YdbTestBase {
     protected static String randomPrefix() {
         return "poc" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     }
+
+    private static final java.util.List<String> TRACKED_PREFIXES =
+            java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+
+    /** Schema creation that registers for @AfterAll cleanup (no silent table leaks). */
+    protected static String trackedSchema(String prefix) {
+        YdbSchema.ensureSchema(client(), prefix);
+        TRACKED_PREFIXES.add(prefix);
+        return prefix;
+    }
+
+    @org.junit.jupiter.api.AfterAll
+    static void dropTrackedSchemas() {
+        for (String prefix : TRACKED_PREFIXES) {
+            YdbSchema.dropSchema(client(), prefix);
+        }
+        TRACKED_PREFIXES.clear();
+    }
 }

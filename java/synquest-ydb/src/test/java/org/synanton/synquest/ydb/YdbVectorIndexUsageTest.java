@@ -19,7 +19,7 @@ class YdbVectorIndexUsageTest {
     void vectorQueryUsesAnnIndex() {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         try (Session session = YdbSearchTestBase.session()) {
             ExplainDataQueryResult plan =
                     session
@@ -44,7 +44,7 @@ class YdbVectorIndexUsageTest {
     void fulltextQueryUsesIndex() {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         try (Session session = YdbSearchTestBase.session()) {
             ExplainDataQueryResult plan =
                     session
@@ -66,7 +66,7 @@ class YdbVectorIndexUsageTest {
     void hybridQueryUsesBothIndexPaths() {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         try (Session session = YdbSearchTestBase.session()) {
             ExplainDataQueryResult plan =
                     session

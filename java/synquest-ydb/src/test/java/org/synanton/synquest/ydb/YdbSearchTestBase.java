@@ -50,6 +50,24 @@ abstract class YdbSearchTestBase {
         return client().createSession(Duration.ofSeconds(10)).join().getValue();
     }
 
+    private static final java.util.List<String> TRACKED_PREFIXES =
+            java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+
+    /** Schema creation that registers for @AfterAll cleanup (no silent table leaks). */
+    protected static String trackedSchema(String prefix, int embeddingDim) {
+        YdbSearchSchema.ensureSchema(client(), prefix, embeddingDim);
+        TRACKED_PREFIXES.add(prefix);
+        return prefix;
+    }
+
+    @org.junit.jupiter.api.AfterAll
+    static void dropTrackedSchemas() {
+        for (String prefix : TRACKED_PREFIXES) {
+            YdbSearchSchema.dropSchema(client(), prefix);
+        }
+        TRACKED_PREFIXES.clear();
+    }
+
     protected static String randomPrefix() {
         return "q" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     }

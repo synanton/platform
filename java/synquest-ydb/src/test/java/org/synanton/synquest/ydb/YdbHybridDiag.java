@@ -35,7 +35,7 @@ class YdbHybridDiag {
     void diagnose() {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         String table = "`" + prefix + "_vectors`";
         try (Session session = YdbSearchTestBase.session()) {
             session.executeSchemeQuery(
@@ -80,7 +80,7 @@ class YdbHybridDiag {
     void generationPredicateThroughVectorView() {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         String vectors = "`" + prefix + "_vectors`";
         try (Session session = YdbSearchTestBase.session()) {
             exec(session, "UPSERT INTO " + vectors + " (key, tenant_id, chunk_id, doc_id,"
@@ -125,7 +125,7 @@ class YdbHybridDiag {
     void promotionSequenceProbe() throws Exception {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         YdbSynquestEngine engine = new YdbSynquestEngine(YdbSearchTestBase.client(), prefix);
         var admin = (org.synanton.synquest.api.SynquestIndexAdmin) engine;
         var g1 = new org.synanton.storage.contract.GenerationId("gen-promote-1");

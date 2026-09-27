@@ -79,7 +79,7 @@ class YdbLoadTest {
     void leakageAndReplayUnderLoad() throws Exception {
         YdbSearchTestBase.ensureStarted();
         String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchTestBase.trackedSchema(prefix, 2);
         YdbSynquestEngine engine = new YdbSynquestEngine(YdbSearchTestBase.client(), prefix);
 
         List<ChunkProjection> seed = new ArrayList<>();

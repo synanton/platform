@@ -42,7 +42,7 @@ class YdbRevisionSemanticsTest {
     static void ensureSchema() {
         YdbTestBase.ensureStarted();
         prefix = YdbTestBase.randomPrefix();
-        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbTestBase.trackedSchema(prefix);
     }
 
     private YdbSynvaultStore store() {
