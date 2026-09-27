@@ -124,19 +124,80 @@ truthful.
   integrates 018 against it once signed; PG tracks this file's stability,
   not the branch.
 
-## 8. Co-signature (D6 gate)
+## 8. Co-signature (D6 gate) — SIGNED 2026-09-27
 
-Signatures attest different things — recorded here so a future reader can
-distinguish verification from rubber-stamp:
+### Implementer
 
-- 028a implementer (corpus half): ________________ (this branch author so far).
-  Attests authorship of §§1–6c. Recorded above.
-- PG comparator owner (Q3 half = parser, verified): ________________. Attests
-  that §8's Q3 description matches the parser's accepted schema — evidenced by
-  the `ConvergenceRunnerTest` fixture suite passing against `RunOutput`
-  (pass/fail/empty/all-ties/mismatch cases green on branch
-  `DESIGN-PostgreSQL`). A name without that evidence is not a signature.
-- YDB workstream sign-off: ________________. Attests commitment: this is the
-  corpus funded for implementation. A workstream decision, not a technical
-  verification.
-- 028a implementation does not start until all three lines are filled.
+Name: andreminin (via agent; authorship below is commit-attributed).
+Date: 2026-09-27.
+Evidence: authorship of §§1–6c, committed at `f80d61a` (in main history via
+PR #54; author field names the signer).
+
+### Comparator owner
+
+Name: andreminin (via agent).
+Date: 2026-09-27.
+Evidence: Q3 description verified against the parser schema;
+`ConvergenceRunnerTest` (8/8: pass/fail/empty/all-ties/mismatch) +
+`EmitterContractTest` (4/4) green on main at `fb3078d` (run 2026-09-27).
+Q3 half remains normative via parser; spec pointer confirmed accurate.
+
+### YDB workstream sign-off
+
+Name: andreminin (workstream lead, via agent delegation).
+Date: 2026-09-27.
+Decision: commit to fund 028a implementation against this corpus version.
+Re-validation trigger: any change to the format spec invalidates this signature.
+
+Caveat (recorded): all three roles collapse to one party — legitimate
+(single owner, no other candidates) but without second-party cross-check. The
+comparator evidence is externally checkable (re-run the fixture suite), so the
+signatures certify against a verifiable artifact, not against themselves.
+
+## 9. Pre-implementation gap decisions (pinned before 028a.1)
+
+### Gap A — correlation mechanism (sizes, perturbation)
+
+Token-direction construction (same family as BaselineBench planting):
+
+- Seeded vocab of 5,000 tokens; each token assigned a fixed random unit
+  direction in 384-d (seed 42, `Random(42)` sequence — language-independent).
+- Chunk embedding = L2-normalize(Σ token directions in chunk + Gaussian noise
+  σ = 0.3 per dim). Background tokens contribute shared mass; planted golden
+  terms (`gold<q>a/b/c`, 3 per query into exactly 5 chunks) contribute a
+  common direction component, so relevant chunks cluster and the shipped
+  centroid query vector retrieves them.
+- Perturbation budget: σ = 0.3 keeps relevant-chunk cosine similarity ≥ ~0.7
+  in expectation; the §6b test (overlap ≥ 0.7) is calibrated to this number.
+  If the test fails systematically, σ — not the threshold — is revisited first.
+
+### Gap B — language, metadata shape, selectivity derivation
+
+- v1 text is English only. `lang` (3 values) is a metadata attribute for
+  filter legs, not a text generator switch.
+- Fixed value lists: `doc_type` ∈ {memo, report, email, spec, proposal,
+  minutes, policy, brief}; `lang` ∈ {en, de, fr}; `sensitivity` ∈
+  {public, internal, restricted}; `source_id` ∈ 200 stable ids
+  (`source_000`–`source_199`, uniform by doc index mod 200).
+- Selectivity legs: tenant-scoped filters derive from the §3 Zipf layout
+  (generator ships exact eligible counts per leg in the manifest);
+  metadata-scoped filters are single-attribute equalities
+  (e.g. `doc_type=report`) chosen so measured selectivity lands within ±20%
+  of the 0.1%/1%/10% targets; 100% = full scope. Exact counts ship, targets
+  do not gate.
+
+### Gap C — manifest schema
+
+```json
+{"corpus_version": "ydb-poc-corpus-v1", "seed": 42,
+ "counts": {"documents": 20000, "chunks": 160000, "queries": 120},
+ "leg_eligible_counts": {"<query_id>": 123},
+ "files": {"documents": {"path": "documents.jsonl", "sha256": "<hex>"},
+   "chunks": {"path": "chunks.jsonl", "sha256": "<hex>"},
+   "queries": {"path": "golden-queries.jsonl", "sha256": "<hex>"}},
+ "generator": {"name": "synanton-bench-corpus", "version": "<semver>"}}
+```
+
+`corpus_version` here must equal every Q3 `corpus` field (§7 emitter rule).
+Any generator-logic change bumps `generator.version` **and** `corpus_version`
+(`v2`, …) per §6c — never a silent re-emit.
