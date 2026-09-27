@@ -35,6 +35,8 @@ no-provider-imports rule until the ArchUnit rule (012) lands.
 docker run -d --name ydb-poc -h localhost -p 2135:2135 -p 2136:2136 -p 8765:8765 \
   ydbplatform/local-ydb:stable-26-3-1-path-aliases
 docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem   # gRPCS-only image (YDB_CA_PATH)
+# NOTE: /tmp is cleaned by the OS — re-copy after reboot/cleanup or if YDB tests
+# fail with NoSuchFileException on the CA. YDB_CA_PATH env overrides the location.
 # Required cluster flags (see 002-schema-validation.md for why each):
 docker exec ydb-poc sed -i \
   -e 's/^table_service_config:/table_service_config:\n  enable_hybrid_search: true/' \
