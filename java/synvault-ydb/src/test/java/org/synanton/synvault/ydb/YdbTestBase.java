@@ -23,7 +23,11 @@ abstract class YdbTestBase {
             return;
         }
         try {
-            String caPath = System.getenv().getOrDefault("YDB_CA_PATH", "/tmp/ydb-ca.pem");
+            String caPath = firstExisting(
+                    System.getenv().getOrDefault("YDB_CA_PATH", ""),
+                    System.getProperty("ydb.ca.path", ""),
+                    "/tmp/ydb-ca.pem",
+                    System.getProperty("user.home") + "/.config/ydb-ca.pem");
             byte[] ca = Files.readAllBytes(Paths.get(caPath));
             transport =
                     GrpcTransport.forConnectionString("grpcs://localhost:2135/local")
@@ -91,5 +95,16 @@ abstract class YdbTestBase {
             YdbSchema.dropSchema(client(), prefix);
         }
         TRACKED_PREFIXES.clear();
+    }
+
+    private static String firstExisting(String... candidates) {
+        for (String c : candidates) {
+            if (c != null && !c.isBlank() && java.nio.file.Files.isReadable(java.nio.file.Paths.get(c))) {
+                return c;
+            }
+        }
+        throw new IllegalStateException(
+                "YDB CA not found; copy it out with: docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem"
+                        + " (or set YDB_CA_PATH)");
     }
 }

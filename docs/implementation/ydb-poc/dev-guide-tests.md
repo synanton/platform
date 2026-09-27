@@ -37,6 +37,9 @@ docker run -d --name ydb-poc -h localhost -p 2135:2135 -p 2136:2136 -p 8765:8765
 docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem   # gRPCS-only image (YDB_CA_PATH)
 # NOTE: /tmp is cleaned by the OS — re-copy after reboot/cleanup or if YDB tests
 # fail with NoSuchFileException on the CA. YDB_CA_PATH env overrides the location.
+# Lookup chain (all YDB suites): YDB_CA_PATH → -Dydb.ca.path → /tmp/ydb-ca.pem →
+# ~/.config/ydb-ca.pem, else a clear error naming the docker cp command. CI
+# provisions the container + CA + flags (see .github/workflows/gradle-build.yml).
 # Required cluster flags (see 002-schema-validation.md for why each):
 docker exec ydb-poc sed -i \
   -e 's/^table_service_config:/table_service_config:\n  enable_hybrid_search: true/' \

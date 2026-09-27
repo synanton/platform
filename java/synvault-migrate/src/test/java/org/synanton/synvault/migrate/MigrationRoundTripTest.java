@@ -78,7 +78,11 @@ class MigrationRoundTripTest {
         SchemaInstaller.install(session);
         cacheClient = new IngestionCacheClient(session);
 
-        String caPath = System.getenv().getOrDefault("YDB_CA_PATH", "/tmp/ydb-ca.pem");
+        String caPath = firstExisting(
+                    System.getenv().getOrDefault("YDB_CA_PATH", ""),
+                    System.getProperty("ydb.ca.path", ""),
+                    "/tmp/ydb-ca.pem",
+                    System.getProperty("user.home") + "/.config/ydb-ca.pem");
         byte[] ca = Files.readAllBytes(Paths.get(caPath));
         ydbTransport =
                 GrpcTransport.forConnectionString("grpcs://localhost:2135/local")
@@ -177,5 +181,16 @@ class MigrationRoundTripTest {
         assertThat(target.getDocument(ctx(), DocumentId.of("mig-1")).toCompletableFuture().join())
                 .as("rollback removes migrated documents")
                 .isEmpty();
+    }
+
+    private static String firstExisting(String... candidates) {
+        for (String c : candidates) {
+            if (c != null && !c.isBlank() && java.nio.file.Files.isReadable(java.nio.file.Paths.get(c))) {
+                return c;
+            }
+        }
+        throw new IllegalStateException(
+                "YDB CA not found; copy it out with: docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem"
+                        + " (or set YDB_CA_PATH)");
     }
 }
