@@ -53,6 +53,11 @@ shape, not its corpus format.
 
 Ratified: 028 re-scoped. Ticket numbers 028a–028e assigned on the YDB tracker.
 
+Resourcing watch: 028a implementer unnamed; 028b and 006 re-freeze
+concentrated in one owner (andreminin). Both are on the critical path.
+Confirm active start this week; name a backup for 028b/006 before execution
+mode.
+
 ## D3 — PG-POC-018 — Multi-tenant Q3 Emitter
 
 PG-track owns the Q3 emitter for the PG leg.
