@@ -19,6 +19,11 @@ runs on **`ydbplatform/local-ydb:stable-26-3-1-path-aliases`** (pulled via
 Accepted for throwaway-scope PoC runs; re-validate against the exact pinned
 server build before any production-track claim (Phase 6).
 
+CI uses the exact pinned image instead: **`ydbplatform/local-ydb:26.3.1.16`**
+(verified present on Docker Hub; the `-path-aliases` tag exists only on the
+mirror). Local runs keep the mirror tag until Hub access is confirmed here —
+the version line (26.3.1) is what matters for PoC purposes, not the tag source.
+
 ## Connection findings (021, recorded 2026-09-26)
 
 - The image serves **gRPCS only** (self-signed CA at container

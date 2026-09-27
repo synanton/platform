@@ -35,7 +35,7 @@ jobs:
         run: |
           docker run -d --name ydb-poc -h localhost \
             -p 2135:2135 -p 2136:2136 -p 8765:8765 \
-            ydbplatform/local-ydb:stable-26-3-1-path-aliases
+            ydbplatform/local-ydb:26.3.1.16
           wait_healthy() {
             for i in $(seq 1 36); do
               s=$(docker inspect --format '{{.State.Health.Status}}' ydb-poc 2>/dev/null || echo starting)
