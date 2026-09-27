@@ -14,6 +14,10 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 class YdbQuotaGuardTest {
 
     private static final long PATH_THRESHOLD = 9000;
+    /** Tolerated growth between consecutive runs (manual probes, one-off runs). */
+    private static final long GROWTH_TOLERANCE = 25;
+    private static final java.nio.file.Path BASELINE =
+            java.nio.file.Paths.get("build", "quota-baseline.txt");
 
     @Test
     void pathCountBelowThreshold() {
@@ -27,6 +31,48 @@ class YdbQuotaGuardTest {
         assertThat(count)
                 .as("test path count approaching 10k quota — clean historical debris")
                 .isLessThan(PATH_THRESHOLD);
+    }
+
+    /**
+     * Delta guard: consecutive runs must not grow the path count beyond manual-run
+     * tolerance. This catches the original bug class (unbounded per-run growth)
+     * within one or two reruns; the absolute check above would take ~875.
+     */
+    @Test
+    void pathCountDoesNotGrowBetweenRuns() {
+        long count;
+        try {
+            count = countTestPaths();
+        } catch (Exception e) {
+            assumeTrue(false, "viewer unreachable, quota guard skipped: " + e.getMessage());
+            return;
+        }
+        long baseline = readBaseline().orElse(count);
+        assertThat(count)
+                .as("path growth since last run (baseline " + baseline + ") exceeds manual-run tolerance")
+                .isLessThanOrEqualTo(baseline + GROWTH_TOLERANCE);
+        writeBaseline(count);
+    }
+
+    private static java.util.OptionalLong readBaseline() {
+        try {
+            String raw = java.nio.file.Files.readString(BASELINE).trim();
+            return java.util.OptionalLong.of(Long.parseLong(raw));
+        } catch (Exception e) {
+            return java.util.OptionalLong.empty();
+        }
+    }
+
+    private static void writeBaseline(long count) {
+        try {
+            java.nio.file.Files.createDirectories(BASELINE.getParent());
+            java.nio.file.Files.writeString(
+                    BASELINE, Long.toString(count),
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (Exception ignored) {
+            // Best effort: a missing baseline degrades to absolute-only guarding.
+        }
     }
 
     static long countTestPaths() throws Exception {

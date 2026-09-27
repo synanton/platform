@@ -55,6 +55,11 @@ growth. Historical debris (~250 pre-hygiene random-prefix paths) remains in
 (`*Probe`, `*Diag`, gated `-Dydb.probe`) keep random names and self-clean
 where cheap; they run manually, not in CI.
 
+Related discipline: a check that doesn't run must say so. Guards that skip
+(e.g. quota guard off-container) skip visibly via assumptions, never silently —
+a green suite that never executed its guards is another silent-pass variant of
+the same class.
+
 This section generalizes beyond YDB: test resources must be reclaimed
 synchronously by the harness, on every backend. Audited: Cassandra is immune
 by lifecycle (one container per JVM, stopped via shutdown hook, Ryuk-reaped —
@@ -81,8 +86,7 @@ write and verify. A green assertion against the wrong identity is a
 false-negative factory. Verified by container-start-time cross-check when a
 lifecycle boundary is involved.
 
-## Evidence-scope rule (institutional — fires on scope mismatch, not every test)
-Every green result states what contract scope it establishes: test name,
+## Evidence-scope rule (institutional — fires on scope mismatch, not every test)Every green result states what contract scope it establishes: test name,
 conformance entry, and tracker status use the same scope. A scoped test is
 never promoted into a broader claim by shared naming (tenant isolation ≠ full
 eligibility; correct results ≠ right path; exercised paths only — a test is
