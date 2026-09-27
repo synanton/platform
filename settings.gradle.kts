@@ -60,6 +60,7 @@ include(
     "java:synquest-ydb",
     "java:synvault-migrate",
     "java:synanton-bench-convergence",
+    "java:synanton-bench-corpus",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)
