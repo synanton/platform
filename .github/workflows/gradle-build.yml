@@ -31,5 +31,27 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Start YDB PoC instance (live-test suites)
+        run: |
+          docker run -d --name ydb-poc -h localhost \
+            -p 2135:2135 -p 2136:2136 -p 8765:8765 \
+            ydbplatform/local-ydb:26.3.1.16
+          wait_healthy() {
+            for i in $(seq 1 36); do
+              s=$(docker inspect --format '{{.State.Health.Status}}' ydb-poc 2>/dev/null || echo starting)
+              if [ "$s" = "healthy" ]; then return 0; fi
+              sleep 5
+            done
+            echo "ydb-poc never became healthy"; docker logs ydb-poc | tail -20; return 1
+          }
+          wait_healthy
+          docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem
+          docker exec ydb-poc sed -i \
+            -e 's/^table_service_config:/table_service_config:\n  enable_hybrid_search: true/' \
+            -e 's/^feature_flags:/feature_flags:\n  enable_fulltext_index_row_id: true\n  enable_fulltext_index_prefix: true\n  enable_add_unique_index: true\n  enable_online_add_unique_index: true/' \
+            /ydb_data/cluster/kikimr_configs/config.yaml
+          docker restart ydb-poc
+          wait_healthy
+
       - name: Run buildAll task
         run: ./gradlew clean buildAll --no-build-cache

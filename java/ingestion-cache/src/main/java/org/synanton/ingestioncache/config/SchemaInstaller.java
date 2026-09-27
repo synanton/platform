@@ -41,7 +41,16 @@ public class SchemaInstaller {
             log.warn("CQL migration not found, skipping: {}", path);
             return;
         }
-        Arrays.stream(cql.split(";"))
+        // Strip full-line `--` comments BEFORE splitting: a semicolon inside a
+        // comment (e.g. V7's header) would otherwise split a statement mid-text and
+        // silently skip the migration (YDB-POC-035 finding: annotations never applied).
+        // Limitation: `--` inside string literals is not handled — none of the
+        // bundled migrations contain any.
+        String uncommented =
+                Arrays.stream(cql.split("\n"))
+                        .filter(line -> !line.trim().startsWith("--"))
+                        .collect(java.util.stream.Collectors.joining("\n"));
+        Arrays.stream(uncommented.split(";"))
             .map(String::trim)
             .filter(s -> !s.isBlank())
             .forEach(stmt -> {

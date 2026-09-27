@@ -1,0 +1,23 @@
+# 028 convergence gate config (pinned — decided before running, never after)
+
+corpus:
+  version: ydb-poc-corpus-v1
+  slice: first-2000-docs          # representative slice; full corpus if time allows
+  queries: golden-K               # frozen K query set from 005, same IDs all legs
+
+legs: [baseline, 024A, 024B]
+
+tolerances:                        # violation = gate fail, frame revised
+  lexical_topk_overlap: 0.90       # top-K id overlap, fully-matching queries only
+  vector_topk_overlap: 0.90        # dims recorded per leg; bias annotated
+  hybrid_topk_overlap: 0.90        # rank-space comparison
+  metadata_eligible_set: identical # exact set identity, not tolerance
+  eligibility_eligible_set: identical  # leakage = hard fail, not tolerance
+  score_comparison: none           # scores never compared across legs (spaces differ)
+
+rules:
+  - minScore: 0                    # neutral on all legs
+  - ties: tolerance-based, never exact-sequence
+  - conjunctive-FT: queries must fully match on YDB leg, or the leg measures divergence
+  - hybrid-flag: enable_hybrid_search=true recorded with results
+  - dims: recorded per leg (384 vs 768), bias direction annotated
