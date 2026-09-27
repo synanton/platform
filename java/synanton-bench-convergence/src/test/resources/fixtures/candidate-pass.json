@@ -1,0 +1,49 @@
+{
+  "run_id": "024a-1",
+  "corpus": "ydb-poc-corpus-v1",
+  "queries": [
+    {
+      "query_id": "q1",
+      "mode": "lexical",
+      "filter": "none",
+      "selectivity": "-",
+      "top_k": [
+        {"chunk_id": "b", "score": 9.1, "rank": 0},
+        {"chunk_id": "a", "score": 8.9, "rank": 1},
+        {"chunk_id": "c", "score": 8.7, "rank": 2},
+        {"chunk_id": "d", "score": 8.5, "rank": 3},
+        {"chunk_id": "e", "score": 8.3, "rank": 4},
+        {"chunk_id": "f", "score": 8.1, "rank": 5},
+        {"chunk_id": "g", "score": 7.9, "rank": 6},
+        {"chunk_id": "h", "score": 7.7, "rank": 7},
+        {"chunk_id": "i", "score": 7.5, "rank": 8},
+        {"chunk_id": "k", "score": 7.3, "rank": 9}
+      ],
+      "eligible_set": ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"],
+      "timing_ms": 0.6
+    },
+    {
+      "query_id": "q2",
+      "mode": "vector",
+      "filter": "eligibility",
+      "selectivity": "1%",
+      "top_k": [
+        {"chunk_id": "b", "score": 0.44, "rank": 0},
+        {"chunk_id": "a", "score": 0.45, "rank": 1}
+      ],
+      "eligible_set": ["a", "b"],
+      "timing_ms": 5.4
+    },
+    {
+      "query_id": "q3",
+      "mode": "hybrid",
+      "filter": "metadata",
+      "selectivity": "10%",
+      "top_k": [
+        {"chunk_id": "m1", "score": 0.99, "rank": 0}
+      ],
+      "eligible_set": ["m1", "m2", "m3"],
+      "timing_ms": 6.0
+    }
+  ]
+}

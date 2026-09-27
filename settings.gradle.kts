@@ -55,9 +55,11 @@ include(
     "java:synvault-cassandra",
     "java:storage-provider",
     "java:synvault-ydb",
+    "java:synvault-postgres",
     "java:synquest-cassandra",
     "java:synquest-ydb",
     "java:synvault-migrate",
+    "java:synanton-bench-convergence",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)

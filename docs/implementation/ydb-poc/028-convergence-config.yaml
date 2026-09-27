@@ -1,11 +1,13 @@
 # 028 convergence gate config (pinned — decided before running, never after)
+# PG-POC-006 extends legs to four (PG added; tolerances unchanged, never
+# re-pinned after running). Per-leg gate: each adapter vs baseline independently.
 
 corpus:
   version: ydb-poc-corpus-v1
   slice: first-2000-docs          # representative slice; full corpus if time allows
   queries: golden-K               # frozen K query set from 005, same IDs all legs
 
-legs: [baseline, 024A, 024B]
+legs: [baseline, 024A, 024B, PG]
 
 tolerances:                        # violation = gate fail, frame revised
   lexical_topk_overlap: 0.90       # top-K id overlap, fully-matching queries only
@@ -21,3 +23,10 @@ rules:
   - conjunctive-FT: queries must fully match on YDB leg, or the leg measures divergence
   - hybrid-flag: enable_hybrid_search=true recorded with results
   - dims: recorded per leg (384 vs 768), bias direction annotated
+  - pg-vector-leg: vec_p95_btree_sort at PoC scale (Gate A: planner uses
+    btree-restrict-then-sort, not ANN — see pg-poc/005-gate-a.md). Never
+    compare against ANN legs as the same operation; metric renames with mechanism.
+  - pg-mechanism-suffix: eligibility-filtered PG metrics carry *_rls_native vs
+    *_predicate_composed in the name (Gate A outcome 1 → *_rls_native).
+  - pg-tiebreak: (score desc, chunkId asc) post-retrieval on every PG query
+    (server tied order is deterministic but not chunkId-asc — pg-poc/013-tie-break.md).

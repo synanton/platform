@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * YDB-POC-011 module-boundary guard (precursor to the ArchUnit rule in YDB-POC-012):
  * {@code synquest-api} may reference only the JDK and {@code storage-contract}.
  * No provider imports, no framework imports, and no reference to {@code synquest-api}.
+ * PG-POC-000 extends the guard to Postgres markers (no PG adapter exists yet;
+ * the domain must not grow PG references before one does).
  */
 class ApiBoundaryTest {
 
@@ -32,6 +34,10 @@ class ApiBoundaryTest {
                     "synanton/synvault",
                     "springframework",
                     "lucene",
+                    "postgres",
+                    "postgresql",
+                    "pgvector",
+                    "jdbc",
                     "testcontainers");
 
     @Test

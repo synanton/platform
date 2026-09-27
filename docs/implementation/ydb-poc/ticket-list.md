@@ -74,6 +74,10 @@ root fix + inventory guard. Branch state: **handoff-ready, awaiting baseline
 for 028**. Next commit on this branch should be the baseline's arrival, not
 more polish.
 
+Cross-track: 028's 024A-vs-baseline leg also unblocks PG Phase 2 (PG-POC-006
+Gate B on branch `DESIGN-PostgreSQL`). 028 is not YDB-only work — whoever runs
+it unblocks both tracks toward the joint Phase 6.
+
 ## Baseline contact
 
 **No contact established; escalation needed.** The baseline service has no

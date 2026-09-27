@@ -1,0 +1,10 @@
+# Test mirror of 028-convergence-config.yaml tolerances (PG-POC-017).
+# Values must track the pinned config; drift fails the suite by design.
+legs: [baseline, 024A, 024B, PG]
+tolerances:
+  lexical_topk_overlap: 0.90
+  vector_topk_overlap: 0.90
+  hybrid_topk_overlap: 0.90
+  metadata_eligible_set: identical
+  eligibility_eligible_set: identical
+  score_comparison: none
