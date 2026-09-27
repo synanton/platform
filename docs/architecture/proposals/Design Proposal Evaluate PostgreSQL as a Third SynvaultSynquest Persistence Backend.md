@@ -537,8 +537,9 @@ Extends the YDB ticket plan with a parallel `PG-POC-` series. Corpus, thresholds
 | PG-POC-014 | Four-legged benchmark run (baseline vs 024A vs 024B vs PG)            |
 | PG-POC-015 | Phase 6 PG evidence contribution                                      |
 | PG-POC-016 | Joint Phase 6 with YDB (per §0.2; Outcome 9 spins off hybrid track)   |
+| PG-POC-017 | Benchmark convergence comparator (Phase 0E; executes the 006 gate run) |
 
-Total: 17 tickets (000–016). The 40-ticket YDB structure provides the template; most of it is reuse or inheritance.
+Total: 18 tickets (000–017). The 40-ticket YDB structure provides the template; most of it is reuse or inheritance.
 
 ------
 

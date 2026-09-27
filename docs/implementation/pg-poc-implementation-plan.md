@@ -4,7 +4,7 @@ Branch: `DESIGN-PostgreSQL` (created and checked out; rebased to main incl. YDB 
 Governing proposal: Design Proposal Evaluate PostgreSQL as a Third Synvault/Synquest Persistence Backend, Rev 4
 Governing architecture: Platform Architecture 1.0 (approved)
 Inherited from: YDB PoC (PR #51, merged)
-Ticket count: 17 (000–016)
+Ticket count: 18 (000–017)
 Legend: 🔴 Blocker · 🟠 Must-hold · 🔵 PoC execution · 🟡 Production gate
 
 ## §0. Inherited Rules (from YDB PoC closeout)
@@ -32,6 +32,7 @@ Phase 0A — Setup (no PG code)           001 002
 Phase 0B — Infrastructure inheritance   000
 Phase 0C — Schema + RLS + contract      003 012 013
 Phase 0D — Must-holds                   005 006 (pre-gates; 013 is Gate B input)
+Phase 0E — Benchmark comparator         017 (blocks the 006 convergence run)
 ───── Pre-Phase-2 gates ─────
     Gate A (RLS × ANN)                  005
     Gate B (comparator validity)        006 (incl. 013 input)
@@ -184,6 +185,27 @@ External gates:
 - Proposal: §10 Phase 2, §11, §18 PG-POC-006.
 - Inherits: YDB 028 convergence config, Phase 2 pre-flight.
 
+## §6b. Phase 0E — Benchmark Comparator
+
+🔴 PG-POC-017 — Benchmark convergence comparator
+
+- Depends on: PG-POC-006 (config), 028 pre-flight rules
+- Description: Build the comparator the R0–R5 runbook executes. New module
+  `synanton-bench-convergence` — no PG or YDB dependency, reused for the 4-leg
+  run (PG-POC-014). Reads `028-convergence-config.yaml`, parses two Q3-format
+  JSON run outputs, computes per-leg overlap (lexical/vector/hybrid) and
+  eligible-set identity (metadata/eligibility), emits verdicts + readable report.
+- Fallback scoping (frozen): "proceed with caveat" applies to
+  lexical/vector/hybrid legs only, report-only allowance (raw overlap numbers
+  recorded as the caveat; no relaxed threshold enforced). Metadata/eligibility
+  failure halts PG Phase 2 and triggers defect investigation — eligible-set
+  identity is a contract property, never a caveat. Comparator/environment
+  failure aborts the run. Time boxes: metadata/eligibility 3-day investigation
+  then escalate (PG stays blocked); perf-leg beyond-allowance 1 week, documented.
+- Acceptance: fixture-tested (pass, fail, empty top-K, all-ties edge cases);
+  R0.7 green.
+- Proposal: §11 (Gate B execution).
+
 ## §7. Phase 1 — PostgresSynvaultStore
 
 🔵 PG-POC-004 — PostgresSynvaultStore
@@ -320,7 +342,7 @@ External gates:
 | §8.4 (Gate A) | 005 |
 | §9 (consistency) | 009 |
 | §10 (PoC plan) | all |
-| §11 (comparator discipline, Gate B) | 006, 013, 014 |
+| §11 (comparator discipline, Gate B) | 006, 013, 014, 017 |
 | §12 (acceptance) | 004, 007, 008, 009, 010 |
 | §13 (risks) | all |
 | §14 (alternatives, Outcome 9 note) | 016 |
