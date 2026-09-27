@@ -55,7 +55,15 @@ composition at plan level, the property Gate A exists to prove.
 tenant-scoped plan — not at 0.1%, not at ~33%, not with seqscan forced off. A
 follow-up scratch check (unfiltered `ORDER BY embedding <-> q LIMIT 10` as
 superuser, plan since deleted with the scratch test) returns `Index Scan using
-chunks_embedding_hnsw`. The index is usable; the miss is **planner cost
+chunks_embedding_hnsw`. Reproduction query (copy-paste for Phase 4):
+
+```sql
+EXPLAIN SELECT chunk_id FROM chunks
+ORDER BY embedding <-> '[1,0,...,0]'  -- e1, 384-d; replace ... with 383 zeros
+LIMIT 10;
+```
+
+run as superuser (bypasses RLS, isolates index usability from policy). The index is usable; the miss is **planner cost
 preference** — btree-restrict-then-sort is estimated cheaper at 30k rows — not
 a structural exclusion. Phase 4 re-verification is therefore actionable: at a
 corpus scale where HNSW wins, record whether RLS sits inside the HNSW scan or

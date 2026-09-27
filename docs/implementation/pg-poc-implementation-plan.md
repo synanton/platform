@@ -213,8 +213,9 @@ External gates:
   - Vector ANN with pgvector HNSW (IVFFlat evaluated in parallel).
   - Hybrid with custom RRF (or extension if available).
   - EXPLAIN assertions on all index-dependent queries (analogue of YDB PlanAssertions).
-  - Pre-ranking eligibility per Gate A outcome; metric suffix on every eligibility-filtered number.
-  - Tie-break deterministic; convergence gates pass.
+- Pre-ranking eligibility per Gate A outcome; metric suffix on every eligibility-filtered number.
+- Post-retrieval sort (`score desc, chunkId asc`) applied on every query — server tied order is deterministic but not chunkId-asc (013 finding); verified by the 013 tie-break determinism test.
+- Tie-break deterministic; convergence gates pass.
 - Proposal: §8.3, §8.4, §10 Phase 2, §11, §12 Synquest.
 
 🔵 PG-POC-008 — Eligibility / side channels / temporal
