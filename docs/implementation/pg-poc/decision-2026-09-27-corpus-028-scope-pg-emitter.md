@@ -54,6 +54,9 @@ shape, not its corpus format.
 Ratified: 028 re-scoped. Ticket numbers 028a–028e assigned on the YDB tracker.
 Implementer task list: `028a-tasks.md` (028a.1–028a.11, ~44 hr) on branch
 `DESIGN-YDB-028a`.
+Downstream task lists: `028b-tasks.md` (baseline harness replacement, ~38 hr),
+`028-emitter-tasks.md` (028c/d/e shared template, ~13 hr each). 006 re-freeze
+is a procedure, not tickets (runs after 028b.8).
 
 Resourcing watch: 028a implementer unnamed; 028b and 006 re-freeze
 concentrated in one owner (andreminin). Both are on the critical path.
