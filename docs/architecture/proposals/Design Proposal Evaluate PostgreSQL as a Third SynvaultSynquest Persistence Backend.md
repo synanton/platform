@@ -516,7 +516,7 @@ The decision is not which backend wins. It's which backend **survives the measur
 
 ## 18. Ticket Sketch (for Phase 0 planning)
 
-Extends the YDB ticket plan with a parallel `PG-POC-` series. Corpus, thresholds, contract tests, and migrator are reused; YDB-grown infrastructure is inherited, not rebuilt.
+Extends the YDB ticket plan with a parallel `PG-POC-` series. Corpus, thresholds, contract tests, and migrator are reused; YDB-grown infrastructure is inherited, not rebuilt. Full tracker with phases, gates, and traceability: `docs/implementation/pg-poc-implementation-plan.md`.
 
 | Ticket     | Scope                                                                 |
 | ---------- | --------------------------------------------------------------------- |
@@ -534,9 +534,11 @@ Extends the YDB ticket plan with a parallel `PG-POC-` series. Corpus, thresholds
 | PG-POC-011 | Migration tooling (reuse YDB migrator)                                |
 | PG-POC-012 | Lifecycle / quota discipline from day one: per-backend quota, synchronous teardown, schema-inventory test (YDB closeout discipline; prevents pool/connection exhaustion rediscovery) |
 | PG-POC-013 | Tie-break verification: `pgvector` tie order + `tsvector` ranking determinism; confirm `(score desc, chunkId asc)` post-retrieval holds on PG (same class as YDB VIEW-sort finding) |
-| PG-POC-014 | Phase 6 decision contribution                                         |
+| PG-POC-014 | Four-legged benchmark run (baseline vs 024A vs 024B vs PG)            |
+| PG-POC-015 | Phase 6 PG evidence contribution                                      |
+| PG-POC-016 | Joint Phase 6 with YDB (per §0.2; Outcome 9 spins off hybrid track)   |
 
-Total: ~15 tickets (000–014). The 40-ticket YDB structure provides the template; most of it is reuse or inheritance.
+Total: 17 tickets (000–016). The 40-ticket YDB structure provides the template; most of it is reuse or inheritance.
 
 ------
 
