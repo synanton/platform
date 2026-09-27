@@ -9,6 +9,14 @@ corpus:
 
 legs: [baseline, 024A, 024B, PG]
 
+# Q3 output path convention (pinned pre-A.5): runs/<leg>-v1.json under the
+# repo root. Emitters write here; the comparator reads here. No other paths.
+runs:
+  baseline: runs/baseline-v1.json
+  024A: runs/024a-v1.json
+  024B: runs/024b-v1.json
+  PG: runs/pg-v1.json
+
 tolerances:                        # violation = gate fail, frame revised
   lexical_topk_overlap: 0.90       # top-K id overlap, fully-matching queries only
   vector_topk_overlap: 0.90        # dims recorded per leg; bias annotated
