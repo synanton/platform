@@ -9,7 +9,7 @@
 |---|---|---|
 | PG tie-break determinism (013) | PG | ✅ Closed — `013-tie-break.md`; post-retrieval sort is a PG-POC-007 obligation |
 | `028-convergence-config.yaml` 3→4 legs | PG (this ticket) | ✅ Done — tolerances unchanged, PG rules appended (metric name, mechanism suffix, tie-break) |
-| 024A-vs-baseline convergence | YDB 028 | ⏳ Not executed — no automated runner exists yet; `BaselineBench` is an on-demand harness (`-Dydb.bench=true`), not a running service |
+| 024A-vs-baseline convergence | YDB 028 | ⏳ Not executed — no automated runner exists yet; `BaselineBench` is an on-demand harness (`-Dydb.bench=true`), not a running service. **PG cannot advance this leg independently** — it is YDB-track 028 execution work. |
 
 ## Baseline availability check (2026-09-27)
 
