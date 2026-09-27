@@ -49,8 +49,9 @@ class YdbWriteResilienceTest {
     @BeforeAll
     static void ensureSchema() {
         YdbTestBase.ensureStarted();
-        prefix = YdbTestBase.randomPrefix();
-        YdbTestBase.trackedSchema(prefix);
+        prefix = "t_vault_resilience";
+        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbSchema.truncateAll(YdbTestBase.client(), prefix);
     }
 
     private YdbSynvaultStore store() {
@@ -168,4 +169,5 @@ class YdbWriteResilienceTest {
                 .as("unpublished record survives restart for relay resume")
                 .contains(revId);
     }
+
 }

@@ -1,5 +1,6 @@
 package org.synanton.synquest.ydb;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.storage.testkit.PlanAssertions;
 import tech.ydb.table.Session;
@@ -15,11 +16,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class YdbVectorIndexUsageTest {
 
+    @BeforeAll
+    static void ensureSchema() {
+        YdbSearchTestBase.ensureStarted();
+        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), "t_quest_usage", 2);
+        YdbSearchSchema.truncateAll(YdbSearchTestBase.client(), "t_quest_usage");
+    }
+
     @Test
     void vectorQueryUsesAnnIndex() {
         YdbSearchTestBase.ensureStarted();
-        String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchTestBase.trackedSchema(prefix, 2);
+        String prefix = "t_quest_usage";
         try (Session session = YdbSearchTestBase.session()) {
             ExplainDataQueryResult plan =
                     session
@@ -43,8 +50,7 @@ class YdbVectorIndexUsageTest {
     @Test
     void fulltextQueryUsesIndex() {
         YdbSearchTestBase.ensureStarted();
-        String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchTestBase.trackedSchema(prefix, 2);
+        String prefix = "t_quest_usage";
         try (Session session = YdbSearchTestBase.session()) {
             ExplainDataQueryResult plan =
                     session
@@ -65,8 +71,7 @@ class YdbVectorIndexUsageTest {
     @Test
     void hybridQueryUsesBothIndexPaths() {
         YdbSearchTestBase.ensureStarted();
-        String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchTestBase.trackedSchema(prefix, 2);
+        String prefix = "t_quest_usage";
         try (Session session = YdbSearchTestBase.session()) {
             ExplainDataQueryResult plan =
                     session
@@ -85,4 +90,5 @@ class YdbVectorIndexUsageTest {
             PlanAssertions.assertUsesIndexes(ast, "v_ft", "v_hyb");
         }
     }
+
 }

@@ -6,6 +6,7 @@ import tech.ydb.table.Session;
 import tech.ydb.table.TableClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterAll;
 
 /**
  * YDB connectivity smoke test (021 pre-req): transport + session + trivial query
@@ -41,6 +42,15 @@ class YdbConnectivityTest {
             tech.ydb.core.Status dropped =
                     session.executeSchemeQuery("DROP TABLE `smoke_conn`;").join();
             assertThat(dropped.isSuccess()).isTrue();
+        }
+    }
+
+    @AfterAll
+    static void dropSchemas() {
+        YdbTestBase.dropAllTracked();
+        try (tech.ydb.table.Session s = YdbTestBase.session()) {
+            s.executeSchemeQuery("DROP TABLE `smoke_conn`;").join();
+        } catch (Exception ignored) {
         }
     }
 }

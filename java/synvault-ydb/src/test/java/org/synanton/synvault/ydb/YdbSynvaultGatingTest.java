@@ -16,8 +16,9 @@ class YdbSynvaultGatingTest extends ConformanceGatingContract {
     @BeforeAll
     static void ensureSchema() {
         YdbTestBase.ensureStarted();
-        prefix = YdbTestBase.randomPrefix();
-        YdbTestBase.trackedSchema(prefix);
+        prefix = "t_vault_gating";
+        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbSchema.truncateAll(YdbTestBase.client(), prefix);
         store = new YdbSynvaultStore(YdbTestBase.client(), prefix, "gating-" + UUID.randomUUID());
     }
 
@@ -38,4 +39,5 @@ class YdbSynvaultGatingTest extends ConformanceGatingContract {
                 Capabilities.SYNVAULT_PAGINATION, flags.supportsCursorPagination(),
                 Capabilities.SYNVAULT_OCC, flags.supportsStorageRevisions());
     }
+
 }

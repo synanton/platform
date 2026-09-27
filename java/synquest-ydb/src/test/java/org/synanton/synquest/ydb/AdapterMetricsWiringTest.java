@@ -34,8 +34,9 @@ class AdapterMetricsWiringTest {
     @Test
     void searchOperationsAreRecorded() {
         YdbSearchTestBase.ensureStarted();
-        String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchTestBase.trackedSchema(prefix, 2);
+        String prefix = "t_quest_metrics";
+        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchSchema.truncateAll(YdbSearchTestBase.client(), prefix);
         InMemoryAdapterMetrics metrics = new InMemoryAdapterMetrics("ydb@1.0.0");
         YdbSynquestEngine engine = engine(metrics, prefix);
         SecurityContext ctx = SecurityContext.user(TENANT, PrincipalRef.user("u-1"), POLICY);
@@ -72,4 +73,5 @@ class AdapterMetricsWiringTest {
         assertThat(snapshot.operations().get(AdapterMetrics.SYNQUEST_UPSERT).count()).isEqualTo(1);
         assertThat(snapshot.operations().get(AdapterMetrics.SYNQUEST_SEARCH).count()).isEqualTo(1);
     }
+
 }

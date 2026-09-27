@@ -45,6 +45,16 @@ docker exec ydb-poc sed -i \
 docker restart ydb-poc
 ```
 
+## YDB test-table lifecycle (quota-safe)
+
+Fixed per-class prefixes (`t_quest_*`, `t_vault_*`, `t_migrate`, `t_relay_*`),
+idempotent ensure + `TRUNCATE` per run — never random prefixes (10k path
+quota) and never inline DDL copies. Verified: full-suite reruns show zero path
+growth. Historical debris (~250 pre-hygiene random-prefix paths) remains in
+`/local` with ~97% quota headroom; drop it if pressure returns. Probes
+(`*Probe`, `*Diag`, gated `-Dydb.probe`) keep random names and self-clean
+where cheap; they run manually, not in CI.
+
 ## Harness pattern: stable store identity in lifecycle tests (false-negative guard)
 Audit 2026-09-26: every suite test holds one store identity per test — except the
 restart-recovery test, which briefly recreated its store mid-test with a fresh

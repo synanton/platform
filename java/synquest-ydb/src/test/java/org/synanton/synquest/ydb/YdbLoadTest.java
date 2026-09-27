@@ -78,8 +78,9 @@ class YdbLoadTest {
     @Test
     void leakageAndReplayUnderLoad() throws Exception {
         YdbSearchTestBase.ensureStarted();
-        String prefix = YdbSearchTestBase.randomPrefix();
-        YdbSearchTestBase.trackedSchema(prefix, 2);
+        String prefix = "t_quest_load";
+        YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+        YdbSearchSchema.truncateAll(YdbSearchTestBase.client(), prefix);
         YdbSynquestEngine engine = new YdbSynquestEngine(YdbSearchTestBase.client(), prefix);
 
         List<ChunkProjection> seed = new ArrayList<>();
@@ -174,4 +175,5 @@ class YdbLoadTest {
         System.out.println(
                 "LOAD rounds=" + ROUNDS + " violations=" + violations.size() + " workers=5");
     }
+
 }

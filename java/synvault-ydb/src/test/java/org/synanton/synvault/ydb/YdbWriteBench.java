@@ -77,8 +77,9 @@ class YdbWriteBench {
     @Test
     void measureWriteOperatingPoints() {
         YdbTestBase.ensureStarted();
-        String prefix = YdbTestBase.randomPrefix();
-        YdbTestBase.trackedSchema(prefix);
+        String prefix = "t_vault_bench";
+        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbSchema.truncateAll(YdbTestBase.client(), prefix);
         YdbSynvaultStore store = new YdbSynvaultStore(YdbTestBase.client(), prefix, "bench");
 
         List<Double> revLat = new ArrayList<>();
@@ -131,4 +132,5 @@ class YdbWriteBench {
     private static String fmt(double v) {
         return String.format("%.3f", v);
     }
+
 }

@@ -25,6 +25,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledIfSystemProperty(named = "ydb.probe", matches = "true")
 class YdbGate0Probe {
 
+    private static final java.util.List<String> CREATED_TABLES =
+            java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+
+    @org.junit.jupiter.api.AfterAll
+    static void dropCreatedTables() {
+        YdbTestBase.ensureStarted();
+        for (String table : CREATED_TABLES) {
+            try (tech.ydb.table.Session session = YdbTestBase.session()) {
+                session.executeSchemeQuery("DROP TABLE " + table + ";").join();
+            } catch (Exception ignored) {
+            }
+        }
+        CREATED_TABLES.clear();
+    }
+
+
     private static String floats(float... values) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < values.length; i++) {
@@ -97,6 +113,7 @@ class YdbGate0Probe {
             // FT leg uses a separate integer-PK table: __ydb_row_id is flag-disabled
             // on this build (see probe finding), so Utf8-PK tables cannot carry FT indexes.
             String ftTable = "`ft_" + YdbTestBase.randomPrefix() + "`";
+            CREATED_TABLES.add(ftTable);
             scheme(session, "ft-create",
                     "CREATE TABLE " + ftTable + " (rowid Uint64 NOT NULL, tenant Utf8 NOT NULL,"
                             + " chunk_text Utf8 NOT NULL, PRIMARY KEY (rowid));");
@@ -196,6 +213,7 @@ class YdbGate0Probe {
         @Test
     void hybridRankAvailability() {        YdbTestBase.ensureStarted();
         String table = "`hyb_" + YdbTestBase.randomPrefix() + "`";
+        CREATED_TABLES.add(table);
         try (Session session = YdbTestBase.session()) {
             scheme(session, "hyb-create",
                     "CREATE TABLE " + table + " (id Uint64 NOT NULL, tenant Utf8 NOT NULL,"

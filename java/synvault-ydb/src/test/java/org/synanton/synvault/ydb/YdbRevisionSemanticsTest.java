@@ -41,8 +41,9 @@ class YdbRevisionSemanticsTest {
     @BeforeAll
     static void ensureSchema() {
         YdbTestBase.ensureStarted();
-        prefix = YdbTestBase.randomPrefix();
-        YdbTestBase.trackedSchema(prefix);
+        prefix = "t_vault_semantics";
+        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbSchema.truncateAll(YdbTestBase.client(), prefix);
     }
 
     private YdbSynvaultStore store() {
@@ -231,4 +232,5 @@ class YdbRevisionSemanticsTest {
                         org.synanton.storage.provider.DeploymentRequirements.fullRevision(false));
         org.assertj.core.api.Assertions.assertThat(validated.describe()).contains("synvault=ydb@1.0.0");
     }
+
 }

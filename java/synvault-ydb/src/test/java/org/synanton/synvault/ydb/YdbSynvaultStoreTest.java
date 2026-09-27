@@ -16,8 +16,9 @@ class YdbSynvaultStoreTest extends SynvaultStoreContract {
     @BeforeAll
     static void ensureSchema() {
         YdbTestBase.ensureStarted();
-        prefix = YdbTestBase.randomPrefix();
-        YdbTestBase.trackedSchema(prefix);
+        prefix = "t_vault_store";
+        YdbSchema.ensureSchema(YdbTestBase.client(), prefix);
+        YdbSchema.truncateAll(YdbTestBase.client(), prefix);
     }
 
     @Override
@@ -25,4 +26,5 @@ class YdbSynvaultStoreTest extends SynvaultStoreContract {
         return new YdbSynvaultStore(
                 YdbTestBase.client(), prefix, "test-" + UUID.randomUUID());
     }
+
 }

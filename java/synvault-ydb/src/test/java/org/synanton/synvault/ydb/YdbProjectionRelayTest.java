@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.storage.contract.ChunkId;
@@ -56,21 +55,19 @@ class YdbProjectionRelayTest {
         return SecurityContext.user(tenant, PrincipalRef.user("u-1"), POLICY);
     }
 
-    @AfterAll
-    static void dropSchemas() {
-        org.synanton.synquest.ydb.YdbSearchSchema.dropSchema(YdbTestBase.client(), searchPrefix);
-    }
 
     @BeforeAll
     static void ensureSchemas() {
         YdbTestBase.ensureStarted();
-        vaultPrefix = YdbTestBase.randomPrefix();
-        YdbTestBase.trackedSchema(vaultPrefix);
-        searchPrefix = YdbTestBase.randomPrefix();
+        vaultPrefix = "t_vault_relay";
+        YdbSchema.ensureSchema(YdbTestBase.client(), vaultPrefix);
+        YdbSchema.truncateAll(YdbTestBase.client(), vaultPrefix);
+        searchPrefix = "t_relay_search";
         // Search schema owned by synquest-ydb main (no local copy — copies drift;
         // see P0-1 relay incident). Dim is irrelevant here (lexical-only relay).
         org.synanton.synquest.ydb.YdbSearchSchema.ensureSchema(
                 YdbTestBase.client(), searchPrefix, 2);
+        org.synanton.synquest.ydb.YdbSearchSchema.truncateAll(YdbTestBase.client(), searchPrefix);
     }
 
     private YdbSynvaultStore store(String ns) {

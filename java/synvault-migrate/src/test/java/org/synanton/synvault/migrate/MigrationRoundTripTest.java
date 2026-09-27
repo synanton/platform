@@ -85,9 +85,10 @@ class MigrationRoundTripTest {
                         .withSecureConnection(ca)
                         .build();
         ydbClient = TableClient.newClient(ydbTransport).build();
-        ydbPrefix = "mig" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        ydbPrefix = "t_migrate";
         // Vault schema owned by synvault-ydb main (no local copy — copies drift).
         org.synanton.synvault.ydb.YdbSchema.ensureSchema(ydbClient, ydbPrefix);
+        org.synanton.synvault.ydb.YdbSchema.truncateAll(ydbClient, ydbPrefix);
     }
 
     @AfterAll

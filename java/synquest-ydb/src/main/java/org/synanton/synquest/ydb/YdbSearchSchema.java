@@ -5,62 +5,72 @@ import tech.ydb.table.Session;
 import tech.ydb.table.TableClient;
 
 /**
- * 024B projection table + lexical full-text index (commit 1). Vector index and
- * hybrid readiness land in commits 2–3 on a separate index structure
- * (024-scope-split decision — this schema stays stable).
+ * 024B search schema: projections table (lexical FT), vectors table (filtered +
+ * plain vector indexes, FT index), generations pointer table.
+ *
+ * <p>Lifecycle rule: fixed per-class prefixes, idempotent ensure + truncate per
+ * run — never random prefixes (10k path quota) and never inline copies.
+ * Existence is probed (SELECT LIMIT 0), never message-matched: YDB's
+ * already-exists errors vary by path state.
  */
 public final class YdbSearchSchema {
 
     private YdbSearchSchema() {}
 
+    /** Idempotent variant for fixed-name lifecycles (no path growth). */
     public static void ensureSchema(TableClient client, String prefix, int embeddingDim) {
-        String table = "`" + prefix + "_projections`";
-        String vectors = "`" + prefix + "_vectors`";
-        String generations = "`" + prefix + "_generations`";
+        // Definitions below must match ensureSchema exactly (single DDL source would be
+        // ideal; the duplication is structural — table names differ per call site).
         try (Session session =
                 client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
-            execute(
+            executeIfAbsent(
                     session,
-                    "CREATE TABLE " + generations + " ("
+                    prefix + "_generations",
+                    "CREATE TABLE `" + prefix + "_generations` ("
                             + "scope Utf8 NOT NULL, active_generation Utf8 NOT NULL,"
                             + " PRIMARY KEY (scope));");
-            execute(
+            executeIfAbsent(
                     session,
-                    "CREATE TABLE " + table + " ("
+                    prefix + "_projections",
+                    "CREATE TABLE `" + prefix + "_projections` ("
                             + "tenant_id Utf8 NOT NULL, chunk_id Utf8 NOT NULL, doc_id Utf8 NOT NULL,"
                             + " chunk_text Utf8 NOT NULL, metadata_json Json NOT NULL,"
                             + " ordering_key Uint64 NOT NULL, generation Utf8 NOT NULL,"
-                            + " PRIMARY KEY (tenant_id, chunk_id));");
-            execute(
-                    session,
-                    "ALTER TABLE " + table + " ADD INDEX `ft` GLOBAL USING fulltext_relevance"
-                            + " ON (`chunk_text`)"
+                            + " PRIMARY KEY (tenant_id, chunk_id));",
+                    "ALTER TABLE `" + prefix + "_projections` ADD INDEX `ft` GLOBAL USING"
+                            + " fulltext_relevance ON (`chunk_text`)"
                             + " WITH (tokenizer=standard, use_filter_lowercase=true);");
-            execute(
+            executeIfAbsent(
                     session,
-                    "CREATE TABLE " + vectors + " ("
+                    prefix + "_vectors",
+                    "CREATE TABLE `" + prefix + "_vectors` ("
                             + "key Utf8 NOT NULL, tenant_id Utf8 NOT NULL, chunk_id Utf8 NOT NULL,"
                             + " doc_id Utf8 NOT NULL, chunk_text Utf8 NOT NULL,"
                             + " metadata_json Json NOT NULL, embedding String NOT NULL,"
                             + " ordering_key Uint64 NOT NULL, generation Utf8 NOT NULL,"
-                            + " PRIMARY KEY (key));");
-            execute(
-                    session,
-                    "ALTER TABLE " + vectors + " ADD INDEX `v_vec` GLOBAL USING vector_kmeans_tree"
-                            + " ON (`tenant_id`, `embedding`)"
+                            + " PRIMARY KEY (key));",
+                    "ALTER TABLE `" + prefix + "_vectors` ADD INDEX `v_vec` GLOBAL USING"
+                            + " vector_kmeans_tree ON (`tenant_id`, `embedding`)"
                             + " WITH (distance=cosine, vector_type=\"float\","
-                            + " vector_dimension=" + embeddingDim + ");");
-            execute(
-                    session,
-                    "ALTER TABLE " + vectors + " ADD INDEX `v_hyb` GLOBAL USING vector_kmeans_tree"
-                            + " ON (`embedding`)"
+                            + " vector_dimension=" + embeddingDim + ");",
+                    "ALTER TABLE `" + prefix + "_vectors` ADD INDEX `v_hyb` GLOBAL USING"
+                            + " vector_kmeans_tree ON (`embedding`)"
                             + " WITH (distance=cosine, vector_type=\"float\","
-                            + " vector_dimension=" + embeddingDim + ");");
-            execute(
-                    session,
-                    "ALTER TABLE " + vectors + " ADD INDEX `v_ft` GLOBAL USING fulltext_relevance"
-                            + " ON (`chunk_text`)"
+                            + " vector_dimension=" + embeddingDim + ");",
+                    "ALTER TABLE `" + prefix + "_vectors` ADD INDEX `v_ft` GLOBAL USING"
+                            + " fulltext_relevance ON (`chunk_text`)"
                             + " WITH (tokenizer=standard, use_filter_lowercase=true);");
+        }
+    }
+
+    /** Clears search tables for a prefix (synchronous, unlike DROP). */
+    public static void truncateAll(TableClient client, String prefix) {
+        try (Session session =
+                client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
+            for (String table :
+                    java.util.List.of("projections", "vectors", "generations")) {
+                execute(session, "TRUNCATE TABLE `" + prefix + "_" + table + "`;");
+            }
         }
     }
 
@@ -85,6 +95,24 @@ public final class YdbSearchSchema {
         Status status = session.executeSchemeQuery(yql).join();
         if (!status.isSuccess()) {
             throw new IllegalStateException(interpret(yql, String.valueOf(status)));
+        }
+    }
+
+    private static void executeIfAbsent(Session session, String tableName, String... statements) {
+        try {
+            session.executeDataQuery(
+                            "SELECT * FROM `" + tableName + "` LIMIT 0;",
+                            tech.ydb.table.transaction.TxControl.snapshotRo().setCommitTx(true),
+                            tech.ydb.table.query.Params.empty(),
+                            new tech.ydb.table.settings.ExecuteDataQuerySettings())
+                    .join()
+                    .getValue();
+            return;
+        } catch (RuntimeException e) {
+            // Absent — create below.
+        }
+        for (String yql : statements) {
+            execute(session, yql);
         }
     }
 

@@ -10,6 +10,7 @@ import tech.ydb.table.query.Params;
 import tech.ydb.table.settings.ExecuteDataQuerySettings;
 import tech.ydb.table.transaction.TxControl;
 import tech.ydb.table.values.PrimitiveValue;
+import org.junit.jupiter.api.AfterAll;
 
 /** Diagnostic: which HybridRank shapes resolve the FT branch. Gated, temporary. */
 @EnabledIfSystemProperty(named = "ydb.probe", matches = "true")
@@ -216,5 +217,10 @@ class YdbHybridDiag {
             try { Thread.sleep(2000); } catch (InterruptedException e) { break; }
             }
         }
+    }
+
+    @AfterAll
+    static void dropSchemas() {
+        YdbSearchTestBase.dropAllTracked();
     }
 }

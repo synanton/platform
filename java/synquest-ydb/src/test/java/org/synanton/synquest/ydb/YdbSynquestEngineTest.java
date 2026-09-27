@@ -15,8 +15,9 @@ class YdbSynquestEngineTest extends SynquestEngineContract {
     private YdbSynquestEngine engine() {
         if (engine == null) {
             YdbSearchTestBase.ensureStarted();
-            String prefix = YdbSearchTestBase.randomPrefix();
-            YdbSearchTestBase.trackedSchema(prefix, 2);
+            String prefix = "t_quest_engine";
+            YdbSearchSchema.ensureSchema(YdbSearchTestBase.client(), prefix, 2);
+            YdbSearchSchema.truncateAll(YdbSearchTestBase.client(), prefix);
             engine = new YdbSynquestEngine(YdbSearchTestBase.client(), prefix);
         }
         return engine;
@@ -36,4 +37,5 @@ class YdbSynquestEngineTest extends SynquestEngineContract {
     protected org.synanton.synquest.api.SynquestIndexAdmin newAdmin() {
         return engine();
     }
+
 }

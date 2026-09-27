@@ -60,8 +60,12 @@ abstract class YdbSearchTestBase {
         return prefix;
     }
 
-    @org.junit.jupiter.api.AfterAll
-    static void dropTrackedSchemas() {
+    /**
+     * Drops all tracked schemas. Called explicitly from each test class's own
+     * {@code @AfterAll} — inherited {@code @AfterAll} in this base never runs
+     * because no test class extends it (verified 2026-09-27: silent no-cleanup).
+     */
+    public static void dropAllTracked() {
         for (String prefix : TRACKED_PREFIXES) {
             YdbSearchSchema.dropSchema(client(), prefix);
         }
