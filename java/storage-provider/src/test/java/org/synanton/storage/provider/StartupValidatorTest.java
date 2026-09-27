@@ -109,6 +109,30 @@ class StartupValidatorTest {
     }
 
     @Test
+    void postgresUnregisteredFailsFastUntilAdaptersExist() {
+        // PG-POC-000: no PG adapter is registered yet (Phases 1/2). Selecting
+        // "postgres" on any port must fail with the unknown-provider error —
+        // startup validation rejects PG configurations until the adapters land
+        // and register (same shape as the pre-024B YDB state).
+        ProviderRegistry registry = registry(full("inmemory"), full("inmemory"));
+        assertThatThrownBy(
+                        () ->
+                                registry.validate(
+                                        new ProviderSelection("postgres", "inmemory", "inmemory", "inmemory"),
+                                        DeploymentRequirements.metadataOnly(false)))
+                .isInstanceOf(ProviderIncompatibleException.class)
+                .hasMessageContaining("postgres")
+                .hasMessageContaining("Available: [inmemory]");
+        assertThatThrownBy(
+                        () ->
+                                registry.validate(
+                                        new ProviderSelection("inmemory", "postgres", "inmemory", "inmemory"),
+                                        DeploymentRequirements.metadataOnly(false)))
+                .isInstanceOf(ProviderIncompatibleException.class)
+                .hasMessageContaining("postgres");
+    }
+
+    @Test
     void cassandraRequiringRevisionFailsFastWithSpecificError() {
         ProviderRegistry registry = registry(cassandraLike(), full("inmemory"));
         assertThatThrownBy(
