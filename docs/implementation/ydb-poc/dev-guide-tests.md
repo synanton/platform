@@ -55,6 +55,22 @@ growth. Historical debris (~250 pre-hygiene random-prefix paths) remains in
 (`*Probe`, `*Diag`, gated `-Dydb.probe`) keep random names and self-clean
 where cheap; they run manually, not in CI.
 
+This section generalizes beyond YDB: test resources must be reclaimed
+synchronously by the harness, on every backend. Audited: Cassandra is immune
+by lifecycle (one container per JVM, stopped via shutdown hook, Ryuk-reaped —
+removal destroys everything, nothing accumulates). Postgres PoC inherits this
+section from day one: table lifecycle policy goes in the schema-deployment
+ticket, not discovered via failure.
+
+## Teardown discipline (second silent-failure class)
+
+Best-effort catches on teardown must log at WARN, never swallow silently. Two
+proven instances: SchemaInstaller split-on-`;` (fixed) and DROP-failure
+swallowing during the quota incident (paths grew to 10k unnoticed). A teardown
+that fails quietly accumulates resources until a hard limit surfaces them —
+when the origin is hardest to trace. `YdbQuotaGuardTest` asserts path count
+below threshold as the permanent guard.
+
 ## Harness pattern: stable store identity in lifecycle tests (false-negative guard)
 Audit 2026-09-26: every suite test holds one store identity per test — except the
 restart-recovery test, which briefly recreated its store mid-test with a fresh
