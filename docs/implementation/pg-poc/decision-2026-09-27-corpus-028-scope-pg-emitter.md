@@ -52,6 +52,8 @@ is replaced, not adapted. Artifact 028b extends the existing harness's output
 shape, not its corpus format.
 
 Ratified: 028 re-scoped. Ticket numbers 028a–028e assigned on the YDB tracker.
+Implementer task list: `028a-tasks.md` (028a.1–028a.11, ~44 hr) on branch
+`DESIGN-YDB-028a`.
 
 Resourcing watch: 028a implementer unnamed; 028b and 006 re-freeze
 concentrated in one owner (andreminin). Both are on the critical path.
