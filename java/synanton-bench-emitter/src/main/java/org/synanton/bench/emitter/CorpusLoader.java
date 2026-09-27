@@ -40,7 +40,12 @@ public final class CorpusLoader {
             String tenantId,
             int ordinal,
             String text,
-            String embeddingB64) {}
+            String embeddingB64,
+            Map<String, String> metadata) {}
+
+    private static final java.util.Set<String> CORE_FIELDS =
+            java.util.Set.of(
+                    "chunk_id", "doc_id", "tenant_id", "ordinal", "text", "embedding_b64");
 
     public interface ChunkHandler {
         void accept(ChunkRow row) throws Exception;
@@ -81,6 +86,14 @@ public final class CorpusLoader {
                     continue;
                 }
                 JsonNode o = MAPPER.readTree(line);
+                java.util.Map<String, String> metadata = new java.util.LinkedHashMap<>();
+                o.fields()
+                        .forEachRemaining(
+                                e -> {
+                                    if (!CORE_FIELDS.contains(e.getKey()) && e.getValue().isTextual()) {
+                                        metadata.put(e.getKey(), e.getValue().asText());
+                                    }
+                                });
                 handler.accept(
                         new ChunkRow(
                                 required(o, "chunk_id"),
@@ -88,7 +101,8 @@ public final class CorpusLoader {
                                 required(o, "tenant_id"),
                                 o.has("ordinal") ? o.get("ordinal").asInt() : 0,
                                 o.has("text") ? o.get("text").asText() : "",
-                                o.has("embedding_b64") ? o.get("embedding_b64").asText() : ""));
+                                o.has("embedding_b64") ? o.get("embedding_b64").asText() : "",
+                                Map.copyOf(metadata)));
                 count++;
             }
         }

@@ -1,4 +1,4 @@
-{"chunk_id": "c1", "doc_id": "d1", "tenant_id": "tenant_07", "ordinal": 0, "text": "alpha beta", "embedding_b64": "AAAAAA=="}
-{"chunk_id": "c2", "doc_id": "d1", "tenant_id": "tenant_07", "ordinal": 1, "text": "beta gamma", "embedding_b64": "AAAAAA=="}
-{"chunk_id": "c3", "doc_id": "d2", "tenant_id": "tenant_11", "ordinal": 0, "text": "gamma delta", "embedding_b64": "AAAAAA=="}
-{"chunk_id": "c4", "doc_id": "d2", "tenant_id": "tenant_11", "ordinal": 1, "text": "delta alpha", "embedding_b64": "AAAAAA=="}
+{"chunk_id": "c1", "doc_id": "d1", "tenant_id": "tenant_07", "ordinal": 0, "text": "alpha beta", "embedding_b64": "AAAAAA==", "doc_type": "memo", "lang": "en"}
+{"chunk_id": "c2", "doc_id": "d1", "tenant_id": "tenant_07", "ordinal": 1, "text": "beta gamma", "embedding_b64": "AAAAAA==", "doc_type": "report", "lang": "en"}
+{"chunk_id": "c3", "doc_id": "d2", "tenant_id": "tenant_11", "ordinal": 0, "text": "gamma delta", "embedding_b64": "AAAAAA==", "doc_type": "memo", "lang": "de"}
+{"chunk_id": "c4", "doc_id": "d2", "tenant_id": "tenant_11", "ordinal": 1, "text": "delta alpha", "embedding_b64": "AAAAAA==", "doc_type": "report", "lang": "de"}
