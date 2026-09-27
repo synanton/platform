@@ -107,6 +107,10 @@ class QueryExecutorTest {
         assertThat(hyb.timingMs()).isGreaterThanOrEqualTo(0.0);
         assertThat(lex.eligibleIds()).containsExactly("c1", "c2");
 
+        // timing_scope pins the topology to the number (fan-out finding).
+        assertThat(lex.timingScope()).isEqualTo("single");
+        assertThat(hyb.timingScope()).isEqualTo("summed_fanout_2");
+
         // Ranks assigned post-sort, 0-based, dense.
         for (int i = 0; i < hyb.topK().size(); i++) {
             assertThat(hyb.topK().get(i).rank()).isEqualTo(i);

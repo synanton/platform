@@ -82,7 +82,8 @@ public final class QueryExecutor {
             String selectivity,
             List<Hit> topK,
             List<String> eligibleIds,
-            double timingMs) {}
+            double timingMs,
+            String timingScope) {}
 
     /**
      * Executes one golden query. Empty scope fans out over the full tenant
@@ -124,7 +125,8 @@ public final class QueryExecutor {
         }
         return new QueryOutput(
                 input.queryId(), input.mode(), input.filter(), input.selectivity(),
-                List.copyOf(top), List.copyOf(input.eligibleIds()), timingMs);
+                List.copyOf(top), List.copyOf(input.eligibleIds()), timingMs,
+                tenants.size() == 1 ? "single" : "summed_fanout_" + tenants.size());
     }
 
     private record Scored(String chunkId, double score) {}
