@@ -92,7 +92,39 @@ truth never reaches the comparator — it is a harness defect).
 - Corpus version string `ydb-poc-corpus-v1` is emitted in a manifest line and
   must equal the Q3 `corpus` field or the comparator refuses the run.
 
-## 7. Co-signature (D6 gate)
+## 6b. Correlation verification (test, not assertion)
+
+"Embeddings correlated with planted text" (§2) is verified by a test shipped
+in 028a, not asserted by the generator: query the corpus embeddings with the
+shipped query vectors and assert per-leg top-K overlap with
+`relevant_chunk_ids` ≥ 0.7 on the vector leg. Uncorrelated output fails this
+test — so a near-zero vector recall in R3 can never be misread as a retrieval
+defect when it is a generator defect.
+
+## 6c. Golden-query stability across regeneration
+
+For seed 42, generation is byte-identical: query vectors,
+`relevant_chunk_ids`, and `eligible_chunk_ids` are stable across
+regenerations. Any change to generator logic invalidates the shipped query
+vectors and requires a new corpus version (`v2`, …). This is the boundary
+condition that makes the manifest-version-equals-Q3-corpus check (§6)
+meaningful rather than ceremonial.
+
+## 7. Emitter obligation + cross-links (Q3 half)
+
+Every emitter (028b/c/d/e, PG-POC-018) must read the corpus manifest, copy
+its version into the Q3 output's `corpus` field, and fail if the manifest is
+missing. The parser enforces field presence; this rule makes the value
+truthful.
+
+- Q3 contract source (normative by code): `java/synanton-bench-convergence`
+  `RunOutput` on branch `DESIGN-PostgreSQL` — PG drafts 018 against the
+  parser, not against this branch. No cross-branch read needed to start.
+- Corpus contract source: this file, on branch `DESIGN-YDB-028a`. PG
+  integrates 018 against it once signed; PG tracks this file's stability,
+  not the branch.
+
+## 8. Co-signature (D6 gate)
 
 - 028a implementer (corpus half): ________________ (this branch author so far)
 - PG comparator owner (Q3 half = parser, verified): ________________
