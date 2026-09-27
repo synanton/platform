@@ -1,0 +1,33 @@
+{
+  "run_id": "024a-empty",
+  "corpus": "ydb-poc-corpus-v1",
+  "queries": [
+    {
+      "query_id": "q1",
+      "mode": "lexical",
+      "filter": "none",
+      "selectivity": "-",
+      "top_k": [],
+      "eligible_set": [],
+      "timing_ms": 0.1
+    },
+    {
+      "query_id": "q2",
+      "mode": "vector",
+      "filter": "eligibility",
+      "selectivity": "1%",
+      "top_k": [],
+      "eligible_set": ["a", "b"],
+      "timing_ms": 5.1
+    },
+    {
+      "query_id": "q3",
+      "mode": "hybrid",
+      "filter": "metadata",
+      "selectivity": "10%",
+      "top_k": [],
+      "eligible_set": ["m1", "m2", "m3"],
+      "timing_ms": 6.2
+    }
+  ]
+}
