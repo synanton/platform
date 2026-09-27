@@ -67,11 +67,11 @@ abstract class PostgresTestBase {
     }
 
     protected static Connection connection() throws Exception {
-        String url = container.getJdbcUrl();
-        return DriverManager.getConnection(url, "app", "app");
+        return DriverManager.getConnection(container.getJdbcUrl(), "app", "app");
     }
 
-    private static Connection adminConnection() throws Exception {
+    /** Superuser handle: schema install and synchronous test-data cleanup only. */
+    static Connection adminConnection() throws Exception {
         return DriverManager.getConnection(
                 container.getJdbcUrl(), container.getUsername(), container.getPassword());
     }

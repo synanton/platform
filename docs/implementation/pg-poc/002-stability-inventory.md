@@ -12,6 +12,7 @@
 | pgvector `v0.8.6` (HNSW, IVFFlat) | Open-source, widely deployed; `0.x` versioning | Index build parameters (`m`, `ef_construction`) need per-workload tuning; dimension fixed at DDL; tie order on equal distances unverified (PG-POC-013) | PoC-valid; `0.x` line recorded as production risk for Phase 6 |
 | `tsvector` + GIN (lexical fallback) | In-core, GA | BM25-equivalent ranking is custom (`ts_rank` ≠ Lucene BM25 k1=1.2/b=0.75); conjunctive/disjunctive semantics must be measured vs frozen Lucene defaults (004 matrix) | Clear (in-core, no extension risk) |
 | `pg_search` (ParadeDB `v0.26.0`, BM25 candidate) | Fast-moving (`v0.26.0` latest tag); GA status **not claimed** | Upgrade compatibility across `0.x` releases not guaranteed; exact image/build recipe not yet pulled in this environment | PoC-valid only; flagged as production risk unless re-cleared at Phase 6 |
+| RLS superuser bypass (PG-POC-003 finding) | Server behavior, all PG versions | `FORCE ROW LEVEL SECURITY` covers table owners, **not superusers** — a superuser connection bypasses RLS unconditionally and silently (proven: PoC smoke test saw 3 rows as `test` superuser before the fixture moved to a least-privilege role). Any deployment connecting as superuser (early-stage setups, managed-PG defaults, convenience configs) has no RLS protection at all | **Deployment constraint:** production must connect as a least-privilege role (PG-POC-012). Convention is insufficient — enforce at connection time |
 
 ## BM25 extension decision (recorded 2026-09-27)
 
