@@ -154,7 +154,7 @@ public abstract class SynquestEngineContract {
     }
 
     @Test
-    void eligibilityIsPreRanking() {
+    void tenantEligibilityIsPreRanking() {
         SynquestEngine engine = newEngine();
         newWriter().upsert(List.of(projection("tenant_a", "c1", "secret migration plan", 1)))
                 .toCompletableFuture()
@@ -166,6 +166,61 @@ public abstract class SynquestEngineContract {
         assertThat(result.hits()).isEmpty();
         assertThat(result.totalEligible()).isZero();
         assertThat(result.highlights()).isEmpty();
+    }
+
+    /**
+     * P0-3: service contexts must not broaden to the request's eligibility tenant.
+     * A service context for tenant A searching with tenant B eligibility is
+     * rejected (FORBIDDEN) — never silently scoped, never cross-tenant.
+     */
+    @Test
+    void serviceContextBroadeningIsRejected() {
+        SynquestEngine engine = newEngine();
+        newWriter().upsert(List.of(projection("tenant_a", "c1", "secret migration plan", 1)))
+                .toCompletableFuture()
+                .join();
+        SecurityContext service =
+                SecurityContext.service(TENANT_A, PrincipalRef.service("indexer"), POLICY);
+        SearchRequest request = lexical("migration plan", TENANT_B, 10);
+        assertThatThrownBy(() -> engine.search(service, request).toCompletableFuture().join())
+                .hasStackTraceContaining(StorageErrorKind.FORBIDDEN.name());
+    }
+
+    /**
+     * 025b gap, visible not silent: principal/policy/explicit-authorization
+     * enforcement is unimplemented — tenant scope is the only enforced
+     * eligibility dimension. A policy-denied principal currently retrieves as if
+     * allowed. Disabled until 025b lands, then this test must pass.
+     */
+    @Test
+    @org.junit.jupiter.api.Disabled("025b: principal/policy eligibility unenforced")
+    void principalPolicyEligibilityIsEnforced() {
+        SynquestEngine engine = newEngine();
+        newWriter().upsert(List.of(projection("tenant_a", "c1", "secret migration plan", 1)))
+                .toCompletableFuture()
+                .join();
+        EligibilityConstraints denied =
+                new EligibilityConstraints(
+                        TENANT_A,
+                        List.of(PrincipalRef.user("revoked-user")),
+                        new PolicyContext("policy-deny-all", "r1"),
+                        true);
+        SearchRequest request =
+                new SearchRequest(
+                        "migration plan",
+                        Optional.empty(),
+                        Optional.empty(),
+                        SearchMode.LEXICAL,
+                        denied,
+                        RelevanceFilters.none(),
+                        TemporalExtension.empty(),
+                        10,
+                        0.0);
+        SearchResult result =
+                engine.search(ctx(TENANT_A), request).toCompletableFuture().join();
+        assertThat(result.hits())
+                .as("policy-denied principal must see nothing")
+                .isEmpty();
     }
 
     @Test

@@ -35,18 +35,29 @@ public abstract class ConformanceGatingContract {
                 .forEach(
                         (capability, claimed) -> {
                             var entry = matrix.entry(capability);
-                            if (claimed
-                                    && (entry.isEmpty()
-                                            || entry.get().status() != ConformanceStatus.SUPPORTED)) {
-                                violations.add(capability + ": claimed but not SUPPORTED in matrix");
+                            if (claimed && !satisfiesClaim(entry)) {
+                                violations.add(
+                                        capability + ": claimed but neither SUPPORTED nor scoped-PARTIAL in matrix");
                             }
                             if (!claimed
                                     && entry.isPresent()
-                                    && entry.get().status() == ConformanceStatus.SUPPORTED) {
-                                violations.add(capability + ": SUPPORTED in matrix but flag is false");
+                                    && (entry.get().status() == ConformanceStatus.SUPPORTED
+                                            || entry.get().status() == ConformanceStatus.PARTIAL)) {
+                                violations.add(capability + ": evidenced in matrix but flag is false");
                             }
                         });
         assertThat(violations).as("flag/matrix mismatch").isEmpty();
+    }
+
+    private static boolean satisfiesClaim(java.util.Optional<ConformanceEntry> entry) {
+        if (entry.isEmpty()) {
+            return false;
+        }
+        return switch (entry.get().status()) {
+            case SUPPORTED -> true;
+            case PARTIAL -> entry.get().evidence().startsWith("scope=");
+            default -> false;
+        };
     }
 
     @Test
@@ -54,11 +65,20 @@ public abstract class ConformanceGatingContract {
         ConformanceMatrix matrix = adapter().conformance();
         List<String> violations = new ArrayList<>();
         for (ConformanceEntry entry : matrix.entries()) {
-            if (entry.status() == ConformanceStatus.SUPPORTED) {
+            if (entry.status() == ConformanceStatus.SUPPORTED
+                    || entry.status() == ConformanceStatus.PARTIAL) {
+                String evidence = entry.evidence();
+                if (entry.status() == ConformanceStatus.PARTIAL) {
+                    assertThat(evidence)
+                            .as("PARTIAL scope for " + entry.capability())
+                            .startsWith("scope=");
+                    int at = evidence.indexOf("test=");
+                    evidence = at >= 0 ? evidence.substring(at + 5).trim() : "";
+                }
                 try {
-                    Class.forName(entry.evidence());
+                    Class.forName(evidence);
                 } catch (ClassNotFoundException | LinkageError e) {
-                    violations.add(entry.capability() + ": evidence class not loadable: " + entry.evidence());
+                    violations.add(entry.capability() + ": evidence class not loadable: " + evidence);
                 }
             }
         }

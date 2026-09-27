@@ -22,6 +22,7 @@ import org.synanton.storage.contract.SecurityContext;
 import org.synanton.storage.contract.StorageErrorKind;
 import org.synanton.storage.contract.StorageException;
 import org.synanton.synquest.api.ChunkProjection;
+import org.synanton.synquest.api.EligibilityScope;
 import org.synanton.synquest.api.IndexStatus;
 import org.synanton.synquest.api.RebuildOptions;
 import org.synanton.synquest.api.SchemaOptions;
@@ -98,10 +99,13 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
                                     StorageErrorKind.UNSUPPORTED,
                                     "UNSUPPORTED: temporal retrieval not supported by this adapter")));
         }
+        // P0-3: fail fast on scope mismatch (throws FORBIDDEN) before touching candidates.
+        String effectiveTenant =
+                EligibilityScope.effectiveTenant(context, request.eligibility()).tenantId();
         List<Scored> eligible = new ArrayList<>();
         for (ProjectionEntry entry : projections.values()) {
             ChunkProjection p = entry.projection();
-            if (!eligibleTenant(context, p.tenantId())) {
+            if (!p.tenantId().equals(effectiveTenant)) {
                 continue;
             }
             if (!matches(p.metadata(), request.filters().mustMatchMetadata())) {
@@ -168,7 +172,7 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HIGHLIGHTS, evidence),
-                        ConformanceEntry.supported(Capabilities.SYNQUEST_ELIGIBILITY, evidence),
+                        ConformanceEntry.partial(Capabilities.SYNQUEST_ELIGIBILITY, "tenant", evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_TEMPORAL_REJECTION, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_ORDERING, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_GENERATION_DELETE, evidence)));
@@ -202,10 +206,6 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
             case VECTOR -> s.vector();
             case HYBRID -> s.lexical() / Math.max(maxLexical, 1e-9) + s.vector();
         };
-    }
-
-    private static boolean eligibleTenant(SecurityContext context, String candidateTenant) {
-        return context.service() || context.tenantScope().tenantId().equals(candidateTenant);
     }
 
     private static boolean matches(Map<String, String> metadata, Map<String, String> required) {

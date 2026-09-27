@@ -6,6 +6,12 @@ package org.synanton.storage.contract;
 public enum ConformanceStatus {
     /** Claimed and backed by a passing contract test (evidence names the test class). */
     SUPPORTED,
+    /**
+     * Claimed for a documented subset only; evidence must open with
+     * {@code scope=<subset>} naming the covered scope (e.g. {@code scope=tenant}).
+     * Satisfies claimed-`true` flags only within that scope.
+     */
+    PARTIAL,
     /** Explicitly not provided; callers must not rely on it (e.g. Cassandra revision). */
     UNSUPPORTED,
     /** Claimed without passing-test evidence; must report {@code false} and cannot

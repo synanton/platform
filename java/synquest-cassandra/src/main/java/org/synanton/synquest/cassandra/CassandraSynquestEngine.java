@@ -50,6 +50,7 @@ import org.synanton.storage.contract.SecurityContext;
 import org.synanton.storage.contract.StorageErrorKind;
 import org.synanton.storage.contract.StorageException;
 import org.synanton.synquest.api.ChunkProjection;
+import org.synanton.synquest.api.EligibilityScope;
 import org.synanton.synquest.api.IndexStatus;
 import org.synanton.synquest.api.RebuildOptions;
 import org.synanton.synquest.api.SchemaOptions;
@@ -167,7 +168,12 @@ public class CassandraSynquestEngine
                                 StorageErrorKind.UNSUPPORTED,
                                 "UNSUPPORTED: temporal retrieval not supported by this adapter"));
             }
-            List<String> tenants = eligibleTenants(context);
+            // P0-3: fail fast on scope mismatch (throws FORBIDDEN) — service
+            // contexts can no longer sweep all tenants.
+            List<String> tenants =
+                    List.of(
+                            EligibilityScope.effectiveTenant(context, request.eligibility())
+                                    .tenantId());
             List<Scored> eligible = new ArrayList<>();
             for (String tenant : tenants) {
                 ensureSearcher(tenant);
@@ -334,7 +340,7 @@ public class CassandraSynquestEngine
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HIGHLIGHTS, evidence),
-                        ConformanceEntry.supported(Capabilities.SYNQUEST_ELIGIBILITY, evidence),
+                        ConformanceEntry.partial(Capabilities.SYNQUEST_ELIGIBILITY, "tenant", evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_TEMPORAL_REJECTION, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_ORDERING, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_GENERATION_DELETE, evidence)));
@@ -461,13 +467,6 @@ public class CassandraSynquestEngine
 
     private GenerationId activeGeneration() {
         return generations.getOrDefault("*", GenerationId.initial());
-    }
-
-    private List<String> eligibleTenants(SecurityContext context) {
-        if (context.service()) {
-            return List.copyOf(searchers.keySet());
-        }
-        return List.of(context.tenantScope().tenantId());
     }
 
     private TopDocs lexical(IndexSearcher searcher, SearchRequest request) throws Exception {

@@ -14,15 +14,16 @@ Full matrix: `004-parity-matrix.md`.
 
 ## Per-adapter conformance (machine-readable via `Conformant.conformance()`)
 
-| Capability | inmemory (vault) | cassandra | inmemory (quest) |
-|---|---|---|---|
-| revision / atomicity | SUPPORTED | **UNSUPPORTED (008)** | n/a |
-| delete | SUPPORTED | **UNSUPPORTED (008)** | generation-scoped SUPPORTED |
-| document / chunks / provenance / pagination | SUPPORTED | SUPPORTED | n/a |
-| OCC revisions | SUPPORTED | **UNSUPPORTED (008)** | n/a |
-| lexical / vector / hybrid / filters / highlights | n/a | n/a | SUPPORTED |
-| pre-ranking eligibility / temporal-rejection / ordering | n/a | n/a | SUPPORTED |
+| Capability | inmemory (vault) | cassandra | inmemory (quest) | ydb (vault / quest) |
+|---|---|---|---|---|
+| revision / atomicity | SUPPORTED | **UNSUPPORTED (008)** | n/a | SUPPORTED (vault) |
+| delete | SUPPORTED | **UNSUPPORTED (008)** | generation-scoped SUPPORTED | SUPPORTED (vault) / generation-scoped (quest) |
+| document / chunks / provenance / pagination | SUPPORTED | SUPPORTED | n/a | SUPPORTED (vault) |
+| OCC revisions | SUPPORTED | **UNSUPPORTED (008)** | n/a | SUPPORTED (vault, incl. ABORTED→CONFLICT) |
+| lexical / vector / hybrid / filters / highlights | n/a | n/a | SUPPORTED | SUPPORTED (quest) |
+| pre-ranking eligibility | n/a | n/a | **PARTIAL(scope=tenant)** | **PARTIAL(scope=tenant)** |
+| temporal-rejection / ordering | n/a | n/a | SUPPORTED | SUPPORTED (quest) |
 
 Gating suite (`ConformanceGatingContract`) enforces: claimed-`true` flags must be
-`SUPPORTED` with a loadable evidence test class; `UNSUPPORTED` rows carry reasons.
-YDB rows fill when 024B lands.
+`SUPPORTED` or scoped-`PARTIAL` with loadable evidence; `UNSUPPORTED` rows carry
+reasons. Full eligibility scope is an open 025b decision, not an implementation.

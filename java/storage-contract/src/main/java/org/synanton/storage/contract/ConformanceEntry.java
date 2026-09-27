@@ -28,6 +28,11 @@ public record ConformanceEntry(String capability, ConformanceStatus status, Stri
         return new ConformanceEntry(capability, ConformanceStatus.SUPPORTED, evidenceTestClass);
     }
 
+    public static ConformanceEntry partial(String capability, String scope, String evidenceTestClass) {
+        return new ConformanceEntry(
+                capability, ConformanceStatus.PARTIAL, "scope=" + scope + "; test=" + evidenceTestClass);
+    }
+
     public static ConformanceEntry unsupported(String capability, String reason) {
         return new ConformanceEntry(capability, ConformanceStatus.UNSUPPORTED, reason);
     }

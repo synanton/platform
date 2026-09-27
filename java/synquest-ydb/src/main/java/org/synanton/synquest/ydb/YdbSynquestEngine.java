@@ -24,6 +24,7 @@ import org.synanton.storage.contract.SecurityContext;
 import org.synanton.storage.contract.StorageErrorKind;
 import org.synanton.storage.contract.StorageException;
 import org.synanton.synquest.api.ChunkProjection;
+import org.synanton.synquest.api.EligibilityScope;
 import org.synanton.synquest.api.IndexStatus;
 import org.synanton.synquest.api.RebuildOptions;
 import org.synanton.synquest.api.SchemaOptions;
@@ -499,7 +500,7 @@ public class YdbSynquestEngine
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HIGHLIGHTS, evidence),
-                        ConformanceEntry.supported(Capabilities.SYNQUEST_ELIGIBILITY, evidence),
+                        ConformanceEntry.partial(Capabilities.SYNQUEST_ELIGIBILITY, "tenant", evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_TEMPORAL_REJECTION, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_ORDERING, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_GENERATION_DELETE, evidence)));
@@ -523,10 +524,9 @@ public class YdbSynquestEngine
     }
 
     private String tenant(SecurityContext context, SearchRequest request) {
-        if (!context.service()) {
-            return context.tenantScope().tenantId();
-        }
-        return request.eligibility().tenantScope().tenantId();
+        // P0-3: effective tenant is always the validated context tenant; a request
+        // naming any other tenant is rejected (FORBIDDEN), including service contexts.
+        return EligibilityScope.effectiveTenant(context, request.eligibility()).tenantId();
     }
 
     private Long readOrdering(Session session, String tenant, ChunkId id) {

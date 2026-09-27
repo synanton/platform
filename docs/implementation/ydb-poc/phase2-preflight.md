@@ -13,6 +13,10 @@ Filtered vector index `ON (tenant, embedding)` + mandatory tenant equality
 returns only eligible rows, correctly ranked; unfiltered `fulltext_relevance`
 + tenant equality + alias-form `FulltextScore` likewise. 024B may proceed to
 engine work and benchmarks. Standing caveats below remain in force for 024B.
+
+**Scope correction (P0-2): Gate 0 passed _tenant_ pre-ranking eligibility.
+Principal/policy/explicit-authorization dimensions are unimplemented and
+untested — see `025b-eligibility-scope.md`. Matrices record PARTIAL(scope=tenant).**
 Filtered vector index `ON (tenant, embedding)` + mandatory tenant equality
 returns only eligible rows, correctly ranked; unfiltered `fulltext_relevance`
 + tenant equality + alias-form `FulltextScore` likewise. 024B may proceed to
