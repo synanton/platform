@@ -61,6 +61,7 @@ include(
     "java:synvault-migrate",
     "java:synanton-bench-convergence",
     "java:synanton-bench-corpus",
+    "java:synanton-bench-baseline",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)
