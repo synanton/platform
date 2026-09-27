@@ -91,8 +91,15 @@ public record ChunkRecord(
             text.append("tok").append(rng.nextInt(5000)).append(' ');
         }
         if (query >= 0) {
-            for (String term : plantedTerms(query)) {
-                text.append(term).append(' ');
+            // Planted terms repeat 4× (title/heading-like emphasis). Without
+            // repetition, ~137 background tokens drown 3 planted directions
+            // (noise norm ≈ 13 vs signal ≈ 3) and no σ makes §6b passable —
+            // the failure would masquerade as "σ is wrong". Repetition is the
+            // documented signal budget, not a tuning knob.
+            for (int r = 0; r < 4; r++) {
+                for (String term : plantedTerms(query)) {
+                    text.append(term).append(' ');
+                }
             }
         }
         int d = doc.docIndex();
