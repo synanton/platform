@@ -51,19 +51,30 @@ belongs to the eligible tenant. Leakage = fail held. The post-ANN signature
 is fixed before the distance sort on both legs. This is pre-ranking
 composition at plan level, the property Gate A exists to prove.
 
-**Caveat (recorded, not hidden):** the HNSW index never entered any plan —
-not at 0.1%, not at ~33%, not with seqscan forced off. At this corpus scale
-(30k rows) the planner correctly prefers btree-restrict-then-sort, so the
-**HNSW×RLS plan interaction is unobserved**, not refuted. The ANN-at-scale
-composition question moves to Phase 4 explicitly: re-verify with a corpus
-large enough (or an index set) where HNSW actually engages, and record whether
-RLS sits inside the HNSW scan or after it. If post-ANN filtering appears
-there, the Outcome 2 machinery (explicit predicate + two-part proof +
-`*_predicate_composed` suffixes) applies unchanged.
+**Caveat (recorded, not hidden):** the HNSW index never entered any
+tenant-scoped plan — not at 0.1%, not at ~33%, not with seqscan forced off. A
+follow-up scratch check (unfiltered `ORDER BY embedding <-> q LIMIT 10` as
+superuser, plan since deleted with the scratch test) returns `Index Scan using
+chunks_embedding_hnsw`. The index is usable; the miss is **planner cost
+preference** — btree-restrict-then-sort is estimated cheaper at 30k rows — not
+a structural exclusion. Phase 4 re-verification is therefore actionable: at a
+corpus scale where HNSW wins, record whether RLS sits inside the HNSW scan or
+after it. If post-ANN filtering appears there, the Outcome 2 machinery
+(explicit predicate + two-part proof + `*_predicate_composed` suffixes) applies
+unchanged.
 
-**What this closes:** the Must requirement — eligibility is enforced during
-candidate generation, before ranking, with zero leakage under adversarial
-construction. Gate A passes; PG Phase 2 remains blocked only on Gate B.
+**Metric rename (topology in the name):** Phase 2's vector leg measures
+btree-restrict-then-sort, not ANN. Its metric is `vec_p95_btree_sort`, never
+`vec_p95_ann`. When Phase 4 exercises HNSW at scale, the metric name changes
+with it — the two numbers are not comparable without the annotation. Never
+compare PG's btree-sort latency against YDB's ANN latency as the same
+operation.
+
+**What this closes (precise scope):** the Must — security eligibility
+composed into candidate generation before ranking — is satisfied **via the
+btree-restrict-then-sort path**. RLS × ANN interaction is unobserved at PoC
+scale and deferred to the Phase 4 scale test with Outcome 2 machinery on
+standby. Gate A passes; PG Phase 2 remains blocked only on Gate B.
 
 **Collapse scope if re-opened:** PG engine + 028-as-Postgres collapse;
 024A/024B unaffected; Phase 6 falls back to Outcomes 1–5 / partial-Postgres
