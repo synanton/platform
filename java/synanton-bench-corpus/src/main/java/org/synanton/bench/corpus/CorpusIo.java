@@ -70,11 +70,11 @@ public final class CorpusIo {
         o.put("text", q.text());
         o.put("query_vector_b64", q.queryVectorB64());
         o.put("filter", q.filterKind());
-        o.putPOJO("tenant_scope", q.tenantScope());
-        o.putPOJO("metadata_predicate", q.metadataPredicate());
+        o.set("tenant_scope", MAPPER.valueToTree(q.tenantScope()));
+        o.set("metadata_predicate", MAPPER.valueToTree(q.metadataPredicate()));
         o.put("selectivity", q.selectivity());
-        o.putPOJO("relevant_chunk_ids", uuids(q.relevantChunkIds()));
-        o.putPOJO("eligible_chunk_ids", uuids(q.eligibleChunkIds()));
+        o.set("relevant_chunk_ids", MAPPER.valueToTree(uuids(q.relevantChunkIds())));
+        o.set("eligible_chunk_ids", MAPPER.valueToTree(uuids(q.eligibleChunkIds())));
         return o.toString();
     }
 

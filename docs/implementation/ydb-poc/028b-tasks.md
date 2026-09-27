@@ -24,6 +24,8 @@ Depends on: —. Evidence: skeleton commit; retirement commit or deprecation not
 
 Description: Load v1 corpus (documents, chunks, embeddings, manifest). Verify
 manifest version matches expected. Fail fast on missing manifest (§7 emitter rule).
+Streaming constraint (phantom-SKIP lesson from 028a.8): stream rows
+(embed-then-write per row); 2g heap is margin, 1g must succeed.
 Acceptance: 20k docs / 160k chunks loaded; manifest version asserted;
 missing-manifest negative test. Estimate: 4 hr. Depends on: 028b.1.
 Evidence: load test with count assertion + negative test.
