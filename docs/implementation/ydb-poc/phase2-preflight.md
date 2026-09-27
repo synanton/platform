@@ -79,7 +79,16 @@ allows per-request overrides).
 - **Dimension bias (latency itself):** ANN cost scales with dimension, so a  384-d 024B leg is intrinsically cheaper than a 768-d baseline leg. Either
   match dims (re-index one side) or annotate every vector-leg number with both
   dims and the direction of bias. Phase 6 must not over-read the gap.
-- **minScore semantics differ per leg:** baseline minScore lives in BM25 score
+- **Vector-leg topology (P1-2):** 024B vector latency = ANN candidate retrieval
+  + one text fetch per returned hit (N+1 reads; text lives outside the vector
+  rows). Report as "vec p95 = X — ANN + payload fetch (mean N, batched where
+  applicable)" alongside dimension. If the implementation is later denormalized,
+  the metric name changes and comparisons restart from the change.
+- **FulltextScore conjunctive (lexical-leg validity):** YDB returns nothing
+  unless every query term matches; Lucene sums partial matches. Lexical
+  Recall@10 is comparable only on fully-matching queries — author benchmark
+  queries accordingly, or measure the divergence itself as a variable. A
+  lexical leg run on partially-matching queries proves nothing on either side.- **minScore semantics differ per leg:** baseline minScore lives in BM25 score
   space; 024B hybrid minScore lives in rank-score space (1/(60+position)).
   The same numeric value filters differently on each side. 028 runs with
   **minScore=0 on all legs** (neutral filter); any non-zero cutoff is

@@ -16,6 +16,7 @@ explicitly **not** committed domain APIs. Each carries `@Provisional` in code.
 | `StorageErrorKind` (error taxonomy) | `storage-contract` | 1.32 Operation/error contract | Kinds may be renamed/merged/extended |
 | `StorageException` (error shape) | `storage-contract` | 1.32 Operation/error contract | Shape may change with the taxonomy |
 | `ProviderIncompatibleException` (startup-error shape) | `storage-contract` | 1.32 Operation/error contract | Shape may change with the taxonomy; specificity requirement (provider + capability + reason) is stable |
+| `pendingPublications` / `markPublished` (relay seam) | `synvault-ydb` (adapter API, not the port) | 1.27 Eventing client | Transitional; folds into the 1.27 client contract, then removed from the adapter |
 
 ## Stable (port-owned, not provisional)
 

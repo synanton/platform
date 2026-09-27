@@ -62,7 +62,9 @@ threshold, only records agreement.
 `BENCH-YDB rev_ms_p50=38.435 rev_ms_p95=57.777 rev_write_rps=27.686 meta_putget_ms_p50=6.446 meta_putget_ms_p95=10.947 revs=200`
 
 Single-threaded, 3-chunk revisions with provenance + publication, same machine/
-instance as the baseline runs. These are **operating points for Phase-6 cost
+instance as the baseline runs. Measured with **full-chunk rewrite per revision**
+— cost scales with total chunk count, not delta; a delta-update path would need
+re-measurement. These are **operating points for Phase-6 cost
 input, not gates**: no frozen write absolutes exist because Cassandra cannot
 perform revisions (nothing baseline-relative to gate against — the Option B
 pattern). Sustained rate ≈ 28 atomic revisions/s single-threaded; burst

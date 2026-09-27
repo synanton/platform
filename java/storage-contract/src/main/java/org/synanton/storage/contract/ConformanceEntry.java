@@ -1,6 +1,7 @@
 package org.synanton.storage.contract;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * One row of a {@link ConformanceMatrix}: a capability, its status, and — for
@@ -31,6 +32,23 @@ public record ConformanceEntry(String capability, ConformanceStatus status, Stri
     public static ConformanceEntry partial(String capability, String scope, String evidenceTestClass) {
         return new ConformanceEntry(
                 capability, ConformanceStatus.PARTIAL, "scope=" + scope + "; test=" + evidenceTestClass);
+    }
+
+    /**
+     * Covered scope for {@code PARTIAL} entries (evidence-scope rule: parsed from
+     * the {@code scope=} prefix). Empty for all other statuses.
+     */
+    public Optional<String> scope() {
+        if (status != ConformanceStatus.PARTIAL) {
+            return Optional.empty();
+        }
+        int start = evidence.indexOf("scope=");
+        if (start < 0) {
+            return Optional.empty();
+        }
+        int end = evidence.indexOf(';', start);
+        String scope = (end < 0 ? evidence.substring(start + 6) : evidence.substring(start + 6, end)).trim();
+        return scope.isEmpty() ? Optional.empty() : Optional.of(scope);
     }
 
     public static ConformanceEntry unsupported(String capability, String reason) {

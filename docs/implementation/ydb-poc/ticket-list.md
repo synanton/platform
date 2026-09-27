@@ -3,6 +3,9 @@
 Supersedes all chat-posted lists. Status as of Phase-0 engineering complete.
 IDs 001–039 per the updated list; 024 split 024A/024B (no new number); 040 added.
 
+Gate format: every gate line names what was tested (scope, harness, date) —
+never just "green". See the evidence-scope rule in `dev-guide-tests.md`.
+
 ## Phase 0A — definition (no code except 037)
 
 | ID | Title | Status |

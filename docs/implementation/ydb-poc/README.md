@@ -18,6 +18,7 @@ Definition-only outputs (no code except YDB-POC-037). All paths relative to the 
 | 040 | `040-call-site-rewire.md` — owner: Platform Eng YDB-PoC workstream (named human countersigns at Phase-0 exit); target 021/024 close | Open |
 | 033 | `YdbLoadTest` green: 5 workers, 15 rounds, **0 violations**, final state consistent | Closed (YDB path) |
 | 034 | `034-cost-write-side.md` — write inputs frozen, search side + totals pending 028 | Partial |
+| 035 | `CassandraToYdbMigrator` round-trip green (dry-run, checksums, rollback); `SchemaInventoryTest` permanent guard; short-circuit paths covered by non-empty contract assertions | Closed |
 | 021 | `YdbSynvaultStore` closed: 4 tables, full atomic revision path (positive + injected-failure + concurrent-contention evidence), OCC both layers, pagination, `supportsStorageRevisions=true` w/ evidence, 039-accepts-YDB test; deviations in `001-version-manifest.md` | Closed |
 | 004+006 | `004-parity-matrix.md` (frozen: current Lucene behavior per Must row, meet-or-justify flags, tie-break rule) + `006-baseline-thresholds.md` (protocol + rules frozen, preliminary operating points measured, absolutes gate on v1-corpus run) + `BaselineBench` (`-Dydb.bench=true`, excluded from PR) — landed as one unit | Closed |
 | 038 | `038-observability-contract.md` — taxonomy + wiring (metrics default-on everywhere incl. Cassandra per Option A symmetry; Noop reserved for metrics-disabled profiles; freshness types for 029; Micrometer deferred) | Closed |

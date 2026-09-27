@@ -20,6 +20,7 @@ import org.synanton.storage.contract.DocumentId;
 import org.synanton.storage.contract.EmbeddingModelRef;
 import org.synanton.storage.contract.InMemoryAdapterMetrics;
 import org.synanton.storage.contract.PageRequest;
+import org.synanton.storage.contract.Provisional;
 import org.synanton.storage.contract.SecurityContext;
 import org.synanton.storage.contract.SourceVersionId;
 import org.synanton.storage.contract.StorageErrorKind;
@@ -170,30 +171,45 @@ public class YdbSynvaultStore implements SynvaultStore, Conformant {
         long start = System.nanoTime();
         String op = AdapterMetrics.SYNVAULT_DELETE;
         try (Session session = session()) {
-            String tenant = tenant(context);
-            exec(
-                    session,
-                    "DECLARE $t AS Utf8; DECLARE $d AS Utf8;"
-                            + "DELETE FROM " + prov() + " WHERE tenant_id=$t AND doc_id=$d;",
-                    Params.create()
-                            .put("$t", PrimitiveValue.newText(tenant))
-                            .put("$d", PrimitiveValue.newText(id.value())));
-            exec(
-                    session,
-                    "DECLARE $t AS Utf8; DECLARE $d AS Utf8;"
-                            + "DELETE FROM " + chunks() + " WHERE tenant_id=$t AND doc_id=$d;",
-                    Params.create()
-                            .put("$t", PrimitiveValue.newText(tenant))
-                            .put("$d", PrimitiveValue.newText(id.value())));
-            exec(
-                    session,
-                    "DECLARE $t AS Utf8; DECLARE $d AS Utf8;"
-                            + "DELETE FROM " + docs() + " WHERE tenant_id=$t AND doc_id=$d;",
-                    Params.create()
-                            .put("$t", PrimitiveValue.newText(tenant))
-                            .put("$d", PrimitiveValue.newText(id.value())));
-            metrics.record(op, System.nanoTime() - start, true);
-            return CompletableFuture.completedFuture(null);
+            // P1-3: provenance + chunks + document deletion in a single serializable
+            // transaction (same guarantee shape as revision commit, inverse direction).
+            var tx =
+                    session
+                            .beginTransaction(TxMode.SERIALIZABLE_RW, new BeginTxSettings())
+                            .join()
+                            .getValue();
+            try {
+                String tenant = tenant(context);
+                Params params =
+                        Params.create()
+                                .put("$t", PrimitiveValue.newText(tenant))
+                                .put("$d", PrimitiveValue.newText(id.value()));
+                for (String target : List.of(prov(), chunks(), docs())) {
+                    tx.executeDataQuery(
+                                    "DECLARE $t AS Utf8; DECLARE $d AS Utf8;"
+                                            + "DELETE FROM " + target + " WHERE tenant_id=$t AND doc_id=$d;",
+                                    false,
+                                    params,
+                                    new ExecuteDataQuerySettings())
+                            .join()
+                            .getValue();
+                }
+                tech.ydb.core.Status committed = tx.commit().join();
+                if (!committed.isSuccess()) {
+                    throw new IllegalStateException("delete commit failed: " + committed);
+                }
+                metrics.record(op, System.nanoTime() - start, true);
+                return CompletableFuture.completedFuture(null);
+            } catch (RuntimeException e) {
+                try {
+                    tx.rollback().join();
+                } catch (RuntimeException ignored) {
+                }
+                metrics.record(op, System.nanoTime() - start, false);
+                throw e;
+            }
+        } catch (StorageException e) {
+            throw e;
         } catch (RuntimeException e) {
             metrics.record(op, System.nanoTime() - start, false);
             throw map(e);
@@ -207,6 +223,22 @@ public class YdbSynvaultStore implements SynvaultStore, Conformant {
         try (Session session = session()) {
             String tenant = tenant(context);
             int from = page.cursor().map(cursor -> Integer.parseInt(cursor) + 1).orElse(0);
+            // P1-4: metadata filter pushed into YQL so pagination operates on
+            // filtered rows (LIMIT-before-filter under-filled pages). Keys/values
+            // are literal-escaped (single quotes doubled); JSON path keys are
+            // restricted to safe characters, anything else falls back to no-match.
+            StringBuilder filter = new StringBuilder();
+            for (Map.Entry<String, String> entry : query.mustMatchMetadata().entrySet()) {
+                if (!entry.getKey().matches("[A-Za-z0-9_.-]+")) {
+                    filter.append(" AND 1=0");
+                    continue;
+                }
+                filter.append(" AND JSON_VALUE(metadata_json, '$.")
+                        .append(entry.getKey())
+                        .append("') = '")
+                        .append(entry.getValue().replace("'", "''"))
+                        .append("'");
+            }
             DataQueryResult result =
                     query(
                             session,
@@ -215,6 +247,7 @@ public class YdbSynvaultStore implements SynvaultStore, Conformant {
                                     + "SELECT chunk_id, chunk_ordinal, chunk_text, token_count, metadata_json,"
                                     + " embedding_b64, embedding_dim FROM " + chunks()
                                     + " WHERE tenant_id=$t AND doc_id=$d AND chunk_ordinal >= $from"
+                                    + filter
                                     + " ORDER BY chunk_ordinal LIMIT $n;",
                             Params.create()
                                     .put("$t", PrimitiveValue.newText(tenant))
@@ -420,7 +453,11 @@ public class YdbSynvaultStore implements SynvaultStore, Conformant {
      * Relay seam for the 029 projection consumer (and the future 1.27 client):
      * publication records committed but not yet handed to eventing, tenant-scoped
      * (031) — a relay must never scan across tenants. Ordered oldest-first.
+     *
+     * <p>{@link Provisional} {@code 1.27}: transitional adapter API, not part of
+     * {@code SynvaultStore}; tracked for cleanup when the 1.27 client lands.
      */
+    @Provisional(value = "1.27", reason = "Relay seam; folds into the 1.27 client contract")
     public CompletionStage<List<PublicationIntent>> pendingPublications(
             SecurityContext context, int limit) {
         try (Session session = session()) {
@@ -454,7 +491,10 @@ public class YdbSynvaultStore implements SynvaultStore, Conformant {
     /**
      * Marks a publication record handed to eventing (sets {@code published_at}).
      * Idempotent: re-marking an already-published record is a no-op match.
+     *
+     * <p>{@link Provisional} {@code 1.27}: see {@link #pendingPublications}.
      */
+    @Provisional(value = "1.27", reason = "Relay seam; folds into the 1.27 client contract")
     public CompletionStage<Void> markPublished(SecurityContext context, String revisionId) {
         try (Session session = session()) {
             exec(

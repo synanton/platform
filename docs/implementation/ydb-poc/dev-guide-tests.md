@@ -46,7 +46,6 @@ docker restart ydb-poc
 ```
 
 ## Harness pattern: stable store identity in lifecycle tests (false-negative guard)
-
 Audit 2026-09-26: every suite test holds one store identity per test — except the
 restart-recovery test, which briefly recreated its store mid-test with a fresh
 namespace and then "passed" by reading empty state from the wrong keyspace.
@@ -55,6 +54,16 @@ stable across phases**; per-test randomness belongs in setup, never between
 write and verify. A green assertion against the wrong identity is a
 false-negative factory. Verified by container-start-time cross-check when a
 lifecycle boundary is involved.
+
+## Evidence-scope rule (institutional — fires on scope mismatch, not every test)
+
+Every green result states what contract scope it establishes: test name,
+conformance entry, and tracker status use the same scope. A scoped test is
+never promoted into a broader claim by shared naming (tenant isolation ≠ full
+eligibility; correct results ≠ right path; exercised paths only — a test is
+green solely for the code paths it traverses). Calibration: the rule fires
+when the contract name is broader than the evidence. Origin: three instances —
+restart-identity, eligibility-scope, annotations-never-exercised.
 
 ## Flake policy (from `live-test-policy.md`)
 

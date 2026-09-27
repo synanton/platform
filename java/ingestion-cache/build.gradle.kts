@@ -15,7 +15,7 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
-    testImplementation(libs.testcontainers.bom)
+    testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.cassandra)
 }
