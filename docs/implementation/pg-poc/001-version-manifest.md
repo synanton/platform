@@ -18,15 +18,13 @@
 
 ## Image deviation (recorded 2026-09-27)
 
-Pinned server `16.15` has no verified pullable image in this environment yet. Local PoC
-runs on **`postgres:16.4`** (also mirrored as `local-registry:5000/postgres:16.4`;
-both already pulled). Accepted for throwaway-scope PoC runs; minor-release upgrades
-require no dump/restore (stop, swap binaries, restart), so re-pinning to the exact
-`16.15` image before any production-track claim (Phase 6) is cheap and mandatory.
+No deviation: **`pgvector/pgvector:0.8.6-pg16`** (digest
+`sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b`,
+pulled 2026-09-27) ships **PostgreSQL 16.15** — exact match to the authoritative
+pin. PG-POC-003's Testcontainers setup uses this tag verbatim (never floating
+`pg16`); the row here and the test must agree (003 acceptance).
 
-pgvector/pg_search images are not yet pulled here. PG-POC-003 records the exact
-extension image (or build recipe) once pulled; until then the pin is the source
-tag above, not a running image.
+The plain `postgres:16.4` images also present locally are NOT used by the PoC.
 
 ## Version-coupled assumptions
 
