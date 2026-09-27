@@ -38,8 +38,6 @@ never just "green". See the evidence-scope rule in `dev-guide-tests.md`.
 | 006 | Baseline thresholds (measured absolutes; sign-off at exit review) | Closed → `006-baseline-thresholds.md` |
 | 008 | Cassandra revision-path decision (option b: non-conforming) | Closed → `008-cassandra-revision-decision.md` |
 
-## Phase 1–6 — open throwaway-scoped (010 resolved; evaluation-only, no production pre-commit)
-
 021, 022, 023 · 024A, 024B, 025, 026, 027, 028 · 029, 030, 031 · 032, 033, 034 ·
 035 · 036. Cross-cutting: 040 (owner assigned, target 021/024 close).
 
@@ -68,3 +66,18 @@ follow this pattern) and behaviorally (tenant-scoped pending test).
 on the same shapes as the 022 YDB numbers — required for the §16.1 cost model.
 Without it YDB metadata writes have no comparator. Not urgent; must exist
 before 034 closes.
+
+## Phase 5 — closed (no baseline needed)
+
+035 migration tooling green (round-trip, checksums, rollback) + SchemaInstaller
+root fix + inventory guard. Branch state: **handoff-ready, awaiting baseline
+for 028**. Next commit on this branch should be the baseline's arrival, not
+more polish.
+
+## Baseline contact
+
+**No contact established; escalation needed.** The baseline service has no
+confirmed owner, timeline, or ping target known to this branch. If you are
+reading this in three weeks wondering who to ping: that question is still open —
+treat it, not the engineering, as the critical path. Owner to resolve:
+PoC workstream.

@@ -56,7 +56,6 @@ false-negative factory. Verified by container-start-time cross-check when a
 lifecycle boundary is involved.
 
 ## Evidence-scope rule (institutional — fires on scope mismatch, not every test)
-
 Every green result states what contract scope it establishes: test name,
 conformance entry, and tracker status use the same scope. A scoped test is
 never promoted into a broader claim by shared naming (tenant isolation ≠ full
@@ -64,6 +63,16 @@ eligibility; correct results ≠ right path; exercised paths only — a test is
 green solely for the code paths it traverses). Calibration: the rule fires
 when the contract name is broader than the evidence. Origin: three instances —
 restart-identity, eligibility-scope, annotations-never-exercised.
+
+## DDL-in-one-place rule (convention — flagged for eventual enforcement)
+
+Schema DDL lives in exactly one place per backend (`YdbSchema`,
+`YdbSearchSchema`, `SchemaInstaller`); tests call it, never copy it. Enforced
+by convention only: no suite test may contain `CREATE TABLE` / `ADD INDEX`
+literals outside those modules (gated `-Dydb.probe` diagnostics are exempt —
+throwaway by design, never blocking). A source-scan or ArchUnit enforcement is
+wanted but not built — the next engineer adding "just one inline DDL" to a
+suite test will restart the drift this rule was created to stop.
 
 ## Flake policy (from `live-test-policy.md`)
 
