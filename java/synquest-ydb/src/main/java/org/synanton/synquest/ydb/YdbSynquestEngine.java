@@ -347,7 +347,7 @@ public class YdbSynquestEngine
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
-        return new SearchResult(hits, eligible, highlights);
+        return new SearchResult(deterministicOrder(hits, request.topK()), eligible, highlights);
     }
 
     private SearchResult lexicalSearch(
@@ -424,7 +424,7 @@ public class YdbSynquestEngine
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
-        return new SearchResult(hits, eligible, highlights);
+        return new SearchResult(deterministicOrder(hits, request.topK()), eligible, highlights);
     }
 
     /**
@@ -468,7 +468,7 @@ public class YdbSynquestEngine
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
-        return new SearchResult(hits, eligible, highlights);
+        return new SearchResult(deterministicOrder(hits, request.topK()), eligible, highlights);
     }
 
     private String readText(Session session, String tenant, ChunkId chunkId) {
@@ -715,6 +715,24 @@ public class YdbSynquestEngine
 
     private static String escapeQuotes(String text) {
         return text.replace("\"", " ");
+    }
+
+    /**
+     * Deterministic tie-break (P0 follow-up): server ORDER BY has no secondary
+     * key on indexed paths (a second key breaks VIEW matching), so ties are
+     * ordered here by (score desc, chunkId asc). Repeated runs over the same
+     * data are stable; residual top-K boundary variance on exact ties is noted
+     * in preflight, not hidden.
+     */
+    private static java.util.List<SearchHit> deterministicOrder(
+            java.util.List<SearchHit> hits, int topK) {
+        return hits.stream()
+                .sorted(
+                        java.util.Comparator.comparingDouble(SearchHit::score)
+                                .reversed()
+                                .thenComparing(h -> h.chunkId().value()))
+                .limit(topK)
+                .toList();
     }
 
     private static String snippet(String text, String query) {

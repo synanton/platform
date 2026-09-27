@@ -79,6 +79,14 @@ allows per-request overrides).
 - **Dimension bias (latency itself):** ANN cost scales with dimension, so a  384-d 024B leg is intrinsically cheaper than a 768-d baseline leg. Either
   match dims (re-index one side) or annotate every vector-leg number with both
   dims and the direction of bias. Phase 6 must not over-read the gap.
+- **Tie-breaking (server-ordered on YDB):** indexed VIEW paths reject secondary
+  sort keys, so YDB ties arrive server-ordered. All three adapters apply
+  (score desc, chunkId asc) deterministically post-retrieval; repeated runs
+  over the same data are stable. Residual top-K boundary variance on exact ties
+  is noted, not hidden — convergence compares with tolerance, never exact
+  sequences on tied scores.
+  match dims (re-index one side) or annotate every vector-leg number with both
+  dims and the direction of bias. Phase 6 must not over-read the gap.
 - **Vector-leg topology (P1-2):** 024B vector latency = ANN candidate retrieval
   + one text fetch per returned hit (N+1 reads; text lives outside the vector
   rows). Report as "vec p95 = X — ANN + payload fetch (mean N, batched where

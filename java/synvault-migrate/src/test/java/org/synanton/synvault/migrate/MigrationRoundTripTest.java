@@ -86,37 +86,8 @@ class MigrationRoundTripTest {
                         .build();
         ydbClient = TableClient.newClient(ydbTransport).build();
         ydbPrefix = "mig" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        try (Session ydbSession = ydbClient.createSession(Duration.ofSeconds(10)).join().getValue()) {
-            ydbSession.executeSchemeQuery(
-                            "CREATE TABLE `" + ydbPrefix + "_documents` (tenant_id Utf8 NOT NULL,"
-                                    + " doc_id Utf8 NOT NULL, title Utf8 NOT NULL, source_uri Utf8 NOT NULL,"
-                                    + " metadata_json Json NOT NULL, storage_revision Uint64 NOT NULL,"
-                                    + " created_at Timestamp NOT NULL, updated_at Timestamp NOT NULL,"
-                                    + " PRIMARY KEY (tenant_id, doc_id));")
-                    .join();
-            ydbSession.executeSchemeQuery(
-                            "CREATE TABLE `" + ydbPrefix + "_chunks` (tenant_id Utf8 NOT NULL,"
-                                    + " chunk_id Utf8 NOT NULL, doc_id Utf8 NOT NULL, chunk_ordinal Uint32 NOT NULL,"
-                                    + " chunk_text Utf8 NOT NULL, token_count Uint32 NOT NULL,"
-                                    + " metadata_json Json NOT NULL, embedding_b64 Utf8 NOT NULL,"
-                                    + " embedding_dim Uint32 NOT NULL,"
-                                    + " PRIMARY KEY (tenant_id, doc_id, chunk_ordinal));")
-                    .join();
-            ydbSession.executeSchemeQuery(
-                            "CREATE TABLE `" + ydbPrefix + "_provenance` (tenant_id Utf8 NOT NULL,"
-                                    + " doc_id Utf8 NOT NULL, chunk_id Utf8 NOT NULL, extractor Utf8 NOT NULL,"
-                                    + " source_version_id Utf8 NOT NULL, model_ref_json Json NOT NULL,"
-                                    + " page_num Uint32 NOT NULL, start_offset Uint32 NOT NULL,"
-                                    + " end_offset Uint32 NOT NULL,"
-                                    + " PRIMARY KEY (tenant_id, doc_id, chunk_id));")
-                    .join();
-            ydbSession.executeSchemeQuery(
-                            "CREATE TABLE `" + ydbPrefix + "_publications` (tenant_id Utf8 NOT NULL,"
-                                    + " revision_id Utf8 NOT NULL, payload_json Json NOT NULL,"
-                                    + " created_at Timestamp NOT NULL, published_at Timestamp,"
-                                    + " PRIMARY KEY (tenant_id, revision_id));")
-                    .join();
-        }
+        // Vault schema owned by synvault-ydb main (no local copy — copies drift).
+        org.synanton.synvault.ydb.YdbSchema.ensureSchema(ydbClient, ydbPrefix);
     }
 
     @AfterAll
