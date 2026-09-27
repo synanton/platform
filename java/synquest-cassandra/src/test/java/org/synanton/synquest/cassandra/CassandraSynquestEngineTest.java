@@ -34,4 +34,9 @@ class CassandraSynquestEngineTest extends SynquestEngineContract {
     protected SynquestIndexWriter newWriter() {
         return engine();
     }
+
+    @Override
+    protected org.synanton.synquest.api.SynquestIndexAdmin newAdmin() {
+        return engine();
+    }
 }

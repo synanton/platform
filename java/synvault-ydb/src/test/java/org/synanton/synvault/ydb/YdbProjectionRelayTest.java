@@ -61,21 +61,10 @@ class YdbProjectionRelayTest {
         vaultPrefix = YdbTestBase.randomPrefix();
         YdbSchema.ensureSchema(YdbTestBase.client(), vaultPrefix);
         searchPrefix = YdbTestBase.randomPrefix();
-        try (tech.ydb.table.Session session = YdbTestBase.session()) {
-            String table = "`" + searchPrefix + "_projections`";
-            YdbSchema.ddl(
-                    YdbTestBase.client(),
-                    "CREATE TABLE " + table + " ("
-                            + "tenant_id Utf8 NOT NULL, chunk_id Utf8 NOT NULL, doc_id Utf8 NOT NULL,"
-                            + " chunk_text Utf8 NOT NULL, metadata_json Json NOT NULL,"
-                            + " ordering_key Uint64 NOT NULL, generation Utf8 NOT NULL,"
-                            + " PRIMARY KEY (tenant_id, chunk_id));");
-            YdbSchema.ddl(
-                    YdbTestBase.client(),
-                    "ALTER TABLE " + table + " ADD INDEX `ft` GLOBAL USING fulltext_relevance"
-                            + " ON (`chunk_text`)"
-                            + " WITH (tokenizer=standard, use_filter_lowercase=true);");
-        }
+        // Search schema owned by synquest-ydb main (no local copy — copies drift;
+        // see P0-1 relay incident). Dim is irrelevant here (lexical-only relay).
+        org.synanton.synquest.ydb.YdbSearchSchema.ensureSchema(
+                YdbTestBase.client(), searchPrefix, 2);
     }
 
     private YdbSynvaultStore store(String ns) {

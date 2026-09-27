@@ -105,6 +105,19 @@ public class CassandraSynquestEngine
         long start = System.nanoTime();
         try {
             for (ChunkProjection p : projections) {
+                GenerationId active = generations.get("*");
+                if (active == null) {
+                    generations.putIfAbsent("*", p.generationId());
+                    active = generations.get("*");
+                }
+                if (!p.generationId().equals(active)) {
+                    metrics.record(AdapterMetrics.SYNQUEST_UPSERT, System.nanoTime() - start, false);
+                    return CompletableFuture.failedFuture(
+                            new StorageException(
+                                    StorageErrorKind.CONFLICT,
+                                    "CONFLICT: stale generation '" + p.generationId().value()
+                                            + "', active is '" + active.value() + "'"));
+                }
                 Long stored = readOrdering(p.tenantId(), p.chunkId());
                 if (stored != null && p.orderingKey() <= stored) {
                     continue;
@@ -193,6 +206,9 @@ public class CassandraSynquestEngine
                                 if (!matches(metaOf(doc), request.filters().mustMatchMetadata())) {
                                     continue;
                                 }
+                                if (!isActiveGeneration(doc)) {
+                                    continue;
+                                }
                                 if (sd.score >= request.minScore()) {
                                     eligible.add(hitOf(doc, sd.score));
                                 }
@@ -203,6 +219,9 @@ public class CassandraSynquestEngine
                             for (ScoreDoc sd : dense.scoreDocs) {
                                 Document doc = searcher.storedFields().document(sd.doc);
                                 if (!matches(metaOf(doc), request.filters().mustMatchMetadata())) {
+                                    continue;
+                                }
+                                if (!isActiveGeneration(doc)) {
                                     continue;
                                 }
                                 if (sd.score >= request.minScore()) {
@@ -223,6 +242,9 @@ public class CassandraSynquestEngine
                             for (Fused f : fuse(lexical, dense, Integer.MAX_VALUE)) {
                                 Document doc = searcher.storedFields().document(f.doc);
                                 if (!matches(metaOf(doc), request.filters().mustMatchMetadata())) {
+                                    continue;
+                                }
+                                if (!isActiveGeneration(doc)) {
                                     continue;
                                 }
                                 double score = f.rrf() / max;
@@ -287,7 +309,8 @@ public class CassandraSynquestEngine
                 generations.put(tenant, options.targetGeneration());
                 refresh(tenant);
             }
-            generations.putIfAbsent("*", options.targetGeneration());
+            // P0-1: rebuild always flips the global pointer (put, not putIfAbsent).
+            generations.put("*", options.targetGeneration());
             metrics.record(AdapterMetrics.SYNQUEST_REBUILD, System.nanoTime() - start, true);
             return CompletableFuture.completedFuture(null);
         } catch (IOException e) {
@@ -463,6 +486,11 @@ public class CassandraSynquestEngine
             }
         }
         return null;
+    }
+
+    private boolean isActiveGeneration(Document doc) {
+        GenerationId active = generations.get("*");
+        return active == null || active.value().equals(doc.get("generation"));
     }
 
     private GenerationId activeGeneration() {

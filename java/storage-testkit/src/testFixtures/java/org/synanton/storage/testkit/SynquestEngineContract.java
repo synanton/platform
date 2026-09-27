@@ -1,5 +1,6 @@
 package org.synanton.storage.testkit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import org.synanton.synquest.api.SearchMode;
 import org.synanton.synquest.api.SearchRequest;
 import org.synanton.synquest.api.SearchResult;
 import org.synanton.synquest.api.SynquestEngine;
+import org.synanton.synquest.api.SynquestIndexAdmin;
 import org.synanton.synquest.api.SynquestIndexWriter;
 import org.synanton.synquest.api.TemporalExtension;
 
@@ -36,6 +38,8 @@ public abstract class SynquestEngineContract {
     protected abstract SynquestEngine newEngine();
 
     protected abstract SynquestIndexWriter newWriter();
+
+    protected abstract SynquestIndexAdmin newAdmin();
 
     protected static final TenantScope TENANT_A = TenantScope.of("tenant_a");
     protected static final TenantScope TENANT_B = TenantScope.of("tenant_b");
@@ -57,6 +61,16 @@ public abstract class SynquestEngineContract {
 
     protected static ChunkProjection projection(
             String tenant, String chunk, String text, long orderingKey, float[] embedding) {
+        return projection(tenant, chunk, text, orderingKey, embedding, GEN);
+    }
+
+    protected static ChunkProjection projection(
+            String tenant,
+            String chunk,
+            String text,
+            long orderingKey,
+            float[] embedding,
+            GenerationId generation) {
         return new ChunkProjection(
                 ChunkId.of(chunk),
                 DocumentId.of("doc-" + chunk),
@@ -66,7 +80,7 @@ public abstract class SynquestEngineContract {
                 embedding,
                 MODEL,
                 orderingKey,
-                GEN);
+                generation);
     }
 
     protected static SearchRequest lexical(String queryText, TenantScope tenant, int topK) {
@@ -320,5 +334,157 @@ public abstract class SynquestEngineContract {
                         10,
                         0.0);
         assertThat(engine.search(ctx(TENANT_A), miss).toCompletableFuture().join().hits()).isEmpty();
+    }
+
+    /**
+     * P0-1 regression: G1 write → G2 rebuild (non-full, rows remain) → G2 write →
+     * search every supported mode → G1 invisible everywhere. Stale G1 writes are
+     * rejected, not mixed.
+     */
+    @Test
+    void generationPromotionHidesPreviousGeneration() {
+        SynquestEngine engine = newEngine();
+        var writer = newWriter();
+        var admin = newAdmin();
+        GenerationId g1 = new GenerationId("gen-promote-1");
+        GenerationId g2 = new GenerationId("gen-promote-2");
+        writer.upsert(List.of(projection("tenant_a", "c1", "genone solar wind storm", 1, new float[] {1.0f, 0.0f}, g1)))
+                .toCompletableFuture()
+                .join();
+        admin.rebuild(new org.synanton.synquest.api.RebuildOptions(g2, false))
+                .toCompletableFuture()
+                .join();
+        // Stale write rejected.
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () ->
+                                writer.upsert(
+                                                List.of(
+                                                        projection(
+                                                                "tenant_a", "c2", "genone second verse", 2,
+                                                                new float[] {1.0f, 0.0f}, g1)))
+                                        .toCompletableFuture()
+                                        .join())
+                .hasStackTraceContaining("CONFLICT");
+        writer.upsert(List.of(projection("tenant_a", "c3", "gentwo solar wind", 3, new float[] {1.0f, 0.0f}, g2)))
+                .toCompletableFuture()
+                .join();
+        // Both generations lexically match "solar wind" (YDB FulltextScore is
+        // conjunctive — partial matches score nothing); only the generation
+        // filter may separate them. This makes the test prove filtering, not matching.
+        for (SearchMode mode : supportedModes(engine)) {
+            SearchRequest request = requestFor(mode, "solar wind");
+            SearchResult result =
+                    engine.search(ctx(TENANT_A), request).toCompletableFuture().join();
+            org.assertj.core.api.Assertions.assertThat(
+                            result.hits().stream().map(h -> h.text()).toList())
+                    .as("G1 invisible in " + mode)
+                    .noneMatch(text -> text.contains("genone"));
+            org.assertj.core.api.Assertions.assertThat(
+                            result.hits().stream().map(h -> h.text()).toList())
+                    .as("G2 visible in " + mode)
+                    .anyMatch(text -> text.contains("gentwo"));
+        }
+    }
+
+    /**
+     * P0-1 regression: search traffic during the promotion window observes
+     * consistently one generation or none — never mixed.
+     */
+    @Test
+    void noMixedGenerationsDuringPromotion() throws Exception {
+        SynquestEngine engine = newEngine();
+        var writer = newWriter();
+        var admin = newAdmin();
+        GenerationId g1 = new GenerationId("gen-window-1");
+        GenerationId g2 = new GenerationId("gen-window-2");
+        List<ChunkProjection> seed = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            seed.add(projection("tenant_a", "w" + i, "genone window seat " + i, i + 1, null, g1));
+        }
+        // NOTE: query "window seat" matches both generations lexically on every
+        // adapter (YDB FulltextScore needs all terms present); separation below
+        // is by generation filter alone.
+        writer.upsert(seed).toCompletableFuture().join();
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.List<String> violations =
+                java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+        java.util.concurrent.CountDownLatch go = new java.util.concurrent.CountDownLatch(1);
+        Thread searcher =
+                new Thread(
+                        () -> {
+                            try {
+                                go.await(10, java.util.concurrent.TimeUnit.SECONDS);
+                                for (int i = 0; i < 20; i++) {
+                                    SearchResult result =
+                                            engine.search(ctx(TENANT_A), lexical("window seat solar", TENANT_A, 10))
+                                                    .toCompletableFuture()
+                                                    .join();
+                                    boolean genone =
+                                            result.hits().stream().anyMatch(h -> h.text().contains("genone"));
+                                    boolean gentwo =
+                                            result.hits().stream().anyMatch(h -> h.text().contains("gentwo"));
+                                    if (genone && gentwo) {
+                                        violations.add("mixed generations observed");
+                                    }
+                                }
+                            } catch (Throwable t) {
+                                failure.compareAndSet(null, t);
+                            }
+                        });
+        searcher.start();
+        go.countDown();
+        admin.rebuild(new org.synanton.synquest.api.RebuildOptions(g2, false))
+                .toCompletableFuture()
+                .join();
+        writer.upsert(List.of(projection("tenant_a", "w9", "gentwo window seat flare", 100, null, g2)))
+                .toCompletableFuture()
+                .join();
+        searcher.join(120_000);
+        org.assertj.core.api.Assertions.assertThat(failure.get()).as("searcher must not fail").isNull();
+        org.assertj.core.api.Assertions.assertThat(violations).as("never mixed").isEmpty();
+    }
+
+    private static List<SearchMode> supportedModes(SynquestEngine engine) {
+        List<SearchMode> modes = new ArrayList<>();
+        var caps = engine.capabilities();
+        if (caps.lexical()) {
+            modes.add(SearchMode.LEXICAL);
+        }
+        if (caps.vector()) {
+            modes.add(SearchMode.VECTOR);
+        }
+        if (caps.hybrid()) {
+            modes.add(SearchMode.HYBRID);
+        }
+        return modes;
+    }
+
+    private static SearchRequest requestFor(SearchMode mode, String queryText) {
+        return switch (mode) {
+            case LEXICAL -> lexical(queryText, TENANT_A, 10);
+            case VECTOR ->
+                    new SearchRequest(
+                            queryText,
+                            Optional.of(new float[] {1.0f, 0.0f}),
+                            Optional.of(MODEL),
+                            SearchMode.VECTOR,
+                            eligibility(TENANT_A),
+                            RelevanceFilters.none(),
+                            TemporalExtension.empty(),
+                            10,
+                            0.0);
+            case HYBRID ->
+                    new SearchRequest(
+                            queryText,
+                            Optional.of(new float[] {1.0f, 0.0f}),
+                            Optional.of(MODEL),
+                            SearchMode.HYBRID,
+                            eligibility(TENANT_A),
+                            RelevanceFilters.none(),
+                            TemporalExtension.empty(),
+                            10,
+                            0.0);
+        };
     }
 }

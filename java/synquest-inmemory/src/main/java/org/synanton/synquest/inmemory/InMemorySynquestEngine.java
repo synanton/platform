@@ -36,13 +36,16 @@ import org.synanton.synquest.api.SynquestIndexWriter;
 
 /**
  * In-memory retrieval + projection-mutation port for tests. Brute-force scoring with
- * strict pre-ranking eligibility: a candidate is eligible only when its tenant matches
- * the caller's validated tenant scope (service contexts see all tenants).
+ * strict pre-ranking eligibility: effective tenant is always the validated context
+ * tenant (P0-3 — service contexts cannot broaden). Generation model (P0-1):
+ * adopt-on-first-write, validated writes, filtered reads; process-local pointer
+ * (test scope — see p0-1-generation-model.md).
  */
 public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWriter, SynquestIndexAdmin, Conformant {
 
     private final ConcurrentHashMap<String, ProjectionEntry> projections = new ConcurrentHashMap<>();
-    private volatile GenerationId activeGeneration = GenerationId.initial();
+    private final java.util.concurrent.atomic.AtomicReference<GenerationId> activeGeneration =
+            new java.util.concurrent.atomic.AtomicReference<>(null);
     private final AdapterMetrics metrics;
 
     public InMemorySynquestEngine() {
@@ -65,6 +68,20 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
     public CompletionStage<Void> upsert(List<ChunkProjection> incoming) {
         for (ChunkProjection projection : incoming) {
             final ChunkProjection current = projection;
+            GenerationId active = activeGeneration.get();
+            if (active == null) {
+                activeGeneration.compareAndSet(null, current.generationId());
+                active = activeGeneration.get();
+            }
+            if (!current.generationId().equals(active)) {
+                return track(
+                        AdapterMetrics.SYNQUEST_UPSERT,
+                        CompletableFuture.failedFuture(
+                                new StorageException(
+                                        StorageErrorKind.CONFLICT,
+                                        "CONFLICT: stale generation '" + current.generationId().value()
+                                                + "', active is '" + active.value() + "'")));
+            }
             projections.compute(
                     current.chunkId().value(),
                     (id, existing) -> {
@@ -102,10 +119,14 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
         // P0-3: fail fast on scope mismatch (throws FORBIDDEN) before touching candidates.
         String effectiveTenant =
                 EligibilityScope.effectiveTenant(context, request.eligibility()).tenantId();
+        GenerationId active = activeGeneration.get();
         List<Scored> eligible = new ArrayList<>();
         for (ProjectionEntry entry : projections.values()) {
             ChunkProjection p = entry.projection();
             if (!p.tenantId().equals(effectiveTenant)) {
+                continue;
+            }
+            if (active != null && !p.generationId().equals(active)) {
                 continue;
             }
             if (!matches(p.metadata(), request.filters().mustMatchMetadata())) {
@@ -185,7 +206,7 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
 
     @Override
     public CompletionStage<Void> rebuild(RebuildOptions options) {
-        activeGeneration = options.targetGeneration();
+        activeGeneration.set(options.targetGeneration());
         if (options.full()) {
             projections.clear();
         }
@@ -194,8 +215,10 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
 
     @Override
     public CompletionStage<IndexStatus> status() {
+        GenerationId active = activeGeneration.get();
         return CompletableFuture.completedFuture(
-                new IndexStatus(activeGeneration, projections.size(), true));
+                new IndexStatus(
+                        active == null ? GenerationId.initial() : active, projections.size(), true));
     }
 
     private record Scored(ChunkProjection projection, double lexical, double vector) {}

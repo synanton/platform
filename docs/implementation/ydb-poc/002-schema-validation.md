@@ -45,6 +45,13 @@ Working DDL is **not** produced here (no live instance in Phase 0A); the accepta
   (feature flag); confirm enablement path before the hybrid leg. Vector
   dimension fixed per index (`vector_dimension`) — model-migration constraint
   stands (018).
+- **FulltextScore is conjunctive in observed behavior:** a query containing any
+  absent term returns nothing, even when other terms match (proven over six
+  query variants: all-present/all-orders hit; any-absent-term misses). Baseline
+  Lucene BM25 sums partial matches — this is a **semantic divergence for 028**:
+  multi-term lexical legs are not comparable unless queries are authored so all
+  terms match, or the divergence is measured as its own variable. Contract
+  promotion tests author both generations to fully match for this reason.
 
 ## Hybrid flag resolution (2026-09-26 — go, with a production note)
 

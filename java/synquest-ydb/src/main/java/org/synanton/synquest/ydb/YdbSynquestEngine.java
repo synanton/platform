@@ -36,11 +36,13 @@ import org.synanton.synquest.api.SearchResult;
 import org.synanton.synquest.api.SynquestEngine;
 import org.synanton.synquest.api.SynquestIndexAdmin;
 import org.synanton.synquest.api.SynquestIndexWriter;
+import tech.ydb.common.transaction.TxMode;
 import tech.ydb.table.Session;
 import tech.ydb.table.TableClient;
 import tech.ydb.table.query.DataQueryResult;
 import tech.ydb.table.query.Params;
 import tech.ydb.table.result.ResultSetReader;
+import tech.ydb.table.settings.BeginTxSettings;
 import tech.ydb.table.settings.ExecuteDataQuerySettings;
 import tech.ydb.table.transaction.TxControl;
 import tech.ydb.table.values.PrimitiveValue;
@@ -58,7 +60,6 @@ public class YdbSynquestEngine
     private final TableClient client;
     private final String prefix;
     private final AdapterMetrics metrics;
-    private final ConcurrentHashMap<String, GenerationId> generations = new ConcurrentHashMap<>();
 
     public YdbSynquestEngine(TableClient client, String tablePrefix) {
         this(client, tablePrefix, new InMemoryAdapterMetrics("ydb@1.0.0"));
@@ -86,13 +87,57 @@ public class YdbSynquestEngine
         return tenant + "|" + chunkId.value();
     }
 
+    private String generations() {
+        return "`" + prefix + "_generations`";
+    }
+
+    /**
+     * Persisted active-generation pointer (P0-1; dissolves P2-3 on this adapter).
+     * Absent row = unset (adopt-on-first-write).
+     */
+    private Optional<String> readActive(Session session) {
+        DataQueryResult result =
+                query(
+                        session,
+                        "DECLARE $s AS Utf8;"
+                                + "SELECT active_generation FROM " + generations()
+                                + " WHERE scope=$s;",
+                        Params.create().put("$s", PrimitiveValue.newText("*")),
+                        TxControl.snapshotRo().setCommitTx(true));
+        ResultSetReader rs = result.getResultSet(0);
+        return rs.next() ? Optional.of(rs.getColumn("active_generation").getText()) : Optional.empty();
+    }
+
+    private void writeActive(Session session, String generation) {
+        exec(
+                session,
+                "DECLARE $s AS Utf8; DECLARE $g AS Utf8;"
+                        + "UPSERT INTO " + generations() + " (scope, active_generation) VALUES ($s, $g);",
+                Params.create()
+                        .put("$s", PrimitiveValue.newText("*"))
+                        .put("$g", PrimitiveValue.newText(generation)));
+    }
+
     // ---- writer ----
 
     @Override
     public CompletionStage<Void> upsert(List<ChunkProjection> projections) {
         long start = System.nanoTime();
         try (Session session = session()) {
+            Optional<String> active = readActive(session);
             for (ChunkProjection p : projections) {
+                if (active.isEmpty()) {
+                    writeActive(session, p.generationId().value());
+                    active = Optional.of(p.generationId().value());
+                }
+                if (!p.generationId().value().equals(active.get())) {
+                    metrics.record(AdapterMetrics.SYNQUEST_UPSERT, System.nanoTime() - start, false);
+                    return CompletableFuture.failedFuture(
+                            new StorageException(
+                                    StorageErrorKind.CONFLICT,
+                                    "CONFLICT: stale generation '" + p.generationId().value()
+                                            + "', active is '" + active.get() + "'"));
+                }
                 String tenant = p.tenantId();
                 Long stored = readOrdering(session, tenant, p.chunkId());
                 if (stored != null && p.orderingKey() <= stored) {
@@ -194,13 +239,14 @@ public class YdbSynquestEngine
         }
         try (Session session = session()) {
             String tenant = tenant(context, request);
+            Optional<String> active = readActive(session);
             if (request.mode() == SearchMode.HYBRID) {
-                return hybridSearch(session, tenant, request, start);
+                return hybridSearch(session, tenant, request, active, start);
             }
             SearchResult result =
                     request.mode() == SearchMode.VECTOR
-                            ? vectorSearch(session, tenant, request)
-                            : lexicalSearch(session, tenant, request);
+                            ? vectorSearch(session, tenant, request, active)
+                            : lexicalSearch(session, tenant, request, active);
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, true);
             return CompletableFuture.completedFuture(result);
         } catch (RuntimeException e) {
@@ -210,7 +256,7 @@ public class YdbSynquestEngine
     }
 
     private CompletionStage<SearchResult> hybridSearch(
-            Session session, String tenant, SearchRequest request, long start) {
+            Session session, String tenant, SearchRequest request, Optional<String> active, long start) {
         try {
             String terms = escapeQuotes(request.queryText());
             String queryVec =
@@ -224,11 +270,12 @@ public class YdbSynquestEngine
                                 StorageErrorKind.UNSUPPORTED,
                                 "UNSUPPORTED: hybrid requires a query embedding"));
             }
+            Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
             DataQueryResult result =
                     query(
                             session,
                             "DECLARE $t AS Utf8;"
-                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json FROM "
+                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json, generation FROM "
                                     + vectors()
                                     + " WHERE tenant_id=$t"
                                     + " ORDER BY HybridRank(FulltextScore(chunk_text, \"" + terms + "\"),"
@@ -236,9 +283,9 @@ public class YdbSynquestEngine
                                     + " Knn::ToBinaryStringFloat([" + queryVec + "])),"
                                     + " (\"v_ft\", \"v_hyb\") AS Indexes)"
                                     + " LIMIT " + (request.topK() + 1) + ";",
-                            Params.create().put("$t", PrimitiveValue.newText(tenant)),
+                            params,
                             TxControl.snapshotRo().setCommitTx(true));
-            SearchResult collected = collectHybrid(request, result);
+            SearchResult collected = collectHybrid(request, result, active);
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, true);
             return CompletableFuture.completedFuture(collected);
         } catch (RuntimeException e) {
@@ -247,7 +294,26 @@ public class YdbSynquestEngine
         }
     }
 
-    private SearchResult collectHybrid(SearchRequest request, DataQueryResult result) {
+    /**
+     * Generation predicate for P0-1 filtered reads. Valid ONLY where the VIEW
+     * tolerates non-key equality predicates (fulltext VIEW: yes, proven;
+     * vector VIEW: no — those paths post-filter in Java, see vectorSearch).
+     * Binds $g when active.
+     */
+    private static String generationClause(Optional<String> active, Params params) {
+        if (active.isEmpty()) {
+            return "";
+        }
+        params.put("$g", PrimitiveValue.newText(active.get()));
+        return " AND generation=$g";
+    }
+
+    private static String declareTenant(Optional<String> active) {
+        return active.isPresent() ? "DECLARE $t AS Utf8; DECLARE $g AS Utf8;" : "DECLARE $t AS Utf8;";
+    }
+
+    private SearchResult collectHybrid(
+            SearchRequest request, DataQueryResult result, Optional<String> active) {
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
         ResultSetReader rs = result.getResultSet(0);
@@ -255,7 +321,10 @@ public class YdbSynquestEngine
         int position = 0;
         while (rs.next()) {
             eligible++;
-            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+            if (active.isPresent()
+                    && !active.get().equals(rs.getColumn("generation").getText())) {
+                continue;
+            }            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
             if (!matches(metadata, request.filters().mustMatchMetadata())) {
                 continue;
             }
@@ -281,38 +350,47 @@ public class YdbSynquestEngine
         return new SearchResult(hits, eligible, highlights);
     }
 
-    private SearchResult lexicalSearch(Session session, String tenant, SearchRequest request) {
+    private SearchResult lexicalSearch(
+            Session session, String tenant, SearchRequest request, Optional<String> active) {
         String terms = escapeQuotes(request.queryText());
+        Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
         DataQueryResult result =
                 query(
                         session,
-                        "DECLARE $t AS Utf8;"
+                        declareTenant(active)
                                 + "SELECT chunk_id, doc_id, chunk_text, metadata_json,"
                                 + " FulltextScore(chunk_text, \"" + terms + "\") AS relevance FROM "
                                 + table() + " VIEW `ft`"
-                                + " WHERE tenant_id=$t AND FulltextScore(chunk_text, \"" + terms + "\") > 0"
+                                + " WHERE tenant_id=$t" + generationClause(active, params)
+                                + " AND FulltextScore(chunk_text, \"" + terms + "\") > 0"
                                 + " ORDER BY relevance DESC LIMIT " + (request.topK() + 1) + ";",
-                        Params.create().put("$t", PrimitiveValue.newText(tenant)),
+                        params,
                         TxControl.snapshotRo().setCommitTx(true));
         return collect(session, request, result);
     }
 
-    private SearchResult vectorSearch(Session session, String tenant, SearchRequest request) {
+    private SearchResult vectorSearch(
+            Session session, String tenant, SearchRequest request, Optional<String> active) {
         if (request.queryEmbedding().isEmpty()) {
             return new SearchResult(List.of(), 0, Map.of());
         }
         String similarity =
                 "Knn::CosineSimilarity(embedding,"
                         + " Knn::ToBinaryStringFloat([" + floatList(request.queryEmbedding().get()) + "]))";
+        // P0-1 note: generation filtering is post-retrieval here, not in the VIEW
+        // predicate — vector VIEW queries only resolve index-key columns in WHERE.
+        // Deterministic (never a security boundary), LIMIT-sized for PoC scale.
+        Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
         DataQueryResult result =
                 query(
                         session,
                         "DECLARE $t AS Utf8;"
-                                + "SELECT chunk_id, doc_id, metadata_json, " + similarity + " AS relevance FROM "
+                                + "SELECT chunk_id, doc_id, metadata_json, generation, " + similarity
+                                + " AS relevance FROM "
                                 + vectors() + " VIEW `v_vec`"
                                 + " WHERE tenant_id=$t"
                                 + " ORDER BY " + similarity + " DESC LIMIT " + (request.topK() + 1) + ";",
-                        Params.create().put("$t", PrimitiveValue.newText(tenant)),
+                        params,
                         TxControl.snapshotRo().setCommitTx(true));
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
@@ -320,6 +398,10 @@ public class YdbSynquestEngine
         int eligible = 0;
         while (rs.next()) {
             eligible++;
+            if (active.isPresent()
+                    && !active.get().equals(rs.getColumn("generation").getText())) {
+                continue;
+            }
             Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
             if (!matches(metadata, request.filters().mustMatchMetadata())) {
                 continue;
@@ -430,32 +512,71 @@ public class YdbSynquestEngine
 
     @Override
     public CompletionStage<Void> rebuild(RebuildOptions options) {
-        generations.put("*", options.targetGeneration());
-        if (options.full()) {
-            long start = System.nanoTime();
-            try (Session session = session()) {
-                DataQueryResult tenants =
-                        query(
-                                session,
-                                "SELECT DISTINCT tenant_id FROM " + table() + ";",
-                                Params.empty(),
-                                TxControl.staleRo().setCommitTx(true));
-                ResultSetReader rs = tenants.getResultSet(0);
-                while (rs.next()) {
-                    String tenant = rs.getColumn("tenant_id").getText();
-                    exec(
-                            session,
-                            "DECLARE $t AS Utf8;"
-                                    + "DELETE FROM " + table() + " WHERE tenant_id=$t;",
-                            Params.create().put("$t", PrimitiveValue.newText(tenant)));
+        long start = System.nanoTime();
+        try (Session session = session()) {
+            var tx =
+                    session
+                            .beginTransaction(TxMode.SERIALIZABLE_RW, new BeginTxSettings())
+                            .join()
+                            .getValue();
+            try {
+                if (options.full()) {
+                    // Wipe both projection tables, then flip the pointer — one atomic
+                    // promotion: readers see the old generation or the new one, never mixed.
+                    for (String target : List.of(table(), vectors())) {
+                        DataQueryResult tenants =
+                                tx.executeDataQuery(
+                                                "SELECT DISTINCT tenant_id FROM " + target + ";",
+                                                false,
+                                                Params.empty(),
+                                                new ExecuteDataQuerySettings())
+                                        .join()
+                                        .getValue();
+                        ResultSetReader rs = tenants.getResultSet(0);
+                        while (rs.next()) {
+                            String tenant = rs.getColumn("tenant_id").getText();
+                            tx.executeDataQuery(
+                                            "DECLARE $t AS Utf8; DELETE FROM " + target
+                                                    + " WHERE tenant_id=$t;",
+                                            false,
+                                            Params.create().put("$t", PrimitiveValue.newText(tenant)),
+                                            new ExecuteDataQuerySettings())
+                                    .join()
+                                    .getValue();
+                        }
+                    }
+                }
+                tx.executeDataQuery(
+                                "DECLARE $s AS Utf8; DECLARE $g AS Utf8;"
+                                        + "UPSERT INTO " + generations()
+                                        + " (scope, active_generation) VALUES ($s, $g);",
+                                false,
+                                Params.create()
+                                        .put("$s", PrimitiveValue.newText("*"))
+                                        .put("$g", PrimitiveValue.newText(options.targetGeneration().value())),
+                                new ExecuteDataQuerySettings())
+                        .join()
+                        .getValue();
+                tech.ydb.core.Status committed = tx.commit().join();
+                if (!committed.isSuccess()) {
+                    throw new IllegalStateException("rebuild commit failed: " + committed);
                 }
                 metrics.record(AdapterMetrics.SYNQUEST_REBUILD, System.nanoTime() - start, true);
+                return CompletableFuture.completedFuture(null);
             } catch (RuntimeException e) {
+                try {
+                    tx.rollback().join();
+                } catch (RuntimeException ignored) {
+                }
                 metrics.record(AdapterMetrics.SYNQUEST_REBUILD, System.nanoTime() - start, false);
-                throw map(e);
+                throw e;
             }
+        } catch (StorageException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            metrics.record(AdapterMetrics.SYNQUEST_REBUILD, System.nanoTime() - start, false);
+            throw map(e);
         }
-        return CompletableFuture.completedFuture(null);
     }
 
     @Override
@@ -469,8 +590,9 @@ public class YdbSynquestEngine
                             TxControl.staleRo().setCommitTx(true));
             ResultSetReader rs = result.getResultSet(0);
             long count = rs.next() ? rs.getColumn("n").getUint64() : 0;
-            return CompletableFuture.completedFuture(
-                    new IndexStatus(generations.getOrDefault("*", GenerationId.initial()), count, true));
+            GenerationId active =
+                    readActive(session).map(GenerationId::of).orElse(GenerationId.initial());
+            return CompletableFuture.completedFuture(new IndexStatus(active, count, true));
         } catch (RuntimeException e) {
             throw map(e);
         }

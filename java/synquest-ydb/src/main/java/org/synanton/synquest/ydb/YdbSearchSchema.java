@@ -16,8 +16,14 @@ public final class YdbSearchSchema {
     public static void ensureSchema(TableClient client, String prefix, int embeddingDim) {
         String table = "`" + prefix + "_projections`";
         String vectors = "`" + prefix + "_vectors`";
+        String generations = "`" + prefix + "_generations`";
         try (Session session =
                 client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
+            execute(
+                    session,
+                    "CREATE TABLE " + generations + " ("
+                            + "scope Utf8 NOT NULL, active_generation Utf8 NOT NULL,"
+                            + " PRIMARY KEY (scope));");
             execute(
                     session,
                     "CREATE TABLE " + table + " ("
