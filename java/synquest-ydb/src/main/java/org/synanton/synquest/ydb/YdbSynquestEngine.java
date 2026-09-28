@@ -849,8 +849,14 @@ public class YdbSynquestEngine
      * Margin is dimension-scoped: 500 rows ≈ 7MB/tx (9×) at 384-d, ≈14MB/tx
      * (4.5×) at 768-d. Re-measure at each embedding-dimension change; the
      * constant is byte-bound, not row-bound.
+     *
+     * <p>Second bound (measured 2026-09-28): server-side AST node cap
+     * (1,000,000 nodes). A 500-row chunk builds ~1.1M nodes (~2,210/row at
+     * 384-d, dominated by inlined float literals ×2 tables) and fails with
+     * "Too many allocated nodes". TX_MAX_ROWS=100 keeps ~221k nodes (≈4.5×
+     * margin; ≈2× at 768-d). Node-bound, not byte-bound, at this size.
      */
-    static final int TX_MAX_ROWS = 500;
+    static final int TX_MAX_ROWS = 100;
 
     public int upsertBatch(Session session, List<ChunkProjection> fresh) {
         if (fresh.isEmpty()) {

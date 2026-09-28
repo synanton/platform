@@ -22,9 +22,11 @@ Replace per-row (1 read + 2 commits) with per-batch (1 read + 1 commit):
   row ids.
 - In-memory comparison — drop rows with incoming key ≤ current (regression),
   keep the rest.
-- One transaction per batch — UPSERT survivors, projections + vectors together.
+- One transaction per ≤100-row chunk — UPSERT survivors, projections +
+  vectors together. (100, not 500: server AST node cap is 1M; 500 rows build
+  ~1.1M nodes. Node-bound.)
 
-Ordering semantics preserved; transaction count drops 3N → 2 per batch.
+Ordering semantics preserved; transaction count drops 3N → ~N/100 per batch.
 
 ## Load-path caveat (not "setup-only")
 
@@ -43,8 +45,8 @@ This changes measured load behavior, not just harness speed:
   same order (equivalence fixture).
 - Ordering guard: stale + fresh events for one chunk → only fresh persists.
 - Mixed batch (fresh + stale rows) → exactly the fresh subset written.
-- Commit count is per 500-batch (10k rows → 20 commits, was 30k) — the
-  ticket's "batch of 500 → 1 commit" acceptance holds per batch unit, confirmed.
+- Commit count is per 100-batch (10k rows → 100 commits, was 30k) — the
+  ticket's "batch → 1 commit" acceptance holds per batch unit, confirmed.
 
 ## Measure and record
 
