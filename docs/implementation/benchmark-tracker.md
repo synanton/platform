@@ -6,7 +6,7 @@ covers the transition; history is not rewritten.
 | Target | Adapter | Emitter ticket | Branch | Q3 output | Status |
 |---|---|---|---|---|---|
 | Baseline | Lucene (in-JVM) | BENCH-BASE (was 028b) | DESIGN-emit-baseline (was DESIGN-YDB-028b) | runs/baseline-v1.json | In progress (andreminin) |
-| Cassandra | 024A (ingestion-cache/Lucene) | CASS-EMIT-024a (was 028c) | DESIGN-emit-cassandra (was DESIGN-PG-028c) | runs/cassandra-v1.json | In flight (B.2 rerun) |
+| Cassandra | 024A (ingestion-cache/Lucene) | CASS-EMIT-024a (was 028c) | DESIGN-emit-cassandra | runs/cassandra-v1.json | ✅ B.2 green 2026-09-28 (sha 85921bb2, 96/120 non-empty, 24 structural) |
 | YDB | 024B | YDB-EMIT-024b (was 028d) | DESIGN-emit-ydb (was DESIGN-YDB-028d) | runs/ydb-v1.json | Blocked on shared template |
 | PostgreSQL | PostgresSynquestEngine | PG-EMIT-pg (was 028e) | DESIGN-emit-pg (was DESIGN-PG-028e) | runs/pg-v1.json | Scaffold only; real run post-R4 |
 
