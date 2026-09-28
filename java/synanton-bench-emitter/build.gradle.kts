@@ -21,7 +21,9 @@ dependencies {
 // this forwarding is why the flag works (same pattern as ydb.bench).
 // 2g heap: documented-run requirement (160k HNSW + stored fields in worker;
 // OOM previously surfaced as silent SKIP at query 100/120). Margin, not tuning.
+// Raised to 10g per runbook (64G host; corpus 762M on disk, index ~430M;
+// in-worker readers + HNSW dominate). Revisit only with measured OOM evidence.
 tasks.named<Test>("test") {
     systemProperty("bench.run.024a", providers.systemProperty("bench.run.024a").getOrElse(""))
-    maxHeapSize = "2g"
+    maxHeapSize = "10g"
 }
