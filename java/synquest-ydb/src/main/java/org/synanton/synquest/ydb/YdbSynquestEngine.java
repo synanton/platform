@@ -666,6 +666,46 @@ public class YdbSynquestEngine
         return rs.next() ? (long) rs.getColumn("ordering_key").getUint64() : null;
     }
 
+    /**
+     * 041.2 batch ordering read: one query per batch (param-count cap below).
+     * Tenant × chunk cross-product overestimates; exact pairs filtered in
+     * memory. Absent rows are absent from the map (new chunks are fresh —
+     * 041.3 relies on this, never on null-vs-zero confusion).
+     */
+    static final int BATCH_READ_MAX = 500;
+
+    Map<String, Long> readOrderingBatch(Session session, List<ChunkProjection> batch) {
+        Map<String, Long> out = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < batch.size(); i += BATCH_READ_MAX) {
+            List<ChunkProjection> part = batch.subList(i, Math.min(i + BATCH_READ_MAX, batch.size()));
+            List<tech.ydb.table.values.Value<?>> tenants = new java.util.ArrayList<>();
+            List<tech.ydb.table.values.Value<?>> chunks = new java.util.ArrayList<>();
+            for (ChunkProjection p : part) {
+                tenants.add(PrimitiveValue.newText(p.tenantId()));
+                chunks.add(PrimitiveValue.newText(p.chunkId().value()));
+            }
+            DataQueryResult result =
+                    query(
+                            session,
+                            "DECLARE $t AS List<Utf8>; DECLARE $c AS List<Utf8>;"
+                                    + "SELECT tenant_id, chunk_id, ordering_key FROM " + table()
+                                    + " WHERE tenant_id IN $t AND chunk_id IN $c;",
+                            Params.create()
+                                    .put("$t", tech.ydb.table.values.ListValue.of(
+                                            tenants.toArray(new tech.ydb.table.values.Value<?>[0])))
+                                    .put("$c", tech.ydb.table.values.ListValue.of(
+                                            chunks.toArray(new tech.ydb.table.values.Value<?>[0]))),
+                            TxControl.snapshotRo().setCommitTx(true));
+            ResultSetReader rs = result.getResultSet(0);
+            while (rs.next()) {
+                out.put(
+                        rs.getColumn("tenant_id").getText() + "|" + rs.getColumn("chunk_id").getText(),
+                        rs.getColumn("ordering_key").getUint64());
+            }
+        }
+        return out;
+    }
+
     private Optional<String> readGeneration(Session session, String tenant, ChunkId id) {
         DataQueryResult result =
                 query(

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map;
 import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 import org.synanton.storage.contract.ChunkId;
@@ -104,8 +105,7 @@ class BulkUpsertEquivalenceTest {
     }
 
     @Test
-    void perRowLoadProducesReferenceStateForEquivalence() throws Exception {
-        YdbSynquestEngine engine = freshEngine();
+    void perRowLoadProducesReferenceStateForEquivalence() throws Exception {        YdbSynquestEngine engine = freshEngine();
         List<ChunkProjection> fixture = fixture();
         // Current per-row path, small batches (reference behavior, not performance).
         for (int i = 0; i < fixture.size(); i += 10) {
@@ -120,5 +120,45 @@ class BulkUpsertEquivalenceTest {
         assertThat(snapshot.stream().filter(l -> l.startsWith("P|"))).hasSize(ROWS);
         assertThat(snapshot.stream().filter(l -> l.startsWith("V|"))).hasSize(ROWS);
         System.out.println("EQUIV-REF rows=" + ROWS + " snapshot_lines=" + snapshot.size());
+    }
+
+    @Test
+    void batchReadReturnsAllKeysInOneQuery() throws Exception {
+        YdbSynquestEngine engine = freshEngine();
+        List<ChunkProjection> fixture = fixture();
+        for (int i = 0; i < fixture.size(); i += 10) {
+            engine.upsert(fixture.subList(i, Math.min(i + 10, fixture.size())))
+                    .toCompletableFuture()
+                    .join();
+        }
+        Map<String, Long> keys;
+        try (tech.ydb.table.Session session = YdbSearchTestBase.session()) {
+            keys = engine.readOrderingBatch(session, fixture);
+        }
+        // One query returned all 100 keys with exact ordering values.
+        assertThat(keys).hasSize(ROWS);
+        assertThat(keys.get("tenant_00|bulk-chunk-0")).isEqualTo(1000L);
+        assertThat(keys.get("tenant_01|bulk-chunk-97")).isEqualTo(1097L);
+    }
+
+    @Test
+    void batchReadEmptyOnFreshTable() throws Exception {
+        freshEngine();
+        Map<String, Long> keys;
+        try (tech.ydb.table.Session session = YdbSearchTestBase.session()) {
+            keys = enginelessRead(fixture());
+        }
+        // Absent rows are absent (new chunks read as fresh downstream) —
+        // never null entries, never zeros.
+        assertThat(keys).isEmpty();
+    }
+
+    private static Map<String, Long> enginelessRead(List<ChunkProjection> fixture) throws Exception {
+        YdbSearchTestBase.ensureStarted();
+        YdbSynquestEngine engine =
+                new YdbSynquestEngine(YdbSearchTestBase.client(), PREFIX);
+        try (tech.ydb.table.Session session = YdbSearchTestBase.session()) {
+            return engine.readOrderingBatch(session, fixture);
+        }
     }
 }
