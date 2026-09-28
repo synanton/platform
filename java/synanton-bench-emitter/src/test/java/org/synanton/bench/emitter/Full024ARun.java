@@ -75,6 +75,13 @@ class Full024ARun {
     private void runLeg() throws Exception {
         currentPhase = "manifest";
         Path corpusDir = Paths.get(System.getenv().getOrDefault("CORPUS_DIR", "/tmp/corpus-v1"));
+        // Stale-output trap (2026-09-28): delete any prior runs/024a-v1.json
+        // BEFORE load begins, so file-exists ⟺ this run completed. A crashed
+        // run must never leave a timestamp-ambiguous artifact behind.
+        // (CLI.1 atomic-write: temp + rename on success covers the tail end;
+        // this covers the head.)
+        Path runsDir = Paths.get("runs");
+        java.nio.file.Files.deleteIfExists(runsDir.resolve("024a-v1.json"));
         CorpusLoader.Manifest manifest = CorpusLoader.loadManifest(corpusDir);
         assertThat(manifest.corpusVersion()).isEqualTo("ydb-poc-corpus-v1");
 
