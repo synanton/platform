@@ -26,5 +26,6 @@ dependencies {
 // in-worker readers + HNSW dominate). Revisit only with measured OOM evidence.
 tasks.named<Test>("test") {
     systemProperty("bench.run.024a", providers.systemProperty("bench.run.024a").getOrElse(""))
+    systemProperty("bench.run.024b.sanity", providers.systemProperty("bench.run.024b.sanity").getOrElse(""))
     maxHeapSize = "10g"
 }
