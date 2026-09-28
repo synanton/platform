@@ -1,7 +1,7 @@
 # CLI.1 — Documented-Run Runner Spec
 
-Smallest change that fixes the 60-min wall: documented runs leave the test
-worker (plain `java -cp`, no Gradle), keeping every gate the test had.
+Smallest change that fixes documented-run invocation: runs leave the test
+worker (plain `java -cp`, no Gradle).
 
 ## Invocation
 
@@ -35,6 +35,16 @@ documented run.
 Each leg emits `runs/<leg>-v1.build.json` (build ms, index bytes, adapter
 params) beside `runs/<leg>-v1.json`. Phase 4 cost model reads the former;
 the comparator reads the latter.
+
+## Rationale correction (2026-09-28)
+
+The original motivation ("escape the 60-min Gradle test wall") was a
+misdiagnosis, corrected by evidence: every wall hit was tool-side (session
+teardown killing nohup'd runs) or heap-side (512m worker OOM surfacing as
+silent SKIP) — never a Gradle task timeout. The CLI stands on its independent
+merits (absolute --out, build.json + checkpoint sidecars, --engine
+unification, truncate/skip-resume, setsid detach), not on timeout avoidance.
+Do not re-quote the wall as fact.
 
 ## Order
 
