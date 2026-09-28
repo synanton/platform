@@ -48,12 +48,39 @@ class Full024ARun {
 
     @Test
     void full024ALeg() throws Exception {
+        // Error-printing discipline: every phase failure prints its phase,
+        // message, and stack to stderr BEFORE propagating — a bare Gradle
+        // "failing tests" line or silent SKIP must never be the only record.
+        Thread.currentThread()
+                .setUncaughtExceptionHandler(
+                        (t, e) -> {
+                            System.err.println("B2-ERROR uncaught thread=" + t.getName() + ": " + e);
+                            e.printStackTrace(System.err);
+                        });
+        try {
+            runLeg();
+        } catch (Exception e) {
+            System.err.println("B2-ERROR phase=" + currentPhase + ": " + e);
+            e.printStackTrace(System.err);
+            throw e;
+        } catch (Throwable t) {
+            System.err.println("B2-ERROR phase=" + currentPhase + " (fatal): " + t);
+            t.printStackTrace(System.err);
+            throw t;
+        }
+    }
+
+    private static volatile String currentPhase = "init";
+
+    private void runLeg() throws Exception {
+        currentPhase = "manifest";
         Path corpusDir = Paths.get(System.getenv().getOrDefault("CORPUS_DIR", "/tmp/corpus-v1"));
         CorpusLoader.Manifest manifest = CorpusLoader.loadManifest(corpusDir);
         assertThat(manifest.corpusVersion()).isEqualTo("ydb-poc-corpus-v1");
 
         Path root = Files.createTempDirectory("full-024a");
         CassandraSynquestEngine engine = new CassandraSynquestEngine(root);
+        currentPhase = "load";
 
         // Load: stream corpus rows into projections (batched upserts).
         // Streaming discipline (OOM lesson): the batch is cleared after every
@@ -86,6 +113,7 @@ class Full024ARun {
         // test here; upsert path only.
         System.out.println("B2-LOAD done loaded=" + loaded.get());
         assertThat(loaded.get()).isEqualTo(160_000);
+        currentPhase = "query";
 
         // Tenant universe: tenant_00..49 (spec-fixed ids).
         List<String> universe = new ArrayList<>();
@@ -134,6 +162,7 @@ class Full024ARun {
 
         // Eligible-set validation (A.5 rule, single in-memory pass):
         // re-derive from corpus rows per spec §5, set-compare vs fixture.
+        currentPhase = "validation";
         record RowMeta(String tenant, Map<String, String> meta) {}
         var meta = new java.util.HashMap<String, RowMeta>();
         CorpusLoader.streamChunks(
@@ -177,6 +206,7 @@ class Full024ARun {
             }
         }
         System.out.println("B2-ELIGIBILITY all 120 queries match re-derivation");
+        currentPhase = "emission";
 
         String json = Q3Emitter.emit("024a-v1", manifest.corpusVersion(), outputs);
         Path runs = Paths.get("runs");
