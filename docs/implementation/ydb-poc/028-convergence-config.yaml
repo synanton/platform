@@ -7,15 +7,15 @@ corpus:
   slice: first-2000-docs          # representative slice; full corpus if time allows
   queries: golden-K               # frozen K query set from 005, same IDs all legs
 
-legs: [baseline, 024A, 024B, PG]
+legs: [baseline, cassandra, ydb, postgres]
 
-# Q3 output path convention (pinned pre-A.5): runs/<leg>-v1.json under the
+# Q3 output path convention (pinned pre-A.5): runs/<target>-v1.json under the
 # repo root. Emitters write here; the comparator reads here. No other paths.
 runs:
   baseline: runs/baseline-v1.json
-  024A: runs/024a-v1.json
-  024B: runs/024b-v1.json
-  PG: runs/pg-v1.json
+  cassandra: runs/cassandra-v1.json
+  ydb: runs/ydb-v1.json
+  postgres: runs/pg-v1.json
 
 tolerances:                        # violation = gate fail, frame revised
   lexical_topk_overlap: 0.90       # top-K id overlap, fully-matching queries only
