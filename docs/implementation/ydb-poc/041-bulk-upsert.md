@@ -10,6 +10,10 @@ row (1 ordering read + 2 commits). At 160k rows ≈ 480k commits; the first
 500-row batch never returned in 40 min. The full 024b leg is infeasible
 through this path at any harness tuning.
 
+Measured baseline (041.1, 2026-09-28): **4.3 rows/s on the 100-row fixture
+(23s)** — 160k extrapolates to ~10.5 hours. The batch path reports its own
+rows/s in `build.json`; this number is the reference it must beat.
+
 ## Scope
 
 Replace per-row (1 read + 2 commits) with per-batch (1 read + 1 commit):
