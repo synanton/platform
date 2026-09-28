@@ -30,3 +30,9 @@ Cross-cutting:
 1. B.2 completes as-is; artifact renamed to runs/cassandra-v1.json at CLI-wrap.
 2. Branch + config + tracker rename pass before 024b starts.
 3. Baseline/PG rename on next touch.
+
+## Parked (single source — lands only here, not in branch-local files)
+
+- `--engine baseline` wiring + README boot-jar line: parked until 028b line
+  and emitter line both merge to main; then one tiny PR off main.
+  (Two branch-local copies would drift — this section is the only record.)
