@@ -674,7 +674,7 @@ public class YdbSynquestEngine
      */
     static final int BATCH_READ_MAX = 500;
 
-    Map<String, Long> readOrderingBatch(Session session, List<ChunkProjection> batch) {
+    public Map<String, Long> readOrderingBatch(Session session, List<ChunkProjection> batch) {
         Map<String, Long> out = new java.util.LinkedHashMap<>();
         for (int i = 0; i < batch.size(); i += BATCH_READ_MAX) {
             List<ChunkProjection> part = batch.subList(i, Math.min(i + BATCH_READ_MAX, batch.size()));
@@ -715,7 +715,7 @@ public class YdbSynquestEngine
      * count makes drift visible in aggregate. Absent stored key means new
      * chunk: always fresh. Pure function — unit-tested without a container.
      */
-    static List<ChunkProjection> keepFresh(
+    public static List<ChunkProjection> keepFresh(
             List<ChunkProjection> batch, Map<String, Long> stored) {
         List<ChunkProjection> fresh = new java.util.ArrayList<>(batch.size());
         int equalDrops = 0;
@@ -762,7 +762,7 @@ public class YdbSynquestEngine
      * A mid-batch failure rolls back everything: projections and vectors can
      * never disagree, and the next retry re-reads pre-commit keys.
      */
-    int upsertBatch(Session session, List<ChunkProjection> fresh) {
+    public int upsertBatch(Session session, List<ChunkProjection> fresh) {
         if (fresh.isEmpty()) {
             return 0;
         }

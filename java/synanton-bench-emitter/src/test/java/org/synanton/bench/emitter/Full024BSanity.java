@@ -96,13 +96,9 @@ class Full024BSanity {
             YdbSearchSchema.ensureSchema(client, PREFIX, 384);
             // Truncation rerun safety: truncate → verify empty → load.
             YdbSearchSchema.truncateAll(client, PREFIX);
-            YdbSynquestEngine engine = new YdbSynquestEngine(client, PREFIX);
             assertThat(countRows(client)).as("starts empty after truncate").isZero();
 
             // Load 10k with throughput measurement.
-            List<ChunkProjection> batch = new ArrayList<>(BATCH);
-            List<ChunkProjection> firstBatch = null;
-            long loaded = 0;
             long t0 = System.nanoTime();
             List<CorpusLoader.ChunkRow> rows = new ArrayList<>();
             final int[] seen = {0};
@@ -114,28 +110,31 @@ class Full024BSanity {
                         }
                     });
             assertThat(rows).hasSize(ROWS);
-            for (int i = 0; i < rows.size(); i += BATCH) {
-                final int base = i;
-                List<ChunkProjection> chunk =
-                        rows.subList(i, Math.min(i + BATCH, rows.size())).stream()
-                                .map(r -> new ChunkProjection(
-                                        ChunkId.of(r.chunkId()), DocumentId.of(r.docId()),
-                                        r.tenantId(), r.text(), Map.copyOf(r.metadata()),
-                                        decodeVec(r.embeddingB64()), MODEL, base, GEN))
-                                .toList();
-                if (firstBatch == null) {
-                    firstBatch = chunk;
-                }
-                engine.upsert(chunk).toCompletableFuture().join();
-                loaded += chunk.size();
+            // 041.7: batch path (read → keepFresh → single commit), with commit
+            // counting. If this log ever shows 3N commits, the batch path is
+            // bypassed and the run measures the old path — assert, not observe.
+            YdbSynquestEngine engine = new YdbSynquestEngine(client, PREFIX);
+            int commits;
+            try (tech.ydb.table.Session session =
+                    client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
+                java.util.Map<String, Long> stored =
+                        engine.readOrderingBatch(session, toProjections(rows));
+                List<ChunkProjection> fresh =
+                        YdbSynquestEngine.keepFresh(toProjections(rows), stored);
+                assertThat(fresh).hasSize(ROWS);
+                commits = engine.upsertBatch(session, fresh);
             }
+            assertThat(commits)
+                    .as("batch path: 1 commit for 10k rows (was 30k)")
+                    .isEqualTo(1);
             double secs = (System.nanoTime() - t0) / 1_000_000_000.0;
-            double rate = loaded / secs;
-            System.out.printf("SANITY loaded=%d secs=%.1f rows_per_s=%.1f batches=%d batch_size=%d%n",
-                    loaded, secs, rate, (loaded + BATCH - 1) / BATCH, BATCH);
+            double rate = ROWS / secs;
+            System.out.printf(
+                    "SANITY loaded=%d secs=%.1f rows_per_s=%.1f commits=%d batches=1 batch_size=%d%n",
+                    ROWS, secs, rate, commits, ROWS);
 
             // Known-answer probe: first chunk's own embedding must return it top-1.
-            ChunkProjection probe = firstBatch.get(0);
+            ChunkProjection probe = toProjections(rows).get(0);
             TenantScope scope = TenantScope.of(probe.tenantId());
             PrincipalRef principal = new PrincipalRef("benchmark", "sanity");
             PolicyContext policy = new PolicyContext("benchmark", "v1");
@@ -190,6 +189,19 @@ class Full024BSanity {
         } finally {
             client.close();
         }
+    }
+
+    private static List<ChunkProjection> toProjections(List<CorpusLoader.ChunkRow> rows) {
+        List<ChunkProjection> out = new ArrayList<>(rows.size());
+        for (int i = 0; i < rows.size(); i++) {
+            CorpusLoader.ChunkRow r = rows.get(i);
+            out.add(
+                    new ChunkProjection(
+                            ChunkId.of(r.chunkId()), DocumentId.of(r.docId()),
+                            r.tenantId(), r.text(), Map.copyOf(r.metadata()),
+                            decodeVec(r.embeddingB64()), MODEL, i, GEN));
+        }
+        return out;
     }
 
     private static long countRows(TableClient client) throws Exception {

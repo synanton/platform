@@ -15,7 +15,7 @@ Pre-R3 gates (all must close before R3; parallel with 041):
 | Gate | Owner | Status |
 |---|---|---|
 | 006 re-freeze (thresholds from baseline-v1.json) | andreminin | Unblocked now — runs parallel with 041, not serial after C.2 |
-| 024B/PG fusion-semantics check (pre-ranking invariant: fuse full legs, filter after) | YDB workstream (024B) · PG workstream (PG) | Open — 15 min per leg; misattribution risk at R3 if skipped |
+| 024B/PG fusion-semantics check (pre-ranking invariant: fuse full legs, filter after) | YDB workstream (024B) · PG workstream (PG) | **024B: FOUND SAME FAMILY** — lexical/vector/hybrid fetch `topK+1` server-side, then Java-filter metadata/generation, then truncate. Under selective metadata filters, eligible rows past rank topK+1 are invisible (short/empty results, correct data). Tenant scope IS server-side (clean); metadata+generation are not. Proposed fix: over-fetch factor (topK×N), filter, truncate — order-preserving. PG: still deferred to leg activation |
 
 Cross-cutting:
 
