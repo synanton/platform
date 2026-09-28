@@ -62,6 +62,7 @@ include(
     "java:synanton-bench-convergence",
     "java:synanton-bench-corpus",
     "java:synanton-bench-baseline",
+    "java:synanton-bench-emitter",
 )
 
 // Give each project a flat, predictable path on disk (e.g. java/security)

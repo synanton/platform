@@ -87,7 +87,10 @@ public record RunOutput(String runId, String corpus, List<QueryResult> queries) 
             eligNode.forEach(e -> eligible.add(e.asText()));
         }
         double timing = q.has("timing_ms") ? q.get("timing_ms").asDouble() : -1.0;
-        return new QueryResult(id, mode, filter, selectivity, List.copyOf(topK), List.copyOf(eligible), timing);
+        String timingScope =
+                q.has("timing_scope") ? q.get("timing_scope").asText() : "unspecified";
+        return new QueryResult(id, mode, filter, selectivity, List.copyOf(topK), List.copyOf(eligible), timing,
+                timingScope);
     }
 
     private static String requiredText(JsonNode node, String field, String source) {

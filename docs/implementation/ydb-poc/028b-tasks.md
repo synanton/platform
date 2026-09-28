@@ -40,6 +40,14 @@ Evidence: index inventory test; per-tenant counts match Zipf.
 
 ## 028b.4 — Query execution over the corpus
 
+Cross-branch question (emitters fan out per tenant — single-tenant port
+contract; see `QueryExecutor` on `DESIGN-emitter-shared`): does the baseline
+fan out over per-tenant indexes the same way, or query once? If the same,
+timings are comparable. If not, R3's timing column carries a topology
+annotation (`timing_scope`: `single` vs `summed_fanout_N`, now a Q3 field).
+Resolve before the baseline run commits, not at R3.
+
+
 Description: Execute the 120 golden queries (lexical/vector/hybrid; none/
 tenant/metadata/eligibility). Query vectors read from the corpus manifest —
 never recomputed.

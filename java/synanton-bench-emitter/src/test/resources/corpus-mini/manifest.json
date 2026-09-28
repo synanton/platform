@@ -1,0 +1,6 @@
+{"corpus_version": "ydb-poc-corpus-v1-mini", "seed": 42,
+ "counts": {"documents": 2, "chunks": 4, "queries": 1},
+ "files": {"documents": {"path": "documents.jsonl", "sha256": "mini"},
+  "chunks": {"path": "chunks.jsonl", "sha256": "mini"},
+  "queries": {"path": "golden-queries.jsonl", "sha256": "mini"}},
+ "generator": {"name": "synanton-bench-corpus", "version": "0.1.0"}}
