@@ -271,21 +271,24 @@ public class YdbSynquestEngine
                                 "UNSUPPORTED: hybrid requires a query embedding"));
             }
             Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
-            DataQueryResult result =
-                    query(
-                            session,
-                            "DECLARE $t AS Utf8;"
-                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json, generation FROM "
-                                    + vectors()
-                                    + " WHERE tenant_id=$t"
-                                    + " ORDER BY HybridRank(FulltextScore(chunk_text, \"" + terms + "\"),"
-                                    + " Knn::CosineDistance(embedding,"
-                                    + " Knn::ToBinaryStringFloat([" + queryVec + "])),"
-                                    + " (\"v_ft\", \"v_hyb\") AS Indexes)"
-                                    + " LIMIT " + (request.topK() + 1) + ";",
-                            params,
-                            TxControl.snapshotRo().setCommitTx(true));
-            SearchResult collected = collectHybrid(request, result, active);
+            SearchResult collected =
+                    collectHybrid(
+                            request,
+                            (limit, offset) ->
+                                    query(
+                                            session,
+                                            "DECLARE $t AS Utf8;"
+                                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json, generation FROM "
+                                                    + vectors()
+                                                    + " WHERE tenant_id=$t"
+                                                    + " ORDER BY HybridRank(FulltextScore(chunk_text, \"" + terms + "\"),"
+                                                    + " Knn::CosineDistance(embedding,"
+                                                    + " Knn::ToBinaryStringFloat([" + queryVec + "])),"
+                                                    + " (\"v_ft\", \"v_hyb\") AS Indexes)"
+                                                    + " LIMIT " + limit + " OFFSET " + offset + ";",
+                                            params,
+                                            TxControl.snapshotRo().setCommitTx(true)),
+                            active);
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, true);
             return CompletableFuture.completedFuture(collected);
         } catch (RuntimeException e) {
@@ -313,36 +316,53 @@ public class YdbSynquestEngine
     }
 
     private SearchResult collectHybrid(
-            SearchRequest request, DataQueryResult result, Optional<String> active) {
+            SearchRequest request, PageQuery pages, Optional<String> active) {
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
-        ResultSetReader rs = result.getResultSet(0);
         int eligible = 0;
         int position = 0;
-        while (rs.next()) {
-            eligible++;
-            if (active.isPresent()
-                    && !active.get().equals(rs.getColumn("generation").getText())) {
-                continue;
-            }            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
-            if (!matches(metadata, request.filters().mustMatchMetadata())) {
-                continue;
+        int scanned = 0;
+        int offset = 0;
+        outer:
+        while (scanned < SCAN_CAP) {
+            DataQueryResult result = pages.fetch(FETCH_PAGE, offset);
+            ResultSetReader rs = result.getResultSet(0);
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                eligible++;
+                if (active.isPresent()
+                        && !active.get().equals(rs.getColumn("generation").getText())) {
+                    continue;
+                }
+                Map<String, String> metadata =
+                        YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+                if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                    continue;
+                }
+                // Rank-derived RRF-shape score (K=60 default): HybridRank cannot be projected.
+                // Position spans pages (global rank), preserving cross-page order.
+                double score = 1.0 / (60.0 + position);
+                position++;
+                if (score < request.minScore()) {
+                    continue;
+                }
+                ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+                String text = rs.getColumn("chunk_text").getText();
+                hits.add(
+                        new SearchHit(
+                                chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text,
+                                metadata));
+                if (hits.size() >= request.topK()) {
+                    break outer;
+                }
+                highlights.put(chunkId, snippet(text, request.queryText()));
             }
-            // Rank-derived RRF-shape score (K=60 default): HybridRank cannot be projected.
-            double score = 1.0 / (60.0 + position);
-            position++;
-            if (score < request.minScore()) {
-                continue;
-            }
-            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
-            String text = rs.getColumn("chunk_text").getText();
-            hits.add(
-                    new SearchHit(
-                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
-            if (hits.size() >= request.topK()) {
+            scanned += n;
+            if (n < FETCH_PAGE) {
                 break;
             }
-            highlights.put(chunkId, snippet(text, request.queryText()));
+            offset += n;
         }
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
@@ -354,7 +374,7 @@ public class YdbSynquestEngine
             Session session, String tenant, SearchRequest request, Optional<String> active) {
         String terms = escapeQuotes(request.queryText());
         Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
-        DataQueryResult result =
+        return collect(session, request, (limit, offset) ->
                 query(
                         session,
                         declareTenant(active)
@@ -363,10 +383,9 @@ public class YdbSynquestEngine
                                 + table() + " VIEW `ft`"
                                 + " WHERE tenant_id=$t" + generationClause(active, params)
                                 + " AND FulltextScore(chunk_text, \"" + terms + "\") > 0"
-                                + " ORDER BY relevance DESC LIMIT " + (request.topK() + 1) + ";",
+                                + " ORDER BY relevance DESC LIMIT " + limit + " OFFSET " + offset + ";",
                         params,
-                        TxControl.snapshotRo().setCommitTx(true));
-        return collect(session, request, result);
+                        TxControl.snapshotRo().setCommitTx(true)));
     }
 
     private SearchResult vectorSearch(
@@ -381,45 +400,60 @@ public class YdbSynquestEngine
         // predicate — vector VIEW queries only resolve index-key columns in WHERE.
         // Deterministic (never a security boundary), LIMIT-sized for PoC scale.
         Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
-        DataQueryResult result =
-                query(
-                        session,
-                        "DECLARE $t AS Utf8;"
-                                + "SELECT chunk_id, doc_id, metadata_json, generation, " + similarity
-                                + " AS relevance FROM "
-                                + vectors() + " VIEW `v_vec`"
-                                + " WHERE tenant_id=$t"
-                                + " ORDER BY " + similarity + " DESC LIMIT " + (request.topK() + 1) + ";",
-                        params,
-                        TxControl.snapshotRo().setCommitTx(true));
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
-        ResultSetReader rs = result.getResultSet(0);
         int eligible = 0;
-        while (rs.next()) {
-            eligible++;
-            if (active.isPresent()
-                    && !active.get().equals(rs.getColumn("generation").getText())) {
-                continue;
+        int scanned = 0;
+        int offset = 0;
+        outer:
+        while (scanned < SCAN_CAP) {
+            DataQueryResult result =
+                    query(
+                            session,
+                            "DECLARE $t AS Utf8;"
+                                    + "SELECT chunk_id, doc_id, metadata_json, generation, " + similarity
+                                    + " AS relevance FROM "
+                                    + vectors() + " VIEW `v_vec`"
+                                    + " WHERE tenant_id=$t"
+                                    + " ORDER BY " + similarity + " DESC LIMIT " + FETCH_PAGE
+                                    + " OFFSET " + offset + ";",
+                            params,
+                            TxControl.snapshotRo().setCommitTx(true));
+            ResultSetReader rs = result.getResultSet(0);
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                eligible++;
+                if (active.isPresent()
+                        && !active.get().equals(rs.getColumn("generation").getText())) {
+                    continue;
+                }
+                Map<String, String> metadata =
+                        YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+                if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                    continue;
+                }
+                double score = readRelevance(rs);
+                if (score < request.minScore()) {
+                    continue;
+                }
+                // Text lives in the projections table; vector rows carry ids + metadata.
+                ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+                String text = readText(session, tenant, chunkId);
+                hits.add(
+                        new SearchHit(
+                                chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text,
+                                metadata));
+                if (hits.size() >= request.topK()) {
+                    break outer;
+                }
+                highlights.put(chunkId, snippet(text, request.queryText()));
             }
-            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
-            if (!matches(metadata, request.filters().mustMatchMetadata())) {
-                continue;
-            }
-            double score = readRelevance(rs);
-            if (score < request.minScore()) {
-                continue;
-            }
-            // Text lives in the projections table; vector rows carry ids + metadata.
-            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
-            String text = readText(session, tenant, chunkId);
-            hits.add(
-                    new SearchHit(
-                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
-            if (hits.size() >= request.topK()) {
+            scanned += n;
+            if (n < FETCH_PAGE) {
                 break;
             }
-            highlights.put(chunkId, snippet(text, request.queryText()));
+            offset += n;
         }
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
@@ -439,30 +473,59 @@ public class YdbSynquestEngine
         }
     }
 
-    private SearchResult collect(Session session, SearchRequest request, DataQueryResult result) {
+    /**
+     * Pre-R3 iterative over-fetch (option 1): page through ranked rows until
+     * caller stops asking. Correct at any selectivity (cost scales with it);
+     * a fixed factor would silently fail at 0.1%. Pages are separate snapshot
+     * reads over static benchmark data — no cross-page consistency claim
+     * beyond that scope.
+     */
+    static final int FETCH_PAGE = 500;
+    static final int SCAN_CAP = 20_000;
+
+    private interface PageQuery {
+        DataQueryResult fetch(int limit, int offset);
+    }
+
+    private SearchResult collect(Session session, SearchRequest request, PageQuery pages) {
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
-        ResultSetReader rs = result.getResultSet(0);
         int eligible = 0;
-        while (rs.next()) {
-            eligible++;
-            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
-            if (!matches(metadata, request.filters().mustMatchMetadata())) {
-                continue;
+        int scanned = 0;
+        int offset = 0;
+        outer:
+        while (scanned < SCAN_CAP) {
+            DataQueryResult result = pages.fetch(FETCH_PAGE, offset);
+            ResultSetReader rs = result.getResultSet(0);
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                eligible++;
+                Map<String, String> metadata =
+                        YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+                if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                    continue;
+                }
+                double score = rs.getColumn("relevance").getDouble();
+                if (score < request.minScore()) {
+                    continue;
+                }
+                ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+                String text = rs.getColumn("chunk_text").getText();
+                hits.add(
+                        new SearchHit(
+                                chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text,
+                                metadata));
+                if (hits.size() >= request.topK()) {
+                    break outer;
+                }
+                highlights.put(chunkId, snippet(text, request.queryText()));
             }
-            double score = rs.getColumn("relevance").getDouble();
-            if (score < request.minScore()) {
-                continue;
-            }
-            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
-            String text = rs.getColumn("chunk_text").getText();
-            hits.add(
-                    new SearchHit(
-                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
-            if (hits.size() >= request.topK()) {
+            scanned += n;
+            if (n < FETCH_PAGE) {
                 break;
             }
-            highlights.put(chunkId, snippet(text, request.queryText()));
+            offset += n;
         }
         // Highlights for the last hit when topK-bounded above.
         for (SearchHit hit : hits) {
