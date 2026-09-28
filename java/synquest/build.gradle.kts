@@ -26,6 +26,7 @@ dependencies {
     // 028b.1b bench wrapper (test sources, beside BaselineBench).
     testImplementation(project(":java:synquest-api"))
     testImplementation(project(":java:storage-contract"))
+    testImplementation(project(":java:synanton-bench-baseline"))
 }
 
 tasks.named<BootJar>("bootJar") {

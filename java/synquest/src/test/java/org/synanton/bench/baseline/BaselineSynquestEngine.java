@@ -108,7 +108,7 @@ public final class BaselineSynquestEngine implements SynquestEngine {
             out.add(
                     new Scored(
                             ChunkId.of(doc.get("id")), DocumentId.of(doc.get("id")),
-                            sd.score, doc.get("text"), Map.of()));
+                            sd.score, doc.get("text"), readMeta(doc)));
         }
         return out;
     }
@@ -125,7 +125,7 @@ public final class BaselineSynquestEngine implements SynquestEngine {
             out.add(
                     new Scored(
                             ChunkId.of(doc.get("id")), DocumentId.of(doc.get("id")),
-                            sd.score, doc.get("text"), Map.of()));
+                            sd.score, doc.get("text"), readMeta(doc)));
         }
         return out;
     }
@@ -149,9 +149,20 @@ public final class BaselineSynquestEngine implements SynquestEngine {
             out.add(
                     new Scored(
                             ChunkId.of(doc.get("id")), DocumentId.of(doc.get("id")),
-                            f.rrfScore(), doc.get("text"), Map.of()));
+                            f.rrfScore(), doc.get("text"), readMeta(doc)));
         }
         return out;
+    }
+
+    /** Stored meta_* fields back into hit metadata (metadata filter legs). */
+    private static Map<String, String> readMeta(org.apache.lucene.document.Document doc) {
+        Map<String, String> meta = new java.util.LinkedHashMap<>();
+        for (org.apache.lucene.index.IndexableField f : doc.getFields()) {
+            if (f.name().startsWith("meta_")) {
+                meta.put(f.name().substring(5), f.stringValue());
+            }
+        }
+        return Map.copyOf(meta);
     }
 
     /** Test/CLI helper: port-native request construction for golden queries. */
