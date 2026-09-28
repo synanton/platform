@@ -846,9 +846,12 @@ public class YdbSynquestEngine
      * <p>Transaction size cap (measured 2026-09-28): a 10k-row single tx
      * returns 139MB against the 64MB gRPC limit (RESOURCE_EXHAUSTED). Batches
      * chunk at {@link #TX_MAX_ROWS} — still 1 commit per chunk vs 3 per row.
-     * Margin is dimension-scoped: 500 rows ≈ 7MB/tx (9×) at 384-d, ≈14MB/tx
-     * (4.5×) at 768-d. Re-measure at each embedding-dimension change; the
-     * constant is byte-bound, not row-bound.
+     * <p>Binding constraint is the AST node cap, not bytes: 500 rows build
+     * ~1.1M nodes (~2,210/row at 384-d, dominated by inlined float literals
+     * ×2 tables) against the 1M cap; TX_MAX_ROWS=100 holds ~221k nodes
+     * (≈4.5× margin; ≈2× at 768-d, still binding). The 64MB gRPC cap would
+     * allow ~4,500 rows and does not bind. Re-measure node cost at each
+     * embedding-dimension change.
      *
      * <p>Second bound (measured 2026-09-28): server-side AST node cap
      * (1,000,000 nodes). A 500-row chunk builds ~1.1M nodes (~2,210/row at

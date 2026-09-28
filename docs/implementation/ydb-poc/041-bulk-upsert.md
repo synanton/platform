@@ -59,7 +59,16 @@ This changes measured load behavior, not just harness speed:
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
 
-## Follow-up experiment (not blocking)
+## Follow-up experiments (not blocking)
+
+1. `setCollectStats(NONE)` on the bulk-write path: if default stats
+   collection inflated the 10k response, suppressing it could raise
+   TX_MAX_ROWS 5–10×. Reads unchanged.
+2. BulkUpsert RPC as an alternative write path: bypasses the AST entirely
+   (no VALUES parsing, no node cap). Caveat — typically outside the
+   transaction model, so the "1 read + 1 commit" ordering pattern needs
+   re-derivation, not direct porting. Evaluate only if per-commit cost at
+   100 rows dominates (sanity rows/s will tell).
 
 All call sites use default `ExecuteDataQuerySettings`; the SDK exposes
 `setCollectStats(NONE)`. If default stats collection (FULL/PROFILE) is what
