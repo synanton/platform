@@ -861,13 +861,18 @@ public class YdbSynquestEngine
      */
     static final int TX_MAX_ROWS = 100;
 
-    public int upsertBatch(Session session, List<ChunkProjection> fresh) {
+    public     int upsertBatch(Session session, List<ChunkProjection> fresh) {
         if (fresh.isEmpty()) {
             return 0;
         }
         int commits = 0;
+        long t0 = System.nanoTime();
+        int total = (fresh.size() + TX_MAX_ROWS - 1) / TX_MAX_ROWS;
         for (int i = 0; i < fresh.size(); i += TX_MAX_ROWS) {
             commits += upsertChunk(session, fresh.subList(i, Math.min(i + TX_MAX_ROWS, fresh.size())));
+            long elapsed = (System.nanoTime() - t0) / 1_000_000;
+            System.out.println(
+                    "BULK-CHUNK done=" + commits + "/" + total + " elapsed_ms=" + elapsed);
         }
         System.out.println(
                 "BULK-COMMIT rows=" + fresh.size() + " commits=" + commits);
