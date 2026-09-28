@@ -8,6 +8,7 @@ dependencies {
     api(project(":java:synquest-api"))
     api(libs.jackson.databind)
     testImplementation(project(":java:synquest-inmemory"))
+    testImplementation(project(":java:synquest-ydb"))
     testImplementation(project(":java:synvault-inmemory"))
     testImplementation(project(":java:synquest-cassandra"))
     testImplementation(project(":java:synanton-bench-convergence"))
