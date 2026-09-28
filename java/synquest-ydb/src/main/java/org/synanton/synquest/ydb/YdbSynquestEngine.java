@@ -1,6 +1,11 @@
 package org.synanton.synquest.ydb;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -871,8 +876,23 @@ public class YdbSynquestEngine
         for (int i = 0; i < fresh.size(); i += TX_MAX_ROWS) {
             commits += upsertChunk(session, fresh.subList(i, Math.min(i + TX_MAX_ROWS, fresh.size())));
             long elapsed = (System.nanoTime() - t0) / 1_000_000;
-            System.out.println(
-                    "BULK-CHUNK done=" + commits + "/" + total + " elapsed_ms=" + elapsed);
+            String line =
+                    "BULK-CHUNK done=" + commits + "/" + total + " elapsed_ms=" + elapsed;
+            System.out.println(line);
+            // File mirror: Gradle captures worker stdout until task end, so
+            // console lines are blind mid-run. The file is the live signal.
+            try {
+                String progress = System.getenv("BULK_PROGRESS_FILE");
+                if (progress != null && !progress.isBlank()) {
+                    Files.writeString(
+                            Path.of(progress),
+                            Instant.now() + " " + line + "\n",
+                            StandardCharsets.UTF_8,
+                            StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                }
+            } catch (Exception ignored) {
+                // Progress must never break the commit path.
+            }
         }
         System.out.println(
                 "BULK-COMMIT rows=" + fresh.size() + " commits=" + commits);
