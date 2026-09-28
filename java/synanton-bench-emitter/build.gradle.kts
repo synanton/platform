@@ -29,3 +29,21 @@ tasks.named<Test>("test") {
     systemProperty("bench.run.024b.sanity", providers.systemProperty("bench.run.024b.sanity").getOrElse(""))
     maxHeapSize = "10g"
 }
+
+// Canonical documented-run invocation (no test-worker wall; plain JVM):
+//   LEG_ARGS="--engine ydb --corpus /tmp/corpus-v1 --out /abs/runs/ydb-v1.json" \
+//     ./gradlew :java:synanton-bench-emitter:runLeg
+// (-PlegArgs quoting is shell-fragile; env is exact.) Detached: setsid the
+// gradle client itself; --out must be absolute.
+tasks.register<JavaExec>("runLeg") {
+    group = "benchmark"
+    description = "Documented benchmark leg run (CLI.1)."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "org.synanton.bench.emitter.RunLeg"
+    val legArgs =
+        System.getenv("LEG_ARGS")
+            ?: (if (project.hasProperty("legArgs")) project.property("legArgs") as String else "")
+    if (legArgs.isNotBlank()) {
+        args = legArgs.trim().split("\\s+".toRegex())
+    }
+}
