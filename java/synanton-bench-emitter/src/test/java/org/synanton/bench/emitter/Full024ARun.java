@@ -93,7 +93,11 @@ class Full024ARun {
                     batch.add(
                             new ChunkProjection(
                                     ChunkId.of(row.chunkId()), DocumentId.of(row.docId()),
-                                    row.tenantId(), row.text(), Map.of(),
+                                    // Metadata carried from the corpus row (NOT Map.of()):
+                                    // an empty map makes every metadata predicate
+                                    // match nothing and empties all 30 metadata
+                                    // legs + every pred-scoped eligibility leg.
+                                    row.tenantId(), row.text(), Map.copyOf(row.metadata()),
                                     decodeVec(row.embeddingB64()), MODEL, 0L, GEN));
                     if (batch.size() >= 2000) {
                         engine.upsert(List.copyOf(batch)).toCompletableFuture().join();
@@ -212,5 +216,23 @@ class Full024ARun {
         Path runs = Paths.get("runs");
         Path written = Q3Emitter.write(runs, "024a", json);
         System.out.println("B2-DONE wrote=" + written.toAbsolutePath() + " queries=" + outputs.size());
+
+        // Narrow-acceptance guard (028a closeout family): non-empty top-K where
+        // the corpus design guarantees retrievability. Lexical filtered legs
+        // are EXEMPT by design — planted terms scatter globally while scopes
+        // restrict (proven: 0/704 tenant_49 chunks contain gold3 terms), so
+        // emptiness there is correct, not a defect. Eligible-set identity
+        // (validated above) remains the gate for those legs.
+        for (QueryOutput out : outputs) {
+            boolean lexicalFiltered =
+                    out.mode().equals("lexical") && !out.filter().equals("none");
+            if (!lexicalFiltered) {
+                assertThat(out.topK())
+                        .as("non-empty top-K for " + out.queryId()
+                                + " (" + out.mode() + "/" + out.filter() + ")")
+                        .isNotEmpty();
+            }
+        }
+        System.out.println("B2-NONEMPTY retrievability guard green (lexical-filtered exempt by design)");
     }
 }
