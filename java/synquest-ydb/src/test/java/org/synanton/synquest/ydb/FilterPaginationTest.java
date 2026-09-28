@@ -21,6 +21,7 @@ import org.synanton.synquest.api.SearchRequest;
 import org.synanton.synquest.api.TemporalExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Pre-R3 fusion/pagination regression: filtered legs must page past
@@ -74,5 +75,15 @@ class FilterPaginationTest {
         assertThat(result.hits())
                 .as("full top-10 from 15 eligible (old topK+1 path returned ~5)")
                 .hasSize(10);
+    }
+
+    @Test
+    void scanCapHitFailsLoudlyNeverSilentPartial() {
+        assertThatThrownBy(() -> YdbSynquestEngine.checkCapHit(20_000, 3, 10))
+                .isInstanceOf(org.synanton.storage.contract.StorageException.class)
+                .hasMessageContaining("SCAN_CAP_HIT");
+        // Below cap, or top-K filled: no throw.
+        YdbSynquestEngine.checkCapHit(500, 3, 10);
+        YdbSynquestEngine.checkCapHit(20_000, 10, 10);
     }
 }

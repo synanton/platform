@@ -364,6 +364,7 @@ public class YdbSynquestEngine
             }
             offset += n;
         }
+        checkCapHit(scanned, hits.size(), request.topK());
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
@@ -455,6 +456,7 @@ public class YdbSynquestEngine
             }
             offset += n;
         }
+        checkCapHit(scanned, hits.size(), request.topK());
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
@@ -482,6 +484,21 @@ public class YdbSynquestEngine
      */
     static final int FETCH_PAGE = 500;
     static final int SCAN_CAP = 20_000;
+
+    /**
+     * Scan-cap tripwire (fail-loudly, never silent-partial): hitting the cap
+     * with unfilled top-K means eligible rows may exist past the scan window.
+     * Pure function — directly unit-tested.
+     */
+    static void checkCapHit(int scanned, int eligible, int topK) {
+        if (scanned >= SCAN_CAP && eligible < topK) {
+            throw new StorageException(
+                    StorageErrorKind.TRANSIENT,
+                    "SCAN_CAP_HIT cap=" + SCAN_CAP + " scanned=" + scanned
+                            + " eligible=" + eligible + " topK=" + topK
+                            + " (raise cap or narrow scope; never silent-partial)");
+        }
+    }
 
     private interface PageQuery {
         DataQueryResult fetch(int limit, int offset);
@@ -527,6 +544,7 @@ public class YdbSynquestEngine
             }
             offset += n;
         }
+        checkCapHit(scanned, hits.size(), request.topK());
         // Highlights for the last hit when topK-bounded above.
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
