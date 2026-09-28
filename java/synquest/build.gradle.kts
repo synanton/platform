@@ -23,6 +23,9 @@ dependencies {
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.junit)
+    // 028b.1b bench wrapper (test sources, beside BaselineBench).
+    testImplementation(project(":java:synquest-api"))
+    testImplementation(project(":java:storage-contract"))
 }
 
 tasks.named<BootJar>("bootJar") {
