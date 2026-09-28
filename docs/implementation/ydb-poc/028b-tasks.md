@@ -64,9 +64,11 @@ Explicitly not: new loader, in-memory corpus, manifest redefinition,
 Description: Build per-tenant Lucene indexes (multi-tenant partitioning).
 Acceptance: 50 tenant indexes, Zipf-distributed; no cross-tenant leakage at
 build; index size/build time recorded for the Phase 4 cost model.
-Adjacent acceptance (pinned now, executed here): wrapped baseline produces
-identical top-K and scores to BaselineBench on a small fixture (equivalence
-boundary — must not be dropped).
+Adjacent acceptance, upgraded to close-gate: 028b.3 does not close until
+equivalence is green (wrapped baseline produces identical top-K and scores
+to BaselineBench on a small fixture). Routing (028b.1b) without behavioral
+equivalence would let baseline-v1.json measure a lookalike harness with R3
+misdiagnosis as the cost. Same discipline as 041's equivalence test.
 Estimate: 6 hr. Depends on: 028b.2.
 Evidence: index inventory test; per-tenant counts match Zipf; equivalence test.
 
