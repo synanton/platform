@@ -825,6 +825,25 @@ public class YdbSynquestEngine
         return List.copyOf(fresh);
     }
 
+    /** Progress file is per-process-run: first call truncates (stale-run
+     * confusion, same family as stale outputs), later calls append. */
+    private static final java.util.concurrent.atomic.AtomicBoolean PROGRESS_TRUNCATED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    private static void truncateProgressOnce() {
+        if (!PROGRESS_TRUNCATED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            String progress = System.getenv("BULK_PROGRESS_FILE");
+            if (progress != null && !progress.isBlank()) {
+                Files.deleteIfExists(Path.of(progress));
+            }
+        } catch (Exception ignored) {
+            // Progress must never break the commit path.
+        }
+    }
+
     private static String sha8(String text) {
         try {
             byte[] digest =
@@ -870,6 +889,7 @@ public class YdbSynquestEngine
         if (fresh.isEmpty()) {
             return 0;
         }
+        truncateProgressOnce();
         int commits = 0;
         long t0 = System.nanoTime();
         int total = (fresh.size() + TX_MAX_ROWS - 1) / TX_MAX_ROWS;
