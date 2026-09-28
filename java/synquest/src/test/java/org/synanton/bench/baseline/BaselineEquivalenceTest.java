@@ -68,10 +68,12 @@ class BaselineEquivalenceTest {
                     new BaselineSynquestEngine(
                             new BaselineIndex.TenantIndex(Map.of("tenant_07", raw)));
 
-            // Manual production pipeline (BaselineBench shape).
+            // Manual production pipeline (BaselineBench shape): full fusion,
+            // filter-after-fuse (same as wrapper — pre-truncated fusion would
+            // hide filtered attributes past rank 10).
             var lex = raw.lexical("alpha", 100);
             var dense = raw.dense(new float[] {1, 0}, 100);
-            var fused = RrfFusion.combine(dense, lex, 10, 60);
+            var fused = RrfFusion.combine(dense, lex, Integer.MAX_VALUE, 60);
             var stored = raw.storedFields();
             List<String> manualIds = new java.util.ArrayList<>();
             List<Double> manualScores = new java.util.ArrayList<>();

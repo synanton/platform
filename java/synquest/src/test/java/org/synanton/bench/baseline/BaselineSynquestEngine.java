@@ -144,7 +144,11 @@ public final class BaselineSynquestEngine implements SynquestEngine {
                         .orElseGet(() -> TopDocs.merge(0, new TopDocs[0]));
         var stored = searcher.storedFields();
         List<Scored> out = new ArrayList<>();
-        for (var f : RrfFusion.combine(dense, lex, request.topK(), RRF_K)) {
+        // Fuse over FULL legs (never pre-truncated): filtering happens after
+        // fusion, so a filtered attribute at fused rank 11+ stays visible.
+        // Fusing top-10-then-filtering silently drops it (found 2026-09-28:
+        // 5 hybrid legs empty despite matching chunks in rank 11-100).
+        for (var f : RrfFusion.combine(dense, lex, Integer.MAX_VALUE, RRF_K)) {
             var doc = stored.document(f.docId());
             out.add(
                     new Scored(
