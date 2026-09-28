@@ -56,33 +56,36 @@ class Full024ARun {
         CassandraSynquestEngine engine = new CassandraSynquestEngine(root);
 
         // Load: stream corpus rows into projections (batched upserts).
+        // Streaming discipline (OOM lesson): the batch is cleared after every
+        // upsert — never 160k projections in memory at once.
         List<ChunkProjection> batch = new ArrayList<>(2000);
-        long ord = 0;
-        long loaded = 0;
-        var batchHolder = new Object() {};
-        List<ChunkProjection> pending = new ArrayList<>();
+        java.util.concurrent.atomic.AtomicLong loaded = new java.util.concurrent.atomic.AtomicLong();
         CorpusLoader.streamChunks(
                 corpusDir,
                 row -> {
-                    pending.add(
+                    batch.add(
                             new ChunkProjection(
                                     ChunkId.of(row.chunkId()), DocumentId.of(row.docId()),
                                     row.tenantId(), row.text(), Map.of(),
                                     decodeVec(row.embeddingB64()), MODEL, 0L, GEN));
+                    if (batch.size() >= 2000) {
+                        engine.upsert(List.copyOf(batch)).toCompletableFuture().join();
+                        long total = loaded.addAndGet(batch.size());
+                        batch.clear();
+                        if (total % 20000 == 0) {
+                            System.out.println("B2-LOAD loaded=" + total);
+                        }
+                    }
                 });
-        // NOTE: orderingKey 0 for all — ordering-guard semantics not under
-        // test here; upsert path only. Batch through the list API.
-        for (int i = 0; i < pending.size(); i += 2000) {
-            engine.upsert(pending.subList(i, Math.min(i + 2000, pending.size())))
-                    .toCompletableFuture()
-                    .join();
-            loaded = Math.min(i + 2000, pending.size());
-            if (loaded % 20000 == 0) {
-                System.out.println("B2-LOAD loaded=" + loaded);
-            }
+        if (!batch.isEmpty()) {
+            engine.upsert(List.copyOf(batch)).toCompletableFuture().join();
+            loaded.addAndGet(batch.size());
+            batch.clear();
         }
-        System.out.println("B2-LOAD done loaded=" + loaded);
-        assertThat(loaded).isEqualTo(160_000);
+        // NOTE: orderingKey 0 for all — ordering-guard semantics not under
+        // test here; upsert path only.
+        System.out.println("B2-LOAD done loaded=" + loaded.get());
+        assertThat(loaded.get()).isEqualTo(160_000);
 
         // Tenant universe: tenant_00..49 (spec-fixed ids).
         List<String> universe = new ArrayList<>();

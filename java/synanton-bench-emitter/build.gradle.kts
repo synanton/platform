@@ -15,3 +15,10 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
 }
+
+// Opt-in full-leg gate (B.2): -Dbench.run.024a=true runs Full024ARun; unset
+// skips it. System properties do NOT cross into the test worker otherwise —
+// this forwarding is why the flag works (same pattern as ydb.bench).
+tasks.named<Test>("test") {
+    systemProperty("bench.run.024a", providers.systemProperty("bench.run.024a").getOrElse(""))
+}
