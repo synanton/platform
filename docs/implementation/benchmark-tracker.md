@@ -1,0 +1,32 @@
+# Benchmark Tracker — Four Targets
+
+Target-named scheme (replaces owner/mixed naming). Alias map at the bottom
+covers the transition; history is not rewritten.
+
+| Target | Adapter | Emitter ticket | Branch | Q3 output | Status |
+|---|---|---|---|---|---|
+| Baseline | Lucene (in-JVM) | BENCH-BASE (was 028b) | DESIGN-emit-baseline (was DESIGN-YDB-028b) | runs/baseline-v1.json | In progress (andreminin) |
+| Cassandra | 024A (ingestion-cache/Lucene) | CASS-EMIT-024a (was 028c) | DESIGN-emit-cassandra (was DESIGN-PG-028c) | runs/cassandra-v1.json | In flight (B.2 rerun) |
+| YDB | 024B | YDB-EMIT-024b (was 028d) | DESIGN-emit-ydb (was DESIGN-YDB-028d) | runs/ydb-v1.json | Blocked on shared template |
+| PostgreSQL | PostgresSynquestEngine | PG-EMIT-pg (was 028e) | DESIGN-emit-pg (was DESIGN-PG-028e) | runs/pg-v1.json | Scaffold only; real run post-R4 |
+
+Cross-cutting:
+
+| Component | Ticket | Status |
+|---|---|---|
+| Emitter module (shared) | BENCH-EMIT-* (was A.1–A.6) | Phase A complete, green |
+| Comparator | BENCH-CMP (was PG-POC-017) | Green (12/12 + 4/4 contract) |
+| Corpus generator | 028a.1–028a.11 | Complete on main |
+
+## Alias map (transition only — drop after all branches renamed)
+
+- 028b → BENCH-BASE · 028c → CASS-EMIT-024a · 028d → YDB-EMIT-024b ·
+  028e → PG-EMIT-pg · A.* → BENCH-EMIT-* · PG-POC-017 → BENCH-CMP
+- runs/024a-v1.json → runs/cassandra-v1.json · runs/024b-v1.json → runs/ydb-v1.json
+- legs [baseline, 024A, 024B, PG] → [baseline, cassandra, ydb, postgres]
+
+## Rename order
+
+1. B.2 completes as-is; artifact renamed to runs/cassandra-v1.json at CLI-wrap.
+2. Branch + config + tracker rename pass before 024b starts.
+3. Baseline/PG rename on next touch.
