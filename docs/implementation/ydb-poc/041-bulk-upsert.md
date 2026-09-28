@@ -14,6 +14,14 @@ Measured baseline (041.1, 2026-09-28): **4.3 rows/s on the 100-row fixture
 (23s)** — 160k extrapolates to ~10.5 hours. The batch path reports its own
 rows/s in `build.json`; this number is the reference it must beat.
 
+Premise status (2026-09-29): an interim reading held the fixed ~35s
+per-commit cost as falsifying "fewer commits = faster." Root cause was
+environmental (unmounted `/ydb_data` on overlayfs + residual compaction;
+see External-storage rule). Observation stands, conclusion updated: on
+non-degenerate storage, per-commit cost is whatever the volume-mounted
+sanity measures, and fewer commits amortizes normally. Strategy validated,
+contingent on storage.
+
 ## Scope
 
 Replace per-row (1 read + 2 commits) with per-batch (1 read + 1 commit):
@@ -22,9 +30,11 @@ Replace per-row (1 read + 2 commits) with per-batch (1 read + 1 commit):
   row ids.
 - In-memory comparison — drop rows with incoming key ≤ current (regression),
   keep the rest.
-- One transaction per batch — UPSERT survivors, projections + vectors together.
+- One transaction per ≤100-row chunk — UPSERT survivors, projections +
+  vectors together. (100, not 500: server AST node cap is 1M; 500 rows build
+  ~1.1M nodes. Node-bound.)
 
-Ordering semantics preserved; transaction count drops 3N → 2 per batch.
+Ordering semantics preserved; transaction count drops 3N → ~N/100 per batch.
 
 ## Load-path caveat (not "setup-only")
 
@@ -43,6 +53,8 @@ This changes measured load behavior, not just harness speed:
   same order (equivalence fixture).
 - Ordering guard: stale + fresh events for one chunk → only fresh persists.
 - Mixed batch (fresh + stale rows) → exactly the fresh subset written.
+- Commit count is per 100-batch (10k rows → 100 commits, was 30k) — the
+  ticket's "batch → 1 commit" acceptance holds per batch unit, confirmed.
 
 ## Measure and record
 
@@ -55,14 +67,22 @@ This changes measured load behavior, not just harness speed:
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
 
-## Load-topology constraint (sequential only)
+## Follow-up experiments (not blocking)
 
-The in-memory ordering comparison runs between the batch read and the batch
-commit. Two concurrent batches for the same chunk can both read the old key
-and both commit — the guard protects within a batch, not across batches.
-Benchmark loading is sequential; parallel loaders require cross-batch
-ordering coordination, out of scope. Pin the topology the number is valid
-for: bulk-load timings assume sequential batches.
+1. `setCollectStats(NONE)` on the bulk-write path: if default stats
+   collection inflated the 10k response, suppressing it could raise
+   TX_MAX_ROWS 5–10×. Reads unchanged.
+2. BulkUpsert RPC as an alternative write path: bypasses the AST entirely
+   (no VALUES parsing, no node cap). Caveat — typically outside the
+   transaction model, so the "1 read + 1 commit" ordering pattern needs
+   re-derivation, not direct porting. Evaluate only if per-commit cost at
+   100 rows dominates (sanity rows/s will tell).
+
+All call sites use default `ExecuteDataQuerySettings`; the SDK exposes
+`setCollectStats(NONE)`. If default stats collection (FULL/PROFILE) is what
+inflated the 10k response to 139MB, setting NONE on the bulk-write path
+alone could raise TX_MAX_ROWS 5–10×. Try it after sanity lands; keep reads
+unchanged.
 
 ## Architectural note (Phase 4 input)
 

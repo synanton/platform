@@ -98,7 +98,6 @@ when the contract name is broader than the evidence. Origin: three instances —
 restart-identity, eligibility-scope, annotations-never-exercised.
 
 ## DDL-in-one-place rule (convention — flagged for eventual enforcement)
-
 Schema DDL lives in exactly one place per backend (`YdbSchema`,
 `YdbSearchSchema`, `SchemaInstaller`); tests call it, never copy it. Enforced
 by convention only: no suite test may contain `CREATE TABLE` / `ADD INDEX`
@@ -106,6 +105,29 @@ literals outside those modules (gated `-Dydb.probe` diagnostics are exempt —
 throwaway by design, never blocking). A source-scan or ArchUnit enforcement is
 wanted but not built — the next engineer adding "just one inline DDL" to a
 suite test will restart the drift this rule was created to stop.
+
+## External-storage rule (stateful containers)
+
+Any Docker container that persists non-trivial data (databases, index stores,
+caches with disk persistence, brokers, log aggregators — anything that
+fsyncs) must mount its data directory externally (bind mount on local
+SSD/NVMe, or named volume). The container's writable layer is for runtime,
+not application state: overlayfs fsync penalty (100–160× on sequential
+writes) turns per-commit fsyncs into fixed metronomic costs that misdiagnose
+as adapter/transaction problems.
+
+Origin: YDB PoC 2026-09-29 — unmounted `/ydb_data` produced fixed ~35s batch
+commits plus 104% idle burn; volume remount dropped idle to 2.8% and restored
+fast commits. Rule of thumb: data beyond a few hundred MB, or expected to
+survive restarts, gets mounted. One-sentence form: if a container fsyncs,
+mount its data directory externally.
+
+Pre-flight (any stateful container):
+
+- [ ] Data directory mounted externally (`docker inspect` shows the mount)
+- [ ] Host path on local SSD/NVMe (not overlayfs, not NFS); space sufficient
+- [ ] Container user has write access to the host path
+- [ ] Idle CPU < 5% before measuring (rules out residual background work)
 
 ## Flake policy (from `live-test-policy.md`)
 

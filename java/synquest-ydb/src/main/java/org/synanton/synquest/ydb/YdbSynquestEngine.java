@@ -1,6 +1,11 @@
 package org.synanton.synquest.ydb;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -271,21 +276,24 @@ public class YdbSynquestEngine
                                 "UNSUPPORTED: hybrid requires a query embedding"));
             }
             Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
-            DataQueryResult result =
-                    query(
-                            session,
-                            "DECLARE $t AS Utf8;"
-                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json, generation FROM "
-                                    + vectors()
-                                    + " WHERE tenant_id=$t"
-                                    + " ORDER BY HybridRank(FulltextScore(chunk_text, \"" + terms + "\"),"
-                                    + " Knn::CosineDistance(embedding,"
-                                    + " Knn::ToBinaryStringFloat([" + queryVec + "])),"
-                                    + " (\"v_ft\", \"v_hyb\") AS Indexes)"
-                                    + " LIMIT " + (request.topK() + 1) + ";",
-                            params,
-                            TxControl.snapshotRo().setCommitTx(true));
-            SearchResult collected = collectHybrid(request, result, active);
+            SearchResult collected =
+                    collectHybrid(
+                            request,
+                            (limit, offset) ->
+                                    query(
+                                            session,
+                                            "DECLARE $t AS Utf8;"
+                                                    + "SELECT chunk_id, doc_id, chunk_text, metadata_json, generation FROM "
+                                                    + vectors()
+                                                    + " WHERE tenant_id=$t"
+                                                    + " ORDER BY HybridRank(FulltextScore(chunk_text, \"" + terms + "\"),"
+                                                    + " Knn::CosineDistance(embedding,"
+                                                    + " Knn::ToBinaryStringFloat([" + queryVec + "])),"
+                                                    + " (\"v_ft\", \"v_hyb\") AS Indexes)"
+                                                    + " LIMIT " + limit + " OFFSET " + offset + ";",
+                                            params,
+                                            TxControl.snapshotRo().setCommitTx(true)),
+                            active);
             metrics.record(AdapterMetrics.SYNQUEST_SEARCH, System.nanoTime() - start, true);
             return CompletableFuture.completedFuture(collected);
         } catch (RuntimeException e) {
@@ -313,37 +321,55 @@ public class YdbSynquestEngine
     }
 
     private SearchResult collectHybrid(
-            SearchRequest request, DataQueryResult result, Optional<String> active) {
+            SearchRequest request, PageQuery pages, Optional<String> active) {
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
-        ResultSetReader rs = result.getResultSet(0);
         int eligible = 0;
         int position = 0;
-        while (rs.next()) {
-            eligible++;
-            if (active.isPresent()
-                    && !active.get().equals(rs.getColumn("generation").getText())) {
-                continue;
-            }            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
-            if (!matches(metadata, request.filters().mustMatchMetadata())) {
-                continue;
+        int scanned = 0;
+        int offset = 0;
+        outer:
+        while (scanned < SCAN_CAP) {
+            DataQueryResult result = pages.fetch(FETCH_PAGE, offset);
+            ResultSetReader rs = result.getResultSet(0);
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                eligible++;
+                if (active.isPresent()
+                        && !active.get().equals(rs.getColumn("generation").getText())) {
+                    continue;
+                }
+                Map<String, String> metadata =
+                        YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+                if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                    continue;
+                }
+                // Rank-derived RRF-shape score (K=60 default): HybridRank cannot be projected.
+                // Position spans pages (global rank), preserving cross-page order.
+                double score = 1.0 / (60.0 + position);
+                position++;
+                if (score < request.minScore()) {
+                    continue;
+                }
+                ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+                String text = rs.getColumn("chunk_text").getText();
+                hits.add(
+                        new SearchHit(
+                                chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text,
+                                metadata));
+                if (hits.size() >= request.topK()) {
+                    break outer;
+                }
+                highlights.put(chunkId, snippet(text, request.queryText()));
             }
-            // Rank-derived RRF-shape score (K=60 default): HybridRank cannot be projected.
-            double score = 1.0 / (60.0 + position);
-            position++;
-            if (score < request.minScore()) {
-                continue;
-            }
-            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
-            String text = rs.getColumn("chunk_text").getText();
-            hits.add(
-                    new SearchHit(
-                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
-            if (hits.size() >= request.topK()) {
+            scanned += n;
+            if (n < FETCH_PAGE) {
                 break;
             }
-            highlights.put(chunkId, snippet(text, request.queryText()));
+            offset += n;
         }
+        checkCapHit(scanned, hits.size(), request.topK());
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
@@ -354,7 +380,7 @@ public class YdbSynquestEngine
             Session session, String tenant, SearchRequest request, Optional<String> active) {
         String terms = escapeQuotes(request.queryText());
         Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
-        DataQueryResult result =
+        return collect(session, request, (limit, offset) ->
                 query(
                         session,
                         declareTenant(active)
@@ -363,10 +389,9 @@ public class YdbSynquestEngine
                                 + table() + " VIEW `ft`"
                                 + " WHERE tenant_id=$t" + generationClause(active, params)
                                 + " AND FulltextScore(chunk_text, \"" + terms + "\") > 0"
-                                + " ORDER BY relevance DESC LIMIT " + (request.topK() + 1) + ";",
+                                + " ORDER BY relevance DESC LIMIT " + limit + " OFFSET " + offset + ";",
                         params,
-                        TxControl.snapshotRo().setCommitTx(true));
-        return collect(session, request, result);
+                        TxControl.snapshotRo().setCommitTx(true)));
     }
 
     private SearchResult vectorSearch(
@@ -381,46 +406,62 @@ public class YdbSynquestEngine
         // predicate — vector VIEW queries only resolve index-key columns in WHERE.
         // Deterministic (never a security boundary), LIMIT-sized for PoC scale.
         Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
-        DataQueryResult result =
-                query(
-                        session,
-                        "DECLARE $t AS Utf8;"
-                                + "SELECT chunk_id, doc_id, metadata_json, generation, " + similarity
-                                + " AS relevance FROM "
-                                + vectors() + " VIEW `v_vec`"
-                                + " WHERE tenant_id=$t"
-                                + " ORDER BY " + similarity + " DESC LIMIT " + (request.topK() + 1) + ";",
-                        params,
-                        TxControl.snapshotRo().setCommitTx(true));
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
-        ResultSetReader rs = result.getResultSet(0);
         int eligible = 0;
-        while (rs.next()) {
-            eligible++;
-            if (active.isPresent()
-                    && !active.get().equals(rs.getColumn("generation").getText())) {
-                continue;
+        int scanned = 0;
+        int offset = 0;
+        outer:
+        while (scanned < SCAN_CAP) {
+            DataQueryResult result =
+                    query(
+                            session,
+                            "DECLARE $t AS Utf8;"
+                                    + "SELECT chunk_id, doc_id, metadata_json, generation, " + similarity
+                                    + " AS relevance FROM "
+                                    + vectors() + " VIEW `v_vec`"
+                                    + " WHERE tenant_id=$t"
+                                    + " ORDER BY " + similarity + " DESC LIMIT " + FETCH_PAGE
+                                    + " OFFSET " + offset + ";",
+                            params,
+                            TxControl.snapshotRo().setCommitTx(true));
+            ResultSetReader rs = result.getResultSet(0);
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                eligible++;
+                if (active.isPresent()
+                        && !active.get().equals(rs.getColumn("generation").getText())) {
+                    continue;
+                }
+                Map<String, String> metadata =
+                        YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+                if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                    continue;
+                }
+                double score = readRelevance(rs);
+                if (score < request.minScore()) {
+                    continue;
+                }
+                // Text lives in the projections table; vector rows carry ids + metadata.
+                ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+                String text = readText(session, tenant, chunkId);
+                hits.add(
+                        new SearchHit(
+                                chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text,
+                                metadata));
+                if (hits.size() >= request.topK()) {
+                    break outer;
+                }
+                highlights.put(chunkId, snippet(text, request.queryText()));
             }
-            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
-            if (!matches(metadata, request.filters().mustMatchMetadata())) {
-                continue;
-            }
-            double score = readRelevance(rs);
-            if (score < request.minScore()) {
-                continue;
-            }
-            // Text lives in the projections table; vector rows carry ids + metadata.
-            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
-            String text = readText(session, tenant, chunkId);
-            hits.add(
-                    new SearchHit(
-                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
-            if (hits.size() >= request.topK()) {
+            scanned += n;
+            if (n < FETCH_PAGE) {
                 break;
             }
-            highlights.put(chunkId, snippet(text, request.queryText()));
+            offset += n;
         }
+        checkCapHit(scanned, hits.size(), request.topK());
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
         }
@@ -439,31 +480,76 @@ public class YdbSynquestEngine
         }
     }
 
-    private SearchResult collect(Session session, SearchRequest request, DataQueryResult result) {
+    /**
+     * Pre-R3 iterative over-fetch (option 1): page through ranked rows until
+     * caller stops asking. Correct at any selectivity (cost scales with it);
+     * a fixed factor would silently fail at 0.1%. Pages are separate snapshot
+     * reads over static benchmark data — no cross-page consistency claim
+     * beyond that scope.
+     */
+    static final int FETCH_PAGE = 500;
+    static final int SCAN_CAP = 20_000;
+
+    /**
+     * Scan-cap tripwire (fail-loudly, never silent-partial): hitting the cap
+     * with unfilled top-K means eligible rows may exist past the scan window.
+     * Pure function — directly unit-tested.
+     */
+    static void checkCapHit(int scanned, int eligible, int topK) {
+        if (scanned >= SCAN_CAP && eligible < topK) {
+            throw new StorageException(
+                    StorageErrorKind.TRANSIENT,
+                    "SCAN_CAP_HIT cap=" + SCAN_CAP + " scanned=" + scanned
+                            + " eligible=" + eligible + " topK=" + topK
+                            + " (raise cap or narrow scope; never silent-partial)");
+        }
+    }
+
+    private interface PageQuery {
+        DataQueryResult fetch(int limit, int offset);
+    }
+
+    private SearchResult collect(Session session, SearchRequest request, PageQuery pages) {
         List<SearchHit> hits = new ArrayList<>();
         Map<ChunkId, String> highlights = new java.util.HashMap<>();
-        ResultSetReader rs = result.getResultSet(0);
         int eligible = 0;
-        while (rs.next()) {
-            eligible++;
-            Map<String, String> metadata = YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
-            if (!matches(metadata, request.filters().mustMatchMetadata())) {
-                continue;
+        int scanned = 0;
+        int offset = 0;
+        outer:
+        while (scanned < SCAN_CAP) {
+            DataQueryResult result = pages.fetch(FETCH_PAGE, offset);
+            ResultSetReader rs = result.getResultSet(0);
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                eligible++;
+                Map<String, String> metadata =
+                        YdbJson.fromJson(rs.getColumn("metadata_json").getJson());
+                if (!matches(metadata, request.filters().mustMatchMetadata())) {
+                    continue;
+                }
+                double score = rs.getColumn("relevance").getDouble();
+                if (score < request.minScore()) {
+                    continue;
+                }
+                ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
+                String text = rs.getColumn("chunk_text").getText();
+                hits.add(
+                        new SearchHit(
+                                chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text,
+                                metadata));
+                if (hits.size() >= request.topK()) {
+                    break outer;
+                }
+                highlights.put(chunkId, snippet(text, request.queryText()));
             }
-            double score = rs.getColumn("relevance").getDouble();
-            if (score < request.minScore()) {
-                continue;
-            }
-            ChunkId chunkId = ChunkId.of(rs.getColumn("chunk_id").getText());
-            String text = rs.getColumn("chunk_text").getText();
-            hits.add(
-                    new SearchHit(
-                            chunkId, DocumentId.of(rs.getColumn("doc_id").getText()), score, text, metadata));
-            if (hits.size() >= request.topK()) {
+            scanned += n;
+            if (n < FETCH_PAGE) {
                 break;
             }
-            highlights.put(chunkId, snippet(text, request.queryText()));
+            offset += n;
         }
+        checkCapHit(scanned, hits.size(), request.topK());
         // Highlights for the last hit when topK-bounded above.
         for (SearchHit hit : hits) {
             highlights.putIfAbsent(hit.chunkId(), snippet(hit.text(), request.queryText()));
@@ -674,7 +760,7 @@ public class YdbSynquestEngine
      */
     static final int BATCH_READ_MAX = 500;
 
-    Map<String, Long> readOrderingBatch(Session session, List<ChunkProjection> batch) {
+    public Map<String, Long> readOrderingBatch(Session session, List<ChunkProjection> batch) {
         Map<String, Long> out = new java.util.LinkedHashMap<>();
         for (int i = 0; i < batch.size(); i += BATCH_READ_MAX) {
             List<ChunkProjection> part = batch.subList(i, Math.min(i + BATCH_READ_MAX, batch.size()));
@@ -704,6 +790,203 @@ public class YdbSynquestEngine
             }
         }
         return out;
+    }
+
+    /**
+     * 041.3 in-memory ordering partition (the load-bearing task): strict
+     * {@code >} — incoming key above stored survives, equal-or-below drops.
+     * Equal drops log the incoming payload hash plus a batch-end count line:
+     * identical hash on re-read means idempotent retry (expected); a differing
+     * stored row needs one SELECT to confirm (collision investigation). The
+     * count makes drift visible in aggregate. Absent stored key means new
+     * chunk: always fresh. Pure function — unit-tested without a container.
+     */
+    public static List<ChunkProjection> keepFresh(
+            List<ChunkProjection> batch, Map<String, Long> stored) {
+        List<ChunkProjection> fresh = new java.util.ArrayList<>(batch.size());
+        int equalDrops = 0;
+        for (ChunkProjection p : batch) {
+            Long current = stored.get(p.tenantId() + "|" + p.chunkId().value());
+            if (current == null || p.orderingKey() > current) {
+                fresh.add(p);
+            } else if (p.orderingKey() == current) {
+                equalDrops++;
+                System.out.println(
+                        "ORDERING-DROP equal key (likely idempotent retry): "
+                                + p.tenantId() + "|" + p.chunkId().value()
+                                + " key=" + p.orderingKey()
+                                + " payload_sha=" + sha8(p.text()));
+            }
+        }
+        System.out.println(
+                "ORDERING-PARTITION batch=" + batch.size() + " fresh=" + fresh.size()
+                        + " equal_drops=" + equalDrops
+                        + " stale_drops=" + (batch.size() - fresh.size() - equalDrops));
+        return List.copyOf(fresh);
+    }
+
+    /** Progress file is per-process-run: first call truncates (stale-run
+     * confusion, same family as stale outputs), later calls append. */
+    private static final java.util.concurrent.atomic.AtomicBoolean PROGRESS_TRUNCATED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    private static void truncateProgressOnce() {
+        if (!PROGRESS_TRUNCATED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            String progress = System.getenv("BULK_PROGRESS_FILE");
+            if (progress != null && !progress.isBlank()) {
+                Files.deleteIfExists(Path.of(progress));
+            }
+        } catch (Exception ignored) {
+            // Progress must never break the commit path.
+        }
+    }
+
+    private static String sha8(String text) {
+        try {
+            byte[] digest =
+                    java.security.MessageDigest.getInstance("SHA-256")
+                            .digest(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 4; i++) {
+                sb.append(String.format("%02x", digest[i]));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "unhashable";
+        }
+    }
+
+    /**
+     * 041.4 single-transaction batch commit: generation pointer (iff unset) +
+     * projections UPSERT + vectors UPSERT in ONE serializable-RW transaction.
+     * Multi-row VALUES with indexed params ($t0..$tn). Returns the commit
+     * count (always 1; 0 for empty input) — the number the ticket exists for.
+     * A mid-batch failure rolls back everything: projections and vectors can
+     * never disagree, and the next retry re-reads pre-commit keys.
+     *
+     * <p>Transaction size cap (measured 2026-09-28): a 10k-row single tx
+     * returns 139MB against the 64MB gRPC limit (RESOURCE_EXHAUSTED). Batches
+     * chunk at {@link #TX_MAX_ROWS} — still 1 commit per chunk vs 3 per row.
+     * <p>Binding constraint is the AST node cap, not bytes: 500 rows build
+     * ~1.1M nodes (~2,210/row at 384-d, dominated by inlined float literals
+     * ×2 tables) against the 1M cap; TX_MAX_ROWS=100 holds ~221k nodes
+     * (≈4.5× margin; ≈2× at 768-d, still binding). The 64MB gRPC cap would
+     * allow ~4,500 rows and does not bind. Re-measure node cost at each
+     * embedding-dimension change.
+     *
+     * <p>Second bound (measured 2026-09-28): server-side AST node cap
+     * (1,000,000 nodes). A 500-row chunk builds ~1.1M nodes (~2,210/row at
+     * 384-d, dominated by inlined float literals ×2 tables) and fails with
+     * "Too many allocated nodes". TX_MAX_ROWS=100 keeps ~221k nodes (≈4.5×
+     * margin; ≈2× at 768-d). Node-bound, not byte-bound, at this size.
+     */
+    static final int TX_MAX_ROWS = 100;
+
+    public     int upsertBatch(Session session, List<ChunkProjection> fresh) {
+        if (fresh.isEmpty()) {
+            return 0;
+        }
+        truncateProgressOnce();
+        int commits = 0;
+        long t0 = System.nanoTime();
+        int total = (fresh.size() + TX_MAX_ROWS - 1) / TX_MAX_ROWS;
+        for (int i = 0; i < fresh.size(); i += TX_MAX_ROWS) {
+            commits += upsertChunk(session, fresh.subList(i, Math.min(i + TX_MAX_ROWS, fresh.size())));
+            long elapsed = (System.nanoTime() - t0) / 1_000_000;
+            String line =
+                    "BULK-CHUNK done=" + commits + "/" + total + " elapsed_ms=" + elapsed;
+            System.out.println(line);
+            // File mirror: Gradle captures worker stdout until task end, so
+            // console lines are blind mid-run. The file is the live signal.
+            try {
+                String progress = System.getenv("BULK_PROGRESS_FILE");
+                if (progress != null && !progress.isBlank()) {
+                    Files.writeString(
+                            Path.of(progress),
+                            Instant.now() + " " + line + "\n",
+                            StandardCharsets.UTF_8,
+                            StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                }
+            } catch (Exception ignored) {
+                // Progress must never break the commit path.
+            }
+        }
+        System.out.println(
+                "BULK-COMMIT rows=" + fresh.size() + " commits=" + commits);
+        return commits;
+    }
+
+    private int upsertChunk(Session session, List<ChunkProjection> fresh) {
+        Optional<String> active = readActive(session);
+        String gen = fresh.get(0).generationId().value();
+        for (ChunkProjection p : fresh) {
+            if (!p.generationId().value().equals(active.orElse(gen))) {
+                throw new StorageException(
+                        StorageErrorKind.CONFLICT,
+                        "CONFLICT: mixed generations in batch");
+            }
+        }
+        StringBuilder yql = new StringBuilder();
+        Params params = Params.create();
+        if (active.isEmpty()) {
+            yql.append("UPSERT INTO ").append(generations())
+                    .append(" (scope, active_generation) VALUES ('*', $gen);");
+            params.put("$gen", PrimitiveValue.newText(gen));
+        }
+        yql.append("UPSERT INTO ").append(table())
+                .append(" (tenant_id, chunk_id, doc_id, chunk_text, metadata_json,"
+                        + " ordering_key, generation) VALUES ");
+        appendProjectionRows(yql, params, fresh, false, "");
+        yql.append(";");
+        yql.append("UPSERT INTO ").append(vectors())
+                .append(" (key, tenant_id, chunk_id, doc_id, chunk_text, metadata_json, embedding,"
+                        + " ordering_key, generation) VALUES ");
+        appendProjectionRows(yql, params, fresh, true, "v");
+        yql.append(";");
+        query(session, yql.toString(), params, TxControl.serializableRw().setCommitTx(true));
+        return 1;
+    }
+
+    private void appendProjectionRows(
+            StringBuilder yql, Params params, List<ChunkProjection> fresh, boolean vectors,
+            String prefix) {
+        for (int i = 0; i < fresh.size(); i++) {
+            ChunkProjection p = fresh.get(i);
+            String t = "$" + prefix + "t" + i;
+            String c = "$" + prefix + "c" + i;
+            String d = "$" + prefix + "d" + i;
+            String x = "$" + prefix + "x" + i;
+            String m = "$" + prefix + "m" + i;
+            String o = "$" + prefix + "o" + i;
+            String g = "$" + prefix + "g" + i;
+            if (i > 0) {
+                yql.append(", ");
+            }
+            if (vectors) {
+                yql.append("($" + prefix + "k" + i)
+                        .append(", ").append(t).append(", ").append(c)
+                        .append(", ").append(d).append(", ").append(x).append(", ").append(m)
+                        .append(", Untag(Knn::ToBinaryStringFloat([")
+                        .append(floatList(p.embedding())).append("]), 'FloatVector'), ")
+                        .append(o).append(", ").append(g).append(")");
+                params.put("$" + prefix + "k" + i,
+                        PrimitiveValue.newText(p.tenantId() + "|" + p.chunkId().value()));
+            } else {
+                yql.append("(").append(t).append(", ").append(c)
+                        .append(", ").append(d).append(", ").append(x).append(", ").append(m)
+                        .append(", ").append(o).append(", ").append(g).append(")");
+            }
+            params.put(t, PrimitiveValue.newText(p.tenantId()));
+            params.put(c, PrimitiveValue.newText(p.chunkId().value()));
+            params.put(d, PrimitiveValue.newText(p.documentId().value()));
+            params.put(x, PrimitiveValue.newText(p.text()));
+            params.put(m, PrimitiveValue.newJson(YdbJson.toJson(p.metadata())));
+            params.put(o, PrimitiveValue.newUint64(p.orderingKey()));
+            params.put(g, PrimitiveValue.newText(p.generationId().value()));
+        }
     }
 
     private Optional<String> readGeneration(Session session, String tenant, ChunkId id) {
