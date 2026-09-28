@@ -9,8 +9,11 @@ workstream (024B) · 028e PG workstream (PG leg)
 
 ## 028[c/d/e].1 — Read corpus + manifest
 
-Description: Load v1 corpus. Read manifest version. Fail fast on missing manifest.
-Acceptance: load succeeds; missing-manifest negative test.
+Description: Load the v1 corpus. Read manifest version. Fail fast on missing manifest.
+Streaming constraint (phantom-SKIP lesson from 028a.8): corpus loading must
+stream (embed-then-write per row; no full in-memory corpus list). 2g heap is
+margin, not a requirement; 1g must succeed.
+Acceptance: Load succeeds; missing-manifest negative test.
 Estimate: 2 hr. Depends on: 028a corpus, `EmitterContractTest`.
 Evidence: load test + negative test.
 
