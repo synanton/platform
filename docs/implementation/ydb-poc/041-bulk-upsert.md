@@ -55,6 +55,15 @@ This changes measured load behavior, not just harness speed:
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
 
+## Load-topology constraint (sequential only)
+
+The in-memory ordering comparison runs between the batch read and the batch
+commit. Two concurrent batches for the same chunk can both read the old key
+and both commit — the guard protects within a batch, not across batches.
+Benchmark loading is sequential; parallel loaders require cross-batch
+ordering coordination, out of scope. Pin the topology the number is valid
+for: bulk-load timings assume sequential batches.
+
 ## Architectural note (Phase 4 input)
 
 024A never hit this: Lucene's index is in-JVM (B.2 load CPU-bound, no
