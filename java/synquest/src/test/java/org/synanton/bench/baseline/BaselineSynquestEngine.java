@@ -108,7 +108,7 @@ public final class BaselineSynquestEngine implements SynquestEngine {
             out.add(
                     new Scored(
                             ChunkId.of(doc.get("id")), DocumentId.of(doc.get("id")),
-                            sd.score, doc.get("text"), Map.of()));
+                            sd.score, doc.get("text"), readMeta(doc)));
         }
         return out;
     }
@@ -125,7 +125,7 @@ public final class BaselineSynquestEngine implements SynquestEngine {
             out.add(
                     new Scored(
                             ChunkId.of(doc.get("id")), DocumentId.of(doc.get("id")),
-                            sd.score, doc.get("text"), Map.of()));
+                            sd.score, doc.get("text"), readMeta(doc)));
         }
         return out;
     }
@@ -144,14 +144,29 @@ public final class BaselineSynquestEngine implements SynquestEngine {
                         .orElseGet(() -> TopDocs.merge(0, new TopDocs[0]));
         var stored = searcher.storedFields();
         List<Scored> out = new ArrayList<>();
-        for (var f : RrfFusion.combine(dense, lex, request.topK(), RRF_K)) {
+        // Fuse over FULL legs (never pre-truncated): filtering happens after
+        // fusion, so a filtered attribute at fused rank 11+ stays visible.
+        // Fusing top-10-then-filtering silently drops it (found 2026-09-28:
+        // 5 hybrid legs empty despite matching chunks in rank 11-100).
+        for (var f : RrfFusion.combine(dense, lex, Integer.MAX_VALUE, RRF_K)) {
             var doc = stored.document(f.docId());
             out.add(
                     new Scored(
                             ChunkId.of(doc.get("id")), DocumentId.of(doc.get("id")),
-                            f.rrfScore(), doc.get("text"), Map.of()));
+                            f.rrfScore(), doc.get("text"), readMeta(doc)));
         }
         return out;
+    }
+
+    /** Stored meta_* fields back into hit metadata (metadata filter legs). */
+    private static Map<String, String> readMeta(org.apache.lucene.document.Document doc) {
+        Map<String, String> meta = new java.util.LinkedHashMap<>();
+        for (org.apache.lucene.index.IndexableField f : doc.getFields()) {
+            if (f.name().startsWith("meta_")) {
+                meta.put(f.name().substring(5), f.stringValue());
+            }
+        }
+        return Map.copyOf(meta);
     }
 
     /** Test/CLI helper: port-native request construction for golden queries. */

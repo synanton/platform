@@ -26,6 +26,8 @@ dependencies {
     // 028b.1b bench wrapper (test sources, beside BaselineBench).
     testImplementation(project(":java:synquest-api"))
     testImplementation(project(":java:storage-contract"))
+    testImplementation(project(":java:synanton-bench-emitter"))
+    testImplementation(project(":java:synanton-bench-baseline"))
 }
 
 tasks.named<BootJar>("bootJar") {
@@ -38,4 +40,8 @@ tasks.named<Test>("test") {
     systemProperty("ydb.bench", providers.systemProperty("ydb.bench").getOrElse(""))
     systemProperty("ydb.bench.docs", providers.systemProperty("ydb.bench.docs").getOrElse("2000"))
     systemProperty("ydb.bench.chunks", providers.systemProperty("ydb.bench.chunks").getOrElse("8"))
+    systemProperty("bench.run.baseline", providers.systemProperty("bench.run.baseline").getOrElse(""))
+    // 028b.8 documented run holds 50 Lucene indexes + query fan-out in worker;
+    // 10g cap (64G host). Cap only, not tuning.
+    maxHeapSize = "10g"
 }

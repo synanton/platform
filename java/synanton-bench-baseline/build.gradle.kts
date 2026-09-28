@@ -5,6 +5,8 @@ plugins {
 dependencies {
     api(libs.jackson.databind)
     api(project(":java:synquest-api"))
+    implementation(libs.lucene.core)
+    implementation(libs.lucene.analysis.common)
     testImplementation(project(":java:storage-provider"))
     testImplementation(project(":java:synanton-bench-emitter"))
     testImplementation(platform(libs.junit.bom))
