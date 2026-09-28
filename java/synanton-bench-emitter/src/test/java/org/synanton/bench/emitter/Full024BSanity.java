@@ -125,8 +125,8 @@ class Full024BSanity {
                 commits = engine.upsertBatch(session, fresh);
             }
             assertThat(commits)
-                    .as("batch path: 1 commit for 10k rows (was 30k)")
-                    .isEqualTo(1);
+                    .as("batch path: 20 commits for 10k rows at 500/tx (was 30k)")
+                    .isEqualTo(20);
             double secs = (System.nanoTime() - t0) / 1_000_000_000.0;
             double rate = ROWS / secs;
             System.out.printf(

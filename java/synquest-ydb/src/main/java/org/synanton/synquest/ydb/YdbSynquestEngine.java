@@ -842,11 +842,27 @@ public class YdbSynquestEngine
      * count (always 1; 0 for empty input) — the number the ticket exists for.
      * A mid-batch failure rolls back everything: projections and vectors can
      * never disagree, and the next retry re-reads pre-commit keys.
+     *
+     * <p>Transaction size cap (measured 2026-09-28): a 10k-row single tx
+     * returns 139MB against the 64MB gRPC limit (RESOURCE_EXHAUSTED). Batches
+     * chunk at {@link #TX_MAX_ROWS} — still 1 commit per chunk vs 3 per row.
      */
+    static final int TX_MAX_ROWS = 500;
+
     public int upsertBatch(Session session, List<ChunkProjection> fresh) {
         if (fresh.isEmpty()) {
             return 0;
         }
+        int commits = 0;
+        for (int i = 0; i < fresh.size(); i += TX_MAX_ROWS) {
+            commits += upsertChunk(session, fresh.subList(i, Math.min(i + TX_MAX_ROWS, fresh.size())));
+        }
+        System.out.println(
+                "BULK-COMMIT rows=" + fresh.size() + " commits=" + commits);
+        return commits;
+    }
+
+    private int upsertChunk(Session session, List<ChunkProjection> fresh) {
         Optional<String> active = readActive(session);
         String gen = fresh.get(0).generationId().value();
         for (ChunkProjection p : fresh) {
@@ -874,8 +890,6 @@ public class YdbSynquestEngine
         appendProjectionRows(yql, params, fresh, true, "v");
         yql.append(";");
         query(session, yql.toString(), params, TxControl.serializableRw().setCommitTx(true));
-        System.out.println(
-                "BULK-COMMIT rows=" + fresh.size() + " commits=1 generation=" + gen);
         return 1;
     }
 
