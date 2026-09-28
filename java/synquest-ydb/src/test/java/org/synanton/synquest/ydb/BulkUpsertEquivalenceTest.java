@@ -178,4 +178,110 @@ class BulkUpsertEquivalenceTest {
         assertThat(fresh.stream().map(p -> p.chunkId().value()).toList())
                 .containsExactly("bulk-chunk-0", "bulk-chunk-1", "bulk-chunk-2", "bulk-chunk-5");
     }
+
+    @Test
+    void dropsIdenticalRetryAsNoop() throws Exception {
+        // Companion to dropsStaleRowsKeepsFreshOnMixedBatch: there the stored
+        // map is synthetic (equal key + DIFFERENT payload still drops — the
+        // invariant cares about keys, not content). Here the payload is
+        // identical (true idempotent retry): drop must also leave state
+        // untouched, verified by re-snapshot equality.
+        YdbSynquestEngine engine = freshEngine();
+        List<ChunkProjection> fixture = fixture();
+        engine.upsert(fixture.subList(0, 10)).toCompletableFuture().join();
+        List<String> before = snapshotState(PREFIX);
+        Map<String, Long> stored;
+        try (tech.ydb.table.Session session = YdbSearchTestBase.session()) {
+            stored = engine.readOrderingBatch(session, fixture.subList(0, 10));
+        }
+        List<ChunkProjection> fresh =
+                YdbSynquestEngine.keepFresh(fixture.subList(0, 10), stored);
+        assertThat(fresh).as("identical retry drops everything").isEmpty();
+        assertThat(snapshotState(PREFIX)).as("state untouched by retry").isEqualTo(before);
+    }
+
+    @Test
+    void batchCommitSingleTransactionMatchesPerRow() throws Exception {
+        // 041.4 + 041.6: one commit for the whole batch; final state identical
+        // to the per-row reference (041.1). Projections and vectors agree
+        // (single tx — never half-applied).
+        YdbSynquestEngine engine = freshEngine();
+        List<ChunkProjection> fixture = fixture();
+        int commits;
+        try (tech.ydb.table.Session session = YdbSearchTestBase.session()) {
+            Map<String, Long> stored = engine.readOrderingBatch(session, fixture);
+            assertThat(stored).as("fresh table reads empty").isEmpty();
+            List<ChunkProjection> fresh = YdbSynquestEngine.keepFresh(fixture, stored);
+            assertThat(fresh).hasSize(ROWS);
+            commits = engine.upsertBatch(session, fresh);
+        }
+        assertThat(commits).as("batch of 100 → 1 commit (was 200)").isEqualTo(1);
+        List<String> batchSnapshot = snapshotState(PREFIX);
+
+        // Per-row reference on the same fixture (truncate between).
+        YdbSearchSchema.truncateAll(YdbSearchTestBase.client(), PREFIX);
+        for (int i = 0; i < fixture.size(); i += 10) {
+            engine.upsert(fixture.subList(i, Math.min(i + 10, fixture.size())))
+                    .toCompletableFuture()
+                    .join();
+        }
+        List<String> perRowSnapshot = snapshotState(PREFIX);
+        assertThat(batchSnapshot)
+                .as("batch final state == per-row final state")
+                .isEqualTo(perRowSnapshot);
+    }
+
+    @Test
+    void mixedBatchWritesExactlyFreshSubset() throws Exception {
+        // 041.5: 3 fresh + 2 stale + 1 new → 4 written, 2 dropped, previous
+        // values of dropped rows unchanged, both tables agree.
+        YdbSynquestEngine engine = freshEngine();
+        List<ChunkProjection> seed = fixture().subList(0, 10);
+        engine.upsert(seed).toCompletableFuture().join();
+        List<ChunkProjection> incoming = new java.util.ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            ChunkProjection p = seed.get(i);
+            incoming.add(
+                    new ChunkProjection(
+                            p.chunkId(), p.documentId(), p.tenantId(), p.text() + " v2",
+                            p.metadata(), p.embedding(), p.embeddingModelRef(),
+                            p.orderingKey() + 100, p.generationId()));
+        }
+        for (int i = 3; i < 5; i++) {
+            ChunkProjection p = seed.get(i);
+            incoming.add(
+                    new ChunkProjection(
+                            p.chunkId(), p.documentId(), p.tenantId(), p.text() + " stale",
+                            p.metadata(), p.embedding(), p.embeddingModelRef(),
+                            p.orderingKey() - 10, p.generationId()));
+        }
+        ChunkProjection novel =
+                new ChunkProjection(
+                        ChunkId.of("bulk-chunk-novel"), DocumentId.of("bulk-doc-novel"),
+                        "tenant_00", "novel text", Map.of("doc_type", "memo"),
+                        new float[] {0.5f, 0.5f}, MODEL, 5000L, GEN);
+        incoming.add(novel);
+        List<String> before = snapshotState(PREFIX);
+        int commits;
+        try (tech.ydb.table.Session session = YdbSearchTestBase.session()) {
+            Map<String, Long> stored = engine.readOrderingBatch(session, incoming);
+            List<ChunkProjection> fresh = YdbSynquestEngine.keepFresh(incoming, stored);
+            assertThat(fresh.stream().map(p -> p.chunkId().value()).toList())
+                    .containsExactly(
+                            "bulk-chunk-0", "bulk-chunk-1", "bulk-chunk-2", "bulk-chunk-novel");
+            commits = engine.upsertBatch(session, fresh);
+        }
+        assertThat(commits).isEqualTo(1);
+        List<String> after = snapshotState(PREFIX);
+        // Dropped rows keep previous values: their snapshot lines survive unchanged.
+        for (String line : before) {
+            if (line.contains("bulk-chunk-3") || line.contains("bulk-chunk-4")) {
+                assertThat(after).as("stale row untouched: " + line).contains(line);
+            }
+        }
+        // Fresh rows updated in BOTH tables (atomicity: P and V agree).
+        assertThat(after.stream().filter(l -> l.contains("bulk-chunk-0")).toList()).hasSize(2);
+        assertThat(after.stream().filter(l -> l.contains("bulk-chunk-novel")).toList()).hasSize(2);
+        assertThat(after.size()).isEqualTo(before.size() + 2);
+    }
 }

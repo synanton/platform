@@ -708,26 +708,133 @@ public class YdbSynquestEngine
 
     /**
      * 041.3 in-memory ordering partition (the load-bearing task): strict
-     * {@code >} — incoming key above stored survives, equal-or-below drops
-     * (equal logs, never fails: idempotent retries re-send identical keys).
-     * Absent stored key means new chunk: always fresh. Pure function —
-     * unit-tested without a container.
+     * {@code >} — incoming key above stored survives, equal-or-below drops.
+     * Equal drops log the incoming payload hash plus a batch-end count line:
+     * identical hash on re-read means idempotent retry (expected); a differing
+     * stored row needs one SELECT to confirm (collision investigation). The
+     * count makes drift visible in aggregate. Absent stored key means new
+     * chunk: always fresh. Pure function — unit-tested without a container.
      */
     static List<ChunkProjection> keepFresh(
             List<ChunkProjection> batch, Map<String, Long> stored) {
         List<ChunkProjection> fresh = new java.util.ArrayList<>(batch.size());
+        int equalDrops = 0;
         for (ChunkProjection p : batch) {
             Long current = stored.get(p.tenantId() + "|" + p.chunkId().value());
             if (current == null || p.orderingKey() > current) {
                 fresh.add(p);
             } else if (p.orderingKey() == current) {
+                equalDrops++;
                 System.out.println(
-                        "ORDERING-DROP equal key (idempotent retry): "
+                        "ORDERING-DROP equal key (likely idempotent retry): "
                                 + p.tenantId() + "|" + p.chunkId().value()
-                                + " key=" + p.orderingKey());
+                                + " key=" + p.orderingKey()
+                                + " payload_sha=" + sha8(p.text()));
             }
         }
+        System.out.println(
+                "ORDERING-PARTITION batch=" + batch.size() + " fresh=" + fresh.size()
+                        + " equal_drops=" + equalDrops
+                        + " stale_drops=" + (batch.size() - fresh.size() - equalDrops));
         return List.copyOf(fresh);
+    }
+
+    private static String sha8(String text) {
+        try {
+            byte[] digest =
+                    java.security.MessageDigest.getInstance("SHA-256")
+                            .digest(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 4; i++) {
+                sb.append(String.format("%02x", digest[i]));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "unhashable";
+        }
+    }
+
+    /**
+     * 041.4 single-transaction batch commit: generation pointer (iff unset) +
+     * projections UPSERT + vectors UPSERT in ONE serializable-RW transaction.
+     * Multi-row VALUES with indexed params ($t0..$tn). Returns the commit
+     * count (always 1; 0 for empty input) — the number the ticket exists for.
+     * A mid-batch failure rolls back everything: projections and vectors can
+     * never disagree, and the next retry re-reads pre-commit keys.
+     */
+    int upsertBatch(Session session, List<ChunkProjection> fresh) {
+        if (fresh.isEmpty()) {
+            return 0;
+        }
+        Optional<String> active = readActive(session);
+        String gen = fresh.get(0).generationId().value();
+        for (ChunkProjection p : fresh) {
+            if (!p.generationId().value().equals(active.orElse(gen))) {
+                throw new StorageException(
+                        StorageErrorKind.CONFLICT,
+                        "CONFLICT: mixed generations in batch");
+            }
+        }
+        StringBuilder yql = new StringBuilder();
+        Params params = Params.create();
+        if (active.isEmpty()) {
+            yql.append("UPSERT INTO ").append(generations())
+                    .append(" (scope, active_generation) VALUES ('*', $gen);");
+            params.put("$gen", PrimitiveValue.newText(gen));
+        }
+        yql.append("UPSERT INTO ").append(table())
+                .append(" (tenant_id, chunk_id, doc_id, chunk_text, metadata_json,"
+                        + " ordering_key, generation) VALUES ");
+        appendProjectionRows(yql, params, fresh, false, "");
+        yql.append(";");
+        yql.append("UPSERT INTO ").append(vectors())
+                .append(" (key, tenant_id, chunk_id, doc_id, chunk_text, metadata_json, embedding,"
+                        + " ordering_key, generation) VALUES ");
+        appendProjectionRows(yql, params, fresh, true, "v");
+        yql.append(";");
+        query(session, yql.toString(), params, TxControl.serializableRw().setCommitTx(true));
+        System.out.println(
+                "BULK-COMMIT rows=" + fresh.size() + " commits=1 generation=" + gen);
+        return 1;
+    }
+
+    private void appendProjectionRows(
+            StringBuilder yql, Params params, List<ChunkProjection> fresh, boolean vectors,
+            String prefix) {
+        for (int i = 0; i < fresh.size(); i++) {
+            ChunkProjection p = fresh.get(i);
+            String t = "$" + prefix + "t" + i;
+            String c = "$" + prefix + "c" + i;
+            String d = "$" + prefix + "d" + i;
+            String x = "$" + prefix + "x" + i;
+            String m = "$" + prefix + "m" + i;
+            String o = "$" + prefix + "o" + i;
+            String g = "$" + prefix + "g" + i;
+            if (i > 0) {
+                yql.append(", ");
+            }
+            if (vectors) {
+                yql.append("($" + prefix + "k" + i)
+                        .append(", ").append(t).append(", ").append(c)
+                        .append(", ").append(d).append(", ").append(x).append(", ").append(m)
+                        .append(", Untag(Knn::ToBinaryStringFloat([")
+                        .append(floatList(p.embedding())).append("]), 'FloatVector'), ")
+                        .append(o).append(", ").append(g).append(")");
+                params.put("$" + prefix + "k" + i,
+                        PrimitiveValue.newText(p.tenantId() + "|" + p.chunkId().value()));
+            } else {
+                yql.append("(").append(t).append(", ").append(c)
+                        .append(", ").append(d).append(", ").append(x).append(", ").append(m)
+                        .append(", ").append(o).append(", ").append(g).append(")");
+            }
+            params.put(t, PrimitiveValue.newText(p.tenantId()));
+            params.put(c, PrimitiveValue.newText(p.chunkId().value()));
+            params.put(d, PrimitiveValue.newText(p.documentId().value()));
+            params.put(x, PrimitiveValue.newText(p.text()));
+            params.put(m, PrimitiveValue.newJson(YdbJson.toJson(p.metadata())));
+            params.put(o, PrimitiveValue.newUint64(p.orderingKey()));
+            params.put(g, PrimitiveValue.newText(p.generationId().value()));
+        }
     }
 
     private Optional<String> readGeneration(Session session, String tenant, ChunkId id) {
