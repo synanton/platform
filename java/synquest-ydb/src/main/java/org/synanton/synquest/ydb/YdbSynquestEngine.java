@@ -706,6 +706,30 @@ public class YdbSynquestEngine
         return out;
     }
 
+    /**
+     * 041.3 in-memory ordering partition (the load-bearing task): strict
+     * {@code >} — incoming key above stored survives, equal-or-below drops
+     * (equal logs, never fails: idempotent retries re-send identical keys).
+     * Absent stored key means new chunk: always fresh. Pure function —
+     * unit-tested without a container.
+     */
+    static List<ChunkProjection> keepFresh(
+            List<ChunkProjection> batch, Map<String, Long> stored) {
+        List<ChunkProjection> fresh = new java.util.ArrayList<>(batch.size());
+        for (ChunkProjection p : batch) {
+            Long current = stored.get(p.tenantId() + "|" + p.chunkId().value());
+            if (current == null || p.orderingKey() > current) {
+                fresh.add(p);
+            } else if (p.orderingKey() == current) {
+                System.out.println(
+                        "ORDERING-DROP equal key (idempotent retry): "
+                                + p.tenantId() + "|" + p.chunkId().value()
+                                + " key=" + p.orderingKey());
+            }
+        }
+        return List.copyOf(fresh);
+    }
+
     private Optional<String> readGeneration(Session session, String tenant, ChunkId id) {
         DataQueryResult result =
                 query(

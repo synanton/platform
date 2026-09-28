@@ -161,4 +161,21 @@ class BulkUpsertEquivalenceTest {
             return engine.readOrderingBatch(session, fixture);
         }
     }
+
+    @Test
+    void dropsStaleRowsKeepsFreshOnMixedBatch() {
+        List<ChunkProjection> batch = fixture().subList(0, 6);
+        // Stored: chunk-0..2 at lower keys (fresh), chunk-3 at equal key
+        // (drop + log), chunk-4 at higher key (drop), chunk-5 absent (fresh).
+        Map<String, Long> stored =
+                Map.of(
+                        "tenant_00|bulk-chunk-0", 500L,
+                        "tenant_01|bulk-chunk-1", 500L,
+                        "tenant_02|bulk-chunk-2", 500L,
+                        "tenant_03|bulk-chunk-3", 1003L,
+                        "tenant_00|bulk-chunk-4", 9999L);
+        List<ChunkProjection> fresh = YdbSynquestEngine.keepFresh(batch, stored);
+        assertThat(fresh.stream().map(p -> p.chunkId().value()).toList())
+                .containsExactly("bulk-chunk-0", "bulk-chunk-1", "bulk-chunk-2", "bulk-chunk-5");
+    }
 }
