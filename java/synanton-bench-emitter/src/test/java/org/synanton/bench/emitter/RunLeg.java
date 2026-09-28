@@ -36,8 +36,13 @@ import org.synanton.synquest.api.SynquestIndexWriter;
  * ({@code <out>/.checkpoint.jsonl}: a LOAD-DONE marker then one Q3 query
  * object per completed query); --resume skips truncate + load (when
  * LOAD-DONE present) + completed queries; no index cache — every documented
- * run cold-builds; build.json emitted beside Q3. Engine construction is the
+ * run cold-builds; build.json emission beside Q3. Engine construction is the
  * only adapter-specific code here; load/query/validate/emit are port-level.
+ *
+ * <p>Byte-identity (resume vs fresh) is modulo {@code timing_ms}: run_id is
+ * deterministic by construction ({@code <engine>-v1}, no timestamps), but
+ * timings are real measurements and legitimately differ. The comparator never
+ * gates on timing; thresholds read it with topology context.
  */
 public final class RunLeg {
 

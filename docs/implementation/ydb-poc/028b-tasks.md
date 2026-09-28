@@ -3,13 +3,32 @@
 **Owner:** andreminin (YDB search-track)
 **Branch:** `DESIGN-YDB-028b-tasks` (task lists; implementation branch TBD)
 **Spec:** `028a-format-spec-corpus.md` + 028a generator output
-**Estimate:** ~38 hr / ~5 days
-**Gate:** Blocked on 028a (corpus format + generator output). D9: replacement,
-not extension — BaselineBench is retired, not adapted.
-**Depends on:** 028a corpus; `EmitterContractTest` green (already green on main)
+**Estimate:** ~10–12 hr (re-scoped: loader/query/emit/validate/determinism
+consumed from shared module — see consumed list below)
 
 Each task maps below. Acceptance is per-task, cumulative. No task closes on a
 documented claim; each needs evidence in the same commit.
+
+## Consumed from shared module (struck from original scope — do not rebuild)
+
+- 028b.2 loader → A.2 streaming loader (this file re-scopes 028b.2 as wiring)
+- 028b.4 query execution → A.3 port-based executor
+- 028b.5 Q3 emitter → A.4 serializer
+- 028b.6 ground-truth validation → A.5 validator
+- 028b.7 determinism → A.6 harness
+
+Remaining unique to 028b: 028b.1b (wrapper prerequisite), 028b.3 (tenant
+index — the substantive unique work), 028b.8 (documented run via RunLeg),
+028b.9 (closeout).
+
+## 028b.1b — BaselineSynquestEngine wrapper (prerequisite)
+
+`BaselineSynquestEngine` does not exist — 028b.2 has nothing to wire to until
+it does. Wrapper presenting the baseline's `HybridSearcher` + `RrfFusion` as
+a `SynquestEngine` port implementation.
+Acceptance: wrapper compiles against the port; delegates lexical/vector/
+hybrid legs to production components. Estimate: 3 hr. Depends on: 028b.1.
+Evidence: scaffold commit; delegation test on mini fixture.
 
 ## 028b.1 — Module scaffold and BaselineBench retirement decision
 
@@ -20,23 +39,38 @@ Acceptance: new module builds, suite green; BaselineBench status documented
 `RrfFusion` reused (frozen baseline definition, 006). Estimate: 2 hr.
 Depends on: —. Evidence: skeleton commit; retirement commit or deprecation note.
 
-## 028b.2 — Multi-tenant corpus loader
+## 028b.2 — Wire shared corpus loader to baseline engine (re-scoped)
 
-Description: Load v1 corpus (documents, chunks, embeddings, manifest). Verify
-manifest version matches expected. Fail fast on missing manifest (§7 emitter rule).
-Streaming constraint (phantom-SKIP lesson from 028a.8): stream rows
-(embed-then-write per row); 2g heap is margin, 1g must succeed.
-Acceptance: 20k docs / 160k chunks loaded; manifest version asserted;
-missing-manifest negative test. Estimate: 4 hr. Depends on: 028b.1.
-Evidence: load test with count assertion + negative test.
+Original 028b.2 ("build a multi-tenant corpus loader") is subsumed by A.2 —
+rebuilding it would duplicate the shared module and risk an incompatible
+loader. This task wires the existing loader instead.
+
+Description: consume the shared streaming loader (`synanton-bench-emitter`,
+A.2) to feed the baseline engine's per-tenant index. Loader streams rows;
+indexer consumes; nothing holds 160k×384 in memory. Manifest-first
+fail-fast inherited (no baseline-specific error path); corpus_version
+exposed for Q3 passthrough.
+Acceptance: baseline loads v1 via shared loader; peak heap ≤ 1g (subprocess
+pattern, full corpus); manifest version + row count logged; missing manifest
+surfaces the shared loader's named error. Test:
+`baselineLoadsV1CorpusStreamingViaSharedLoaderAtOneGigabyteHeap`.
+Estimate: 3 hr. Depends on: shared emitter (main), 028b.1b.
+Evidence: green test at -Xmx1g on full v1; negative test; version+count log.
+Explicitly not: new loader, in-memory corpus, manifest redefinition,
+ CorpusIo/Manifest reimplementation.
 
 ## 028b.3 — Tenant-scoped index construction
 
 Description: Build per-tenant Lucene indexes (multi-tenant partitioning).
 Acceptance: 50 tenant indexes, Zipf-distributed; no cross-tenant leakage at
 build; index size/build time recorded for the Phase 4 cost model.
+Adjacent acceptance, upgraded to close-gate: 028b.3 does not close until
+equivalence is green (wrapped baseline produces identical top-K and scores
+to BaselineBench on a small fixture). Routing (028b.1b) without behavioral
+equivalence would let baseline-v1.json measure a lookalike harness with R3
+misdiagnosis as the cost. Same discipline as 041's equivalence test.
 Estimate: 6 hr. Depends on: 028b.2.
-Evidence: index inventory test; per-tenant counts match Zipf.
+Evidence: index inventory test; per-tenant counts match Zipf; equivalence test.
 
 ## 028b.4 — Query execution over the corpus
 
