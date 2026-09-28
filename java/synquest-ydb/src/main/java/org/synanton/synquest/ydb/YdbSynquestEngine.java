@@ -846,6 +846,9 @@ public class YdbSynquestEngine
      * <p>Transaction size cap (measured 2026-09-28): a 10k-row single tx
      * returns 139MB against the 64MB gRPC limit (RESOURCE_EXHAUSTED). Batches
      * chunk at {@link #TX_MAX_ROWS} — still 1 commit per chunk vs 3 per row.
+     * Margin is dimension-scoped: 500 rows ≈ 7MB/tx (9×) at 384-d, ≈14MB/tx
+     * (4.5×) at 768-d. Re-measure at each embedding-dimension change; the
+     * constant is byte-bound, not row-bound.
      */
     static final int TX_MAX_ROWS = 500;
 

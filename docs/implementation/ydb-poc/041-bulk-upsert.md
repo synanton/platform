@@ -43,6 +43,8 @@ This changes measured load behavior, not just harness speed:
   same order (equivalence fixture).
 - Ordering guard: stale + fresh events for one chunk → only fresh persists.
 - Mixed batch (fresh + stale rows) → exactly the fresh subset written.
+- Commit count is per 500-batch (10k rows → 20 commits, was 30k) — the
+  ticket's "batch of 500 → 1 commit" acceptance holds per batch unit, confirmed.
 
 ## Measure and record
 
@@ -54,6 +56,14 @@ This changes measured load behavior, not just harness speed:
 ## Not in scope
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
+
+## Follow-up experiment (not blocking)
+
+All call sites use default `ExecuteDataQuerySettings`; the SDK exposes
+`setCollectStats(NONE)`. If default stats collection (FULL/PROFILE) is what
+inflated the 10k response to 139MB, setting NONE on the bulk-write path
+alone could raise TX_MAX_ROWS 5–10×. Try it after sanity lands; keep reads
+unchanged.
 
 ## Architectural note (Phase 4 input)
 
