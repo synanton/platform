@@ -46,6 +46,14 @@ merits (absolute --out, build.json + checkpoint sidecars, --engine
 unification, truncate/skip-resume, setsid detach), not on timeout avoidance.
 Do not re-quote the wall as fact.
 
+## Pre-run verification (mount gate)
+
+Before any documented run, the harness (or operator) must run
+`./scripts/verify-mounts.sh <container> <data-dir> [<certs-dir>]` and abort
+on failure. A check operators must remember is the original 32s failure mode;
+wire it into RunLeg startup (or the CI first step), never leave it manual.
+Defaults resolve under `docker/data/`; first `up` creates them.
+
 ## Order
 
 Sequential, one leg at a time: 024a → 024b → 028e (fixture only) →
