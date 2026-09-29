@@ -103,6 +103,14 @@ class H2IndexMatrix {
                             new Variant("neither", false, false));
             for (Variant v : variants) {
                 String prefix = "t_emit_h2_" + v.name().replace("-", "_");
+                // Drop-then-create: persisted volumes carry stale tables from
+                // prior runs, and ensureSchema skips index DDL when tables
+                // exist — leaving variants without the indexes to drop.
+                try {
+                    YdbSearchSchema.dropSchema(client, prefix);
+                } catch (Exception e) {
+                    System.out.println("H2 dropSchema (best-effort): " + e.getMessage());
+                }
                 YdbSearchSchema.ensureSchema(client, prefix, 384);
                 if (!v.vec()) {
                     dropIndex(client, prefix, "vectors", "v_vec");
