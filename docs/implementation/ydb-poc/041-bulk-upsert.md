@@ -56,12 +56,18 @@ This changes measured load behavior, not just harness speed:
 - Commit count is per 100-batch (10k rows → 100 commits, was 30k) — the
   ticket's "batch → 1 commit" acceptance holds per batch unit, confirmed.
 
-## Measure and record
+## Measure and record (closed 2026-09-29)
 
-- Rows/s at 10k, extrapolated to 160k.
-- Commit count reduction (per-row vs per-batch).
-- Index backfill behavior vs per-row path.
-- Effect on `build.json` load timing.
+- BulkUpsert 100 rows = 8–10ms / ~10–12.5k rows/s; 1000 rows = 20ms / 50k
+  rows/s (sublinear scaling). Durability verified (count + content read-back
+  immediately after return). 160k extrapolates to seconds.
+- The measurement: BulkUpsert vs YQL batch ≈ 3000–4000×. C.2 drops from
+  ~14 hr to minutes.
+- The contract split: load path non-transactional (BulkUpsert, empty table
+  only), update path transactional (YQL serializable + ordering guard).
+- The premise correction: "fewer commits = faster" holds under the correct
+  API; the YQL path is structurally incompatible with bulk load (per-commit
+  fixed cost independent of storage, stats, and indexes).
 
 ## Not in scope
 
