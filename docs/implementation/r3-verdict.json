@@ -1,0 +1,69 @@
+{
+  "decision": "R3-CONDITIONAL-PASS",
+  "date": "2026-09-29",
+  "corpus": "ydb-poc-corpus-v1",
+  "legs": {
+    "cassandra": {
+      "identity_fails": 0,
+      "overlap_fails": 20,
+      "failed_legs": [
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/tenant/-",
+        "vector/none/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "hybrid/none/-",
+        "hybrid/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "hybrid/tenant/-"
+      ],
+      "comparator_overall": "FAIL",
+      "r3_routing": "proceed (no hard-gate fails)"
+    },
+    "ydb": {
+      "identity_fails": 0,
+      "overlap_fails": 21,
+      "failed_legs": [
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "vector/none/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "vector/none/-",
+        "hybrid/none/-",
+        "hybrid/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-",
+        "hybrid/none/-",
+        "vector/tenant/-"
+      ],
+      "comparator_overall": "FAIL",
+      "r3_routing": "proceed (no hard-gate fails)"
+    }
+  },
+  "notes": [
+    "24 structural empties identical across all three legs",
+    "vector/hybrid overlap divergence pre-declared (vector spaces, fusion semantics)"
+  ],
+  "meaning": "hard gates (identity, lexical) pass on both legs; vector/hybrid overlap divergences pre-declared semantic, not defect"
+}
