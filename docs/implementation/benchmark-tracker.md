@@ -14,7 +14,7 @@ Pre-R3 gates (all must close before R3; parallel with 041):
 
 | Gate | Owner | Status |
 |---|---|---|
-| 006 re-freeze (thresholds from baseline-v1.json) | andreminin | Unblocked now — runs parallel with 041, not serial after C.2 |
+| 006 re-freeze (thresholds from baseline-v1.json) | andreminin | Unblocked now — runs parallel with 041, not serial after C.2. Percentile rule: legs flagged `structural_empty` are EXCLUDED from threshold math (no signal, not zero signal) |
 | 024B/PG fusion-semantics check (pre-ranking invariant) | YDB workstream (024B) · PG workstream (PG) | **024B CLOSED**: iterative over-fetch on all 3 legs (page-until-full, 20k cap, fail-loudly `SCAN_CAP_HIT` tripwire); regression + cap tests green. PG still deferred to leg activation |
 
 Cross-cutting:

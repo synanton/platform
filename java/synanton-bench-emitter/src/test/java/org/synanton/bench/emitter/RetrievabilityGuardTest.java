@@ -45,4 +45,15 @@ class RetrievabilityGuardTest {
         assertThat(v.pass()).isFalse();
         assertThat(v.detail()).contains("defect, not structural");
     }
+
+    @Test
+    void isStructuralFlagsZeroRetrievable() {
+        Map<String, String> texts = Map.of("c1", "alpha beta", "c2", "beta gamma");
+        assertThat(RetrievabilityGuard.isStructural("alpha zeta", List.of("c1", "c2"), texts))
+                .as("no eligible chunk contains all terms → structural")
+                .isTrue();
+        assertThat(RetrievabilityGuard.isStructural("alpha beta", List.of("c1", "c2"), texts))
+                .as("c1 retrievable → not structural")
+                .isFalse();
+    }
 }

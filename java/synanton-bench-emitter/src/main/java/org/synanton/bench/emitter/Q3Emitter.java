@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import org.synanton.bench.emitter.QueryExecutor.Hit;
 import org.synanton.bench.emitter.QueryExecutor.QueryOutput;
 
@@ -22,6 +23,16 @@ public final class Q3Emitter {
     private Q3Emitter() {}
 
     public static String emit(String runId, String corpus, List<QueryOutput> outputs) {
+        return emit(runId, corpus, outputs, Set.of());
+    }
+
+    /**
+     * Emits Q3 with per-query {@code structural_empty} flags for the given
+     * query ids (proven via {@link RetrievabilityGuard#isStructural}, never
+     * asserted by class). Re-freeze excludes flagged legs from percentiles.
+     */
+    public static String emit(
+            String runId, String corpus, List<QueryOutput> outputs, Set<String> structuralIds) {
         ObjectNode root = MAPPER.createObjectNode();
         root.put("run_id", runId);
         root.put("corpus", corpus);
@@ -44,6 +55,7 @@ public final class Q3Emitter {
             }
             ArrayNode eligible = q.putArray("eligible_set");
             o.eligibleIds().forEach(eligible::add);
+            q.put("structural_empty", structuralIds.contains(o.queryId()));
             queries.add(q);
         }
         return root.toString();
