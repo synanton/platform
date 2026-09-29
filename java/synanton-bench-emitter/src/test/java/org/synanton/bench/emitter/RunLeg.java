@@ -377,6 +377,25 @@ public final class RunLeg {
                     () -> {
                         try {
                             org.synanton.synquest.ydb.YdbSearchSchema.truncateAll(client, prefix);
+                            // TRUNCATE returns before deletion is visible (same
+                            // scheme-eventual-consistency family as DROP):
+                            // poll until empty, fail loudly on timeout.
+                            // Otherwise the bulk read sees stale keys and
+                            // keepFresh drops the whole reload as "equal".
+                            long deadline =
+                                    System.currentTimeMillis() + 120_000;
+                            while (true) {
+                                if (countProjections(client, prefix) == 0) {
+                                    break;
+                                }
+                                if (System.currentTimeMillis() > deadline) {
+                                    throw new IllegalStateException(
+                                            "truncate did not take effect in 120s");
+                                }
+                                Thread.sleep(2_000);
+                            }
+                        } catch (RuntimeException e) {
+                            throw e;
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -400,6 +419,25 @@ public final class RunLeg {
                 }
             }
             throw new IllegalStateException("YDB CA not found");
+        }
+
+        private static long countProjections(tech.ydb.table.TableClient client, String prefix)
+                throws Exception {
+            try (tech.ydb.table.Session session =
+                    client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
+                var rs =
+                        session
+                                .executeDataQuery(
+                                        "SELECT COUNT(*) AS n FROM `" + prefix + "_projections`;",
+                                        tech.ydb.table.transaction.TxControl.staleRo().setCommitTx(true),
+                                        tech.ydb.table.query.Params.empty(),
+                                        new tech.ydb.table.settings.ExecuteDataQuerySettings())
+                                .join()
+                                .getValue()
+                                .getResultSet(0);
+                rs.next();
+                return rs.getColumn("n").getUint64();
+            }
         }
     }
 
