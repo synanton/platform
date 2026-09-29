@@ -3,12 +3,12 @@ plugins {
 }
 
 dependencies {
-    // Main stays dependency-free (JDK + java.sql only): the domain boundary
-    // guards (PG-POC-000) forbid driver/extension references outside adapters,
-    // and the adapter itself does not exist yet (Phase 1).
-    testImplementation(project(":java:synvault-api"))
+    // PG-POC-004: the adapter exists now. Driver stays an api dependency of
+    // this module only (never leaks to domain modules — PG-POC-000 guards).
+    api(project(":java:synvault-api"))
+    api(libs.postgresql)
     testImplementation(project(":java:storage-provider"))
-    testImplementation(libs.postgresql)
+    testImplementation(testFixtures(project(":java:storage-testkit")))
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(platform(libs.junit.bom))

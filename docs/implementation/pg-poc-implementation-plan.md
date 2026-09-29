@@ -208,7 +208,7 @@ External gates:
 
 ## §7. Phase 1 — PostgresSynvaultStore
 
-🔵 PG-POC-004 — PostgresSynvaultStore
+🟢 PG-POC-004 — PostgresSynvaultStore
 
 - Depends on: PG-POC-003, PG-POC-000, PG-POC-012
 - Description: Implement PostgresSynvaultStore with all contract methods: document CRUD, chunks with cursor pagination, mandatory provenance, atomic revision commit (single-node ACID), storage revisions (OCC), tenant isolation via RLS + SecurityContext.
@@ -220,8 +220,19 @@ External gates:
   - Cursor pagination stable across pages and out-of-order requests.
   - supportsStorageRevisions=true with conformance evidence.
   - RLS tenant isolation demonstrated at all four selectivity levels.
+- Evidence: `java/synvault-postgres` — `PostgresSynvaultStoreTest` (contract
+  8/8), `RevisionAtomicityTest` (rollback + racer + metadata-only 3/3),
+  full module 23/23 green. Schema PK/FK `uuid`→`text` (domain ids
+  `tenant_a`/`d1` cannot round-trip; inventory expanded). OCC via
+  `SELECT ... FOR UPDATE` + revision guard; atomic single transaction;
+  publication relay to outbox only on revision path. failAfterChunks hook
+  is test-only (negative path), mirrors YDB 021 shape.
 - Proposal: §8.1, §10 Phase 1, §12 Synvault.
 - Reuses: YDB 021 contract tests, atomicity tests, PlanAssertions pattern.
+- Note (YDB-041 non-transfer): PG tolerates inlined literals far better than
+  YDB — do not expect the 250× finding to reproduce, and do not skip
+  parameterization thinking "PG is fine with literals anyway." Parameterize
+  by default for security and correctness all the same.
 
 ## §8. Phase 2 — PostgresSynquestEngine
 
