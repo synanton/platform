@@ -15,7 +15,10 @@ nothing. Presence misread — the inverse of the phantom-SKIP family
 ## Fix (same shape as the H2-local one)
 
 After any drop-then-create sequence, poll until all tables are actually
-absent (60s cap, fail loudly) before creating. Options:
+absent — projections, vectors, AND the `_generations` pointer table.
+Partial cleanup is worse than none: "mostly fresh" state (stale generation
+pointer pinning old active generation) is harder to reason about than fully
+fresh or fully stale. 60s cap, fail loudly. Options:
 
 - Promote the H2-local `waitForAbsent` into `YdbSearchSchema` as
   `awaitAbsent(client, prefix, timeout)` and call it from `ensureSchema`
