@@ -17,6 +17,14 @@ controlling terminal but not from the session, and session teardown still
 kills it. `setsid` creates a new session and is immune. (Learned 2026-09-28
 when a nohup'd run died with the tool session.)
 
+Baseline leg runs via `:java:synquest:test --tests "*BaselineDocumentedRun"`,
+NOT via RunLeg `--engine baseline`: `java/synquest` ships only a Spring Boot
+fat jar (`jar` task disabled; Dockerfile globs `synquest*.jar`), so its
+classes are unimportable as a library — including from `testFixtures`.
+The wrapper lives in synquest test sources beside BaselineBench by necessity,
+not preference. Unifying under RunLeg would require re-enabling the plain
+jar plus a Dockerfile glob fix; deferred, not forgotten.
+
 ## Checkpoint granularity: per query
 
 Query phase allocates more than load (readers + HNSW resident + metadata —
