@@ -187,7 +187,14 @@ External gates:
 - Proposal: §8.4, §10 Phase 2, §12 Synquest, §17 gate 1.
 - Inherits: YDB Gate 0 (phase2-preflight.md).
 
-🔴 PG-POC-006 — Gate B: comparator validity
+🟢 PG-POC-006 — Gate B: comparator validity
+
+- Depends on: PG-POC-013, baseline service, YDB 024A convergence
+- Evidence: `pg-poc/006-gate-b.md` (CLOSED 2026-09-29). 024A leg closed by
+  R3-CONDITIONAL-PASS (corpus `ydb-poc-corpus-v1`, frozen tolerances;
+  verdict `docs/implementation/r3-verdict.json`, routing
+  `docs/implementation/r4-decision.md` → PG Phase 2 opens). Tie-break 013
+  closed; config at 4 legs.
 
 - Depends on: PG-POC-013, baseline service, YDB 024A convergence
 - Description: Before PG Phase 2 begins, verify:
@@ -244,7 +251,7 @@ External gates:
   `SELECT ... FOR UPDATE` + revision guard; atomic single transaction;
   publication relay to outbox only on revision path. failAfterChunks hook
   is test-only (negative path), mirrors YDB 021 shape.
-- Pattern transfer (recorded in `pg-poc/pattern-notes.md`): parameterization
+- Pattern transfer (pattern-notes.md PN-1/2/3): parameterization
   held by default — YDB needed it for performance, PG for
   correctness/security; same policy, per-backend motive. OCC mechanism
   differs from YDB (row locks vs serializable-RW abort) with identical
