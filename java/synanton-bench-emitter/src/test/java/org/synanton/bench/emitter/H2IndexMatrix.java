@@ -90,6 +90,48 @@ class H2IndexMatrix {
         }
     }
 
+    /**
+     * DROP returns before scheme deletion propagates; ensureSchema's existence
+     * probe (SELECT LIMIT 0) can still see the ghost and skip creation, after
+     * which TRUNCATE fails on nothing. Poll until all three tables are
+     * actually absent (60s cap, then fail loudly — never proceed on ghost).
+     */
+    private static void waitForAbsent(TableClient client, String prefix) throws Exception {
+        long deadline = System.currentTimeMillis() + 60_000;
+        List<String> tables =
+                List.of(prefix + "_projections", prefix + "_vectors", prefix + "_generations");
+        while (true) {
+            boolean anyPresent = false;
+            try (Session session =
+                    client.createSession(Duration.ofSeconds(10)).join().getValue()) {
+                for (String table : tables) {
+                    try {
+                        session
+                                .executeDataQuery(
+                                        "SELECT * FROM `" + table + "` LIMIT 0;",
+                                        tech.ydb.table.transaction.TxControl.snapshotRo()
+                                                .setCommitTx(true),
+                                        tech.ydb.table.query.Params.empty(),
+                                        new tech.ydb.table.settings.ExecuteDataQuerySettings())
+                                .join()
+                                .getValue();
+                        anyPresent = true;
+                    } catch (RuntimeException absent) {
+                        // Table gone — expected path.
+                    }
+                }
+            }
+            if (!anyPresent) {
+                return;
+            }
+            if (System.currentTimeMillis() > deadline) {
+                throw new IllegalStateException(
+                        "scheme deletion did not propagate in 60s for prefix " + prefix);
+            }
+            Thread.sleep(2_000);
+        }
+    }
+
     @Test
     void indexIsolationMatrix() throws Exception {
         Path corpusDir = Paths.get(System.getenv().getOrDefault("CORPUS_DIR", "/tmp/corpus-v1"));
@@ -111,6 +153,7 @@ class H2IndexMatrix {
                 } catch (Exception e) {
                     System.out.println("H2 dropSchema (best-effort): " + e.getMessage());
                 }
+                waitForAbsent(client, prefix);
                 YdbSearchSchema.ensureSchema(client, prefix, 384);
                 if (!v.vec()) {
                     dropIndex(client, prefix, "vectors", "v_vec");
