@@ -152,3 +152,13 @@ If a batch statement is slow, count the AST nodes first. If the statement
 contains inlined literals proportional to data size, parameterize before
 investigating anything else — YDB-041 lost days to storage, stats, and index
 hypotheses before the statement shape was examined.
+
+## Closeout (2026-09-29)
+
+YDB-041 closed: param-based batch path delivers ~770 rows/s (250× over the
+inlined-literal path); C.2 produced `runs/ydb-v1.json` (120 queries, 96
+non-empty, 24 structural empties identical across all three legs); R3
+conditional-pass with zero hard-gate fails. PG Phase 2 inherits:
+parameterized-statement discipline, AST-first diagnostics, and the
+wait-for-effect family (042) — Postgres won't reproduce the AST failure mode,
+but the investigation discipline transfers whole.
