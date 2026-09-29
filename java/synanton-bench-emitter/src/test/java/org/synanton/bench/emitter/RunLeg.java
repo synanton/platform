@@ -157,7 +157,8 @@ public final class RunLeg {
 
     private record Engine(
             SynquestEngine engine, Runnable truncate, java.util.function.Supplier<List<String>> universeSup,
-            String describe, Runnable close) {
+            String describe, Runnable close,
+            java.util.function.Supplier<tech.ydb.table.Session> sessions) {
         List<String> tenantUniverse() {
             return universeSup.get();
         }
@@ -172,6 +173,12 @@ public final class RunLeg {
     }
 
     private static void streamLoad(Engine engine, Path corpusDir) throws Exception {
+        // YDB leg uses the batch path (read → keepFresh → single-tx commits);
+        // per-row upsert at 160k scale is ~10hr (041). Others use port upsert.
+        if (engine.engine() instanceof org.synanton.synquest.ydb.YdbSynquestEngine ydb) {
+            bulkLoadYdb(engine, ydb, corpusDir);
+            return;
+        }
         SynquestIndexWriter writer = (SynquestIndexWriter) engine.engine();
         List<ChunkProjection> batch = new ArrayList<>(BATCH);
         long loaded = 0;
@@ -195,6 +202,59 @@ public final class RunLeg {
         }
         System.out.println("LOAD done loaded=" + loaded);
         rows.clear();
+    }
+
+    private static final int BULK_WINDOW = 10_000;
+
+    private static void bulkLoadYdb(
+            Engine engine, org.synanton.synquest.ydb.YdbSynquestEngine ydb, Path corpusDir)
+            throws Exception {
+        // True streaming: projections accumulate to one window, flush, clear.
+        // Nothing here ever holds 160k rows (texts included).
+        List<ChunkProjection> window = new ArrayList<>(BULK_WINDOW);
+        long[] loaded = {0};
+        int[] commits = {0};
+        long[] ordinal = {0};
+        CorpusLoader.streamChunks(
+                corpusDir,
+                r -> {
+                    window.add(
+                            new ChunkProjection(
+                                    ChunkId.of(r.chunkId()), DocumentId.of(r.docId()),
+                                    r.tenantId(), r.text(), Map.copyOf(r.metadata()),
+                                    decodeVec(r.embeddingB64()), MODEL, ordinal[0]++, GEN));
+                    if (window.size() >= BULK_WINDOW) {
+                        flushWindow(engine, ydb, window, loaded, commits);
+                    }
+                });
+        if (!window.isEmpty()) {
+            flushWindow(engine, ydb, window, loaded, commits);
+        }
+        System.out.println(
+                "LOAD bulk done rows=" + loaded[0] + " commits=" + commits[0]);
+    }
+
+    private static void flushWindow(
+            Engine engine,
+            org.synanton.synquest.ydb.YdbSynquestEngine ydb,
+            List<ChunkProjection> window,
+            long[] loaded,
+            int[] commits) {
+        try (tech.ydb.table.Session session = engine.sessions().get()) {
+            java.util.Map<String, Long> stored = ydb.readOrderingBatch(session, window);
+            List<ChunkProjection> fresh =
+                    org.synanton.synquest.ydb.YdbSynquestEngine.keepFresh(window, stored);
+            commits[0] += ydb.upsertBatch(session, fresh);
+            loaded[0] += fresh.size();
+            System.out.println(
+                    "LOAD bulk window done loaded=" + loaded[0] + " commits=" + commits[0]);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            window.clear();
+        }
     }
 
     private static long countRows(Engine engine, Path corpusDir) throws Exception {
@@ -322,7 +382,15 @@ public final class RunLeg {
                         }
                     },
                     () -> universe,
-                    "ydb@26.3", () -> client.close());
+                    "ydb@26.3", () -> client.close(),
+                    () -> {
+                        try {
+                            return client.createSession(java.time.Duration.ofSeconds(30))
+                                    .join().getValue();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
         }
 
         private static String firstExisting(String... candidates) {
@@ -350,7 +418,10 @@ public final class RunLeg {
                     () -> {},
                     () -> universe,
                     "cassandra-lucene",
-                    () -> {});
+                    () -> {},
+                    () -> {
+                        throw new UnsupportedOperationException("no sessions on cassandra leg");
+                    });
         }
     }
 }
