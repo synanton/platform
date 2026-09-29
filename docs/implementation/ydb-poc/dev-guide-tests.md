@@ -136,3 +136,12 @@ Pre-flight (any stateful container):
   infra (attach container logs).
 - 3 consecutive infra-attributed failures → ticket against the runner; suite
   stays gating meanwhile.
+
+## Pause protocol (live tests vs stopped infrastructure)
+
+A paused project (container stopped per pause checklist) must mark live-YDB
+tests as expected-skip until resume — otherwise the suite goes red for a
+stopped container, which reads as regression but is pause state. Pause
+instructions and the test suite must agree: stopped infra ⇒ live tests skip
+visibly, never fail. (Learned 2026-09-29: wiring test failed post-pause for
+a stopped container; container restart + CA re-copy restored green.)
