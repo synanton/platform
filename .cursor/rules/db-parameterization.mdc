@@ -1,0 +1,187 @@
+---
+description: Parameterized database statements — required for all value data, both scalar and collection forms
+globs:
+  - "**/*.java"
+  - "**/*.kt"
+  - "**/*.sql"
+  - "**/*.yql"
+  - "**/repositories/**"
+  - "**/*Repository.java"
+  - "**/*Adapter.java"
+  - "**/*Store.java"
+  - "**/*Engine.java"
+alwaysApply: true
+---
+
+# Parameterized Database Statements
+
+## The rule
+
+**All database interactions pass values as parameters. Never embed values in query text.**
+
+This applies to both scalar and collection data. Text-embedded values are
+permitted only for a defined set of structural exceptions (below).
+Complements `java-rules.mdc` secure-coding (which covers scalar parameterization
+for security); this rule extends to collection forms and to the correctness
+and performance reasons.
+
+## Why — three reasons, in priority order
+
+1. **Security.** Text-embedded values create SQL injection vulnerabilities.
+   Non-negotiable.
+2. **Correctness.** Parameters carry explicit types. Inlined literals require
+   the database to infer type from text, with drift across locales,
+   timestamps, decimals, and Unicode.
+3. **Performance.** Parameterized statements have small, stable, cacheable
+   plans. Inlined statements produce plans whose *size* is proportional to the
+   data. YDB-041: inlined 384-float embedding literals produced ~221,000 AST
+   nodes per statement and a 250× commit-time penalty that vanished under
+   parameterization.
+
+## How — the two forms
+
+### Scalar parameters
+
+Standard case. Use the driver's binding mechanism.
+
+**Wrong:**
+```java
+String sql = "SELECT * FROM chunks WHERE tenant_id = '" + tenantId + "'";
+```
+
+**Right:**
+```java
+String sql = "SELECT * FROM chunks WHERE tenant_id = ?";
+PreparedStatement stmt = conn.prepareStatement(sql);
+stmt.setString(1, tenantId);
+```
+
+For YQL in YDB:
+
+```java
+// Wrong
+session.executeDataQuery("SELECT * FROM chunks WHERE tenant_id = '" + tenantId + "'");
+
+// Right
+session.prepareDataQuery(
+    "DECLARE $tenant AS Utf8; SELECT * FROM chunks WHERE tenant_id = $tenant;").thenCompose(q -> q.execute(TxControl.SERIALIZABLE_RW,
+    Map.of("$tenant", utf8(tenantId))));
+```
+
+### Collection parameters
+
+The case most teams get wrong. Inserting or updating N rows must not build
+a `VALUES (a,b,c), (d,e,f), ...` literal.
+
+**Wrong — this is the YDB-041 pattern:**
+```java
+StringBuilder sql = new StringBuilder("UPSERT INTO chunks VALUES ");
+for (Row r : rows) {
+    sql.append("('")
+      .append(r.id).append("', ")
+      .append(r.embedding.stream()
+          .map(v -> "CAST(" + v + " AS Float)")
+          .collect(joining(", ")))
+      .append("), ");
+}
+// Result: thousands of AST nodes, 27s commit for 100 rows
+```
+
+**Right — pass the collection as a parameter:**
+```java
+// YQL
+String stmt = """
+    DECLARE $rows AS List<Struct<
+        tenant_id: Utf8,
+        chunk_id: Utf8,
+        embedding: List<Float>
+    >>;
+    UPSERT INTO chunks
+        SELECT * FROM AS_TABLE($rows);
+    """;
+List<Value<?>> paramRows = rows.stream()
+    .map(r -> struct(
+        "tenant_id", utf8(r.tenantId),
+        "chunk_id", utf8(r.chunkId),
+        "embedding", list(r.embedding.stream()
+                          .map(v -> floatVal(v))
+                          .collect(toList()))))
+    .collect(toList());
+session.executeDataQuery(stmt, Map.of("$rows", list(paramRows)));
+// Result: ~dozens of AST nodes, 130ms commit for 100 rows
+```
+
+**JDBC equivalent:**
+```java
+PreparedStatement stmt = conn.prepareStatement(
+    "INSERT INTO chunks (tenant_id, chunk_id, embedding) VALUES (?, ?, ?)");
+for (Row r : rows) {
+    stmt.setString(1, r.tenantId);
+    stmt.setString(2, r.chunkId);
+    stmt.setArray(3, conn.createArrayOf("float4", r.embedding.toArray()));
+    stmt.addBatch();
+}
+stmt.executeBatch();
+```
+
+## When — decision tree
+
+```text
+Building a query with data values?
+├── Values are scalars → use scalar parameters
+├── Values are collections → use collection parameters
+│   ├── Driver supports list/array binding → use it
+│   ├── Driver supports struct binding (YQL) → use it
+│   └── Driver has no collection binding → batch API (JDBC addBatch)
+└── Query has no data values
+    └── Plain text is fine (SELECT * FROM table)
+```
+
+## Structural exceptions — where text is permitted
+
+| Exception | Reason |
+|---|---|
+| DDL statements | Table/column names cannot be parameters in any mainstream database |
+| Dynamic identifiers | Same — identifiers vs. values distinction |
+| Administrative operations (`TRUNCATE`, `DROP`, `ALTER`) | No value payload |
+| Query shapes with no values | `SELECT * FROM t` — nothing to parameterize |
+
+**These are structural exceptions, not convenience exceptions.** Any other
+text-embedded value is a violation.
+
+## Enforcement
+
+Two levels:
+
+**1. Code review.** Any PR that constructs SQL via string concatenation with
+data values is rejected.
+
+**2. Static analysis (aspirational).** A CI lint for `+`-concatenation into
+SQL strings, or a code review checklist item if no lint is available.
+
+## Origin
+
+YDB-041 (`YDB-041-SLOW`): inlined 384-float embedding literals across 100 rows
+and two tables produced ~221,000 AST nodes per YQL statement. YDB's Query
+Service parsed and planned every node on every commit. Result: 27 seconds per
+100-row commit, 14-hour 160k-row load. Parameterized form: 130 milliseconds
+per 100-row commit, 3.5-minute 160k-row load. 250× improvement from the shape
+of the statement, not from any configuration change.
+
+The finding is specific to YQL's AST discipline. Postgres, Cassandra, and
+most databases tolerate inlined literals far better — but they still require
+parameterization for security and correctness reasons. The YDB case is the
+extreme illustration of the third reason (performance), not the general case.
+
+## Checklist for generated database code
+
+Before committing AI-generated code that touches a database:
+
+- [ ] No `String sql = ... + userInput` or `+ anyValue`
+- [ ] No `VALUES (...), (...), ...` built by string concatenation
+- [ ] No `CAST(<literal> AS <type>)` repeated per element in a batch statement
+- [ ] Batch inserts use either parameterized statements in a loop with
+      `addBatch`, or a single parameterized statement with collection binding
+- [ ] YQL statements use `DECLARE $param AS <type>;` and bind via the
+      parameters map
+- [ ] DDL uses text form (explicitly, and the code comment says why)

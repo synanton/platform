@@ -145,3 +145,10 @@ unchanged.
 round-trips); YDB's is client-server (network-bound, per-commit cost
 exposed). Write-path batching discipline is a YDB-specific operational
 concern — a material backend difference for the comparison, not a defect.
+
+## Diagnostic heuristic (for future slowness)
+
+If a batch statement is slow, count the AST nodes first. If the statement
+contains inlined literals proportional to data size, parameterize before
+investigating anything else — YDB-041 lost days to storage, stats, and index
+hypotheses before the statement shape was examined.

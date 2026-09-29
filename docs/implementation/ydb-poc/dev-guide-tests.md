@@ -122,6 +122,17 @@ fast commits. Rule of thumb: data beyond a few hundred MB, or expected to
 survive restarts, gets mounted. One-sentence form: if a container fsyncs,
 mount its data directory externally.
 
+## Parameterization by default (scalar + collection)
+
+All database interactions pass values as parameters, not as text-embedded
+literals — scalar (`WHERE id = ?`) and collection (`List<Struct<...>>`)
+forms. Text-embedded values are permitted only for DDL, dynamic identifiers,
+and administrative operations. Security, correctness, and performance all
+require it. Origin: YDB-041 (inlined embedding literals produced 221k AST
+nodes per statement and a 250× commit-time penalty). AI-generated database
+code follows the same rule (`.cursor/rules/db-parameterization.mdc`); both
+surfaces cite the same origin.
+
 Pre-flight (any stateful container):
 
 - [ ] Data directory mounted externally (`docker inspect` shows the mount)
