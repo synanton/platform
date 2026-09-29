@@ -67,6 +67,22 @@ This changes measured load behavior, not just harness speed:
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
 
+## H2 matrix — partial (suspended 2026-09-29 for maintenance; V4 pending)
+
+| Variant | Load time | Rows/s | Reading |
+|---|---|---|---|
+| V1 full indexes | 2482s | 4.0 | Baseline at scale |
+| V2 no vector | 2635s | 3.8 | +6% (noise band, not signal) |
+| V3 no full-text | 2099s | 4.8 | −15%, contributor not driver |
+| V4 neither | — | — | Deciding test on resume |
+
+V1–V3 agree within family: neither index alone drives the cost. V4 decides
+between "any-index triggers slow path" (defer-all-indexes) and "tx
+coordination" (split tx / bulkUpsert). Suspended run killed via single-PID
+SIGTERM; V4 never started. Rerun full matrix post-maintenance (V1–V3 cheap
+to re-confirm, V4 is the only new datum needed — but rerun all four to
+control for environment drift across the maintenance window).
+
 ## Hypothesis status
 
 - H1 (stats): INCONCLUSIVE at small scale (2026-09-29). 100-row batch commit
