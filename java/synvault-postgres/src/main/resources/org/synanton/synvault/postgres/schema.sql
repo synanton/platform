@@ -6,8 +6,8 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE documents (
-    tenant_id        uuid NOT NULL,
-    doc_id           uuid NOT NULL,
+    tenant_id        text NOT NULL,
+    doc_id           text NOT NULL,
     source_uri       text,
     title            text,
     metadata         jsonb,
@@ -18,9 +18,9 @@ CREATE TABLE documents (
 );
 
 CREATE TABLE chunks (
-    tenant_id   uuid NOT NULL,
-    chunk_id    uuid NOT NULL,
-    doc_id      uuid NOT NULL,
+    tenant_id   text NOT NULL,
+    chunk_id    text NOT NULL,
+    doc_id      text NOT NULL,
     ordinal     int NOT NULL,
     text        text NOT NULL,
     token_count int NOT NULL,
@@ -31,10 +31,10 @@ CREATE TABLE chunks (
 );
 
 CREATE TABLE provenance (
-    tenant_id         uuid NOT NULL,
-    chunk_id          uuid NOT NULL,
+    tenant_id         text NOT NULL,
+    chunk_id          text NOT NULL,
     extractor         text,
-    source_version_id uuid,
+    source_version_id text,
     embedding_model_ref jsonb,
     page              int,
     start_offset      int,
@@ -43,8 +43,8 @@ CREATE TABLE provenance (
 );
 
 CREATE TABLE publication_log (
-    tenant_id    uuid NOT NULL,
-    revision_id  uuid NOT NULL,
+    tenant_id    text NOT NULL,
+    revision_id  text NOT NULL,
     payload      jsonb NOT NULL,
     created_at   timestamptz NOT NULL,
     published_at timestamptz,
@@ -69,19 +69,19 @@ CREATE INDEX documents_metadata_gin ON documents USING gin (metadata);
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON documents
-    USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    USING (tenant_id = current_setting('app.tenant_id', true));
 
 ALTER TABLE chunks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chunks FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON chunks
-    USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    USING (tenant_id = current_setting('app.tenant_id', true));
 
 ALTER TABLE provenance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE provenance FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON provenance
-    USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    USING (tenant_id = current_setting('app.tenant_id', true));
 
 ALTER TABLE publication_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE publication_log FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON publication_log
-    USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    USING (tenant_id = current_setting('app.tenant_id', true));
