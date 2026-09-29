@@ -111,7 +111,7 @@ External gates:
 - Proposal: §7.1, §7.2, §7.3, §12 Architecture.
 - Inherits: YDB tickets 037, 038, 039, 012, 013–020.
 
-🔴 PG-POC-012 — Lifecycle / quota discipline from day one
+🟢 PG-POC-012 — Lifecycle / quota discipline from day one
 
 - Depends on: PG-POC-003
 - Description: Apply the YDB closeout lifecycle discipline before the first test run:
@@ -121,6 +121,13 @@ External gates:
   - DDL-in-one-place: SQL DDL lives in exactly one module per backend; tests call it, never duplicate.
   - Visible-skip rule: guards that skip off-container skip visibly.
 - Acceptance: All five sub-rules verified by test; dev-guide updated for PG-specific quota shapes; the lifecycle section generalized in the dev-guide is applied.
+- Evidence: `LifecycleDisciplineTest` 4/4 (synchronous TRUNCATE,
+  WARN-helper stderr pin, skip-helper abort-with-reason, DDL source scan),
+  `PgQuotaGuardTest` 2/2 (backend connections < 20, no stale
+  idle-in-transaction), inventory extended with `text`-identity pin
+  (PG-POC-004 finding locked in), dev-guide gains "Postgres quota shapes".
+  `PostgresTestBase` exposes `warnTeardown`/`abortVisible` helpers so the
+  rules are unit-pinned, not eyeballed. Full module 30/30 green.
 - Proposal: §18 PG-POC-012, §19 nine-rule discipline.
 - Inherits: YDB closeout (SchemaInstaller, path-accumulation, teardown WARN).
 
@@ -154,7 +161,17 @@ External gates:
 
 ## §6. Phase 0D — Pre-Phase-2 Gates
 
-🔴 PG-POC-005 — Gate A: RLS × ANN composition
+🟢 PG-POC-005 — Gate A: RLS × ANN composition
+
+- Depends on: PG-POC-003
+- Evidence: `pg-poc/005-gate-a.md` (PASS with recorded caveat 2026-09-27) +
+  `pg-poc/005-gate-a-plans/` (three verbatim EXPLAINs). Outcome 1 via
+  btree-restrict-then-sort on both legs (0.1% and ~33% selectivity);
+  adversarial behavioral legs 10/10 eligible, leakage = fail held; metric
+  renamed `vec_p95_btree_sort`. Caveat: HNSW never entered a tenant-scoped
+  plan at PoC scale (planner cost preference, not structural exclusion) —
+  re-verification deferred to Phase 4 with Outcome 2 machinery on standby;
+  standby preflight in `pg-poc/005-gate-a-hnsw-preflight.md`.
 
 - Depends on: PG-POC-003
 - Description: The analogue of YDB's Gate 0. Test before engine exists: highly selective tenant predicate + vector query + EXPLAIN. Three outcomes decided up front per §8.4:
@@ -227,6 +244,11 @@ External gates:
   `SELECT ... FOR UPDATE` + revision guard; atomic single transaction;
   publication relay to outbox only on revision path. failAfterChunks hook
   is test-only (negative path), mirrors YDB 021 shape.
+- Pattern transfer (recorded in `pg-poc/pattern-notes.md`): parameterization
+  held by default — YDB needed it for performance, PG for
+  correctness/security; same policy, per-backend motive. OCC mechanism
+  differs from YDB (row locks vs serializable-RW abort) with identical
+  contract semantics; the racer test is the drift guard.
 - Proposal: §8.1, §10 Phase 1, §12 Synvault.
 - Reuses: YDB 021 contract tests, atomicity tests, PlanAssertions pattern.
 - Note (YDB-041 non-transfer): PG tolerates inlined literals far better than

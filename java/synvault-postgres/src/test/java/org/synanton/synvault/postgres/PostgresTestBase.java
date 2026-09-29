@@ -29,12 +29,28 @@ abstract class PostgresTestBase {
                                         try {
                                             container.stop();
                                         } catch (Exception e) {
-                                            // Teardown WARN rule: log, never swallow silently.
-                                            System.err.println(
-                                                    "WARN: pg container teardown failed: " + e.getMessage());
+                                            warnTeardown("pg container stop", e);
                                         }
                                     }
                                 }));
+    }
+
+    /**
+     * Teardown WARN rule (PG-POC-012): a teardown failure logs at WARN, never
+     * swallowed silently. Extracted as a helper so the rule is unit-pinned in
+     * {@code LifecycleDisciplineTest}, not just eyeballed.
+     */
+    static void warnTeardown(String what, Exception e) {
+        System.err.println("WARN: " + what + " teardown failed: " + e.getMessage());
+    }
+
+    /**
+     * Visible-skip rule (PG-POC-012): an off-container guard aborts with its
+     * reason, never green-silently. Extracted as a helper so the abort-with-
+     * message property is unit-pinned in {@code LifecycleDisciplineTest}.
+     */
+    static void abortVisible(String reason) {
+        Assumptions.assumeTrue(false, reason);
     }
 
     protected static synchronized void ensureStarted() {
@@ -60,7 +76,7 @@ abstract class PostgresTestBase {
             }
         } catch (Exception e) {
             // Visible-skip rule: off-container guard skips visibly, never green-silently.
-            Assumptions.assumeTrue(false, "pg container unavailable, suite skipped: " + e.getMessage());
+            abortVisible("pg container unavailable, suite skipped: " + e.getMessage());
             throw new IllegalStateException("unreachable", e);
         }
         started = true;

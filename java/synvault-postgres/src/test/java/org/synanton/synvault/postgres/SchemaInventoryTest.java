@@ -128,8 +128,7 @@ class SchemaInventoryTest extends PostgresTestBase {
     }
 
     @Test
-    void vectorExtensionInstalled() throws Exception {
-        Set<String> extensions = new HashSet<>();
+    void vectorExtensionInstalled() throws Exception {        Set<String> extensions = new HashSet<>();
         try (Connection conn = connection();
                 ResultSet rs =
                         conn.createStatement().executeQuery("SELECT extname FROM pg_extension")) {
@@ -138,5 +137,32 @@ class SchemaInventoryTest extends PostgresTestBase {
             }
         }
         assertThat(extensions).contains("vector");
+    }
+
+    @Test
+    void identityColumnsAreTextNotUuid() throws Exception {
+        // PG-POC-004 finding, pinned: domain ids (tenant_a, d1) are opaque
+        // strings, not UUID-shaped — uuid columns reject them at insert. A
+        // future schema edit that reverts to uuid must fail here, loudly.
+        Map<String, String> types = new HashMap<>();
+        try (Connection conn = connection();
+                ResultSet rs =
+                        conn.createStatement()
+                                .executeQuery(
+                                        "SELECT table_name || '.' || column_name, data_type"
+                                                + " FROM information_schema.columns"
+                                                + " WHERE table_schema = 'public'"
+                                                + " AND column_name IN"
+                                                + " ('tenant_id', 'doc_id', 'chunk_id')")) {
+            while (rs.next()) {
+                types.put(rs.getString(1), rs.getString(2));
+            }
+        }
+        assertThat(types).isNotEmpty();
+        for (Map.Entry<String, String> entry : types.entrySet()) {
+            assertThat(entry.getValue())
+                    .as("identity column " + entry.getKey())
+                    .isEqualTo("text");
+        }
     }
 }

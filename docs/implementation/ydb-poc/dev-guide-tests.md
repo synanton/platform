@@ -79,6 +79,34 @@ that fails quietly accumulates resources until a hard limit surfaces them —
 when the origin is hardest to trace. `YdbQuotaGuardTest` asserts path count
 below threshold as the permanent guard.
 
+## Postgres quota shapes (PG-POC-012)
+
+PG inherits the lifecycle section from day one; its silently-accumulating
+resources differ from YDB's. There is no path quota — one container per JVM
+plus TRUNCATE-per-store means table debris cannot accumulate. The scarce
+resources are:
+
+- **Backend connections** (`max_connections` defaults to 100). Every adapter
+  op and every test handle borrows one; a leaked handle (un-closed
+  `Connection`, pool misconfiguration in production shape) exhausts the
+  backend and the suite starts flaking at a distance from the leak.
+  Permanent guard: `PgQuotaGuardTest.backendConnectionCountBelowThreshold`
+  (20, well under 100).
+- **`idle in transaction` sessions.** Hold locks, block autovacuum, bloat
+  tables — the PG-shaped variant of "quiet accumulation until a hard limit".
+  Every adapter operation commits or rolls back in the same call; no handle
+  may cross a test boundary mid-transaction. Permanent guard:
+  `PgQuotaGuardTest.noStaleIdleInTransactionSessions` (60s).
+- **Temp objects / WAL** on bulk loads: acknowledged, unguarded — revisit in
+  PG-POC-009 if the ANN corpus load shows pressure.
+
+Lifecycle sub-rules, all test-pinned in `LifecycleDisciplineTest`:
+synchronous teardown (TRUNCATE takes effect immediately, no eventual
+consistency to hide behind), teardown-WARN helper, visible-skip helper,
+DDL-in-one-place (source scan: no Java file outside the enforcer itself may
+state DDL). Schema inventory additionally pins identity columns to `text`
+(PG-POC-004 finding: domain ids are opaque strings, not UUID-shaped).
+
 ## Harness pattern: stable store identity in lifecycle tests (false-negative guard)
 Audit 2026-09-26: every suite test holds one store identity per test — except the
 restart-recovery test, which briefly recreated its store mid-test with a fresh
