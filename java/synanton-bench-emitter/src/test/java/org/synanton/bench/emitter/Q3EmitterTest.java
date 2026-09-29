@@ -52,4 +52,25 @@ class Q3EmitterTest {
                         new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), "q3-test");
         assertThat(parsed.queries().get(0).timingScope()).isEqualTo("summed_fanout_3");
     }
+
+    @Test
+    void structuralEmptyFlagRoundTrips() throws Exception {
+        QueryExecutor.QueryOutput out =
+                new QueryExecutor.QueryOutput(
+                        "q1", "lexical", "tenant", "0.1%",
+                        List.of(), List.of("c1"), 0.5, "single");
+        String json =
+                Q3Emitter.emit("r", "c", List.of(out), java.util.Set.of("q1"));
+        RunOutput parsed =
+                RunOutput.parse(
+                        new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), "q3-test");
+        assertThat(parsed.queries().get(0).structuralEmpty()).isTrue();
+        String json2 = Q3Emitter.emit("r", "c", List.of(out));
+        RunOutput parsed2 =
+                RunOutput.parse(
+                        new ByteArrayInputStream(json2.getBytes(StandardCharsets.UTF_8)), "q3-test");
+        assertThat(parsed2.queries().get(0).structuralEmpty())
+                .as("absent flag defaults false (old fixtures unaffected)")
+                .isFalse();
+    }
 }
