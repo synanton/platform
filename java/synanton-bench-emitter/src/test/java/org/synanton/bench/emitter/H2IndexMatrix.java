@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledIfSystemProperty(named = "bench.run.h2matrix", matches = "true")
 class H2IndexMatrix {
 
-    private static final int ROWS = 5_000;
+    private static final int ROWS = 10_000;
     private static final GenerationId GEN = new GenerationId("h2-gen-1");
     private static final EmbeddingModelRef MODEL = new EmbeddingModelRef("h2", "v1", "h2");
 
@@ -137,9 +137,28 @@ class H2IndexMatrix {
                     commits = engine.upsertBatch(session, fresh);
                 }
                 double secs = (System.nanoTime() - t0) / 1_000_000_000.0;
-                System.out.printf(
-                        "H2-MATRIX variant=%s rows=%d secs=%.1f rows_per_s=%.1f commits=%d%n",
-                        v.name(), ROWS, secs, ROWS / secs, commits);
+                String line =
+                        String.format(
+                                "H2-MATRIX variant=%s rows=%d secs=%.1f rows_per_s=%.1f commits=%d",
+                                v.name(), ROWS, secs, ROWS / secs, commits);
+                System.out.println(line);
+                // Per-variant log file (Gradle captures stdout until task end;
+                // the file is the live signal — same discipline as BULK_PROGRESS_FILE).
+                try {
+                    Path logDir =
+                            Paths.get(
+                                    System.getenv().getOrDefault("H2_LOG_DIR", "/tmp/h2-logs"));
+                    Files.createDirectories(logDir);
+                    Path log = logDir.resolve("h2-" + v.name() + ".log");
+                    if (!Files.exists(log)) {
+                        Files.writeString(log, line + "\n");
+                    } else {
+                        Files.writeString(
+                                log, line + "\n", java.nio.file.StandardOpenOption.APPEND);
+                    }
+                } catch (Exception ignored) {
+                    // Logging must never break measurement.
+                }
             }
         } finally {
             client.close();
