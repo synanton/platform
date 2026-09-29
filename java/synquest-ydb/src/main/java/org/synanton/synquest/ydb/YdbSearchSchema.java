@@ -77,7 +77,11 @@ public final class YdbSearchSchema {
     /** Best-effort cleanup (tables + implicit index paths). Never throws. */
     public static void dropSchema(TableClient client, String prefix) {
         for (String name :
-                java.util.List.of(prefix + "_projections", prefix + "_vectors")) {
+                // All three tables: a surviving generations pointer would pin
+                // a stale active generation across variants (found 2026-09-29
+                // when wait-for-absence timed out on exactly this table).
+                java.util.List.of(
+                        prefix + "_projections", prefix + "_vectors", prefix + "_generations")) {
             try (Session session =
                     client.createSession(java.time.Duration.ofSeconds(10)).join().getValue()) {
                 session.executeSchemeQuery("DROP TABLE `" + name + "`;").join();
