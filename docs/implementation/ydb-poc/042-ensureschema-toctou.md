@@ -27,6 +27,17 @@ fresh or fully stale. 60s cap, fail loudly. Options:
 - Keep `ensureSchema` untouched; document that callers dropping first must
   await absence (weaker — relies on every future caller reading the doc).
 
+## The family (complete 2026-09-29)
+
+| Operation | Async behavior | Guard |
+|---|---|---|
+| DROP TABLE | Ghost persists; existence probe lies | Poll-until-absent, 60s cap |
+| CREATE TABLE | Slow propagation; TRUNCATE fails on nothing | Wait-for-present before use |
+| TRUNCATE TABLE | Returns before rows vanish; bulk read sees ghost keys and the ordering guard correctly no-ops the reload | Poll-count-to-zero, 120s cap |
+
+Rule: no scheme or data-plane mutation is assumed from its return code —
+poll for the intended effect, cap the wait, fail loudly on timeout.
+
 ## Acceptance
 
 - Drop → recreate → TRUNCATE succeeds deterministically (no ghost window).
