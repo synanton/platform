@@ -67,7 +67,27 @@ This changes measured load behavior, not just harness speed:
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
 
-## H2 matrix — partial (suspended 2026-09-29 for maintenance; V4 pending)
+## H2 matrix — complete 2026-09-29 (clean-slate paths, same container)
+
+| Variant | Load time | Rows/s | Δ vs V1 | Reading |
+|---|---|---|---|---|
+| V1 full indexes | 2665s | 3.8 | — | Baseline (3rd V1 point; family 2482/2840/2665, ±7% noise) |
+| V2 no vector | 2527s | 4.0 | −5% | Within noise: vector index neutral |
+| V3 no full-text | 2053s | 4.9 | −23% | Modest contributor, not driver |
+| V4 neither | 1896s | 5.3 | −29% | Real but not collapse |
+
+Conclusions:
+
+1. Indexes are additive, not multiplicative (−5% + −23% ≈ −29%): two
+   independent per-commit costs, not a shared mechanism.
+2. Residual ~70% is tx shape: with no indexes at all, batch (5.3 rows/s)
+   beats per-row (4.3) by only ~23% — an order of magnitude short of what
+   one-commit-per-100-rows should give. The superlinear cost lives in the
+   statement/tx layer.
+3. Fix priority unambiguous: bulkUpsert first (H3 — bypasses AST, Query
+   Service coordination, serializable-RW per-statement path), index
+   deferral second (~30% off load). If both land per projection, C.2 drops
+   from ~14 hr to ~5–10 min.
 
 | Variant | Load time | Rows/s | Reading |
 |---|---|---|---|
@@ -86,9 +106,8 @@ stale tables across runs, and `ensureSchema` skips index DDL when tables
 exist — so every variant must drop-then-create its schema before measuring.
 Same discipline as mount-gate (verify running state) and truncate-on-start
 (clear data state), extended to schema state. Suspended run killed via single-PID
-SIGTERM; V4 never started. Rerun full matrix post-maintenance (V1–V3 cheap
-to re-confirm, V4 is the only new datum needed — but rerun all four to
-control for environment drift across the maintenance window).
+SIGTERM pre-maintenance; full matrix re-ran clean-slate post-maintenance
+(table above). No stale-state confound in the final numbers.
 
 ## Hypothesis status
 
