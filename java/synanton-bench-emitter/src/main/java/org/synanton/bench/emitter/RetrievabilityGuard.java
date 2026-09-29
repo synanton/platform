@@ -19,6 +19,28 @@ public final class RetrievabilityGuard {
 
     private RetrievabilityGuard() {}
 
+    /**
+     * Structural-empty predicate for the Q3 {@code structural_empty} flag:
+     * true iff no eligible chunk contains all query terms. Pure function of
+     * corpus ground truth — the flag is proven per query, never a class
+     * exemption. Emitters set it; re-freeze excludes flagged legs from
+     * percentile math (they contribute no timing signal, not zero signal).
+     */
+    public static boolean isStructural(
+            String queryText, List<String> eligibleIds, Map<String, String> idToText) {
+        List<String> terms = List.of(queryText.strip().split("\\s+"));
+        return eligibleIds.stream()
+                .noneMatch(
+                        id -> {
+                            String text = idToText.get(id);
+                            if (text == null) {
+                                return false;
+                            }
+                            String padded = " " + text + " ";
+                            return terms.stream().allMatch(t -> padded.contains(" " + t + " "));
+                        });
+    }
+
     public record Verdict(String queryId, long retrievable, int topK, boolean pass, String detail) {}
 
     /**

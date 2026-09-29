@@ -137,11 +137,11 @@ Pre-flight (any stateful container):
 - 3 consecutive infra-attributed failures → ticket against the runner; suite
   stays gating meanwhile.
 
-## Shell-chain guard (commands that gate commits)
+## Pause protocol (live tests vs stopped infrastructure)
 
-Never chain a commit past a `grep` (or any filter): `grep`'s exit code means
-"pattern found," not "build succeeded" — a broken commit pushed this way
-(2026-09-29: missing import committed because `grep -E` matched error lines
-and returned 0). Assert `BUILD SUCCESSFUL` explicitly (e.g. `grep -q
-"BUILD SUCCESSFUL"` as the gate, or check `$?` of the build itself) before
-`git commit`. Same family as single-PID kill and verify-after-edit.
+A paused project (container stopped per pause checklist) must mark live-YDB
+tests as expected-skip until resume — otherwise the suite goes red for a
+stopped container, which reads as regression but is pause state. Pause
+instructions and the test suite must agree: stopped infra ⇒ live tests skip
+visibly, never fail. (Learned 2026-09-29: wiring test failed post-pause for
+a stopped container; container restart + CA re-copy restored green.)

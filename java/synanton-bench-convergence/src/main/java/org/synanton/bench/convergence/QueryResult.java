@@ -7,7 +7,9 @@ import java.util.List;
  * lexical/vector/hybrid; {@code filter} is none/eligibility/metadata.
  * {@code timingScope} pins the timing topology ("single" vs
  * "summed_fanout_N"); it is carried, never gated — verdicts use overlap and
- * set identity only.
+ * set identity only. {@code structuralEmpty} marks legs with zero retrievable
+ * ground truth (proven, not asserted): excluded from percentile/threshold
+ * math at re-freeze, never counted as failures.
  */
 public record QueryResult(
         String queryId,
@@ -17,4 +19,5 @@ public record QueryResult(
         List<TopKEntry> topK,
         List<String> eligibleSet,
         double timingMs,
-        String timingScope) {}
+        String timingScope,
+        boolean structuralEmpty) {}
