@@ -990,11 +990,18 @@ public class YdbSynquestEngine
                 yql.append("($" + prefix + "k" + i)
                         .append(", ").append(t).append(", ").append(c)
                         .append(", ").append(d).append(", ").append(x).append(", ").append(m)
-                        .append(", Untag(Knn::ToBinaryStringFloat([")
-                        .append(floatList(p.embedding())).append("]), 'FloatVector'), ")
+                        // List<Float> param instead of 384 inline CASTs: same
+                        // server-side conversion, ~2000 fewer AST nodes/row.
+                        .append(", Untag(Knn::ToBinaryStringFloat($" + prefix + "e" + i + "), 'FloatVector'), ")
                         .append(o).append(", ").append(g).append(")");
                 params.put("$" + prefix + "k" + i,
                         PrimitiveValue.newText(p.tenantId() + "|" + p.chunkId().value()));
+                tech.ydb.table.values.Value[] floats = new tech.ydb.table.values.Value[p.embedding().length];
+                for (int f = 0; f < floats.length; f++) {
+                    floats[f] = PrimitiveValue.newFloat(p.embedding()[f]);
+                }
+                params.put("$" + prefix + "e" + i,
+                        tech.ydb.table.values.ListValue.of(floats));
             } else {
                 yql.append("(").append(t).append(", ").append(c)
                         .append(", ").append(d).append(", ").append(x).append(", ").append(m)

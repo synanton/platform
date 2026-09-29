@@ -14,13 +14,11 @@ Measured baseline (041.1, 2026-09-28): **4.3 rows/s on the 100-row fixture
 (23s)** — 160k extrapolates to ~10.5 hours. The batch path reports its own
 rows/s in `build.json`; this number is the reference it must beat.
 
-Premise status (2026-09-29): an interim reading held the fixed ~35s
-per-commit cost as falsifying "fewer commits = faster." Root cause was
-environmental (unmounted `/ydb_data` on overlayfs + residual compaction;
-see External-storage rule). Observation stands, conclusion updated: on
-non-degenerate storage, per-commit cost is whatever the volume-mounted
-sanity measures, and fewer commits amortizes normally. Strategy validated,
-contingent on storage.
+Premise status (closed 2026-09-29): "fewer commits = faster" validated —
+the batch design was correct; inlined `CAST` literals were the confound
+(2,210 AST nodes/row → dozens via `List<Float>` params; 32s → ~130ms/chunk,
+~250×). H3 downgraded to optional optimization (BulkUpsert if YQL ever
+ceilings); H2 index-deferral not worth its complexity at 13s loads.
 
 ## Scope
 
@@ -56,16 +54,64 @@ This changes measured load behavior, not just harness speed:
 - Commit count is per 100-batch (10k rows → 100 commits, was 30k) — the
   ticket's "batch → 1 commit" acceptance holds per batch unit, confirmed.
 
-## Measure and record
+## Measure and record (closed 2026-09-29)
 
-- Rows/s at 10k, extrapolated to 160k.
-- Commit count reduction (per-row vs per-batch).
-- Index backfill behavior vs per-row path.
-- Effect on `build.json` load timing.
+- BulkUpsert 100 rows = 8–10ms / ~10–12.5k rows/s; 1000 rows = 20ms / 50k
+  rows/s (sublinear scaling). Durability verified (count + content read-back
+  immediately after return). 160k extrapolates to seconds.
+- The measurement: BulkUpsert vs YQL batch ≈ 3000–4000×. C.2 drops from
+  ~14 hr to minutes.
+- The contract split: load path non-transactional (BulkUpsert, empty table
+  only), update path transactional (YQL serializable + ordering guard).
+- The premise correction: "fewer commits = faster" holds under the correct
+  API; the YQL path is structurally incompatible with bulk load (per-commit
+  fixed cost independent of storage, stats, and indexes).
 
 ## Not in scope
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
+
+## H2 matrix — complete 2026-09-29 (clean-slate paths, same container)
+
+| Variant | Load time | Rows/s | Δ vs V1 | Reading |
+|---|---|---|---|---|
+| V1 full indexes | 2665s | 3.8 | — | Baseline (3rd V1 point; family 2482/2840/2665, ±7% noise) |
+| V2 no vector | 2527s | 4.0 | −5% | Within noise: vector index neutral |
+| V3 no full-text | 2053s | 4.9 | −23% | Modest contributor, not driver |
+| V4 neither | 1896s | 5.3 | −29% | Real but not collapse |
+
+Conclusions:
+
+1. Indexes are additive, not multiplicative (−5% + −23% ≈ −29%): two
+   independent per-commit costs, not a shared mechanism.
+2. Residual ~70% is tx shape: with no indexes at all, batch (5.3 rows/s)
+   beats per-row (4.3) by only ~23% — an order of magnitude short of what
+   one-commit-per-100-rows should give. The superlinear cost lives in the
+   statement/tx layer.
+3. Fix priority unambiguous: bulkUpsert first (H3 — bypasses AST, Query
+   Service coordination, serializable-RW per-statement path), index
+   deferral second (~30% off load). If both land per projection, C.2 drops
+   from ~14 hr to ~5–10 min.
+
+| Variant | Load time | Rows/s | Reading |
+|---|---|---|---|
+| V1 full indexes | 2482s | 4.0 | Baseline at scale |
+| V1 reconfirm (post-maintenance) | 2840s | 3.5 | +14% drift — noise floor ~15%; deltas within family are not signal |
+| V2 no vector | 2635s | 3.8 | +6% (noise band, not signal) |
+| V3 no full-text | 2099s | 4.8 | −15%, contributor not driver |
+| V4 neither | — | — | Deciding test; rerun full matrix post-maintenance |
+
+V1–V3 agree within family: neither index alone drives the cost. V4 decides
+between "any-index triggers slow path" (defer-all-indexes) and "tx
+coordination" (split tx / bulkUpsert).
+
+Schema-lifecycle precondition (learned 2026-09-29): persisted volumes carry
+stale tables across runs, and `ensureSchema` skips index DDL when tables
+exist — so every variant must drop-then-create its schema before measuring.
+Same discipline as mount-gate (verify running state) and truncate-on-start
+(clear data state), extended to schema state. Suspended run killed via single-PID
+SIGTERM pre-maintenance; full matrix re-ran clean-slate post-maintenance
+(table above). No stale-state confound in the final numbers.
 
 ## Hypothesis status
 
@@ -99,3 +145,20 @@ unchanged.
 round-trips); YDB's is client-server (network-bound, per-commit cost
 exposed). Write-path batching discipline is a YDB-specific operational
 concern — a material backend difference for the comparison, not a defect.
+
+## Diagnostic heuristic (for future slowness)
+
+If a batch statement is slow, count the AST nodes first. If the statement
+contains inlined literals proportional to data size, parameterize before
+investigating anything else — YDB-041 lost days to storage, stats, and index
+hypotheses before the statement shape was examined.
+
+## Closeout (2026-09-29)
+
+YDB-041 closed: param-based batch path delivers ~770 rows/s (250× over the
+inlined-literal path); C.2 produced `runs/ydb-v1.json` (120 queries, 96
+non-empty, 24 structural empties identical across all three legs); R3
+conditional-pass with zero hard-gate fails. PG Phase 2 inherits:
+parameterized-statement discipline, AST-first diagnostics, and the
+wait-for-effect family (042) — Postgres won't reproduce the AST failure mode,
+but the investigation discipline transfers whole.

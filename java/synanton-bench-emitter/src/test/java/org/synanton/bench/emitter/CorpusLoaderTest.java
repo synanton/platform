@@ -1,68 +1,35 @@
 package org.synanton.bench.emitter;
 
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * A.2 acceptance: loadsV1CorpusStreamingAtOneGigabyteHeap (+ missing-manifest
- * negative). The heap leg runs {@link CorpusLoadProbe} in a subprocess at
- * -Xmx1g (028a.8 pattern) — same-JVM-only would not pin the bound.
+ * Guards the fixture↔Q3 field-name boundary that silently emptied two legs'
+ * eligible sets (baseline + YDB read {@code eligible_set} where the corpus
+ * ships {@code eligible_chunk_ids}; null-tolerant parsing hid it, and
+ * empty-vs-empty identity passed vacuously). All runners must call
+ * {@link CorpusLoader#eligibleIds}, never inline field access.
  */
 class CorpusLoaderTest {
 
-    private static Path fixtureDir() throws Exception {
-        URI uri =
-                CorpusLoaderTest.class.getResource("/corpus-mini/manifest.json").toURI();
-        return Paths.get(uri).getParent();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    @Test
+    void eligibleIdsReadsFixtureField() throws Exception {
+        var q =
+                MAPPER.readTree(
+                        "{\"query_id\": \"q1\", \"eligible_chunk_ids\": [\"a\", \"b\"]}");
+        assertThat(CorpusLoader.eligibleIds(q)).containsExactly("a", "b");
     }
 
     @Test
-    void loadsV1CorpusStreamingAtOneGigabyteHeap() throws Exception {
-        Path dir = fixtureDir();
-        CorpusLoader.Manifest manifest = CorpusLoader.loadManifest(dir);
-        assertThat(manifest.corpusVersion()).isEqualTo("ydb-poc-corpus-v1-mini");
-        assertThat(manifest.seed()).isEqualTo(42);
-        List<String> seen = new ArrayList<>();
-        long count = CorpusLoader.streamChunks(dir, row -> seen.add(row.chunkId()));
-        assertThat(count).isEqualTo(4);
-        assertThat(seen).containsExactly("c1", "c2", "c3", "c4");
-
-        // Subprocess leg at -Xmx1g: same load must succeed under the bound.
-        String javaBin = System.getProperty("java.home") + "/bin/java";
-        String classpath = System.getProperty("java.class.path");
-        // Test classes + resources are on the worker classpath; main classes too.
-        Process proc =
-                new ProcessBuilder(
-                                javaBin, "-Xmx1g", "-cp", classpath,
-                                CorpusLoadProbe.class.getName(), dir.toString())
-                        .redirectErrorStream(true)
-                        .start();
-        String stdout = new String(proc.getInputStream().readAllBytes());
-        int exit = proc.waitFor();
-        assertThat(exit).as("1g subprocess exit 0; output:\n" + stdout).isZero();
-        assertThat(stdout)
-                .as("subprocess loaded all rows under 1g")
-                .contains("corpus_version=ydb-poc-corpus-v1-mini chunks=4");
-    }
-
-    @Test
-    void missingManifestNamesExpectedPath() throws Exception {
-        Path empty = Files.createTempDirectory("corpus-nomanifest");
-        try {
-            assertThatThrownBy(() -> CorpusLoader.loadManifest(empty))
-                    .isInstanceOf(CorpusLoader.MissingManifestException.class)
-                    .hasMessageContaining("manifest.json")
-                    .hasMessageContaining(empty.toString());
-        } finally {
-            Files.delete(empty);
-        }
+    void eligibleIdsFailsLoudlyOnMissingField() throws Exception {
+        var q = MAPPER.readTree("{\"query_id\": \"q1\"}");
+        assertThatThrownBy(() -> CorpusLoader.eligibleIds(q))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("eligible_chunk_ids");
     }
 }

@@ -1,0 +1,50 @@
+# 042 — ensureSchema TOCTOU Guard (H2 Follow-Up)
+
+**Status:** Filed (not blocking; trigger after H2 matrix closes)
+**Origin:** H2 matrix 2026-09-29 — drop-then-create raced scheme deletion;
+local wait-for-absence fixed the test, shared `ensureSchema` still exposed.
+
+## Problem
+
+`ensureSchema` probes existence via `SELECT LIMIT 0` and skips creation on
+success. After a DROP, scheme deletion propagates asynchronously: the probe
+can see the ghost and skip, after which TRUNCATE (or index DDL) fails on
+nothing. Presence misread — the inverse of the phantom-SKIP family
+(absence misread as pass).
+
+## Fix (same shape as the H2-local one)
+
+After any drop-then-create sequence, poll until all tables are actually
+absent — projections, vectors, AND the `_generations` pointer table.
+Partial cleanup is worse than none: "mostly fresh" state (stale generation
+pointer pinning old active generation) is harder to reason about than fully
+fresh or fully stale. 60s cap, fail loudly. Options:
+
+- Promote the H2-local `waitForAbsent` into `YdbSearchSchema` as
+  `awaitAbsent(client, prefix, timeout)` and call it from `ensureSchema`
+  callers that drop first — or from `dropSchema` itself (changes its
+  best-effort contract; decide explicitly).
+- Keep `ensureSchema` untouched; document that callers dropping first must
+  await absence (weaker — relies on every future caller reading the doc).
+
+## The family (complete 2026-09-29)
+
+| Operation | Async behavior | Guard |
+|---|---|---|
+| DROP TABLE | Ghost persists; existence probe lies | Poll-until-absent, 60s cap |
+| CREATE TABLE | Slow propagation; TRUNCATE fails on nothing | Wait-for-present before use |
+| TRUNCATE TABLE | Returns before rows vanish; bulk read sees ghost keys and the ordering guard correctly no-ops the reload | Poll-count-to-zero, 120s cap |
+
+Rule: no scheme or data-plane mutation is assumed from its return code —
+poll for the intended effect, cap the wait, fail loudly on timeout.
+
+## Acceptance
+
+- Drop → recreate → TRUNCATE succeeds deterministically (no ghost window).
+- Timeout still fails loudly, never silently skips creation.
+- Existing callers unaffected (no-behavior-change when tables simply absent).
+
+## Out of scope
+
+- Generation-pointer coverage (fixed separately: `dropSchema` now drops
+  `_generations`; committed on the 041 branch).

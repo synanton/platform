@@ -18,4 +18,5 @@ dependencies {
 tasks.named<Test>("test") {
     systemProperty("ydb.bench", providers.systemProperty("ydb.bench").getOrElse(""))
     systemProperty("ydb.probe", providers.systemProperty("ydb.probe").getOrElse(""))
+    systemProperty("ydb.bulkprobe", providers.systemProperty("ydb.bulkprobe").getOrElse(""))
 }

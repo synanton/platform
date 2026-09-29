@@ -103,7 +103,7 @@ class BaselineDocumentedRun {
                                             strings(q.get("tenant_scope")),
                                             stringMap(q.get("metadata_predicate")),
                                             q.has("selectivity") ? q.get("selectivity").asText() : "-",
-                                            q.get("filter").asText(), strings(q.get("eligible_set"))),
+                                            q.get("filter").asText(), CorpusLoader.eligibleIds(q)),
                                     universe));
                     if (++qcount % 20 == 0) {
                         System.out.println("BASELINE-QUERY done=" + qcount);

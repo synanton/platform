@@ -2,6 +2,7 @@ package org.synanton.bench.emitter;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -36,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledIfSystemProperty(named = "bench.run.h2matrix", matches = "true")
 class H2IndexMatrix {
 
-    private static final int ROWS = 5_000;
+    private static final int ROWS = 10_000;
     private static final GenerationId GEN = new GenerationId("h2-gen-1");
     private static final EmbeddingModelRef MODEL = new EmbeddingModelRef("h2", "v1", "h2");
 
@@ -89,6 +90,49 @@ class H2IndexMatrix {
         }
     }
 
+    /**
+     * Creation is as eventually-consistent as deletion: after CREATE, the
+     * existence probe can miss for seconds-to-minutes. Poll until all three
+     * tables answer SELECT (60s cap, fail loudly) before truncate/load.
+     * Symmetric to the (removed) wait-for-absence: scheme state is never
+     * assumed from a DDL return code.
+     */
+    private static void waitForPresent(TableClient client, String prefix) throws Exception {
+        long deadline = System.currentTimeMillis() + 120_000;
+        List<String> tables =
+                List.of(prefix + "_projections", prefix + "_vectors", prefix + "_generations");
+        while (true) {
+            boolean allPresent = true;
+            try (Session session =
+                    client.createSession(Duration.ofSeconds(10)).join().getValue()) {
+                for (String table : tables) {
+                    try {
+                        session
+                                .executeDataQuery(
+                                        "SELECT * FROM `" + table + "` LIMIT 0;",
+                                        tech.ydb.table.transaction.TxControl.snapshotRo()
+                                                .setCommitTx(true),
+                                        tech.ydb.table.query.Params.empty(),
+                                        new tech.ydb.table.settings.ExecuteDataQuerySettings())
+                                .join()
+                                .getValue();
+                    } catch (RuntimeException missing) {
+                        allPresent = false;
+                        break;
+                    }
+                }
+            }
+            if (allPresent) {
+                return;
+            }
+            if (System.currentTimeMillis() > deadline) {
+                throw new IllegalStateException(
+                        "scheme creation did not propagate in 120s for prefix " + prefix);
+            }
+            Thread.sleep(2_000);
+        }
+    }
+
     @Test
     void indexIsolationMatrix() throws Exception {
         Path corpusDir = Paths.get(System.getenv().getOrDefault("CORPUS_DIR", "/tmp/corpus-v1"));
@@ -101,8 +145,17 @@ class H2IndexMatrix {
                             new Variant("no-ft", true, false),
                             new Variant("neither", false, false));
             for (Variant v : variants) {
-                String prefix = "t_emit_h2_" + v.name().replace("-", "_");
+                // Unique prefixes per invocation: scheme deletion propagates
+                // over minutes (measured — ghost tables visible 60s+ after
+                // DROP), so drop-then-reuse races. New paths never existed:
+                // no waiting, no ghosts. Previous generation cleaned
+                // best-effort (quota headroom ~97%; debris is bounded).
+                String stamp =
+                        new java.text.SimpleDateFormat("MMddHHmm")
+                                .format(new java.util.Date());
+                String prefix = "t_emit_h2_" + v.name().replace("-", "_") + "_" + stamp;
                 YdbSearchSchema.ensureSchema(client, prefix, 384);
+                waitForPresent(client, prefix);
                 if (!v.vec()) {
                     dropIndex(client, prefix, "vectors", "v_vec");
                     dropIndex(client, prefix, "vectors", "v_hyb");
@@ -137,9 +190,28 @@ class H2IndexMatrix {
                     commits = engine.upsertBatch(session, fresh);
                 }
                 double secs = (System.nanoTime() - t0) / 1_000_000_000.0;
-                System.out.printf(
-                        "H2-MATRIX variant=%s rows=%d secs=%.1f rows_per_s=%.1f commits=%d%n",
-                        v.name(), ROWS, secs, ROWS / secs, commits);
+                String line =
+                        String.format(
+                                "H2-MATRIX variant=%s rows=%d secs=%.1f rows_per_s=%.1f commits=%d",
+                                v.name(), ROWS, secs, ROWS / secs, commits);
+                System.out.println(line);
+                // Per-variant log file (Gradle captures stdout until task end;
+                // the file is the live signal — same discipline as BULK_PROGRESS_FILE).
+                try {
+                    Path logDir =
+                            Paths.get(
+                                    System.getenv().getOrDefault("H2_LOG_DIR", "/tmp/h2-logs"));
+                    Files.createDirectories(logDir);
+                    Path log = logDir.resolve("h2-" + v.name() + ".log");
+                    if (!Files.exists(log)) {
+                        Files.writeString(log, line + "\n");
+                    } else {
+                        Files.writeString(
+                                log, line + "\n", java.nio.file.StandardOpenOption.APPEND);
+                    }
+                } catch (Exception ignored) {
+                    // Logging must never break measurement.
+                }
             }
         } finally {
             client.close();

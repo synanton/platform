@@ -115,4 +115,23 @@ public final class CorpusLoader {
         }
         return o.get(field).asText();
     }
+
+    /**
+     * Golden-query eligible ids from the corpus fixture field
+     * {@code eligible_chunk_ids} (NOT {@code eligible_set} — that is the Q3
+     * output field; mixing them silently yields empty lists and vacuous
+     * identity passes. All three runners must call this, never inline
+     * field access).
+     */
+    public static java.util.List<String> eligibleIds(com.fasterxml.jackson.databind.JsonNode q) {
+        com.fasterxml.jackson.databind.JsonNode node = q.get("eligible_chunk_ids");
+        if (node == null || !node.isArray()) {
+            throw new IllegalStateException(
+                    "golden query '" + q.path("query_id").asText()
+                            + "' missing required array 'eligible_chunk_ids'");
+        }
+        java.util.List<String> out = new java.util.ArrayList<>();
+        node.forEach(e -> out.add(e.asText()));
+        return out;
+    }
 }

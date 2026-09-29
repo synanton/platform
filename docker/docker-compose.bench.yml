@@ -1,0 +1,47 @@
+# Canonical benchmark backend services (YDB PoC / PG PoC).
+# Every stateful service mounts its data directory externally — never
+# container-internal overlayfs (see External-storage rule; 2026-09-29 YDB
+# incident: unmounted /ydb_data produced fixed ~35s commits).
+#
+# YDB_DATA_PATH / YDB_CERTS_PATH (and PG_/CASS_ equivalents) must point at
+# local SSD/NVMe. Never network filesystems, never the docker-root dir.
+# Usage: docker compose -f docker/docker-compose.bench.yml up -d [ydb|postgres|cassandra]
+
+services:
+  ydb:
+    image: ydbplatform/local-ydb:stable-26-3-1-path-aliases
+    hostname: localhost
+    ports:
+      - "2135:2135"
+      - "2136:2136"
+      - "8765:8765"
+    volumes:
+      - ${YDB_DATA_PATH:-./data/ydb}:/ydb_data
+      - ${YDB_CERTS_PATH:-./certs/ydb}:/ydb_certs
+    environment:
+      GRPC_TLS_PORT: 2135
+      GRPC_PORT: 2136
+      MON_PORT: 8765
+      YDB_PDISK_SIZE: 64GB
+    healthcheck:
+      test: ["CMD-SHELL", "ydbd admin node list >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      start_period: 90s
+
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg16
+    ports:
+      - "5433:5432"
+    volumes:
+      - ${PG_DATA_PATH:-./data/postgres}:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench
+      POSTGRES_DB: bench
+
+  cassandra:
+    image: cassandra:4.1
+    ports:
+      - "9044:9042"
+    volumes:
+      - ${CASS_DATA_PATH:-./data/cassandra}:/var/lib/cassandra
