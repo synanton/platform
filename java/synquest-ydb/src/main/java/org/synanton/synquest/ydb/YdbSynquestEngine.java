@@ -727,6 +727,26 @@ public class YdbSynquestEngine
                 .getValue();
     }
 
+    /**
+     * H1 experiment (2026-09-29): bulk-write path with stats collection
+     * suppressed. If default stats (FULL per-row profile on a 100-row ×
+     * 384-float × 2-table statement) dominate the ~32s commit cost, NONE
+     * collapses it. Reads keep defaults; this overload is bulk-write only.
+     */
+    private DataQueryResult queryNoStats(
+            Session session, String yql, Params params, TxControl<?> control) {
+        return session
+                .executeDataQuery(
+                        yql,
+                        control,
+                        params,
+                        new ExecuteDataQuerySettings()
+                                .setCollectStats(
+                                        tech.ydb.table.query.stats.QueryStatsCollectionMode.NONE))
+                .join()
+                .getValue();
+    }
+
     private void exec(Session session, String yql, Params params) {
         query(session, yql, params, TxControl.serializableRw().setCommitTx(true));
     }
@@ -946,7 +966,8 @@ public class YdbSynquestEngine
                         + " ordering_key, generation) VALUES ");
         appendProjectionRows(yql, params, fresh, true, "v");
         yql.append(";");
-        query(session, yql.toString(), params, TxControl.serializableRw().setCommitTx(true));
+        // H1: stats suppressed on the bulk-write path only (experiment).
+        queryNoStats(session, yql.toString(), params, TxControl.serializableRw().setCommitTx(true));
         return 1;
     }
 
