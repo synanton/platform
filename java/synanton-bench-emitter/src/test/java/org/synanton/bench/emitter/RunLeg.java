@@ -298,7 +298,9 @@ public final class RunLeg {
                     System.getProperty("user.home") + "/.config/ydb-ca.pem");
             byte[] ca = Files.readAllBytes(Paths.get(caPath));
             tech.ydb.core.grpc.GrpcTransport transport =
-                    tech.ydb.core.grpc.GrpcTransport.forConnectionString("grpcs://localhost:2135/local")
+                    tech.ydb.core.grpc.GrpcTransport.forConnectionString(
+                            System.getenv()
+                                    .getOrDefault("YDB_ENDPOINT", "grpcs://localhost:2135/local"))
                             .withSecureConnection(ca)
                             .build();
             tech.ydb.table.TableClient client = tech.ydb.table.TableClient.newClient(transport).build();
