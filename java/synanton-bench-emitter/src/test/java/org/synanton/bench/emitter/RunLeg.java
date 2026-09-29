@@ -125,7 +125,7 @@ public final class RunLeg {
                                         q.has("query_vector_b64") ? q.get("query_vector_b64").asText() : "",
                                         strings(q.get("tenant_scope")), stringMap(q.get("metadata_predicate")),
                                         q.has("selectivity") ? q.get("selectivity").asText() : "-",
-                                        q.get("filter").asText(), strings(q.get("eligible_set"))),
+                                        q.get("filter").asText(), CorpusLoader.eligibleIds(q)),
                                 universe);
                 outputs.add(out);
                 appendLine(checkpoint, Q3Emitter.emit("x", "x", List.of(out)));
