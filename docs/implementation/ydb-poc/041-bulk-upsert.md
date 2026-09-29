@@ -67,7 +67,16 @@ This changes measured load behavior, not just harness speed:
 
 - Query path changes. Index architecture changes. CLI wrap (independent).
 
-## Follow-up experiments (not blocking)
+## Hypothesis status
+
+- H1 (stats): INCONCLUSIVE at small scale (2026-09-29). 100-row batch commit
+  completes in ~1–2s on near-empty tables with or without NONE — the 32s cost
+  does not manifest there, so stats was never exercised. Change kept
+  (strictly less work). Re-run at 10k scale only if H2 fails.
+- H2 (index maintenance): PRIMARY by elimination. (a) Fast at 100 rows
+  (~1–2s/chunk), 32s metronomic at thousands; (b) storage-independent
+  (overlayfs vs volume); (c) stats-independent at small scale. Matrix:
+  indexes on/off × {vector, fulltext} at fixed 5k scale (below).
 
 1. `setCollectStats(NONE)` on the bulk-write path: if default stats
    collection inflated the 10k response, suppressing it could raise

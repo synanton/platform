@@ -27,6 +27,7 @@ dependencies {
 tasks.named<Test>("test") {
     systemProperty("bench.run.024a", providers.systemProperty("bench.run.024a").getOrElse(""))
     systemProperty("bench.run.024b.sanity", providers.systemProperty("bench.run.024b.sanity").getOrElse(""))
+    systemProperty("bench.run.h2matrix", providers.systemProperty("bench.run.h2matrix").getOrElse(""))
     maxHeapSize = "10g"
 }
 
