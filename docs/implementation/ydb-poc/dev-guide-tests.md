@@ -136,3 +136,12 @@ Pre-flight (any stateful container):
   infra (attach container logs).
 - 3 consecutive infra-attributed failures → ticket against the runner; suite
   stays gating meanwhile.
+
+## Shell-chain guard (commands that gate commits)
+
+Never chain a commit past a `grep` (or any filter): `grep`'s exit code means
+"pattern found," not "build succeeded" — a broken commit pushed this way
+(2026-09-29: missing import committed because `grep -E` matched error lines
+and returned 0). Assert `BUILD SUCCESSFUL` explicitly (e.g. `grep -q
+"BUILD SUCCESSFUL"` as the gate, or check `$?` of the build itself) before
+`git commit`. Same family as single-PID kill and verify-after-edit.
