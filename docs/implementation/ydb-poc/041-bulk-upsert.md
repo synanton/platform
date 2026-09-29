@@ -72,13 +72,20 @@ This changes measured load behavior, not just harness speed:
 | Variant | Load time | Rows/s | Reading |
 |---|---|---|---|
 | V1 full indexes | 2482s | 4.0 | Baseline at scale |
+| V1 reconfirm (post-maintenance) | 2840s | 3.5 | +14% drift — noise floor ~15%; deltas within family are not signal |
 | V2 no vector | 2635s | 3.8 | +6% (noise band, not signal) |
 | V3 no full-text | 2099s | 4.8 | −15%, contributor not driver |
-| V4 neither | — | — | Deciding test on resume |
+| V4 neither | — | — | Deciding test; rerun full matrix post-maintenance |
 
 V1–V3 agree within family: neither index alone drives the cost. V4 decides
 between "any-index triggers slow path" (defer-all-indexes) and "tx
-coordination" (split tx / bulkUpsert). Suspended run killed via single-PID
+coordination" (split tx / bulkUpsert).
+
+Schema-lifecycle precondition (learned 2026-09-29): persisted volumes carry
+stale tables across runs, and `ensureSchema` skips index DDL when tables
+exist — so every variant must drop-then-create its schema before measuring.
+Same discipline as mount-gate (verify running state) and truncate-on-start
+(clear data state), extended to schema state. Suspended run killed via single-PID
 SIGTERM; V4 never started. Rerun full matrix post-maintenance (V1–V3 cheap
 to re-confirm, V4 is the only new datum needed — but rerun all four to
 control for environment drift across the maintenance window).
