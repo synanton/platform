@@ -145,3 +145,12 @@ stopped container, which reads as regression but is pause state. Pause
 instructions and the test suite must agree: stopped infra ⇒ live tests skip
 visibly, never fail. (Learned 2026-09-29: wiring test failed post-pause for
 a stopped container; container restart + CA re-copy restored green.)
+
+## AST-node discipline (YQL collection params)
+
+Parameterize collections; never inline them. Inlined literals (e.g. 384
+`CAST(... AS Float)` per embedding × rows × tables) cost ~2,210 AST nodes
+per row against YDB's 1M cap and dominate commit latency (measured: 32s vs
+~130ms per 100-row commit after switching to `List<Float>` params, ~250×).
+Node count is a first-class YQL performance metric — estimate it before
+sizing batches, and re-estimate at each dimension change.

@@ -14,13 +14,11 @@ Measured baseline (041.1, 2026-09-28): **4.3 rows/s on the 100-row fixture
 (23s)** — 160k extrapolates to ~10.5 hours. The batch path reports its own
 rows/s in `build.json`; this number is the reference it must beat.
 
-Premise status (2026-09-29): an interim reading held the fixed ~35s
-per-commit cost as falsifying "fewer commits = faster." Root cause was
-environmental (unmounted `/ydb_data` on overlayfs + residual compaction;
-see External-storage rule). Observation stands, conclusion updated: on
-non-degenerate storage, per-commit cost is whatever the volume-mounted
-sanity measures, and fewer commits amortizes normally. Strategy validated,
-contingent on storage.
+Premise status (closed 2026-09-29): "fewer commits = faster" validated —
+the batch design was correct; inlined `CAST` literals were the confound
+(2,210 AST nodes/row → dozens via `List<Float>` params; 32s → ~130ms/chunk,
+~250×). H3 downgraded to optional optimization (BulkUpsert if YQL ever
+ceilings); H2 index-deferral not worth its complexity at 13s loads.
 
 ## Scope
 
