@@ -271,13 +271,37 @@ External gates:
 - Description: Implement PostgresSynquestEngine for lexical, vector, hybrid retrieval. Pre-ranking eligibility per Gate A outcome. Metadata filtering pushed into SQL (not post-fetch). Tie-break post-retrieval per PG-POC-013.
 - Acceptance:
   - Full contract suite green.
-  - Lexical retrieval with BM25/tsvector.
-  - Vector ANN with pgvector HNSW (IVFFlat evaluated in parallel).
-  - Hybrid with custom RRF (or extension if available).
+  - Lexical retrieval, default in-core `tsvector`+GIN per the 002 decision
+    (acceptable iff lexical overlap vs baseline stays within the R3
+    tolerance family); `pg_search` is the recorded fallback, evaluated in
+    parallel where pullable — never a hidden second implementation.
+  - Vector ANN: planner-chooses access path (no forced index); metric
+    carries the topology (`vec_p95_btree_sort` until a plan says
+    otherwise). IVFFlat added beside HNSW. Dimension fixed at column
+    creation — switching models needs ALTER + index drop/rebuild, cost
+    scaling with table size (same shelf as the YDB finding). Synthetic-384-d
+    recall stays unclaimed.
+  - Fusion parity probe (007-4, before any hybrid number): four named axes
+    vs YDB's **recorded** 024B behavior (artifact reference, no
+    cross-container dependency) — term matching
+    (conjunctive/disjunctive), RRF k (60 vs PG default), score space
+    (rank vs normalized), tie ordering (per 013). Each axis matching or
+    divergent-with-a-name; output written to `build.json` beside load_ms
+    so the topology travels with the number for 028e/R3.
+  - Hybrid leg gated by the parity probe, not before it.
   - EXPLAIN assertions on all index-dependent queries (analogue of YDB PlanAssertions).
+  - Metadata filtering in SQL: EXPLAIN shows the predicate in-plan plus a
+    behavioral large-eligible-set leg (YDB P1-4 class, caught by
+    construction).
+  - Engine determinism: two runs on the same corpus produce identical
+    top-K per query (modulo timing_ms). No RunLeg home exists — 007 owns it.
 - Pre-ranking eligibility per Gate A outcome; metric suffix on every eligibility-filtered number.
 - Post-retrieval sort (`score desc, chunkId asc`) applied on every query — server tied order is deterministic but not chunkId-asc (013 finding); verified by the 013 tie-break determinism test.
 - Tie-break deterministic; convergence gates pass.
+- HNSW-at-scale stays with the standby preflight (`005-gate-a-hnsw-preflight.md`); 007 measures what the planner selects at PoC scale.
+- Temporal rejection explicit: `capabilities().temporal() == false` →
+  non-empty TemporalExtension rejected cleanly (same shape as the YDB leg),
+  its own acceptance — not folded into eligibility generically.
 - Proposal: §8.3, §8.4, §10 Phase 2, §11, §12 Synquest.
 
 🔵 PG-POC-008 — Eligibility / side channels / temporal
