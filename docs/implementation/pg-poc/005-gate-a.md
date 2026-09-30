@@ -51,7 +51,17 @@ belongs to the eligible tenant. Leakage = fail held. The post-ANN signature
 is fixed before the distance sort on both legs. This is pre-ranking
 composition at plan level, the property Gate A exists to prove.
 
-**Caveat (recorded, not hidden):** the HNSW index never entered any
+**Caveat CLOSED 2026-09-30 (observed at 160k, not Phase 4):** the
+tenant-scoped vector plan on the loaded corpus is `Index Scan using
+chunks_embedding_ivfflat` with RLS as a post-scan `Filter` — post-ANN
+filtering confirmed live. Outcome 2 machinery applies unchanged:
+ivfflat-topology vector numbers carry `*_predicate_composed` suffixes,
+and any future ANN-path comparison uses explicit-predicate composition
+with the two-part proof. Recorded in `r3-verdict-final.json`. The
+`vec_p95_btree_sort` vs `vec_p95_ann_*` naming rule stands — the two
+numbers are not comparable without the annotation.
+
+**Original caveat (recorded 2026-09-27, superseded by the above):** the HNSW index never entered any
 tenant-scoped plan — not at 0.1%, not at ~33%, not with seqscan forced off. A
 follow-up scratch check (unfiltered `ORDER BY embedding <-> q LIMIT 10` as
 superuser, plan since deleted with the scratch test) returns `Index Scan using
