@@ -1,0 +1,15 @@
+{
+  "probe": "PG-POC-007-4",
+  "date": "2026-09-30",
+  "mode": "behavioral parity only (024B Q3 lacks fusion internals; parameter axes verified against YDB code)",
+  "axes": [
+    {"name": "rrf_k", "kind": "parameter", "pg": 60, "ydb": 60, "verdict": "matching-by-decision"},
+    {"name": "fusion_inputs", "kind": "parameter", "pg": "top-100 per leg", "ydb": "top-100 per leg", "verdict": "matching-by-decision"},
+    {"name": "hybrid_score", "kind": "parameter", "pg": "rrf/maxLexicalScore", "ydb": "rrf/maxLexicalScore floor 1e-9", "verdict": "matching-shape"},
+    {"name": "tie_ordering", "kind": "parameter", "pg": "score desc, chunkId asc", "ydb": "score desc, chunkId asc", "verdict": "matching"},
+    {"name": "score_space", "kind": "parameter-per-leg", "pg": "ts_rank >= 0; -cosine_distance in [-2,0]", "ydb": "BM25 unbounded; cosine similarity", "verdict": "divergent-by-construction"},
+    {"name": "term_matching", "kind": "behavioral", "pg": "disjunctive to_tsquery", "ydb": "Lucene default OR", "verdict": "pending-007-5-overlap"},
+    {"name": "lexical_semantics", "kind": "behavioral", "pg": "ts_rank", "ydb": "BM25 k1=1.2/b=0.75", "verdict": "pending-007-5-overlap"}
+  ],
+  "decisions_007_5": ["rrf k=60 formula 1/(60+rank+1)", "top-100 inputs", "hybrid score rrf/maxLexicalScore", "minScore same application points, non-portable thresholds"]
+}

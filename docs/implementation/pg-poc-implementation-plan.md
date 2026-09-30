@@ -265,19 +265,107 @@ External gates:
 
 ## §8. Phase 2 — PostgresSynquestEngine
 
-🔵 PG-POC-007 — PostgresSynquestEngine
+🟢 PG-POC-007 — PostgresSynquestEngine
+
+- Depends on: PG-POC-005 (Gate A), PG-POC-006 (Gate B), PG-POC-013
+- Evidence: `java/synquest-postgres` — contract 12/12 (1 disabled 025b,
+  same as reference legs), ScoreSemantics 5/5, topology 3/3, guard 6/6,
+  gating 3/3, registration 2/2, determinism 2/2 (cross-process),
+  emitter wiring 3/3. Closed 007-1→007-8 on DESIGN-PG-007.
 
 - Depends on: PG-POC-005 (Gate A), PG-POC-006 (Gate B), PG-POC-013
 - Description: Implement PostgresSynquestEngine for lexical, vector, hybrid retrieval. Pre-ranking eligibility per Gate A outcome. Metadata filtering pushed into SQL (not post-fetch). Tie-break post-retrieval per PG-POC-013.
 - Acceptance:
   - Full contract suite green.
-  - Lexical retrieval with BM25/tsvector.
-  - Vector ANN with pgvector HNSW (IVFFlat evaluated in parallel).
-  - Hybrid with custom RRF (or extension if available).
+  - Lexical retrieval, default in-core `tsvector`+GIN per the 002 decision
+    (acceptable iff lexical overlap vs baseline stays within the R3
+    tolerance family); `pg_search` is the recorded fallback, evaluated in
+    parallel where pullable — never a hidden second implementation.
+    Query semantics named: disjunctive `to_tsquery` (mirrors Lucene
+    QueryParser default OR), `ts_rank` custom (not BM25), sub-384 vectors
+    zero-padded to the fixed column (orthogonal stays orthogonal; >384
+    rejected). All three recorded for the 007-4 probe.
+  - Vector ANN: planner-chooses access path (no forced index); metric
+    carries the topology (`vec_p95_btree_sort` until a plan says
+    otherwise). IVFFlat added beside HNSW. Dimension fixed at column
+    creation — switching models needs ALTER + index drop/rebuild, cost
+    scaling with table size (same shelf as the YDB finding). Synthetic-384-d
+    recall stays unclaimed.
+  - Distance operator named: cosine `<=>` per production COSINE parity
+    (Gate A's `<->` L2 probe was plan-shape evidence, not the served path;
+    score stored as `-distance` so higher-better ordering is uniform).
+  - IVFFlat deferred-DDL rule (same class as the YDB empty-table-index
+    finding): IVFFlat trains on what's present, so it is created AFTER the
+    corpus loads — never in schema setup. Test path creates it post-seed;
+    production path is a post-load migration step.
+  - Per-query topology: plan shape can differ per selectivity, so the
+    topology travels per query, not per leg — EXPLAIN per selectivity leg,
+    topology recorded per leg, hard assertion is eligibility-in-plan
+    (tenant restriction before ordering), never "must use index" (at PoC
+    scale seqscan can be the correct planner choice). 028e carries the
+    per-query field into Q3 output as a follow-up obligation.
+    Observed 007-3 (30k Gate-A-shaped corpus, IVFFlat post-load):
+    0.1%-selectivity leg → btree-sort, ~33% leg → ivfflat — per-query
+    variance confirmed, HNSW serves neither (Gate A caveat holds).
+  - Fusion parity probe (007-4, before any hybrid number): seven named axes
+    in two kinds vs YDB's recorded behavior — parameter-level (RRF k,
+    fusion inputs, hybrid score shape, tie ordering, score space: directly
+    checkable, results are named values) and behavioral (term matching,
+    lexical semantics: diagnostic labels for 007-5 overlap drops, not
+    independent measurements). Mode is behavioral parity only (024B Q3
+    lacks fusion internals; parameter axes verified against YDB code);
+    internal parity is a Phase-4 follow-up. Score-space axis scoped to
+    per-leg scores (RRF is rank-based; fusion order immune; minScore
+    thresholds non-portable). Record: `pg-poc/007-4-fusion-parity.md` +
+    machine twin `007-4-fusion-parity.json`; `build.json` fusion fields
+    land with the 028e emitter.
+  - Hybrid leg gated by the parity probe, not before it.
   - EXPLAIN assertions on all index-dependent queries (analogue of YDB PlanAssertions).
+  - Metadata filtering in SQL: EXPLAIN shows the predicate in-plan plus a
+    behavioral large-eligible-set leg (YDB P1-4 class, caught by
+    construction). Single emitted form `@>` (corpus uses single-attribute
+    equalities — one shape covers all frozen queries; `->>`/OR out of scope
+    until emitted). Guard pins lexical + vector + hybrid legs; binding
+    fixture (~5% eligible, ineligible ranked higher) discriminates
+    pre-ranking from post-fetch. Cross-ref 007-5 probe filter row
+    (mechanism difference, outcome-convergent via YDB over-fetch).
+  - Engine determinism: two runs on the same corpus produce identical
+    top-K per query (modulo timing_ms). No RunLeg home exists — 007 owns it.
+- Self-arming suite: the contract tests gate on capability flags, so no
+  suite modification is needed as flags flip — each evidenced flag just
+  arms more tests. Progress is measured by failures shrinking, same
+  structural property as "conformance matrix is code, not docs."
+- 007-7 (two logical units): (a) structural — DB-backed per-tenant
+  generation pointer (YDB P0-1 equivalent; global-* vs per-tenant stated,
+  PG stronger under multi-tenancy), atomic promotion flip, stale→CONFLICT,
+  strict-> ordering guard with log-on-drop (041.3 superset),
+  generation-scoped delete via DEFINER key lookup (port gives no tenant),
+  rebuild flip/reset (reset scoped by generation IS NOT NULL —
+  shared-table equivalent of per-index delete); search filters generation
+  pre-retrieval (absent pointer = no filter, YDB mirror). Per-tenant
+  pointers are strictly safer than global-* for multi-tenant operation
+  (one tenant's rebuild cannot flip another's reads) — not exercised by
+  PoC tests; recorded as a PG advantage for Phase 6. DEFINER ownership
+  (BYPASSRLS role) is tracked in `007-followup-definer-audit.md`
+  (production-migration gate, PN-5).
+  (b) conformance — eligibility partial (tenant scope; 025b excluded),
+  temporal rejection per mode, vacuous-filter==unfiltered equivalence
+  (Gate A analogue, behavioral), determinism cross-process (028a.8:
+  subprocess -Xmx1g, byte-identical top-K).
+- 007-8 emitter wiring: PG Q3 satisfies the shared emitter contract
+  (`PgQ3EmitterTest` — run_id deterministic `pg-v1`, corpus from manifest,
+  eligible_set from ground-truth SQL, min_score per leg). Real frozen run
+  (`runs/pg-v1.json`) belongs to 028e.
+- 007 close = four-legged moment: 028e real run → PG joins R3 → Phase 6
+  four-legged decision (all backends artifacted). Whoever picks up 028e
+  starts from `PgQ3Emitter` (wiring proven) + frozen corpus.
 - Pre-ranking eligibility per Gate A outcome; metric suffix on every eligibility-filtered number.
 - Post-retrieval sort (`score desc, chunkId asc`) applied on every query — server tied order is deterministic but not chunkId-asc (013 finding); verified by the 013 tie-break determinism test.
 - Tie-break deterministic; convergence gates pass.
+- HNSW-at-scale stays with the standby preflight (`005-gate-a-hnsw-preflight.md`); 007 measures what the planner selects at PoC scale.
+- Temporal rejection explicit: `capabilities().temporal() == false` →
+  non-empty TemporalExtension rejected cleanly (same shape as the YDB leg),
+  its own acceptance — not folded into eligibility generically.
 - Proposal: §8.3, §8.4, §10 Phase 2, §11, §12 Synquest.
 
 🔵 PG-POC-008 — Eligibility / side channels / temporal

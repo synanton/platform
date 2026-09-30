@@ -193,3 +193,16 @@ per row against YDB's 1M cap and dominate commit latency (measured: 32s vs
 ~130ms per 100-row commit after switching to `List<Float>` params, ~250×).
 Node count is a first-class YQL performance metric — estimate it before
 sizing batches, and re-estimate at each dimension change.
+
+## Score thresholds are not portable across backends (007-4 finding)
+
+Each adapter's `minScore` operates in its own score space: Lucene BM25 is
+unbounded, `ts_rank` is custom ≥ 0, cosine similarity and `-cosine_distance`
+share order but not range, and hybrid `rrf/maxLexicalScore` is normalized per
+query. Same application points (per-leg on raw scores, hybrid on the
+normalized score), different numbers — a threshold tuned on one backend is
+meaningless on another. Frozen R3 thresholds are therefore per-backend
+tolerances on overlap/identity, never shared score cutoffs; the 028e-family
+emitters record `minScore` per leg per backend in Q3 output. Same shelf as
+timing_scope and the metric-suffix findings: the score space travels with
+the number.
