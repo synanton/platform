@@ -31,10 +31,10 @@ class PostgresSynquestGatingTest extends ConformanceGatingContract {
                 Capabilities.SYNQUEST_HYBRID, flags.hybrid(),
                 Capabilities.SYNQUEST_FILTERS, flags.filters(),
                 Capabilities.SYNQUEST_HIGHLIGHTS, flags.highlights(),
-                Capabilities.SYNQUEST_ELIGIBILITY, false,
-                // Temporal rejection lands in 007-7; until then the flag is
-                // false (cassandra maps !temporal() because theirs is done).
-                Capabilities.SYNQUEST_TEMPORAL_REJECTION, false,
+                Capabilities.SYNQUEST_ELIGIBILITY, true,
+                // Rejection is mode-independent (checked before dispatch);
+                // per-mode tests pin each path in ScoreSemanticsTest.
+                Capabilities.SYNQUEST_TEMPORAL_REJECTION, true,
                 Capabilities.SYNQUEST_ORDERING, false,
                 Capabilities.SYNQUEST_GENERATION_DELETE, false);
     }

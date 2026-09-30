@@ -205,4 +205,64 @@ class MetadataPushdownGuardTest extends QuestPostgresFixture {
         assertThat(result.hits())
                 .allMatch(h -> h.chunkId().value().startsWith("guard-z-"));
     }
+
+    @Test
+    void nonBindingFilterEqualsUnfiltered() throws Exception {
+        // Gate A analogue, behavioral: a filter matching every row must
+        // leave the candidate set, order, and top-K unaltered — pre-ranking
+        // enforcement with a vacuous predicate is the identity function.
+        // All guard rows carry type runbook-or-note; filter on the corpus
+        // tenant marker instead: seed a uniform tenant for this test.
+        resetTenants("equiv");
+        var engine = QuestPostgresFixture.newEngine();
+        List<ChunkProjection> batch = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            batch.add(
+                    new ChunkProjection(
+                            ChunkId.of(String.format("equiv-%02d", i)),
+                            DocumentId.of("doc-equiv-" + i),
+                            "equiv",
+                            "equivalence probe text number " + i,
+                            Map.of("kind", "uniform"),
+                            new float[] {1.0f, 0.0f},
+                            EmbeddingModelRef.of("m", "v1", "d"),
+                            i,
+                            GenerationId.of("gen-equiv")));
+        }
+        engine.upsert(batch).toCompletableFuture().join();
+        TenantScope equivScope = TenantScope.of("equiv");
+        SecurityContext equivCtx =
+                SecurityContext.user(equivScope, PrincipalRef.user("u-1"), POLICY);
+        EligibilityConstraints equivEligibility =
+                EligibilityConstraints.from(
+                        equivScope, List.of(PrincipalRef.user("u-1")), POLICY);
+        SearchRequest unfiltered =
+                new SearchRequest(
+                        "equivalence probe",
+                        Optional.empty(),
+                        Optional.empty(),
+                        SearchMode.LEXICAL,
+                        equivEligibility,
+                        RelevanceFilters.none(),
+                        TemporalExtension.empty(),
+                        10,
+                        0.0);
+        SearchRequest vacuous =
+                new SearchRequest(
+                        "equivalence probe",
+                        Optional.empty(),
+                        Optional.empty(),
+                        SearchMode.LEXICAL,
+                        equivEligibility,
+                        new RelevanceFilters(Map.of("kind", "uniform")),
+                        TemporalExtension.empty(),
+                        10,
+                        0.0);
+        SearchResult plain =
+                engine.search(equivCtx, unfiltered).toCompletableFuture().join();
+        SearchResult filtered =
+                engine.search(equivCtx, vacuous).toCompletableFuture().join();
+        assertThat(filtered.hits()).as("vacuous filter alters nothing").isEqualTo(plain.hits());
+        assertThat(filtered.totalEligible()).isEqualTo(plain.totalEligible());
+    }
 }

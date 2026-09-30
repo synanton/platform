@@ -719,6 +719,13 @@ public class PostgresSynquestEngine
                         ConformanceEntry.supported(Capabilities.SYNQUEST_LEXICAL, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_VECTOR, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
-                        ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence)));
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence),
+                        // Tenant scope enforced pre-ranking (RLS + generation
+                        // filter in SQL); principal/policy dimensions are
+                        // 025b territory — partial, honestly scoped.
+                        ConformanceEntry.partial(
+                                Capabilities.SYNQUEST_ELIGIBILITY, "tenant", evidence),
+                        ConformanceEntry.supported(
+                                Capabilities.SYNQUEST_TEMPORAL_REJECTION, evidence)));
     }
 }

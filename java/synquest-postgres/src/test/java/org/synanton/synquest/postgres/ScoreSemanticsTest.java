@@ -128,8 +128,7 @@ class ScoreSemanticsTest extends QuestPostgresFixture {
     }
 
     @Test
-    void vectorScoresAreNegativeDistances() throws Exception {
-        SearchResult result = vector(new float[] {1.0f, 0.0f});
+    void vectorScoresAreNegativeDistances() throws Exception {        SearchResult result = vector(new float[] {1.0f, 0.0f});
         assertThat(result.hits()).isNotEmpty();
         for (var hit : result.hits()) {
             assertThat(hit.score())
@@ -137,5 +136,57 @@ class ScoreSemanticsTest extends QuestPostgresFixture {
                     .isBetween(-2.0, 0.0);
         }
         assertThat(result.hits().get(0).chunkId().value()).isEqualTo("s1");
+    }
+
+    @Test
+    void temporalRejectedOnVectorMode() throws Exception {
+        var engine = QuestPostgresFixture.newEngine();
+        SearchRequest request =
+                new SearchRequest(
+                        "alpha",
+                        Optional.of(new float[] {1.0f, 0.0f}),
+                        Optional.empty(),
+                        SearchMode.VECTOR,
+                        eligibility(),
+                        RelevanceFilters.none(),
+                        new TemporalExtension(
+                                Optional.of(java.time.Instant.now()),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                false),
+                        10,
+                        -10.0);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> engine.search(ctx(), request).toCompletableFuture().join())
+                .hasStackTraceContaining(
+                        org.synanton.storage.contract.StorageErrorKind.UNSUPPORTED.name());
+    }
+
+    @Test
+    void temporalRejectedOnHybridMode() throws Exception {
+        var engine = QuestPostgresFixture.newEngine();
+        SearchRequest request =
+                new SearchRequest(
+                        "alpha",
+                        Optional.of(new float[] {1.0f, 0.0f}),
+                        Optional.empty(),
+                        SearchMode.HYBRID,
+                        eligibility(),
+                        RelevanceFilters.none(),
+                        new TemporalExtension(
+                                Optional.of(java.time.Instant.now()),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                false),
+                        10,
+                        0.0);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> engine.search(ctx(), request).toCompletableFuture().join())
+                .hasStackTraceContaining(
+                        org.synanton.storage.contract.StorageErrorKind.UNSUPPORTED.name());
     }
 }

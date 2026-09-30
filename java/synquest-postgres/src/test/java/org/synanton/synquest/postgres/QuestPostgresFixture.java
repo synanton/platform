@@ -82,6 +82,12 @@ abstract class QuestPostgresFixture {
                 container.getJdbcUrl(), container.getUsername(), container.getPassword());
     }
 
+    /** JDBC URL for out-of-JVM probes (determinism subprocess owns its connections). */
+    static String jdbcUrl() {
+        ensureStarted();
+        return container.getJdbcUrl();
+    }
+
     /**
      * Per-class seed hygiene (007-7a): pointers persist across test classes
      * (first-write-wins adoption), so a corpus seed clears its tenants'

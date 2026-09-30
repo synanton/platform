@@ -329,6 +329,19 @@ External gates:
   suite modification is needed as flags flip — each evidenced flag just
   arms more tests. Progress is measured by failures shrinking, same
   structural property as "conformance matrix is code, not docs."
+- 007-7 (two logical units): (a) structural — DB-backed per-tenant
+  generation pointer (YDB P0-1 equivalent; global-* vs per-tenant stated,
+  PG stronger under multi-tenancy), atomic promotion flip, stale→CONFLICT,
+  strict-> ordering guard with log-on-drop (041.3 superset),
+  generation-scoped delete via DEFINER key lookup (port gives no tenant),
+  rebuild flip/reset (reset scoped by generation IS NOT NULL —
+  shared-table equivalent of per-index delete); search filters generation
+  pre-retrieval (absent pointer = no filter, YDB mirror). DEFINER
+  ownership (BYPASSRLS role) is a production-migration follow-up.
+  (b) conformance — eligibility partial (tenant scope; 025b excluded),
+  temporal rejection per mode, vacuous-filter==unfiltered equivalence
+  (Gate A analogue, behavioral), determinism cross-process (028a.8:
+  subprocess -Xmx1g, byte-identical top-K).
 - Pre-ranking eligibility per Gate A outcome; metric suffix on every eligibility-filtered number.
 - Post-retrieval sort (`score desc, chunkId asc`) applied on every query — server tied order is deterministic but not chunkId-asc (013 finding); verified by the 013 tie-break determinism test.
 - Tie-break deterministic; convergence gates pass.
