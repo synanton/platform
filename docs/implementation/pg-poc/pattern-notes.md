@@ -75,3 +75,15 @@ the old). Entries carry stable labels (`PN-1`…); tickets cite the label
   Detection heuristic: any functional-interface return in harness code
   gets inspected; this class never fails loudly on any JVM without
   opt-in static analysis.
+- **[PN-8] A guard whose only caller is its own unit test protects
+  nothing.** Origin: 028e (2026-09-30): `RetrievabilityGuard.check()` had
+  exactly one caller repo-wide (its test); a 120-empty artifact flowed
+  through emission unchecked on every path. Sibling finding, same audit:
+  `EligibilityValidator.validate()` — also test-only. (Q3Emitter references
+  the guard in javadoc only, which reads as wiring and isn't.) Rule: every
+  Guard/Validator/Check must name a production-path caller; audit by
+  grepping the class name outside `test/` and self. Other zeros found in
+  the same pass (`ExtractionRequestValidator`, `JsonResponseValidator`,
+  `BudgetGuard`, `AdapterResidencyGuard`) belong to owning workstreams —
+  flagged, not claimed. Wiring both bench guards into RunLeg post-emission
+  is a post-R3 commit (all legs, shared layer).
