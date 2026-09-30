@@ -62,11 +62,8 @@ class ScoreSemanticsTest extends QuestPostgresFixture {
     @BeforeAll
     static void seed() throws Exception {
         ensureStarted();
+        resetTenants("tenant_a");
         var engine = QuestPostgresFixture.newEngine();
-        try (var admin = QuestPostgresFixture.adminConnection();
-                var stmt = admin.createStatement()) {
-            stmt.execute("DELETE FROM chunks WHERE tenant_id = 'tenant_a'");
-        }
         engine.upsert(
                         List.of(
                                 projection("s1", "alpha beta gamma delta", 1, new float[] {1.0f, 0.0f}),

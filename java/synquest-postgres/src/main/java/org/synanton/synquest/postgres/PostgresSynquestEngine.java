@@ -3,6 +3,7 @@ package org.synanton.synquest.postgres;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import javax.sql.DataSource;
@@ -46,6 +47,8 @@ import org.synanton.synquest.api.SynquestIndexWriter;
  */
 public class PostgresSynquestEngine
         implements SynquestEngine, SynquestIndexWriter, SynquestIndexAdmin, Conformant {
+
+    private static final Logger LOG = Logger.getLogger(PostgresSynquestEngine.class.getName());
 
     private final DataSource dataSource;
 
@@ -123,11 +126,20 @@ public class PostgresSynquestEngine
      * OR-forms are out of scope until the engine emits them.
      */
     static String lexicalSql(boolean filtered, int limit) {
+        return lexicalSql(filtered, true, limit);
+    }
+
+    static String lexicalSql(boolean filtered, boolean generationScoped, int limit) {
         return "SELECT chunk_id, doc_id, text, metadata,"
                 + " ts_rank(tsv, to_tsquery('english', ?)) AS score"
                 + " FROM chunks"
                 + " WHERE tsv @@ to_tsquery('english', ?)"
                 + (filtered ? " AND metadata @> ?::jsonb" : "")
+                // Generation filter pre-retrieval (007-7a): YDB filters
+                // post-fetch (isActiveGeneration); PG restricts in SQL —
+                // strictly stronger (never returns fewer for filtering),
+                // same visible contract once promotion settles.
+                + (generationScoped ? " AND generation_id = ?" : "")
                 // Fetch cap mirrors YDB's top-100 leg fetch: generous past
                 // topK so minScore filtering post-fetch matches the reference
                 // shape; the slice (not this cut) is the verdict. Monotonic
@@ -138,18 +150,24 @@ public class PostgresSynquestEngine
     private List<SearchHit> fetchLexical(
             String tenant, SearchRequest request, String tsquery, int limit) throws Exception {
         boolean filtered = !request.filters().mustMatchMetadata().isEmpty();
-        String sql = lexicalSql(filtered, limit);
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
                 set.execute("SET LOCAL app.tenant_id = '" + tenant.replace("'", "''") + "'");
             }
+            // YDB mirror: absent pointer (never adopted) means no filter.
+            String active = selectPointer(conn, tenant);
+            String sql = lexicalSql(filtered, active != null, limit);
             List<SearchHit> matches = new java.util.ArrayList<>();
             try (var ps = conn.prepareStatement(sql)) {
-                ps.setString(1, tsquery);
-                ps.setString(2, tsquery);
+                int param = 1;
+                ps.setString(param++, tsquery);
+                ps.setString(param++, tsquery);
                 if (filtered) {
-                    ps.setString(3, metadataJson(request.filters().mustMatchMetadata()));
+                    ps.setString(param++, metadataJson(request.filters().mustMatchMetadata()));
+                }
+                if (active != null) {
+                    ps.setString(param++, active);
                 }
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -282,10 +300,17 @@ public class PostgresSynquestEngine
      * Same single {@code @>} predicate form as lexical.
      */
     static String vectorSql(boolean filtered, int limit) {
+        return vectorSql(filtered, true, limit);
+    }
+
+    static String vectorSql(boolean filtered, boolean generationScoped, int limit) {
         return "SELECT chunk_id, doc_id, text, metadata,"
                 + " (embedding <=> ?::vector) AS dist"
                 + " FROM chunks"
-                + (filtered ? " WHERE metadata @> ?::jsonb" : "")
+                + (filtered || generationScoped ? " WHERE " : "")
+                + (filtered ? "metadata @> ?::jsonb" : "")
+                + (filtered && generationScoped ? " AND " : "")
+                + (generationScoped ? "generation_id = ?" : "")
                 // Same fetch-cap shape as lexical (YDB top-100 mirror).
                 + " ORDER BY dist LIMIT " + Math.max(limit, 100);
     }
@@ -293,17 +318,22 @@ public class PostgresSynquestEngine
     private List<SearchHit> fetchVector(String tenant, SearchRequest request, int fetchLimit)
             throws Exception {
         boolean filtered = !request.filters().mustMatchMetadata().isEmpty();
-        String sql = vectorSql(filtered, fetchLimit);
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
                 set.execute("SET LOCAL app.tenant_id = '" + tenant.replace("'", "''") + "'");
             }
+            String active = selectPointer(conn, tenant);
+            String sql = vectorSql(filtered, active != null, fetchLimit);
             List<SearchHit> matches = new java.util.ArrayList<>();
             try (var ps = conn.prepareStatement(sql)) {
-                ps.setString(1, paddedVector(request.queryEmbedding().get()));
+                int param = 1;
+                ps.setString(param++, paddedVector(request.queryEmbedding().get()));
                 if (filtered) {
-                    ps.setString(2, metadataJson(request.filters().mustMatchMetadata()));
+                    ps.setString(param++, metadataJson(request.filters().mustMatchMetadata()));
+                }
+                if (active != null) {
+                    ps.setString(param++, active);
                 }
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -415,13 +445,10 @@ public class PostgresSynquestEngine
     // ---- writer ----
 
     /**
-     * 007-2 writer (minimal): projection rows into the shared {@code chunks}
-     * table with maintained {@code tsv} + stored generation/ordering values.
-     * Plain overwrite on conflict — ordering-guard (regression prevention)
-     * and generation promotion semantics land in 007-5/007-7; the
-     * corresponding contract tests stay red until then. Grouped per tenant:
-     * {@code SET LOCAL} scopes to one transaction, so multi-tenant batches
-     * commit tenant by tenant.
+     * Projection writes, grouped per tenant (one transaction each —
+     * {@code SET LOCAL} scopes per transaction). Generation gate first
+     * (stale batch fails the tenant tx atomically), then ordering-guarded
+     * row writes. See {@code adoptOrCheck} for the pointer contract.
      */
     @Override
     public CompletionStage<Void> upsert(List<ChunkProjection> projections) {
@@ -439,11 +466,77 @@ public class PostgresSynquestEngine
         }
     }
 
+    /**
+     * Generation pointer, YDB P0-1 equivalent shape (007-7a). YDB holds the
+     * active generation in engine memory (first-write-wins adopt, rebuild
+     * flips via map put); PG holds one row per tenant in
+     * {@code quest_generations} — a single-row upsert is the atomic flip,
+     * and DB state survives restarts and shares across instances. Same
+     * contract either way: a query never observes two generations.
+     * Deliberate difference (stated, not drifted): YDB's pointer is global
+     * ({@code "*"}); PG's is per-tenant — contract-indistinguishable on
+     * single-tenant tests, strictly more isolated under multi-tenancy
+     * (one tenant's rebuild never flips another's reads).
+     */
+    private static String selectPointer(java.sql.Connection conn, String tenant) throws Exception {
+        try (var ps = conn.prepareStatement(
+                "SELECT active_generation FROM quest_generations WHERE tenant_id = ?")) {
+            ps.setString(1, tenant);
+            try (var rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
+
+    private static String adoptOrCheck(
+            java.sql.Connection conn, String tenant, GenerationId generation) throws Exception {
+        String active = selectPointer(conn, tenant);
+        if (active == null) {
+            try (var ps = conn.prepareStatement(
+                    "INSERT INTO quest_generations (tenant_id, active_generation)"
+                            + " VALUES (?, ?) ON CONFLICT DO NOTHING")) {
+                ps.setString(1, tenant);
+                ps.setString(2, generation.value());
+                ps.executeUpdate();
+            }
+            active = selectPointer(conn, tenant);
+        }
+        if (active != null && !active.equals(generation.value())) {
+            throw new StorageException(
+                    StorageErrorKind.CONFLICT,
+                    "CONFLICT: stale generation '" + generation.value()
+                            + "', active is '" + active + "'");
+        }
+        return active;
+    }
+
+    private static Long storedOrdering(
+            java.sql.Connection conn, String tenant, String chunkId) throws Exception {
+        try (var ps = conn.prepareStatement(
+                "SELECT ordering_key FROM chunks WHERE tenant_id = ? AND chunk_id = ?")) {
+            ps.setString(1, tenant);
+            ps.setString(2, chunkId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    long value = rs.getLong(1);
+                    return rs.wasNull() ? null : value;
+                }
+                return null;
+            }
+        }
+    }
+
     private void upsertTenant(String tenant, List<ChunkProjection> projections) throws Exception {
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
                 set.execute("SET LOCAL app.tenant_id = '" + tenant.replace("'", "''") + "'");
+            }
+            // Generation gate first: a stale batch fails the whole tenant
+            // transaction (atomic — strictly stronger than YDB's
+            // prefix-apply-then-fail; the contract asserts only the CONFLICT).
+            for (ChunkProjection p : projections) {
+                adoptOrCheck(conn, tenant, p.generationId());
             }
             try (var ps =
                     conn.prepareStatement(
@@ -459,6 +552,19 @@ public class PostgresSynquestEngine
                                     + " tsv = EXCLUDED.tsv, generation_id = EXCLUDED.generation_id,"
                                     + " ordering_key = EXCLUDED.ordering_key")) {
                 for (ChunkProjection p : projections) {
+                    // Ordering guard (041.3 discipline): strict >, equal-key
+                    // drops, log-not-fail — retry-safe by construction. YDB
+                    // silently continues; PG logs the drop (superset, the
+                    // retry-safety argument applies identically).
+                    Long stored = storedOrdering(conn, tenant, p.chunkId().value());
+                    if (stored != null && p.orderingKey() <= stored) {
+                        LOG.info(() ->
+                                "ordering-guard drop: tenant=" + tenant
+                                        + " chunk=" + p.chunkId().value()
+                                        + " incoming=" + p.orderingKey()
+                                        + " stored=" + stored);
+                        continue;
+                    }
                     ps.setString(1, tenant);
                     ps.setString(2, p.chunkId().value());
                     ps.setString(3, p.documentId().value());
@@ -513,7 +619,43 @@ public class PostgresSynquestEngine
 
     @Override
     public CompletionStage<Void> delete(GenerationId generationId, Collection<ChunkId> ids) {
-        return CompletableFuture.failedFuture(todo("delete", "007-5"));
+        // Generation-scoped delete (YDB mirror: only rows at the requested
+        // generation go). Tenant discovery via the DEFINER lookup — the port
+        // supplies no tenant, and YDB scans its local indexes for the same
+        // reason. Each tenant's delete runs scoped (RLS still binds it).
+        try (var conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            for (ChunkId id : ids) {
+                List<String> tenants = new java.util.ArrayList<>();
+                try (var ps = conn.prepareStatement(
+                        "SELECT tenant_id FROM quest_chunk_tenants(?, ?)")) {
+                    ps.setString(1, id.value());
+                    ps.setString(2, generationId.value());
+                    try (var rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            tenants.add(rs.getString(1));
+                        }
+                    }
+                }
+                for (String tenant : tenants) {
+                    try (var set = conn.createStatement()) {
+                        set.execute("SET LOCAL app.tenant_id = '" + tenant.replace("'", "''") + "'");
+                    }
+                    try (var ps = conn.prepareStatement(
+                            "DELETE FROM chunks WHERE tenant_id = ? AND chunk_id = ?"
+                                    + " AND generation_id = ?")) {
+                        ps.setString(1, tenant);
+                        ps.setString(2, id.value());
+                        ps.setString(3, generationId.value());
+                        ps.executeUpdate();
+                    }
+                }
+            }
+            conn.commit();
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(map(e));
+        }
     }
 
     // ---- admin ----
@@ -525,7 +667,29 @@ public class PostgresSynquestEngine
 
     @Override
     public CompletionStage<Void> rebuild(RebuildOptions options) {
-        return CompletableFuture.failedFuture(todo("rebuild", "007-5"));
+        // Promotion flip (YDB P0-1 mirror): non-full flips the pointer only
+        // (rows remain — the promotion-window test's exact setup); full
+        // clears quest rows first. Both via DEFINER (port gives no tenant;
+        // the flip is global like YDB "*"). Single statements — the flip is
+        // the atomic promotion edge the no-mixed-generations test needs.
+        try (var conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            try (var stmt = conn.createStatement()) {
+                if (options.full()) {
+                    stmt.execute("SELECT quest_reset_quest_rows()");
+                }
+                try (var ps = conn.prepareStatement("SELECT quest_promote_flip(?)")) {
+                    ps.setString(1, options.targetGeneration().value());
+                    try (var rs = ps.executeQuery()) {
+                        rs.next();
+                    }
+                }
+            }
+            conn.commit();
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(map(e));
+        }
     }
 
     @Override

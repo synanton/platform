@@ -61,6 +61,7 @@ class MetadataPushdownGuardTest extends QuestPostgresFixture {
     @BeforeAll
     static void seed() throws Exception {
         ensureStarted();
+        resetTenants(TENANT);
         try (Connection admin = QuestPostgresFixture.adminConnection();
                 var ps = admin.prepareStatement("SELECT count(*) FROM chunks WHERE tenant_id = ?")) {
             ps.setString(1, TENANT);
@@ -146,7 +147,8 @@ class MetadataPushdownGuardTest extends QuestPostgresFixture {
                         TENANT,
                         "common | filler | alpha",
                         "common | filler | alpha",
-                        "{\"type\":\"runbook\"}");
+                        "{\"type\":\"runbook\"}",
+                        "gen-guard");
         assertThat(plan).as("lexical plan carries @> containment").contains("@>");
     }
 
@@ -157,7 +159,8 @@ class MetadataPushdownGuardTest extends QuestPostgresFixture {
                         PostgresSynquestEngine.vectorSql(true, 10),
                         TENANT,
                         "[1,0,0,0]",
-                        "{\"type\":\"runbook\"}");
+                        "{\"type\":\"runbook\"}",
+                        "gen-guard");
         assertThat(plan).as("vector plan carries @> containment").contains("@>");
     }
 

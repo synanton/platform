@@ -81,4 +81,28 @@ abstract class QuestPostgresFixture {
         return DriverManager.getConnection(
                 container.getJdbcUrl(), container.getUsername(), container.getPassword());
     }
+
+    /**
+     * Per-class seed hygiene (007-7a): pointers persist across test classes
+     * (first-write-wins adoption), so a corpus seed clears its tenants'
+     * rows AND pointer rows first — then its own upserts adopt fresh.
+     * Contract tests truncate instead (per-test); same property, tighter scope.
+     */
+    protected static void resetTenants(String... tenants) {
+        try (Connection admin = adminConnection();
+                var psChunks =
+                        admin.prepareStatement("DELETE FROM chunks WHERE tenant_id = ?");
+                var psPointers =
+                        admin.prepareStatement(
+                                "DELETE FROM quest_generations WHERE tenant_id = ?")) {
+            for (String tenant : tenants) {
+                psChunks.setString(1, tenant);
+                psChunks.executeUpdate();
+                psPointers.setString(1, tenant);
+                psPointers.executeUpdate();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("tenant reset failed", e);
+        }
+    }
 }

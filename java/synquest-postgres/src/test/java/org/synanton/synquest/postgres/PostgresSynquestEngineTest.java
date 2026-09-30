@@ -24,9 +24,11 @@ class PostgresSynquestEngineTest extends SynquestEngineContract {
         // Per-test isolation (same shape as the synvault store test): the
         // contract reuses fixed chunk ids (c1) and zero-padded toy vectors
         // collide exactly, so every test starts from an empty table.
-        // JUnit runs test classes sequentially — the topology test's corpus
-        // is seeded in its own @BeforeAll, unaffected by these wipes.
-        truncateChunks();
+        // Pointers truncate too: generation adoption is first-write-wins
+        // per test, never leaked from the previous one. JUnit runs test
+        // classes sequentially — the topology/guard corpora are seeded in
+        // their own @BeforeAll, unaffected by these wipes.
+        truncateQuestState();
         return QuestPostgresFixture.newEngine();
     }
 
@@ -40,10 +42,10 @@ class PostgresSynquestEngineTest extends SynquestEngineContract {
         return QuestPostgresFixture.newEngine();
     }
 
-    private static void truncateChunks() {
+    private static void truncateQuestState() {
         try (var admin = QuestPostgresFixture.adminConnection();
                 var stmt = admin.createStatement()) {
-            stmt.execute("TRUNCATE chunks");
+            stmt.execute("TRUNCATE chunks, quest_generations");
         } catch (Exception e) {
             throw new IllegalStateException("truncate failed", e);
         }

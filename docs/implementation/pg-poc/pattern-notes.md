@@ -27,3 +27,10 @@ the old). Entries carry stable labels (`PN-1`…); tickets cite the label
   shared suite + `RevisionAtomicityTest`). If either implementation changes
   its concurrency mechanism, re-run the racer test first — semantic drift
   between backends is a correctness bug, not a style choice.
+- **[PN-4] Plan-shape guards catch what result-shape tests miss.** Origin:
+  PG-POC-007-6 (fourth instance in this PoC family: Map.of, vector
+  text-duplication, and the vector leg's missing filter push-down — none
+  visible to outcome-only tests). A guard that verifies mechanism
+  (predicate in plan, topology recorded) discovers defects the retrieval
+  tests pass over. Every retrieval leg gets both shapes: result
+  correctness AND plan-shape evidence.
