@@ -115,20 +115,30 @@ public class PostgresSynquestEngine
         }
     }
 
+    /**
+     * Lexical query shape (package-visible for the 007-6 EXPLAIN guard: the
+     * test explains exactly what the engine runs). Single emitted predicate
+     * form: {@code @>} containment — the corpus uses single-attribute
+     * equalities, so one shape covers all frozen queries; {@code ->>} and
+     * OR-forms are out of scope until the engine emits them.
+     */
+    static String lexicalSql(boolean filtered, int limit) {
+        return "SELECT chunk_id, doc_id, text, metadata,"
+                + " ts_rank(tsv, to_tsquery('english', ?)) AS score"
+                + " FROM chunks"
+                + " WHERE tsv @@ to_tsquery('english', ?)"
+                + (filtered ? " AND metadata @> ?::jsonb" : "")
+                // Fetch cap mirrors YDB's top-100 leg fetch: generous past
+                // topK so minScore filtering post-fetch matches the reference
+                // shape; the slice (not this cut) is the verdict. Monotonic
+                // int — never user text.
+                + " ORDER BY score DESC LIMIT " + Math.max(limit, 100);
+    }
+
     private List<SearchHit> fetchLexical(
             String tenant, SearchRequest request, String tsquery, int limit) throws Exception {
         boolean filtered = !request.filters().mustMatchMetadata().isEmpty();
-        String sql =
-                "SELECT chunk_id, doc_id, text, metadata,"
-                        + " ts_rank(tsv, to_tsquery('english', ?)) AS score"
-                        + " FROM chunks"
-                        + " WHERE tsv @@ to_tsquery('english', ?)"
-                        + (filtered ? " AND metadata @> ?::jsonb" : "")
-                        // Fetch cap mirrors YDB's top-100 leg fetch: generous
-                        // past topK so minScore filtering post-fetch matches
-                        // the reference shape; the slice (not this cut) is
-                        // the verdict. Monotonic int — never user text.
-                        + " ORDER BY score DESC LIMIT " + Math.max(limit, 100);
+        String sql = lexicalSql(filtered, limit);
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
@@ -267,14 +277,23 @@ public class PostgresSynquestEngine
         }
     }
 
+    /**
+     * Vector query shape (package-visible for the 007-6 EXPLAIN guard).
+     * Same single {@code @>} predicate form as lexical.
+     */
+    static String vectorSql(boolean filtered, int limit) {
+        return "SELECT chunk_id, doc_id, text, metadata,"
+                + " (embedding <=> ?::vector) AS dist"
+                + " FROM chunks"
+                + (filtered ? " WHERE metadata @> ?::jsonb" : "")
+                // Same fetch-cap shape as lexical (YDB top-100 mirror).
+                + " ORDER BY dist LIMIT " + Math.max(limit, 100);
+    }
+
     private List<SearchHit> fetchVector(String tenant, SearchRequest request, int fetchLimit)
             throws Exception {
-        String sql =
-                "SELECT chunk_id, doc_id, text, metadata,"
-                        + " (embedding <=> ?::vector) AS dist"
-                        + " FROM chunks"
-                        // Same fetch-cap shape as lexical (YDB top-100 mirror).
-                        + " ORDER BY dist LIMIT " + Math.max(fetchLimit, 100);
+        boolean filtered = !request.filters().mustMatchMetadata().isEmpty();
+        String sql = vectorSql(filtered, fetchLimit);
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
@@ -283,6 +302,9 @@ public class PostgresSynquestEngine
             List<SearchHit> matches = new java.util.ArrayList<>();
             try (var ps = conn.prepareStatement(sql)) {
                 ps.setString(1, paddedVector(request.queryEmbedding().get()));
+                if (filtered) {
+                    ps.setString(2, metadataJson(request.filters().mustMatchMetadata()));
+                }
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
                         double score = -rs.getDouble("dist");
@@ -385,9 +407,9 @@ public class PostgresSynquestEngine
     @Override
     public SearchCapabilities capabilities() {
         // §9.3: unverified flags report false. Lexical (007-2), vector
-        // (007-3) and hybrid (007-5) flipped on evidence; the rest flip
-        // with their own tasks.
-        return new SearchCapabilities(true, true, true, false, false, false, false, false);
+        // (007-3), hybrid (007-5) and filters (007-6) flipped on evidence;
+        // the rest flip with their own tasks.
+        return new SearchCapabilities(true, true, true, true, false, false, false, false);
     }
 
     // ---- writer ----
@@ -533,8 +555,6 @@ public class PostgresSynquestEngine
                         ConformanceEntry.supported(Capabilities.SYNQUEST_LEXICAL, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_VECTOR, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
-                        ConformanceEntry.unverified(
-                                Capabilities.SYNQUEST_FILTERS,
-                                "007-1 scaffold, lands in 007-6")));
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_FILTERS, evidence)));
     }
 }

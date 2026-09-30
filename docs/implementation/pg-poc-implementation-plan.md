@@ -317,7 +317,12 @@ External gates:
   - EXPLAIN assertions on all index-dependent queries (analogue of YDB PlanAssertions).
   - Metadata filtering in SQL: EXPLAIN shows the predicate in-plan plus a
     behavioral large-eligible-set leg (YDB P1-4 class, caught by
-    construction).
+    construction). Single emitted form `@>` (corpus uses single-attribute
+    equalities — one shape covers all frozen queries; `->>`/OR out of scope
+    until emitted). Guard pins lexical + vector + hybrid legs; binding
+    fixture (~5% eligible, ineligible ranked higher) discriminates
+    pre-ranking from post-fetch. Cross-ref 007-5 probe filter row
+    (mechanism difference, outcome-convergent via YDB over-fetch).
   - Engine determinism: two runs on the same corpus produce identical
     top-K per query (modulo timing_ms). No RunLeg home exists — 007 owns it.
 - Self-arming suite: the contract tests gate on capability flags, so no
