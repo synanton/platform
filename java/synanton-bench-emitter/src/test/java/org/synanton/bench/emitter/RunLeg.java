@@ -85,7 +85,11 @@ public final class RunLeg {
         Engine engine = open(engineName, corpusDir);
         long tLoad0 = System.nanoTime();
         if (!loadDone) {
-            engine.truncate();
+            // NOTE (028e incident): these are Runnable-returning record
+            // accessors — a bare engine.truncate() fetches and drops the
+            // lambda without running it (compiles silent, no warning).
+            // Always invoke with .run().
+            engine.truncate().run();
             streamLoad(engine, corpusDir);
             appendLine(checkpoint, "{\"phase\":\"load-done\"}");
         } else {
@@ -94,9 +98,7 @@ public final class RunLeg {
         // Post-load runs on both paths (idempotent by contract): PG trains
         // IVFFlat on the loaded corpus here — resuming onto a dropped index
         // re-trains instead of silently running unindexed.
-        System.out.println("POSTLOAD dispatching for leg=" + engineName);
-        engine.postLoad();
-        System.out.println("POSTLOAD returned for leg=" + engineName);
+        engine.postLoad().run();
         long loadMs = (System.nanoTime() - tLoad0) / 1_000_000;
 
         List<String> universe = engine.tenantUniverse();
@@ -158,7 +160,7 @@ public final class RunLeg {
         Files.writeString(
                 outFile.resolveSibling(outFile.getFileName() + ".build.json"), build.toPrettyString());
         System.out.println("DONE wrote=" + outFile + " queries=" + outputs.size());
-        engine.close();
+        engine.close().run();
     }
 
     private record Engine(
@@ -490,6 +492,37 @@ public final class RunLeg {
      * {@code PG_APP_PASSWORD} (default {@code app}).
      */
     static final class PgLeg {
+        /** Post-load as a named method (not an inline lambda): entry print
+         * proves dispatch reached here — see 028e incident forensics. */
+        static void postLoadIndex(String url, String user, String password) {
+            System.out.println("POSTLOAD-ENTRY pg leg");
+            try (java.sql.Connection admin =
+                    java.sql.DriverManager.getConnection(url, user, password);
+                    var stmt = admin.createStatement()) {
+                System.out.println("POSTLOAD dropping stale ivfflat (if any)");
+                stmt.execute("DROP INDEX IF EXISTS chunks_embedding_ivfflat");
+                System.out.println("POSTLOAD training ivfflat on loaded corpus");
+                stmt.execute(
+                        "CREATE INDEX chunks_embedding_ivfflat ON chunks"
+                                + " USING ivfflat (embedding vector_cosine_ops)"
+                                + " WITH (lists = 100)");
+                System.out.println("POSTLOAD analyzing");
+                stmt.execute("ANALYZE chunks");
+                try (var rs = stmt.executeQuery(
+                        "SELECT count(*) FROM pg_indexes"
+                                + " WHERE indexname = 'chunks_embedding_ivfflat'")) {
+                    rs.next();
+                    if (rs.getLong(1) != 1) {
+                        throw new IllegalStateException(
+                                "post-load verification failed: ivfflat absent after create");
+                    }
+                }
+                System.out.println("POSTLOAD verified: ivfflat present + analyzed");
+            } catch (Exception e) {
+                throw new IllegalStateException("pg post-load index failed", e);
+            }
+        }
+
         static Engine open(Path corpusDir) throws Exception {
             String url = System.getenv().getOrDefault("PG_JDBC_URL", "jdbc:postgresql://localhost:5433/bench");
             String user = System.getenv().getOrDefault("PG_JDBC_USER", "bench");
@@ -547,37 +580,9 @@ public final class RunLeg {
                     // Deferred-DDL rule (007-3 ticket): IVFFlat trains on the
                     // loaded corpus + ANALYZE, never in schema setup.
                     // Idempotent: safe on resume after a dropped index.
-                    // Loud by contract (PN-4): prints progress and VERIFIES
-                    // the index exists afterwards — a silently-skipped
-                    // post-load once shipped a full btree-sort run as ANN
-                    // numbers (028e incident, 2026-09-30). Never again.
-                    () -> {
-                        try (java.sql.Connection admin =
-                                java.sql.DriverManager.getConnection(url, user, password);
-                                var stmt = admin.createStatement()) {
-                            System.out.println("POSTLOAD dropping stale ivfflat (if any)");
-                            stmt.execute("DROP INDEX IF EXISTS chunks_embedding_ivfflat");
-                            System.out.println("POSTLOAD training ivfflat on loaded corpus");
-                            stmt.execute(
-                                    "CREATE INDEX chunks_embedding_ivfflat ON chunks"
-                                            + " USING ivfflat (embedding vector_cosine_ops)"
-                                            + " WITH (lists = 100)");
-                            System.out.println("POSTLOAD analyzing");
-                            stmt.execute("ANALYZE chunks");
-                            try (var rs = stmt.executeQuery(
-                                    "SELECT count(*) FROM pg_indexes"
-                                            + " WHERE indexname = 'chunks_embedding_ivfflat'")) {
-                                rs.next();
-                                if (rs.getLong(1) != 1) {
-                                    throw new IllegalStateException(
-                                            "post-load verification failed: ivfflat absent after create");
-                                }
-                            }
-                            System.out.println("POSTLOAD verified: ivfflat present + analyzed");
-                        } catch (Exception e) {
-                            throw new IllegalStateException("pg post-load index failed", e);
-                        }
-                    },
+                    // Invoked as postLoadIndex(...) via .run() — see the
+                    // fetch-and-drop note at the call site.
+                    () -> postLoadIndex(url, user, password),
                     () -> {
                         throw new UnsupportedOperationException("no sessions on pg leg");
                     });

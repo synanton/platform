@@ -43,3 +43,21 @@ the old). Entries carry stable labels (`PN-1`…); tickets cite the label
   reaching the function with arbitrary arguments reads/writes any tenant.
   Production must audit role scope + argument handling. Tracked:
   `007-followup-definer-audit.md`.
+- **[PN-6] Mitigation ≠ mechanism — and the record must say which closed
+  the class.** Origin: 028e run-1 (2026-09-30): a full leg completed with
+  no IVFFlat and no error; root cause for that silent instance remains
+  unexplained. The class is closed by verify-or-throw (post-load prints +
+  `pg_indexes` check), which prevents recurrence without explaining the
+  original. "Closed by mitigation" must never read as "root cause found"
+  six months later — write which one it is.
+- **[PN-7] A bare call on a Runnable-returning accessor is fetch-and-drop,
+  not invocation — and javac won't tell you.** Resolution of PN-6's
+  instance (2026-09-30, same day): `engine.postLoad();` fetches the lambda
+  and discards it; only `engine.postLoad().run()` invokes. Same for
+  `truncate()`/`close()`. Compiles silent, no warning, all downstream
+  evidence consistent with "the step ran" (load succeeded, queries
+  returned, DONE written) while the step never executed. Supplier-returning
+  accessors don't have this shape (`.get()` is always written); Runnables
+  do. Review rule: every call site on a `Runnable`-returning accessor must
+  show `.run()` — grep `engine\.(truncate|close|postLoad)();` finds the
+  bug class repository-wide.
