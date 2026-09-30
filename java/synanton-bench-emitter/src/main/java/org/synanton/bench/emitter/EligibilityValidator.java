@@ -36,31 +36,34 @@ public final class EligibilityValidator {
     }
 
     /**
-     * Validates claimed eligible ids for one query: empty scope means the full
-     * corpus (filter=none legs); otherwise tenants in scope intersected with
-     * the metadata predicate.
+     * Corpus index for single-pass validation (RunLeg wiring): one stream
+     * builds it, per-query checks run in memory. Same match semantics as
+     * {@link #validate(Path, List, Map, List)} — the predicate core is
+     * shared, never duplicated.
      */
-    public static Mismatch validate(
-            Path corpusDir,
-            List<String> tenantScope,
-            Map<String, String> metadataPredicate,
-            List<String> claimedEligibleIds)
-            throws Exception {
-        Set<String> recomputed = new HashSet<>();
-        final List<String> scope =
-                (tenantScope == null || tenantScope.isEmpty()) ? null : tenantScope;
+    public record IndexedRow(String tenant, Map<String, String> meta, String text) {}
+
+    public static Map<String, IndexedRow> loadIndex(Path corpusDir) throws Exception {
+        Map<String, IndexedRow> index = new java.util.HashMap<>();
         CorpusLoader.streamChunks(
                 corpusDir,
-                row -> {
-                    if (scope != null && !scope.contains(row.tenantId())) {
-                        return;
-                    }
-                    if (!metadataPredicate.entrySet().stream()
-                            .allMatch(e -> e.getValue().equals(rowMetadata(row, e.getKey())))) {
-                        return;
-                    }
-                    recomputed.add(row.chunkId());
-                });
+                row -> index.put(row.chunkId(),
+                        new IndexedRow(row.tenantId(), Map.copyOf(row.metadata()), row.text())));
+        return Map.copyOf(index);
+    }
+
+    /** In-memory twin of {@link #validate(Path, List, Map, List)} (same rules). */
+    public static Mismatch validate(
+            Map<String, IndexedRow> index,
+            List<String> tenantScope,
+            Map<String, String> metadataPredicate,
+            List<String> claimedEligibleIds) {
+        Set<String> recomputed = new HashSet<>();
+        for (var entry : index.entrySet()) {
+            if (matches(entry.getValue(), tenantScope, metadataPredicate)) {
+                recomputed.add(entry.getKey());
+            }
+        }
         Set<String> claimed = new HashSet<>(claimedEligibleIds);
         Set<String> missing = new TreeSet<>(recomputed);
         missing.removeAll(claimed);
@@ -69,9 +72,37 @@ public final class EligibilityValidator {
         return new Mismatch(missing, extra);
     }
 
-    private static String rowMetadata(CorpusLoader.ChunkRow row, String key) {
-        // Metadata rides on the row (loader collects non-core string fields);
-        // absent attribute ⇒ no match (fail-closed, never fail-open).
-        return row.metadata().getOrDefault(key, "");
+    private static boolean matches(
+            IndexedRow row, List<String> tenantScope, Map<String, String> metadataPredicate) {
+        if (tenantScope != null && !tenantScope.isEmpty() && !tenantScope.contains(row.tenant())) {
+            return false;
+        }
+        return metadataPredicate.entrySet().stream()
+                .allMatch(e -> e.getValue().equals(row.meta().getOrDefault(e.getKey(), "")));
+    }
+    /** Path-based entry: streams once, then delegates to the shared core. */
+    public static Mismatch validate(
+            Path corpusDir,
+            List<String> tenantScope,
+            Map<String, String> metadataPredicate,
+            List<String> claimedEligibleIds)
+            throws Exception {
+        Set<String> recomputed = new HashSet<>();
+        CorpusLoader.streamChunks(
+                corpusDir,
+                row -> {
+                    if (matches(
+                            new IndexedRow(row.tenantId(), Map.copyOf(row.metadata()), row.text()),
+                            tenantScope,
+                            metadataPredicate)) {
+                        recomputed.add(row.chunkId());
+                    }
+                });
+        Set<String> claimed = new HashSet<>(claimedEligibleIds);
+        Set<String> missing = new TreeSet<>(recomputed);
+        missing.removeAll(claimed);
+        Set<String> extra = new TreeSet<>(claimed);
+        extra.removeAll(recomputed);
+        return new Mismatch(missing, extra);
     }
 }

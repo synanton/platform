@@ -150,6 +150,11 @@ public final class RunLeg {
         }
         // NOTE: checkpoint lines are full Q3 docs; re-parse for merge.
         // (outputs already holds prior + new in order; the file is truth on resume.)
+        // PN-8 wiring: both bench guards run here, post-query pre-emission,
+        // on every leg. A violation fails LOUDLY before the artifact is
+        // written — the 120-empty resume artifact is the incident that
+        // proved an unwired guard protects nothing.
+        gateOutputs(corpusDir, outputs);
         String json = Q3Emitter.emit(engineName + "-v1", manifest.corpusVersion(), outputs);
         Files.createDirectories(outFile.getParent());
         Files.writeString(outFile, json);
@@ -336,6 +341,62 @@ public final class RunLeg {
         Files.writeString(
                 file, line + "\n", java.nio.charset.StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    }
+
+    /**
+     * PN-8 gate: RetrievabilityGuard (empty-leg detection) +
+     * EligibilityValidator (ground-truth set compare) over every emitted
+     * query, before the artifact is written. Ground truth re-derives from
+     * the corpus (never from engine output); query texts come from the
+     * fixture. First violation aborts the run with the query named.
+     */
+    private static void gateOutputs(Path corpusDir, List<QueryOutput> outputs) throws Exception {
+        Map<String, EligibilityValidator.IndexedRow> index =
+                EligibilityValidator.loadIndex(corpusDir);
+        Map<String, JsonNode> golden = new LinkedHashMap<>();
+        try (var reader = Files.newBufferedReader(corpusDir.resolve("golden-queries.jsonl"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                JsonNode q = MAPPER.readTree(line);
+                golden.put(q.get("query_id").asText(), q);
+            }
+        }
+        Map<String, String> idToText = new LinkedHashMap<>();
+        index.forEach((id, row) -> idToText.put(id, row.text()));
+        for (QueryOutput out : outputs) {
+            JsonNode q = golden.get(out.queryId());
+            if (q == null) {
+                throw new IllegalStateException(
+                        "gate: emitted query has no fixture row: " + out.queryId());
+            }
+            boolean lexicalFiltered =
+                    out.mode().equals("lexical") && !out.filter().equals("none");
+            List<String> topIds = new ArrayList<>();
+            out.topK().forEach(h -> topIds.add(h.chunkId()));
+            RetrievabilityGuard.Verdict verdict =
+                    RetrievabilityGuard.check(
+                            out.queryId(),
+                            q.has("text") ? q.get("text").asText() : "",
+                            out.eligibleIds(), topIds, idToText, lexicalFiltered);
+            if (!verdict.pass()) {
+                throw new IllegalStateException(
+                        "gate: retrievability failed for " + out.queryId() + ": " + verdict.detail());
+            }
+            List<String> scope = new ArrayList<>();
+            q.get("tenant_scope").forEach(s -> scope.add(s.asText()));
+            Map<String, String> pred = new LinkedHashMap<>();
+            q.get("metadata_predicate").fields().forEachRemaining(e -> pred.put(e.getKey(), e.getValue().asText()));
+            EligibilityValidator.Mismatch mismatch =
+                    EligibilityValidator.validate(index, scope, pred, out.eligibleIds());
+            if (!mismatch.clean()) {
+                throw new IllegalStateException(
+                        "gate: eligible-set mismatch for " + out.queryId() + ": " + mismatch);
+            }
+        }
+        System.out.println("GATE all " + outputs.size() + " queries pass both guards");
     }
 
     private static float[] decodeVec(String b64) {
