@@ -82,7 +82,12 @@ public final class RunLeg {
         }
 
         CorpusLoader.Manifest manifest = CorpusLoader.loadManifest(corpusDir);
-        Engine engine = open(engineName, corpusDir);
+        // Freshness is known BEFORE open (checkpoint read above): fresh runs
+        // cold-build, resume runs join existing state. Open must not
+        // destroy-then-skip — that shape once shipped a 120-empty artifact
+        // (028e resume incident, 2026-09-30).
+        boolean fresh = !loadDone;
+        Engine engine = open(engineName, corpusDir, fresh);
         long tLoad0 = System.nanoTime();
         if (!loadDone) {
             // NOTE (028e incident): these are Runnable-returning record
@@ -181,11 +186,11 @@ public final class RunLeg {
         }
     }
 
-    private static Engine open(String name, Path corpusDir) throws Exception {
+    private static Engine open(String name, Path corpusDir, boolean fresh) throws Exception {
         return switch (name) {
-            case "ydb" -> YdbLeg.open(corpusDir);
-            case "cassandra" -> CassandraLeg.open(corpusDir);
-            case "pg" -> PgLeg.open(corpusDir);
+            case "ydb" -> YdbLeg.open(corpusDir, fresh);
+            case "cassandra" -> CassandraLeg.open(corpusDir, fresh);
+            case "pg" -> PgLeg.open(corpusDir, fresh);
             default -> throw new IllegalArgumentException("unknown --engine (ydb|cassandra|pg): " + name);
         };
     }
@@ -370,7 +375,7 @@ public final class RunLeg {
 
     /** Per-leg engine openers (the only adapter-specific code in the CLI). */
     static final class YdbLeg {
-        static Engine open(Path corpusDir) throws Exception {
+        static Engine open(Path corpusDir, boolean fresh) throws Exception {
             String caPath = firstExisting(
                     System.getenv().getOrDefault("YDB_CA_PATH", ""),
                     System.getProperty("ydb.ca.path", ""),
@@ -466,7 +471,7 @@ public final class RunLeg {
     }
 
     /** Per-leg engine openers (the only adapter-specific code in the CLI). */
-    static final class CassandraLeg {        static Engine open(Path corpusDir) throws Exception {
+    static final class CassandraLeg {        static Engine open(Path corpusDir, boolean fresh) throws Exception {
             Path root = Files.createTempDirectory("bench-leg-cassandra");
             org.synanton.synquest.cassandra.CassandraSynquestEngine engine =
                     new org.synanton.synquest.cassandra.CassandraSynquestEngine(root);
@@ -532,25 +537,29 @@ public final class RunLeg {
             }
         }
 
-        static Engine open(Path corpusDir) throws Exception {
+        static Engine open(Path corpusDir, boolean fresh) throws Exception {
             String url = System.getenv().getOrDefault("PG_JDBC_URL", "jdbc:postgresql://localhost:5433/bench");
             String user = System.getenv().getOrDefault("PG_JDBC_USER", "bench");
             String password = System.getenv().getOrDefault("PG_JDBC_PASSWORD", "bench");
             String appPassword = System.getenv().getOrDefault("PG_APP_PASSWORD", "app");
             try (java.sql.Connection admin =
                     java.sql.DriverManager.getConnection(url, user, password)) {
-                // Cold-build (RunLeg rule: no index cache, every documented
-                // run rebuilds): drop quest tables + functions first, then
-                // install canonical DDL fresh. ensureSchema itself is
-                // create-only (unit-test fresh-container path stays simple).
-                try (var drop = admin.createStatement()) {
-                    drop.execute("DROP TABLE IF EXISTS documents, chunks, provenance,"
-                            + " publication_log, quest_generations CASCADE");
-                    drop.execute("DROP FUNCTION IF EXISTS quest_chunk_tenants(text, text)");
-                    drop.execute("DROP FUNCTION IF EXISTS quest_promote_flip(text)");
-                    drop.execute("DROP FUNCTION IF EXISTS quest_reset_quest_rows()");
+                // Cold-build ONLY on fresh runs (RunLeg rule: no index cache,
+                // every documented run rebuilds). Resume joins existing
+                // state — dropping here once shipped 120 empty legs (028e
+                // resume incident, 2026-09-30).
+                if (fresh) {
+                    try (var drop = admin.createStatement()) {
+                        drop.execute("DROP TABLE IF EXISTS documents, chunks, provenance,"
+                                + " publication_log, quest_generations CASCADE");
+                        drop.execute("DROP FUNCTION IF EXISTS quest_chunk_tenants(text, text)");
+                        drop.execute("DROP FUNCTION IF EXISTS quest_promote_flip(text)");
+                        drop.execute("DROP FUNCTION IF EXISTS quest_reset_quest_rows()");
+                    }
+                    org.synanton.synvault.postgres.PostgresSchema.ensureSchema(admin);
+                } else {
+                    System.out.println("RESUME joining existing PG schema (no drop, no install)");
                 }
-                org.synanton.synvault.postgres.PostgresSchema.ensureSchema(admin);
                 try (var stmt = admin.createStatement()) {
                     stmt.execute("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app')"
                             + " THEN CREATE ROLE app NOSUPERUSER LOGIN PASSWORD '" + appPassword.replace("'", "''")
