@@ -59,6 +59,13 @@ CREATE INDEX chunks_tenant_doc_btree ON chunks (tenant_id, doc_id);
 CREATE INDEX chunks_metadata_gin ON chunks USING gin (metadata);
 CREATE INDEX documents_metadata_gin ON documents USING gin (metadata);
 
+-- PG-POC-007-2 (additive): quest-side write state. The synvault store path
+-- (PG-POC-004) never sets these — nullable by design, not oversight.
+-- Generation/promotion semantics land in 007-5/007-7; 007-2 stores the
+-- values, search does not filter on them yet.
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS generation_id text;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS ordering_key bigint;
+
 -- RLS: tenant isolation on all four tables (proposal §7.4, §8.1).
 -- current_setting(..., true) with missing_ok=true: an unset app.tenant_id
 -- yields NULL, which matches no rows — fail-closed, never fail-open.

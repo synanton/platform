@@ -275,19 +275,25 @@ External gates:
     (acceptable iff lexical overlap vs baseline stays within the R3
     tolerance family); `pg_search` is the recorded fallback, evaluated in
     parallel where pullable — never a hidden second implementation.
+    Query semantics named: disjunctive `to_tsquery` (mirrors Lucene
+    QueryParser default OR), `ts_rank` custom (not BM25), sub-384 vectors
+    zero-padded to the fixed column (orthogonal stays orthogonal; >384
+    rejected). All three recorded for the 007-4 probe.
   - Vector ANN: planner-chooses access path (no forced index); metric
     carries the topology (`vec_p95_btree_sort` until a plan says
     otherwise). IVFFlat added beside HNSW. Dimension fixed at column
     creation — switching models needs ALTER + index drop/rebuild, cost
     scaling with table size (same shelf as the YDB finding). Synthetic-384-d
     recall stays unclaimed.
-  - Fusion parity probe (007-4, before any hybrid number): four named axes
+  - Fusion parity probe (007-4, before any hybrid number): five named axes
     vs YDB's **recorded** 024B behavior (artifact reference, no
     cross-container dependency) — term matching
     (conjunctive/disjunctive), RRF k (60 vs PG default), score space
-    (rank vs normalized), tie ordering (per 013). Each axis matching or
-    divergent-with-a-name; output written to `build.json` beside load_ms
-    so the topology travels with the number for 028e/R3.
+    (rank vs normalized), tie ordering (per 013), lexical query semantics
+    (plainto/to_tsquery/websearch/phraseto vs frozen Lucene defaults).
+    Each axis matching or divergent-with-a-name; output written to
+    `build.json` beside load_ms so the topology travels with the number
+    for 028e/R3.
   - Hybrid leg gated by the parity probe, not before it.
   - EXPLAIN assertions on all index-dependent queries (analogue of YDB PlanAssertions).
   - Metadata filtering in SQL: EXPLAIN shows the predicate in-plan plus a
@@ -295,6 +301,10 @@ External gates:
     construction).
   - Engine determinism: two runs on the same corpus produce identical
     top-K per query (modulo timing_ms). No RunLeg home exists — 007 owns it.
+- Self-arming suite: the contract tests gate on capability flags, so no
+  suite modification is needed as flags flip — each evidenced flag just
+  arms more tests. Progress is measured by failures shrinking, same
+  structural property as "conformance matrix is code, not docs."
 - Pre-ranking eligibility per Gate A outcome; metric suffix on every eligibility-filtered number.
 - Post-retrieval sort (`score desc, chunkId asc`) applied on every query — server tied order is deterministic but not chunkId-asc (013 finding); verified by the 013 tie-break determinism test.
 - Tie-break deterministic; convergence gates pass.

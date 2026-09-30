@@ -9,6 +9,9 @@ dependencies {
     api(libs.postgresql)
     testImplementation(project(":java:synquest-api"))
     testImplementation(project(":java:storage-provider"))
+    // Schema DDL lives in synvault-postgres (DDL-in-one-place): the quest
+    // fixture installs it via PostgresSchema, never a local copy.
+    testImplementation(project(":java:synvault-postgres"))
     testImplementation(testFixtures(project(":java:storage-testkit")))
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.postgresql)
