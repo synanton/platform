@@ -24,7 +24,7 @@ Cross-cutting:
 | Emitter module (shared) | BENCH-EMIT-* (was A.1–A.6) | Phase A complete, green |
 | Comparator | BENCH-CMP (was PG-POC-017) | Green (12/12 + 4/4 contract) |
 | Corpus generator | 028a.1–028a.11 | Complete on main |
-| Phase 4 backlog | — | NONE experiment, index isolation, BulkUpsert-RPC, clock skew, resource broker |
+| Phase 4 backlog | — | NONE experiment, index isolation, BulkUpsert-RPC, clock skew, resource broker, 028-4.X KNN-vs-text split (owner TBD — pre-R3 backlog, non-blocking, tracked here so it isn't lost) |
 
 ## Alias map (transition only — drop after all branches renamed)
 

@@ -98,7 +98,7 @@ public final class DeterminismProbe {
             normalized.add(
                     new QueryOutput(
                             o.queryId(), o.mode(), o.filter(), o.selectivity(), o.topK(),
-                            o.eligibleIds(), 0.0, o.timingScope()));
+                            o.eligibleIds(), 0.0, o.timingScope(), o.minScore()));
         }
         String json = Q3Emitter.emit("det-run", "det-corpus", normalized);
         return HexFormat.of()

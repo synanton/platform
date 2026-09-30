@@ -532,11 +532,19 @@ public class PostgresSynquestEngine
             try (var set = conn.createStatement()) {
                 set.execute("SET LOCAL app.tenant_id = '" + tenant.replace("'", "''") + "'");
             }
-            // Generation gate first: a stale batch fails the whole tenant
-            // transaction (atomic — strictly stronger than YDB's
-            // prefix-apply-then-fail; the contract asserts only the CONFLICT).
+            // Generation gate first: adopt once per tenant-batch, then
+            // compare without further round-trips (160k-row loads stay
+            // linear). A stale batch fails the whole tenant transaction
+            // (atomic — strictly stronger than YDB's prefix-apply-then-fail;
+            // the contract asserts only the CONFLICT).
+            String active = adoptOrCheck(conn, tenant, projections.get(0).generationId());
             for (ChunkProjection p : projections) {
-                adoptOrCheck(conn, tenant, p.generationId());
+                if (!p.generationId().value().equals(active)) {
+                    throw new StorageException(
+                            StorageErrorKind.CONFLICT,
+                            "CONFLICT: stale generation '" + p.generationId().value()
+                                    + "', active is '" + active + "'");
+                }
             }
             try (var ps =
                     conn.prepareStatement(

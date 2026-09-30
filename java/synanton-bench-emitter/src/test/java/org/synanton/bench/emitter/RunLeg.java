@@ -91,6 +91,10 @@ public final class RunLeg {
         } else {
             System.out.println("RESUME skipping truncate+load");
         }
+        // Post-load runs on both paths (idempotent by contract): PG trains
+        // IVFFlat on the loaded corpus here — resuming onto a dropped index
+        // re-trains instead of silently running unindexed.
+        engine.postLoad();
         long loadMs = (System.nanoTime() - tLoad0) / 1_000_000;
 
         List<String> universe = engine.tenantUniverse();
@@ -158,6 +162,10 @@ public final class RunLeg {
     private record Engine(
             SynquestEngine engine, Runnable truncate, java.util.function.Supplier<List<String>> universeSup,
             String describe, Runnable close,
+            // Post-load step (idempotent; runs on fresh AND resume paths):
+            // PG builds its IVFFlat here (deferred-DDL rule — never in
+            // schema setup). Other legs no-op.
+            Runnable postLoad,
             java.util.function.Supplier<tech.ydb.table.Session> sessions) {
         List<String> tenantUniverse() {
             return universeSup.get();
@@ -168,7 +176,8 @@ public final class RunLeg {
         return switch (name) {
             case "ydb" -> YdbLeg.open(corpusDir);
             case "cassandra" -> CassandraLeg.open(corpusDir);
-            default -> throw new IllegalArgumentException("unknown --engine (ydb|cassandra): " + name);
+            case "pg" -> PgLeg.open(corpusDir);
+            default -> throw new IllegalArgumentException("unknown --engine (ydb|cassandra|pg): " + name);
         };
     }
 
@@ -291,7 +300,9 @@ public final class RunLeg {
                                 q.get("query_id").asText(), q.get("mode").asText(),
                                 q.get("filter").asText(), q.get("selectivity").asText(),
                                 hits, elig, q.get("timing_ms").asDouble(),
-                                q.has("timing_scope") ? q.get("timing_scope").asText() : "unspecified"));
+                                q.has("timing_scope") ? q.get("timing_scope").asText() : "unspecified",
+                                // Backward compat: pre-min_score runs read as neutral.
+                                q.has("min_score") ? q.get("min_score").asDouble() : 0.0));
             }
         }
         return out;
@@ -402,6 +413,8 @@ public final class RunLeg {
                     },
                     () -> universe,
                     "ydb@26.3", () -> client.close(),
+                    // YDB needs no post-load step (index maintenance is inline).
+                    () -> {},
                     () -> {
                         try {
                             return client.createSession(java.time.Duration.ofSeconds(30))
@@ -442,8 +455,7 @@ public final class RunLeg {
     }
 
     /** Per-leg engine openers (the only adapter-specific code in the CLI). */
-    static final class CassandraLeg {
-        static Engine open(Path corpusDir) throws Exception {
+    static final class CassandraLeg {        static Engine open(Path corpusDir) throws Exception {
             Path root = Files.createTempDirectory("bench-leg-cassandra");
             org.synanton.synquest.cassandra.CassandraSynquestEngine engine =
                     new org.synanton.synquest.cassandra.CassandraSynquestEngine(root);
@@ -457,8 +469,87 @@ public final class RunLeg {
                     () -> universe,
                     "cassandra-lucene",
                     () -> {},
+                    // No post-load index step on the Lucene leg.
+                    () -> {},
                     () -> {
                         throw new UnsupportedOperationException("no sessions on cassandra leg");
+                    });
+        }
+    }
+
+    /**
+     * PG leg (028e): engine bound to the bench container (compose service
+     * {@code postgres}, pgvector:0.8.6-pg16) as the least-privilege
+     * {@code app} role — every query exercises the RLS path
+     * (production shape). Schema/role/truncate/post-load run as the
+     * superuser handle. Env: {@code PG_JDBC_URL} (default
+     * {@code jdbc:postgresql://localhost:5433/bench}), {@code PG_JDBC_USER} /
+     * {@code PG_JDBC_PASSWORD} (default {@code bench/bench}),
+     * {@code PG_APP_PASSWORD} (default {@code app}).
+     */
+    static final class PgLeg {
+        static Engine open(Path corpusDir) throws Exception {
+            String url = System.getenv().getOrDefault("PG_JDBC_URL", "jdbc:postgresql://localhost:5433/bench");
+            String user = System.getenv().getOrDefault("PG_JDBC_USER", "bench");
+            String password = System.getenv().getOrDefault("PG_JDBC_PASSWORD", "bench");
+            String appPassword = System.getenv().getOrDefault("PG_APP_PASSWORD", "app");
+            try (java.sql.Connection admin =
+                    java.sql.DriverManager.getConnection(url, user, password)) {
+                org.synanton.synvault.postgres.PostgresSchema.ensureSchema(admin);
+                try (var stmt = admin.createStatement()) {
+                    stmt.execute("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app')"
+                            + " THEN CREATE ROLE app NOSUPERUSER LOGIN PASSWORD '" + appPassword.replace("'", "''")
+                            + "'; END IF; END $$");
+                    stmt.execute("GRANT USAGE ON SCHEMA public TO app");
+                    stmt.execute("GRANT ALL ON ALL TABLES IN SCHEMA public TO app");
+                    stmt.execute("GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO app");
+                    stmt.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO app");
+                    stmt.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO app");
+                }
+            }
+            org.postgresql.ds.PGSimpleDataSource ds = new org.postgresql.ds.PGSimpleDataSource();
+            ds.setUrl(url);
+            ds.setUser("app");
+            ds.setPassword(appPassword);
+            org.synanton.synquest.postgres.PostgresSynquestEngine engine =
+                    new org.synanton.synquest.postgres.PostgresSynquestEngine(ds);
+            Set<String> tenants = new LinkedHashSet<>();
+            CorpusLoader.streamChunks(corpusDir, row -> tenants.add(row.tenantId()));
+            List<String> universe = new ArrayList<>(tenants);
+            universe.sort(null);
+            return new Engine(
+                    engine,
+                    () -> {
+                        try (java.sql.Connection admin =
+                                java.sql.DriverManager.getConnection(url, user, password);
+                                var stmt = admin.createStatement()) {
+                            stmt.execute("TRUNCATE chunks, quest_generations");
+                        } catch (Exception e) {
+                            throw new IllegalStateException("pg truncate failed", e);
+                        }
+                    },
+                    () -> universe,
+                    "postgres-pgvector",
+                    () -> {},
+                    // Deferred-DDL rule (007-3 ticket): IVFFlat trains on the
+                    // loaded corpus + ANALYZE, never in schema setup.
+                    // Idempotent: safe on resume after a dropped index.
+                    () -> {
+                        try (java.sql.Connection admin =
+                                java.sql.DriverManager.getConnection(url, user, password);
+                                var stmt = admin.createStatement()) {
+                            stmt.execute("DROP INDEX IF EXISTS chunks_embedding_ivfflat");
+                            stmt.execute(
+                                    "CREATE INDEX chunks_embedding_ivfflat ON chunks"
+                                            + " USING ivfflat (embedding vector_cosine_ops)"
+                                            + " WITH (lists = 100)");
+                            stmt.execute("ANALYZE chunks");
+                        } catch (Exception e) {
+                            throw new IllegalStateException("pg post-load index failed", e);
+                        }
+                    },
+                    () -> {
+                        throw new UnsupportedOperationException("no sessions on pg leg");
                     });
         }
     }
