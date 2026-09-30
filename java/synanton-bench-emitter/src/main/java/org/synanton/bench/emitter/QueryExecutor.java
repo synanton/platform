@@ -93,13 +93,29 @@ public final class QueryExecutor {
     /**
      * Executes one golden query. Empty scope fans out over the full tenant
      * universe (filter=none legs); otherwise over the listed scope.
+     *
+     * <p>{@code vectorFloor} is the backend-local neutral minScore for
+     * VECTOR legs (frozen config: neutrality is per score space, not
+     * universal — 0.0 for Lucene/ts_rank/RRF-normalized spaces, below-floor
+     * for negative spaces like PG's {@code -distance}). Lexical/hybrid
+     * stay at frozen 0.0 on every backend. The applied value is what the
+     * output carries (018 obligation).
      */
     public static QueryOutput execute(
-            SynquestEngine engine, GoldenInput input, List<String> tenantUniverse)
+            SynquestEngine engine, GoldenInput input, List<String> tenantUniverse) throws Exception {
+        return execute(engine, input, tenantUniverse, 0.0);
+    }
+
+    public static QueryOutput execute(
+            SynquestEngine engine,
+            GoldenInput input,
+            List<String> tenantUniverse,
+            double vectorFloor)
             throws Exception {
         List<String> tenants =
                 input.tenantScope().isEmpty() ? tenantUniverse : input.tenantScope();
         SearchMode mode = SearchMode.valueOf(input.mode().toUpperCase());
+        double minScore = mode == SearchMode.VECTOR ? vectorFloor : 0.0;
         List<Scored> merged = new ArrayList<>();
         double timingMs = 0.0;
         for (String tenant : tenants) {
@@ -115,7 +131,7 @@ public final class QueryExecutor {
                             new RelevanceFilters(input.metadataPredicate()),
                             TemporalExtension.empty(),
                             TOP_K,
-                            0.0);
+                            minScore);
             long start = System.nanoTime();
             List<SearchHit> hits =
                     engine.search(context, request).toCompletableFuture().join().hits();
@@ -132,10 +148,9 @@ public final class QueryExecutor {
                 input.queryId(), input.mode(), input.filter(), input.selectivity(),
                 List.copyOf(top), List.copyOf(input.eligibleIds()), timingMs,
                 tenants.size() == 1 ? "single" : "summed_fanout_" + tenants.size(),
-                // Frozen neutral per config AND the applied value: the
-                // SearchRequest above carries minScore 0.0 — emitted is
-                // applied, never a serialization default.
-                0.0);
+                // The applied value (018 obligation): per-space neutral —
+                // 0.0 frozen except PG-vector's below-floor value.
+                minScore);
     }
 
     private record Scored(String chunkId, double score) {}

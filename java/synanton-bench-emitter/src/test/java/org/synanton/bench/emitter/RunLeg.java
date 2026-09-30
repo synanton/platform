@@ -134,7 +134,8 @@ public final class RunLeg {
                                         strings(q.get("tenant_scope")), stringMap(q.get("metadata_predicate")),
                                         q.has("selectivity") ? q.get("selectivity").asText() : "-",
                                         q.get("filter").asText(), CorpusLoader.eligibleIds(q)),
-                                universe);
+                                universe,
+                                engine.vectorFloor());
                 outputs.add(out);
                 appendLine(checkpoint, Q3Emitter.emit("x", "x", List.of(out)));
                 if (++qdone % 20 == 0) {
@@ -170,6 +171,10 @@ public final class RunLeg {
             // PG builds its IVFFlat here (deferred-DDL rule — never in
             // schema setup). Other legs no-op.
             Runnable postLoad,
+            // Backend-local neutral minScore for VECTOR legs (frozen config:
+            // neutrality is per score space). 0.0 everywhere except PG's
+            // -distance space (floor -2.0 — passes all, truly neutral).
+            double vectorFloor,
             java.util.function.Supplier<tech.ydb.table.Session> sessions) {
         List<String> tenantUniverse() {
             return universeSup.get();
@@ -419,6 +424,8 @@ public final class RunLeg {
                     "ydb@26.3", () -> client.close(),
                     // YDB needs no post-load step (index maintenance is inline).
                     () -> {},
+                    // Lucene cosine space: 0.0 frozen neutral stands.
+                    0.0,
                     () -> {
                         try {
                             return client.createSession(java.time.Duration.ofSeconds(30))
@@ -475,6 +482,8 @@ public final class RunLeg {
                     () -> {},
                     // No post-load index step on the Lucene leg.
                     () -> {},
+                    // Lucene cosine space: 0.0 frozen neutral stands.
+                    0.0,
                     () -> {
                         throw new UnsupportedOperationException("no sessions on cassandra leg");
                     });
@@ -583,6 +592,10 @@ public final class RunLeg {
                     // Invoked as postLoadIndex(...) via .run() — see the
                     // fetch-and-drop note at the call site.
                     () -> postLoadIndex(url, user, password),
+                    // PG -distance space floor: -2.0 passes all (neutral =
+                    // passes-everything, not the number 0.0 — frozen config
+                    // corrective amendment, 007-4 finding in practice).
+                    -2.0,
                     () -> {
                         throw new UnsupportedOperationException("no sessions on pg leg");
                     });
