@@ -301,15 +301,18 @@ External gates:
     Observed 007-3 (30k Gate-A-shaped corpus, IVFFlat post-load):
     0.1%-selectivity leg → btree-sort, ~33% leg → ivfflat — per-query
     variance confirmed, HNSW serves neither (Gate A caveat holds).
-  - Fusion parity probe (007-4, before any hybrid number): five named axes
-    vs YDB's **recorded** 024B behavior (artifact reference, no
-    cross-container dependency) — term matching
-    (conjunctive/disjunctive), RRF k (60 vs PG default), score space
-    (rank vs normalized), tie ordering (per 013), lexical query semantics
-    (plainto/to_tsquery/websearch/phraseto vs frozen Lucene defaults).
-    Each axis matching or divergent-with-a-name; output written to
-    `build.json` beside load_ms so the topology travels with the number
-    for 028e/R3.
+  - Fusion parity probe (007-4, before any hybrid number): seven named axes
+    in two kinds vs YDB's recorded behavior — parameter-level (RRF k,
+    fusion inputs, hybrid score shape, tie ordering, score space: directly
+    checkable, results are named values) and behavioral (term matching,
+    lexical semantics: diagnostic labels for 007-5 overlap drops, not
+    independent measurements). Mode is behavioral parity only (024B Q3
+    lacks fusion internals; parameter axes verified against YDB code);
+    internal parity is a Phase-4 follow-up. Score-space axis scoped to
+    per-leg scores (RRF is rank-based; fusion order immune; minScore
+    thresholds non-portable). Record: `pg-poc/007-4-fusion-parity.md` +
+    machine twin `007-4-fusion-parity.json`; `build.json` fusion fields
+    land with the 028e emitter.
   - Hybrid leg gated by the parity probe, not before it.
   - EXPLAIN assertions on all index-dependent queries (analogue of YDB PlanAssertions).
   - Metadata filtering in SQL: EXPLAIN shows the predicate in-plan plus a
