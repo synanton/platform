@@ -94,7 +94,9 @@ public final class RunLeg {
         // Post-load runs on both paths (idempotent by contract): PG trains
         // IVFFlat on the loaded corpus here — resuming onto a dropped index
         // re-trains instead of silently running unindexed.
+        System.out.println("POSTLOAD dispatching for leg=" + engineName);
         engine.postLoad();
+        System.out.println("POSTLOAD returned for leg=" + engineName);
         long loadMs = (System.nanoTime() - tLoad0) / 1_000_000;
 
         List<String> universe = engine.tenantUniverse();
