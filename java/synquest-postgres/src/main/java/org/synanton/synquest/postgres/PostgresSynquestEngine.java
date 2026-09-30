@@ -50,6 +50,25 @@ public class PostgresSynquestEngine
 
     private static final Logger LOG = Logger.getLogger(PostgresSynquestEngine.class.getName());
 
+    /**
+     * ANN session shape (028e tuning, pgvector ≥ 0.8.0):
+     * <ul>
+     *   <li>iterative scans ({@code strict_order}) fix pre-0.8.0
+     *       overfiltering: the scan continues past filtered rows until K
+     *       eligible results fill, instead of filtering a fixed candidate
+     *       set. {@code strict_order} (not relaxed) preserves exact
+     *       distance ordering for tie-break + RRF.</li>
+     *   <li>{@code probes = 10} (10% of the 100-list IVFFlat): the default
+     *       1-probe floor was the single largest overlap depressor at R3.
+     *       Declared here so RunLeg records the applied value in build.json
+     *       (topology annotation travels with the number).</li>
+     * </ul>
+     * Set per operation via {@code SET LOCAL} (same lifecycle as the tenant
+     * claim — no new infrastructure, no session state leaks).
+     */
+    public static final String ITERATIVE_SCAN = "strict_order";
+    public static final int IVFFLAT_PROBES = 10;
+
     private final DataSource dataSource;
 
     public PostgresSynquestEngine(DataSource dataSource) {
@@ -330,6 +349,12 @@ public class PostgresSynquestEngine
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
                 set.execute("SET LOCAL app.tenant_id = '" + tenant.replace("'", "''") + "'");
+                // ANN session shape (constants above): iterative scans fix
+                // overfiltering; probes lift the recall floor. Per-operation
+                // scope — same lifecycle as the tenant claim.
+                set.execute("SET LOCAL ivfflat.iterative_scan = '" + ITERATIVE_SCAN + "'");
+                set.execute("SET LOCAL hnsw.iterative_scan = '" + ITERATIVE_SCAN + "'");
+                set.execute("SET LOCAL ivfflat.probes = " + IVFFLAT_PROBES);
             }
             String active = selectPointer(conn, tenant);
             String sql = vectorSql(filtered, active != null, fetchLimit);

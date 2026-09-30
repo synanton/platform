@@ -163,6 +163,15 @@ public final class RunLeg {
         build.put("emitted_at", Instant.now().toString());
         build.put("corpus_version", manifest.corpusVersion());
         build.put("index_fresh", true);
+        if (engineName.equals("pg")) {
+            // Topology annotation travels with the number (single-sourced
+            // from the engine constants — never a duplicated literal).
+            build.put(
+                    "ann_session",
+                    org.synanton.synquest.postgres.PostgresSynquestEngine.ITERATIVE_SCAN
+                            + "/probes="
+                            + org.synanton.synquest.postgres.PostgresSynquestEngine.IVFFLAT_PROBES);
+        }
         Files.writeString(
                 outFile.resolveSibling(outFile.getFileName() + ".build.json"), build.toPrettyString());
         System.out.println("DONE wrote=" + outFile + " queries=" + outputs.size());
