@@ -50,14 +50,28 @@ the old). Entries carry stable labels (`PN-1`…); tickets cite the label
   `pg_indexes` check), which prevents recurrence without explaining the
   original. "Closed by mitigation" must never read as "root cause found"
   six months later — write which one it is.
-- **[PN-7] A bare call on a Runnable-returning accessor is fetch-and-drop,
-  not invocation — and javac won't tell you.** Resolution of PN-6's
-  instance (2026-09-30, same day): `engine.postLoad();` fetches the lambda
-  and discards it; only `engine.postLoad().run()` invokes. Same for
-  `truncate()`/`close()`. Compiles silent, no warning, all downstream
-  evidence consistent with "the step ran" (load succeeded, queries
-  returned, DONE written) while the step never executed. Supplier-returning
-  accessors don't have this shape (`.get()` is always written); Runnables
-  do. Review rule: every call site on a `Runnable`-returning accessor must
-  show `.run()` — grep `engine\.(truncate|close|postLoad)();` finds the
-  bug class repository-wide.
+- **[PN-7] A bare call on a functional-interface-returning method is
+  fetch-and-drop, not invocation — and javac won't tell you.** Resolution
+  of PN-6's instance (2026-09-30, same day): `engine.postLoad();` fetches
+  the lambda and discards it; only `engine.postLoad().run()` invokes.
+  The bare form is a valid statement expression — the compiler accepts it
+  with no warning (opt-in only: `@CheckReturnValue`, ErrorProne
+  `ReturnValueIgnored`, SpotBugs `RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT`).
+  Blast radius, three legs: PG postLoad (no IVFFlat/ANALYZE — fully
+  silent, caught by rerun), YDB truncate (never ran — masked by fresh
+  prefixes), YDB close (transport never closed — harmless one-shot, leaks
+  long-lived). Retroactive correction: earlier YDB closeouts claiming
+  "truncate-on-start verified" should be read as "redundant mechanism,
+  unverified" — observed cleanliness came from prefix naming, not the
+  never-invoked path (amendment filed with the YDB closeout).
+  Grep signature: bare `engine.(truncate|close|postLoad)();` — any
+  `Runnable`/`Supplier`/`Callable`-returning call site without a visible
+  `.run()`/`.get()`/`.call()` is silently dropped.
+  Structural prevention (post-R3 refactor, recorded not executed mid-run):
+  audit whether any leg genuinely needs deferral; if not, return void —
+  the caller can't drop what isn't returned — or a `PendingAction`
+  wrapper with `@CheckReturnValue`. The current `Runnable` shape is the
+  worst of both: never deferred in practice, shaped like deferral.
+  Detection heuristic: any functional-interface return in harness code
+  gets inspected; this class never fails loudly on any JVM without
+  opt-in static analysis.
