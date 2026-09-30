@@ -534,16 +534,33 @@ public final class RunLeg {
                     // Deferred-DDL rule (007-3 ticket): IVFFlat trains on the
                     // loaded corpus + ANALYZE, never in schema setup.
                     // Idempotent: safe on resume after a dropped index.
+                    // Loud by contract (PN-4): prints progress and VERIFIES
+                    // the index exists afterwards — a silently-skipped
+                    // post-load once shipped a full btree-sort run as ANN
+                    // numbers (028e incident, 2026-09-30). Never again.
                     () -> {
                         try (java.sql.Connection admin =
                                 java.sql.DriverManager.getConnection(url, user, password);
                                 var stmt = admin.createStatement()) {
+                            System.out.println("POSTLOAD dropping stale ivfflat (if any)");
                             stmt.execute("DROP INDEX IF EXISTS chunks_embedding_ivfflat");
+                            System.out.println("POSTLOAD training ivfflat on loaded corpus");
                             stmt.execute(
                                     "CREATE INDEX chunks_embedding_ivfflat ON chunks"
                                             + " USING ivfflat (embedding vector_cosine_ops)"
                                             + " WITH (lists = 100)");
+                            System.out.println("POSTLOAD analyzing");
                             stmt.execute("ANALYZE chunks");
+                            try (var rs = stmt.executeQuery(
+                                    "SELECT count(*) FROM pg_indexes"
+                                            + " WHERE indexname = 'chunks_embedding_ivfflat'")) {
+                                rs.next();
+                                if (rs.getLong(1) != 1) {
+                                    throw new IllegalStateException(
+                                            "post-load verification failed: ivfflat absent after create");
+                                }
+                            }
+                            System.out.println("POSTLOAD verified: ivfflat present + analyzed");
                         } catch (Exception e) {
                             throw new IllegalStateException("pg post-load index failed", e);
                         }
