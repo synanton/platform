@@ -29,6 +29,17 @@ Output must parse under `synanton-bench-convergence` `RunOutput` today:
 - Determinism: fixed query order, frozen corpus, recorded seed — same seed →
   same JSON modulo tie-order (tolerance-based, never exact-sequence).
 
+## Q3 obligations from 007-4 (minScore + fusion internals)
+
+Score thresholds are not portable across backends (dev-guide rule): each
+query record carries `min_score` per leg per backend, in that backend's own
+score space (BM25-unbounded vs `ts_rank` vs `-cosine_distance` vs
+`rrf/maxLex`). A shared cutoff would compare different filters. When the
+Phase-4 internal-parity follow-up lands, add `rrf_k`,
+`fusion_input_size_lexical`, `fusion_input_size_vector`, `score_semantics`
+per hybrid query; until then the parity mode stays behavioral (top-K
+comparison), stated in the run record.
+
 ## Corpus-half placeholders (blocked on 028a spec)
 
 - **Embedding format:** dimension + encoding per query/corpus. If 028a ships a

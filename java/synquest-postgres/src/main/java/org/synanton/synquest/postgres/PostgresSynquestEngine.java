@@ -75,10 +75,13 @@ public class PostgresSynquestEngine
             return CompletableFuture.failedFuture(e);
         }
         if (request.mode() == SearchMode.LEXICAL && capabilities().lexical()) {
-            return searchLexical(tenant, request);
+            return searchLexical(tenant, request, request.topK());
         }
         if (request.mode() == SearchMode.VECTOR && capabilities().vector()) {
-            return searchVector(tenant, request);
+            return searchVector(tenant, request, request.topK());
+        }
+        if (request.mode() == SearchMode.HYBRID && capabilities().hybrid()) {
+            return searchHybrid(tenant, request);
         }
         return CompletableFuture.failedFuture(
                 new StorageException(
@@ -97,18 +100,35 @@ public class PostgresSynquestEngine
      * Lucene BM25. Both recorded for the 007-4 probe — the semantics travel
      * with the number, never implicit in the code.
      */
-    private CompletionStage<SearchResult> searchLexical(String tenant, SearchRequest request) {
+    private CompletionStage<SearchResult> searchLexical(String tenant, SearchRequest request, int limit) {
         String tsquery = toDisjunctiveTsquery(request.queryText());
         if (tsquery.isEmpty()) {
             return CompletableFuture.completedFuture(new SearchResult(List.of(), 0, Map.of()));
         }
+        try {
+            List<SearchHit> matches = fetchLexical(tenant, request, tsquery, limit);
+            int total = matches.size();
+            List<SearchHit> page = matches.subList(0, Math.min(limit, matches.size()));
+            return CompletableFuture.completedFuture(new SearchResult(page, total, Map.of()));
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(map(e));
+        }
+    }
+
+    private List<SearchHit> fetchLexical(
+            String tenant, SearchRequest request, String tsquery, int limit) throws Exception {
         boolean filtered = !request.filters().mustMatchMetadata().isEmpty();
         String sql =
                 "SELECT chunk_id, doc_id, text, metadata,"
                         + " ts_rank(tsv, to_tsquery('english', ?)) AS score"
                         + " FROM chunks"
                         + " WHERE tsv @@ to_tsquery('english', ?)"
-                        + (filtered ? " AND metadata @> ?::jsonb" : "");
+                        + (filtered ? " AND metadata @> ?::jsonb" : "")
+                        // Fetch cap mirrors YDB's top-100 leg fetch: generous
+                        // past topK so minScore filtering post-fetch matches
+                        // the reference shape; the slice (not this cut) is
+                        // the verdict. Monotonic int — never user text.
+                        + " ORDER BY score DESC LIMIT " + Math.max(limit, 100);
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
@@ -144,11 +164,7 @@ public class PostgresSynquestEngine
                     java.util.Comparator.comparingDouble(SearchHit::score)
                             .reversed()
                             .thenComparing(h -> h.chunkId().value()));
-            int total = matches.size();
-            List<SearchHit> page = matches.subList(0, Math.min(request.topK(), matches.size()));
-            return CompletableFuture.completedFuture(new SearchResult(page, total, Map.of()));
-        } catch (Exception e) {
-            return CompletableFuture.failedFuture(map(e));
+            return matches;
         }
     }
 
@@ -235,15 +251,30 @@ public class PostgresSynquestEngine
      * an honest seqscan at small scale); the topology test records what it
      * picked per selectivity leg instead of asserting a shape.
      */
-    private CompletionStage<SearchResult> searchVector(String tenant, SearchRequest request) {
+    private CompletionStage<SearchResult> searchVector(
+            String tenant, SearchRequest request, int fetchLimit) {
         if (request.queryEmbedding().isEmpty()) {
             return CompletableFuture.completedFuture(new SearchResult(List.of(), 0, Map.of()));
         }
+        try {
+            List<SearchHit> matches = fetchVector(tenant, request, fetchLimit);
+            int total = matches.size();
+            List<SearchHit> page =
+                    matches.subList(0, Math.min(request.topK(), matches.size()));
+            return CompletableFuture.completedFuture(new SearchResult(page, total, Map.of()));
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(map(e));
+        }
+    }
+
+    private List<SearchHit> fetchVector(String tenant, SearchRequest request, int fetchLimit)
+            throws Exception {
         String sql =
                 "SELECT chunk_id, doc_id, text, metadata,"
                         + " (embedding <=> ?::vector) AS dist"
                         + " FROM chunks"
-                        + " ORDER BY dist LIMIT ?";
+                        // Same fetch-cap shape as lexical (YDB top-100 mirror).
+                        + " ORDER BY dist LIMIT " + Math.max(fetchLimit, 100);
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             try (var set = conn.createStatement()) {
@@ -252,9 +283,6 @@ public class PostgresSynquestEngine
             List<SearchHit> matches = new java.util.ArrayList<>();
             try (var ps = conn.prepareStatement(sql)) {
                 ps.setString(1, paddedVector(request.queryEmbedding().get()));
-                // Over-fetch past topK: minScore + tie-break apply
-                // post-retrieval, so the SQL cut must not be the verdict.
-                ps.setInt(2, Math.max(request.topK() * 5, 100));
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
                         double score = -rs.getDouble("dist");
@@ -276,11 +304,72 @@ public class PostgresSynquestEngine
                     java.util.Comparator.comparingDouble(SearchHit::score)
                             .reversed()
                             .thenComparing(h -> h.chunkId().value()));
-            int total = matches.size();
-            List<SearchHit> page = matches.subList(0, Math.min(request.topK(), matches.size()));
+            return matches;
+        }
+    }
+
+    /**
+     * 007-5 hybrid: rank-based RRF mirroring YDB shape exactly (probe-bound):
+     * top-100 inputs per leg, {@code 1/(60+rank+1)} per list, hybrid score
+     * {@code rrf/maxLexicalScore}, same minScore application points
+     * (per-leg raw, hybrid normalized — non-portable values, probe caveat).
+     * Generation filtering is absent (lands in 007-7); highlights are empty
+     * (side channels land in 008). Confirmed: top-100 inputs, not top-K —
+     * fusion compares the same candidate-set shape as YDB.
+     */
+    private CompletionStage<SearchResult> searchHybrid(String tenant, SearchRequest request) {
+        final int legInput = 100;
+        try {
+            String tsquery = toDisjunctiveTsquery(request.queryText());
+            List<SearchHit> lexical =
+                    tsquery.isEmpty()
+                            ? List.of()
+                            : fetchLexical(tenant, request, tsquery, legInput);
+            List<SearchHit> dense =
+                    request.queryEmbedding().isEmpty()
+                            ? List.of()
+                            : fetchVector(tenant, request, legInput);
+            java.util.Map<String, double[]> acc = new java.util.LinkedHashMap<>();
+            java.util.Map<String, SearchHit> byId = new java.util.LinkedHashMap<>();
+            rankInto(acc, byId, lexical);
+            rankInto(acc, byId, dense);
+            double maxLex = 1e-9;
+            for (SearchHit hit : lexical) {
+                maxLex = Math.max(maxLex, hit.score());
+            }
+            List<SearchHit> fused = new java.util.ArrayList<>();
+            for (var entry : acc.entrySet()) {
+                double score = entry.getValue()[0] / maxLex;
+                if (score < request.minScore()) {
+                    continue;
+                }
+                SearchHit base = byId.get(entry.getKey());
+                fused.add(
+                        new SearchHit(
+                                base.chunkId(), base.documentId(), score, base.text(), base.metadata()));
+            }
+            fused.sort(
+                    java.util.Comparator.comparingDouble(SearchHit::score)
+                            .reversed()
+                            .thenComparing(h -> h.chunkId().value()));
+            int total = fused.size();
+            List<SearchHit> page = fused.subList(0, Math.min(request.topK(), fused.size()));
             return CompletableFuture.completedFuture(new SearchResult(page, total, Map.of()));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(map(e));
+        }
+    }
+
+    private static void rankInto(
+            java.util.Map<String, double[]> acc,
+            java.util.Map<String, SearchHit> byId,
+            List<SearchHit> leg) {
+        // Probe-bound k=60, YDB formula verbatim: 1/(60+rank+1) per list.
+        for (int rank = 0; rank < leg.size(); rank++) {
+            SearchHit hit = leg.get(rank);
+            double[] slot = acc.computeIfAbsent(hit.chunkId().value(), k -> new double[1]);
+            slot[0] += 1.0 / (60 + rank + 1);
+            byId.putIfAbsent(hit.chunkId().value(), hit);
         }
     }
 
@@ -295,9 +384,10 @@ public class PostgresSynquestEngine
 
     @Override
     public SearchCapabilities capabilities() {
-        // §9.3: unverified flags report false. Lexical (007-2) and vector
-        // (007-3) flipped on evidence; the rest flip with their own tasks.
-        return new SearchCapabilities(true, true, false, false, false, false, false, false);
+        // §9.3: unverified flags report false. Lexical (007-2), vector
+        // (007-3) and hybrid (007-5) flipped on evidence; the rest flip
+        // with their own tasks.
+        return new SearchCapabilities(true, true, true, false, false, false, false, false);
     }
 
     // ---- writer ----
@@ -442,8 +532,7 @@ public class PostgresSynquestEngine
                 List.of(
                         ConformanceEntry.supported(Capabilities.SYNQUEST_LEXICAL, evidence),
                         ConformanceEntry.supported(Capabilities.SYNQUEST_VECTOR, evidence),
-                        ConformanceEntry.unverified(
-                                Capabilities.SYNQUEST_HYBRID, "007-1 scaffold, lands in 007-5"),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_HYBRID, evidence),
                         ConformanceEntry.unverified(
                                 Capabilities.SYNQUEST_FILTERS,
                                 "007-1 scaffold, lands in 007-6")));
