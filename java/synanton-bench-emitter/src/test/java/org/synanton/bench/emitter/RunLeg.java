@@ -495,6 +495,17 @@ public final class RunLeg {
             String appPassword = System.getenv().getOrDefault("PG_APP_PASSWORD", "app");
             try (java.sql.Connection admin =
                     java.sql.DriverManager.getConnection(url, user, password)) {
+                // Cold-build (RunLeg rule: no index cache, every documented
+                // run rebuilds): drop quest tables + functions first, then
+                // install canonical DDL fresh. ensureSchema itself is
+                // create-only (unit-test fresh-container path stays simple).
+                try (var drop = admin.createStatement()) {
+                    drop.execute("DROP TABLE IF EXISTS documents, chunks, provenance,"
+                            + " publication_log, quest_generations CASCADE");
+                    drop.execute("DROP FUNCTION IF EXISTS quest_chunk_tenants(text, text)");
+                    drop.execute("DROP FUNCTION IF EXISTS quest_promote_flip(text)");
+                    drop.execute("DROP FUNCTION IF EXISTS quest_reset_quest_rows()");
+                }
                 org.synanton.synvault.postgres.PostgresSchema.ensureSchema(admin);
                 try (var stmt = admin.createStatement()) {
                     stmt.execute("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app')"
