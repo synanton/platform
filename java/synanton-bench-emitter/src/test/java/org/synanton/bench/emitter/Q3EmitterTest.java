@@ -24,7 +24,7 @@ class Q3EmitterTest {
                 new QueryExecutor.QueryOutput(
                         "q1", "lexical", "none", "-",
                         List.of(new QueryExecutor.Hit("c1", 3.0, 0)),
-                        List.of("c1"), 0.5, "single");
+                        List.of("c1"), 0.5, "single", 0.0);
         String json = Q3Emitter.emit("test-run", "ydb-poc-corpus-v1", List.of(out));
         RunOutput parsed =
                 RunOutput.parse(
@@ -58,7 +58,7 @@ class Q3EmitterTest {
         QueryExecutor.QueryOutput out =
                 new QueryExecutor.QueryOutput(
                         "q1", "lexical", "tenant", "0.1%",
-                        List.of(), List.of("c1"), 0.5, "single");
+                        List.of(), List.of("c1"), 0.5, "single", 0.0);
         String json =
                 Q3Emitter.emit("r", "c", List.of(out), java.util.Set.of("q1"));
         RunOutput parsed =

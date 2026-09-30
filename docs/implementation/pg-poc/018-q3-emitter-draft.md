@@ -40,6 +40,23 @@ Phase-4 internal-parity follow-up lands, add `rrf_k`,
 per hybrid query; until then the parity mode stays behavioral (top-K
 comparison), stated in the run record.
 
+## 028e run rules (pre-flags, recorded before the run)
+
+- Fan-out semantics: the PG run routes every query through the shared
+  `QueryExecutor` (never a bespoke loop) — one tenant scope per call, one
+  RLS-scoped session per call, timing summed. Filtered legs report
+  `timing_scope: summed_fanout_N` from the executor; a `single` scope on a
+  filtered leg means RLS was bypassed — fail loudly rather than emit.
+  (PG is stronger here than YDB by construction: the engine opens a fresh
+  connection + `SET LOCAL` per operation, so no unscoped session path
+  exists in code. The rule guards the harness, not the engine.)
+- Score-space annotation: `min_score` per query reflects the value the
+  engine applied (frozen neutral 0.0 via `QueryExecutor`), not a default
+  filled at serialization. Backend-local per the 007-4 finding.
+- Mount gate (CLI.1): `./scripts/verify-mounts.sh <pg-container>
+  /var/lib/postgresql/data` before load begins — the pgvector/pg16 data
+  path, not YDB's. Abort on failure, never run on overlayfs.
+
 ## Corpus-half placeholders (blocked on 028a spec)
 
 - **Embedding format:** dimension + encoding per query/corpus. If 028a ships a

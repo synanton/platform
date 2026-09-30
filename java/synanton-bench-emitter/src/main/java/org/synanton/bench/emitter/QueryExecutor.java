@@ -83,7 +83,12 @@ public final class QueryExecutor {
             List<Hit> topK,
             List<String> eligibleIds,
             double timingMs,
-            String timingScope) {}
+            String timingScope,
+            // 018 obligation (007-4 finding): the minScore value applied to
+            // this query, in the backend's own score space. Frozen neutral
+            // 0.0 today — the field exists so Phase-4 internal parity reads
+            // what was applied, not a default filled at serialization.
+            double minScore) {}
 
     /**
      * Executes one golden query. Empty scope fans out over the full tenant
@@ -126,7 +131,11 @@ public final class QueryExecutor {
         return new QueryOutput(
                 input.queryId(), input.mode(), input.filter(), input.selectivity(),
                 List.copyOf(top), List.copyOf(input.eligibleIds()), timingMs,
-                tenants.size() == 1 ? "single" : "summed_fanout_" + tenants.size());
+                tenants.size() == 1 ? "single" : "summed_fanout_" + tenants.size(),
+                // Frozen neutral per config AND the applied value: the
+                // SearchRequest above carries minScore 0.0 — emitted is
+                // applied, never a serialization default.
+                0.0);
     }
 
     private record Scored(String chunkId, double score) {}

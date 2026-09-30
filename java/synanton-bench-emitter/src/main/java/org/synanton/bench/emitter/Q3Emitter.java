@@ -45,6 +45,7 @@ public final class Q3Emitter {
             q.put("selectivity", o.selectivity());
             q.put("timing_ms", o.timingMs());
             q.put("timing_scope", o.timingScope());
+            q.put("min_score", o.minScore());
             ArrayNode topK = q.putArray("top_k");
             for (Hit h : o.topK()) {
                 ObjectNode e = MAPPER.createObjectNode();
