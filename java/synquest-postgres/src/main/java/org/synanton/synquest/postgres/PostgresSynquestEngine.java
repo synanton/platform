@@ -109,7 +109,8 @@ public class PostgresSynquestEngine
             return CompletableFuture.completedFuture(new SearchResult(List.of(), 0, Map.of()));
         }
         try {
-            List<SearchHit> matches = fetchLexical(tenant, request, tsquery, limit);
+            List<SearchHit> matches =
+                    fetchLexical(tenant, request, tsquery, limit, request.minScore());
             int total = matches.size();
             List<SearchHit> page = matches.subList(0, Math.min(limit, matches.size()));
             return CompletableFuture.completedFuture(new SearchResult(page, total, Map.of()));
@@ -148,7 +149,8 @@ public class PostgresSynquestEngine
     }
 
     private List<SearchHit> fetchLexical(
-            String tenant, SearchRequest request, String tsquery, int limit) throws Exception {
+            String tenant, SearchRequest request, String tsquery, int limit, double scoreFloor)
+            throws Exception {
         boolean filtered = !request.filters().mustMatchMetadata().isEmpty();
         try (var conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
@@ -172,7 +174,11 @@ public class PostgresSynquestEngine
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
                         double score = rs.getDouble("score");
-                        if (score < request.minScore()) {
+                        // YDB mirror: hybrid fuses RAW leg lists (no per-leg
+                        // minScore — the fused normalized score is filtered,
+                        // never the inputs). Single-leg calls pass the
+                        // request floor; hybrid passes -inf (see searchHybrid).
+                        if (score < scoreFloor) {
                             continue;
                         }
                         matches.add(
@@ -285,7 +291,8 @@ public class PostgresSynquestEngine
             return CompletableFuture.completedFuture(new SearchResult(List.of(), 0, Map.of()));
         }
         try {
-            List<SearchHit> matches = fetchVector(tenant, request, fetchLimit);
+            List<SearchHit> matches =
+                    fetchVector(tenant, request, fetchLimit, request.minScore());
             int total = matches.size();
             List<SearchHit> page =
                     matches.subList(0, Math.min(request.topK(), matches.size()));
@@ -315,7 +322,8 @@ public class PostgresSynquestEngine
                 + " ORDER BY dist LIMIT " + Math.max(limit, 100);
     }
 
-    private List<SearchHit> fetchVector(String tenant, SearchRequest request, int fetchLimit)
+    private List<SearchHit> fetchVector(
+            String tenant, SearchRequest request, int fetchLimit, double scoreFloor)
             throws Exception {
         boolean filtered = !request.filters().mustMatchMetadata().isEmpty();
         try (var conn = dataSource.getConnection()) {
@@ -338,7 +346,7 @@ public class PostgresSynquestEngine
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
                         double score = -rs.getDouble("dist");
-                        if (rs.wasNull() || score < request.minScore()) {
+                        if (rs.wasNull() || score < scoreFloor) {
                             continue;
                         }
                         matches.add(
@@ -376,11 +384,13 @@ public class PostgresSynquestEngine
             List<SearchHit> lexical =
                     tsquery.isEmpty()
                             ? List.of()
-                            : fetchLexical(tenant, request, tsquery, legInput);
+                            : fetchLexical(
+                                    tenant, request, tsquery, legInput,
+                                    Double.NEGATIVE_INFINITY);
             List<SearchHit> dense =
                     request.queryEmbedding().isEmpty()
                             ? List.of()
-                            : fetchVector(tenant, request, legInput);
+                            : fetchVector(tenant, request, legInput, Double.NEGATIVE_INFINITY);
             java.util.Map<String, double[]> acc = new java.util.LinkedHashMap<>();
             java.util.Map<String, SearchHit> byId = new java.util.LinkedHashMap<>();
             rankInto(acc, byId, lexical);
