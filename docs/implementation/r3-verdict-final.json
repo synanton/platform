@@ -4,6 +4,7 @@
   "corpus": "ydb-poc-corpus-v1",
   "supersedes": "r3-verdict.json (R3-CONDITIONAL-PASS, three legs, 2026-09-29)",
   "legs": {
+    "baseline": {"lexical_overlap_mean": 1.0, "note": "reference leg"},
     "cassandra": {
       "lexical_overlap_mean": 1.0,
       "vector_overlap_mean": 0.88,
@@ -16,6 +17,7 @@
       "vector_overlap_mean": 0.83,
       "hybrid_overlap_mean": 0.71,
       "identity": "pass",
+      "divergence_cause": "measurement limitation — synthetic 384-d space, recall unclaimed per preflight",
       "note": "unchanged from three-legged verdict"
     },
     "postgres": {
@@ -23,6 +25,7 @@
       "vector_overlap_mean": 0.23,
       "hybrid_overlap_mean": 0.18,
       "identity": "pass (all modes, all filters — no leakage at scale)",
+      "divergence_cause": "mechanism finding — two ADDITIVE causes (fixing either narrows without closing): (1) RLS post-ANN composition (*_predicate_composed live, not hypothetical); (2) probes=1 recall floor. Falsifiable prediction: probes-to-full pushes vector overlap toward YDB's 0.83; residual isolates the RLS-composition effect. Phase-4 measurable.",
       "annotations": [
         "Outcome 2 OBSERVED LIVE (closes 005-gate-a.md caveat, deferred to Phase 4, seen at 160k): tenant-scoped vector plan is Index Scan using chunks_embedding_ivfflat with RLS as post-scan Filter — pre-ranking composition does NOT hold on the ANN path. Outcome 2 machinery applies: ivfflat-topology numbers carry *_predicate_composed suffixes.",
         "probes=1 floor: engine never sets ivfflat.probes (pgvector default) — approximate recall at its lowest. Single largest overlap depressor; exact-probes sweep is Phase-4 perf work with a testable prediction (overlap approaches YDB's).",
@@ -31,5 +34,14 @@
       ]
     }
   },
+  "gate_a_prescience": "The standby preflight predicted Outcome 2 (RLS post-ANN) for Phase-4 HNSW scale; it fired at 160k on IVFFlat instead — conservative on scale, exact on mechanism. Second PoC instance of a Phase-4-deferred caveat observed early. *_predicate_composed is now a live annotation.",
+  "phase6_implication": "YDB's divergence is a measurement limitation (unmeasurable recall); PG's is a mechanism finding (measurable, addressable) — not equivalent Phase-6 inputs. PG's vector-specific divergence empirically motivates Outcome 8 (Postgres Synvault + dedicated search) as a distinct candidate, not a fallback. Does not decide Phase 6.",
+  "followup_backlog": [
+    {"item": "Guard wiring into RunLeg post-emission (PN-8)", "priority": "high", "why": "guard exists, no caller; family produced an actual corrupted artifact (120-empty resume)"},
+    {"item": "DEFINER audit (007-followup-definer-audit.md)", "priority": "medium", "why": "production gate, not PoC-blocking"},
+    {"item": "./data/ layout (corpus+runs+volumes, gitignored, env-overridable)", "priority": "medium", "why": "ergonomics; post-R3 sequence agreed"},
+    {"item": "structural-empty rename (reserved, wire key kept)", "priority": "low", "why": "cosmetic; deferred to avoid mid-run churn"},
+    {"item": "Probes sweep with falsifiable prediction", "priority": "low", "why": "Phase 4 perf work"}
+  ],
   "meaning": "hard gates (identity, lexical) pass on all four legs; vector/hybrid overlap divergences pre-declared semantic on YDB and mechanism-tagged on PG. Phase 6 proceeds four-legged."
 }
