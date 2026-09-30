@@ -265,7 +265,13 @@ External gates:
 
 ## §8. Phase 2 — PostgresSynquestEngine
 
-🔵 PG-POC-007 — PostgresSynquestEngine
+🟢 PG-POC-007 — PostgresSynquestEngine
+
+- Depends on: PG-POC-005 (Gate A), PG-POC-006 (Gate B), PG-POC-013
+- Evidence: `java/synquest-postgres` — contract 12/12 (1 disabled 025b,
+  same as reference legs), ScoreSemantics 5/5, topology 3/3, guard 6/6,
+  gating 3/3, registration 2/2, determinism 2/2 (cross-process),
+  emitter wiring 3/3. Closed 007-1→007-8 on DESIGN-PG-007.
 
 - Depends on: PG-POC-005 (Gate A), PG-POC-006 (Gate B), PG-POC-013
 - Description: Implement PostgresSynquestEngine for lexical, vector, hybrid retrieval. Pre-ranking eligibility per Gate A outcome. Metadata filtering pushed into SQL (not post-fetch). Tie-break post-retrieval per PG-POC-013.
@@ -336,12 +342,23 @@ External gates:
   generation-scoped delete via DEFINER key lookup (port gives no tenant),
   rebuild flip/reset (reset scoped by generation IS NOT NULL —
   shared-table equivalent of per-index delete); search filters generation
-  pre-retrieval (absent pointer = no filter, YDB mirror). DEFINER
-  ownership (BYPASSRLS role) is a production-migration follow-up.
+  pre-retrieval (absent pointer = no filter, YDB mirror). Per-tenant
+  pointers are strictly safer than global-* for multi-tenant operation
+  (one tenant's rebuild cannot flip another's reads) — not exercised by
+  PoC tests; recorded as a PG advantage for Phase 6. DEFINER ownership
+  (BYPASSRLS role) is tracked in `007-followup-definer-audit.md`
+  (production-migration gate, PN-5).
   (b) conformance — eligibility partial (tenant scope; 025b excluded),
   temporal rejection per mode, vacuous-filter==unfiltered equivalence
   (Gate A analogue, behavioral), determinism cross-process (028a.8:
   subprocess -Xmx1g, byte-identical top-K).
+- 007-8 emitter wiring: PG Q3 satisfies the shared emitter contract
+  (`PgQ3EmitterTest` — run_id deterministic `pg-v1`, corpus from manifest,
+  eligible_set from ground-truth SQL, min_score per leg). Real frozen run
+  (`runs/pg-v1.json`) belongs to 028e.
+- 007 close = four-legged moment: 028e real run → PG joins R3 → Phase 6
+  four-legged decision (all backends artifacted). Whoever picks up 028e
+  starts from `PgQ3Emitter` (wiring proven) + frozen corpus.
 - Pre-ranking eligibility per Gate A outcome; metric suffix on every eligibility-filtered number.
 - Post-retrieval sort (`score desc, chunkId asc`) applied on every query — server tied order is deterministic but not chunkId-asc (013 finding); verified by the 013 tie-break determinism test.
 - Tie-break deterministic; convergence gates pass.

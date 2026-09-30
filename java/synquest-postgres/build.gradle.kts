@@ -12,6 +12,11 @@ dependencies {
     // Schema DDL lives in synvault-postgres (DDL-in-one-place): the quest
     // fixture installs it via PostgresSchema, never a local copy.
     testImplementation(project(":java:synvault-postgres"))
+    // 007-8 emitter wiring proof: PG Q3 output must satisfy the shared
+    // emitter contract (RunOutput strict parser). Jackson stays test-scope:
+    // the production engine never serializes JSON.
+    testImplementation(project(":java:synanton-bench-convergence"))
+    testImplementation(libs.jackson.databind)
     testImplementation(testFixtures(project(":java:storage-testkit")))
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.postgresql)

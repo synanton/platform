@@ -34,3 +34,12 @@ the old). Entries carry stable labels (`PN-1`…); tickets cite the label
   (predicate in plan, topology recorded) discovers defects the retrieval
   tests pass over. Every retrieval leg gets both shapes: result
   correctness AND plan-shape evidence.
+- **[PN-5] Tenant-less port methods need DEFINER functions — and the
+  function's argument validation is the security boundary.** Origin:
+  PG-POC-007-7a. `delete()`/`rebuild()` carry no tenant scope (YDB scans
+  its local indexes for the same reason); PG resolves keys through narrow
+  SECURITY DEFINER functions owned by a BYPASSRLS-capable role. Narrow by
+  shape (exact chunk+generation; global flip), never open-ended: any caller
+  reaching the function with arbitrary arguments reads/writes any tenant.
+  Production must audit role scope + argument handling. Tracked:
+  `007-followup-definer-audit.md`.

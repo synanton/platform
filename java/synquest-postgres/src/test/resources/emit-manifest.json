@@ -1,0 +1,3 @@
+{"corpus_version": "pg-q3-fixture-v1", "seed": 42,
+ "counts": {"documents": 0, "chunks": 60, "queries": 6},
+ "note": "007-8 wiring fixture only — the frozen run belongs to 028e"}
