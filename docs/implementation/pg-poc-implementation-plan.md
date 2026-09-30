@@ -285,6 +285,22 @@ External gates:
     creation — switching models needs ALTER + index drop/rebuild, cost
     scaling with table size (same shelf as the YDB finding). Synthetic-384-d
     recall stays unclaimed.
+  - Distance operator named: cosine `<=>` per production COSINE parity
+    (Gate A's `<->` L2 probe was plan-shape evidence, not the served path;
+    score stored as `-distance` so higher-better ordering is uniform).
+  - IVFFlat deferred-DDL rule (same class as the YDB empty-table-index
+    finding): IVFFlat trains on what's present, so it is created AFTER the
+    corpus loads — never in schema setup. Test path creates it post-seed;
+    production path is a post-load migration step.
+  - Per-query topology: plan shape can differ per selectivity, so the
+    topology travels per query, not per leg — EXPLAIN per selectivity leg,
+    topology recorded per leg, hard assertion is eligibility-in-plan
+    (tenant restriction before ordering), never "must use index" (at PoC
+    scale seqscan can be the correct planner choice). 028e carries the
+    per-query field into Q3 output as a follow-up obligation.
+    Observed 007-3 (30k Gate-A-shaped corpus, IVFFlat post-load):
+    0.1%-selectivity leg → btree-sort, ~33% leg → ivfflat — per-query
+    variance confirmed, HNSW serves neither (Gate A caveat holds).
   - Fusion parity probe (007-4, before any hybrid number): five named axes
     vs YDB's **recorded** 024B behavior (artifact reference, no
     cross-container dependency) — term matching

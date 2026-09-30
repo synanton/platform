@@ -77,6 +77,9 @@ public class PostgresSynquestEngine
         if (request.mode() == SearchMode.LEXICAL && capabilities().lexical()) {
             return searchLexical(tenant, request);
         }
+        if (request.mode() == SearchMode.VECTOR && capabilities().vector()) {
+            return searchVector(tenant, request);
+        }
         return CompletableFuture.failedFuture(
                 new StorageException(
                         StorageErrorKind.UNSUPPORTED,
@@ -223,11 +226,78 @@ public class PostgresSynquestEngine
         return new StorageException(StorageErrorKind.TRANSIENT, "PG search failed: " + e.getMessage());
     }
 
+    /**
+     * 007-3 vector: cosine distance ({@code <=>}, production COSINE parity)
+     * over the shared {@code embedding} column, RLS-scoped per operation,
+     * post-retrieval tie-break per 013. Score stored as {@code -distance} so
+     * higher-better ordering (and {@code minScore}) is uniform with lexical.
+     * No index forcing — the planner chooses (btree-sort, IVFFlat, HNSW, or
+     * an honest seqscan at small scale); the topology test records what it
+     * picked per selectivity leg instead of asserting a shape.
+     */
+    private CompletionStage<SearchResult> searchVector(String tenant, SearchRequest request) {
+        if (request.queryEmbedding().isEmpty()) {
+            return CompletableFuture.completedFuture(new SearchResult(List.of(), 0, Map.of()));
+        }
+        String sql =
+                "SELECT chunk_id, doc_id, text, metadata,"
+                        + " (embedding <=> ?::vector) AS dist"
+                        + " FROM chunks"
+                        + " ORDER BY dist LIMIT ?";
+        try (var conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            try (var set = conn.createStatement()) {
+                set.execute("SET LOCAL app.tenant_id = '" + tenant.replace("'", "''") + "'");
+            }
+            List<SearchHit> matches = new java.util.ArrayList<>();
+            try (var ps = conn.prepareStatement(sql)) {
+                ps.setString(1, paddedVector(request.queryEmbedding().get()));
+                // Over-fetch past topK: minScore + tie-break apply
+                // post-retrieval, so the SQL cut must not be the verdict.
+                ps.setInt(2, Math.max(request.topK() * 5, 100));
+                try (var rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        double score = -rs.getDouble("dist");
+                        if (rs.wasNull() || score < request.minScore()) {
+                            continue;
+                        }
+                        matches.add(
+                                new SearchHit(
+                                        ChunkId.of(rs.getString("chunk_id")),
+                                        DocumentId.of(rs.getString("doc_id")),
+                                        score,
+                                        rs.getString("text"),
+                                        metadataMap(rs.getString("metadata"))));
+                    }
+                }
+            }
+            conn.commit();
+            matches.sort(
+                    java.util.Comparator.comparingDouble(SearchHit::score)
+                            .reversed()
+                            .thenComparing(h -> h.chunkId().value()));
+            int total = matches.size();
+            List<SearchHit> page = matches.subList(0, Math.min(request.topK(), matches.size()));
+            return CompletableFuture.completedFuture(new SearchResult(page, total, Map.of()));
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(map(e));
+        }
+    }
+
+    /**
+     * Query embedding padded to the fixed 384 columns (same rule as writer
+     * storage: sub-384 zero-pads, over-384 rejects). Shared so write and
+     * read agree on what a toy vector means.
+     */
+    static String paddedVector(float[] embedding) {
+        return vectorLiteral(embedding);
+    }
+
     @Override
     public SearchCapabilities capabilities() {
-        // §9.3: unverified flags report false. Lexical flipped with 007-2
-        // evidence; each remaining flag flips with its own task.
-        return new SearchCapabilities(true, false, false, false, false, false, false, false);
+        // §9.3: unverified flags report false. Lexical (007-2) and vector
+        // (007-3) flipped on evidence; the rest flip with their own tasks.
+        return new SearchCapabilities(true, true, false, false, false, false, false, false);
     }
 
     // ---- writer ----
@@ -371,8 +441,7 @@ public class PostgresSynquestEngine
                 adapterVersion(),
                 List.of(
                         ConformanceEntry.supported(Capabilities.SYNQUEST_LEXICAL, evidence),
-                        ConformanceEntry.unverified(
-                                Capabilities.SYNQUEST_VECTOR, "007-1 scaffold, lands in 007-3"),
+                        ConformanceEntry.supported(Capabilities.SYNQUEST_VECTOR, evidence),
                         ConformanceEntry.unverified(
                                 Capabilities.SYNQUEST_HYBRID, "007-1 scaffold, lands in 007-5"),
                         ConformanceEntry.unverified(
