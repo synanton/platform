@@ -6,6 +6,9 @@ Canonical 12 (folded from 17 listed). Merges: A1.2+A1.3 → BR-A1.2; A2.2+A2.3 �
 A3.1+A3.2+A3.3 → BR-A3.1 (optional analytic sinks); A3.4 + runbook pointer → BR-A3.2
 (runbook itself counted once under DOC-D1.1).
 
+Historical IDs from the pre-reconciliation draft are noted inline where tasks were merged;
+canonical IDs in this file are current. See INDEX.md for the complete reconciliation table.
+
 ## Phase A0 — Requirements and schema design (Week 1–2)
 
 ### BR-A0.1 — Gather requirements from Track B

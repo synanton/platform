@@ -5,6 +5,9 @@ Parent: [INDEX.md](./INDEX.md)
 Canonical 24 (folded from 35 listed). B0 8→5, B1 5→4, B2 4→3, B3 5→4, B4 3→2, B5 6→4, B6 4→2.
 Old-ID mapping noted per task. Conditional 3rd-party adapter parked, not counted.
 
+Historical IDs from the pre-reconciliation draft are noted inline where tasks were merged;
+canonical IDs in this file are current. See INDEX.md for the complete reconciliation table.
+
 > **Principle: cross-runtime boundaries are service boundaries.** Any non-JVM component
 > integrated into the platform runs as a separate process or service. JNI and native-library
 > embedding are explicitly out of scope — they create build-toolchain coupling, JVM crash risk,

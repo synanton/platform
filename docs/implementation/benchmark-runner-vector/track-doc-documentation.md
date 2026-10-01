@@ -5,6 +5,9 @@ Parent: [INDEX.md](./INDEX.md)
 Documentation ships alongside the code, not after. Each item has an owner (Docs owner)
 and a deadline tied to a track milestone. Canonical 12 (D4.1 + D4.2 merged into DOC-D4.1).
 
+Historical IDs from the pre-reconciliation draft are noted inline where tasks were merged;
+canonical IDs in this file are current. See INDEX.md for the complete reconciliation table.
+
 ## Phase D0 — Frozen-schema documentation (Week 2)
 
 ### DOC-D0.1 — Benchmark Manifest schema reference · Ships with BR-A0.2
