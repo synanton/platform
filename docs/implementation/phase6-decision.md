@@ -53,6 +53,48 @@ high-selectivity queries should not read any column at face value.
 - PG-tuned-vs-default framing: resolved to tuned (column declaration in
   R3 record; default preserved as diagnostic).
 - Cassandra tension (intentional vs drift).
-- Missing sections for a complete input: query latency (p95/p99), cost
-  per row/query, operational complexity, migration path. Those land as
-  later sections; the matrix alone isn't the decision.
+
+## Query latency (p50/p95 ms, adapter-call only, single run)
+
+| Mode | Baseline | Cassandra | YDB | PG |
+|---|---|---|---|---|
+| Lexical | 0.3 / 14 | 0.2 / 13 | 4.3 / 253 | 95 / 1601 |
+| Vector | 3.0 / 147 | 2.6 / 90 | 44 / 3005 | 31 / 1208 |
+| Hybrid | 6.0 / 190 | 5.2 / 101 | 2084 / 56082 | 103 / 2761 |
+
+Caveats (load-bearing, read before ranking): mixed `timing_scope`
+(single + summed fan-out summed across tenants) is blended into every
+cell; PG opens a connection per operation (no pooling — handshake cost
+in every query); YDB hybrid tail is extreme skew (p50 2s vs p95 56s —
+cold/first-query effects suspected, uninvestigated); single run, no
+repeats; adapter-call scope excludes harness overhead by design
+(comparator never gates on timing). Latency ranks legs only after a
+repeat run with scope-separated percentiles.
+
+## Cost (inputs, not a model yet)
+
+- Write side frozen (034): YDB revision p50/p95 38/58 ms, 77.6 rps at
+  20-way concurrency; ~8 rows ≈ 4 KB per 3-chunk document; index
+  overhead + replication pricing still open.
+- Search side: load rates above are the only measured search-cost input;
+  per-query compute cost unmeasured on all legs.
+- A cost model needs: managed-service pricing basis per backend,
+  replication ×3 storage math, and the missing latency repeats. Not
+  attempted here — stated so Phase 6 doesn't assume it exists.
+
+## Operational complexity (qualitative, single-node PoC basis)
+
+- Cassandra: incumbent (production operates it today).
+- YDB: newer; restart recovery demonstrated (~30s, no intervention);
+  node-loss breadth awaits full 032.
+- PG: mature engine, new-to-this-workload; RLS + pgvector ops are
+  standard DBA territory; DEFINER audit gates production, not the PoC.
+- Headcount/complexity deltas: unassessed on all legs — recorded, not guessed.
+
+## Migration path
+
+- Existing deployment is Cassandra-backed: staying is zero-migration.
+- Any move (YDB or PG) needs the Phase-5 migrator path + dual-read
+  validation, neither scoped yet. Migration cost is an open input, not
+  a footnote — the decision meeting should demand it before selecting
+  a non-incumbent outcome.
