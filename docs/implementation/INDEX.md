@@ -22,6 +22,8 @@ last_reviewed: "2026-08-26"
 | [`gpu-execution-plane/INDEX.md`](./gpu-execution-plane/INDEX.md) | GPU Execution Plane (v1.20) |
 | [`eventing-workflow-plane/INDEX.md`](./eventing-workflow-plane/INDEX.md) | Eventing and Workflow Plane (v1.27) - not started; next implementation step alongside v1.32 |
 | [`platform-api-plane/INDEX.md`](./platform-api-plane/INDEX.md) | Platform API Plane (v1.32) - not started; next implementation step alongside v1.27 |
+| [`benchmark-runner-vector/INDEX.md`](./benchmark-runner-vector/INDEX.md) | Benchmark Runner + Vector Engine Selection — 48-task plan (BR 12 + VEC 24 + DOC 12) |
+| [`benchmark-tracker.md`](./benchmark-tracker.md) | Benchmark execution tracker (targets, gates, aliases) |
 | [`modules/helper.md`](./modules/helper.md) | `helper` module implementation plan |
 | [`modules/wizard.md`](./modules/wizard.md) | `wizard` module implementation plan |
 | [`demo/standalone-syntology-demo.md`](./demo/standalone-syntology-demo.md) | Standalone Syntology demo guide |

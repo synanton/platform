@@ -27,6 +27,14 @@ Cross-cutting:
 | Phase 4 backlog | — | NONE experiment, index isolation, BulkUpsert-RPC, clock skew, resource broker, 028-4.X KNN-vs-text split (owner TBD — pre-R3 backlog, non-blocking, tracked here so it isn't lost) |
 | Harness amendment 2026-09-30 (PN-7) | — | RunLeg-based runs NEVER executed the truncate step (`engine.truncate()` fetched-and-dropped the lambda). Observed clean state came from fresh prefixes/temp dirs, not truncate — earlier "truncate-on-start verified" claims read as "redundant mechanism, unverified". Fixed with `.run()` (all legs); structural prevention (void return) is a post-R3 refactor. YDB close never ran either (transport leak, harmless one-shot). |
 
+## Forward plan (Benchmark Runner + Vector Engine Selection)
+
+- Execution plan: [benchmark-runner-vector/INDEX.md](./benchmark-runner-vector/INDEX.md) — 48 canonical tasks
+  (BR 12 + VEC 24 + DOC 12). Track files: [BR](./benchmark-runner-vector/track-a-benchmark-runner.md) ·
+  [VEC](./benchmark-runner-vector/track-b-vector-engine.md) · [DOC](./benchmark-runner-vector/track-doc-documentation.md).
+- This tracker stays the execution record for the four-target benchmark; the new plan's B5/VEC-B5.x
+  runs report back here. No duplication: task definitions live in the plan, run results live here.
+
 ## Alias map (transition only — drop after all branches renamed)
 
 - 028b → BENCH-BASE · 028c → CASS-EMIT-024a · 028d → YDB-EMIT-024b ·
