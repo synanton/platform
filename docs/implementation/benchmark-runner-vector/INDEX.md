@@ -38,6 +38,14 @@ Canonical is **48 = 12 + 24 + 12**. The 17-task delta is folded by merge, not by
 Full old-ID → canonical-ID mapping lives in each track file. No scope was dropped;
 parked items (conditional 3rd-party adapter, UI API extras) are marked Optional/Parked.
 
+### Reconciliation update 2026-10-01 (Rust as service; JNI out of scope)
+
+| Item | Change | Reason |
+|---|---|---|
+| Tantivy/Quickwit rows | Added to B0 matrices | Adjacent-engine assessment; unmeasured, Phase-5 candidate |
+| VEC-B6.2-FOLLOWON | Expanded trigger | Names two service paths; excludes JNI |
+| Dev-guide rule | New rule | Cross-runtime boundaries are services |
+
 ## §1. Ownership
 
 | Role | Scope | Named? |
@@ -130,6 +138,7 @@ Track DOC — Documentation:
 | No clear winner in evaluation | Valid outcome; framework says "context-dependent" with named defaults |
 | Scope creep (adjacent engines) | Summary cards only, unless a context gap justifies promotion |
 | Metric-definition divergence | Taxonomy frozen at A0; shared vocabulary enforced |
+| Cross-runtime adapter proposed via JNI | Dev-guide rule + architecture review requirement |
 
 ## §5. Immediate Next Steps (Week 1, in order)
 

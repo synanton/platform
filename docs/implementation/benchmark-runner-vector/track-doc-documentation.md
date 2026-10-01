@@ -71,7 +71,8 @@ and a deadline tied to a track milestone. Canonical 12 (D4.1 + D4.2 merged into 
 
 - Description: Add parameterization discipline (from YDB-041) and composition rules to the dev-guide.
 - Acceptance: Both rules citable by PR reviewers.
-- Evidence: Updated `docs/dev-guide.md` (or current equivalent).
+- Evidence: Updated `docs/dev-guide.md` (seeded 2026-10-01 with the cross-runtime rule;
+  this task adds parameterization + composition).
 - Estimate: 4 hr.
 - Depends on: VEC-B2.3.
 

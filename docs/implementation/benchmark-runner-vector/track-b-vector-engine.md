@@ -5,6 +5,12 @@ Parent: [INDEX.md](./INDEX.md)
 Canonical 24 (folded from 35 listed). B0 8→5, B1 5→4, B2 4→3, B3 5→4, B4 3→2, B5 6→4, B6 4→2.
 Old-ID mapping noted per task. Conditional 3rd-party adapter parked, not counted.
 
+> **Principle: cross-runtime boundaries are service boundaries.** Any non-JVM component
+> integrated into the platform runs as a separate process or service. JNI and native-library
+> embedding are explicitly out of scope — they create build-toolchain coupling, JVM crash risk,
+> and cross-language memory coordination that outweigh their latency benefit. See dev-guide rule:
+> "Cross-runtime boundaries are services, not JNI." (Added 2026-10-01, Rust-as-service update.)
+
 ## Phase B0 — Document-driven comparison (Week 1–2)
 
 ### VEC-B0.1 — License matrix (old B0.1)
@@ -16,6 +22,13 @@ Old-ID mapping noted per task. Conditional 3rd-party adapter parked, not counted
 - Estimate: 2 days.
 - Depends on: Track B owner named.
 
+Matrix seed — Tantivy rows (added 2026-10-01; two rows, not one):
+
+| Engine | License | Copyleft scope | Notes |
+|---|---|---|---|
+| Tantivy | MIT | Permissive | Library; service requires wrapper |
+| Quickwit (Tantivy-based) | Apache 2.0 | Permissive | Distributed service built on Tantivy |
+
 ### VEC-B0.2 — Deployment-mode + managed-availability matrix (merges old B0.2 + B0.6)
 
 - Description: Which engines support cloud-managed / cloud-self / on-prem / docker / embedded,
@@ -24,6 +37,32 @@ Old-ID mapping noted per task. Conditional 3rd-party adapter parked, not counted
 - Evidence: `vector-deployment-modes.md` (incl. managed section).
 - Estimate: 1.5 days.
 - Depends on: VEC-B0.1.
+
+Matrix seed — "Runtime integration" column (added 2026-10-01). Rule: every cell filled;
+"External service" is a first-class value, not a fallback:
+
+| Engine | Runtime integration | Process model |
+|---|---|---|
+| PostgreSQL + pgvector | In-process (SQL extension) | Same host as PG |
+| YDB | In-process (native index) | Same host as YDB |
+| Cassandra + Lucene | In-process (JVM library) | Same host as Cassandra |
+| Milvus | External service | Separate process/cluster |
+| Qdrant | External service | Separate process/cluster |
+| Tantivy | External service | Sidecar or Quickwit |
+| Lucene (standalone) | In-process (JVM library) | Same host |
+| Weaviate | External service | Separate process/cluster |
+| Vespa | External service | Separate process/cluster |
+| OpenSearch | External service | Separate process/cluster |
+
+Matrix seed — managed-availability rows for Tantivy/Quickwit (old B0.6 scope, merged here):
+
+| Engine | Cloud-managed | Cloud self-hosted | On-prem | Docker | Embedded |
+|---|---|---|---|---|---|
+| Tantivy (sidecar) | N/A | ✅ | ✅ | ✅ | ⚠️ (embedded Rust binary, not JVM-embedded) |
+| Quickwit | ⚠️ (via managed Rust services) | ✅ | ✅ | ✅ | ❌ |
+
+"Embedded" for Tantivy-sidecar means co-located with the service, not in-process —
+the distinction matters and is stated, not implied.
 
 ### VEC-B0.3 — Hardware + scalability + operational complexity (merges old B0.3 + B0.4 + B0.5)
 
@@ -35,6 +74,22 @@ Old-ID mapping noted per task. Conditional 3rd-party adapter parked, not counted
 - Evidence: `vector-hardware-profiles.md` (incl. scalability + ops sections).
 - Estimate: 3 days.
 - Depends on: VEC-B0.1.
+
+Matrix seed — Tantivy/Quickwit hardware rows (added 2026-10-01; no assumed values —
+every cell measured, sourced, or flagged):
+
+| Engine | CPU profile | Memory footprint | Storage footprint | Status |
+|---|---|---|---|---|
+| Tantivy (sidecar) | Unmeasured; Rust, no GC — expected lower tail latency | Unmeasured at 384/768/1536d | Unmeasured | ⚠️ Phase-5 candidate |
+| Quickwit | Unmeasured; multi-process distributed | Unmeasured | Unmeasured; decoupled storage | ⚠️ Phase-5 candidate |
+
+Matrix seed — operational complexity rows (old B0.5 scope, merged here).
+Explicit counts, not qualitative labels:
+
+| Engine | Process count for HA | Dependencies | Backup model |
+|---|---|---|---|
+| Tantivy (sidecar) | 2+ per host (JVM + sidecar) | Rust toolchain at build; binary at deploy | Snapshot the sidecar's index dirs |
+| Quickwit | N searchers + M indexers + coordinator | Rust toolchain at build; cluster config | Native cluster snapshots; S3-backed |
 
 ### VEC-B0.4 — Per-context profiles (old B0.7)
 
@@ -68,6 +123,10 @@ Informs BR-A0 schema design.
 - Evidence: Interface + DTO files + tests.
 - Estimate: 1 day.
 - Depends on: Track B owner named.
+
+Clarification (2026-10-01): implementation options for non-JVM engines — `LexicalRetriever`
+implementations that wrap external services (HTTP, gRPC, or Unix socket) follow the same
+contract as in-process implementations. The port is transport-agnostic. No new task.
 
 ### VEC-B1.2 — VectorIndexWriter port (old B1.3)
 
@@ -243,9 +302,38 @@ Gate B5: All 6 compositions have artifacts. Hard gates pass. Effects isolated.
 
 - Description: Publish `docs/architecture/vector-engine-selection.md` (reviewed by architecture +
   legal); list every unmeasured engine-context pair and file owner-named follow-on tickets.
+  Includes the expanded Rust follow-on below.
 - Acceptance: Committed file; every unmeasured dimension has an owner-named follow-on.
 - Evidence: Committed file + filed tickets.
 - Estimate: 1 day.
 - Depends on: VEC-B6.1.
+
+VEC-B6.2-FOLLOWON — Rust lexical kernel (Tantivy/Quickwit) comparison:
+
+Not scheduled. Activates when the trigger fires.
+
+Trigger: one of the following passes `LexicalRetrieverContractTest`:
+
+- `TantivySidecarRetriever` (custom Rust service exposing Tantivy over HTTP/gRPC)
+- `QuickwitLexicalRetriever` (Java HTTP client against Quickwit REST API)
+
+Scope: lexical retrieval only. Add a lexical-only comparison row to the B5 matrix subset.
+Do not add as a vector-engine composition — the axes are independent.
+
+Two paths, not one:
+
+- Sidecar path: minimal Rust binary, one process per host, HTTP/gRPC. Best for single-host,
+  embedded, small-cluster deployments.
+- Quickwit path: distributed service with decoupled storage/compute, ES-compatible REST API.
+  Best for cloud, multi-tenant, large-corpus deployments.
+
+Choose based on deployment context. Both are valid; the trigger doesn't prefer one.
+
+JNI excluded. No tantivy4java or custom JNI bridge. If a JNI approach is proposed later,
+it goes through a separate architecture review, not this follow-on.
+
+- Owner: Track B owner (or whoever builds the Rust adapter).
+- Evidence required to close: comparison artifact showing lexical recall + latency for Lucene
+  vs Tantivy-sidecar (or Quickwit), on the frozen v1 corpus, under the same R3 discipline.
 
 Gate B6: Decision framework published. Follow-ons filed.
