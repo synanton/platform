@@ -25,6 +25,8 @@ public final class R3ConvergenceRun {
     public static void main(String[] args) throws Exception {
         report("baseline-v1.json", "cassandra-v1.json");
         report("baseline-v1.json", "ydb-v1.json");
+        // Fourth column (028e, 2026-09-30): PG vs baseline, same frozen config.
+        report("baseline-v1.json", "pg-v1.json");
         System.out.println("R3-DONE reports in " + runsDir().toAbsolutePath());
     }
 

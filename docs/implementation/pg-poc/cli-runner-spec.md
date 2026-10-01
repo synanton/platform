@@ -62,6 +62,21 @@ on failure. A check operators must remember is the original 32s failure mode;
 wire it into RunLeg startup (or the CI first step), never leave it manual.
 Defaults resolve under `docker/data/`; first `up` creates them.
 
+## Environment rules (028e learnings, 2026-09-30)
+
+- Scratch lives under `/var/tmp`, never `/tmp`: the host wiped `/tmp`
+  mid-PoC (reboot), taking the corpus, run logs, and mini fixtures with
+  it. `/var/tmp` survives reboots. Corpus + logs + smoke fixtures go
+  there; the workspace keeps only artifacts (`runs/`) and code.
+- Mini smokes never touch the shared bench DB: a 100-row smoke truncated
+  160k run rows (same container, same tables — no isolation). Smokes run
+  against a distinct database (`bench_mini`) or a distinct container, never
+  the run container.
+- Corpus determinism banks: the regenerated corpus hashed byte-identical
+  (same shas, different path) — 028a.8 seed discipline holds across
+  filesystem locations, a slightly stronger claim than same-environment
+  regeneration.
+
 ## Order
 
 Sequential, one leg at a time: 024a → 024b → 028e (fixture only) →

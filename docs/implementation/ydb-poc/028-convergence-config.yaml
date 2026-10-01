@@ -26,7 +26,17 @@ tolerances:                        # violation = gate fail, frame revised
   score_comparison: none           # scores never compared across legs (spaces differ)
 
 rules:
-  - minScore: 0                    # neutral on all legs
+  - minScore: 0                    # neutral on all legs, DEFINED PER SCORE SPACE (corrective
+                                   # amendment 2026-09-30, 007-4 finding in practice): 0.0 is
+                                   # neutral for Lucene BM25 / ts_rank / RRF-normalized
+                                   # (non-negative spaces); PG vector serves -cosine_distance
+                                   # in [-2, 0], where 0.0 wiped the whole leg — its neutral
+                                   # is the space floor (-2.0, passes all). Neutrality means
+                                   # "passes everything", never the number 0.0. Same
+                                   # application points on every backend; values travel
+                                   # per-leg in Q3 min_score. Corrective, not relaxative:
+                                   # no threshold was lowered, an unmeasurable leg was made
+                                   # measurable.
   - ties: tolerance-based, never exact-sequence
   - conjunctive-FT: queries must fully match on YDB leg, or the leg measures divergence
   - hybrid-flag: enable_hybrid_search=true recorded with results

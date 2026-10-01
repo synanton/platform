@@ -43,3 +43,47 @@ the old). Entries carry stable labels (`PN-1`…); tickets cite the label
   reaching the function with arbitrary arguments reads/writes any tenant.
   Production must audit role scope + argument handling. Tracked:
   `007-followup-definer-audit.md`.
+- **[PN-6] Mitigation ≠ mechanism — and the record must say which closed
+  the class.** Origin: 028e run-1 (2026-09-30): a full leg completed with
+  no IVFFlat and no error; root cause for that silent instance remains
+  unexplained. The class is closed by verify-or-throw (post-load prints +
+  `pg_indexes` check), which prevents recurrence without explaining the
+  original. "Closed by mitigation" must never read as "root cause found"
+  six months later — write which one it is.
+- **[PN-7] A bare call on a functional-interface-returning method is
+  fetch-and-drop, not invocation — and javac won't tell you.** Resolution
+  of PN-6's instance (2026-09-30, same day): `engine.postLoad();` fetches
+  the lambda and discards it; only `engine.postLoad().run()` invokes.
+  The bare form is a valid statement expression — the compiler accepts it
+  with no warning (opt-in only: `@CheckReturnValue`, ErrorProne
+  `ReturnValueIgnored`, SpotBugs `RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT`).
+  Blast radius, three legs: PG postLoad (no IVFFlat/ANALYZE — fully
+  silent, caught by rerun), YDB truncate (never ran — masked by fresh
+  prefixes), YDB close (transport never closed — harmless one-shot, leaks
+  long-lived). Retroactive correction: earlier YDB closeouts claiming
+  "truncate-on-start verified" should be read as "redundant mechanism,
+  unverified" — observed cleanliness came from prefix naming, not the
+  never-invoked path (amendment filed with the YDB closeout).
+  Grep signature: bare `engine.(truncate|close|postLoad)();` — any
+  `Runnable`/`Supplier`/`Callable`-returning call site without a visible
+  `.run()`/`.get()`/`.call()` is silently dropped.
+  Structural prevention (post-R3 refactor, recorded not executed mid-run):
+  audit whether any leg genuinely needs deferral; if not, return void —
+  the caller can't drop what isn't returned — or a `PendingAction`
+  wrapper with `@CheckReturnValue`. The current `Runnable` shape is the
+  worst of both: never deferred in practice, shaped like deferral.
+  Detection heuristic: any functional-interface return in harness code
+  gets inspected; this class never fails loudly on any JVM without
+  opt-in static analysis.
+- **[PN-8] A guard whose only caller is its own unit test protects
+  nothing.** Origin: 028e (2026-09-30): `RetrievabilityGuard.check()` had
+  exactly one caller repo-wide (its test); a 120-empty artifact flowed
+  through emission unchecked on every path. Sibling finding, same audit:
+  `EligibilityValidator.validate()` — also test-only. (Q3Emitter references
+  the guard in javadoc only, which reads as wiring and isn't.) Rule: every
+  Guard/Validator/Check must name a production-path caller; audit by
+  grepping the class name outside `test/` and self. Other zeros found in
+  the same pass (`ExtractionRequestValidator`, `JsonResponseValidator`,
+  `BudgetGuard`, `AdapterResidencyGuard`) belong to owning workstreams —
+  flagged, not claimed. Wiring both bench guards into RunLeg post-emission
+  is a post-R3 commit (all legs, shared layer).

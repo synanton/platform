@@ -1,0 +1,51 @@
+{
+  "decision": "R3-CONDITIONAL-PASS",
+  "date": "2026-09-30",
+  "corpus": "ydb-poc-corpus-v1",
+  "supersedes": "r3-verdict.json (R3-CONDITIONAL-PASS, three legs, 2026-09-29)",
+  "legs": {
+    "baseline": {"lexical_overlap_mean": 1.0, "note": "reference leg"},
+    "cassandra": {
+      "lexical_overlap_mean": 1.0,
+      "vector_overlap_mean": 0.88,
+      "hybrid_overlap_mean": 0.48,
+      "identity": "pass",
+      "note": "unchanged from three-legged verdict"
+    },
+    "ydb": {
+      "lexical_overlap_mean": 1.0,
+      "vector_overlap_mean": 0.83,
+      "hybrid_overlap_mean": 0.71,
+      "identity": "pass",
+      "divergence_cause": "measurement limitation — synthetic 384-d space, recall unclaimed per preflight",
+      "note": "unchanged from three-legged verdict"
+    },
+    "postgres": {
+      "lexical_overlap_mean": 1.0,
+      "vector_overlap_mean": 0.77,
+      "hybrid_overlap_mean": 0.67,
+      "identity": "pass (all modes, all filters — no leakage at scale)",
+      "divergence_cause": "NARROWED 2026-09-30 (rerun with ANN session shape: iterative_scan strict_order + probes=10, recorded in build.json ann_session): vector 0.23→0.77, hybrid 0.18→0.67 — within reach of YDB (0.83/0.71). Residual (~0.06-0.16) isolates the RLS-composition effect + approximate-vs-exact, per the falsifiable prediction. The two causes were additive and addressable, exactly as stated.",
+      "annotations": [
+        "Outcome 2 OBSERVED LIVE (closes 005-gate-a.md caveat, deferred to Phase 4, seen at 160k): tenant-scoped vector plan is Index Scan using chunks_embedding_ivfflat with RLS as post-scan Filter — pre-ranking composition does NOT hold on the ANN path. Outcome 2 machinery applies: ivfflat-topology numbers carry *_predicate_composed suffixes.",
+        "probes=1 floor: engine never sets ivfflat.probes (pgvector default) — approximate recall at its lowest. Single largest overlap depressor; exact-probes sweep is Phase-4 perf work with a testable prediction (overlap approaches YDB's).",
+        "minScore corrected pre-run (per-space neutrals: PG vector floor -2.0); lexical empties byte-identical to baseline (planted scatter).",
+        "PG vector gap vs YDB (0.23 vs 0.83) is MECHANISM-tagged (approximation + post-ANN filter), not retrieval-defect: eligible sets exact, lexical parity 1.0."
+      ]
+    }
+  },
+  "pg_column_declaration": "R3-FINAL's PG column is the TUNED artifact (vector 0.77 / hybrid 0.67, ann_session strict_order/probes=10, runs/pg-v1.json). Rationale: R3 compares backends at documented production-representative settings; probes=1 was never a candidate posture (documented floor). The default-config run (0.23/0.18) is preserved as a diagnostic in this record, not a column — same treatment as the superseded btree run.",
+  "pg_selectivity_slice": "Overlap concentrates by pool size, INVERTED vs literature expectation: 0.1%/1% legs ~0.93-1.00, 10% ~0.14-0.18, 100% ~0.28-0.59 (n=2-3 per cell — small-n, stated not hidden). Mechanism: tiny pools force agreement (saturation); large pools let space differences compound through ranking. The literature's iterative-scan benefit is a recall gain already saturated at low selectivity — different thing from overlap. WORKLOAD CAVEAT: the aggregate 0.77 averages two regimes; an operational workload dominated by high-selectivity queries should read 0.14-0.59, not 0.77. The aggregate is the PoC summary statistic, not the workload representative number. Per-cell numbers are DIRECTIONAL (pattern too consistent for chance, n too small for precision); Phase 4 re-cuts them tight.",
+  "cassandra_hybrid_note": "0.48 is the remaining unattributed-family divergence: systematic across filters (none ~0.0-0.11 worst, tenant/metadata 0.54-0.82), full top-K but disjoint ranking (not coverage — q020/q044/q068/q080 at 7-8 rows excepted). Covered by the pre-declared fusion-semantics annotation (same family as YDB's); per-leg table banked above. TENSION RECORDED: 024A is supposed to mirror the baseline (028b.3 equivalence) — the divergence is either intentional fusion-semantics difference (declared but not propagated to tolerance expectations) or mirror drift (a bug, not semantics). Distinguishing is YDB-track follow-up; the deferral names both candidate answers.",
+  "posture_symmetry": "All columns production-representative as understood at run time, evidence basis stated per leg (not assumed uniform): baseline — in-JVM Lucene defaults (build.json under runs/baseline-v1.build.json naming); cassandra — Lucene library defaults per B.2 notes + code, NO build.json (predates CLI.1 convention — posture lives in notes+code, gap noted not papered); ydb — 041-parameterized bulk path (production fix in main) + build.json; pg — tuned session strict_order/probes=10 + build.json ann_session. No leg ran at a knowingly-degraded posture; cassandra's provenance gap is the one asymmetry, recorded here.",
+  "gate_a_prescience": "The standby preflight predicted Outcome 2 (RLS post-ANN) for Phase-4 HNSW scale; it fired at 160k on IVFFlat instead — conservative on scale, exact on mechanism. Second PoC instance of a Phase-4-deferred caveat observed early. *_predicate_composed is now a live annotation.",
+  "phase6_implication": "YDB's divergence is a measurement limitation (unmeasurable recall); PG's was a mechanism finding (measurable, addressable) — and the addressable part has now been addressed (0.23→0.77). Outcome 8 (Postgres Synvault + dedicated search) WEAKENS accordingly: PG's vector leg converges toward the pack with session tuning alone, no architecture split required. Recorded so the inference updates with the number.",
+  "followup_backlog": [
+    {"item": "Guard wiring into RunLeg post-emission (PN-8)", "priority": "high", "why": "guard exists, no caller; family produced an actual corrupted artifact (120-empty resume)"},
+    {"item": "DEFINER audit (007-followup-definer-audit.md)", "priority": "medium", "why": "production gate, not PoC-blocking"},
+    {"item": "./data/ layout (corpus+runs+volumes, gitignored, env-overridable)", "priority": "medium", "why": "ergonomics; post-R3 sequence agreed"},
+    {"item": "structural-empty rename (reserved, wire key kept)", "priority": "low", "why": "cosmetic; deferred to avoid mid-run churn"},
+    {"item": "Probes sweep with falsifiable prediction", "priority": "low", "why": "Phase 4 perf work"}
+  ],
+  "meaning": "hard gates (identity, lexical) pass on all four legs; vector/hybrid overlap divergences pre-declared semantic on YDB and mechanism-tagged on PG. Phase 6 proceeds four-legged."
+}

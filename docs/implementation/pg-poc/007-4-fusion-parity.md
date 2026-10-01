@@ -44,3 +44,20 @@ hybrid *ordering* diverges.
   `build.json` fusion fields (`rrf_k`, `fusion_input_size_*`,
   `score_semantics`) land with the 028e emitter as a follow-up obligation,
   not here — this probe has no bench run to attach them to.
+
+## 028e addendum — ANN session shape (neither cause fundamental)
+
+R3's PG vector gap (0.23 vs 0.83) resolved into two addressable causes
+(pgvector ≥ 0.8.0; we're on 0.8.6):
+(a) pre-0.8.0 overfiltering behavior — fixed by `iterative_scan`
+(`strict_order`: exact distance ordering for tie-break + RRF; the
+planner's btree-vs-ANN choice at 007-3 was intended 0.8.0 cost behavior,
+not misconfiguration);
+(b) `probes=1` default floor — raised to 10 (10% of 100 lists).
+Both set per operation via `SET LOCAL` (same lifecycle as the tenant
+claim); values single-sourced as engine constants and recorded in
+`build.json` (`ann_session`). Expected per literature: filtered recall
+~50–70% → ~99% on tenant legs, selectivity-dependent (large at 0.1%/1%,
+negligible at 100% — the rerun's per-selectivity breakdown is the check).
+If the gap closes, the Outcome-8 justification weakens accordingly —
+recorded here so the inference updates with the number.

@@ -82,10 +82,19 @@ public final class RunLeg {
         }
 
         CorpusLoader.Manifest manifest = CorpusLoader.loadManifest(corpusDir);
-        Engine engine = open(engineName, corpusDir);
+        // Freshness is known BEFORE open (checkpoint read above): fresh runs
+        // cold-build, resume runs join existing state. Open must not
+        // destroy-then-skip — that shape once shipped a 120-empty artifact
+        // (028e resume incident, 2026-09-30).
+        boolean fresh = !loadDone;
+        Engine engine = open(engineName, corpusDir, fresh);
         long tLoad0 = System.nanoTime();
         if (!loadDone) {
-            engine.truncate();
+            // NOTE (028e incident): these are Runnable-returning record
+            // accessors — a bare engine.truncate() fetches and drops the
+            // lambda without running it (compiles silent, no warning).
+            // Always invoke with .run().
+            engine.truncate().run();
             streamLoad(engine, corpusDir);
             appendLine(checkpoint, "{\"phase\":\"load-done\"}");
         } else {
@@ -94,7 +103,7 @@ public final class RunLeg {
         // Post-load runs on both paths (idempotent by contract): PG trains
         // IVFFlat on the loaded corpus here — resuming onto a dropped index
         // re-trains instead of silently running unindexed.
-        engine.postLoad();
+        engine.postLoad().run();
         long loadMs = (System.nanoTime() - tLoad0) / 1_000_000;
 
         List<String> universe = engine.tenantUniverse();
@@ -130,7 +139,8 @@ public final class RunLeg {
                                         strings(q.get("tenant_scope")), stringMap(q.get("metadata_predicate")),
                                         q.has("selectivity") ? q.get("selectivity").asText() : "-",
                                         q.get("filter").asText(), CorpusLoader.eligibleIds(q)),
-                                universe);
+                                universe,
+                                engine.vectorFloor());
                 outputs.add(out);
                 appendLine(checkpoint, Q3Emitter.emit("x", "x", List.of(out)));
                 if (++qdone % 20 == 0) {
@@ -153,10 +163,19 @@ public final class RunLeg {
         build.put("emitted_at", Instant.now().toString());
         build.put("corpus_version", manifest.corpusVersion());
         build.put("index_fresh", true);
+        if (engineName.equals("pg")) {
+            // Topology annotation travels with the number (single-sourced
+            // from the engine constants — never a duplicated literal).
+            build.put(
+                    "ann_session",
+                    org.synanton.synquest.postgres.PostgresSynquestEngine.ITERATIVE_SCAN
+                            + "/probes="
+                            + org.synanton.synquest.postgres.PostgresSynquestEngine.IVFFLAT_PROBES);
+        }
         Files.writeString(
                 outFile.resolveSibling(outFile.getFileName() + ".build.json"), build.toPrettyString());
         System.out.println("DONE wrote=" + outFile + " queries=" + outputs.size());
-        engine.close();
+        engine.close().run();
     }
 
     private record Engine(
@@ -166,17 +185,21 @@ public final class RunLeg {
             // PG builds its IVFFlat here (deferred-DDL rule — never in
             // schema setup). Other legs no-op.
             Runnable postLoad,
+            // Backend-local neutral minScore for VECTOR legs (frozen config:
+            // neutrality is per score space). 0.0 everywhere except PG's
+            // -distance space (floor -2.0 — passes all, truly neutral).
+            double vectorFloor,
             java.util.function.Supplier<tech.ydb.table.Session> sessions) {
         List<String> tenantUniverse() {
             return universeSup.get();
         }
     }
 
-    private static Engine open(String name, Path corpusDir) throws Exception {
+    private static Engine open(String name, Path corpusDir, boolean fresh) throws Exception {
         return switch (name) {
-            case "ydb" -> YdbLeg.open(corpusDir);
-            case "cassandra" -> CassandraLeg.open(corpusDir);
-            case "pg" -> PgLeg.open(corpusDir);
+            case "ydb" -> YdbLeg.open(corpusDir, fresh);
+            case "cassandra" -> CassandraLeg.open(corpusDir, fresh);
+            case "pg" -> PgLeg.open(corpusDir, fresh);
             default -> throw new IllegalArgumentException("unknown --engine (ydb|cassandra|pg): " + name);
         };
     }
@@ -361,7 +384,7 @@ public final class RunLeg {
 
     /** Per-leg engine openers (the only adapter-specific code in the CLI). */
     static final class YdbLeg {
-        static Engine open(Path corpusDir) throws Exception {
+        static Engine open(Path corpusDir, boolean fresh) throws Exception {
             String caPath = firstExisting(
                     System.getenv().getOrDefault("YDB_CA_PATH", ""),
                     System.getProperty("ydb.ca.path", ""),
@@ -415,6 +438,8 @@ public final class RunLeg {
                     "ydb@26.3", () -> client.close(),
                     // YDB needs no post-load step (index maintenance is inline).
                     () -> {},
+                    // Lucene cosine space: 0.0 frozen neutral stands.
+                    0.0,
                     () -> {
                         try {
                             return client.createSession(java.time.Duration.ofSeconds(30))
@@ -455,7 +480,7 @@ public final class RunLeg {
     }
 
     /** Per-leg engine openers (the only adapter-specific code in the CLI). */
-    static final class CassandraLeg {        static Engine open(Path corpusDir) throws Exception {
+    static final class CassandraLeg {        static Engine open(Path corpusDir, boolean fresh) throws Exception {
             Path root = Files.createTempDirectory("bench-leg-cassandra");
             org.synanton.synquest.cassandra.CassandraSynquestEngine engine =
                     new org.synanton.synquest.cassandra.CassandraSynquestEngine(root);
@@ -471,6 +496,8 @@ public final class RunLeg {
                     () -> {},
                     // No post-load index step on the Lucene leg.
                     () -> {},
+                    // Lucene cosine space: 0.0 frozen neutral stands.
+                    0.0,
                     () -> {
                         throw new UnsupportedOperationException("no sessions on cassandra leg");
                     });
@@ -488,14 +515,60 @@ public final class RunLeg {
      * {@code PG_APP_PASSWORD} (default {@code app}).
      */
     static final class PgLeg {
-        static Engine open(Path corpusDir) throws Exception {
+        /** Post-load as a named method (not an inline lambda): entry print
+         * proves dispatch reached here — see 028e incident forensics. */
+        static void postLoadIndex(String url, String user, String password) {
+            System.out.println("POSTLOAD-ENTRY pg leg");
+            try (java.sql.Connection admin =
+                    java.sql.DriverManager.getConnection(url, user, password);
+                    var stmt = admin.createStatement()) {
+                System.out.println("POSTLOAD dropping stale ivfflat (if any)");
+                stmt.execute("DROP INDEX IF EXISTS chunks_embedding_ivfflat");
+                System.out.println("POSTLOAD training ivfflat on loaded corpus");
+                stmt.execute(
+                        "CREATE INDEX chunks_embedding_ivfflat ON chunks"
+                                + " USING ivfflat (embedding vector_cosine_ops)"
+                                + " WITH (lists = 100)");
+                System.out.println("POSTLOAD analyzing");
+                stmt.execute("ANALYZE chunks");
+                try (var rs = stmt.executeQuery(
+                        "SELECT count(*) FROM pg_indexes"
+                                + " WHERE indexname = 'chunks_embedding_ivfflat'")) {
+                    rs.next();
+                    if (rs.getLong(1) != 1) {
+                        throw new IllegalStateException(
+                                "post-load verification failed: ivfflat absent after create");
+                    }
+                }
+                System.out.println("POSTLOAD verified: ivfflat present + analyzed");
+            } catch (Exception e) {
+                throw new IllegalStateException("pg post-load index failed", e);
+            }
+        }
+
+        static Engine open(Path corpusDir, boolean fresh) throws Exception {
             String url = System.getenv().getOrDefault("PG_JDBC_URL", "jdbc:postgresql://localhost:5433/bench");
             String user = System.getenv().getOrDefault("PG_JDBC_USER", "bench");
             String password = System.getenv().getOrDefault("PG_JDBC_PASSWORD", "bench");
             String appPassword = System.getenv().getOrDefault("PG_APP_PASSWORD", "app");
             try (java.sql.Connection admin =
                     java.sql.DriverManager.getConnection(url, user, password)) {
-                org.synanton.synvault.postgres.PostgresSchema.ensureSchema(admin);
+                // Cold-build ONLY on fresh runs (RunLeg rule: no index cache,
+                // every documented run rebuilds). Resume joins existing
+                // state — dropping here once shipped 120 empty legs (028e
+                // resume incident, 2026-09-30).
+                if (fresh) {
+                    try (var drop = admin.createStatement()) {
+                        drop.execute("DROP TABLE IF EXISTS documents, chunks, provenance,"
+                                + " publication_log, quest_generations CASCADE");
+                        drop.execute("DROP FUNCTION IF EXISTS quest_chunk_tenants(text, text)");
+                        drop.execute("DROP FUNCTION IF EXISTS quest_promote_flip(text)");
+                        drop.execute("DROP FUNCTION IF EXISTS quest_reset_quest_rows()");
+                    }
+                    org.synanton.synvault.postgres.PostgresSchema.ensureSchema(admin);
+                } else {
+                    System.out.println("RESUME joining existing PG schema (no drop, no install)");
+                }
                 try (var stmt = admin.createStatement()) {
                     stmt.execute("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app')"
                             + " THEN CREATE ROLE app NOSUPERUSER LOGIN PASSWORD '" + appPassword.replace("'", "''")
@@ -534,20 +607,13 @@ public final class RunLeg {
                     // Deferred-DDL rule (007-3 ticket): IVFFlat trains on the
                     // loaded corpus + ANALYZE, never in schema setup.
                     // Idempotent: safe on resume after a dropped index.
-                    () -> {
-                        try (java.sql.Connection admin =
-                                java.sql.DriverManager.getConnection(url, user, password);
-                                var stmt = admin.createStatement()) {
-                            stmt.execute("DROP INDEX IF EXISTS chunks_embedding_ivfflat");
-                            stmt.execute(
-                                    "CREATE INDEX chunks_embedding_ivfflat ON chunks"
-                                            + " USING ivfflat (embedding vector_cosine_ops)"
-                                            + " WITH (lists = 100)");
-                            stmt.execute("ANALYZE chunks");
-                        } catch (Exception e) {
-                            throw new IllegalStateException("pg post-load index failed", e);
-                        }
-                    },
+                    // Invoked as postLoadIndex(...) via .run() — see the
+                    // fetch-and-drop note at the call site.
+                    () -> postLoadIndex(url, user, password),
+                    // PG -distance space floor: -2.0 passes all (neutral =
+                    // passes-everything, not the number 0.0 — frozen config
+                    // corrective amendment, 007-4 finding in practice).
+                    -2.0,
                     () -> {
                         throw new UnsupportedOperationException("no sessions on pg leg");
                     });

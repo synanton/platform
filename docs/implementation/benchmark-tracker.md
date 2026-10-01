@@ -25,6 +25,7 @@ Cross-cutting:
 | Comparator | BENCH-CMP (was PG-POC-017) | Green (12/12 + 4/4 contract) |
 | Corpus generator | 028a.1–028a.11 | Complete on main |
 | Phase 4 backlog | — | NONE experiment, index isolation, BulkUpsert-RPC, clock skew, resource broker, 028-4.X KNN-vs-text split (owner TBD — pre-R3 backlog, non-blocking, tracked here so it isn't lost) |
+| Harness amendment 2026-09-30 (PN-7) | — | RunLeg-based runs NEVER executed the truncate step (`engine.truncate()` fetched-and-dropped the lambda). Observed clean state came from fresh prefixes/temp dirs, not truncate — earlier "truncate-on-start verified" claims read as "redundant mechanism, unverified". Fixed with `.run()` (all legs); structural prevention (void return) is a post-R3 refactor. YDB close never ran either (transport leak, harmless one-shot). |
 
 ## Alias map (transition only — drop after all branches renamed)
 
