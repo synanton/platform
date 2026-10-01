@@ -65,11 +65,11 @@ high-selectivity queries should not read any column at face value.
 Caveats (load-bearing, read before ranking): mixed `timing_scope`
 (single + summed fan-out summed across tenants) is blended into every
 cell; PG opens a connection per operation (no pooling — handshake cost
-in every query); YDB hybrid tail is extreme skew (p50 2s vs p95 56s —
-cold/first-query effects suspected, uninvestigated); single run, no
-repeats; adapter-call scope excludes harness overhead by design
-(comparator never gates on timing). Latency ranks legs only after a
-repeat run with scope-separated percentiles.
+in every query); YDB hybrid 56s tail: outlier / systematic / artifact —
+unclassified (one repeat run resolves; could weaken the YDB
+recommendation if systematic); single run, no repeats; adapter-call scope
+excludes harness overhead by design (comparator never gates on timing).
+Latency ranks legs only after a repeat run with scope-separated percentiles.
 
 ## Cost (inputs, not a model yet)
 
@@ -95,6 +95,16 @@ repeat run with scope-separated percentiles.
 
 - Existing deployment is Cassandra-backed: staying is zero-migration.
 - Any move (YDB or PG) needs the Phase-5 migrator path + dual-read
-  validation, neither scoped yet. Migration cost is an open input, not
-  a footnote — the decision meeting should demand it before selecting
-  a non-incumbent outcome.
+  validation, neither scoped yet. Magnitude estimate needed before any
+  move decision: cost-per-row and time-per-million-rows for
+  Cassandra → target — turn "unscoped" into "estimated magnitude"
+  (one-month vs one-year project is a decision input, not a detail).
+
+## Decision scope
+
+Technical recommendation only. Cost-model-driven selection awaits the
+named inputs (managed-pricing basis, replication math, migration
+magnitude, 56s-tail classification). Recommend the Phase 6 meeting run
+as a scoping meeting: confirm what's answerable, commission the missing
+inputs, schedule the selection once they're filled — not a final
+selection on technical merit alone.
