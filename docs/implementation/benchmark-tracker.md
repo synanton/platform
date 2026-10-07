@@ -51,6 +51,13 @@ Cross-cutting:
 - Elasticsearch row is the only license-gated decision cell (SSPL/ELv2/AGPL) — legal sign-off required.
 - Legal review checklist open; dependency-level scan deferred to legal review.
 
+### VEC-B0.2 — Deployment-mode + managed-availability matrix: landed
+
+- Scope: runtime-integration model + engine × context deployment matrix + engine × cloud managed-availability matrix + embedded-edge cases.
+- Matrix: [vector-deployment-modes.md](./benchmark-runner-vector/vector-deployment-modes.md) landed — 02fd620 (PR #96, 2026-10-07).
+- Declared 11-engine universe; divergence from VEC-B0.1's 21-engine license set recorded in §5a (combined rows retained, Quickwit split, PG-extension + adjacent exclusions).
+- Phase-5 measurement candidates recorded in §5b (Vespa Azure, Quickwit managed, Cassandra+Lucene managed, Tantivy managed).
+
 ## Alias map (transition only — drop after all branches renamed)
 
 - 028b → BENCH-BASE · 028c → CASS-EMIT-024a · 028d → YDB-EMIT-024b ·
