@@ -35,6 +35,21 @@ Cross-cutting:
 - This tracker stays the execution record for the four-target benchmark; the new plan's B5/VEC-B5.x
   runs report back here. No duplication: task definitions live in the plan, run results live here.
 
+### Week-1 gate: closed 2026-10-01
+
+- Track A / Track B / Docs owner: Andrei Minin (all three). Recorded in
+  [benchmark-runner-vector/INDEX.md](./benchmark-runner-vector/INDEX.md) §1.
+- Legal + architecture reviewers TBD (needed at B0/B6 review points, not blocking).
+- Week-2 gate (Manifest + Result schema + metric taxonomy freeze) schedulable.
+
+### VEC-B0.1 — License matrix: in progress
+
+- Scope: primary engines + pg-extensions + adjacent incl. Tantivy/Quickwit rows.
+- Verify-against-LICENSE flags (not High confidence until read): pgvectorscale (TSL-lineage
+  hypothesis — if restricted, pgvector stays the safe default), pgvecto.rs, Quickwit.
+- Elasticsearch row is the only license-gated decision cell (SSPL/ELv2/AGPL) — legal sign-off required.
+- Legal review checklist open; dependency-level scan deferred to legal review.
+
 ## Alias map (transition only — drop after all branches renamed)
 
 - 028b → BENCH-BASE · 028c → CASS-EMIT-024a · 028d → YDB-EMIT-024b ·
