@@ -45,8 +45,9 @@ Cross-cutting:
 ### VEC-B0.1 — License matrix: in progress
 
 - Scope: primary engines + pg-extensions + adjacent incl. Tantivy/Quickwit rows.
-- Verify-against-LICENSE flags (not High confidence until read): pgvectorscale (TSL-lineage
-  hypothesis — if restricted, pgvector stays the safe default), pgvecto.rs, Quickwit.
+- Matrix: [vector-license-matrix.md](./benchmark-runner-vector/vector-license-matrix.md) landed — 034b08e (PR #93, 2026-10-01).
+- LICENSE reads complete: pgvectorscale PostgreSQL/High (TSL-lineage hypothesis refuted),
+  pgvecto.rs Apache-2.0/High, Quickwit Apache-2.0/High; Verified-restricted retired uninstantiated.
 - Elasticsearch row is the only license-gated decision cell (SSPL/ELv2/AGPL) — legal sign-off required.
 - Legal review checklist open; dependency-level scan deferred to legal review.
 
