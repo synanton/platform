@@ -1,14 +1,4 @@
-# Vector License Matrix (VEC-B0.1) — DRAFT, unlanded scratch
-
-> **Status: DRAFT — verify reads pending; header to be removed before merge.**
-> Staged 2026-10-01 to de-risk the only unlanded artifact in the
-> Benchmark Runner + Vector Engine chain. Verify flags must clear
-> (LICENSE-file reads) before VEC-B0.1 exits in-progress.
-> Evidence target: `vector-license-matrix.md` per
-> [track-b-vector-engine.md](./track-b-vector-engine.md) VEC-B0.1.
-> Partial-restriction handling: TBD — if a LICENSE read shows mixed terms
-> (e.g., TSL on some modules only), the rule for partial instantiation gets
-> written here before merge, not improvised at push time.
+# Vector License Matrix (VEC-B0.1)
 
 ## Purpose
 
