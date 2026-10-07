@@ -808,7 +808,9 @@ Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on
 
 - **Lucentrix** — ingestion/crawling and distributed-search experiments
 - **Resolutor** — dependency-aware conflict and recalculation planning
-- **Equalix** — fair scheduling and resource-controlled execution
+- **Equalix** — fair scheduling and resource-controlled execution; see the
+  [family comparison](https://github.com/synanton/.github/blob/main/profile/experiments/equalix-family-comparison.md)
+  for the Spring Boot / Go / Micronaut characterization study
 - **Commitix** — durable execution and reliable business workflows
 - **GPU Execution Plane** — isolated GPU infrastructure for Synanton
 - **Structured Content Extractor** — deployment-neutral structured document extraction

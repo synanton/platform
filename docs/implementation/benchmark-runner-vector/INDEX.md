@@ -50,13 +50,13 @@ parked items (conditional 3rd-party adapter, UI API extras) are marked Optional/
 
 | Role | Scope | Named? |
 |---|---|---|
-| Track A owner | Benchmark Runner: schema, sinks, API, runbook | ⬜ TBD |
-| Track B owner | SYN-VECTOR-001: matrix, ports, adapters, synthesis | ⬜ TBD |
-| Docs owner | Cross-track documentation, kept current | ⬜ TBD |
+| Track A owner | Benchmark Runner: schema, sinks, API, runbook | ✅ Andrei Minin |
+| Track B owner | SYN-VECTOR-001: matrix, ports, adapters, synthesis | ✅ Andrei Minin |
+| Docs owner | Cross-track documentation, kept current | ✅ Andrei Minin |
 | Legal reviewer | License column sign-off | ⬜ TBD |
 | Architecture reviewer | Port decomposition + framework publication | ⬜ TBD |
 
-Week 1 gate: Track A, Track B, Docs owners named. Without these, the plan is documentation, not execution.
+Week 1 gate: closed 2026-10-01 — all three track owners named. Week-2 schema-freeze schedulable.
 
 ## §2. Sequencing and Gates
 
