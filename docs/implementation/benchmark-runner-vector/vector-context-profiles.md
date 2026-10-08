@@ -237,5 +237,5 @@ alternative that meets the requirement.
 - [x] Trade-offs stated per context
 - [x] Evidence path matches VEC-B0.4 requirement
 
-Gate B0 is closed on this artifact: B0.1 (license), B0.2 (deployment), B0.3
-(hardware), B0.4 (contexts) all landed. No open B0 items.
+Gate B0 status: B0.1–B0.4 landed; remaining B0 items tracked in
+benchmark-tracker.md.
