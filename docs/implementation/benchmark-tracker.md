@@ -87,6 +87,21 @@ Cross-cutting:
 - Recorded deviation: B0.5 satisfied via §3 (shape differs from card; accepted at review, no edit).
 - Carried open: legal sign-off + dependency scan (B0.1); storage-footprint batch measurement. If legal returns a restriction on a universe engine, the gate reopens for B0.4 review.
 
+### VEC-B1.1 — VectorRetriever port + DTOs: landed
+
+- Scope: VectorRetriever port, VectorSearchRequest (pre-embedded vectors only), VectorSearchResult (no highlights), VectorProjection, Projection sealed interface (incl. ChunkProjection gains `implements Projection`).
+- Evidence: PR #110 (5be66de) — interface + DTO files + JSON round-trip tests green, boundary guard green.
+- Decisions: Reading 1 (caller embeds, retriever never sees text); reuse-by-shape (records final, no subtyping); capabilities reuse with lexical-only flags false by contract.
+- Carried gap: capabilities() reuses SearchCapabilities — vector-specific flags (index type, distance metric per B0.3 §2a) not representable; no B1 task owns this. Revisit if B3 per-adapter work needs it.
+- B1.4 note: facade synthesizes an empty highlights map when translating back to SearchResult.
+
+### VEC-B1.2 — Writer port sealed upsert: landed
+
+- Scope: upsert(List<ChunkProjection>) → upsert(List<? extends Projection>) + narrowing contract; ordering-key/generation + rebuild-semantics javadoc; VectorProjection forward-ref fix.
+- Evidence: PR #111 (d5b5a78) — api + inmemory suites green; Postgres contract suite 10/10 on live container; YDB/Cassandra test-compile green (CI covers).
+- Deviations: no VectorIndexWriter port (tenant/operator two-port decomposition preserved); no new rebuild (already on SynquestIndexAdmin); adapters fail UNSUPPORTED on unimplemented kinds, never silently drop.
+- Follow-up (non-blocking, hygiene): failure-path metric inconsistency — Postgres records no metric on pre-pass UNSUPPORTED failure; Cassandra/YDB record false; InMemory uses track(). Reconcile on a B1.2-adjacent branch.
+
 ### Week-2 gate: open (unscheduled)
 
 - Scope: Manifest + Result schema + metric-taxonomy freeze (BR-A0.2/A0.3/A0.4).
