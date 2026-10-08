@@ -20,9 +20,14 @@ import org.synanton.storage.contract.TenantScope;
 class SearchRequestEqualsTest {
 
     private static SearchRequest request(float[] embedding, double minScore) {
+        return request(Optional.of(embedding), minScore);
+    }
+
+    private static SearchRequest request(Optional<float[]> embedding, double minScore) {
+        // Non-blank text: the record rejects blank-text + absent-embedding by design.
         return new SearchRequest(
-                "",
-                Optional.of(embedding),
+                "query",
+                embedding,
                 Optional.of(new EmbeddingModelRef("bge-base", "v1", "abc123")),
                 SearchMode.VECTOR,
                 new EligibilityConstraints(
@@ -60,5 +65,23 @@ class SearchRequestEqualsTest {
                 request(new float[] {0.1f, 0.2f}, Double.NEGATIVE_INFINITY);
 
         assertThat(first).isNotEqualTo(second);
+    }
+
+    @Test
+    void shouldTreatTwoAbsentEmbeddingsAsEqual() {
+        SearchRequest first = request(Optional.empty(), 0.0);
+        SearchRequest second = request(Optional.empty(), 0.0);
+
+        assertThat(first).isEqualTo(second);
+        assertThat(first.hashCode()).isEqualTo(second.hashCode());
+    }
+
+    @Test
+    void shouldDistinguishAbsentFromPresentEmbedding() {
+        SearchRequest first = request(Optional.empty(), 0.0);
+        SearchRequest second = request(Optional.of(new float[] {0.1f}), 0.0);
+
+        assertThat(first).isNotEqualTo(second);
+        assertThat(second).isNotEqualTo(first);
     }
 }
