@@ -52,6 +52,7 @@ import org.synanton.storage.contract.StorageException;
 import org.synanton.synquest.api.ChunkProjection;
 import org.synanton.synquest.api.EligibilityScope;
 import org.synanton.synquest.api.IndexStatus;
+import org.synanton.synquest.api.Projection;
 import org.synanton.synquest.api.RebuildOptions;
 import org.synanton.synquest.api.SchemaOptions;
 import org.synanton.synquest.api.SearchCapabilities;
@@ -101,10 +102,22 @@ public class CassandraSynquestEngine
     // ---- writer ----
 
     @Override
-    public CompletionStage<Void> upsert(List<ChunkProjection> projections) {
+    public CompletionStage<Void> upsert(List<? extends Projection> projections) {
         long start = System.nanoTime();
+        List<ChunkProjection> chunks = new ArrayList<>(projections.size());
+        for (Projection projection : projections) {
+            if (!(projection instanceof ChunkProjection chunk)) {
+                metrics.record(AdapterMetrics.SYNQUEST_UPSERT, System.nanoTime() - start, false);
+                return CompletableFuture.failedFuture(
+                        new StorageException(
+                                StorageErrorKind.UNSUPPORTED,
+                                "unsupported projection type for upsert: "
+                                        + projection.getClass().getSimpleName()));
+            }
+            chunks.add(chunk);
+        }
         try {
-            for (ChunkProjection p : projections) {
+            for (ChunkProjection p : chunks) {
                 GenerationId active = generations.get("*");
                 if (active == null) {
                     generations.putIfAbsent("*", p.generationId());

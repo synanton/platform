@@ -8,7 +8,7 @@ import org.synanton.storage.contract.EmbeddingModelRef;
 import org.synanton.storage.contract.GenerationId;
 
 /**
- * Vector-path projection unit written through {@code VectorIndexWriter} (SYN-VECTOR-001 B1).
+ * Vector-path projection unit written through {@link SynquestIndexWriter} (SYN-VECTOR-001 B1).
  * Narrow by design: identity, vector payload + model provenance, and the monotonic
  * {@code orderingKey} / {@code generationId} pair (same semantics as
  * {@link ChunkProjection} — per tenant/doc/chunk commit sequence, never wall-clock).
