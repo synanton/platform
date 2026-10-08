@@ -47,7 +47,7 @@ offering, not a code-license concern.
 
 | Engine | Type | License | Copyleft scope | Commercial restriction | Confidence | Source |
 |---|---|---|---|---|---|---|
-| Weaviate | External service | BSD-3-Clause | Permissive | None | High | github.com/weaviate/weaviate |
+| Weaviate | External service | BSD-3-Clause (OSS core) + proprietary enterprise (wl/, license key) | Permissive (OSS core) | None on OSS core | High (LICENSE read 2026-10-08) | github.com/weaviate/weaviate |
 | Vespa | External service | Apache-2.0 | Permissive | None | High | github.com/vespa-engine/vespa |
 | OpenSearch | External service | Apache-2.0 | Permissive | None | High | github.com/opensearch-project |
 | Elasticsearch | External service | SSPL OR Elastic-2.0 OR AGPL-3.0 | Non-OSI (SSPL/ELv2); strong copyleft (AGPL) | Managed-service ban (SSPL/ELv2); network-triggered copyleft (AGPL) | Legal | elastic.co/pricing/faq/licensing |
