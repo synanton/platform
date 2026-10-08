@@ -70,6 +70,7 @@ bcrypt              = { module = "at.favre.lib:bcrypt",                 version.
 
 # Jackson
 jackson-databind    = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson" }
 
 # Logging
 slf4j-api           = { module = "org.slf4j:slf4j-api",                 version.ref = "slf4j" }
