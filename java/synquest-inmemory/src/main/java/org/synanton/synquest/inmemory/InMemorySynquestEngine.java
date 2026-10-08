@@ -24,6 +24,7 @@ import org.synanton.storage.contract.StorageException;
 import org.synanton.synquest.api.ChunkProjection;
 import org.synanton.synquest.api.EligibilityScope;
 import org.synanton.synquest.api.IndexStatus;
+import org.synanton.synquest.api.Projection;
 import org.synanton.synquest.api.RebuildOptions;
 import org.synanton.synquest.api.SchemaOptions;
 import org.synanton.synquest.api.SearchCapabilities;
@@ -65,8 +66,21 @@ public class InMemorySynquestEngine implements SynquestEngine, SynquestIndexWrit
     private record ProjectionEntry(ChunkProjection projection) {}
 
     @Override
-    public CompletionStage<Void> upsert(List<ChunkProjection> incoming) {
-        for (ChunkProjection projection : incoming) {
+    public CompletionStage<Void> upsert(List<? extends Projection> incoming) {
+        List<ChunkProjection> chunks = new ArrayList<>(incoming.size());
+        for (Projection projection : incoming) {
+            if (!(projection instanceof ChunkProjection chunk)) {
+                return track(
+                        AdapterMetrics.SYNQUEST_UPSERT,
+                        CompletableFuture.failedFuture(
+                                new StorageException(
+                                        StorageErrorKind.UNSUPPORTED,
+                                        "unsupported projection type for upsert: "
+                                                + projection.getClass().getSimpleName())));
+            }
+            chunks.add(chunk);
+        }
+        for (ChunkProjection projection : chunks) {
             final ChunkProjection current = projection;
             GenerationId active = activeGeneration.get();
             if (active == null) {

@@ -20,6 +20,7 @@ import org.synanton.storage.contract.StorageException;
 import org.synanton.synquest.api.ChunkProjection;
 import org.synanton.synquest.api.EligibilityScope;
 import org.synanton.synquest.api.IndexStatus;
+import org.synanton.synquest.api.Projection;
 import org.synanton.synquest.api.RebuildOptions;
 import org.synanton.synquest.api.SchemaOptions;
 import org.synanton.synquest.api.SearchCapabilities;
@@ -486,10 +487,21 @@ public class PostgresSynquestEngine
      * row writes. See {@code adoptOrCheck} for the pointer contract.
      */
     @Override
-    public CompletionStage<Void> upsert(List<ChunkProjection> projections) {
+    public CompletionStage<Void> upsert(List<? extends Projection> projections) {
+        List<ChunkProjection> chunks = new java.util.ArrayList<>(projections.size());
+        for (Projection projection : projections) {
+            if (!(projection instanceof ChunkProjection chunk)) {
+                return CompletableFuture.failedFuture(
+                        new StorageException(
+                                StorageErrorKind.UNSUPPORTED,
+                                "unsupported projection type for upsert: "
+                                        + projection.getClass().getSimpleName()));
+            }
+            chunks.add(chunk);
+        }
         try {
             java.util.Map<String, List<ChunkProjection>> byTenant = new java.util.LinkedHashMap<>();
-            for (ChunkProjection p : projections) {
+            for (ChunkProjection p : chunks) {
                 byTenant.computeIfAbsent(p.tenantId(), t -> new java.util.ArrayList<>()).add(p);
             }
             for (var entry : byTenant.entrySet()) {
