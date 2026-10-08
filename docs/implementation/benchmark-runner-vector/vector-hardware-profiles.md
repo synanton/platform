@@ -37,7 +37,7 @@ in §8 as a re-verification candidate.
 ### §1c. Marking discipline
 
 Every hardware cell carries one of four states (defined in §2d): `measured`,
-`sourced`, `assumed`, `n/a`. `assumed` cells route to §9 Phase-5 candidates by
+`sourced`, `assumed`, `n/a`. `assumed` cells route to §8 Phase-5 candidates by
 category — "no figure published" is a measurement gap; "page unread" is a cheap
 follow-up read; the two are distinguished in the cell text.
 
@@ -329,7 +329,7 @@ across tiers produces false precision.
 
 Vespa's anchor is 2022-06-08; Milvus's is 2026-03-19. Both are current as of
 read, but a 2022 anchor on a moving engine should not be treated as equivalent
-to a 2026 one without re-verification. Flagged in §9.
+to a 2026 one without re-verification. Flagged in §8c.
 
 ---
 
