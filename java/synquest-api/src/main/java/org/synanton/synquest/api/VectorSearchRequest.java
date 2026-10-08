@@ -10,6 +10,9 @@ import org.synanton.storage.contract.EmbeddingModelRef;
  * vector — embedding is the caller's responsibility (operator decision on B1 review,
  * Reading 1); the retriever never embeds and never sees text. Eligibility stays
  * mandatory and pre-ranking, mirroring {@link SearchRequest}.
+ * Asymmetry is deliberate: the request's model ref is optional (callers may pass
+ * pre-computed embeddings without fabricating provenance) while
+ * {@link VectorProjection}'s is required (stored vectors must carry it for invalidation).
  */
 public record VectorSearchRequest(
         float[] queryEmbedding,

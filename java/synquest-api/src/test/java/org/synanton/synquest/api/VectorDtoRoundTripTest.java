@@ -51,6 +51,26 @@ class VectorDtoRoundTripTest {
     }
 
     @Test
+    void shouldRoundTripVectorSearchRequestWithoutModelRef() throws Exception {
+        VectorSearchRequest request =
+                new VectorSearchRequest(
+                        new float[] {0.5f},
+                        Optional.empty(),
+                        new EligibilityConstraints(
+                                new TenantScope("demo"),
+                                List.of(new PrincipalRef("user", "u1")),
+                                new PolicyContext("p", "1"),
+                                true),
+                        5);
+
+        VectorSearchRequest parsed =
+                MAPPER.readValue(MAPPER.writeValueAsString(request), VectorSearchRequest.class);
+
+        assertThat(parsed).isEqualTo(request);
+        assertThat(parsed.embeddingModelRef()).isEmpty();
+    }
+
+    @Test
     void shouldRoundTripVectorSearchResult() throws Exception {
         VectorSearchResult result =
                 new VectorSearchResult(
