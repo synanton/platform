@@ -72,7 +72,14 @@ Cross-cutting:
 - Profiles: [vector-context-profiles.md](./benchmark-runner-vector/vector-context-profiles.md) landed — e3028d2 (PR #101, 2026-10-08).
 - Defaults: PostgreSQL + pgvector (cloud-managed); Qdrant (cloud-self-hosted, on-prem, docker); Lucene standalone (embedded).
 - License top-up reads complete (all 12 universe-touching entries: no managed-service restriction found; Weaviate wl/ enterprise split noted, no use restriction on OSS core).
-- Open: VEC-B0.5 (cross-context recommendations) is the last open B0 item; Gate-B0 closure waits on its resolution.
+
+### VEC-B0.5 — Cross-context recommendations: landed
+
+- Scope: context → recommended / alternative / notes summary table.
+- Evidence: §3 of [vector-context-profiles.md](./benchmark-runner-vector/vector-context-profiles.md) — section landed with e3028d2 (PR #101, 2026-10-08).
+- Satisfied as written; acceptance ("every context has a recommendation") met — five contexts, one default each.
+- Known deviation: card describes `context → recommended / alternative / notes`; §3 carries `Context | Default | Viable | Disqualified`. Accepted at review; no edit.
+- Gate B0: closed — B0.1–B0.5 all landed.
 
 ## Alias map (transition only — drop after all branches renamed)
 
