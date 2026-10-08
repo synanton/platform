@@ -127,7 +127,9 @@ Informs BR-A0 schema design.
 - Estimate: 1 day.
 - Depends on: Track B owner named.
 
-Clarification (2026-10-01): implementation options for non-JVM engines — `LexicalRetriever`
+Clarification (2026-10-01, typo fixed 2026-10-08 — `LexicalRetriever` → `VectorRetriever`;
+no such sibling port exists in `synquest-api`): implementation options for non-JVM engines —
+`VectorRetriever`
 implementations that wrap external services (HTTP, gRPC, or Unix socket) follow the same
 contract as in-process implementations. The port is transport-agnostic. No new task.
 
