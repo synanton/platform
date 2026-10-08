@@ -58,6 +58,14 @@ Cross-cutting:
 - Declared 11-engine universe; divergence from VEC-B0.1's 21-engine license set recorded in §5a (combined rows retained, Quickwit split, PG-extension + adjacent exclusions).
 - Phase-5 measurement candidates recorded in §5b (Vespa Azure, Quickwit managed, Cassandra+Lucene managed, Tantivy managed).
 
+### VEC-B0.3 — Hardware + scalability + operational complexity: landed
+
+- Scope: CPU/memory/storage profiles per engine + scalability + operations.
+- Profiles: [vector-hardware-profiles.md](./benchmark-runner-vector/vector-hardware-profiles.md) landed — 425c374 (PR #98, 2026-10-07).
+- 11-engine universe (same as B0.2); no measured cells — all sourced or n/a-with-reason; assumed cells routed to Phase-5 in §8.
+- Cross-engine findings: overhead type non-uniform (§6a), tier comparability non-universal (§6b), source vintage spans 4 years (§6c).
+- Open: storage footprint gap (10/11 engines blank) flagged as batch Phase-5 candidate.
+
 ## Alias map (transition only — drop after all branches renamed)
 
 - 028b → BENCH-BASE · 028c → CASS-EMIT-024a · 028d → YDB-EMIT-024b ·
