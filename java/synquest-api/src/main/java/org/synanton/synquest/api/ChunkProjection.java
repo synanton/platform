@@ -23,7 +23,7 @@ public record ChunkProjection(
         float[] embedding,
         EmbeddingModelRef embeddingModelRef,
         long orderingKey,
-        GenerationId generationId) {
+        GenerationId generationId) implements Projection {
     public ChunkProjection {
         Objects.requireNonNull(chunkId, "chunkId");
         Objects.requireNonNull(documentId, "documentId");
