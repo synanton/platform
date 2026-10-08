@@ -42,12 +42,13 @@ Cross-cutting:
 - Legal + architecture reviewers TBD (needed at B0/B6 review points, not blocking).
 - Week-2 gate (Manifest + Result schema + metric taxonomy freeze) schedulable.
 
-### VEC-B0.1 — License matrix: in progress
+### VEC-B0.1 — License matrix: landed (legal review open, non-blocking)
 
 - Scope: primary engines + pg-extensions + adjacent incl. Tantivy/Quickwit rows.
 - Matrix: [vector-license-matrix.md](./benchmark-runner-vector/vector-license-matrix.md) landed — 034b08e (PR #93, 2026-10-01).
 - LICENSE reads complete: pgvectorscale PostgreSQL/High (TSL-lineage hypothesis refuted),
   pgvecto.rs Apache-2.0/High, Quickwit Apache-2.0/High; Verified-restricted retired uninstantiated.
+- Final matrix state incl. Weaviate mixed-license row (BSD-3-Clause OSS core + proprietary enterprise wl/; PR #104). All 12 universe-touching entries read; no managed-service restriction found.
 - Elasticsearch row is the only license-gated decision cell (SSPL/ELv2/AGPL) — legal sign-off required.
 - Legal review checklist open; dependency-level scan deferred to legal review.
 
@@ -79,7 +80,17 @@ Cross-cutting:
 - Evidence: §3 of [vector-context-profiles.md](./benchmark-runner-vector/vector-context-profiles.md) — section landed with e3028d2 (PR #101, 2026-10-08).
 - Satisfied as written; acceptance ("every context has a recommendation") met — five contexts, one default each.
 - Known deviation: card describes `context → recommended / alternative / notes`; §3 carries `Context | Default | Viable | Disqualified`. Accepted at review; no edit.
-- Gate B0: closed — B0.1–B0.5 all landed.
+
+### Gate B0: closed 2026-10-08
+
+- Owner: Andrei Minin (Track B). B0.1–B0.5 landed and mirrored above — primary artifact PRs #93/#96/#98/#101 (+fixes #99/#102, matrix touch-up #104); tracker PRs #92/#94/#97/#100/#103/#105/#106.
+- Recorded deviation: B0.5 satisfied via §3 (shape differs from card; accepted at review, no edit).
+- Carried open: legal sign-off + dependency scan (B0.1); storage-footprint batch measurement. If legal returns a restriction on a universe engine, the gate reopens for B0.4 review.
+
+### Week-2 gate: open (unscheduled)
+
+- Scope: Manifest + Result schema + metric-taxonomy freeze (BR-A0.2/A0.3/A0.4).
+- Owner/date: TBD — schedulable since Week-1 closed; unscheduled until BR-A0.1 requirements land.
 
 ## Alias map (transition only — drop after all branches renamed)
 
@@ -93,6 +104,8 @@ Cross-cutting:
 1. B.2 completes as-is; artifact renamed to runs/cassandra-v1.json at CLI-wrap.
 2. Branch + config + tracker rename pass before 024b starts.
 3. Baseline/PG rename on next touch.
+
+- Status: rename pass pending (024b paused, not started); alias map active until drop condition met.
 
 ## Parked (single source — lands only here, not in branch-local files)
 
