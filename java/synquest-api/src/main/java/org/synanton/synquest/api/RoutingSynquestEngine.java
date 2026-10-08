@@ -73,7 +73,8 @@ public final class RoutingSynquestEngine implements SynquestEngine {
     private CompletionStage<SearchResult> routeToRetriever(SecurityContext context, SearchRequest request) {
         VectorSearchRequest vectorRequest =
                 new VectorSearchRequest(
-                        request.queryEmbedding().orElseThrow(),
+                        request.queryEmbedding().orElseThrow(
+                                () -> new IllegalStateException("queryEmbedding present per isNarrowVectorRequest")),
                         request.embeddingModelRef(),
                         request.eligibility(),
                         request.topK());
@@ -85,22 +86,16 @@ public final class RoutingSynquestEngine implements SynquestEngine {
     private static boolean isNarrowVectorRequest(SearchRequest request) {
         return request.mode() == SearchMode.VECTOR
                 && request.queryEmbedding().isPresent()
-                && request.queryText().isEmpty()
-                && request.filters().mustMatchMetadata().isEmpty()
-                && request.temporal().isEmpty()
-                && request.minScore() == VectorRetriever.MIN_SCORE_NO_THRESHOLD;
+                && wideFields(request).isEmpty();
     }
 
     private static boolean isLossyVectorRequest(SearchRequest request) {
         return request.mode() == SearchMode.VECTOR
                 && request.queryEmbedding().isPresent()
-                && (!request.queryText().isEmpty()
-                        || !request.filters().mustMatchMetadata().isEmpty()
-                        || !request.temporal().isEmpty()
-                        || request.minScore() != VectorRetriever.MIN_SCORE_NO_THRESHOLD);
+                && !wideFields(request).isEmpty();
     }
 
-    private static String describeWideFields(SearchRequest request) {
+    private static List<String> wideFields(SearchRequest request) {
         List<String> fields = new ArrayList<>();
         if (!request.queryText().isEmpty()) {
             fields.add("queryText");
@@ -114,6 +109,10 @@ public final class RoutingSynquestEngine implements SynquestEngine {
         if (request.minScore() != VectorRetriever.MIN_SCORE_NO_THRESHOLD) {
             fields.add("minScore");
         }
-        return String.join(", ", fields);
+        return fields;
+    }
+
+    private static String describeWideFields(SearchRequest request) {
+        return String.join(", ", wideFields(request));
     }
 }
