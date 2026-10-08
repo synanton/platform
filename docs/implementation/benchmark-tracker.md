@@ -66,6 +66,14 @@ Cross-cutting:
 - Cross-engine findings: overhead type non-uniform (§6a), tier comparability non-universal (§6b), source vintage spans 4 years (§6c).
 - Open: storage footprint gap (10/11 engines blank) flagged as batch Phase-5 candidate.
 
+### VEC-B0.4 — Per-context profiles: landed
+
+- Scope: five contexts (cloud-managed, cloud-self-hosted, on-prem, docker, embedded) × disqualified / viable / default / trade-offs.
+- Profiles: [vector-context-profiles.md](./benchmark-runner-vector/vector-context-profiles.md) landed — e3028d2 (PR #101, 2026-10-08).
+- Defaults: PostgreSQL + pgvector (cloud-managed); Qdrant (cloud-self-hosted, on-prem, docker); Lucene standalone (embedded).
+- License top-up reads complete (all 12 universe-touching entries: no managed-service restriction found; Weaviate wl/ enterprise split noted, no use restriction on OSS core).
+- Open: Gate-B0 closure claim under review against VEC-B0.5.
+
 ## Alias map (transition only — drop after all branches renamed)
 
 - 028b → BENCH-BASE · 028c → CASS-EMIT-024a · 028d → YDB-EMIT-024b ·
