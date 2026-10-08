@@ -102,6 +102,14 @@ Cross-cutting:
 - Deviations: no VectorIndexWriter port (tenant/operator two-port decomposition preserved); no new rebuild (already on SynquestIndexAdmin); adapters fail UNSUPPORTED on unimplemented kinds, never silently drop.
 - Follow-up (non-blocking, hygiene): failure-path metric inconsistency — Postgres records no metric on pre-pass UNSUPPORTED failure; Cassandra/YDB record false; InMemory uses track(). Reconcile on a B1.2-adjacent branch.
 
+### VEC-B1.3 — Wrap adapters as VectorRetriever: landed
+
+- Scope: Cassandra + Lucene, YDB, PostgreSQL + pgvector each expose their vector path through VectorRetriever; no behavior change.
+- Evidence: PR #115 (2213f97) — three wrappers + three live equivalence suites green; 33 existing contract tests green across the three adapters.
+- Deviations: card says "test suite unchanged"; Option 2 adds three equivalence suites at Operator direction (live-container validation before B1.4 facade wiring). Accepted at review.
+- Design note: wrappers delegate through engine.search(mode=VECTOR), not adapter internals — zero behavior change is structural. Three wrappers are byte-identical; a single DelegateVectorRetriever in synquest-api would pass the boundary guard. Revisit before B3 authors Milvus/Qdrant retrievers against the per-adapter pattern.
+- Carried gap: capabilities() hardcodes vector-only shape — underlying engine capability detail (filters, index type) not surfaced; overlaps B1.1's recorded VectorCapabilities gap.
+
 ### Week-2 gate: open (unscheduled)
 
 - Scope: Manifest + Result schema + metric-taxonomy freeze (BR-A0.2/A0.3/A0.4).
