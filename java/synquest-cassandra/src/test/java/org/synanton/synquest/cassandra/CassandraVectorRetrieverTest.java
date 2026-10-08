@@ -19,7 +19,6 @@ import org.synanton.storage.contract.PrincipalRef;
 import org.synanton.storage.contract.SecurityContext;
 import org.synanton.storage.contract.TenantScope;
 import org.synanton.synquest.api.ChunkProjection;
-import org.synanton.synquest.api.ChunkProjection;
 import org.synanton.synquest.api.EligibilityConstraints;
 import org.synanton.synquest.api.RelevanceFilters;
 import org.synanton.synquest.api.SearchCapabilities;
