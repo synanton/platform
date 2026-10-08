@@ -14,6 +14,14 @@ import org.synanton.storage.contract.SecurityContext;
  */
 public interface VectorRetriever {
 
+    /**
+     * Score floor meaning "no threshold": callers own thresholding (retrieval is
+     * topK-bounded, filtering happens caller-side). Relies on Java-side score
+     * comparison in every adapter — verify if any adapter ever moves score
+     * filtering into the query itself, where this value may not round-trip.
+     */
+    double MIN_SCORE_NO_THRESHOLD = Double.NEGATIVE_INFINITY;
+
     CompletionStage<VectorSearchResult> search(SecurityContext context, VectorSearchRequest request);
 
     SearchCapabilities capabilities();
