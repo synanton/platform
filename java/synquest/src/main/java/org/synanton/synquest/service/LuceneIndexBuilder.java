@@ -1,11 +1,11 @@
 package org.synanton.synquest.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.FSDirectory;
-import org.synanton.ingestioncache.client.IngestionCacheClient;
-import org.synanton.ingestioncache.domain.EmbeddingRow;
+import org.synanton.ingestioncache.client.IngestionCacheClient;import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,35 +209,20 @@ public class LuceneIndexBuilder {
         }
     }
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private static long parseIngestWallMs(String ingestUsageJson) {
         if (ingestUsageJson == null || ingestUsageJson.isBlank()) {
             return 0L;
         }
-        int idx = ingestUsageJson.indexOf("\"wallMs\"");
-        if (idx < 0) {
-            idx = ingestUsageJson.indexOf("\"wall_ms\"");
-        }
-        if (idx < 0) {
-            return 0L;
-        }
-        int colon = ingestUsageJson.indexOf(':', idx);
-        if (colon < 0) {
-            return 0L;
-        }
-        int end = colon + 1;
-        while (end < ingestUsageJson.length() && Character.isWhitespace(ingestUsageJson.charAt(end))) {
-            end++;
-        }
-        int startNum = end;
-        while (end < ingestUsageJson.length() && Character.isDigit(ingestUsageJson.charAt(end))) {
-            end++;
-        }
-        if (startNum == end) {
-            return 0L;
-        }
         try {
-            return Long.parseLong(ingestUsageJson.substring(startNum, end));
-        } catch (NumberFormatException e) {
+            var root = MAPPER.readTree(ingestUsageJson);
+            var node = root.path("wallMs");
+            if (node.isMissingNode()) {
+                node = root.path("wall_ms");
+            }
+            return node.asLong(0L);
+        } catch (Exception e) {
             return 0L;
         }
     }
