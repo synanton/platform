@@ -72,7 +72,7 @@ Cross-cutting:
 - Profiles: [vector-context-profiles.md](./benchmark-runner-vector/vector-context-profiles.md) landed — e3028d2 (PR #101, 2026-10-08).
 - Defaults: PostgreSQL + pgvector (cloud-managed); Qdrant (cloud-self-hosted, on-prem, docker); Lucene standalone (embedded).
 - License top-up reads complete (all 12 universe-touching entries: no managed-service restriction found; Weaviate wl/ enterprise split noted, no use restriction on OSS core).
-- Open: Gate-B0 closure claim under review against VEC-B0.5.
+- Open: VEC-B0.5 (cross-context recommendations) is the last open B0 item; Gate-B0 closure waits on its resolution.
 
 ## Alias map (transition only — drop after all branches renamed)
 
