@@ -72,6 +72,7 @@ When generating Java code:
 - Prefer `@RequiredArgsConstructor` (Lombok) for dependency injection and `final` field initialization whenever it fits; avoid hand-written constructors that only assign fields
 - Use `rows.getFirst()` instead of `rows.get(0)` where possible
 - Use `@Accessors(chain = true)` from `lombok.experimental.Accessors` on domain classes for fluent construction
+- **JSON parsing:** Never hand-parse JSON with `indexOf`/`substring`/regex. Use Jackson `ObjectMapper` (`readTree` + `path(...).asXxx(default)`), returning safe defaults on malformed input. Origin: `LuceneIndexBuilder.parseIngestWallMs` hand-parse replaced 2026-10-08.
 - Repository classes should return domain objects, not protobuf objects
 - Use case classes should return domain objects; protobuf conversion happens in the gRPC adapter layer
 - Protobuf class fields cannot be null - no need for null checks on them
