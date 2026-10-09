@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       POSTGRES_DB: ${POSTGRES_DB:-synanton}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ${DATA_ROOT:-./data}/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-synanton}"]
       interval: 5s
@@ -24,7 +24,7 @@ services:
       - -c
       - "mkdir -p /data/ontologies/demo && chown -R 1001:2000 /data/ontologies && chmod 750 /data/ontologies/demo"
     volumes:
-      - ontology-data:/data/ontologies
+      - ${DATA_ROOT:-./data}/ontologies:/data/ontologies
     restart: "no"
 
   security:
@@ -57,7 +57,7 @@ services:
       TOPOLOGY_ONTOLOGY_DIR: /data/ontologies
       SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
     volumes:
-      - ontology-data:/data/ontologies:ro
+      - ${DATA_ROOT:-./data}/ontologies:/data/ontologies:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s
@@ -83,8 +83,8 @@ services:
       SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
       SERVER_PORT: 8083
     volumes:
-      - ontology-data:/data/ontologies
-      - syntology-tdb2:/var/lib/syntology/tdb2
+      - ${DATA_ROOT:-./data}/ontologies:/data/ontologies
+      - ${DATA_ROOT:-./data}/syntology-tdb2:/var/lib/syntology/tdb2
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s
@@ -115,7 +115,7 @@ services:
       MAX_HEAP_SIZE: 512M
       HEAP_NEWSIZE: 100M
     volumes:
-      - cassandra-data:/var/lib/cassandra
+      - ${DATA_ROOT:-./data}/cassandra:/var/lib/cassandra
     healthcheck:
       test: ["CMD-SHELL", "nodetool status | grep -q '^UN'"]
       interval: 15s
@@ -130,7 +130,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
-      - minio-data:/data
+      - ${DATA_ROOT:-./data}/minio:/data
     healthcheck:
       test: ["CMD-SHELL", "mc ready local"]
       interval: 10s
@@ -195,7 +195,9 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       SERVER_PORT: 8091
     ports:
-      - "8091:8091"
+      # Host port 18091: 8091 is taken by gpu-7-external-gateway on this host.
+      # Inter-service traffic uses the internal port; only host access remaps.
+      - "18091:8091"
     volumes:
       - ../../demo-data/documents:/demo-data/documents:ro
     healthcheck:
@@ -328,7 +330,7 @@ services:
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       CLUSTER_ID: synanton-local-kafka-cluster
     volumes:
-      - kafka-data:/var/lib/kafka/data
+      - ${DATA_ROOT:-./data}/kafka:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 10s
@@ -384,7 +386,7 @@ services:
       CUDA_VISIBLE_DEVICES: "0"
       HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
     volumes:
-      - hf-cache:/root/.cache/huggingface
+      - ${DATA_ROOT:-./data}/hf-cache:/root/.cache/huggingface
     deploy:
       resources:
         reservations:
@@ -414,7 +416,7 @@ services:
       CUDA_VISIBLE_DEVICES: "1"
       HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
     volumes:
-      - hf-cache:/root/.cache/huggingface
+      - ${DATA_ROOT:-./data}/hf-cache:/root/.cache/huggingface
     deploy:
       resources:
         reservations:
@@ -484,15 +486,6 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports: ["8088:8080"]
     restart: unless-stopped
-
-volumes:
-  postgres-data:
-  ontology-data:
-  syntology-tdb2:
-  cassandra-data:
-  minio-data:
-  hf-cache:
-  kafka-data:
 
 networks:
   default:
