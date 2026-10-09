@@ -1,0 +1,14 @@
+# VEC-B2.3 example: pg-milvus (composition 4/6).
+# Secret-bearing values by ${VAR} reference only (.env.default contract).
+synquest:
+  metadata:
+    provider: postgres
+  vector:
+    provider: milvus
+    endpoint_ref: "${BENCH_MILVUS_URI}"
+  fusion:
+    method: rrf
+    rrf_k: 60
+  execution:
+    mode: parallel
+    per_query_override: true

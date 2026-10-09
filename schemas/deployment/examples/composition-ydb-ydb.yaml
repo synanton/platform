@@ -1,0 +1,13 @@
+# VEC-B2.3 example: ydb-ydb (composition 6/6).
+# Secret-bearing values by ${VAR} reference only (.env.default contract).
+synquest:
+  metadata:
+    provider: ydb
+  vector:
+    provider: ydb
+  fusion:
+    method: rrf
+    rrf_k: 60
+  execution:
+    mode: parallel
+    per_query_override: true
