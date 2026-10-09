@@ -61,6 +61,7 @@ include(
     "java:synquest-postgres",
     "java:synquest-milvus",
     "java:synquest-qdrant",
+    "java:synquest-lucene",
     "java:synvault-migrate",
     "java:synanton-bench-convergence",
     "java:synanton-bench-corpus",
