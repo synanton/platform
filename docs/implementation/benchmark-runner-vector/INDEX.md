@@ -46,6 +46,13 @@ parked items (conditional 3rd-party adapter, UI API extras) are marked Optional/
 | VEC-B6.2-FOLLOWON | Expanded trigger | Names two service paths; excludes JNI |
 | Dev-guide rule | New rule | Cross-runtime boundaries are services |
 
+### Convention adopted 2026-10-09 (system field marking)
+
+| Item | Change | Reason |
+|---|---|---|
+| Dev-guide rule | `_internal_` infix for system-only fields | Only marker surviving all engines; conflict-checked per engine (Solr wrapped-`_..._` + `$` syntax, ES metadata list, Milvus `$meta`); `$`/`@`/encoding rejected |
+| Grandfather clause | Existing public fields not renamed | Arch 1.0 #29 (breaking changes need versioning); expert knobs documented, not renamed |
+
 ## §1. Ownership
 
 | Role | Scope | Named? |

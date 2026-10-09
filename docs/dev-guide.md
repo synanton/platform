@@ -40,3 +40,45 @@ What to do if JNI seems necessary:
 
 Origin: Tantivy integration decision, 2026-10-01. Tantivy and Quickwit integrate as services;
 JNI was evaluated and rejected.
+
+---
+
+## System-only fields use the `_internal_` infix
+
+Fields that must never be client-settable are named `_internal_*`
+(e.g. `_internal_model_id`, following Architecture 1.32's
+`reranker_internal_model_id`). The underscore family is the industry-wide
+system-field marker (Solr `_version_`/`_root_`, Elasticsearch
+`_id`/`_index`/`_source`/`_routing`/`_meta`), and the `_internal_` infix —
+not a bare `_` prefix — is what keeps our names out of the engines'
+reserved subspaces:
+
+| Engine | Reserved subspace | Our collision posture |
+|---|---|---|
+| Solr | Wrapped `_..._` names reserved (`_version_`, `_root_` — verified); `{!...}` local-params + `$param` dereferencing are query syntax (verified) | `_internal_*` is leading-only, outside the reserved wrapped class; `$` never used |
+| Elasticsearch | `_`-prefixed metadata (`_id`, `_index`, `_source`, `_routing`, `_meta`, … — verified list) | No listed name starts `_internal_` |
+| PostgreSQL | System columns (`tableoid`, `xmin`/`xmax`, `ctid`) carry no underscore prefix | No overlap possible |
+| Lucene | No reserved field namespace (internals live in segments) | No overlap possible |
+| Milvus | `$meta` dynamic field + `$namespace_id` + `__virtual_pk__` reserved (verified: source + docs); system fields by ID | Reinforces never-`$`, now confirmed rather than reported |
+| Qdrant / Cassandra | No known `_`-space reservations | No overlap known |
+
+What not to use:
+
+- `$` / `@` — never. `$` is Solr query syntax and Milvus's reported dynamic-field
+  marker; `@` breaks in Painless/scripts and several JSON-path dialects.
+- Per-platform encoding of field names — never. Every reader and writer
+  (including external adapters and the benchmark harness) would have to share
+  the codec, for a round-trip problem none of our engines have.
+
+Scope and grandfather clause:
+
+- Applies to new fields from 2026-10-09. Existing public API fields are NOT
+  renamed by this rule — renames are breaking changes under Architecture 1.0
+  invariant #29 (explicit versioning required).
+- Existing expert knobs (`top_k_dense`, `top_k_lexical`, `rrf_k`,
+  `execution_mode`) stay as-is and are documented as the controlled expert
+  surface per Architecture 1.32 (profiles for clients, internals withheld
+  unless explicitly exposed). Naming documents; withholding enforces.
+
+Origin: field-marking review 2026-10-09. Prior art: unity-hli-v4 `ScopePrefix`
+(concept only — no code reuse, no dependency; see thread record).
