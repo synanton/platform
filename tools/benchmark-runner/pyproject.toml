@@ -1,0 +1,26 @@
+[project]
+name = "benchmark-runner"
+version = "0.1.0"
+description = "Benchmark Runner (Track A) - manifest-driven multi-composition benchmark execution; see docs/implementation/benchmark-runner-vector/track-a-benchmark-runner.md"
+requires-python = ">=3.11"
+dependencies = [
+    "jsonschema>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+benchmark-runner = "benchmark_runner.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["benchmark_runner*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
