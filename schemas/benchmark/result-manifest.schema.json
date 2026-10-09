@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synanton.dev/schemas/benchmark/result-manifest.schema.json",
+  "title": "Result Manifest",
+  "description": "BR-A0.3 draft — output contract for Benchmark Runner runs. Reuses the R3 Q3 shape (run_id, corpus, queries[] with top_k, eligible_set, timing_ms, timing_scope) and adds metrics summary, reproducibility flags, environment, and per-query topology annotations. R3 artifacts (baseline/cassandra/ydb/pg v1) validate as-is: all additions are optional. Schema becomes immutable at Week-2 freeze; this draft is version 0.2.0-draft.",
+  "type": "object",
+  "required": ["run_id", "corpus", "queries"],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "corpus": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Corpus identifier as recorded by the emitter (R3 shape keeps the plain string; structured cas: refs arrive with the manifest-driven runner)."
+    },
+    "manifest_id": {
+      "type": "string",
+      "description": "Benchmark Manifest that produced this run (BR-A0.2). Absent on pre-runner R3 artifacts."
+    },
+    "composition_id": {
+      "type": "string",
+      "description": "Composition evaluated (BR-A0.2 slug). Absent on pre-runner R3 artifacts."
+    },
+    "queries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/query" }
+    },
+    "metrics_summary": {
+      "type": "object",
+      "description": "Run-level metric rollups (recall@k, overlap, latency percentiles, index size...). Absent on R3 artifacts.",
+      "properties": {
+        "recall_at_k": {
+          "type": "object",
+          "patternProperties": {
+            "^[0-9]+$": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "overlap": { "type": "number", "minimum": 0, "maximum": 1 },
+        "latency_p50_ms": { "type": "number", "minimum": 0 },
+        "latency_p95_ms": { "type": "number", "minimum": 0 },
+        "latency_p99_ms": { "type": "number", "minimum": 0 },
+        "index_build_time_s": { "type": "number", "minimum": 0 },
+        "index_size_bytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "reproducibility": {
+      "type": "object",
+      "description": "Reproducibility flags. Absent on R3 artifacts.",
+      "properties": {
+        "verified": { "type": "boolean" },
+        "corpus_hash": { "type": "string" },
+        "seed": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "description": "Lightweight env record (engine + runner versions, model ids/dims, topology). Full digests parked (BR-A0.1 4b). Absent on R3 artifacts.",
+      "properties": {
+        "runner_version": { "type": "string" },
+        "embedding_model": { "type": "string" },
+        "embedding_dim": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "query": {
+      "type": "object",
+      "required": ["top_k", "eligible_set", "timing_ms", "timing_scope"],
+      "properties": {
+        "query_id": { "type": "string" },
+        "mode": { "type": "string" },
+        "filter": { "type": "string" },
+        "selectivity": { "type": "string" },
+        "structural_empty": { "type": "boolean" },
+        "min_score": { "type": "number" },
+        "top_k": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/hit" }
+        },
+        "eligible_set": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "timing_ms": { "type": "number", "minimum": 0 },
+        "timing_scope": { "type": "string" },
+        "topology": {
+          "type": "string",
+          "description": "Per-query execution topology (btree_sort, ivfflat, milvus_gpu, ...). Required on runner-produced artifacts; absent on R3 artifacts."
+        }
+      },
+      "additionalProperties": true
+    },
+    "hit": {
+      "type": "object",
+      "required": ["chunk_id", "rank", "score"],
+      "properties": {
+        "chunk_id": { "type": "string" },
+        "rank": { "type": "integer", "minimum": 0 },
+        "score": { "type": "number" }
+      },
+      "additionalProperties": true
+    }
+  }
+}
