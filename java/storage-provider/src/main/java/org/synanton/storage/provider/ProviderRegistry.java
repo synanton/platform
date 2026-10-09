@@ -70,6 +70,32 @@ public final class ProviderRegistry {
     public record VectorComposition(Conformant metadata, Conformant vector) {}
 
     /**
+     * Validates a metadata × vector composition (SYN-VECTOR-001 B2.2).
+     * A blank vector name defaults to the metadata name, so single-provider
+     * deployments stay zero-config. Role checks are capability-based: the
+     * metadata side must store documents, the vector side must serve vectors.
+     * Every failure names the provider, the capability, and the reason.
+     */
+    public VectorComposition validateComposition(String metadataName, String vectorName) {
+        String vector = (vectorName == null || vectorName.isBlank()) ? metadataName : vectorName;
+        Conformant metadata = resolve(PORT_METADATA, metadataName);
+        Conformant vectorAdapter = resolve(PORT_VECTOR, vector);
+        require(
+                metadata,
+                Capabilities.SYNVAULT_DOCUMENT,
+                true,
+                "metadata role requires document storage but adapter '"
+                        + metadata.adapterName() + "' does not report it");
+        require(
+                vectorAdapter,
+                Capabilities.SYNQUEST_VECTOR,
+                true,
+                "vector role requires vector search but adapter '"
+                        + vectorAdapter.adapterName() + "' does not report it");
+        return new VectorComposition(metadata, vectorAdapter);
+    }
+
+    /**
      * Validates a selection against deployment requirements. Fails fast with a
      * specific error naming the provider, the missing capability, and the reason —
      * including the 008 Cassandra revision case.
