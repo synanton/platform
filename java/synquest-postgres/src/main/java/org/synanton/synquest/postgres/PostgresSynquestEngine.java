@@ -21,6 +21,7 @@ import org.synanton.synquest.api.ChunkProjection;
 import org.synanton.synquest.api.EligibilityScope;
 import org.synanton.synquest.api.IndexStatus;
 import org.synanton.synquest.api.Projection;
+import org.synanton.synquest.api.VectorProjection;
 import org.synanton.synquest.api.RebuildOptions;
 import org.synanton.synquest.api.SchemaOptions;
 import org.synanton.synquest.api.SearchCapabilities;
@@ -490,14 +491,30 @@ public class PostgresSynquestEngine
     public CompletionStage<Void> upsert(List<? extends Projection> projections) {
         List<ChunkProjection> chunks = new java.util.ArrayList<>(projections.size());
         for (Projection projection : projections) {
-            if (!(projection instanceof ChunkProjection chunk)) {
+            if (projection instanceof ChunkProjection chunk) {
+                chunks.add(chunk);
+            } else if (projection instanceof VectorProjection vector) {
+                // B3.4 explicit pgvector path: vector-only rows carry empty text and
+                // metadata; the vector columns are what the retriever reads. Chunk-only
+                // kinds still fail loud below (B1.2 narrowing contract).
+                chunks.add(
+                        new ChunkProjection(
+                                vector.chunkId(),
+                                vector.documentId(),
+                                vector.tenantId(),
+                                "",
+                                java.util.Map.of(),
+                                vector.embedding(),
+                                vector.embeddingModelRef(),
+                                vector.orderingKey(),
+                                vector.generationId()));
+            } else {
                 return CompletableFuture.failedFuture(
                         new StorageException(
                                 StorageErrorKind.UNSUPPORTED,
                                 "unsupported projection type for upsert: "
                                         + projection.getClass().getSimpleName()));
             }
-            chunks.add(chunk);
         }
         try {
             java.util.Map<String, List<ChunkProjection>> byTenant = new java.util.LinkedHashMap<>();
