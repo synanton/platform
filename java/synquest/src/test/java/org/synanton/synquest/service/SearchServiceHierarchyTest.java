@@ -62,7 +62,7 @@ class SearchServiceHierarchyTest {
         }
         when(cache.readChunks(tenant, ref)).thenReturn(rows);
         var props = new SynquestProperties(new SynquestProperties.Index(indexRoot.toString(), true, 30), null,
-                new SynquestProperties.Embedding("m", 2, true, 0));
+                new SynquestProperties.Embedding("m", 2, true, 0), null);
         var shape = new EmbeddingShape(props);
         builder = new LuceneIndexBuilder(cache, props, shape, true);
         LlmClient emb = new LlmClient() {
@@ -75,7 +75,7 @@ class SearchServiceHierarchyTest {
 
     private static SearchRequest req(int topK, String expand, Integer max) {
         // lexical-only ranking (top_k_dense 0) keeps the test deterministic
-        return new SearchRequest("t", "substance use disorders", topK, 0, 100, 60, null, null, expand, max);
+        return new SearchRequest("t", "substance use disorders", topK, 0, 100, 60, null, null, expand, max, null);
     }
 
     @Test

@@ -28,10 +28,31 @@ public class HybridSearcher implements Closeable {
     }
 
     public TopDocs dense(float[] queryVec, int topK) throws IOException {
+        return dense(queryVec, topK, null);
+    }
+
+    /**
+     * Dense leg with an optional candidate universe (SYN-VECTOR-001 B4 sequential
+     * mode): when {@code allowedContentRefs} is non-null, KNN is filtered to those
+     * content refs. Null or empty universe means no dense side (empty result, never
+     * an unfiltered run — an empty candidate set constrains to nothing).
+     */
+    public TopDocs dense(float[] queryVec, int topK, java.util.Set<String> allowedContentRefs) throws IOException {
         IndexSearcher searcher = searcherManager.acquire();
         try {
             searcher.setSimilarity(new BM25Similarity());
-            KnnFloatVectorQuery knnQuery = new KnnFloatVectorQuery("embedding", queryVec, topK);
+            if (queryVec == null || allowedContentRefs != null && allowedContentRefs.isEmpty()) {
+                return new TopDocs(new TotalHits(0, TotalHits.Relation.EQUAL_TO), new ScoreDoc[0]);
+            }
+            Query knnQuery = new KnnFloatVectorQuery("embedding", queryVec, topK);
+            if (allowedContentRefs != null) {
+                java.util.List<org.apache.lucene.util.BytesRef> terms = allowedContentRefs.stream()
+                        .map(org.apache.lucene.util.BytesRef::new)
+                        .collect(java.util.stream.Collectors.toList());
+                knnQuery = new KnnFloatVectorQuery(
+                        "embedding", queryVec, topK,
+                        new TermInSetQuery("content_ref_id", terms));
+            }
             return searcher.search(knnQuery, topK);
         } finally {
             searcherManager.release(searcher);

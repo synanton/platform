@@ -49,7 +49,7 @@ class SearchServiceRequiredModeTest {
                 .thenReturn(Optional.of(new EmbeddingRow(tenant, ref, 0, "m", "s0", new float[]{1f, 0f}, 2, Instant.now())));
 
         var props = new SynquestProperties(new SynquestProperties.Index(indexRoot.toString(), true, 30), null,
-                new SynquestProperties.Embedding("m", 2, true, 0));
+                new SynquestProperties.Embedding("m", 2, true, 0), null);
         AtomicInteger embedCalls = new AtomicInteger();
         LlmClient failing = new LlmClient() {
             @Override public EmbedResponse embed(EmbedRequest r) { embedCalls.incrementAndGet(); throw new IllegalStateException("circuit_open"); }

@@ -122,7 +122,24 @@ public class SearchService {
         }
 
         final float[] denseVec = queryVec;
-        Future<TopDocs> denseFuture = searchPool.submit(() -> {
+        String executionMode = effectiveExecutionMode(req);
+        TopDocs denseResults;
+        TopDocs lexicalResults;
+        long denseMs;
+        long lexicalMs;
+        if ("sequential".equals(executionMode)) {
+            // VEC-B4.2 metadata-first: lexical runs first; its candidate universe
+            // constrains the dense leg. Fusion and everything below is shared,
+            // so result shapes are identical to parallel mode by construction.
+            long lexicalStart = System.currentTimeMillis();
+            lexicalResults = searcher.lexical(req.query(), topKLexical);
+            lexicalMs = System.currentTimeMillis() - lexicalStart;
+            java.util.Set<String> universe = contentRefIds(searcher, lexicalResults);
+            long denseStart = System.currentTimeMillis();
+            denseResults = searcher.dense(denseVec, topKDense, universe);
+            denseMs = System.currentTimeMillis() - denseStart;
+        } else {
+            Future<TopDocs> denseFuture = searchPool.submit(() -> {
             if (!denseRequested || denseVec == null) {
                 return new TopDocs(new org.apache.lucene.search.TotalHits(0,
                         org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
@@ -141,16 +158,31 @@ public class SearchService {
         });
         Future<TopDocs> lexicalFuture = searchPool.submit(() -> searcher.lexical(req.query(), topKLexical));
 
-        long denseStart = System.currentTimeMillis();
-        TopDocs denseResults;
-        TopDocs lexicalResults;
-        try {
-            denseResults = denseFuture.get();
-            long denseMs = System.currentTimeMillis() - denseStart;
+            long parallelDenseStart = System.currentTimeMillis();
+            try {
+                denseResults = denseFuture.get();
+                denseMs = System.currentTimeMillis() - parallelDenseStart;
 
-            long lexicalStart = System.currentTimeMillis();
-            lexicalResults = lexicalFuture.get();
-            long lexicalMs = System.currentTimeMillis() - lexicalStart;
+                long parallelLexicalStart = System.currentTimeMillis();
+                lexicalResults = lexicalFuture.get();
+                lexicalMs = System.currentTimeMillis() - parallelLexicalStart;
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof IOException ioe) {
+                    throw ioe;
+                }
+                if (cause instanceof EmbeddingUnavailableException eue) {
+                    throw eue;
+                }
+                if (cause instanceof RerankUnavailableException rue) {
+                    throw rue;
+                }
+                throw new RuntimeException("Search failed", cause);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Search interrupted", e);
+            }
+        }
 
             // Rerank (B2/T10): fuse a wider candidate list, score full chunk text with the
             // cross-encoder, reorder, cut to top_k. Fail closed: never return RRF order as "reranked".
@@ -216,23 +248,6 @@ public class SearchService {
                     searcher.generation(), rerankMs, rerankRequested ? fused.size() : null);
             QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped, embedCached);
             return new SearchResponse(hits, trace, queryUsage);
-
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof IOException ioe) {
-                throw ioe;
-            }
-            if (cause instanceof EmbeddingUnavailableException eue) {
-                throw eue;
-            }
-            if (cause instanceof RerankUnavailableException rue) {
-                throw rue;
-            }
-            throw new RuntimeException("Search failed", cause);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Search interrupted", e);
-        }
     }
 
     /**
@@ -278,8 +293,40 @@ public class SearchService {
         return out;
     }
 
-    private Hit toHit(Document doc, double score, double dense, double lexical, int rankDense, int rankLexical) {
-        String text = doc.get("text");
+    /**
+     * Effective retrieval execution mode (SYN-VECTOR-001 B4): per-query override
+     * wins, else the deployment default. Unknown values fail loud — a misspelled
+     * mode must never silently run as parallel.
+     */
+    private String effectiveExecutionMode(SearchRequest req) {
+        String override = req.executionMode();
+        String mode = override != null && !override.isBlank()
+                ? override
+                : props.execution().mode();
+        String normalized =
+                mode == null ? "parallel" : mode.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!normalized.equals("parallel") && !normalized.equals("sequential")) {
+            throw new IllegalArgumentException(
+                    "unknown execution mode '" + mode + "' (expected parallel|sequential)");
+        }
+        return normalized;
+    }
+
+    /** Content-ref IDs backing lexical hits — the sequential candidate universe. */
+    private static java.util.Set<String> contentRefIds(HybridSearcher searcher, TopDocs docs)
+            throws IOException {
+        var stored = searcher.storedFields();
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (var scoreDoc : docs.scoreDocs) {
+            String ref = stored.document(scoreDoc.doc).get("content_ref_id");
+            if (ref != null) {
+                ids.add(ref);
+            }
+        }
+        return ids;
+    }
+
+    private Hit toHit(Document doc, double score, double dense, double lexical, int rankDense, int rankLexical) {        String text = doc.get("text");
         String snippet = text != null && text.length() > 200 ? text.substring(0, 200) + "…" : text;
         String sectionId = doc.get("section_id");
         return new Hit(

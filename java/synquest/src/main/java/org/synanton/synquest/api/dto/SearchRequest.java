@@ -16,14 +16,17 @@ public record SearchRequest(
         /** "section": small-to-big. Each hit pulls in its whole document section, in reading order (B2/T05). */
         @JsonProperty("expand") String expand,
         /** Max chunks per expanded section (default 8); a larger section is windowed around the hit. */
-        @JsonProperty("expand_max_chunks") Integer expandMaxChunks
+        @JsonProperty("expand_max_chunks") Integer expandMaxChunks,
+        /** Retrieval execution mode override (SYN-VECTOR-001 B4): "parallel" or "sequential".
+            Null means the deployment default (synquest.execution.mode). */
+        @JsonProperty("execution_mode") String executionMode
 ) {
     public SearchRequest(String tenant, String query, Integer topK, Integer topKDense, Integer topKLexical, Integer rrfK) {
-        this(tenant, query, topK, topKDense, topKLexical, rrfK, null, null, null, null);
+        this(tenant, query, topK, topKDense, topKLexical, rrfK, null, null, null, null, null);
     }
 
     public SearchRequest(String tenant, String query, Integer topK, Integer topKDense, Integer topKLexical, Integer rrfK,
                          Boolean rerank, Integer rerankCandidates) {
-        this(tenant, query, topK, topKDense, topKLexical, rrfK, rerank, rerankCandidates, null, null);
+        this(tenant, query, topK, topKDense, topKLexical, rrfK, rerank, rerankCandidates, null, null, null);
     }
 }
