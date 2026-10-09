@@ -59,6 +59,8 @@ include(
     "java:synquest-cassandra",
     "java:synquest-ydb",
     "java:synquest-postgres",
+    "java:synquest-milvus",
+    "java:synquest-qdrant",
     "java:synvault-migrate",
     "java:synanton-bench-convergence",
     "java:synanton-bench-corpus",
