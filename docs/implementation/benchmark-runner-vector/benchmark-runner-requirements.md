@@ -1,87 +1,103 @@
-# Benchmark Runner Requirements (BR-A0.1) — DRAFT for Track A/B review
+# Benchmark Runner Requirements (BR-A0.1) — CLOSED
 
 **Task:** BR-A0.1 — Gather requirements from Track B
-**Status:** Draft — each section ends with open questions for the requirements session.
-Nothing below is frozen until Week-2 schema freeze (BR-A0.2/A0.3/A0.4).
-**Depends on:** Track A + Track B owners named (Week-1 gate closed 2026-10-01).
+**Status:** Closed 2026-10-09 — owner decisions recorded below; open questions resolved.
+**Depends on:** Track A + Track B owners named (Week-1 gate closed 2026-10-01) ✓
+**Design anchors:** Platform Architecture 1.0 invariants + §§6/11/13/14; Manifests,
+EventLab, Benchmark-runner, Versioning proposals where 1.0 is silent.
 
 ---
 
-## 1. Composition description format
+## 1. Composition description format — DECIDED
 
-The manifest must describe N compositions of (metadata store × vector engine).
-Known set from Track B (B5 evaluation): Cassandra+Lucene, Cassandra+Milvus,
-Cassandra+Qdrant, PG+Milvus, PG+Qdrant, YDB+YDB (+ PG+pgvector reference).
+**1a. Composition IDs: runner-assigned slug.** `composition_id` = slug of
+`metadata.provider + vector.provider + index-params-hash`, recorded in both
+manifests. Stable across runs, no central allocator. Rejected: Track-B-assigned
+human names (central bottleneck, renames break history). Anchor: Arch 1.0 #9
+(identity names, digest verifies), #12.
 
-Requirements on the format:
-- Each composition names `metadata.provider` + `vector.provider` (VEC-B2.1 namespaces).
-- Per-composition config: engine endpoints/credentials refs (not secrets inline),
-  index parameters (HNSW m/ef where applicable), embedding model id + dim.
-- Single-provider compositions stay zero-config (`vector.provider` defaults to
-  `metadata.provider` per VEC-B2.2).
+**1b. Secrets: by-name env refs, resolved at runner start.** `${VAR}`
+interpolation, mirroring the platform compose/`.env` pattern. Manifests stay
+write-once and shareable. Rejected: vault integration (new dependency pre-B5).
+`.env` is git-ignored (`.gitignore:43`, verified); runner secret contract lives in
+`.env.default` (commented, placeholder values — proposed names, normed at BR-A0.2
+schema freeze). Missing ref fails loud, never guessed (Arch 1.0 #7); secrets must
+not leak into shareable contracts (#25).
 
-Open questions:
-- Composition ID scheme: who assigns stable IDs used across manifests and results?
-- Secret references: by name from which store (env, vault, k8s secret)?
+## 2. Corpus reference format — DECIDED
 
-## 2. Corpus reference format
+**2a. Content-addressed URI + alias.** `cas:<sha256>` with human alias, resolved
+via a corpus registry file pinned in the manifest. The hash *is* the identity;
+verification trivial. Rejected: plain paths (mutable targets break reproducibility
+silently). Anchor: #9, #35.
 
-- Corpus identified by content hash + `dataset_version` (no floating "latest").
-- Corpus used for B5 pre-check: small/frozen subset; full corpus for B5 proper.
-- Runner verifies hash before execution; mismatch aborts (BR-A1.3).
+**2b. Track B owner publishes `dataset_version`.** Content hash recorded in the
+corpus definition; runner cross-checks before execution. Rejected: runner-computed
+(first run has nothing to compare against). Anchor: #12, #35.
 
-Open questions:
-- Canonical corpus location (path/URI scheme) for manifests to reference?
-- Who publishes the frozen v1 corpus hash, and where is it recorded?
+## 3. Metric shape — DECIDED
 
-## 3. Metric shape
+**3a. Narrow mandatory set.** Mandatory: recall@10, eligible-set identity, p95
+latency, reproducibility flags, per-query topology. Nullable: NDCG/MRR, build
+time/size, freshness, RAG quality. Honors "no metric without topology"; deferred
+metrics may require re-runs. Rejected: all-mandatory (B5 blocks on hardest
+measurements). Anchor: Arch 1.0 §13, metric taxonomy (BR-A0.4).
 
-Canonical metrics (BR-A0.4 taxonomy): recall@10, overlap, eligible-set identity,
-latency percentiles (p50/p95/p99 + per-leg breakdown: embed/dense/lexical/fusion),
-index build time, index size, freshness. Per-query topology annotation required
-(no metric without its topology).
+**3b. RAG answer quality: deferred.** Runner measures retrieval; answer quality
+belongs to gateway/LLM eval. Keeps B5 unblocked. Rejected: in-scope (needs judge
+model + rubric + cost). Anchor: design 1.31 benchmark scope (recall/NDCG/latency).
 
-Open questions:
-- Mandatory vs optional metrics for MVP (which fields may be explicitly null)?
-- RAG answer-quality metric: in scope for the runner, or deferred?
+## 4. Reproducibility — DECIDED
 
-## 4. Reproducibility requirements
+**4a. Control sampling + order; document build nondeterminism.** Pin query
+sampling, corpus order, all controllable seeds; name Lucene merge-order
+nondeterminism as uncontrolled (bit-identical indexes not guaranteed). Rejected:
+single-threaded fixed-seed builds (unrepresentative, slow). Anchor: #35.
 
-- Corpus hash verification (abort on mismatch), seed capture, embedding model
-  id + dim recorded per run, single-model-per-index invariant.
-- Result Manifest carries reproducibility flags + environment record.
+**EventLab review (operator-requested, recorded here):** EventLab
+(`../eventlab`, README-only design spike, blank project) is the *intended*
+deterministic-sampling source — workload identity (generator version + schema +
+PRNG + seed + config + canonical serialization, R1–R7 contract) maps directly
+onto the runner's corpus-verification needs. But it is unimplemented (Phase 0
+spike unresolved): the dependency is future, recorded as follow-on, not
+assumed. Until EventLab lands, the runner works on the demo-data corpus with
+content-hash verification. No plan text may cite EventLab as an available input.
 
-Open questions:
-- Seed scope: query sampling only, or also index-build nondeterminism (segment merge order)?
-- Environment record depth: versions of engines + runner, or full container digests?
+**4b. Lightweight env record now, digests later.** Engine + runner versions,
+model ids/dims, `dataset_version`, topology. Container digests parked as Phase-5
+hardening. Anchor: #31, #12.
 
-## 5. Execution mode (parallel / sequential)
+## 5. Execution mode — DECIDED
 
-- Parallel (default): lexical + vector legs concurrently, fusion merges.
-- Sequential metadata-first: lexical → eligible set → vector over candidate universe.
-- Per-query override of the deployment default (VEC-B4.2).
+**5a. Per composition, per-query override optional.** Mirrors VEC-B4.2's own
+`executionMode` + deployment-default design; mixed-mode comparisons expressible
+in one manifest; mode recorded either way. Rejected: inherit-default always
+(cannot express B5's comparisons). Anchor: VEC-B4.2, #35.
 
-Open questions:
-- Does the manifest pin execution mode per composition, per query, or inherit deployment default?
-- Crossover-selectivity measurement: runner feature or analysis-side concern?
+**5b. Crossover measurement: analysis-side.** Runner emits per-leg timings;
+crossover computed from artifacts, re-runnable without re-execution. Executor
+stays dumb. Anchor: #11/#32 (derived state).
 
-## 6. Output needs
+## 6. Outputs — DECIDED
 
-- N Result Manifests (one per composition) + `RunCompletedEvent` per run
-  (provisional shape pending Eventing 1.27 freeze).
-- Sinks: file (atomic write, required); Kafka/ClickHouse (optional, BR-A3.1).
-- Result Manifest API for UI (BR-A3.2, non-blocking for B5).
+**6a. Proposal §10 layout + local mirror.** `s3://synvault/manifests/benchmark/<id>.json`,
+`.../result/<id>.json`, `.../runs/<id>/…`, with local-file mirror for pre-S3 runs.
+Write-once. Needs the bucket to exist (follow-on). Anchor: Runner proposal §10;
+Arch 1.0 #21 (large payloads by reference).
 
-Open questions:
-- Result artifact layout (paths, naming) for the 6-composition B5 run?
-- Event shape freeze date — who owns the Eventing 1.27 decision?
+**6b. Eventing 1.27 owner; provisional until freeze.** Strongest call in this
+record: Arch 1.0 §6 forbids planes inventing separate async semantics and §14
+sequences the 1.27 freeze before dependent planes. Runner ships the provisional
+`RunCompletedEvent` shape flagged. Rejected: track-local freeze (fast, violates
+§6, rework risk).
 
-## 7. Cost controls (cross-cutting)
+## 7. Cost controls — DECIDED
 
-`--dry-run` (validate only), timeout, max-event-count guard — all
-manifest-configurable, all fail loud. Approval gate for large runs: owner TBD.
+**7a. Track A owner approves.** Threshold = event-count × estimated unit cost,
+in-manifest. Week-1-named owner accountable; no heavier gate.
 
-## Session exit criteria
+## Session exit
 
-BR-A0.1 closes when every open question above has an answer recorded here and
-both track owners sign off. The answers feed BR-A0.2 (manifest schema) directly.
+All §1–§7 questions answered above. BR-A0.1 closes on merge; answers feed
+BR-A0.2 (manifest schema) directly. Follow-ons: EventLab dependency (future),
+synvault bucket existence, BR-A0.2 norming of `.env.default` var names.
