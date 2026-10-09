@@ -75,6 +75,70 @@ def run_completed_event(
     }
 
 
+class KafkaResultSink(ResultSink):
+    """Emits Result Manifests + events to Kafka (BR-A3.1, optional).
+
+    Takes a duck-typed producer (anything with ``send(topic, value: bytes)``)
+    so the contract holds without a broker or client library. Live wiring
+    (kafka-python/confluent-kafka + broker address from manifest) is a
+    follow-on gated on EventLab integration.
+    """
+
+    def __init__(self, producer, result_topic: str, event_topic: str):
+        self.producer = producer
+        self.result_topic = result_topic
+        self.event_topic = event_topic
+
+    def write(self, result: dict) -> Path:
+        validate_result(result)
+        payload = json.dumps(result, sort_keys=True).encode()
+        try:
+            self.producer.send(self.result_topic, payload)
+        except Exception as e:
+            raise SinkWriteError(Path(f"kafka://{self.result_topic}"), str(e)) from e
+        return Path(f"kafka://{self.result_topic}/{result.get('run_id', 'unknown')}")
+
+    def emit(self, event: dict) -> None:
+        for field in ("run_id", "manifest_id", "composition_count", "duration_ms"):
+            if field not in event:
+                raise SinkWriteError(
+                    Path(f"kafka://{self.event_topic}"),
+                    f"RunCompletedEvent missing field: {field}",
+                )
+        try:
+            self.producer.send(
+                self.event_topic, json.dumps(event, sort_keys=True).encode()
+            )
+        except Exception as e:
+            raise SinkWriteError(Path(f"kafka://{self.event_topic}"), str(e)) from e
+
+
+class ClickHouseResultSink(ResultSink):
+    """Inserts Result Manifests into ClickHouse (BR-A3.1, optional).
+
+    Takes a duck-typed client (anything with ``insert(table, row: dict)``).
+    Live wiring (clickhouse-connect + server address) is a follow-on gated
+    on analytics integration.
+    """
+
+    def __init__(self, client, table: str):
+        self.client = client
+        self.table = table
+
+    def write(self, result: dict) -> Path:
+        validate_result(result)
+        try:
+            self.client.insert(self.table, result)
+        except Exception as e:
+            raise SinkWriteError(Path(f"clickhouse://{self.table}"), str(e)) from e
+        return Path(f"clickhouse://{self.table}/{result.get('run_id', 'unknown')}")
+
+    def emit(self, event: dict) -> None:
+        # Analytics sink: events ride the same insert path as results.
+        try:
+            self.client.insert(f"{self.table}_events", event)
+        except Exception as e:
+            raise SinkWriteError(Path(f"clickhouse://{self.table}_events"), str(e)) from e
 class FileResultSink(ResultSink):
     """Writes Result Manifests to disk. Atomic write (temp file + os.replace)."""
 

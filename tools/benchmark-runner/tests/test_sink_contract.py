@@ -9,11 +9,39 @@ import json
 import pytest
 
 from benchmark_runner.sinks import (
+    ClickHouseResultSink,
     FileResultSink,
+    KafkaResultSink,
     SinkValidationError,
     SinkWriteError,
     run_completed_event,
 )
+
+
+class FakeProducer:
+    """Duck-typed Kafka producer stand-in (send(topic, value: bytes))."""
+
+    def __init__(self, fail=False):
+        self.sent = []
+        self.fail = fail
+
+    def send(self, topic, value):
+        if self.fail:
+            raise ConnectionError("broker unreachable")
+        self.sent.append((topic, value))
+
+
+class FakeClickHouse:
+    """Duck-typed ClickHouse client stand-in (insert(table, row: dict))."""
+
+    def __init__(self, fail=False):
+        self.rows = []
+        self.fail = fail
+
+    def insert(self, table, row):
+        if self.fail:
+            raise ConnectionError("server unreachable")
+        self.rows.append((table, row))
 
 
 def make_result(run_id="vec-test-r1"):
@@ -32,12 +60,13 @@ def make_result(run_id="vec-test-r1"):
     }
 
 
-def check_valid_document_persists(sink, read_back):
+def check_valid_document_persists(sink, read_back, filesystem=True):
     """Shared contract case 1: a valid document persists and round-trips."""
     path = sink.write(make_result())
 
-    assert path.exists()
-    assert json.loads(path.read_text())["run_id"] == "vec-test-r1"
+    if filesystem:
+        assert path.exists()
+    assert json.loads(json.dumps(read_back(path)))["run_id"] == "vec-test-r1"
     assert read_back(path)["queries"][0]["top_k"][0]["chunk_id"] == "c1"
 
 
@@ -121,4 +150,78 @@ def test_file_event_round_trip(tmp_path):
     sink = file_sink(tmp_path)
     check_event_round_trip(
         sink, lambda run_id: json.loads((tmp_path / "results" / f"{run_id}.event.json").read_text())
+    )
+
+
+# --- KafkaResultSink bindings (same contract; live broker is a follow-on) ---
+
+
+def test_kafka_valid_document_persists():
+    producer = FakeProducer()
+    sink = KafkaResultSink(producer, "bench.results", "bench.events")
+    check_valid_document_persists(
+        sink, lambda p: json.loads(producer.sent[0][1].decode()), filesystem=False
+    )
+    assert producer.sent[0][0] == "bench.results"
+
+
+def test_kafka_invalid_document_rejected_before_write(tmp_path):
+    producer = FakeProducer()
+    sink = KafkaResultSink(producer, "bench.results", "bench.events")
+    check_invalid_document_rejected_before_write(sink, tmp_path, lambda d: len(producer.sent))
+
+
+def test_kafka_failure_raises_loudly():
+    sink = KafkaResultSink(FakeProducer(fail=True), "bench.results", "bench.events")
+
+    with pytest.raises(SinkWriteError):
+        sink.write(make_result())
+
+
+def test_kafka_event_requires_all_fields():
+    check_event_requires_all_fields(
+        KafkaResultSink(FakeProducer(), "bench.results", "bench.events")
+    )
+
+
+def test_kafka_event_round_trip():
+    producer = FakeProducer()
+    sink = KafkaResultSink(producer, "bench.results", "bench.events")
+    check_event_round_trip(
+        sink,
+        lambda run_id: json.loads(
+            [v for t, v in producer.sent if t == "bench.events"][0].decode()
+        ),
+    )
+
+
+# --- ClickHouseResultSink bindings (same contract; live server is a follow-on) ---
+
+
+def test_clickhouse_valid_document_persists():
+    client = FakeClickHouse()
+    sink = ClickHouseResultSink(client, "bench_results")
+    check_valid_document_persists(sink, lambda p: client.rows[0][1], filesystem=False)
+    assert client.rows[0][0] == "bench_results"
+
+
+def test_clickhouse_invalid_document_rejected_before_write(tmp_path):
+    client = FakeClickHouse()
+    sink = ClickHouseResultSink(client, "bench_results")
+    check_invalid_document_rejected_before_write(sink, tmp_path, lambda d: len(client.rows))
+
+
+def test_clickhouse_failure_raises_loudly():
+    sink = ClickHouseResultSink(FakeClickHouse(fail=True), "bench_results")
+
+    with pytest.raises(SinkWriteError):
+        sink.write(make_result())
+
+
+def test_clickhouse_event_round_trip():
+    client = FakeClickHouse()
+    sink = ClickHouseResultSink(client, "bench_results")
+    check_event_round_trip(
+        sink,
+        lambda run_id: [r for t, r in client.rows if t == "bench_results_events"][0],
     )

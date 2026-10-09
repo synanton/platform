@@ -52,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
                      help="composition executor (Synquest-backed lands with B5)")
     run.add_argument("--dry-run", action="store_true", help="validate only; produce no artifacts")
     run.set_defaults(func=cmd_run)
+    results = sub.add_parser("results", help="query stored Result Manifests (BR-A3.2 read API, CLI form)")
+    results.add_argument("action", choices=["list", "show"], help="list summaries or show one run")
+    results.add_argument("--out", required=True, help="result sink base directory")
+    results.add_argument("--run-id", help="run_id for 'show'")
+    results.set_defaults(func=cmd_results)
     return parser
 
 
@@ -85,7 +90,6 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("error: --corpus, --queries and --out are required (or use --dry-run)",
               file=sys.stderr)
         return EXIT_REPRO_FAILURE
-    import json as json_module
 
     from .executor import SimulatedExecutor
     from .runner import run_manifest
@@ -111,6 +115,35 @@ def cmd_run(args: argparse.Namespace) -> int:
         return EXIT_COST_FIRED
     for path in artifacts:
         print(f"wrote {path}")
+    return 0
+
+
+def cmd_results(args: argparse.Namespace) -> int:
+    from .query import ResultNotFound, list_results, show_result
+
+    base = Path(args.out)
+    if args.action == "list":
+        summaries = list_results(base)
+        if not summaries:
+            print("no results")
+            return 0
+        for summary in summaries:
+            print(
+                f"{summary['run_id']}  manifest={summary['manifest_id']} "
+                f"composition={summary['composition_id']} "
+                f"queries={summary['query_count']}"
+            )
+        return 0
+    if not args.run_id:
+        print("error: show requires --run-id", file=sys.stderr)
+        return EXIT_MANIFEST_ERROR
+    try:
+        document = show_result(base, args.run_id)
+    except ResultNotFound as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_MANIFEST_ERROR
+
+    print(json_module.dumps(document, indent=2, sort_keys=True))
     return 0
 
 
