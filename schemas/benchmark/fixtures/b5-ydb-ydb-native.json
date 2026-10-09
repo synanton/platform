@@ -1,0 +1,65 @@
+{
+  "compositions": [
+    {
+      "composition_id": "ydb-ydb-native",
+      "embedding": {
+        "dim": 768,
+        "model_id": "bge-base"
+      },
+      "endpoint_refs": {},
+      "execution_mode": {
+        "default": "parallel",
+        "per_query_override": false
+      },
+      "index_params": {
+        "clusters": 128,
+        "levels": 2,
+        "overlap_clusters": 3
+      },
+      "metadata_provider": "ydb",
+      "vector_provider": "ydb"
+    }
+  ],
+  "corpus": {
+    "alias": "demo-frozen-v1",
+    "dataset_version": "demo-frozen-v1",
+    "ref": "cas:0000000000000000000000000000000000000000000000000000000000000000",
+    "registry": "demo-data/eval/corpus-registry.json"
+  },
+  "cost_controls": {
+    "dry_run": false,
+    "max_event_count": 1000000,
+    "timeout_ms": 3600000
+  },
+  "manifest_id": "vec-b5-ydb-ydb-native",
+  "metrics": {
+    "eligible_set_identity": true,
+    "index_build_time": true,
+    "index_size": true,
+    "latency_percentiles": [
+      50,
+      95,
+      99
+    ],
+    "ndcg_at_k": [
+      10
+    ],
+    "recall_at_k": [
+      10
+    ],
+    "reproducibility_flags": true,
+    "topology_per_query": true
+  },
+  "output_sink": {
+    "file": {
+      "atomic_write": true,
+      "base_path": "runs/vec-b5-ydb-ydb-native"
+    }
+  },
+  "reproducibility": {
+    "environment_record": "lightweight",
+    "seed": 7348291,
+    "verify_corpus_hash": true
+  },
+  "schema_version": "0.2.0-draft"
+}
