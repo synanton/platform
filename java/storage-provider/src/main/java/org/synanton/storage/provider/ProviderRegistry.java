@@ -22,6 +22,13 @@ public final class ProviderRegistry {
     public static final String PORT_SYNQUEST = "synquest";
     public static final String PORT_WRITER = "writer";
     public static final String PORT_ADMIN = "admin";
+    /**
+     * Composition namespaces (SYN-VECTOR-001 B2.1): the metadata stack and the
+     * vector engine resolve independently, so Cassandra+Milvus or PG+Qdrant
+     * are expressible without touching the four legacy ports.
+     */
+    public static final String PORT_METADATA = "metadata";
+    public static final String PORT_VECTOR = "vector";
 
     private final Map<String, Map<String, Conformant>> providers = new LinkedHashMap<>();
 
@@ -48,6 +55,19 @@ public final class ProviderRegistry {
         }
         return adapter;
     }
+
+    /**
+     * Resolves a metadata × vector composition: each namespace resolves
+     * independently against its own registrations, so cross-backend pairs
+     * need no special casing. Unknown names fail loud via {@link #resolve}.
+     */
+    public VectorComposition resolveComposition(String metadataName, String vectorName) {
+        return new VectorComposition(
+                resolve(PORT_METADATA, metadataName), resolve(PORT_VECTOR, vectorName));
+    }
+
+    /** A resolved metadata-stack + vector-engine pair. */
+    public record VectorComposition(Conformant metadata, Conformant vector) {}
 
     /**
      * Validates a selection against deployment requirements. Fails fast with a
