@@ -37,7 +37,7 @@ class LuceneIndexBuilderDimensionTest {
 
     private SynquestProperties props(int dim, int truncateDim) {
         return new SynquestProperties(new SynquestProperties.Index(indexRoot.toString(), true, 30), null,
-                new SynquestProperties.Embedding(MODEL, dim, true, truncateDim));
+                new SynquestProperties.Embedding(MODEL, dim, true, truncateDim), null);
     }
 
     /** Three chunks: ordinal 0 and 1 carry 2048-dim vectors, ordinal 2 has no vector. */

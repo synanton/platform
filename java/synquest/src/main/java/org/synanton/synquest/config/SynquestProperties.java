@@ -6,7 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record SynquestProperties(
         Index index,
         Search search,
-        Embedding embedding
+        Embedding embedding,
+        Execution execution
 ) {
     public record Index(
             String path,
@@ -20,6 +21,16 @@ public record SynquestProperties(
             int defaultTopKLexical,
             int defaultRrfK,
             String denseSimilarity
+    ) {}
+
+    /**
+     * Execution posture (SYN-VECTOR-001 B4): deployment default for retrieval
+     * legs. {@code parallel} runs lexical + dense concurrently (default);
+     * {@code sequential} runs lexical first and constrains dense to its
+     * candidate universe. Per-query override via the search request.
+     */
+    public record Execution(
+            String mode
     ) {}
 
     /**
@@ -45,5 +56,6 @@ public record SynquestProperties(
         if (index == null) index = new Index("./data/synquest", true, 30);
         if (search == null) search = new Search(20, 100, 100, 60, "COSINE");
         if (embedding == null) embedding = new Embedding("bge-base-en-v1.5", 768, true, 0);
+        if (execution == null) execution = new Execution("parallel");
     }
 }

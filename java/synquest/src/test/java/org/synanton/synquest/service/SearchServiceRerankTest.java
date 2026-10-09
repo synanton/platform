@@ -58,7 +58,7 @@ class SearchServiceRerankTest {
         }
         when(cache.readChunks(tenant, ref)).thenReturn(rows);
         props = new SynquestProperties(new SynquestProperties.Index(indexRoot.toString(), true, 30), null,
-                new SynquestProperties.Embedding("m", 2, true, 0));
+                new SynquestProperties.Embedding("m", 2, true, 0), null);
         var shape = new EmbeddingShape(props);
         builder = new LuceneIndexBuilder(cache, props, shape, true);
         LlmClient emb = new LlmClient() {
