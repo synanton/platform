@@ -110,6 +110,17 @@ Cross-cutting:
 - Design note: wrappers delegate through engine.search(mode=VECTOR), not adapter internals — zero behavior change is structural. Three wrappers are byte-identical; a single DelegateVectorRetriever in synquest-api would pass the boundary guard. Revisit before B3 authors Milvus/Qdrant retrievers against the per-adapter pattern.
 - Carried gap: capabilities() hardcodes vector-only shape — underlying engine capability detail (filters, index type) not surfaced; overlaps B1.1's recorded VectorCapabilities gap.
 
+### VEC-B1.4 — Routing facade: landed
+
+- Scope: RoutingSynquestEngine in synquest-api routes mode=VECTOR + embedding-present + narrow fields through VectorRetriever; all other requests pass through to the engine. Wide vector+embedding requests fail loud naming the fields.
+- Evidence: PR #118 (8490f81) — facade + unit tests green, api suite + boundary guard green.
+- Reading-1 claim: zero change for direct-engine callers; facade callers get the narrow retriever contract or an explicit IllegalArgumentException — no silent narrowing. Empty highlights on routed results.
+- Deviation from card: card implied pass-through; fail-loud on wide vector requests adopted at operator direction (silent narrowing rejected).
+- Confirmed at review: RelevanceFilters is single-field (mustMatchMetadata), so the emptiness check is complete — no silent filter-dropping.
+- Precedent: first behavioral class in synquest-api; module scope "port-owned types" extended to include the routing facade.
+- Carried: B2.1 owns retriever selection — facade holds one retriever, constructor-injected.
+- Widening escape hatch: if VectorSearchRequest grows filters/temporal/minScore, the corresponding clause comes off both predicates (isNarrowVectorRequest, isLossyVectorRequest).
+
 ### Week-2 gate: open (unscheduled)
 
 - Scope: Manifest + Result schema + metric-taxonomy freeze (BR-A0.2/A0.3/A0.4).
