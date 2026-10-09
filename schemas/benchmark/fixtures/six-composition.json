@@ -1,0 +1,94 @@
+{
+  "_note": "TEST FIXTURE for BR-A0.2 schema validation — corpus hash is a placeholder, not a real frozen corpus. Six B5 compositions.",
+  "manifest_id": "vec-6comp-r1",
+  "schema_version": "0.2.0-draft",
+  "corpus": {
+    "ref": "cas:0000000000000000000000000000000000000000000000000000000000000000",
+    "alias": "demo-frozen-v1",
+    "dataset_version": "demo-frozen-v1",
+    "registry": "demo-data/eval/corpus-registry.json"
+  },
+  "compositions": [
+    {
+      "composition_id": "cassandra-lucene-m16",
+      "metadata_provider": "cassandra",
+      "vector_provider": "lucene",
+      "endpoint_refs": {},
+      "index_params": {"m": 16, "ef_construction": 100},
+      "embedding": {"model_id": "bge-base", "dim": 768},
+      "execution_mode": {"default": "parallel", "per_query_override": true}
+    },
+    {
+      "composition_id": "cassandra-milvus-m16",
+      "metadata_provider": "cassandra",
+      "vector_provider": "milvus",
+      "endpoint_refs": {"MILVUS_URI": "${BENCH_MILVUS_URI}", "MILVUS_TOKEN": "${BENCH_MILVUS_TOKEN}"},
+      "index_params": {"m": 16},
+      "embedding": {"model_id": "bge-base", "dim": 768},
+      "execution_mode": {"default": "parallel", "per_query_override": true}
+    },
+    {
+      "composition_id": "cassandra-qdrant-m16",
+      "metadata_provider": "cassandra",
+      "vector_provider": "qdrant",
+      "endpoint_refs": {"QDRANT_URL": "${BENCH_QDRANT_URL}", "QDRANT_KEY": "${BENCH_QDRANT_API_KEY}"},
+      "index_params": {"m": 16},
+      "embedding": {"model_id": "bge-base", "dim": 768},
+      "execution_mode": {"default": "parallel", "per_query_override": true}
+    },
+    {
+      "composition_id": "pg-milvus-m16",
+      "metadata_provider": "postgres",
+      "vector_provider": "milvus",
+      "endpoint_refs": {"PG_URL": "${BENCH_PG_URL}", "MILVUS_URI": "${BENCH_MILVUS_URI}"},
+      "index_params": {"m": 16, "lists": 100},
+      "embedding": {"model_id": "bge-base", "dim": 768},
+      "execution_mode": {"default": "parallel", "per_query_override": true}
+    },
+    {
+      "composition_id": "pg-qdrant-m16",
+      "metadata_provider": "postgres",
+      "vector_provider": "qdrant",
+      "endpoint_refs": {"PG_URL": "${BENCH_PG_URL}", "QDRANT_URL": "${BENCH_QDRANT_URL}"},
+      "index_params": {"m": 16},
+      "embedding": {"model_id": "bge-base", "dim": 768},
+      "execution_mode": {"default": "sequential", "per_query_override": true}
+    },
+    {
+      "composition_id": "ydb-ydb-native",
+      "metadata_provider": "ydb",
+      "vector_provider": "ydb",
+      "endpoint_refs": {},
+      "index_params": {"levels": 2, "clusters": 128, "overlap_clusters": 3},
+      "embedding": {"model_id": "bge-base", "dim": 768},
+      "execution_mode": {"default": "parallel", "per_query_override": false}
+    }
+  ],
+  "metrics": {
+    "recall_at_k": [10],
+    "eligible_set_identity": true,
+    "latency_percentiles": [50, 95, 99],
+    "reproducibility_flags": true,
+    "topology_per_query": true,
+    "ndcg_at_k": [10],
+    "index_build_time": true,
+    "index_size": true,
+    "freshness": false,
+    "rag_quality": null
+  },
+  "reproducibility": {
+    "seed": 7348291,
+    "verify_corpus_hash": true,
+    "environment_record": "lightweight"
+  },
+  "cost_controls": {
+    "dry_run": false,
+    "timeout_ms": 3600000,
+    "max_event_count": 1000000,
+    "approval_threshold_usd": 50.0
+  },
+  "output_sink": {
+    "file": {"base_path": "runs/vec-6comp-r1", "atomic_write": true},
+    "kafka": {"topic": "benchmark-results"}
+  }
+}
