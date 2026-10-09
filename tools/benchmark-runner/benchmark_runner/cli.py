@@ -1,6 +1,8 @@
 """Command-line entry point for the Benchmark Runner.
 
     benchmark-runner validate <manifest.json>
+    benchmark-runner verify <manifest.json> --corpus <path>
+    benchmark-runner run <manifest.json> --corpus <path> [--dry-run]
 """
 
 from __future__ import annotations
@@ -9,7 +11,12 @@ import argparse
 import sys
 from pathlib import Path
 
+from . import costs, repro
 from .manifest import ManifestError, load_manifest
+
+EXIT_MANIFEST_ERROR = 2
+EXIT_REPRO_FAILURE = 3
+EXIT_COST_FIRED = 4
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
@@ -31,7 +38,77 @@ def build_parser() -> argparse.ArgumentParser:
     validate = sub.add_parser("validate", help="validate a Benchmark Manifest against the schema")
     validate.add_argument("manifest", help="path to the manifest JSON file")
     validate.set_defaults(func=cmd_validate)
+    verify = sub.add_parser("verify", help="verify reproducibility preconditions (corpus hash + seed)")
+    verify.add_argument("manifest", help="path to the manifest JSON file")
+    verify.add_argument("--corpus", required=True, help="path to the corpus file or directory")
+    verify.set_defaults(func=cmd_verify)
+    run = sub.add_parser("run", help="stub-execute a manifest (full execution lands in A2)")
+    run.add_argument("manifest", help="path to the manifest JSON file")
+    run.add_argument("--corpus", help="path to the corpus file or directory")
+    run.add_argument("--dry-run", action="store_true", help="validate only; produce no artifacts")
+    run.set_defaults(func=cmd_run)
     return parser
+
+
+def cmd_verify(args: argparse.Namespace) -> int:
+    try:
+        manifest = load_manifest(Path(args.manifest))
+    except ManifestError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_MANIFEST_ERROR
+    try:
+        report = repro.verify(manifest.document, Path(args.corpus))
+    except repro.ReproducibilityError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_REPRO_FAILURE
+    print(f"reproducibility verified: corpus {report.corpus_hash[:12]}… seed {report.seed}")
+    return 0
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    try:
+        manifest = load_manifest(Path(args.manifest))
+    except ManifestError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_MANIFEST_ERROR
+    controls = costs.controls_from_manifest(manifest.document)
+    if args.dry_run or controls["dry_run"]:
+        print(f"dry run: manifest {manifest.manifest_id} valid; "
+              f"{len(manifest.composition_ids)} compositions would execute; no artifacts produced")
+        return 0
+    if not args.corpus:
+        print("error: --corpus is required (or set cost_controls.dry_run)", file=sys.stderr)
+        return EXIT_REPRO_FAILURE
+    try:
+        repro.verify(manifest.document, Path(args.corpus))
+    except repro.ReproducibilityError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_REPRO_FAILURE
+    counter = (
+        costs.EventCounter(controls["max_event_count"])
+        if controls["max_event_count"]
+        else None
+    )
+    timeout_ms = controls["timeout_ms"]
+    try:
+        for composition_id in manifest.composition_ids:
+            step = lambda: _stub_execute(composition_id, counter)  # noqa: E731
+            if timeout_ms:
+                costs.run_with_timeout(step, timeout_ms)
+            else:
+                step()
+    except costs.CostControlError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_COST_FIRED
+    print(f"stub run complete: {len(manifest.composition_ids)} compositions (full execution lands in A2)")
+    return 0
+
+
+def _stub_execute(composition_id: str, counter) -> None:
+    # A2 replaces this with real composition execution. Counts one event so the
+    # max-event-count guard has observable wiring from day one.
+    if counter is not None:
+        counter.observe(1)
 
 
 def main(argv: list = None) -> int:
