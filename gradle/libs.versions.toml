@@ -127,6 +127,11 @@ kafka-clients            = { module = "org.apache.kafka:kafka-clients",         
 
 # Testcontainers extras
 testcontainers-cassandra = { module = "org.testcontainers:cassandra" }
+testcontainers-core = { module = "org.testcontainers:testcontainers" }
+
+# Vector engines (SYN-VECTOR-001 B3; server/client pairs verified 2026-10-09)
+milvus-sdk-java = { module = "io.milvus:milvus-sdk-java", version = "3.0.10" }
+qdrant-client = { module = "io.qdrant:client", version = "1.19.0" }
 
 # YDB Java SDK (PoC-pinned, see ydb-poc/001-version-manifest.md)
 ydb-sdk-table           = { module = "tech.ydb:ydb-sdk-table",             version = "2.4.11" }
