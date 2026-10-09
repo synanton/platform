@@ -19,6 +19,12 @@
 #   other's containers — start stacks explicitly (below), not via compose.
 set -euo pipefail
 
+# Data root for ALL bind mounts below (external volumes only — nothing may
+# live on container overlayfs or docker-root; see External-storage rule).
+# Export DATA_ROOT to relocate (local SSD/NVMe, never network filesystems).
+DATA_ROOT="${DATA_ROOT:-./data}"
+mkdir -p "${DATA_ROOT}"/{etcd,minio,milvus,qdrant}
+
 # ---------------------------------------------------------------- network ---
 docker network create bench-vec 2>/dev/null || true
 
@@ -26,6 +32,7 @@ docker network create bench-vec 2>/dev/null || true
 # Milvus dependency. Health: etcdctl endpoint health (see HEALTH section).
 docker rm -f milvus-etcd 2>/dev/null || true
 docker run -d --name milvus-etcd --network bench-vec \
+  -v "${DATA_ROOT}/etcd:/etcd" \
   quay.io/coreos/etcd:v3.5.18 \
   etcd -advertise-client-urls=http://127.0.0.1:2379 \
        -listen-client-urls=http://0.0.0.0:2379 \
@@ -35,6 +42,7 @@ docker run -d --name milvus-etcd --network bench-vec \
 # Milvus dependency (object storage). Credentials must match Milvus env below.
 docker rm -f milvus-minio 2>/dev/null || true
 docker run -d --name milvus-minio --network bench-vec \
+  -v "${DATA_ROOT}/minio:/minio_data" \
   -e MINIO_ROOT_USER=minioadmin \
   -e MINIO_ROOT_PASSWORD=minioadmin \
   minio/minio:latest server /minio_data
@@ -47,6 +55,7 @@ ETCD_IP="$(docker inspect milvus-etcd --format '{{range .NetworkSettings.Network
 echo "etcd IP: ${ETCD_IP}"
 docker rm -f milvus-standalone 2>/dev/null || true
 docker run -d --name milvus-standalone --network bench-vec \
+  -v "${DATA_ROOT}/milvus:/var/lib/milvus" \
   -e "ETCD_ENDPOINTS=${ETCD_IP}:2379" \
   -e MINIO_ADDRESS=minio:9000 \
   -p 19530:19530 -p 9091:9091 \
@@ -59,6 +68,7 @@ docker run -d --name milvus-standalone --network bench-vec \
 # caller's concern — see QdrantVectorRetriever javadoc).
 docker rm -f qdrant-bench 2>/dev/null || true
 docker run -d --name qdrant-bench \
+  -v "${DATA_ROOT}/qdrant:/qdrant/storage" \
   -p 6333:6333 -p 6334:6334 \
   qdrant/qdrant:latest
 
