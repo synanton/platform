@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synanton.dev/schemas/benchmark/benchmark-manifest.schema.json",
+  "title": "Benchmark Manifest",
+  "description": "BR-A0.2 draft — input contract for the Benchmark Runner. Defines the corpus, N compositions, metrics, reproducibility, cost controls, and output sink for one benchmark run. Schema becomes immutable at Week-2 freeze; this draft is version 0.2.0-draft.",
+  "type": "object",
+  "required": ["manifest_id", "schema_version", "corpus", "compositions", "metrics", "reproducibility", "cost_controls", "output_sink"],
+  "properties": {
+    "manifest_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable human-readable run identifier, e.g. vec-6comp-r1."
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-draft)?$",
+      "description": "Manifest schema version. Drafts carry -draft; frozen schemas are immutable per the Manifests proposal."
+    },
+    "corpus": {
+      "type": "object",
+      "required": ["ref", "alias", "dataset_version"],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^cas:[0-9a-f]{64}$",
+          "description": "Content-addressed corpus reference (BR-A0.1 2a). The hash IS the identity."
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human alias, e.g. demo-frozen-v1."
+        },
+        "dataset_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Publisher-pinned version string (BR-A0.1 2b, Track B owner publishes)."
+        },
+        "registry": {
+          "type": "string",
+          "description": "Optional path/URI of the corpus registry file resolving the alias."
+        }
+      },
+      "additionalProperties": false
+    },
+    "compositions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/composition" }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["recall_at_k", "eligible_set_identity", "latency_percentiles", "reproducibility_flags", "topology_per_query"],
+      "properties": {
+        "recall_at_k": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "integer", "minimum": 1 },
+          "description": "Mandatory: recall cutoffs; 10 always included for B5."
+        },
+        "eligible_set_identity": { "type": "boolean" },
+        "latency_percentiles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 100 },
+          "description": "Mandatory: includes p95. Per-leg breakdown (embed/dense/lexical/fusion) always collected."
+        },
+        "reproducibility_flags": { "type": "boolean" },
+        "topology_per_query": {
+          "type": "boolean",
+          "description": "Mandatory true for B5: no metric without its topology."
+        },
+        "ndcg_at_k": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+        "mrr_at_k": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+        "index_build_time": { "type": "boolean" },
+        "index_size": { "type": "boolean" },
+        "freshness": { "type": "boolean" },
+        "rag_quality": {
+          "type": ["boolean", "null"],
+          "description": "Deferred per BR-A0.1 3b; null until gateway/LLM eval owns it."
+        }
+      },
+      "additionalProperties": false
+    },
+    "reproducibility": {
+      "type": "object",
+      "required": ["seed", "verify_corpus_hash"],
+      "properties": {
+        "seed": {
+          "type": "integer",
+          "description": "Query-sampling seed. Index-build nondeterminism (segment merge order) is documented, not controlled (BR-A0.1 4a)."
+        },
+        "verify_corpus_hash": {
+          "type": "boolean",
+          "description": "True: runner aborts on corpus hash mismatch before execution."
+        },
+        "environment_record": {
+          "type": "string",
+          "enum": ["lightweight", "full-digests"],
+          "description": "Lightweight now (versions + model ids/dims); full container digests parked as Phase-5 hardening (BR-A0.1 4b)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "cost_controls": {
+      "type": "object",
+      "properties": {
+        "dry_run": {
+          "type": "boolean",
+          "description": "True: validate only, produce no artifacts."
+        },
+        "timeout_ms": { "type": "integer", "minimum": 1 },
+        "max_event_count": { "type": "integer", "minimum": 1 },
+        "approval_threshold_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Above this estimated cost, Track A owner approval required (BR-A0.1 7a)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "output_sink": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": {
+          "type": "object",
+          "required": ["base_path", "atomic_write"],
+          "properties": {
+            "base_path": { "type": "string", "minLength": 1 },
+            "atomic_write": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "kafka": {
+          "type": "object",
+          "required": ["topic"],
+          "properties": {
+            "topic": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "clickhouse": {
+          "type": "object",
+          "required": ["table"],
+          "properties": {
+            "table": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "composition": {
+      "type": "object",
+      "required": ["composition_id", "metadata_provider", "vector_provider", "embedding", "execution_mode"],
+      "properties": {
+        "composition_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Runner-assigned slug: metadata.provider + vector.provider + index-params-hash (BR-A0.1 1a)."
+        },
+        "metadata_provider": {
+          "type": "string",
+          "enum": ["cassandra", "postgres", "ydb", "lucene"],
+          "description": "VEC-B2.1 metadata.* namespace."
+        },
+        "vector_provider": {
+          "type": "string",
+          "enum": ["lucene", "milvus", "qdrant", "pgvector", "ydb"],
+          "description": "VEC-B2.1 vector.* namespace. Defaults to metadata.provider when unset by config convention; explicit here."
+        },
+        "endpoint_refs": {
+          "type": "object",
+          "description": "Secret-bearing endpoints by ${VAR} reference only — never inline secrets (.env.default contract).",
+          "patternProperties": {
+            "^[A-Z][A-Z0-9_]*$": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "index_params": {
+          "type": "object",
+          "description": "Engine index parameters, e.g. HNSW m/efConstruction. Free-form per engine; hashed into composition_id.",
+          "properties": {
+            "m": { "type": "integer", "minimum": 1 },
+            "ef_construction": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": true
+        },
+        "embedding": {
+          "type": "object",
+          "required": ["model_id", "dim"],
+          "properties": {
+            "model_id": { "type": "string", "minLength": 1 },
+            "dim": { "type": "integer", "minimum": 1, "maximum": 4096 }
+          },
+          "additionalProperties": false
+        },
+        "execution_mode": {
+          "type": "object",
+          "required": ["default"],
+          "properties": {
+            "default": { "type": "string", "enum": ["parallel", "sequential"] },
+            "per_query_override": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
