@@ -57,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
     results.add_argument("--out", required=True, help="result sink base directory")
     results.add_argument("--run-id", help="run_id for 'show'")
     results.set_defaults(func=cmd_results)
+    probe = sub.add_parser("probe", help="check synquest endpoint reachability (B5.2 scouting)")
+    probe.add_argument("--endpoint", action="append", required=True,
+                       help="synquest base URL (repeatable)")
+    probe.set_defaults(func=cmd_probe)
     return parser
 
 
@@ -151,6 +155,20 @@ def main(argv: list = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
+
+
+def cmd_probe(args: argparse.Namespace) -> int:
+    from .synquest_exec import probe
+
+    all_ok = True
+    for endpoint in args.endpoint:
+        status = probe(endpoint)
+        if status["reachable"]:
+            print(f"UP   {endpoint} (HTTP {status['status']})")
+        else:
+            all_ok = False
+            print(f"DOWN {endpoint}: {status['reason']}")
+    return 0 if all_ok else 1
 
 
 if __name__ == "__main__":
