@@ -42,9 +42,10 @@ class StubHandler(BaseHTTPRequestHandler):
             if StubHandler.mode == "error":
                 self._send(500, {"error": "boom"})
             else:
+                hits = [] if StubHandler.mode == "empty" else STUB_HITS
                 self._send(
                     200,
-                    {"hits": STUB_HITS, "trace": {"totalMs": 11.0},
+                    {"hits": hits, "trace": {"totalMs": 11.0},
                      "query_usage": {}},
                 )
         else:
@@ -117,11 +118,27 @@ def test_executor_maps_hits_and_topology(stub_url):
     assert results[0].structural_empty is False
 
 
-def test_executor_structural_empty_without_gold_or_eligible(stub_url):
+def test_executor_structural_empty_only_without_signal(stub_url):
     executor = SynquestExecutor(stub_url)
 
+    # Stub returns hits → leg ran against live state → not structural,
+    # even with no gold/eligible expectations.
     results = executor.execute(
         {"composition_id": "c1"}, [{"query_id": "qn"}], None
     )
 
-    assert results[0].structural_empty is True
+    assert results[0].structural_empty is False
+
+
+def test_executor_structural_empty_without_signal(stub_url):
+    StubHandler.mode = "empty"
+    try:
+        executor = SynquestExecutor(stub_url)
+
+        results = executor.execute(
+            {"composition_id": "c1"}, [{"query_id": "qn"}], None
+        )
+
+        assert results[0].structural_empty is True
+    finally:
+        StubHandler.mode = "ok"

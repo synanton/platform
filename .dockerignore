@@ -1,0 +1,4 @@
+docker/data/
+.git/
+build/
+*/build/

@@ -48,8 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--corpus", help="path to the corpus file or directory")
     run.add_argument("--queries", help="path to a JSON array of {query_id, gold[], eligible[]}")
     run.add_argument("--out", help="result sink base directory (FileResultSink)")
-    run.add_argument("--executor", default="simulated", choices=["simulated"],
+    run.add_argument("--executor", default="simulated", choices=["simulated", "synquest"],
                      help="composition executor (Synquest-backed lands with B5)")
+    run.add_argument("--endpoint", help="synquest base URL (required with --executor synquest)")
     run.add_argument("--dry-run", action="store_true", help="validate only; produce no artifacts")
     run.set_defaults(func=cmd_run)
     results = sub.add_parser("results", help="query stored Result Manifests (BR-A3.2 read API, CLI form)")
@@ -104,7 +105,15 @@ def cmd_run(args: argparse.Namespace) -> int:
     except (OSError, ValueError) as e:
         print(f"error: cannot load queries: {e}", file=sys.stderr)
         return EXIT_MANIFEST_ERROR
-    executor = SimulatedExecutor(seed=manifest.document["reproducibility"]["seed"])
+    if args.executor == "synquest":
+        from .synquest_exec import SynquestExecutor
+
+        if not args.endpoint:
+            print("error: --endpoint is required with --executor synquest", file=sys.stderr)
+            return EXIT_MANIFEST_ERROR
+        executor = SynquestExecutor(args.endpoint)
+    else:
+        executor = SimulatedExecutor(seed=manifest.document["reproducibility"]["seed"])
     sink = FileResultSink(Path(args.out))
     try:
         artifacts = run_manifest(

@@ -10,6 +10,8 @@ import json
 import urllib.request
 import urllib.error
 
+from .executor import CompositionExecutor, RawQueryResult
+
 
 class EndpointUnreachable(Exception):
     def __init__(self, endpoint: str, reason: str):
@@ -51,7 +53,7 @@ def probe(endpoint: str, timeout_s: int = 10) -> dict:
         return {"endpoint": endpoint, "reachable": False, "reason": str(e)[:200]}
 
 
-class SynquestExecutor:
+class SynquestExecutor(CompositionExecutor):
     """CompositionExecutor over a live synquest service (B5.2 execution leg).
 
     Maps manifest compositions to service query params; converts service hits
@@ -71,8 +73,6 @@ class SynquestExecutor:
         return f"{composition.get('vector_provider', 'unknown')}"
 
     def execute(self, composition: dict, queries: list, ctx) -> list:
-        from .executor import RawQueryResult
-
         results = []
         for query in queries:
             payload = {
@@ -100,7 +100,11 @@ class SynquestExecutor:
                     timing_ms=timing,
                     timing_scope="synquest",
                     topology=self._topology(composition),
-                    structural_empty=not query.get("gold") and not query.get("eligible"),
+                    # No signal only when the leg returned nothing AND nothing
+                    # was expected: hits prove the leg ran against live state.
+                    structural_empty=not hits
+                    and not query.get("gold")
+                    and not query.get("eligible"),
                 )
             )
         return results
