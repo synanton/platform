@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synanton.dev/schemas/deployment/synquest-composition.schema.json",
+  "title": "Synquest composition configuration",
+  "description": "VEC-B2.3 draft — JSON/YAML schema for synquest.metadata, synquest.vector, synquest.fusion, synquest.execution. Forward-looking: Java binding lands with B2 adapters/B4 modes; this schema freezes the key space now. Version 0.1.0-draft.",
+  "type": "object",
+  "required": ["synquest"],
+  "properties": {
+    "synquest": {
+      "type": "object",
+      "required": ["metadata", "vector"],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "required": ["provider"],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["cassandra", "postgres", "ydb", "lucene"],
+              "description": "VEC-B2.1 metadata.* namespace: the storage/lexical stack."
+            }
+          },
+          "additionalProperties": true
+        },
+        "vector": {
+          "type": "object",
+          "required": ["provider"],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["lucene", "milvus", "qdrant", "pgvector", "ydb"],
+              "description": "VEC-B2.1 vector.* namespace. Unset in config means default-to-metadata (VEC-B2.2); explicit here."
+            },
+            "endpoint_ref": {
+              "type": "string",
+              "description": "Secret-bearing endpoint by ${VAR} reference only (.env.default contract); absent for in-process providers."
+            }
+          },
+          "additionalProperties": true
+        },
+        "fusion": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["rrf"],
+              "description": "Fusion method. Only rrf exists today; the enum grows, never renames."
+            },
+            "rrf_k": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": true
+        },
+        "execution": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["parallel", "sequential"],
+              "description": "Deployment default; per-query override via SearchRequest.executionMode (VEC-B4.2)."
+            },
+            "per_query_override": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

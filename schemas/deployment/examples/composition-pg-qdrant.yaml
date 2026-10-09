@@ -1,0 +1,14 @@
+# VEC-B2.3 example: pg-qdrant (composition 5/6).
+# Secret-bearing values by ${VAR} reference only (.env.default contract).
+synquest:
+  metadata:
+    provider: postgres
+  vector:
+    provider: qdrant
+    endpoint_ref: "${BENCH_QDRANT_URL}"
+  fusion:
+    method: rrf
+    rrf_k: 60
+  execution:
+    mode: sequential
+    per_query_override: true
