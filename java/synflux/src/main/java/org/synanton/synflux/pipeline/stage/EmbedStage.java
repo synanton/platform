@@ -48,6 +48,10 @@ public class EmbedStage implements PipelineStage<ChunkedDocument, ChunkedDocumen
         this.embedClient = embedClient;
         this.cacheClient = cacheClient;
         this.modelId = modelId;
+        if (batchSize < 1) {
+            throw new IllegalArgumentException(
+                "EmbedStage batchSize must be >= 1 (got " + batchSize + "); refusing to spin on empty batches");
+        }
         this.batchSize = batchSize;
         this.failOnError = failOnError;
     }
@@ -89,6 +93,11 @@ public class EmbedStage implements PipelineStage<ChunkedDocument, ChunkedDocumen
 
         List<SemanticChunk> toEmbed = new ArrayList<>();
         for (SemanticChunk c : chunks) {
+            // Blank chunks carry no content and providers reject them (TEI 400
+            // "`inputs` cannot be empty"); skip before batching, not after failure.
+            if (c.text() == null || c.text().isBlank()) {
+                continue;
+            }
             var cached = cacheClient.readEmbeddingByChunkHash(tenantId, c.sha256(), modelId);
             if (cached.isEmpty()) {
                 toEmbed.add(c);

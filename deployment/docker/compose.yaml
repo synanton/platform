@@ -225,10 +225,16 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       LLM_BASE_URL: http://vllm-llm:8000/v1
       EMBED_BASE_URL: http://vllm-embed:8001/v1
+      # Ingest-time embeddings via node1 TEI (must equal synquest's EMBED_MODEL).
+      SYNFLUX_EMBEDDING_EMBED_BASE_URL: http://host.docker.internal:30800/v1
+      SYNFLUX_EMBEDDING_MODEL_ID: synanton-bge-base-embedding
+      SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "true"
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8090
       EXTRACTION_CLIENT_ENABLED: "true"
       EXTRACTION_ENDPOINT: extraction-gateway:9091
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8090:8090"
     volumes:
@@ -253,6 +259,15 @@ services:
       CASSANDRA_LOCAL_DC: datacenter1
       SERVER_PORT: 8083
       SYNQUEST_INDEX_PATH: /var/lib/synquest
+      # Dense legs embed via node1 TEI (bge-base, 768d) through an SSH tunnel
+      # bound on all host interfaces (host-gateway). Fail closed: a dense run
+      # can never silently degrade to BM25-only.
+      VLLM_EMBED_BASE_URL: http://host.docker.internal:30800/v1
+      EMBED_MODEL: synanton-bge-base-embedding
+      EMBED_DIM: 768
+      SYNQUEST_EMBEDDING_REQUIRED: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8083:8083"
     healthcheck:
