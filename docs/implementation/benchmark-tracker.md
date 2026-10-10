@@ -175,6 +175,21 @@ Cross-cutting:
 ### VEC-B5.6 — Crossover measured (BM25-only scope)
 
 - 10/10 identical hit sets parallel vs sequential, live. No crossover identifiable without dense legs; procedure in place via per-leg trace timings.
+- Superseded for the Lucene leg by F-2 below (dense-leg crossover now measured).
+
+### F-1 — Real embeddings live: landed 2026-10-10
+
+- TEI + `synanton-bge-base-embedding` (BAAI/bge-base, 768d) on node1 via GPU-5 blueprint; bench reaches it through an SSH tunnel (`:30800`) + `host-gateway` (NodePort can't cross this host's firewall). Tunnel is manual — host reboot fails dense runs closed (503 by design).
+- Wiring: synquest `VLLM_EMBED_BASE_URL` + synflux ingest env in compose; runner `--embedding-model/--embedding-dim` stamps result manifests. Runner suite 65 green.
+- Index proof: 81 docs / 81 vector_docs, 0 mismatches, 0 missing. First dense leg: 3/3 × 5 hits, correct tops.
+- Bugs fixed en route: `synflux.embedding.*` misnested under `synanton:` (batch-size silently 0 → infinite empty-batch loop, 419k TEI 400s) + fail-loud guard; blank-chunk filter in EmbedStage.
+- Evidence: PR #156 (310e6f3).
+
+### F-2 — Dense-leg crossover (Lucene leg): measured 2026-10-10
+
+- 3 queries × parallel vs sequential, topKDense=10, real 768d vectors. 2/3 identical; q2 same set + same top-3 with ranks 4/5 swapped. First real crossover signal, and it's a tail swap — consistent with "sequential constrains the dense universe; order may differ at the tail".
+- Artifacts local-only (`vec-f1-dense-first-768-cassandra-lucene-m16`, parallel + sequential runs, model + dim stamped).
+- Remaining F-2: hybrid runs for comps 2–6 need embedded corpora in Milvus/Qdrant/PG/YDB (backfill work, not yet scheduled).
 
 ### VEC-B6 — Synthesis published (draft for review)
 
