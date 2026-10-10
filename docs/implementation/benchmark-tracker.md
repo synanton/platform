@@ -145,10 +145,30 @@ Cross-cutting:
 - B0.4 profiles stay frozen as task evidence; functional overlay lives in the framework.
 - NOT yet reviewed: architecture + legal sign-off required before production use.
 
+### DOC-D3.3 — Pattern library additions: landed
+
+- Appended PN-9…PN-13 to `docs/implementation/pg-poc/pattern-notes.md`
+  (the library seed; house rules append-only/chronological kept): roles-not-
+  positions composition, unmeasured-cell flags, score-space portability,
+  identical-input attribution, runbook-by-execution. Each names its Track B origin.
+
+### DOC-D4.1 — Cross-reference pass 2026-10-10: landed
+
+- Mechanical citation check over all 10 DOC-evidence docs: every referenced
+  path resolves (6 same-directory sibling links + schema basenames verified
+  against `schemas/benchmark/`). One genuine fix: framework §4 cited
+  `b5-effect-isolation.md` bare — corrected to the full
+  `../implementation/benchmark-runner-vector/` path.
+- Standing cadence: repeat this pass at every phase gate; gate checklists
+  carry DOC items (see Week-2 entry below).
+
 ### Week-2 gate: open (unscheduled)
 
 - Scope: Manifest + Result schema + metric-taxonomy freeze (BR-A0.2/A0.3/A0.4).
 - Owner/date: TBD — schedulable since Week-1 closed; unscheduled until BR-A0.1 requirements land.
+- DOC items for the gate checklist: D0 refs current vs frozen schema versions;
+  D4.1 cross-reference pass repeated; runbook validation log still green
+  against the frozen CLI.
 
 ## Alias map (transition only — drop after all branches renamed)
 

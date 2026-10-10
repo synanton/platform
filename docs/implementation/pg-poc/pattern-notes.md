@@ -86,4 +86,35 @@ the old). Entries carry stable labels (`PN-1`…); tickets cite the label
   the same pass (`ExtractionRequestValidator`, `JsonResponseValidator`,
   `BudgetGuard`, `AdapterResidencyGuard`) belong to owning workstreams —
   flagged, not claimed. Wiring both bench guards into RunLeg post-emission
-  is a post-R3 commit (all legs, shared layer).
+   is a post-R3 commit (all legs, shared layer).
+- **[PN-9] Composition is roles, not positions — and validation fails loud.**
+  Origin: VEC-B2.1/B2.2. Providers resolve by capability role
+  (`metadata.*` needs document storage, `vector.*` needs vector search);
+  `validateComposition` names provider + capability + reason on mismatch.
+  Silent fallback to a default engine is a correctness bug class, not a
+  convenience — every cross-provider code path must cite its composition.
+- **[PN-10] A blank evidence cell is a lie — mark unmeasured, don't imply.**
+  Origin: VEC-B6.1. The selection matrix carries functional columns where
+  most cells have no runs; an empty cell reads as "zero/unknown-later" and
+  downstream decisions treat it as data. Rule: every cell has a measured
+  number with vintage or an explicit `unmeasured` flag with the reason
+  (no embeddings, no hybrid runs, unpublished vendor figure). Applies to any
+  future comparison table, not just engines.
+- **[PN-11] Score spaces don't transfer — filter in the portable layer.**
+  Origin: VEC-B1/B3 (Lucene TF-IDF vs HNSW cosine distances). A threshold
+  meaningful in one engine is meaningless in another; pushing it into the
+  engine query bakes in non-portable semantics (and sentinel values may not
+  round-trip). Rule: retrieval is topK-bounded, thresholding happens
+  caller-side in Java (`MIN_SCORE_NO_THRESHOLD` contract).
+- **[PN-12] Attribution needs identical inputs, not similar ones.**
+  Origin: R3 Cassandra-vs-Lucene parity runs (VEC-B5). Two legs are
+  comparable only on byte-identical queries against a canonical corpus hash;
+  the runner refuses mismatched hashes rather than running anyway. A
+  benchmark that "runs anyway" on drifted inputs produces numbers that read
+  as comparable and aren't.
+- **[PN-13] Runbooks are validated by execution, not review.**
+  Origin: DOC-D1.1 (2026-10-09): fresh-eyes pass in a clean env caught a
+  live defect (fake corpus hash correctly refused) that review had passed
+  over twice. A runbook no one has executed verbatim from zero state is a
+  draft regardless of review stamps. Same standard applies to any
+  operator-facing procedure doc.
