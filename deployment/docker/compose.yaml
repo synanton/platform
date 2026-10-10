@@ -116,6 +116,9 @@ services:
       HEAP_NEWSIZE: 100M
     volumes:
       - ${DATA_ROOT:-./data}/cassandra:/var/lib/cassandra
+    ports:
+      # Bench legs (JUnit) read embeddings straight from CQL on the host.
+      - "9042:9042"
     healthcheck:
       test: ["CMD-SHELL", "nodetool status | grep -q '^UN'"]
       interval: 15s

@@ -191,6 +191,13 @@ Cross-cutting:
 - Artifacts local-only (`vec-f1-dense-first-768-cassandra-lucene-m16`, parallel + sequential runs, model + dim stamped).
 - Remaining F-2: hybrid runs for comps 2–6 need embedded corpora in Milvus/Qdrant/PG/YDB (backfill work, not yet scheduled).
 
+### F-2 backfill — Milvus + Qdrant hybrid legs with real vectors: landed 2026-10-10
+
+- Method: `MilvusF2HybridLegRun` / `QdrantF2HybridLegRun` (JUnit, established B5 leg pattern) — 81 demo chunks backfilled from ingestion cache into fresh 768d HNSW collections (M16, COSINE), F-3 queries embedded live via TEI. Artifacts local-only per `runs/` convention.
+- Recall@10 (first-pass gold, n=3): **Milvus 0.889 = Qdrant 0.889 > Lucene-hybrid 0.778.** Both HNSW engines return byte-identical q3 rankings and surface `logistics-network.md` at rank 3 — the doc Lucene-hybrid missed entirely.
+- Latencies: Qdrant 3–38 ms, Milvus 6–74 ms (small-scale; noise band, not a ranking).
+- Honest scope: n=3 queries, first-pass gold; cross-engine agreement is a signal, not a verdict. PG/YDB-native legs still open.
+
 ### F-3 — First-pass gold + first recall: landed 2026-10-10
 
 - Gold: `demo-data/eval/retrieval-benchmark/queries-f1-dense.json` — 3 queries, content_ref-level gold, every judgment carries `annotator: agent-first-pass, confidence: low` + rationale. PDFs unjudged (unread this pass). Human re-annotation replaces, never edits, this file.
