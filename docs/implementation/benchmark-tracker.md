@@ -121,6 +121,30 @@ Cross-cutting:
 - Carried: B2.1 owns retriever selection — facade holds one retriever, constructor-injected.
 - Widening escape hatch: if VectorSearchRequest grows filters/temporal/minScore, the corresponding clause comes off both predicates (isNarrowVectorRequest, isLossyVectorRequest).
 
+### VEC-B5.2 — Composition legs executed (partial): comp 1, 2+3, 4+5, 6
+
+- Comp 1 (Cassandra+Lucene, BM25-only): live synquest run, 10 queries, p50/p95 4.5/36ms, recall null (gold unannotated). Local artifact.
+- Comps 2/3 (Milvus/Qdrant vector legs): distinct-vector self-match runs, recall@10 1.0 (correctness, not quality), p95 50.5/27.1ms.
+- Comps 4/5 (PG lexical legs, shared metadata evidence): recall@10 1.0, p95 21.6ms.
+- Comp 6 (YDB lexical legs): recall@10 1.0, p50/p95 19.8/40.8ms.
+- Dense-leg quality + hybrid runs blocked on real embeddings (mock-constant vectors prove plumbing only). Artifacts local per `runs/` convention (untracked).
+- Machinery: Synquest REST executor + endpoint probe + Q3 bridge in `tools/benchmark-runner` (59+ tests green).
+
+### VEC-B5.3 — Vector-engine effect isolated
+
+- Lucene vs Milvus vs Qdrant on identical mini workload: recall 1.0 ×3, p50s 2–4ms, p95s 27–51ms. No selection signal at this scale; all three viable. Evidence: `b5-effect-isolation.md`.
+- B5.4 (metadata-store) + B5.5 (integration): deferred — need hybrid runs, no table faked.
+
+### VEC-B5.6 — Crossover measured (BM25-only scope)
+
+- 10/10 identical hit sets parallel vs sequential, live. No crossover identifiable without dense legs; procedure in place via per-leg trace timings.
+
+### VEC-B6 — Synthesis published (draft for review)
+
+- Framework: `docs/architecture/vector-engine-selection.md` — matrix with measured/unmeasured cells, per-context recommendations with evidence notes, sources, follow-ons F-1–F-8 (owners TBD).
+- B0.4 profiles stay frozen as task evidence; functional overlay lives in the framework.
+- NOT yet reviewed: architecture + legal sign-off required before production use.
+
 ### Week-2 gate: open (unscheduled)
 
 - Scope: Manifest + Result schema + metric-taxonomy freeze (BR-A0.2/A0.3/A0.4).
