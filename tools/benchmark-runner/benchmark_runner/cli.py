@@ -51,6 +51,12 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--executor", default="simulated", choices=["simulated", "synquest"],
                      help="composition executor (Synquest-backed lands with B5)")
     run.add_argument("--endpoint", help="synquest base URL (required with --executor synquest)")
+    run.add_argument("--embedding-model", default=None,
+                     help="embedding model id stamped into result manifests "
+                          "(e.g. synanton-bge-base-embedding); also asserts the "
+                          "service embeds with this model when --executor synquest")
+    run.add_argument("--embedding-dim", type=int, default=None,
+                     help="embedding dimension stamped into result manifests (e.g. 768)")
     run.add_argument("--dry-run", action="store_true", help="validate only; produce no artifacts")
     run.set_defaults(func=cmd_run)
     results = sub.add_parser("results", help="query stored Result Manifests (BR-A3.2 read API, CLI form)")
@@ -115,10 +121,15 @@ def cmd_run(args: argparse.Namespace) -> int:
     else:
         executor = SimulatedExecutor(seed=manifest.document["reproducibility"]["seed"])
     sink = FileResultSink(Path(args.out))
+    environment = {"runner_version": "0.2.0"}
+    if args.embedding_model:
+        environment["embedding_model"] = args.embedding_model
+    if args.embedding_dim:
+        environment["embedding_dim"] = args.embedding_dim
     try:
         artifacts = run_manifest(
             manifest, Path(args.corpus), queries, executor, sink,
-            environment={"runner_version": "0.2.0"},
+            environment=environment,
         )
     except ManifestError as e:
         print(f"error: {e}", file=sys.stderr)

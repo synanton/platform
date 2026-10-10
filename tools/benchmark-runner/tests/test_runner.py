@@ -87,3 +87,30 @@ def test_hash_mismatch_aborts_before_artifacts(tmp_path):
         raise AssertionError("expected abort on hash mismatch")
 
     assert not (tmp_path / "out").exists()
+
+
+def test_embedding_provenance_stamped_into_environment(tmp_path):
+    corpus = tmp_path / "corpus.bin"
+    corpus.write_bytes(b"test corpus bytes")
+    manifest = load_manifest(three_comp_manifest(tmp_path))
+    import hashlib
+
+    manifest.document["corpus"]["ref"] = "cas:" + hashlib.sha256(b"test corpus bytes").hexdigest()
+    sink = FileResultSink(tmp_path / "out")
+
+    artifacts = run_manifest(
+        manifest,
+        corpus,
+        QUERIES,
+        SimulatedExecutor(seed=11),
+        sink,
+        environment={
+            "runner_version": "test",
+            "embedding_model": "synanton-bge-base-embedding",
+            "embedding_dim": 768,
+        },
+    )
+
+    document = json.loads(artifacts[0].read_text())
+    assert document["environment"]["embedding_model"] == "synanton-bge-base-embedding"
+    assert document["environment"]["embedding_dim"] == 768
