@@ -1,0 +1,54 @@
+[
+  {
+    "query_id": "f1-q1",
+    "text": "company profile industrial manufacturing",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": ["b81bb34b-7afb-5f87-9107-917edc1273f4"],
+    "gold_provenance": {
+      "annotator": "agent-first-pass",
+      "date": "2026-10-10",
+      "confidence": "low",
+      "rationale": "acme-corp-profile.md IS a company profile of an industrial manufacturer (Overview + FY2024 financials). Globex/Initech profiles deliberately excluded: they are supplier profiles, and the query's singular 'company profile' + manufacturing-distributor framing matches Acme. Revisit in human pass.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q2",
+    "text": "supplier precision metal components automotive",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": ["d1436931-c546-57c5-9ea3-45535e141c75"],
+    "gold_provenance": {
+      "annotator": "agent-first-pass",
+      "date": "2026-10-10",
+      "confidence": "low",
+      "rationale": "globex-manufacturing.md: tier-one supplier, precision metal components (castings/forgings/CNC), automotive among served industries. Initech excluded (EMS/electronics, not precision metal). Vendor-agreements excluded (contract terms, not components). Revisit in human pass.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q3",
+    "text": "compliance report quarterly logistics network",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "ad3520fd-851a-57fd-8638-f68a0deae1df",
+      "8c803827-4301-59ce-9d72-e3240b68b9c7",
+      "e1ea63d9-10cc-516b-8a08-7fac26217721"
+    ],
+    "gold_provenance": {
+      "annotator": "agent-first-pass",
+      "date": "2026-10-10",
+      "confidence": "low",
+      "rationale": "One gold doc per query facet: compliance-report.txt (compliance facet), logistics-network.md (logistics facet), quarterly-report-q1.md (quarterly facet). NOTE: logistics-network.md did not surface in the unjudged run's top-5 — that is a recall miss to investigate, not an annotation error. PDFs (outsourcing-agreement, manual, mental-health, quarterly-report.pdf) not judged — unread in this pass. Revisit in human pass.",
+      "supersedes": null
+    }
+  }
+]
