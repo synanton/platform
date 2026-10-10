@@ -1,0 +1,97 @@
+# Bench-owned 384d TEI workload (F-9 path: bge-small legs for the 384d-locked
+# PG/YDB POC engines). Same turing image as the base workload; time-shares
+# node1's single GPU with tei-embedding (scale base to 0 while this runs).
+# Weights: /mnt/local-fast/models/bge-small-en-v1.5 (verified in place).
+# Apply from a host with cluster access (node0):
+#   kubectl scale deploy/tei-embedding -n gpu-plane --replicas=0
+#   kubectl apply -f deployment/bench/tei-embedding-small.yaml
+# Restore afterwards:
+#   kubectl delete -f deployment/bench/tei-embedding-small.yaml
+#   kubectl scale deploy/tei-embedding -n gpu-plane --replicas=1
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tei-embedding-small
+  namespace: gpu-plane
+  labels:
+    app: tei-embedding-small
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tei-embedding-small
+  template:
+    metadata:
+      labels:
+        app: tei-embedding-small
+    spec:
+      nodeName: node1
+      imagePullSecrets:
+        - name: local-registry-cred
+      containers:
+        - name: tei
+          image: local-registry:5000/text-embeddings-inference:turing-1.9
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model-id
+            - /models
+            - --served-model-name
+            - synanton-bge-small-embedding
+            - --hostname
+            - "0.0.0.0"
+            - --port
+            - "8000"
+            - --dtype
+            - float16
+          env:
+            - name: HF_HUB_OFFLINE
+              value: "1"
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              nvidia.com/gpu: 1
+              cpu: "2"
+              memory: 4Gi
+            limits:
+              nvidia.com/gpu: 1
+              cpu: "4"
+              memory: 8Gi
+          volumeMounts:
+            - name: model
+              mountPath: /models
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 3
+      volumes:
+        - name: model
+          hostPath:
+            path: /mnt/local-fast/models/bge-small-en-v1.5
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tei-embedding-small
+  namespace: gpu-plane
+spec:
+  selector:
+    app: tei-embedding-small
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+      nodePort: 30801
+  type: NodePort

@@ -96,5 +96,25 @@ docker compose -f docker/docker-compose.bench.yml up -d postgres
 # pg:      docker exec bench-postgres-1 psql -U bench -d bench -c "SELECT 1"
 # ydb:     test suite YdbSearchTestBase connects grpcs://localhost:2135/local
 #
+# ------------------------------------------------------------------ TEI tunnel
+# Dense legs embed via node1 TEI (bge-base, 768d). This host's firewall drops
+# NodePort traffic, so bench reaches TEI through an SSH tunnel bound on all
+# host interfaces (compose points synquest/synflux at host-gateway:30800).
+# Idempotent: re-run anytime; a live tunnel is left alone. Without it, dense
+# runs fail closed (503) by design — never silently lexical.
+#   NodePort object (bench-owned, gpu-runtime blueprint stays ClusterIP-only):
+#   kubectl apply -f deployment/bench/tei-embedding-bench-svc.yaml  (from node0)
+if (ss -tln 2>/dev/null || netstat -tln 2>/dev/null) | grep -q ":30800 "; then
+  echo "tei tunnel: already listening on :30800"
+else
+  ssh -o ConnectTimeout=10 -o BatchMode=yes -fN -L 0.0.0.0:30800:localhost:30800 node1 \
+    && echo "tei tunnel: established :30800 -> node1:30800" \
+    || echo "tei tunnel: FAILED (dense legs will 503) - rerun this script when node1 is reachable"
+fi
+curl -s -m 15 -o /dev/null -w "tei /v1/embeddings via tunnel: %{http_code}\n" \
+  -X POST http://localhost:30800/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{"input": "tunnel check", "model": "synanton-bge-base-embedding"}' || true
+#
 # Teardown (data in bind mounts / named containers survives unless removed):
 #   docker stop milvus-standalone milvus-minio milvus-etcd qdrant-bench

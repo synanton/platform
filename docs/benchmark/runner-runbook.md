@@ -75,6 +75,7 @@ will be) ingested — `demo-data/documents` for the demo runs.
 | `seed is missing` (exit 3) | No reproducibility claim possible | Add integer `seed` |
 | `endpoint unreachable` (run) | Synquest down / wrong URL | `probe` the endpoint (below); check `:8083/actuator/health` |
 | `search failed: HTTP 5xx` (run) | Service-side error | Check service logs; rerun one query with `top_k_dense: 0` to isolate BM25 |
+| `search failed: HTTP 503` on dense queries | TEI tunnel down (`:30800`): dense runs fail closed by design, never silently lexical | Re-run `scripts/bench-vector-stacks.sh` (TEI section re-establishes the tunnel idempotently); verify `curl ... :30800/v1/embeddings` returns 200 |
 | `timeout after N ms` (exit 4) | `timeout_ms` too tight or service stalled | Raise `timeout_ms` or investigate service latency |
 | `event count … exceeded limit` (exit 4) | `max_event_count` below workload | Raise the limit (manifest-configurable) or shrink the query set |
 | Empty `hits` on every query | Wrong tenant, empty index, or (dense) missing embeddings | Check tenant; `results show` timing_scope; service `/index/stats` for vector coverage |
