@@ -198,6 +198,12 @@ Cross-cutting:
 - Latencies: Qdrant 3–38 ms, Milvus 6–74 ms (small-scale; noise band, not a ranking).
 - Honest scope: n=3 queries, first-pass gold; cross-engine agreement is a signal, not a verdict. PG/YDB-native legs still open.
 
+### F-2 backfill — PG/YDB legs: blocked on 384d lock-in (recorded 2026-10-10)
+
+- Both POC engines hard-code 384d: PG `vector(384)` column rejects wider vectors (`PostgresSynquestEngine` paddedVector/write path); YDB's statements are 384-literal-shaped (768d noted in-code as binding vs the 64MB gRPC cap).
+- Options rejected: (a) running PG/YDB at 384d with different vectors — breaks cross-engine comparability; (b) truncating 768→384 via Matryoshka cut — compares cut vectors on one engine against full vectors on others.
+- Filed as F-9 (dim-parameterization of the POC engines) in the selection framework. F-2 closes with Lucene + Milvus + Qdrant hybrid legs.
+
 ### F-3 — First-pass gold + first recall: landed 2026-10-10
 
 - Gold: `demo-data/eval/retrieval-benchmark/queries-f1-dense.json` — 3 queries, content_ref-level gold, every judgment carries `annotator: agent-first-pass, confidence: low` + rationale. PDFs unjudged (unread this pass). Human re-annotation replaces, never edits, this file.
