@@ -8,6 +8,8 @@ dependencies {
     api(project(":java:synquest-api"))
     api(libs.milvus.sdk.java)
     testImplementation(project(":java:synquest-api"))
+    testImplementation(project(":java:ingestion-cache"))
+    testImplementation(project(":java:synanton-llm-client"))
     testImplementation(testFixtures(project(":java:storage-testkit")))
     testImplementation(libs.jackson.databind)
     testImplementation(platform(libs.testcontainers.bom))
