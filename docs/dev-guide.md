@@ -1,9 +1,8 @@
 # Synanton Developer Guide — Infrastructure Discipline Rules
 
-**Status:** Seeded 2026-10-01 · **Owner:** Docs owner (TBD — Week 1 gate)
+**Status:** Seeded 2026-10-01 · Parameterization + composition added 2026-10-09 (DOC-D2.3) · **Owner:** Docs owner (TBD — Week 1 gate)
 **Scope:** Cross-cutting implementation disciplines citable by PR reviewers.
-Pending rules land here via DOC-D2.3 (parameterization discipline from YDB-041,
-composition boundaries); pattern additions via DOC-D3.3.
+Pattern additions via DOC-D3.3.
 
 Related: [Benchmark Runner + Vector Engine plan](./implementation/benchmark-runner-vector/INDEX.md)
 
@@ -82,3 +81,42 @@ Scope and grandfather clause:
 
 Origin: field-marking review 2026-10-09. Prior art: unity-hli-v4 `ScopePrefix`
 (concept only — no code reuse, no dependency; see thread record).
+
+---
+
+## Parameterized statements, AST-first diagnostics
+
+Batch statements use bound parameters — never inlined literals proportional
+to data size. YDB-041 lost days to storage, stats, and index hypotheses
+before the statement shape was examined; the param-based batch path then
+delivered ~770 rows/s (250× over inlined literals).
+
+- If a batch statement is slow, count the AST nodes first. Literals
+  proportional to data size mean: parameterize before investigating anything else.
+- Measure from clean-slate schema state: drop-then-create before benchmarking.
+  Persisted volumes carry stale tables and `ensureSchema` skips index DDL when
+  tables exist — a stale-schema confound reads exactly like a slow engine.
+
+Origin: YDB-041 bulk-upsert investigation, closed 2026-09-29.
+
+---
+
+## Composition boundaries
+
+A composition pairs one metadata stack with one vector engine under separate
+namespaces (`metadata.*`, `vector.*`); providers are resolved by role, never
+by position:
+
+- `metadata.provider` requires document storage; `vector.provider` requires
+  vector search. `validateComposition` fails loud on unknown names or
+  capability mismatch — no silent fallback, ever.
+- Endpoints are by-name references (`endpoint_ref`), never inline secrets.
+- Single-provider deployments stay zero-config: unset `vector.provider`
+  defaults to `metadata.provider` at config load, before validation.
+  (In the schema file the field is required — defaulting happens at load.)
+
+Reviewers: any PR introducing a cross-provider code path must cite its
+composition and show the validation passing. See the composition guide for
+the six reference compositions.
+
+Origin: VEC-B2.1/B2.2 provider registry + `validateComposition`, 2026-10-06.

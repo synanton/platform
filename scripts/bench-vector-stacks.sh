@@ -52,16 +52,18 @@ docker run -d --name milvus-minio --network bench-vec \
 # timeout instead of retrying — if it exits 134, check ETCD reachability,
 # then `docker start milvus-standalone`).
 ETCD_IP="$(docker inspect milvus-etcd --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
-echo "etcd IP: ${ETCD_IP}"
+MINIO_IP="$(docker inspect milvus-minio --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+echo "etcd IP: ${ETCD_IP} / minio IP: ${MINIO_IP}"
 docker rm -f milvus-standalone 2>/dev/null || true
 docker run -d --name milvus-standalone --network bench-vec \
   -v "${DATA_ROOT}/milvus:/var/lib/milvus" \
   -e "ETCD_ENDPOINTS=${ETCD_IP}:2379" \
-  -e MINIO_ADDRESS=minio:9000 \
+  -e "MINIO_ADDRESS=${MINIO_IP}:9000" \
   -p 19530:19530 -p 9091:9091 \
   milvusdb/milvus:latest milvus run standalone
-# NOTE: ETCD by IP, not name — embedded DNS proved unreliable here.
-# MinIO keeps the alias (S3 SDK resolves once at startup; harmless if flaky).
+# NOTE: both endpoints by IP, not name — embedded DNS proved unreliable here
+# (getent fails on fresh user networks; Milvus panics on etcd timeout instead
+# of retrying, and dies ~60s later when MinIO is unreachable).
 
 # ------------------------------------------------------------------ qdrant ---
 # Single container. REST :6333, gRPC :6334 (plaintext for tests; TLS is the
