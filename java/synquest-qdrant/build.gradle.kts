@@ -9,6 +9,7 @@ dependencies {
     api(libs.qdrant.client)
     testImplementation(project(":java:synquest-api"))
     testImplementation(testFixtures(project(":java:storage-testkit")))
+    testImplementation(libs.jackson.databind)
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.core)
     testImplementation(libs.testcontainers.junit)
