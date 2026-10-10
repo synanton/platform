@@ -83,6 +83,8 @@ class SynquestExecutor(CompositionExecutor):
                 "top_k_lexical": query.get("top_k_lexical", 100),
                 "rrf_k": query.get("rrf_k", 60),
             }
+            if query.get("execution_mode"):
+                payload["execution_mode"] = query["execution_mode"]
             response = post_search(self.endpoint, payload, self.timeout_s)
             hits = [
                 {"chunk_id": h.get("content_ref_id", h.get("chunk_id", "")),
