@@ -191,6 +191,12 @@ Cross-cutting:
 - Artifacts local-only (`vec-f1-dense-first-768-cassandra-lucene-m16`, parallel + sequential runs, model + dim stamped).
 - Remaining F-2: hybrid runs for comps 2–6 need embedded corpora in Milvus/Qdrant/PG/YDB (backfill work, not yet scheduled).
 
+### F-3 — First-pass gold + first recall: landed 2026-10-10
+
+- Gold: `demo-data/eval/retrieval-benchmark/queries-f1-dense.json` — 3 queries, content_ref-level gold, every judgment carries `annotator: agent-first-pass, confidence: low` + rationale. PDFs unjudged (unread this pass). Human re-annotation replaces, never edits, this file.
+- Result: **recall@10 = 0.78** (q1 1/1 Acme, q2 1/1 Globex, q3 1/3 — logistics-network.md + quarterly-report-q1.md missed from top-5). Artifact local-only, model + dim stamped.
+- Methodology wrinkle recorded: recall key is k=10 but lists are top-5, so this reads as recall@5. Fix the k/returned-hits alignment before comparing across legs.
+
 ### VEC-B6 — Synthesis published (draft for review)
 
 - Framework: `docs/architecture/vector-engine-selection.md` — matrix with measured/unmeasured cells, per-context recommendations with evidence notes, sources, follow-ons F-1–F-8 (owners TBD).
