@@ -128,7 +128,7 @@ a filled `n/a` is different from an unfilled cell.
 | Mem 768d | 3080 B/vec · 3.080 GB/1M | storage | fp32 | sourced | same |
 | Mem 1536d | 6152 B/vec · 6.152 GB/1M | storage | fp32 | sourced | same |
 | Index-tier (HNSW graph) | — | index | fp32 | assumed (no figure) | README: "uses more memory" vs IVFFlat |
-| Storage footprint | — | — | — | assumed (no figure) | — |
+| Storage footprint (deployment) | image 438 MB (`pgvector:0.8.6-pg16`); data dir 4 KB at toy scale | disk | — | measured | local docker 2026-10-10 |
 
 HNSW params: m=16, ef_c=64, ef_s=40. Quant states: fp32 (4d+8), halfvec fp16 (2d+8), bit (d/8+8), sparsevec (8·nnz+16).
 
@@ -143,7 +143,7 @@ comparable to `index`-tier cells of other engines until the HNSW graph figure la
 | Mem 384d | n/a | — | — | n/a (IVF) | index resident in distributed storage; bounded by level-cache config |
 | Mem 768d | n/a | — | — | n/a (IVF) | same |
 | Mem 1536d | n/a | — | — | n/a (IVF) | same |
-| Storage footprint | — | — | — | assumed (no figure) | — |
+| Storage footprint (deployment) | image 877 MB (`local-ydb:stable-26-3-1`); per-vector storage n/a (IVF, distributed) | disk | — | measured | local docker 2026-10-10 |
 
 Index params (IVF): levels 1–16 (rec 1–3), clusters 2–2048 (rec 64–512), overlap_clusters 1 (rec 3), vector_type float/uint8/int8, dim ≤ 16384. Posting table stores keys not vectors by default; covering index stores vectors; level table cacheable via `resource_manager.kqp_level_cache_max_size_bytes`. Clusters read over network per descent.
 
@@ -156,6 +156,7 @@ Index params (IVF): levels 1–16 (rec 1–3), clusters 2–2048 (rec 64–512),
 | Mem 768d | — | — | — | assumed (no joint figure) | — |
 | Mem 1536d | — | — | — | assumed (no joint figure) | — |
 | Storage footprint | +20–35% disk over unindexed (SAI variant) | disk | — | sourced | cassandra.apache.org SAI FAQ |
+| Storage footprint (deployment) | image 336 MB (`cassandra:4.1`); data dir 1.2 MB disk (33 MB apparent, sparse) at toy scale | disk | — | measured | local docker 2026-10-10 |
 
 Sourced notes: SAI memory splits between JVM heap (memtable indexes) and chunk cache (on-disk). Per-index byte metrics exist (`indexFileCacheSize`). `cassandra-lucene-index` plugin dials: ram_buffer_mb 64 / max_merge_mb 5 / max_cached_mb 30 per local index × partitions.
 
@@ -167,7 +168,7 @@ Sourced notes: SAI memory splits between JVM heap (memtable indexes) and chunk c
 | Mem 384d | 2765 B/vec · 2.765 GB/1M | index | fp32 | sourced | milvus.io/blog 2026-03-19 |
 | Mem 768d | 5530 B/vec · 5.530 GB/1M | index | fp32 | sourced | same |
 | Mem 1536d | 11059 B/vec · 11.059 GB/1M | index | fp32 | sourced | same |
-| Storage footprint | — | — | — | assumed (no figure) | — |
+| Storage footprint (deployment) | images 1.57 GB milvus + 59 MB etcd + 175 MB minio; data dirs 150 MB / 8 KB / 424 KB at toy scale | disk | — | measured | local docker 2026-10-10 |
 
 Multiplier: 1.8× raw. Same-page range stated as 1.5–2.0×; sizing-tool blog states 2–3×. Second datapoint: 8M × 768d HNSW M=4 → 1.36× raw (Alibaba sizing calc, experimental, managed context).
 
@@ -179,7 +180,7 @@ Multiplier: 1.8× raw. Same-page range stated as 1.5–2.0×; sizing-tool blog s
 | Mem 384d | — | — | — | assumed (no figure) | — |
 | Mem 768d | — | — | — | assumed (no figure) | — |
 | Mem 1536d | — | — | — | assumed (no figure) | — |
-| Storage footprint | — | — | — | assumed (no figure) | — |
+| Storage footprint (deployment) | image 200 MB (`qdrant:latest`); data dir 524 KB disk (369 MB apparent — preallocated mmap) at toy scale | disk | — | measured | local docker 2026-10-10 |
 
 Sourced qualitative (tiers): default cached tier = fp32 vectors in RAM; turbo4 datatype = 4-bit/dim on disk; turboquant bits1; cold tier = vectors + HNSW on disk; `inline_storage` ≈ 3–6× float32 vectors when cold + quantized.
 
@@ -364,7 +365,7 @@ Cells marked `assumed` route here, split by category.
 | Tantivy | All memory cells | Lexical-only; n/a on dense-vector, but other metrics possible |
 | Quickwit | All per-vector memory cells | Lexical-only |
 | Milvus, Weaviate, Vespa, OpenSearch | CPU profiles | None published |
-| All engines | Storage footprint (except Cassandra+Lucene SAI) | Broad gap; consider a batch Phase-5 measurement |
+| All engines | Storage footprint (except Cassandra+Lucene SAI) | Broad gap; batch deployment measurement 2026-10-10 filled 5/11 (PG, YDB, Cassandra, Milvus stack, Qdrant); per-vector storage still unmeasured — data dirs reflect toy corpora only |
 
 ### §8b. Follow-up reads (page exists, content unread)
 
