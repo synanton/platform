@@ -10,7 +10,7 @@ dependencies {
     testImplementation(project(":java:synquest-api"))
     testImplementation(project(":java:synquest-cassandra"))
     testImplementation(testFixtures(project(":java:storage-testkit")))
-    testImplementation(project(":java:synquest-cassandra"))
+    testImplementation(libs.jackson.databind)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
