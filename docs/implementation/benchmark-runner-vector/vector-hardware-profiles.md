@@ -172,6 +172,8 @@ Sourced notes: SAI memory splits between JVM heap (memtable indexes) and chunk c
 
 Multiplier: 1.8× raw. Same-page range stated as 1.5–2.0×; sizing-tool blog states 2–3×. Second datapoint: 8M × 768d HNSW M=4 → 1.36× raw (Alibaba sizing calc, experimental, managed context).
 
+Corroborated 2026-10-10 by the 2026-03-20 cost-optimization guide (same publisher): HNSW multiplier ~1.8× nominal, 1.5–2.0× range restated, sizing-tool 2–3× restated. Three mutually consistent sources; the band stands. Caveat from production issue reports: jemalloc/allocator overhead and loaded raw data can push observed RSS above the formula — size with headroom, don't treat 1.8× as a ceiling.
+
 ### Qdrant
 
 | Field | Value | Tier | Quant | Marking | Source |
@@ -231,6 +233,8 @@ Overhead model: fixed 640 B/node (maxConn 64 × 10 B), independent of d. Cross-c
 | Storage footprint | — | — | — | assumed (no figure) | — |
 
 Overhead model: proportional, ~20–40% of raw. Anchor: "1B × 768d fp32 requires close to 3 TiB; HNSW graph adds 20–40%; ~4 TiB total." Interpolation law stated (linear-overhead); constant-overhead alternative bracketed in the cell. HNSW params: max-links-per-node=16, neighbors-to-explore-at-insert=200. Tensor cell types: int8=1B, bfloat16=2B, float=4B, double=8B.
+
+Re-verified 2026-10-10: anchor post live, figures unchanged; current HNSW docs corroborate the in-memory model (tensors + graph resident, float→bfloat16 halves cost). Billion-scale economics caveat: hybrid HNSW-IF (2022-06-08 companion + 2022-10-26 follow-up) keeps only centroids in memory with the bulk on disk — the 4 TiB figure is the pure-HNSW path, not the cheapest Vespa path at 1B scale.
 
 ### OpenSearch
 
@@ -387,8 +391,8 @@ Cells marked `assumed` route here, split by category.
 
 | Cell | Reason |
 |---|---|
-| Vespa 768d anchor (2022-06-08) | Four years of releases; anchors all three Vespa dims |
-| Milvus multiplier 1.8× | Same-page range 1.5–2.0×; sizing-tool states 2–3× |
+| Vespa 768d anchor (2022-06-08) | Re-verified 2026-10-10: confirmed, figures unchanged (+HNSW-IF caveat noted in-section) |
+| Milvus multiplier 1.8× | Corroborated 2026-10-10 by second 2026 source; band stands (+RSS-headroom caveat noted in-section) |
 | OpenSearch mem cells | Formula-derived; not verified against running deployment |
 
 ---
