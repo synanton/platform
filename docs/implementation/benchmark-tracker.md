@@ -121,6 +121,43 @@ Cross-cutting:
 - Carried: B2.1 owns retriever selection — facade holds one retriever, constructor-injected.
 - Widening escape hatch: if VectorSearchRequest grows filters/temporal/minScore, the corresponding clause comes off both predicates (isNarrowVectorRequest, isLossyVectorRequest).
 
+### VEC-B2.1 — Provider namespaces: landed
+
+- Scope: `metadata.*` + `vector.*` namespaces in ProviderRegistry (role-based resolution, not positional).
+- Evidence: PR #131 (c9935f5) — registry + composition test (118 insertions).
+
+### VEC-B2.2 — Composition validation: landed
+
+- Scope: `validateComposition` with load-time defaults (unset `vector.provider` → `metadata.provider`); unknown names and capability mismatches fail loud naming provider + capability + reason.
+- Evidence: PR #132 (058d426) — validation + test (131 insertions).
+- Carried: no silent fallback, ever (now a dev-guide rule via DOC-D2.3).
+
+### VEC-B2.3 — Composition config schema + examples: landed
+
+- Scope: `synquest-composition.schema.json` (`0.1.0-draft`) + all 6 composition examples; fusion (`rrf`, `rrf_k`) and execution (`parallel`/`sequential`, `per_query_override`) included.
+- Evidence: PR #133 (28b8001) — schema + 7 files (151 insertions).
+
+### VEC-B3.1 + B3.2 — Milvus + Qdrant adapters: landed (one PR)
+
+- Scope: Both external-service adapters behind VectorRetriever, async, eligibility pre-ranking, Java-side score filtering.
+- Evidence: PR #134 (9dabcac) — 9 files (883 insertions), incl. per-adapter tests.
+
+### VEC-B3.3 — Lucene standalone + Cassandra parity: landed
+
+- Scope: In-process Lucene adapter; parity test vs Cassandra+Lucene on identical queries (R3 attribution basis).
+- Evidence: PR #135 (507e548) — adapter + parity test (393 insertions).
+
+### VEC-B3.4 — pgvector reference: landed
+
+- Scope: Explicit pgvector reference — contract test + vector write path on PostgresSynquestEngine.
+- Evidence: PR #136 (18d6166) — 2 files (62 insertions).
+
+### VEC-B4 narrow — Sequential filtered-KNN: landed
+
+- Scope: Sequential metadata-first mode + `executionMode` per-query override; result shapes identical to parallel by construction (shared fusion path).
+- Evidence: PR #137 (18f77bf) — 11 files (269 insertions), incl. SearchServiceSequentialTest.
+- Carried: per-backend sequential is Phase-5; crossover selectivity unmeasured without dense legs (B5.6 record).
+
 ### VEC-B5.2 — Composition legs executed (partial): comp 1, 2+3, 4+5, 6
 
 - Comp 1 (Cassandra+Lucene, BM25-only): live synquest run, 10 queries, p50/p95 4.5/36ms, recall null (gold unannotated). Local artifact.
