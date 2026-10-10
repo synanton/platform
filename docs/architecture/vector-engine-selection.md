@@ -81,7 +81,7 @@ cells are `unmeasured`, the recommendation says so rather than implying data.
 - Deployment: vendor docs + plan seeds (VEC-B0.2 artifact).
 - Hardware: vendor formulas/blogs + computed cells (VEC-B0.3 artifact);
   Vespa anchor 2022-06-08 flagged for re-verification.
-- Functional: B5 run artifacts (this repo `runs/`, local-only) + `b5-effect-isolation.md`.
+- Functional: B5 run artifacts (this repo `runs/`, local-only) + `../implementation/benchmark-runner-vector/b5-effect-isolation.md`.
 
 ## 4. Follow-ons (VEC-B6.4 — owners TBD, filed here until a tracker home exists)
 
