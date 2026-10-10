@@ -129,7 +129,6 @@ def test_executor_structural_empty_only_without_signal(stub_url):
 
     assert results[0].structural_empty is False
 
-
 def test_executor_structural_empty_without_signal(stub_url):
     StubHandler.mode = "empty"
     try:
@@ -142,3 +141,23 @@ def test_executor_structural_empty_without_signal(stub_url):
         assert results[0].structural_empty is True
     finally:
         StubHandler.mode = "ok"
+
+
+def test_executor_forwards_execution_mode(stub_url):
+    executor = SynquestExecutor(stub_url)
+
+    executor.execute(
+        {"composition_id": "c1"},
+        [{"query_id": "qn", "execution_mode": "sequential"}],
+        None,
+    )
+
+    assert StubHandler.seen[-1].get("execution_mode") == "sequential"
+
+
+def test_executor_omits_execution_mode_by_default(stub_url):
+    executor = SynquestExecutor(stub_url)
+
+    executor.execute({"composition_id": "c1"}, [{"query_id": "qn"}], None)
+
+    assert "execution_mode" not in StubHandler.seen[-1]

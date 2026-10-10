@@ -26,6 +26,24 @@ fixed) predict divergence with dimension and scale — untested here, routed to
 Phase-5 measurement. No selection signal at this scale; the matrix keeps all
 three viable on functional grounds.
 
+## B5.6 sequential vs parallel crossover — measured (BM25-only scope)
+
+10 demo-doc queries × both modes, live synquest, BM25-only (`topKDense=0`).
+Identical hit sets: **10/10** — shape identity holds live, not just in unit tests.
+
+| Mode | p50 (ms) | p95 (ms) |
+|---|---|---|
+| Parallel | 4.5 | 36.0 |
+| Sequential | 5.0 | 10.6 |
+
+Read carefully, not triumphantly: the p95 gap is a first-query cold-cache
+effect (rb001 ran first in the parallel run at 59 ms vs 12 ms sequential on
+warm caches), not a mode effect. Medians are indistinguishable (4.5 vs 5.0).
+**No crossover selectivity is identifiable in BM25-only mode** — the dense leg
+is empty under both modes, so there is nothing to cross over. Crossover
+measurement needs hybrid runs with real embeddings; routed to Phase-5 with the
+procedure (per-leg trace timings on both modes) already in place.
+
 ## B5.4 metadata-store effect — DEFERRED
 
 Isolating metadata-store effect (2 vs 4, 3 vs 5) requires full hybrid runs per
