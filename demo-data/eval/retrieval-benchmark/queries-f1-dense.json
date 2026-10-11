@@ -370,5 +370,149 @@
       "rationale": "Multi-gold by design: logistics-network (six-hour milk-run service) + initech (Mississauga VMI hub, kanban replenishment). Tests whether engines bridge two docs describing one operation.",
       "supersedes": null
     }
+  },
+  {
+    "query_id": "f1-q21",
+    "text": "cGMP quality agreement master batch record manufacturing standards",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "cGMP Requirements, Master Batch Record, Quality Agreement definitions + manufacturing process clauses live only in outsourcing-agreement chunks. Pharma-domain depth probe.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q22",
+    "text": "Bubendorf Switzerland manufacturing facilities territory",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Facilities at Bubendorf/Neuland + Territory definition (USA + expansion) only in outsourcing-agreement. Entity-precision probe.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q23",
+    "text": "payment terms early discount audit rights supplier agreements",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "96aaae57-8f4e-5f55-8e84-ecee37df393d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "30-day terms, 1.5% early discount, annual audit rights only in vendor-agreements (Globex section). Outsourcing-agreement invoicing (Article 10) is a near-miss \u2014 different companies, excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q24",
+    "text": "C-TPAT customs conflict minerals cybersecurity supplier requirements",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "ad3520fd-851a-57fd-8638-f68a0deae1df"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "C-TPAT certification, Form SD conflict minerals, SOC 2 supplier standard only in compliance-report. Risk-factors cyber theme is generic \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q25",
+    "text": "Columbus cross-dock Mississauga hub freight facilities",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "180k sq ft Columbus cross-dock + Mississauga VMI hub only in logistics-network. Initech mentions its Mississauga facility (manufacturing, not hub) \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q26",
+    "text": "production continuity disruption days inventory concentration impact",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "9c4be5e5-6386-5ea6-aabb-2c81934e2524"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "10\u201314 day continuity impact + 62% concentration (Risk Factor 1) only in risk-factors-2025. Acme risk-committee mention is generic \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q27",
+    "text": "steel aluminum copper input cost inflation index pricing margins",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "0d1ff376-bced-5eb4-9310-b448ae0d582d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Spot steel -12%, index-linked pricing, margin restoration only in market-analysis. Quarterly-report commodity adjustments are a near-miss \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q28",
+    "text": "safety stock inventory secondary supplier qualification casting",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "e1ea63d9-10cc-516b-8a08-7fac26217721"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "$6.3M safety stock + secondary casting supplier qualification only in quarterly-report-q1. Risk-factors dual-sourcing theme is generic \u2014 excluded pending human call.",
+      "supersedes": null
+    }
   }
 ]
