@@ -295,6 +295,28 @@ Cross-cutting:
 - Result: **recall@10 = 0.78** (q1 1/1 Acme, q2 1/1 Globex, q3 1/3 — logistics-network.md + quarterly-report-q1.md missed from top-5). Artifact local-only, model + dim stamped.
 - Methodology wrinkle recorded: recall key is k=10 but lists are top-5, so this reads as recall@5. Fix the k/returned-hits alignment before comparing across legs.
 
+### F-3 confirmed — human gold in chat (2026-10-11)
+
+- All three first-pass judgments confirmed unchanged (Acme-only / Globex-only /
+  3-facet q3). File provenance upgraded to `human-confirmed, medium`
+  (single annotator, no adjudication). PDFs still unjudged — next expansion.
+- Final scoreboard, human gold, n=3:
+
+  | Engine | bge-base 768d | bge-small 384d |
+  |---|---|---|
+  | Lucene-hybrid (service) | 0.778 | 0.889 |
+  | Lucene-vector (service) | — | 0.889 |
+  | Lucene-standalone | — | 0.889 |
+  | Milvus HNSW | 0.889 | 0.889 |
+  | Qdrant HNSW | 0.889 | 0.889 |
+  | PG (384-locked) | — | 1.0 |
+  | YDB-hybrid (384-locked) | — | 1.0 |
+
+  (768d Lucene cell rescored from run log after /tmp wipe; queries+gold identical.)
+- Reading holds: model effect (Lucene +0.111), engine effect at fixed model
+  (PG/YDB 1.0 > rest 0.889), Milvus=Qdrant identical everywhere, B5.5
+  integration zero. All cells provisional on n=3 + unjudged PDFs.
+
 ### VEC-B6 — Synthesis published (draft for review)
 
 - Framework: `docs/architecture/vector-engine-selection.md` — matrix with measured/unmeasured cells, per-context recommendations with evidence notes, sources, follow-ons F-1–F-8 (owners TBD).
