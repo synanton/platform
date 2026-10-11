@@ -25,6 +25,17 @@ set -euo pipefail
 DATA_ROOT="${DATA_ROOT:-./data}"
 mkdir -p "${DATA_ROOT}"/{etcd,minio,milvus,qdrant}
 
+# YDB client CA: repo-local gitignored copy (docker/certs/ydb/ca.pem) so legs
+# survive /tmp wipes on reboot. Legs read YDB_CA_PATH first; refresh the copy
+# whenever ydb-poc is recreated (certs regenerate with the container).
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -f "${REPO_ROOT}/docker/certs/ydb/ca.pem" ]]; then
+  export YDB_CA_PATH="${REPO_ROOT}/docker/certs/ydb/ca.pem"
+else
+  echo "warning: ${REPO_ROOT}/docker/certs/ydb/ca.pem missing — copy it out with:" >&2
+  echo "  docker cp ydb-poc:/ydb_certs/ca.pem ${REPO_ROOT}/docker/certs/ydb/ca.pem" >&2
+fi
+
 # ---------------------------------------------------------------- network ---
 docker network create bench-vec 2>/dev/null || true
 

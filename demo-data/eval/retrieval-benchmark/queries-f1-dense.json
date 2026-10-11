@@ -225,5 +225,150 @@
       "rationale": "Demand drivers ($84B market, 3.8% CAGR, EV/reshoring) only in market-analysis.txt. Globex Q3-2024 EV battery-enclosure expansion is a partial topical overlap \u2014 excluded as company-news vs market-analysis framing, pending human call.",
       "supersedes": null
     }
+  },
+  {
+    "query_id": "f1-q13",
+    "text": "Paratek CARBOGEN outsourcing agreement effective date parties",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Parties (Paratek Pharmaceuticals / CARBOGEN AMCIS) + Effective Date 2016-12-30 appear only in outsourcing-agreement chunks. In-domain pharma retrieval test.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q14",
+    "text": "manufacturing capacity forecasts purchase orders supply commitments",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Production capacity, rolling forecasts, binding purchase orders (Articles 3-4) are the agreement's core commercial terms. Vendor-agreements (Acme/Globex/Initech terms) is a deliberate near-miss \u2014 different companies, excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q15",
+    "text": "switch web management interface login device configuration",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "70d1cb94-dd31-5ffc-8329-5785421e3274"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "SKS8300 manual TOC (login, system config, device info) is the only network-equipment content. In-domain tech retrieval test.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q16",
+    "text": "mental health population report executive summary",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "de349296-58b7-57d7-bfb3-2c02125c8e5c"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Public-health report (TOC: population mental health sections) is the only match. In-domain test that engines don't drag manufacturing docs into unrelated queries.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q17",
+    "text": "Krakow Poland facility automation electrification components",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "9f460a4c-4276-5a53-8da0-336a8dfd47f3"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Initech Krakow facility (automation investment, electrification demand, IPC-A-610) \u2014 sub-document precision probe. Logistics-network mentions Krakow hub (different facet: freight, not manufacturing) \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q18",
+    "text": "Ontario facility expansion electric vehicle battery enclosure investment",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "d1436931-c546-57c5-9ea3-45535e141c75"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Globex Q3-2024 $95M Ontario expansion (die casting cell, EV battery enclosures, +400 jobs). Market-analysis EV framing is the near-miss \u2014 company-news vs market-analysis, excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q19",
+    "text": "USMCA duty savings customs trade compliance tariff",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "ad3520fd-851a-57fd-8638-f68a0deae1df"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "$1.2M duty savings + USMCA analysis live only in compliance-report (Trade Compliance section). Risk-factors trade-policy theme is generic \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q20",
+    "text": "milk-run vendor managed inventory hub replenishment production lines",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7",
+      "9f460a4c-4276-5a53-8da0-336a8dfd47f3"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Multi-gold by design: logistics-network (six-hour milk-run service) + initech (Mississauga VMI hub, kanban replenishment). Tests whether engines bridge two docs describing one operation.",
+      "supersedes": null
+    }
   }
 ]

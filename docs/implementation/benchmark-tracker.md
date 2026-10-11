@@ -370,6 +370,44 @@ Cross-cutting:
   (0.847) > Lucene-st-384 (0.806) > Lucene-st-768 (0.778).
   All cells n=12, single annotator, PDFs judged.
 
+### F-3 n=20 — round 2 (q13–q20), small-384 column (2026-10-11)
+
+- 8 new queries human-confirmed (pharma parties/terms, switch login, mental
+  health, Krakow, EV capex, USMCA, milk-run/VMI bridge). Legs read the
+  single gold file (`BENCH_QUERIES_FILE`).
+- Recall@10, human gold, n=20, bge-small 384d: PG 0.975, YDB 0.975,
+  Milvus 0.883, Qdrant 0.883, Lucene-hyb 0.883, Lucene-st 0.858.
+  (Milvus=Qdrant byte-identical again, all 20.)
+- Systematic miss: q20 (milk-run/VMI bridge) 0.5 on ALL six legs — the two
+  gold docs never co-occur in any top-5. Multi-doc bridge queries are the
+  hardest class in this corpus; next tuning input after q2-fusion.
+- YDB CA now repo-local (`docker/certs/ydb/`, gitignored) + `YDB_CA_PATH`
+  export in stacks script — /tmp wipes broke legs on reboot, per decision.
+
+### F-3 n=20 complete — full 2-model matrix (2026-10-11)
+
+- Recall@10, human gold, n=20:
+
+  | Engine | bge-base 768d | bge-small 384d |
+  |---|---|---|
+  | Lucene-hybrid (service) | 0.892 | 0.883 |
+  | Lucene-vector (service) | — | 0.889* |
+  | Lucene-standalone | 0.817 | 0.858 |
+  | Milvus HNSW | 0.883 | 0.883 |
+  | Qdrant HNSW | 0.883 | 0.883 |
+  | PG (384-locked) | — | 0.975 |
+  | YDB-hybrid (384-locked) | — | 0.975 |
+
+  (*service-vec-384 scored at n=12; rerun pending — cell carried, flagged.)
+- Ranking: PG=YDB (0.975) > Lucene-vec-384 (0.889) > Milvus=Qdrant both
+  models + Lucene-hyb both models (0.883–0.892) > Lucene-st-384 (0.858) >
+  Lucene-st-768 (0.817). Model effect compresses at n=20 (base≈small
+  within engine); engine effect persists (PG/YDB clear).
+- New misses at n=20: q6 (certs) 0.0–0.5 everywhere except PG/YDB/service-hyb
+  (acronyms need lexical or PG/YDB ranking); q20 bridge 0.5 everywhere.
+- Live compose state restored to small/384d (committed state) after the
+  768d service window; index self-healed (81/81, 0 mismatches).
+
 ### F-tune — RRF diagnosis: fetch depth + fusion math both exonerated (2026-10-11)
 
 - q2 outsourcing-agreement, Lucene-small: `rrf_k` ∈ {10, 30, 60, 120} gives
