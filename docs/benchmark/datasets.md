@@ -10,7 +10,7 @@ and exactly which slice the legs consume. Update on any re-download.
 - Upstream: https://github.com/udayallu/RAG-Multi-Corpus (synthetic enterprise
   content — no real/confidential info; code MIT; no formal data license, clean
   for internal reuse/relabeling).
-- Local: `/home/aminin/workspace/synanton/testing/RAG-Multi-Corpus/`
+- Local: `testing/RAG-Multi-Corpus/`
   (datasets/ + bechmark/, as downloaded; do not modify in place).
 - Slice consumed: `datasets/*/md/` only — 236 Markdown files across 5
   enterprises (dedupes the docx/html/pdf/pptx mirrors of identical content;
@@ -31,7 +31,7 @@ and exactly which slice the legs consume. Update on any re-download.
 ## PIRE (Phase B queued)
 
 - Upstream: https://huggingface.co/datasets/Wikit/PIRE (CC BY-SA).
-- Local: `/home/aminin/workspace/synanton/testing/PIRE/pdf_files.zip`
+- Local: `testing/PIRE/pdf_files.zip`
   (100 PDFs) + `bench-chunknorris-acl2025/` harness (Apache-2.0 code).
 - 332 queries (chunk.single 300 + chunk.multi 32), file+page+passage gold.
 
@@ -39,7 +39,7 @@ and exactly which slice the legs consume. Update on any re-download.
 
 - Upstream: https://huggingface.co/datasets/opendatalab/OHR-Bench
   (CC-BY-4.0, research-only, non-commercial).
-- Local: `/home/aminin/workspace/synanton/testing/OHR-Bench/` (8.5k pages,
+- Local: `testing/OHR-Bench/` (8.5k pages,
   8.5k QAs, page-level gold; 3.3GB).
 
 ## Demo corpus (F-1–F-3 basis, retained)

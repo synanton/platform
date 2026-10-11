@@ -11,7 +11,8 @@ REPO_CONFIG = Path(__file__).resolve().parents[1] / "config.yml"
 def test_load_config_resolves_default_root():
     os.environ.pop("RETRIEVAL_BENCH_DATASETS_DIR", None)
     config = load_config(REPO_CONFIG)
-    assert str(config.datasets_root) == "/home/aminin/workspace/synanton/testing"
+    expected = (REPO_CONFIG.parent / "../../../testing").resolve()
+    assert config.datasets_root == expected
     assert set(config.datasets) == {"pire", "rag_multi_corpus", "ohr_bench"}
 
 

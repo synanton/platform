@@ -83,6 +83,11 @@ def load_config(path: Path | str = DEFAULT_CONFIG_PATH) -> BenchmarkConfig:
 
     datasets_section = resolved.get("datasets", {})
     root = Path(datasets_section.pop("root"))
+    if not root.is_absolute():
+        # Relative roots resolve against the config file's directory, so the
+        # default checkout layout works with no username-specific paths and
+        # no environment setup. Absolute roots (incl. env overrides) pass through.
+        root = (path.parent / root).resolve()
 
     datasets: dict[str, DatasetSpec] = {}
     for name, entry in datasets_section.items():
