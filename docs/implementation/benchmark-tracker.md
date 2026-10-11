@@ -384,6 +384,30 @@ Cross-cutting:
 - YDB CA now repo-local (`docker/certs/ydb/`, gitignored) + `YDB_CA_PATH`
   export in stacks script — /tmp wipes broke legs on reboot, per decision.
 
+### F-3 n=20 complete — full 2-model matrix (2026-10-11)
+
+- Recall@10, human gold, n=20:
+
+  | Engine | bge-base 768d | bge-small 384d |
+  |---|---|---|
+  | Lucene-hybrid (service) | 0.892 | 0.883 |
+  | Lucene-vector (service) | — | 0.889* |
+  | Lucene-standalone | 0.817 | 0.858 |
+  | Milvus HNSW | 0.883 | 0.883 |
+  | Qdrant HNSW | 0.883 | 0.883 |
+  | PG (384-locked) | — | 0.975 |
+  | YDB-hybrid (384-locked) | — | 0.975 |
+
+  (*service-vec-384 scored at n=12; rerun pending — cell carried, flagged.)
+- Ranking: PG=YDB (0.975) > Lucene-vec-384 (0.889) > Milvus=Qdrant both
+  models + Lucene-hyb both models (0.883–0.892) > Lucene-st-384 (0.858) >
+  Lucene-st-768 (0.817). Model effect compresses at n=20 (base≈small
+  within engine); engine effect persists (PG/YDB clear).
+- New misses at n=20: q6 (certs) 0.0–0.5 everywhere except PG/YDB/service-hyb
+  (acronyms need lexical or PG/YDB ranking); q20 bridge 0.5 everywhere.
+- Live compose state restored to small/384d (committed state) after the
+  768d service window; index self-healed (81/81, 0 mismatches).
+
 ### F-tune — RRF diagnosis: fetch depth + fusion math both exonerated (2026-10-11)
 
 - q2 outsourcing-agreement, Lucene-small: `rrf_k` ∈ {10, 30, 60, 120} gives
