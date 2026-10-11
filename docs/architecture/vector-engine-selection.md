@@ -34,20 +34,20 @@ a managed-service restriction (11/11 LICENSE files read 2026-10-07/08).
 
 ### 1b. Functional columns (measured F-2/F-3 legs; everything else flagged)
 
-Recall@10 on the 12-query human gold set (`queries-f1-dense.json`, single
+Recall@10 on the 28-query human gold set (`queries-f1-dense.json`, single
 annotator, demo corpus). Two embedding columns: bge-base 768d vs bge-small
 384d — model and engine vary together across columns, so cross-model engine
 claims are flagged, not made.
 
 | Engine | Recall bge-base 768d | Recall bge-small 384d | Latency (measured) | Status |
 |---|---|---|---|---|
-| Lucene-hybrid (service) | 0.861 | 0.847 | p50/p95 tens of ms | measured, n=12 |
+| Lucene-hybrid (service) | 0.9226 (155/6) | 0.9167 (77/3) | p50/p95 tens of ms | measured, n=28 |
 | Lucene-vector (service) | — | 0.7917 (133/6) | same path | measured, n=28 |
-| Lucene-standalone | 0.778 | 0.806 | p50 2.7 / p95 31 ms (toy) | measured, n=12 |
-| Milvus (HNSW M16) | 0.847 | 0.847 | p50 3.5 / p95 50.5 ms (toy) + leg timings | measured, n=12 |
-| Qdrant (HNSW) | 0.847 | 0.847 | p50 2.2 / p95 27.1 ms (toy) + leg timings | measured, n=12 |
-| PG+pgvector | — (384d lock-in) | 1.0 | p95 21.6 ms (lexical legs) | measured, n=12 |
-| YDB-hybrid | — (384d lock-in) | 1.0 | p50/p95 19.8/40.8 ms (lexical legs) | measured, n=12 |
+| Lucene-standalone | 0.7976 (67/3) | 0.8274 (139/6) | p50 2.7 / p95 31 ms (toy) | measured, n=28 |
+| Milvus (HNSW M16) | 0.8452 (71/3) | 0.8810 (74/3) | p50 3.5 / p95 50.5 ms (toy) + leg timings | measured, n=28 |
+| Qdrant (HNSW) | 0.8452 (71/3) | 0.8810 (74/3) | p50 2.2 / p95 27.1 ms (toy) + leg timings | measured, n=28 |
+| PG+pgvector | — (384d lock-in) | 0.9821 (55/2) | p95 21.6 ms (lexical legs) | measured, n=28 |
+| YDB-hybrid | — (384d lock-in) | 0.9821 (55/2) | p50/p95 19.8/40.8 ms (lexical legs) | measured, n=28 |
 | Cassandra+Lucene | `unmeasured` (BM25 latencies p50 4.5/p95 36 ms) | — | BM25-only | partial |
 | Tantivy / Quickwit / Weaviate / Vespa / OpenSearch | `unmeasured` | `unmeasured` | per B0.3 | unmeasured |
 
@@ -57,14 +57,31 @@ Lucene-standalone (0.7976/0.8274) > Lucene-vector-384 (0.7917).
 Milvus=Qdrant are byte-identical per query on both models. All cells n=28
 (human gold) except where noted.
 
+### 1b-ii. Second corpus: RAG-Multi-Corpus (n=1216, upstream gold)
+
+236 synthetic enterprise docs, 1216 queries (Supporting Facts gold), tenant
+`ragmc`, bge-small 384d. Full method in tracker Phase A + `datasets.md`.
+
+| Engine | Recall@10 | Note |
+|---|---|---|
+| Lucene-hybrid (service) | 0.9778 | leads; by-type ≥0.96 everywhere |
+| Milvus / Qdrant HNSW | 0.9572 | identical per query, again |
+| Lucene-standalone | 0.9490 | trails hybrid (lexical rescue matters) |
+| PG+pgvector / YDB-hybrid | 0.7944 | 1210/1216 identical top-k lists; trail badly |
+
+Engine ranking is corpus-dependent: PG/YDB lead demo (0.9821) but trail
+RAGMC (0.7944); Milvus=Qdrant most consistent across corpora. No engine
+dominates both corpora — the per-context defaults (§2) stand on
+non-functional fit, with quality as supporting evidence only.
+
 Latency at bench scale carries JVM/GC/RPC noise; treat p95 gaps under ~2×
 as ties. Overhead models (Milvus ~1.8×, Qdrant fixed/node) per B0.3.
 
 ### 1c. What the functional evidence does and doesn't support
 
-- Supports: quality ranking PG=YDB > rest at 384d/small (n=12, human gold);
-  model effect on Lucene (+0.111 small over base at n=3, confirmed direction
-  at n=12); Milvus=Qdrant equivalence (identical rankings, both models);
+- Supports: quality ranking PG=YDB > rest at 384d/small (n=28, human gold);
+  model effect compresses with n (base≈small within engine at n=28);
+  Milvus=Qdrant equivalence (identical rankings, both models, both corpora);
   integration effect zero (B5.5: service-vector-only == standalone adapter,
   byte-identical); Lucene parity with Cassandra+Lucene (R3 resolved).
 - Does NOT support: cross-model engine claims for PG/YDB (no 768d cells —
@@ -78,8 +95,8 @@ as ties. Overhead models (Milvus ~1.8×, Qdrant fixed/node) per B0.3.
 
 | Context | Recommended | Alternative | Functional note |
 |---|---|---|---|
-| Cloud-managed | PostgreSQL + pgvector | Qdrant Cloud | PG hybrid recall 1.0 (n=12, 384d) — strongest quality cell; HNSW figure unpublished so capacity planning carries uncertainty |
-| Cloud-self-hosted | Qdrant | PG + pgvector | Qdrant 0.847 both models (n=12); simplest ops in class; PG alternative pending 768d cells |
+| Cloud-managed | PostgreSQL + pgvector | Qdrant Cloud | PG hybrid recall 0.9821 (n=28, 384d) — strongest demo cell, but trails on RAGMC (0.7944): engine ranking is corpus-dependent; HNSW figure unpublished so capacity planning carries uncertainty |
+| Cloud-self-hosted | Qdrant | PG + pgvector | Qdrant 0.8452/0.8810 (n=28); simplest ops in class; most consistent across corpora (0.9572 RAGMC); PG alternative pending 768d cells |
 | On-prem | Qdrant | PG + pgvector | Same as above + air-gap suitability (no object-store requirement) |
 | Docker | Qdrant | pgvector image | Single container, no sidecars |
 | Embedded | Lucene standalone | Tantivy sidecar (non-JVM) | Lucene correctness measured; merge-time heap spikes are the known risk |
