@@ -283,6 +283,18 @@ Cross-cutting:
   both 200. Cause of the v0.20.0 failure not isolated to a commit —
   recorded as version-level, not attributed.
 
+### P0 time-slicing — base + small concurrent on node1 (2026-10-11)
+
+- Plugin ConfigMap `sharing.timeSlicing: [{nvidia.com/gpu, replicas: 2}]`
+  (no rename — existing specs unchanged); allocatable 2 on all workers.
+- Both TEI deployments at 1 concurrently, both serve (768d + 384d verified
+  at pod IPs). VRAM shared, no eviction at bench scale.
+- Manual dockers retired; `:30800`/`:30801` both resolve to K8s NodePorts.
+  Caveat: plan D2's one-workload rule stands for PROD (reranker/synthesis);
+  time-slicing is approved for bench coexistence only, until load-tested.
+- Revert (one command): delete the ConfigMap env/volume from the DS
+  (`CONFIG_FILE`), allocatable returns to 1.
+
 ### F-2 backfill — PG/YDB legs: blocked on 384d lock-in (recorded 2026-10-10)
 
 - Both POC engines hard-code 384d: PG `vector(384)` column rejects wider vectors (`PostgresSynquestEngine` paddedVector/write path); YDB's statements are 384-literal-shaped (768d noted in-code as binding vs the 64MB gRPC cap).
