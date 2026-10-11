@@ -1,6 +1,6 @@
 # Benchmark Manifest reference (DOC-D0.1)
 
-**Schema:** `schemas/benchmark/benchmark-manifest.schema.json` (`0.2.0-draft`, pre-freeze).
+**Schema:** `schemas/benchmark/benchmark-manifest.schema.json` (`0.2.0`, pre-freeze).
 **Goal:** author a valid manifest from this doc alone.
 **Validate:** `benchmark-runner validate <manifest.json>` (exit 0/2).
 
@@ -72,7 +72,7 @@ approval above estimate).
 ```json
 {
   "manifest_id": "smoke-1comp",
-  "schema_version": "0.2.0-draft",
+  "schema_version": "0.2.0",
   "corpus": {"ref": "cas:<64-hex>", "alias": "demo-frozen-v1", "dataset_version": "demo-frozen-v1"},
   "compositions": [
     {"composition_id": "cassandra-lucene-m16", "metadata_provider": "cassandra",

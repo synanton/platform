@@ -1,10 +1,11 @@
 # Metric Taxonomy (DOC-D0.3) — canonical definitions
 
+**Version:** 1.0 (frozen Week-2, 2026-10-11).
 **Schemas:** `schemas/benchmark/benchmark-manifest.schema.json`,
-`schemas/benchmark/result-manifest.schema.json` (both `0.2.0-draft`).
+`schemas/benchmark/result-manifest.schema.json` (both `0.2.0`).
 **Companion docs:** `manifest-reference.md`, `result-reference.md` (same directory).
 
-**Status:** Draft for Week-2 freeze (ships with BR-A0.2/A0.3 schemas).
+**Status:** Frozen Week-2 (ships with BR-A0.2/A0.3 schemas).
 **Rule:** Both tracks use these definitions verbatim. "Overlap" means §3 below —
 nothing else. Field names match `result-manifest.schema.json` and
 `benchmark-manifest.schema.json`.

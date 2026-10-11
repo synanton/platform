@@ -1,6 +1,6 @@
 # Result Manifest reference (DOC-D0.2)
 
-**Schema:** `schemas/benchmark/result-manifest.schema.json` (`0.2.0-draft`, pre-freeze).
+**Schema:** `schemas/benchmark/result-manifest.schema.json` (`0.2.0`, pre-freeze).
 **Goal:** interpret a Result Manifest without reading the schema.
 **Note:** R3 artifacts (`runs/*-v1.json`) predate runner fields and validate as-is;
 new fields are optional precisely for that reason.

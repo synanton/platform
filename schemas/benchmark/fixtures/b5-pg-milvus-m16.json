@@ -63,5 +63,5 @@
     "seed": 7348291,
     "verify_corpus_hash": true
   },
-  "schema_version": "0.2.0-draft"
+  "schema_version": "0.2.0"
 }

@@ -422,12 +422,17 @@ Cross-cutting:
 - Standing cadence: repeat this pass at every phase gate; gate checklists
   carry DOC items (see Week-2 entry below).
 
-### Week-2 gate: open (unscheduled)
+### Week-2 gate: FROZEN 2026-10-11
 
 - Scope: Manifest + Result schema + metric-taxonomy freeze (BR-A0.2/A0.3/A0.4).
-- Owner/date: TBD — schedulable since Week-1 closed; unscheduled until BR-A0.1 requirements land.
-- DOC items for the gate checklist: D0 refs current vs frozen schema versions;
-  D4.1 cross-reference pass repeated; runbook validation log still green
+- Owner: Andrei Minin (approved F-8). Executed per
+  `docs/implementation/week2-freeze-packet.md` §2–§4, no exceptions.
+- Frozen: manifest schema 0.2.0, result schema 0.2.0, taxonomy 1.0.
+  Fixtures bumped + re-validated; freeze-check leg reproduced 0.8472.
+- Post-freeze rule: schema changes need version bump + migration note, never
+  silent edit. DOC-D0 final; B5 pre-check formal complete.
+- DOC items for future gates (standing): D0 refs current vs frozen versions;
+  D4.1 cross-reference pass repeated; runbook validation log green
   against the frozen CLI.
 
 ## Alias map (transition only — drop after all branches renamed)

@@ -1,7 +1,7 @@
 {
   "_note": "TEST FIXTURE for BR-A0.2 schema validation — corpus hash is a placeholder, not a real frozen corpus. Six B5 compositions.",
   "manifest_id": "vec-6comp-r1",
-  "schema_version": "0.2.0-draft",
+  "schema_version": "0.2.0",
   "corpus": {
     "ref": "cas:0000000000000000000000000000000000000000000000000000000000000000",
     "alias": "demo-frozen-v1",
