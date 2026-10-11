@@ -424,6 +424,20 @@ Cross-cutting:
 - Live compose state restored to small/384d (committed state) after the
   768d service window; index self-healed (81/81, 0 mismatches).
 
+### F-3 n=28 round 3 (q21–q28) + Fusion B spike (2026-10-11)
+
+- 8 queries human-confirmed (pharma parties/terms, switch login, mental
+  health, Krakow, EV capex, USMCA, milk-run/VMI bridge).
+- Recall@10, human gold, n=28, bge-small 384d: PG 0.982, YDB 0.982,
+  Lucene-hyb 0.917, Milvus 0.881, Qdrant 0.881, Lucene-st 0.827.
+  (Milvus=Qdrant byte-identical, all 28. Only q20 missed by PG/YDB.)
+- Cross-over: hybrid now leads pure-vector (q7/q28 rescued lexically);
+  pure-vector leads on q2 (dense finds outsourcing, fusion buries it).
+  Neither mode dominates — the case for score-fusion keeps building.
+- Fusion B spike: `docs/architecture/proposals/fusion-score-based-spike.md`
+  (design only — per-leg min-max normalization, 0.5/0.5 defaults, missing-leg
+  zero rule, n≥50 calibration gate, PN-11 analysis). Deferred until n≥50.
+
 ### F-tune — RRF diagnosis: fetch depth + fusion math both exonerated (2026-10-11)
 
 - q2 outsourcing-agreement, Lucene-small: `rrf_k` ∈ {10, 30, 60, 120} gives
