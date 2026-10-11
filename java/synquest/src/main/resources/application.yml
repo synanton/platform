@@ -25,6 +25,11 @@ synquest:
     default-top-k-lexical: 100
     default-rrf-k: 60
     dense-similarity: COSINE
+    # Single-leg RRF boost (F-tune option A): 1.0 = classic RRF; 2.0 boosts
+    # DENSE-only hits to dual-leg parity (lexical-only hits keep classic
+    # weight — boosting them promotes BM25 tail noise). Tune only against
+    # gold; see RrfFusion.
+    default-single-leg-boost: 1.0
   embedding:
     model: ${EMBED_MODEL:bge-base-en-v1.5}
     # Dense index dimension (<= 1024, the Lucene 9.11 KNN cap). Changing it needs a /reindex.

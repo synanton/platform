@@ -63,4 +63,40 @@ class RrfFusionTest {
         TopDocs lexical = topDocs();
         assertThat(RrfFusion.combine(dense, lexical, 20, 60)).isEmpty();
     }
+
+    // F-tune option A acceptance tests.
+
+    @Test
+    void defaultBoostOnePreservesClassicRrf() {
+        // 4-arg form must equal 5-arg form with 1.0: no behavior change at default.
+        TopDocs dense = topDocs(1, 2, 3);
+        TopDocs lexical = topDocs(2, 4, 5);
+        List<RrfFusion.FusedHit> classic = RrfFusion.combine(dense, lexical, 5, 60);
+        List<RrfFusion.FusedHit> boosted = RrfFusion.combine(dense, lexical, 5, 60, 1.0);
+        assertThat(boosted).hasSize(classic.size());
+        for (int i = 0; i < classic.size(); i++) {
+            assertThat(boosted.get(i).docId()).isEqualTo(classic.get(i).docId());
+            assertThat(boosted.get(i).rrfScore()).isCloseTo(classic.get(i).rrfScore(), within(1e-12));
+        }
+    }
+
+    @Test
+    void boostTwoRestoresSingleLegParity() {
+        // Doc 9 dense-only at rank 1 (1/61) vs doc 8 dual-leg at ranks 3+3
+        // (2/63): classic buries the single-leg hit; boost 2.0 flips it.
+        TopDocs dense = topDocs(9, 1, 8);
+        TopDocs lexical = topDocs(2, 3, 8);
+        List<RrfFusion.FusedHit> classic = RrfFusion.combine(dense, lexical, 5, 60);
+        assertThat(classic.get(0).docId()).isEqualTo(8);
+        List<RrfFusion.FusedHit> boosted = RrfFusion.combine(dense, lexical, 5, 60, 2.0);
+        assertThat(boosted.get(0).docId()).isEqualTo(9);
+    }
+
+    @Test
+    void boostBelowOneRejected() {
+        TopDocs dense = topDocs(1);
+        TopDocs lexical = topDocs();
+        assertThatThrownBy(() -> RrfFusion.combine(dense, lexical, 5, 60, 0.5))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }
