@@ -31,7 +31,7 @@ unless stated otherwise.
 
 Copy the minimal example from `docs/benchmark/manifest-reference.md`
 (§ Minimal example) or trim `schemas/benchmark/fixtures/six-composition.json`.
-Required anatomy: `manifest_id`, `schema_version` (`0.2.0-draft` until Week-2
+Required anatomy: `manifest_id`, `schema_version` (`0.2.0` until Week-2
 freeze), `corpus.ref` as `cas:<64-hex>`, ≥1 entry in `compositions` with
 `composition_id` + `metadata_provider` + `vector_provider` + `embedding` +
 `execution`, `metrics` (recall@10, eligible identity, p95, repro flags,

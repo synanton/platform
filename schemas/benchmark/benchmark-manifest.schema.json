@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://synanton.dev/schemas/benchmark/benchmark-manifest.schema.json",
   "title": "Benchmark Manifest",
-  "description": "BR-A0.2 draft — input contract for the Benchmark Runner. Defines the corpus, N compositions, metrics, reproducibility, cost controls, and output sink for one benchmark run. Schema becomes immutable at Week-2 freeze; this draft is version 0.2.0-draft.",
+  "description": "BR-A0.2 frozen (Week-2, 2026-10-11) — input contract for the Benchmark Runner. Defines the corpus, N compositions, metrics, reproducibility, cost controls, and output sink for one benchmark run. Frozen at Week-2 at version 0.2.0; immutable per the Manifests proposal.",
   "type": "object",
   "required": ["manifest_id", "schema_version", "corpus", "compositions", "metrics", "reproducibility", "cost_controls", "output_sink"],
   "properties": {

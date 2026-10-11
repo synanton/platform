@@ -8,9 +8,9 @@ migration note, never a silent edit.
 
 | Artifact | Current version | Freeze to |
 |---|---|---|
-| `schemas/benchmark/benchmark-manifest.schema.json` | `0.1.0-draft` (check) | `0.1.0` |
-| `schemas/benchmark/result-manifest.schema.json` | `0.1.0-draft` (check) | `0.1.0` |
-| `docs/benchmark/metric-taxonomy.md` | taxonomy text (no version — add `1.0` header at freeze) | `1.0` |
+| `schemas/benchmark/benchmark-manifest.schema.json` | `0.2.0-draft` | `0.2.0` |
+| `schemas/benchmark/result-manifest.schema.json` | `0.2.0-draft` | `0.2.0` |
+| `docs/benchmark/metric-taxonomy.md` | taxonomy text (no version) | `1.0` header |
 | Runner `runner_version` | `0.2.0` (cli.py) | record, don't freeze (code, not schema) |
 
 ## 2. Pre-freeze checks (all must pass day-of)
@@ -35,7 +35,9 @@ migration note, never a silent edit.
 
 ## 4. Execution record (fill at scheduling)
 
-- Date:
-- Owner:
-- Freeze commit:
-- Exceptions (if any §2 item waived, with reason + follow-up):
+- Date: 2026-10-11
+- Owner: Andrei Minin (approved F-8; executed by agent, verified below)
+- Freeze commit: (this commit — see log)
+- Exceptions: none. §2 checks: D4.1 citation re-run 0 unresolved; fixtures
+  validate; freeze-check leg reproduced 0.8472 exactly; runbook fresh-eyes
+  pass rerun (CLI gained additive flags + service lexical guard since D1.1).
