@@ -1,6 +1,7 @@
 package org.synanton.synquest.milvus;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,6 +53,16 @@ class MilvusF2HybridLegRun {
 
     private static int dim() {
         return Integer.parseInt(System.getenv().getOrDefault("BENCH_EMBED_DIM", "768"));
+    }
+
+    /** TCP reachability probe: legs skip cleanly where bench stacks are absent (CI). */
+    private static boolean reachable(String host, int port) {
+        try (java.net.Socket probe = new java.net.Socket()) {
+            probe.connect(new InetSocketAddress(host, port), 3000);
+            return true;
+        } catch (java.io.IOException expectedWithoutBenchStack) {
+            return false;
+        }
     }
     private static final GenerationId GEN = new GenerationId("f2-gen-1");
     private static final ObjectMapper JSON = new ObjectMapper();
@@ -128,6 +139,14 @@ class MilvusF2HybridLegRun {
         String cassandraHost = System.getenv().getOrDefault("BENCH_CASSANDRA_HOST", "localhost");
         int cassandraPort = Integer.parseInt(System.getenv().getOrDefault("BENCH_CASSANDRA_PORT", "9042"));
         String teiBase = System.getenv().getOrDefault("BENCH_TEI_BASE_URL", "http://localhost:30800/v1");
+
+        // Bench-stack leg: skip cleanly where stacks are absent (CI).
+        assumeTrue(reachable(
+                        System.getenv().getOrDefault("BENCH_MILVUS_HOST", "localhost"),
+                        Integer.parseInt(System.getenv().getOrDefault("BENCH_MILVUS_PORT", "19530"))),
+                "bench Milvus unreachable — skipping leg (CI-safe)");
+        assumeTrue(reachable(cassandraHost, cassandraPort),
+                "bench Cassandra unreachable — skipping leg (CI-safe)");
 
         String collection = "t_f2_milvus_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         MilvusVectorRetriever adapter = new MilvusVectorRetriever(client(), collection, dim());
