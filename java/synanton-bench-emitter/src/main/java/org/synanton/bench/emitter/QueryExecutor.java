@@ -112,6 +112,21 @@ public final class QueryExecutor {
             List<String> tenantUniverse,
             double vectorFloor)
             throws Exception {
+        return execute(engine, input, tenantUniverse, vectorFloor, BENCH_MODEL);
+    }
+
+    /**
+     * Same, with an explicit query-embedding model ref. Real-vector legs
+     * (F-2) pass their TEI model here so provenance isn't mislabeled
+     * synthetic; toy legs keep the {@code BENCH_MODEL} default above.
+     */
+    public static QueryOutput execute(
+            SynquestEngine engine,
+            GoldenInput input,
+            List<String> tenantUniverse,
+            double vectorFloor,
+            EmbeddingModelRef queryModel)
+            throws Exception {
         List<String> tenants =
                 input.tenantScope().isEmpty() ? tenantUniverse : input.tenantScope();
         SearchMode mode = SearchMode.valueOf(input.mode().toUpperCase());
@@ -125,7 +140,7 @@ public final class QueryExecutor {
                     new SearchRequest(
                             input.text(),
                             queryVector(input),
-                            Optional.of(BENCH_MODEL),
+                            Optional.of(queryModel),
                             mode,
                             EligibilityConstraints.from(scope, List.of(BENCH_PRINCIPAL), BENCH_POLICY),
                             new RelevanceFilters(input.metadataPredicate()),

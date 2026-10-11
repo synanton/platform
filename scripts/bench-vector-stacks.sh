@@ -115,6 +115,19 @@ curl -s -m 15 -o /dev/null -w "tei /v1/embeddings via tunnel: %{http_code}\n" \
   -X POST http://localhost:30800/v1/embeddings \
   -H "Content-Type: application/json" \
   -d '{"input": "tunnel check", "model": "synanton-bge-base-embedding"}' || true
+# 384d leg (F-9): bge-small TEI-small on node1:8001 (manual docker while the
+# K8s small workload has no GPU injection - see troubleshooting). Same pattern.
+if (ss -tln 2>/dev/null || netstat -tln 2>/dev/null) | grep -q ":30801 "; then
+  echo "tei-small tunnel: already listening on :30801"
+else
+  ssh -o ConnectTimeout=10 -o BatchMode=yes -fN -L 0.0.0.0:30801:localhost:8001 node1 \
+    && echo "tei-small tunnel: established :30801 -> node1:8001" \
+    || echo "tei-small tunnel: FAILED (384d legs need manual tei-small-bench on node1)"
+fi
+curl -s -m 15 -o /dev/null -w "tei-small /v1/embeddings via tunnel: %{http_code}\n" \
+  -X POST http://localhost:30801/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{"input": "tunnel check", "model": "synanton-bge-small-embedding"}' || true
 #
 # Teardown (data in bind mounts / named containers survives unless removed):
 #   docker stop milvus-standalone milvus-minio milvus-etcd qdrant-bench

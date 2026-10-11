@@ -119,6 +119,18 @@ public class IngestionJobRunner {
                             boolean alreadyDone = "EMBEDDED".equals(existingState)
                                 || (!props.pipeline().embeddingEnabled() && "ENRICHED".equals(existingState))
                                 || (!props.pipeline().enrichmentEnabled() && !props.pipeline().embeddingEnabled() && "CHUNKED".equals(existingState));
+                            if (alreadyDone && props.pipeline().embeddingEnabled()) {
+                                // State is pipeline-global but vectors are per-model: a doc
+                                // EMBEDDED under another model still needs this model's pass.
+                                // (F-9: second-model backfill would otherwise no-op.)
+                                boolean covered = !cacheClient
+                                        .listEmbeddings(tenant, acquired.contentRefId()).stream()
+                                        .filter(e -> props.embedding().modelId().equals(e.modelId()))
+                                        .toList().isEmpty();
+                                if (!covered) {
+                                    alreadyDone = false;
+                                }
+                            }
                             if (alreadyDone) {
                                 log.debug("Skipping already-processed doc (state={}): {}", existingState, ref.uri());
                                 return null;

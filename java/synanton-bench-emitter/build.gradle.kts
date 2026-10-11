@@ -13,6 +13,8 @@ dependencies {
     testImplementation(project(":java:synquest-cassandra"))
     testImplementation(project(":java:synquest-postgres"))
     testImplementation(project(":java:synvault-postgres"))
+    testImplementation(project(":java:ingestion-cache"))
+    testImplementation(project(":java:synanton-llm-client"))
     testImplementation(libs.postgresql)
     testImplementation(project(":java:synanton-bench-convergence"))
     testImplementation(platform(libs.junit.bom))
