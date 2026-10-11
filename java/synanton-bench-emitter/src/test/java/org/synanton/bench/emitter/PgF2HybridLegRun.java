@@ -58,7 +58,41 @@ class PgF2HybridLegRun {
 
     private record TextQuery(String id, String text) {}
 
-    private static final List<TextQuery> QUERIES = List.of(
+    private static final List<TextQuery> QUERIES = loadQueries();
+
+    private static List<TextQuery> loadQueries() {
+        String file = System.getenv("BENCH_QUERIES_FILE");
+        if (file != null && !file.isBlank()) {
+            // Single query source (F-3): [{query_id, text, ...}, ...]; gold lives alongside.
+            try {
+                String json = java.nio.file.Files.readString(java.nio.file.Path.of(file));
+                List<TextQuery> out = new ArrayList<>();
+                for (String part : json.split("\"query_id\"")) {
+                    String[] q = part.split("\"", -1);
+                    if (q.length < 2 || q[1].isBlank()) {
+                        continue;
+                    }
+                    String[] t = part.split("\"text\"", -1);
+                    if (t.length < 2) {
+                        continue;
+                    }
+                    String[] tv = t[1].split("\"", -1);
+                    if (tv.length < 2 || tv[1].isBlank()) {
+                        continue;
+                    }
+                    out.add(new TextQuery(q[1], tv[1]));
+                }
+                if (!out.isEmpty()) {
+                    return List.copyOf(out);
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException("cannot load BENCH_QUERIES_FILE=" + file, e);
+            }
+        }
+        return QUERIES_DEFAULT;
+    }
+
+    private static final List<TextQuery> QUERIES_DEFAULT = List.of(
             new TextQuery("f1-q1", "company profile industrial manufacturing"),
             new TextQuery("f1-q2", "supplier precision metal components automotive"),
             new TextQuery("f1-q3", "compliance report quarterly logistics network"));
@@ -142,11 +176,12 @@ class PgF2HybridLegRun {
             outputs.add(QueryExecutor.execute(engine, input, List.of(TENANT), PG_VECTOR_FLOOR, MODEL));
         }
 
-        String json = Q3Emitter.emit("pg-f2-r1", "demo-frozen-v1", outputs);
-        Path out = Q3Emitter.write(Paths.get("runs"), "pg-f2-r1", json);
+        String runId = System.getenv().getOrDefault("BENCH_RUN_ID", "pg-f2-r1");
+        String json = Q3Emitter.emit(runId, "demo-frozen-v1", outputs);
+        Path out = Q3Emitter.write(Paths.get("runs"), runId, json);
 
         assertThat(out.toFile().exists()).isTrue();
-        assertThat(outputs).hasSize(3);
+        assertThat(outputs).hasSize(QUERIES.size());
         assertThat(outputs.stream().mapToInt(o -> o.topK().size()).sum()).isGreaterThan(0);
     }
 }

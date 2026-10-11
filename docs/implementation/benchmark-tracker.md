@@ -331,6 +331,33 @@ Cross-cutting:
   dense hit out — first evidence against blind fusion, and a direct input
   to crossover tuning.
 
+### F-3 n=12 — full matrix, human gold (2026-10-11)
+
+- 9 expansion queries (q4–q12) human-confirmed in chat; legs read queries
+  from the single gold file (`BENCH_QUERIES_FILE`; run with `--no-build-cache`,
+  env vars are invisible to Gradle up-to-date checks — a full rerun silently
+  no-ops without it).
+- Recall@10, human gold, n=12:
+
+  | Engine | bge-base 768d | bge-small 384d |
+  |---|---|---|
+  | Lucene-hybrid (service) | 0.861 | 0.847 |
+  | Lucene-vector (service) | — | 0.889 |
+  | Lucene-standalone | 0.778 | 0.806 |
+  | Milvus HNSW | 0.847 | 0.847 |
+  | Qdrant HNSW | 0.847 | 0.847 |
+  | PG (384-locked) | — | 1.0 |
+  | YDB-hybrid (384-locked) | — | 1.0 |
+
+- Regularities: Milvus=Qdrant byte-identical per-query on BOTH models
+  (incl. shared misses q6 0.5 / q7 0.0); PG=YDB perfect 12/12; q7 (scorecard)
+  missed by every pure-vector leg but caught by hybrid + PG/YDB (lexical
+  table match rescues it — the mirror image of the q2 fusion miss).
+- Ranking by mean: PG=YDB (1.0) > Lucene-vec-384 (0.889) >
+  Lucene-hyb-768 (0.861) > Milvus=Qdrant both models + Lucene-hyb-384
+  (0.847) > Lucene-st-384 (0.806) > Lucene-st-768 (0.778).
+  All cells n=12, single annotator, PDFs judged.
+
 ### F-tune — RRF diagnosis: fetch depth + fusion math both exonerated (2026-10-11)
 
 - q2 outsourcing-agreement, Lucene-small: `rrf_k` ∈ {10, 30, 60, 120} gives
