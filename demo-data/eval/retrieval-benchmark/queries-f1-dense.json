@@ -61,5 +61,169 @@
       "first_pass": "agent-first-pass 2026-10-10 (all three judgments confirmed unchanged)",
       "pdf_pass": "2026-10-11 user: all 4 PDFs judged; only outsourcing-agreement added (q2). mental-health + sks8300-manual excluded (domain mismatch); quarterly-report.pdf excluded (single content-free chunk)."
     }
+  },
+  {
+    "query_id": "f1-q4",
+    "text": "Acme Corp revenue EBITDA fiscal year 2024 financial results",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "b81bb34b-7afb-5f87-9107-917edc1273f4"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Financial Highlights table (Revenue $870M, EBITDA $112M) lives only in acme-corp-profile.md. quarterly-report-q1.md has Q1-2025 numbers ($218M revenue, $28.4M EBITDA) \u2014 different period, excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q5",
+    "text": "Globex Manufacturing founded headquarters history",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "d1436931-c546-57c5-9ea3-45535e141c75"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Established 1971 in Columbus, Ohio \u2014 only in globex-manufacturing.md Overview. Acme mentions Globex relationship but not founding facts.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q6",
+    "text": "IATF 16949 AS9100 quality certifications supplier facilities",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "d1436931-c546-57c5-9ea3-45535e141c75",
+      "9f460a4c-4276-5a53-8da0-336a8dfd47f3"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Globex lists IATF 16949 + AS9100D + ISO 14001 + NADCAP; Initech lists ISO 9001 + IATF 16949 (+Krakow IPC-A-610). Both docs are the certification sources. Multi-gold query by design.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q7",
+    "text": "on-time delivery performance scorecard supplier ratings",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "e1ea63d9-10cc-516b-8a08-7fac26217721"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Supplier scorecard table (Globex 97.3%/42PPM/A, Initech 98.1%/18PPM/A+) lives only in quarterly-report-q1.md. Logistics-network has lane metrics (different grain: lanes not suppliers) \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q8",
+    "text": "consolidation hubs freight lanes transit times logistics",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Hubs + lane table (modes, on-time %, transit days) only in logistics-network.md. Structured-supply-chain mentions Rotterdam/Singapore hubs in one line each \u2014 too thin, excluded.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q9",
+    "text": "supply concentration risk single source dual sourcing",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "9c4be5e5-6386-5ea6-aabb-2c81934e2524",
+      "c1c19646-d6df-5c34-b3cb-2802e452f651"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Risk Factor 1 (62% concentration, 10\u201314 day impact) in risk-factors-2025.txt; dual-sourcing/inventory buffers in supply-chain-overview.txt. Acme profile's Risk Profile section is a third candidate \u2014 excluded as company-specific vs the query's generic framing, pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q10",
+    "text": "vendor managed inventory penalties on-time delivery agreement terms",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "96aaae57-8f4e-5f55-8e84-ecee37df393d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "VMI obligations + sub-95% penalties + evergreen term live only in vendor-agreements.txt (Initech section). Initech profile mentions the VMI hub factually \u2014 thin, excluded.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q11",
+    "text": "pharmaceutical outsourcing manufacturing supply agreement terms",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Distractor-tolerance probe: only the pharma contract matches this vocabulary. Tests whether engines stay in-domain (a manufacturing-components query must NOT surface it; this query MUST). Vendor-agreements is the near-miss \u2014 excluded, pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q12",
+    "text": "electric vehicle transition component demand reshoring market growth",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "0d1ff376-bced-5eb4-9310-b448ae0d582d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-11)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Demand drivers ($84B market, 3.8% CAGR, EV/reshoring) only in market-analysis.txt. Globex Q3-2024 EV battery-enclosure expansion is a partial topical overlap \u2014 excluded as company-news vs market-analysis framing, pending human call.",
+      "supersedes": null
+    }
   }
 ]
