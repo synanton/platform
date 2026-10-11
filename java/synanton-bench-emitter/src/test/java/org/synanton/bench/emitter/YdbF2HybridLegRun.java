@@ -107,7 +107,7 @@ class YdbF2HybridLegRun {
         String caPath = firstExisting(
                 System.getenv().getOrDefault("YDB_CA_PATH", ""),
                 System.getProperty("ydb.ca.path", ""),
-                "/tmp/ydb-ca.pem",
+                "../../docker/certs/ydb/ca.pem",
                 System.getProperty("user.home") + "/.config/ydb-ca.pem");
         byte[] ca = Files.readAllBytes(Paths.get(caPath));
         transport = GrpcTransport.forConnectionString(
@@ -126,7 +126,7 @@ class YdbF2HybridLegRun {
             }
         }
         throw new IllegalStateException(
-                "YDB CA not found; copy it out with: docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem");
+                "YDB CA not found; copy it out with: docker cp ydb-poc:/ydb_certs/ca.pem docker/certs/ydb/ca.pem");
     }
 
     @AfterAll
@@ -168,7 +168,23 @@ class YdbF2HybridLegRun {
 
         TableClient client = client();
         prefix = "t_f2_ydb_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        YdbSearchSchema.ensureSchema(client, prefix, 384);
+        // YDB tablets take minutes after container (re)start; discovery fails
+        // fast with GENERIC_ERROR meanwhile. ensureSchema is idempotent, so
+        // poll it instead of failing the leg on a cold container (2026-10-11).
+        Exception lastSchemaFailure = null;
+        for (int attempt = 1; attempt <= 12; attempt++) {
+            try {
+                YdbSearchSchema.ensureSchema(client, prefix, 384);
+                lastSchemaFailure = null;
+                break;
+            } catch (RuntimeException e) {
+                lastSchemaFailure = e;
+                Thread.sleep(15000);
+            }
+        }
+        if (lastSchemaFailure != null) {
+            throw new IllegalStateException("YDB not ready after 3 min", lastSchemaFailure);
+        }
         YdbSynquestEngine engine = new YdbSynquestEngine(client, prefix);
 
         List<ChunkProjection> rows = new ArrayList<>();

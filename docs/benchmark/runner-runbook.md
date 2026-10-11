@@ -13,6 +13,23 @@ at the end). If a step fails for you, it is a bug in this doc — file it.
 - A synquest service URL for live runs (simulated runs need nothing).
 - Corpus files locally readable (for hash verification).
 
+## 0a. Bench discipline (violations burned us — read once)
+
+- **Clean tree before live runs.** `git status` must show no modifications
+  to code under `java/` or `tools/benchmark-runner/` before any measured
+  run — docker builds and Gradle workers both run from the working tree,
+  not from git, so uncommitted edits silently become "results" that no
+  commit reproduces. Twice bitten (boost wiring, SearchService line).
+- **GPU workload moves go through `scripts/bench-tei-swap.sh`, never raw
+  `kubectl scale/delete`.** Deleting pods under a live ReplicaSet creates
+  admission storms and orphaned GPU containers (2026-10-10 lockout). The
+  script sequences scale-down → termination wait → pre-flights → scale-up.
+- **Run inputs live under `bench-staging/` (gitignored), never `/tmp`.**
+  OS tmp cleaners and reboots ate manifests, queries, and the YDB CA
+  mid-program three times. Committed gold stays in
+  `demo-data/eval/retrieval-benchmark/`; everything generated goes to
+  `bench-staging/run-inputs/`.
+
 ## 1. Setup (no install needed)
 
 The runner runs from the repo without installation (PEP 668 forbids bare

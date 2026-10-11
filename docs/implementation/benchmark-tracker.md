@@ -449,6 +449,21 @@ Cross-cutting:
 - New systematic misses: q23 (payment terms) + q28 (safety stock) 0.0 on
   Milvus/Qdrant/Lucene-st (both models) — lexical-rescued only; q20 bridge
   0.5 everywhere.
+- k-alignment audit (2026-10-11): service legs return top-5, JUnit legs
+  top-10 — recall@10 cells were incomparable. Rescored all legs at k=5:
+
+  | Engine | base 768 | small 384 |
+  |---|---|---|
+  | Lucene-hyb | 0.9226 | 0.9167 |
+  | Lucene-vec | — | 0.7917 |
+  | Lucene-st | 0.7440 | 0.8274 |
+  | Milvus=Qdrant | 0.8095 | 0.7917 |
+  | PG | — | 0.7917 |
+  | YDB | — | 0.8274 |
+
+  k-choice moves conclusions (PG/YDB 0.98→0.79): report k WITH the number,
+  always. Matrix cells above are recall@5; the §1b table keeps recall@10
+  with returned-depth noted per method.
 - Fusion B spike: `docs/architecture/proposals/fusion-score-based-spike.md`
   (design only — per-leg min-max normalization, 0.5/0.5 defaults, missing-leg
   zero rule, n≥50 calibration gate, PN-11 analysis). Deferred until n≥50.
@@ -499,6 +514,11 @@ Cross-cutting:
   cross-encoder; 0.6B model; baseline 0.988 leaves almost no headroom
   (rerank can mostly hurt). Fair retest needs harder queries or a weaker
   baseline — recorded, not run.
+- Revision (full snippets via `snippet-chars: 2000`): 0.988 → 0.988 with
+  26/28 orderings changed but recall identical — active reranking that
+  preserves quality. The 200-char cap was a confound in the verdict above,
+  not a model verdict. `snippet-chars` is now a prop (default 200,
+  production behavior unchanged).
 
 ### Phase A — RAG-Multi-Corpus legs, n=1216 (2026-10-11)
 
