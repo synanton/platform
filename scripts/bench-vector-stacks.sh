@@ -98,31 +98,53 @@ docker compose -f docker/docker-compose.bench.yml up -d postgres
 #
 # ------------------------------------------------------------------ TEI tunnel
 # Dense legs embed via node1 TEI (bge-base, 768d). This host's firewall drops
-# NodePort traffic, so bench reaches TEI through an SSH tunnel bound on all
+# NodePort traffic, so bench reaches TEI through SSH tunnels bound on all
 # host interfaces (compose points synquest/synflux at host-gateway:30800).
-# Idempotent: re-run anytime; a live tunnel is left alone. Without it, dense
+# Idempotent: re-run anytime; live tunnels are left alone. Without them, dense
 # runs fail closed (503) by design — never silently lexical.
 #   NodePort object (bench-owned, gpu-runtime blueprint stays ClusterIP-only):
 #   kubectl apply -f deployment/bench/tei-embedding-bench-svc.yaml  (from node0)
-if (ss -tln 2>/dev/null || netstat -tln 2>/dev/null) | grep -q ":30800 "; then
-  echo "tei tunnel: already listening on :30800"
+#
+# TEI endpoint resolution (2026-10-11): K8s GPU injection on node1 is faulty
+# (operator track), so TEI currently serves from manual docker on node1
+# (tei-base-bench :8002, tei-small-bench :8001) instead of the NodePort.
+# tei_endpoint() prefers the K8s path and falls back to manual docker.
+tei_endpoint() { # $1 = model, $2 = k8s-nodeport, $3 = docker-port; echoes working node1 port or nothing
+  local model="$1" k8s_port="$2" docker_port="$3" port
+  for port in "${k8s_port}" "${docker_port}"; do
+    if ssh -o ConnectTimeout=8 -o BatchMode=yes node1 \
+      "curl -s -m 10 -o /dev/null -w '%{http_code}' -X POST http://localhost:${port}/v1/embeddings -H 'Content-Type: application/json' -d '{\"input\": \"t\", \"model\": \"${model}\"}'" \
+      2>/dev/null | grep -q 200; then
+      echo "${port}"
+      return 0
+    fi
+  done
+  return 1
+}
+ensure_tunnel() { # $1 = host port, $2 = node1 port, $3 = label
+  if (ss -tln 2>/dev/null || netstat -tln 2>/dev/null) | grep -q ":$1 "; then
+    echo "tei tunnel: already listening on :$1 ($3)"
+  else
+    ssh -o ConnectTimeout=10 -o BatchMode=yes -fN -L "0.0.0.0:$1:localhost:$2" node1 \
+      && echo "tei tunnel: established :$1 -> node1:$2 ($3)" \
+      || echo "tei tunnel: FAILED ($3 dense legs will 503) - rerun when node1 is reachable"
+  fi
+}
+if BASE_PORT="$(tei_endpoint synanton-bge-base-embedding 30800 8002)"; then
+  ensure_tunnel 30800 "${BASE_PORT}" "base-768d"
 else
-  ssh -o ConnectTimeout=10 -o BatchMode=yes -fN -L 0.0.0.0:30800:localhost:30800 node1 \
-    && echo "tei tunnel: established :30800 -> node1:30800" \
-    || echo "tei tunnel: FAILED (dense legs will 503) - rerun this script when node1 is reachable"
+  echo "tei tunnel: FAILED (no live base endpoint on node1:30800 or :8002)"
 fi
 curl -s -m 15 -o /dev/null -w "tei /v1/embeddings via tunnel: %{http_code}\n" \
   -X POST http://localhost:30800/v1/embeddings \
   -H "Content-Type: application/json" \
   -d '{"input": "tunnel check", "model": "synanton-bge-base-embedding"}' || true
-# 384d leg (F-9): bge-small TEI-small on node1:8001 (manual docker while the
-# K8s small workload has no GPU injection - see troubleshooting). Same pattern.
-if (ss -tln 2>/dev/null || netstat -tln 2>/dev/null) | grep -q ":30801 "; then
-  echo "tei-small tunnel: already listening on :30801"
+# 384d leg (F-9): bge-small TEI on node1 (manual docker :8001 while K8s GPU
+# injection is faulty; K8s NodePort :30801 once the small workload schedules).
+if SMALL_PORT="$(tei_endpoint synanton-bge-small-embedding 30801 8001)"; then
+  ensure_tunnel 30801 "${SMALL_PORT}" "small-384d"
 else
-  ssh -o ConnectTimeout=10 -o BatchMode=yes -fN -L 0.0.0.0:30801:localhost:8001 node1 \
-    && echo "tei-small tunnel: established :30801 -> node1:8001" \
-    || echo "tei-small tunnel: FAILED (384d legs need manual tei-small-bench on node1)"
+  echo "tei-small tunnel: FAILED (no live small endpoint on node1:30801 or :8001)"
 fi
 curl -s -m 15 -o /dev/null -w "tei-small /v1/embeddings via tunnel: %{http_code}\n" \
   -X POST http://localhost:30801/v1/embeddings \
