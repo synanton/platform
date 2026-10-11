@@ -55,7 +55,8 @@ class MilvusF2HybridLegRun {
     }
     private static final GenerationId GEN = new GenerationId("f2-gen-1");
     private static final ObjectMapper JSON = new ObjectMapper();
-    private static final String TENANT = "demo";
+    private static final String TENANT =
+            System.getenv().getOrDefault("BENCH_TENANT", "demo");
 
     private record TextQuery(String id, String text) {}
 

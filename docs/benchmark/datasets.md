@@ -22,6 +22,11 @@ and exactly which slice the legs consume. Update on any re-download.
   the upstream tree — keeps corpus hashes stable if upstream moves).
 - Tenant: single `ragmc` (ticket #14 out-scopes leakage tests; per-enterprise
   tenants reserved for the classification-aware phase).
+- Known gap (2026-10-11): 2/236 files never ingested
+  (`ZX_Bank/Personal Loan Information.md`,
+  `ZX_Bank/ZX Bank Agriculture Loan.md`) — no error logged, cause open.
+  8 gold files affected → 36 queries excluded from gold (1216 scored).
+  Rerun ingest picked up 0; needs a discover-walk investigation.
 
 ## PIRE (Phase B queued)
 

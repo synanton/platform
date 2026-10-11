@@ -48,7 +48,8 @@ class PgF2HybridLegRun {
     private static final EmbeddingModelRef MODEL = EmbeddingModelRef.of(
             "synanton-bge-small-embedding", "bge-small-en-v1.5", "tei-1.9");
     private static final GenerationId GEN = new GenerationId("f2-gen-1");
-    private static final String TENANT = "demo";
+    private static final String TENANT =
+            System.getenv().getOrDefault("BENCH_TENANT", "demo");
     /**
      * PG vector score space is {@code -distance} (negative). pgvector's
      * {@code <=>} is cosine distance in [0, 2], so -2.0 keeps every hit —

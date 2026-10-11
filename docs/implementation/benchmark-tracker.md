@@ -480,6 +480,25 @@ Cross-cutting:
   default-off; fitting the value needs a bigger gold set. Classic RRF
   remains the production behavior.
 
+### Phase A — RAG-Multi-Corpus legs, n=1216 (2026-10-11)
+
+- Corpus: 236 md files staged (`bench-staging/ragmc/`, gitignored), tenant
+  `ragmc`, embedded small-384. Gold: 1216/1251 queries mapped from upstream
+  Supporting Facts (36 reference 8 un-ingested files; 2 files never ingested
+  with no error — discover-walk gap, recorded in datasets.md).
+- Recall@10, upstream gold, small-384: Lucene-hyb 0.9778, Milvus 0.9572,
+  Qdrant 0.9572 (identical), Lucene-st 0.9490, PG 0.7944, YDB 0.7944
+  (1210/1216 identical top-k lists).
+- Inversions vs demo: PG/YDB trail badly here (0.79 vs 0.98) while leading
+  demo (1.0) — engine ranking is corpus-dependent, not absolute. Milvus=
+  Qdrant identity holds on the third corpus. By-type all ≥0.96 (hybrid).
+- Bugs fixed en route: file-URI percent-decode (spaces/`&` 404'd 149 docs);
+  synquest index bind mount (was overlayfs); per-model ingest skip;
+  YDB backslash-escape + empty-terms fallback (quote-heavy queries);
+  /tmp CA loss → repo-local `docker/certs/ydb/` + `YDB_CA_PATH` export.
+- YDB cold-start flake: GENERIC_ERROR right after container restart is
+  tablet boot, not a query bug — wait minutes and rerun before diagnosing.
+
 ### Ops closeout (2026-10-11)
 
 - node0 `kubectl logs` failures (`nvidia-smi not found` on log reads) tracked
