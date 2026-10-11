@@ -317,6 +317,20 @@ Cross-cutting:
   (PG/YDB 1.0 > rest 0.889), Milvus=Qdrant identical everywhere, B5.5
   integration zero. All cells provisional on n=3 + unjudged PDFs.
 
+### F-3 v2 — PDF judgments + outsourcing surprise (2026-10-11)
+
+- All 4 PDFs judged from ingested chunks: outsourcing-agreement (pharma
+  contract) ADDED to q2 gold per user (supplier relationship counts);
+  mental-health + sks8300-manual excluded (domain); quarterly-report.pdf
+  excluded (single content-free chunk — gold marks substance).
+- v2 scoreboard (human gold, n=3): PG 1.0, YDB 1.0; Milvus/Qdrant 0.889 both
+  models; Lucene-vec/standalone-384 0.889; Lucene-hyb-384 0.722;
+  Lucene-hyb-768 0.611 (rerun live for a complete matrix).
+- Standout: hybrid fusion HURT q2 on Lucene (outsourcing-agreement ranks in
+  pure-vector but not in fused top-5, both models). RRF re-ranks a good
+  dense hit out — first evidence against blind fusion, and a direct input
+  to crossover tuning.
+
 ### VEC-B6 — Synthesis published (draft for review)
 
 - Framework: `docs/architecture/vector-engine-selection.md` — matrix with measured/unmeasured cells, per-context recommendations with evidence notes, sources, follow-ons F-1–F-8 (owners TBD).
