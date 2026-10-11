@@ -10,12 +10,13 @@
       "b81bb34b-7afb-5f87-9107-917edc1273f4"
     ],
     "gold_provenance": {
-      "annotator": "human-confirmed (chat 2026-10-11)",
+      "annotator": "human-confirmed (chat 2026-10-10/11)",
       "date": "2026-10-10",
       "confidence": "medium (single annotator, no adjudication)",
       "rationale": "acme-corp-profile.md IS a company profile of an industrial manufacturer (Overview + FY2024 financials). Globex/Initech profiles deliberately excluded: they are supplier profiles, and the query's singular 'company profile' + manufacturing-distributor framing matches Acme. Revisit in human pass.",
       "supersedes": null,
-      "first_pass": "agent-first-pass 2026-10-10 (all three judgments confirmed unchanged)"
+      "first_pass": "agent-first-pass 2026-10-10 (all three judgments confirmed unchanged)",
+      "pdf_pass": "2026-10-11 user: all 4 PDFs judged; only outsourcing-agreement added (q2). mental-health + sks8300-manual excluded (domain mismatch); quarterly-report.pdf excluded (single content-free chunk)."
     }
   },
   {
@@ -26,15 +27,17 @@
     "top_k_lexical": 10,
     "rrf_k": 60,
     "gold": [
-      "d1436931-c546-57c5-9ea3-45535e141c75"
+      "d1436931-c546-57c5-9ea3-45535e141c75",
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572"
     ],
     "gold_provenance": {
-      "annotator": "human-confirmed (chat 2026-10-11)",
+      "annotator": "human-confirmed (chat 2026-10-10/11)",
       "date": "2026-10-10",
       "confidence": "medium (single annotator, no adjudication)",
       "rationale": "globex-manufacturing.md: tier-one supplier, precision metal components (castings/forgings/CNC), automotive among served industries. Initech excluded (EMS/electronics, not precision metal). Vendor-agreements excluded (contract terms, not components). Revisit in human pass.",
       "supersedes": null,
-      "first_pass": "agent-first-pass 2026-10-10 (all three judgments confirmed unchanged)"
+      "first_pass": "agent-first-pass 2026-10-10 (all three judgments confirmed unchanged)",
+      "pdf_pass": "2026-10-11 user: outsourcing-agreement.pdf ADDED (supplier/manufacturing relationship counts for the supplier query despite pharma domain)"
     }
   },
   {
@@ -50,12 +53,13 @@
       "e1ea63d9-10cc-516b-8a08-7fac26217721"
     ],
     "gold_provenance": {
-      "annotator": "human-confirmed (chat 2026-10-11)",
+      "annotator": "human-confirmed (chat 2026-10-10/11)",
       "date": "2026-10-10",
       "confidence": "medium (single annotator, no adjudication)",
       "rationale": "One gold doc per query facet: compliance-report.txt (compliance facet), logistics-network.md (logistics facet), quarterly-report-q1.md (quarterly facet). NOTE: logistics-network.md did not surface in the unjudged run's top-5 \u2014 that is a recall miss to investigate, not an annotation error. PDFs (outsourcing-agreement, manual, mental-health, quarterly-report.pdf) not judged \u2014 unread in this pass. Revisit in human pass.",
       "supersedes": null,
-      "first_pass": "agent-first-pass 2026-10-10 (all three judgments confirmed unchanged)"
+      "first_pass": "agent-first-pass 2026-10-10 (all three judgments confirmed unchanged)",
+      "pdf_pass": "2026-10-11 user: all 4 PDFs judged; only outsourcing-agreement added (q2). mental-health + sks8300-manual excluded (domain mismatch); quarterly-report.pdf excluded (single content-free chunk)."
     }
   }
 ]
