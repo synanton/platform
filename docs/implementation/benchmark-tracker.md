@@ -256,9 +256,9 @@ Cross-cutting:
   fine — driver, silicon, image, weights all exonerated.
 - Mechanism: plugin runs `DEVICE_LIST_STRATEGY=envvar`, but containerd has
   only `runc` + `enable_cdi` (no nvidia runtime, no hooks) — nobody consumes
-  the env vars, nobody injects. The custom v0.20.0 plugin build crashes
+  the env injection path. The custom v0.20.0 plugin build crashes
   instantly on `cdi-annotations` (all 3 nodes), so the correct pairing is
-  currently unrepresentable; strategy stays `envvar`, GPU workloads stay at 0.
+  unrepresentable; strategy stays `envvar`, GPU workloads stay at 0.
 - Collateral fixed en route: node2 driver↔libs mismatch (module 595.84 vs
   libs 595.99.02 — its own nvidia-smi failed); node2 driver upgraded to
   595.99.02, cluster converged. Node-version matrix in analysis (ask on demand).
@@ -267,6 +267,21 @@ Cross-cutting:
   with K8s-NodePort fallback. Return to K8s serving requires a plugin build
   that supports CDI annotations (or an nvidia runtime in containerd) —
   operator project, not bench work.
+
+### P0 resolved — v0.21.0 plugin restores K8s injection (2026-10-11)
+
+- Rebuilt k8s-device-plugin from current upstream main (8 commits ahead of
+  the Sep-4 tree, incl. a 4GiB-memory reporting fix relevant to the 4GB
+  1650) with the same debian12-base patch; pushed `:v0.21.0` (v0.20.0 kept
+  as rollback); DaemonSet rolled.
+- Base TEI schedules green on the first clean admission and serves 768d
+  through the K8s-native NodePort path (verified 200 + dim). Manual
+  `tei-base-bench` retired. Small stays manual (`tei-small-bench`, one GPU
+  per node by design — K8s small pends while base holds it).
+- Live state: 768d = K8s TEI (designed path), 384d = manual docker
+  (documented fallback); stacks script auto-resolves both; `:30800`/`:30801`
+  both 200. Cause of the v0.20.0 failure not isolated to a commit —
+  recorded as version-level, not attributed.
 
 ### F-2 backfill — PG/YDB legs: blocked on 384d lock-in (recorded 2026-10-10)
 
