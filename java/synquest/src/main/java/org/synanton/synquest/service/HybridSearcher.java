@@ -60,6 +60,13 @@ public class HybridSearcher implements Closeable {
     }
 
     public TopDocs lexical(String queryText, int topK) throws IOException {
+        if (topK < 1) {
+            // Leg disabled (e.g. vector-only bench runs): skip the search —
+            // Lucene rejects numHits <= 0, and an empty leg must not 500 the query.
+            return new TopDocs(new org.apache.lucene.search.TotalHits(0,
+                    org.apache.lucene.search.TotalHits.Relation.EQUAL_TO),
+                    new org.apache.lucene.search.ScoreDoc[0]);
+        }
         IndexSearcher searcher = searcherManager.acquire();
         try {
             searcher.setSimilarity(new BM25Similarity());

@@ -227,6 +227,27 @@ Cross-cutting:
   QueryExecutor model-ref overload (provenance, no synthetic mislabel),
   Milvus/Qdrant leg parametrization (dim/model/run-id via env).
 
+### B5.5 — Integration effect isolated: zero (2026-10-11)
+
+- Lucene-in-service (vector-only mode, `top_k_lexical: 0`) vs Lucene-standalone
+  adapter on identical 384d vectors: byte-identical orderings all 3 queries,
+  recall 1.0/1.0/0.667 both. The service adds no distortion; earlier
+  hybrid-vs-standalone ranking differences were fusion (RRF re-ranks), not
+  integration overhead.
+- En route: real service bug — `top_k_lexical=0` 500'd (Lucene rejects
+  numHits<=0). Fixed in `HybridSearcher.lexical` with the same empty-TopDocs
+  guard the dense side already had. Evidence: `LuceneF2HybridLegRun`.
+
+### B5.4 — Metadata-store effect: null by construction (recorded 2026-10-11)
+
+- Vector-only legs cannot measure it: adapters never touch the metadata store
+  (retriever sees eligibility + vectors only, by Reading-1 design). Same bytes
+  from Cassandra or PG score identically — running the comparison would
+  manufacture a table around a zero.
+- The effect is observable only in hybrid service legs (lexical side reads the
+  store). That needs a PG-backed synquest service — unbuilt, out of scope;
+  recorded as a constraint, not a gap.
+
 ### F-2 backfill — PG/YDB legs: blocked on 384d lock-in (recorded 2026-10-10)
 
 - Both POC engines hard-code 384d: PG `vector(384)` column rejects wider vectors (`PostgresSynquestEngine` paddedVector/write path); YDB's statements are 384-literal-shaped (768d noted in-code as binding vs the 64MB gRPC cap).
