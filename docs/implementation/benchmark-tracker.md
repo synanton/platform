@@ -331,6 +331,27 @@ Cross-cutting:
   dense hit out — first evidence against blind fusion, and a direct input
   to crossover tuning.
 
+### F-tune — RRF diagnosis: fetch depth + fusion math both exonerated (2026-10-11)
+
+- q2 outsourcing-agreement, Lucene-small: `rrf_k` ∈ {10, 30, 60, 120} gives
+  byte-identical rankings (k is inert — expected: single-leg hits keep a
+  constant ratio under RRF rescaling).
+- BM25-only probe (top 100): outsourcing chunks at lexical ranks 12–18 —
+  present but weak (pharma vocab shares no query terms).
+- `top_k_lexical` 10→100 changes nothing: with dense rank 3 (1/63) + lexical
+  rank ~12–18 (1/72–1/78), the fused sum still trails dual-leg competitors.
+  The miss is structural to rank-fusion, not a depth artifact.
+- Candidate fixes (recorded, not implemented): score-based fusion, leg-priority
+  weighting, single-leg union boost. Any of these is a SearchService change
+  needing its own review — filed here as the first gold-backed tuning input.
+
+### Ops closeout (2026-10-11)
+
+- node0 `kubectl logs` failures (`nvidia-smi not found` on log reads) tracked
+  node1 kubelet restarts during the GPU fault window; function fully restored
+  with no change (verified across namespaces). No action.
+- Orphan watchdog cron installed on node0 (verified silent-healthy).
+
 ### VEC-B6 — Synthesis published (draft for review)
 
 - Framework: `docs/architecture/vector-engine-selection.md` — matrix with measured/unmeasured cells, per-context recommendations with evidence notes, sources, follow-ons F-1–F-8 (owners TBD).
