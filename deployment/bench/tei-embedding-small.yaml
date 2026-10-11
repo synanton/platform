@@ -26,6 +26,10 @@ spec:
         app: tei-embedding-small
     spec:
       nodeName: node1
+      # REQUIRED: without the nvidia runtime class, containerd uses plain runc
+      # and no GPU is injected (pod admits, entrypoint dies on missing
+      # nvidia-smi). Matches the base blueprint (gpu-runtime, line 27).
+      runtimeClassName: nvidia
       imagePullSecrets:
         - name: local-registry-cred
       containers:
