@@ -34,9 +34,10 @@ no-provider-imports rule until the ArchUnit rule (012) lands.
 ```bash
 docker run -d --name ydb-poc -h localhost -p 2135:2135 -p 2136:2136 -p 8765:8765 \
   ydbplatform/local-ydb:stable-26-3-1-path-aliases
-docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem   # gRPCS-only image (YDB_CA_PATH)
-# NOTE: /tmp is cleaned by the OS — re-copy after reboot/cleanup or if YDB tests
-# fail with NoSuchFileException on the CA. YDB_CA_PATH env overrides the location.
+docker cp ydb-poc:/ydb_certs/ca.pem docker/certs/ydb/ca.pem   # gRPCS-only image (YDB_CA_PATH)
+# NOTE: keep the CA in the repo-local gitignored docker/certs/ydb/ (NOT /tmp —
+# /tmp is cleaned by the OS and legs broke on reboot, 2026-10-11). Refresh the
+# copy whenever ydb-poc is recreated (certs regenerate with the container).
 # Lookup chain (all YDB suites): YDB_CA_PATH → -Dydb.ca.path → /tmp/ydb-ca.pem →
 # ~/.config/ydb-ca.pem, else a clear error naming the docker cp command. CI
 # provisions the container + CA + flags (see .github/workflows/gradle-build.yml).

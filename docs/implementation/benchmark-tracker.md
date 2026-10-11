@@ -370,6 +370,20 @@ Cross-cutting:
   (0.847) > Lucene-st-384 (0.806) > Lucene-st-768 (0.778).
   All cells n=12, single annotator, PDFs judged.
 
+### F-3 n=20 — round 2 (q13–q20), small-384 column (2026-10-11)
+
+- 8 new queries human-confirmed (pharma parties/terms, switch login, mental
+  health, Krakow, EV capex, USMCA, milk-run/VMI bridge). Legs read the
+  single gold file (`BENCH_QUERIES_FILE`).
+- Recall@10, human gold, n=20, bge-small 384d: PG 0.975, YDB 0.975,
+  Milvus 0.883, Qdrant 0.883, Lucene-hyb 0.883, Lucene-st 0.858.
+  (Milvus=Qdrant byte-identical again, all 20.)
+- Systematic miss: q20 (milk-run/VMI bridge) 0.5 on ALL six legs — the two
+  gold docs never co-occur in any top-5. Multi-doc bridge queries are the
+  hardest class in this corpus; next tuning input after q2-fusion.
+- YDB CA now repo-local (`docker/certs/ydb/`, gitignored) + `YDB_CA_PATH`
+  export in stacks script — /tmp wipes broke legs on reboot, per decision.
+
 ### F-tune — RRF diagnosis: fetch depth + fusion math both exonerated (2026-10-11)
 
 - q2 outsourcing-agreement, Lucene-small: `rrf_k` ∈ {10, 30, 60, 120} gives
