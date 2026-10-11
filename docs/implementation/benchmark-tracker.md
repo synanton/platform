@@ -397,6 +397,14 @@ Cross-cutting:
 - B0.4 profiles stay frozen as task evidence; functional overlay lives in the framework.
 - NOT yet reviewed: architecture + legal sign-off required before production use.
 
+### F-4/F-5 — Reviews signed 2026-10-11: closed
+
+- Andrei Minin signed the review brief with architecture + legal authority.
+- ADR-013 Proposed → Accepted (deciders + date filled); framework F-4/F-5
+  rows closed with signatures. Framework may now steer production decisions
+  within its stated scope and revisit triggers.
+- Next: F-8 Week-2 freeze scheduling (packet ready).
+
 ### DOC-D3.3 — Pattern library additions: landed
 
 - Appended PN-9…PN-13 to `docs/implementation/pg-poc/pattern-notes.md`

@@ -1,8 +1,8 @@
 # ADR-013: Vector Engine Selection per Deployment Context
 
-**Status:** Proposed (requires architecture + legal review; see framework §4 F-4/F-5)
-**Date:** 2026-10-10
-**Deciders:** TBD — architecture review pending
+**Status:** Accepted 2026-10-11 (architecture + legal sign-off, review brief)
+**Date:** 2026-10-10 (decided), accepted 2026-10-11
+**Deciders:** Andrei Minin (architecture + legal authority, via review-brief sign-off 2026-10-11)
 **Framework:** [vector-engine-selection.md](../vector-engine-selection.md) (evidence, matrices, follow-ons F-1–F-8)
 
 ## Context

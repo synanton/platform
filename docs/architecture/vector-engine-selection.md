@@ -14,19 +14,19 @@ explicit `unmeasured` flags elsewhere (B6.1 rule — a blank cell is a lie).
 
 ### 1a. Non-functional columns (from B0, full detail in `vector-*.md`)
 
-| Engine | License | Runtime | Managed (3-cloud) | Embedded (prod) |
-|---|---|---|---|---|
-| PostgreSQL + pgvector | PostgreSQL, permissive | In-process (SQL ext) | ✅ all three | ❌ |
-| YDB | Apache-2.0 | In-process (native) | Yandex only | ❌ |
-| Cassandra + Lucene | Apache-2.0 | In-process (JVM lib) | ⚠️ (no Lucene in managed) | ❌ |
-| Milvus | Apache-2.0 | External service | ✅ (Zilliz) | ❌ |
-| Qdrant | Apache-2.0 | External service | ✅ (Cloud) | ⚠️ dev-only |
-| Tantivy | MIT (sidecar) | External service | N/A | ⚠️ sidecar, not in-process |
-| Lucene standalone | Apache-2.0 | In-process (JVM lib) | ⚠️ via search services | ✅ |
-| Weaviate | BSD-3-Clause + proprietary wl/ | External service | ✅ | ⚠️ dev-only |
-| Vespa | Apache-2.0 | External service | AWS/GCP only | ❌ |
-| OpenSearch | Apache-2.0 | External service | AWS only | ❌ |
-| Quickwit | Apache-2.0 | External service | ⚠️ managed-Rust path | ❌ |
+| Engine                | License                        | Runtime              | Managed (3-cloud)          | Embedded (prod)            |
+|-----------------------|--------------------------------|----------------------|----------------------------|----------------------------|
+| PostgreSQL + pgvector | PostgreSQL, permissive         | In-process (SQL ext) | ✅ all three                | ❌                          |
+| YDB                   | Apache-2.0                     | In-process (native)  | Yandex only                | ❌                          |
+| Cassandra + Lucene    | Apache-2.0                     | In-process (JVM lib) | ⚠️ (no Lucene in managed)  | ❌                          |
+| Milvus                | Apache-2.0                     | External service     | ✅ (Zilliz)                 | ❌                          |
+| Qdrant                | Apache-2.0                     | External service     | ✅ (Cloud)                  | ⚠️ dev-only                |
+| Tantivy               | MIT (sidecar)                  | External service     | N/A                        | ⚠️ sidecar, not in-process |
+| Lucene standalone     | Apache-2.0                     | In-process (JVM lib) | ⚠️ via search services     | ✅                          |
+| Weaviate              | BSD-3-Clause + proprietary wl/ | External service     | ✅                          | ⚠️ dev-only                |
+| Vespa                 | Apache-2.0                     | External service     | AWS/GCP only               | ❌                          |
+| OpenSearch            | Apache-2.0                     | External service     | AWS only                   | ❌                          |
+| Quickwit              | Apache-2.0                     | External service     | ⚠️ managed-Rust path       | ❌                          |
 
 License gate: Elasticsearch (SSPL/ELv2/AGPL) excluded from managed-service
 contexts — legal sign-off required before any use. No universe engine carries
@@ -103,8 +103,8 @@ cells are `unmeasured`, the recommendation says so rather than implying data.
 | F-1 | Real embeddings (vLLM/GPU or provider) for dense-leg quality | Recall quality everywhere; hybrid crossover | TBD |
 | F-2 | Full hybrid runs per composition (B5.4/B5.5) | Metadata-store + integration effects | TBD |
 | F-3 | Gold-query annotation vs live tenants (`retrieval-eval inspect`) | Recall on demo corpus (comp-1 style runs) | TBD |
-| F-4 | Legal sign-off: license columns + Elasticsearch gate | Production use of this framework | Legal TBD |
-| F-5 | Architecture review: port decomposition + this framework | Framework publication | Arch TBD |
+| F-4 | Legal sign-off: license columns + Elasticsearch gate | Production use of this framework | Signed 2026-10-11 (review brief) |
+| F-5 | Architecture review: port decomposition + this framework | Framework publication | Signed 2026-10-11 (review brief, ADR-013 Accepted) |
 | F-6 | Vespa anchor re-verification (2022) + Milvus 1.8× band | Hardware confidence | TBD |
 | F-7 | Storage-footprint batch measurement (10/11 blank) | Capacity planning | TBD |
 | F-8 | Week-2 schema freeze sign-off | DOC-D0 final, B5 pre-check formal | Track A+B owners |
