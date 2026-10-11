@@ -32,31 +32,44 @@ License gate: Elasticsearch (SSPL/ELv2/AGPL) excluded from managed-service
 contexts — legal sign-off required before any use. No universe engine carries
 a managed-service restriction (11/11 LICENSE files read 2026-10-07/08).
 
-### 1b. Functional columns (measured B5 cells; everything else flagged)
+### 1b. Functional columns (measured F-2/F-3 legs; everything else flagged)
 
-| Engine | Recall (measured) | Latency (measured) | Overhead model | Status |
+Recall@10 on the 12-query human gold set (`queries-f1-dense.json`, single
+annotator, demo corpus). Two embedding columns: bge-base 768d vs bge-small
+384d — model and engine vary together across columns, so cross-model engine
+claims are flagged, not made.
+
+| Engine | Recall bge-base 768d | Recall bge-small 384d | Latency (measured) | Status |
 |---|---|---|---|---|
-| Lucene standalone | 1.0 (correctness, 4-vec self-match) | p50 2.7 / p95 31 ms | proportional | measured, small-scale |
-| Milvus (HNSW) | 1.0 (correctness) | p50 3.5 / p95 50.5 ms | proportional ~1.8× | measured, small-scale |
-| Qdrant (HNSW) | 1.0 (correctness) | p50 2.2 / p95 27.1 ms | fixed 640 B/node | measured, small-scale |
-| PG+pgvector | 1.0 (lexical legs) | p95 21.6 ms | `unmeasured` (HNSW figure unpublished) | partial |
-| YDB | 1.0 (lexical legs) | p50/p95 19.8/40.8 ms | `unmeasured` (IVF, cache-bounded) | partial |
-| Cassandra+Lucene | `unmeasured` (recall; BM25 latencies p50 4.5/p95 36 ms) | BM25-only | proportional | partial |
+| Lucene-hybrid (service) | 0.861 | 0.847 | p50/p95 tens of ms | measured, n=12 |
+| Lucene-vector (service) | — | 0.889 | same path | measured, n=12 |
+| Lucene-standalone | 0.778 | 0.806 | p50 2.7 / p95 31 ms (toy) | measured, n=12 |
+| Milvus (HNSW M16) | 0.847 | 0.847 | p50 3.5 / p95 50.5 ms (toy) + leg timings | measured, n=12 |
+| Qdrant (HNSW) | 0.847 | 0.847 | p50 2.2 / p95 27.1 ms (toy) + leg timings | measured, n=12 |
+| PG+pgvector | — (384d lock-in) | 1.0 | p95 21.6 ms (lexical legs) | measured, n=12 |
+| YDB-hybrid | — (384d lock-in) | 1.0 | p50/p95 19.8/40.8 ms (lexical legs) | measured, n=12 |
+| Cassandra+Lucene | `unmeasured` (BM25 latencies p50 4.5/p95 36 ms) | — | BM25-only | partial |
 | Tantivy / Quickwit / Weaviate / Vespa / OpenSearch | `unmeasured` | `unmeasured` | per B0.3 | unmeasured |
 
-Recall here means **index correctness** (exact self-match retrieves itself),
-not embedding quality — dense quality needs real embeddings (unavailable;
-mock-constant vectors prove plumbing only). Latency at 4-vector scale carries
-JVM/GC/RPC noise; treat p95 gaps under ~2× as ties.
+Ranking by mean: PG=YDB (1.0) > Lucene-vector-384 (0.889) >
+Lucene-hybrid-768 (0.861) > Milvus=Qdrant both models + Lucene-hybrid-384
+(0.847) > Lucene-standalone-384 (0.806) > Lucene-standalone-768 (0.778).
+Milvus=Qdrant are byte-identical per query on both models. All cells n=12.
+
+Latency at bench scale carries JVM/GC/RPC noise; treat p95 gaps under ~2×
+as ties. Overhead models (Milvus ~1.8×, Qdrant fixed/node) per B0.3.
 
 ### 1c. What the functional evidence does and doesn't support
 
-- Supports: all three measured HNSW engines are correct; Lucene parity with
-  Cassandra+Lucene on identical queries (R3 attribution resolved); PG/YDB
-  lexical legs at recall 1.0 with real latencies.
-- Does NOT support: any quality ranking between engines, any scale claim, any
-  metadata-store or integration effect (B5.4/B5.5 deferred — no hybrid runs),
-  any hybrid-mode crossover (BM25-only scope).
+- Supports: quality ranking PG=YDB > rest at 384d/small (n=12, human gold);
+  model effect on Lucene (+0.111 small over base at n=3, confirmed direction
+  at n=12); Milvus=Qdrant equivalence (identical rankings, both models);
+  integration effect zero (B5.5: service-vector-only == standalone adapter,
+  byte-identical); Lucene parity with Cassandra+Lucene (R3 resolved).
+- Does NOT support: cross-model engine claims for PG/YDB (no 768d cells —
+  structural lock-in); any scale claim; metadata-store effects (B5.4 null by
+  construction); blind-fusion confidence (F-tune: RRF buries single-leg hits,
+  k-inert, depth-exonerated).
 
 ---
 
@@ -64,8 +77,8 @@ JVM/GC/RPC noise; treat p95 gaps under ~2× as ties.
 
 | Context | Recommended | Alternative | Functional note |
 |---|---|---|---|
-| Cloud-managed | PostgreSQL + pgvector | Qdrant Cloud | PG lexical measured (recall 1.0); HNSW figure unpublished — capacity planning carries uncertainty |
-| Cloud-self-hosted | Qdrant | PG + pgvector | Qdrant correctness + latency measured; simplest ops in class |
+| Cloud-managed | PostgreSQL + pgvector | Qdrant Cloud | PG hybrid recall 1.0 (n=12, 384d) — strongest quality cell; HNSW figure unpublished so capacity planning carries uncertainty |
+| Cloud-self-hosted | Qdrant | PG + pgvector | Qdrant 0.847 both models (n=12); simplest ops in class; PG alternative pending 768d cells |
 | On-prem | Qdrant | PG + pgvector | Same as above + air-gap suitability (no object-store requirement) |
 | Docker | Qdrant | pgvector image | Single container, no sidecars |
 | Embedded | Lucene standalone | Tantivy sidecar (non-JVM) | Lucene correctness measured; merge-time heap spikes are the known risk |
