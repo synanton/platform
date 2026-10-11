@@ -295,6 +295,22 @@ Cross-cutting:
 - Revert (one command): delete the ConfigMap env/volume from the DS
   (`CONFIG_FILE`), allocatable returns to 1.
 
+### P0 615 convergence — cluster on driver 615.71.09 (2026-10-11)
+
+- Rolled node2 → node3 → node1 (bench last): kernel + libs + toolkit
+  aligned at 615.71.09/CUDA 13.4 everywhere. node2's skew (module 595.84
+  vs libs 595.99) resolved by upgrade, not downgrade (595.84 gone from repos).
+- Post-upgrade: plugins green, both TEI 1/1 on cold admission, tunnels
+  re-established by the stacks script, legs verified green. GTX 1650
+  accepted by the 615 driver (listed, serving) — no old-card block.
+- Mirror pins (`List of custom images.txt`, `gpu-operator-install2.md`)
+  updated to `615.71.09-ubuntu24.04`; driver container mirrored + pushed
+  (digest recorded in chat). Lock rule stands: driver/libs/toolkit move
+  as a triple.
+- gpu-runtime as-built GPU section rewritten (PR #20): no-operator
+  correction, 615 inventory, v0.21.0 + rollback, time-slicing live,
+  runtimeClassName requirement.
+
 ### F-2 backfill — PG/YDB legs: blocked on 384d lock-in (recorded 2026-10-10)
 
 - Both POC engines hard-code 384d: PG `vector(384)` column rejects wider vectors (`PostgresSynquestEngine` paddedVector/write path); YDB's statements are 384-literal-shaped (768d noted in-code as binding vs the 64MB gRPC cap).
