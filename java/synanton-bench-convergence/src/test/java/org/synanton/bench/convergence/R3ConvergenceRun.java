@@ -34,10 +34,17 @@ public final class R3ConvergenceRun {
         String dir = System.getenv().getOrDefault("RUNS_DIR", "runs");
         Path base = Paths.get(dir);
         if (!Files.isDirectory(base)) {
-            base = Paths.get("/home/aminin/workspace/synanton/platform/runs");
+            // Fall back to <platform-root>/runs via an explicit variable, never a
+            // hardcoded checkout path (machine-specific). Set PLATFORM_ROOT when
+            // running outside Gradle (Gradle workers start in the module dir).
+            String root = System.getenv("PLATFORM_ROOT");
+            if (root != null) {
+                base = Paths.get(root, "runs");
+            }
         }
         if (!Files.isDirectory(base)) {
-            throw new IllegalStateException("runs dir not found: " + dir);
+            throw new IllegalStateException(
+                    "runs dir not found: " + dir + " (set RUNS_DIR or PLATFORM_ROOT)");
         }
         return base;
     }

@@ -7,7 +7,10 @@
 #
 # Rule: VRAM held while ZERO pods run in gpu-plane == definite orphan -> alert.
 # VRAM held with a Running pod present == healthy (no output, no noise).
-# Install on node0:  */5 * * * * /home/aminin/workspace/synanton/platform/scripts/bench-tei-orphan-watch.sh
+# Install: copy to the monitoring host (e.g. node0 ~/tei-orphan-watch.sh;
+# the repo path below is illustrative, not required) and schedule:
+#   */5 * * * * ~/tei-orphan-watch.sh
+# Repo source: <platform-checkout>/scripts/bench-tei-orphan-watch.sh
 set -euo pipefail
 
 HOLDERS="$(ssh -o ConnectTimeout=10 node1 \

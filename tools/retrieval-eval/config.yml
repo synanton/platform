@@ -6,7 +6,7 @@
 # if datasets are staged somewhere other than the default.
 
 datasets:
-  root: ${RETRIEVAL_BENCH_DATASETS_DIR:-/home/aminin/workspace/synanton/testing}
+  root: ${RETRIEVAL_BENCH_DATASETS_DIR:-../../../testing}
 
   pire:
     path: PIRE
