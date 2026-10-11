@@ -428,12 +428,23 @@ Cross-cutting:
 
 - 8 queries human-confirmed (pharma parties/terms, switch login, mental
   health, Krakow, EV capex, USMCA, milk-run/VMI bridge).
-- Recall@10, human gold, n=28, bge-small 384d: PG 0.982, YDB 0.982,
-  Lucene-hyb 0.917, Milvus 0.881, Qdrant 0.881, Lucene-st 0.827.
-  (Milvus=Qdrant byte-identical, all 28. Only q20 missed by PG/YDB.)
-- Cross-over: hybrid now leads pure-vector (q7/q28 rescued lexically);
-  pure-vector leads on q2 (dense finds outsourcing, fusion buries it).
-  Neither mode dominates — the case for score-fusion keeps building.
+- Recall@10, human gold, n=28, full 2-model matrix (exact fractions):
+
+  | Engine | bge-base 768d | bge-small 384d |
+  |---|---|---|
+  | Lucene-hybrid (service) | 0.9226 (155/6) | 0.9167 (77/3) |
+  | Lucene-vector (service) | — | 0.889* (n=12, rerun flagged) |
+  | Lucene-standalone | 0.7976 (67/3) | 0.8274 (139/6) |
+  | Milvus HNSW | 0.8452 (71/3) | 0.8810 (74/3) |
+  | Qdrant HNSW | 0.8452 (71/3) | 0.8810 (74/3) |
+  | PG (384-locked) | — | 0.9821 (55/2) |
+  | YDB-hybrid (384-locked) | — | 0.9821 (55/2) |
+- Model effect compresses further at n=28 (base≈small within engine);
+  engine ranking stable: PG=YDB > Lucene-hyb > Milvus=Qdrant > Lucene-st.
+  Milvus=Qdrant byte-identical per query on both models, all 28.
+- New systematic misses: q23 (payment terms) + q28 (safety stock) 0.0 on
+  Milvus/Qdrant/Lucene-st (both models) — lexical-rescued only; q20 bridge
+  0.5 everywhere.
 - Fusion B spike: `docs/architecture/proposals/fusion-score-based-spike.md`
   (design only — per-leg min-max normalization, 0.5/0.5 defaults, missing-leg
   zero rule, n≥50 calibration gate, PN-11 analysis). Deferred until n≥50.
