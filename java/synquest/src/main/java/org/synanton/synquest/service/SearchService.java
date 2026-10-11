@@ -198,7 +198,9 @@ public class SearchService {
             }
 
             long fusionStart = System.currentTimeMillis();
-            List<RrfFusion.FusedHit> fused = RrfFusion.combine(denseResults, lexicalResults, candidates, rrfK);
+            List<RrfFusion.FusedHit> fused = RrfFusion.combine(
+                    denseResults, lexicalResults, candidates, rrfK,
+                    props.search().defaultSingleLegBoost());
             long fusionMs = System.currentTimeMillis() - fusionStart;
 
             var stored = searcher.storedFields();
