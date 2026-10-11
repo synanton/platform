@@ -384,6 +384,19 @@ Cross-cutting:
   weighting, single-leg union boost. Any of these is a SearchService change
   needing its own review — filed here as the first gold-backed tuning input.
 
+### F-tune option A — implemented, default off (2026-10-11)
+
+- `RrfFusion.combine` overload + `synquest.search.default-single-leg-boost`
+  (default 1.0 = classic RRF; <1.0 rejected). Boost applies to DENSE-only
+  hits only — boosting lexical-only hits promoted BM25 tail noise over
+  dual-leg substance (measured). Unit tests: default-equivalence,
+  parity-flip, rejection. Option B kept as code TODO + review-brief item.
+- Trade curve on n=12 human gold (Lucene-hyb-384): 1.0 → 0.8472 (q2 0.5,
+  q7 1.0); 1.5 → 0.7639 (q2 0.5, q7 0.0); 2.0 → 0.8056 (q2 1.0, q7 0.0).
+  No value dominates: the boost moves the miss between queries. Shipped
+  default-off; fitting the value needs a bigger gold set. Classic RRF
+  remains the production behavior.
+
 ### Ops closeout (2026-10-11)
 
 - node0 `kubectl logs` failures (`nvidia-smi not found` on log reads) tracked

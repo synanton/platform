@@ -20,7 +20,8 @@ public record SynquestProperties(
             int defaultTopKDense,
             int defaultTopKLexical,
             int defaultRrfK,
-            String denseSimilarity
+            String denseSimilarity,
+            double defaultSingleLegBoost
     ) {}
 
     /**
@@ -54,7 +55,7 @@ public record SynquestProperties(
 
     public SynquestProperties {
         if (index == null) index = new Index("./data/synquest", true, 30);
-        if (search == null) search = new Search(20, 100, 100, 60, "COSINE");
+        if (search == null) search = new Search(20, 100, 100, 60, "COSINE", 1.0);
         if (embedding == null) embedding = new Embedding("bge-base-en-v1.5", 768, true, 0);
         if (execution == null) execution = new Execution("parallel");
     }
