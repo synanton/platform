@@ -248,6 +248,26 @@ Cross-cutting:
   store). That needs a PG-backed synquest service — unbuilt, out of scope;
   recorded as a constraint, not a gap.
 
+### P0 — K8s GPU injection: root-caused, bench on manual docker (2026-10-11)
+
+- Verdict: admitted K8s containers receive ZERO NVIDIA devices cluster-wide
+  (proven on node1 + node2 + node3 with router-direct probes: `libcuda.so.1`
+  missing). Manual `docker --gpus all` with identical image/model/GPU serves
+  fine — driver, silicon, image, weights all exonerated.
+- Mechanism: plugin runs `DEVICE_LIST_STRATEGY=envvar`, but containerd has
+  only `runc` + `enable_cdi` (no nvidia runtime, no hooks) — nobody consumes
+  the env vars, nobody injects. The custom v0.20.0 plugin build crashes
+  instantly on `cdi-annotations` (all 3 nodes), so the correct pairing is
+  currently unrepresentable; strategy stays `envvar`, GPU workloads stay at 0.
+- Collateral fixed en route: node2 driver↔libs mismatch (module 595.84 vs
+  libs 595.99.02 — its own nvidia-smi failed); node2 driver upgraded to
+  595.99.02, cluster converged. Node-version matrix in analysis (ask on demand).
+- Bench state: `tei-base-bench` (:8002→:30800, 768d) + `tei-small-bench`
+  (:8001→:30801, 384d) manual docker on node1; stacks script resolves both
+  with K8s-NodePort fallback. Return to K8s serving requires a plugin build
+  that supports CDI annotations (or an nvidia runtime in containerd) —
+  operator project, not bench work.
+
 ### F-2 backfill — PG/YDB legs: blocked on 384d lock-in (recorded 2026-10-10)
 
 - Both POC engines hard-code 384d: PG `vector(384)` column rejects wider vectors (`PostgresSynquestEngine` paddedVector/write path); YDB's statements are 384-literal-shaped (768d noted in-code as binding vs the 64MB gRPC cap).
