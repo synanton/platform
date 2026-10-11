@@ -198,6 +198,35 @@ Cross-cutting:
 - Latencies: Qdrant 3–38 ms, Milvus 6–74 ms (small-scale; noise band, not a ranking).
 - Honest scope: n=3 queries, first-pass gold; cross-engine agreement is a signal, not a verdict. PG/YDB-native legs still open.
 
+### F-9 — bge-small 384d legs (PG 1.0, YDB 1.0, full model×engine matrix): landed 2026-10-11
+
+- Path chosen over engine surgery: TEI-small (bge-small-en-v1.5, 384d) serves
+  from manual docker on node1 (K8s small workload gets no GPU injection —
+  post-reboot plugin fault, operator track); `:30801` tunnel in stacks script.
+- Second ingest pass: `IngestionJobRunner` skip logic now verifies per-model
+  coverage (was state-only: a second model no-op'd). 81 chunks × 2 models coexist.
+- Recall@10 (first-pass gold, n=3) — model × engine matrix:
+
+  | Engine | bge-base 768d | bge-small 384d |
+  |---|---|---|
+  | Lucene-hybrid | 0.778 | 0.889 |
+  | Milvus HNSW | 0.889 | 0.889 |
+  | Qdrant HNSW | 0.889 | 0.889 |
+  | PG (384-locked) | — | 1.0 |
+  | YDB-hybrid (384-locked) | — | 1.0 |
+
+- Reading (scoped, n=3): model effect real on Lucene (+0.111 small over base,
+  logistics-network.md surfaces #1); engine effect real at fixed model
+  (PG/YDB-small 1.0 > Lucene-small 0.889); Milvus=Qdrant byte-identical on
+  both models. PG/YDB lack 768d cells (structural lock-in) — no cross-model
+  engine claim beyond the 384d column.
+- Live compose state: synquest + synflux point at small/30801 (384d index,
+  81/81 vectors, 0 mismatches). Base restore = revert env + reindex once
+  K8s TEI-base schedules again.
+- Evidence: PgF2HybridLegRun, YdbF2HybridLegRun (bench-emitter),
+  QueryExecutor model-ref overload (provenance, no synthetic mislabel),
+  Milvus/Qdrant leg parametrization (dim/model/run-id via env).
+
 ### F-2 backfill — PG/YDB legs: blocked on 384d lock-in (recorded 2026-10-10)
 
 - Both POC engines hard-code 384d: PG `vector(384)` column rejects wider vectors (`PostgresSynquestEngine` paddedVector/write path); YDB's statements are 384-literal-shaped (768d noted in-code as binding vs the 64MB gRPC cap).

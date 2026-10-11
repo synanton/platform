@@ -17,6 +17,18 @@ if [[ "${TARGET}" != "base" && "${TARGET}" != "small" ]]; then
   exit 2
 fi
 
+if [[ "${TARGET}" == "base" ]]; then
+  DOWN=tei-embedding-small; UP=tei-embedding; PORT=30800; DIM=768
+else
+  DOWN=tei-embedding; UP=tei-embedding-small; PORT=30801; DIM=384
+fi
+
+echo "== scaling ${DOWN} -> 0"
+kubectl -n gpu-plane scale "deploy/${DOWN}" --replicas=0 >/dev/null
+echo "== waiting for pods to terminate"
+kubectl -n gpu-plane wait --for=delete pod -l "app=${DOWN}" --timeout=120s 2>/dev/null \
+  || kubectl -n gpu-plane delete "pods -l app=${DOWN}" --ignore-not-found=true >/dev/null
+
 echo "== pre-flight: VRAM holders on node1 (must be none)"
 HOLDERS="$(ssh -o ConnectTimeout=10 node1 \
   "nvidia-smi --query-compute-apps=pid --format=csv,noheader 2>/dev/null" | grep -vc '^$' || true)"
@@ -37,18 +49,6 @@ if [[ "${ALLOC}" != "1" ]]; then
   exit 1
 fi
 echo "  allocatable: 1"
-
-if [[ "${TARGET}" == "base" ]]; then
-  DOWN=tei-embedding-small; UP=tei-embedding; PORT=30800; DIM=768
-else
-  DOWN=tei-embedding; UP=tei-embedding-small; PORT=30801; DIM=384
-fi
-
-echo "== scaling ${DOWN} -> 0"
-kubectl -n gpu-plane scale "deploy/${DOWN}" --replicas=0 >/dev/null
-echo "== waiting for pods to terminate"
-kubectl -n gpu-plane wait --for=delete "pods -l app=${DOWN}" --timeout=120s 2>/dev/null \
-  || kubectl -n gpu-plane delete "pods -l app=${DOWN}" --ignore-not-found=true >/dev/null
 
 echo "== scaling ${UP} -> 1"
 kubectl -n gpu-plane scale "deploy/${UP}" --replicas=1 >/dev/null

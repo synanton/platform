@@ -96,6 +96,7 @@ cells are `unmeasured`, the recommendation says so rather than implying data.
 | F-7 | Storage-footprint batch measurement (10/11 blank) | Capacity planning | TBD |
 | F-8 | Week-2 schema freeze sign-off | DOC-D0 final, B5 pre-check formal | Track A+B owners |
 | F-9 | Dim-parameterization of PG/YDB POC engines (384d lock-in) | PG/YDB hybrid legs at 768d; cross-engine comparability | TBD |
+| F-9a (resolved 2026-10-11) | bge-small 384d legs instead of engine surgery: PG 1.0, YDB-hybrid 1.0, full model×engine matrix in tracker F-9 | Closed the leg gap with model confound flagged per-cell | Done |
 
 ## 5. Revisit triggers
 

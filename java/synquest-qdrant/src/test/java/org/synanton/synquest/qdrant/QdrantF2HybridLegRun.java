@@ -46,8 +46,14 @@ import org.synanton.synquest.api.VectorSearchResult;
  */
 class QdrantF2HybridLegRun {
 
-    private static final EmbeddingModelRef MODEL =
-            EmbeddingModelRef.of("synanton-bge-base-embedding", "bge-base-en-v1.5", "tei-1.9");
+    private static final EmbeddingModelRef MODEL = EmbeddingModelRef.of(
+            System.getenv().getOrDefault("BENCH_EMBED_MODEL", "synanton-bge-base-embedding"),
+            System.getenv().getOrDefault("BENCH_EMBED_MODEL_VERSION", "bge-base-en-v1.5"),
+            "tei-1.9");
+
+    private static int dim() {
+        return Integer.parseInt(System.getenv().getOrDefault("BENCH_EMBED_DIM", "768"));
+    }
     private static final GenerationId GEN = new GenerationId("f2-gen-1");
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String TENANT = "demo";
@@ -89,7 +95,7 @@ class QdrantF2HybridLegRun {
         String teiBase = System.getenv().getOrDefault("BENCH_TEI_BASE_URL", "http://localhost:30800/v1");
 
         String collection = "t_f2_qdrant_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        QdrantVectorRetriever adapter = new QdrantVectorRetriever(client(), collection, 768);
+        QdrantVectorRetriever adapter = new QdrantVectorRetriever(client(), collection, dim());
 
         List<VectorProjection> rows = new ArrayList<>();
         long ordering = 1;
@@ -107,7 +113,7 @@ class QdrantF2HybridLegRun {
                                 .filter(e -> MODEL.modelId().equals(e.modelId()))
                                 .toList();
                 for (EmbeddingRow e : embeddings) {
-                    assertThat(e.embeddingDim()).isEqualTo(768);
+                    assertThat(e.embeddingDim()).isEqualTo(dim());
                     rows.add(new VectorProjection(
                             ChunkId.of(e.contentRefId().toString() + "#" + e.chunkOrdinal()),
                             DocumentId.of("d-" + e.contentRefId()),
@@ -127,7 +133,7 @@ class QdrantF2HybridLegRun {
         for (TextQuery query : QUERIES) {
             float[] vector = tei.embed(new EmbedRequest(MODEL.modelId(), List.of(query.text())))
                     .embeddings().get(0);
-            assertThat(vector).hasSize(768);
+            assertThat(vector).hasSize(dim());
             SecurityContext context = SecurityContext.user(
                     new TenantScope(TENANT), new PrincipalRef("user", "u1"), new PolicyContext("p", "1"));
             EligibilityConstraints eligibility = EligibilityConstraints.from(
@@ -159,12 +165,12 @@ class QdrantF2HybridLegRun {
         }
 
         Map<String, Object> document = new LinkedHashMap<>();
-        document.put("run_id", "qdrant-f2-r1");
+        document.put("run_id", System.getenv().getOrDefault("BENCH_RUN_ID", "qdrant-f2-r1"));
         document.put("corpus", "demo-frozen-v1");
         document.put("embedding_model", MODEL.modelId());
-        document.put("embedding_dim", 768);
+        document.put("embedding_dim", dim());
         document.put("queries", queries);
-        Path out = Paths.get("runs", "qdrant-f2-r1-v1.json");
+        Path out = Paths.get("runs", System.getenv().getOrDefault("BENCH_RUN_ID", "qdrant-f2-r1") + "-v1.json");
         Files.createDirectories(out.getParent());
         Files.writeString(out, JSON.writeValueAsString(document));
 
