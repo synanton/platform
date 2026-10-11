@@ -80,8 +80,7 @@ public class FilesystemAdapter implements ContentAdapter {
     @Override
     public InputStream open(ContentRef ref) {
         try {
-            String path = ref.uri().startsWith("file://") ? ref.uri().substring(7) : ref.uri().replace("file:", "");
-            return new FileInputStream(path);
+            return new FileInputStream(localPath(ref));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -90,10 +89,24 @@ public class FilesystemAdapter implements ContentAdapter {
     @Override
     public Optional<Instant> lastModified(ContentRef ref) {
         try {
-            String path = ref.uri().startsWith("file://") ? ref.uri().substring(7) : ref.uri().replace("file:", "");
-            return Optional.of(Files.getLastModifiedTime(Path.of(path)).toInstant());
+            return Optional.of(Files.getLastModifiedTime(Path.of(localPath(ref))).toInstant());
         } catch (IOException e) {
             return Optional.empty();
+        }
+    }
+
+    /**
+     * file:// URIs from {@code Path.toUri()} are percent-encoded (spaces,
+     * {@code &}, non-ASCII); decode after stripping the scheme or every
+     * such file 404s. Found via RAG-Multi-Corpus filenames, 2026-10-11.
+     */
+    private static String localPath(ContentRef ref) {
+        String uri = ref.uri();
+        String path = uri.startsWith("file://") ? uri.substring(7) : uri.replace("file:", "");
+        try {
+            return java.net.URLDecoder.decode(path, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            return path;
         }
     }
 

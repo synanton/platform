@@ -804,6 +804,38 @@ Retrieval benchmark impact: **dense and hybrid runs are planned against GPU-7 on
 
 ---
 
+## Retrieval benchmark evidence (2026-10-11)
+
+Measured on live stacks (TEI bge-base-768d / bge-small-384d on the GPU plane;
+Lucene, Milvus, Qdrant, PG+pgvector, YDB backends; RRF hybrid). Recall@10:
+
+**Demo corpus** — 16 docs, 28 human-confirmed queries:
+
+| Engine | bge-base 768d | bge-small 384d |
+|---|---|---|
+| Lucene-hybrid (service) | 0.9226 | 0.9167 |
+| Lucene-vector (service) | — | 0.7917 |
+| Lucene-standalone | 0.7976 | 0.8274 |
+| Milvus / Qdrant HNSW | 0.8452 | 0.8810 |
+| PG+pgvector / YDB-hybrid | — (384d lock-in) | 0.9821 |
+
+**RAG-Multi-Corpus** — 236 synthetic enterprise docs, 1216 upstream gold queries:
+
+| Engine (bge-small 384d) | Recall@10 |
+|---|---|
+| Lucene-hybrid | 0.9778 |
+| Milvus / Qdrant | 0.9572 |
+| Lucene-standalone | 0.9490 |
+| PG / YDB | 0.7944 |
+
+Readings (scoped, provisional): engine ranking is corpus-dependent (PG/YDB
+lead demo, trail RAGMC); Milvus=Qdrant byte-identical on all corpora;
+integration effect zero (service-vector == standalone adapter); blind RRF
+burries single-leg hits (tunable union boost, default off; score-fusion
+deferred to n≥50). Full record: [selection framework](docs/architecture/vector-engine-selection.md)
+(ADR-013 Accepted), [benchmark tracker](docs/implementation/benchmark-tracker.md),
+[dataset registry](docs/benchmark/datasets.md).
+
 ## Related projects
 
 - **Lucentrix** — ingestion/crawling and distributed-search experiments

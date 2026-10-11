@@ -101,6 +101,30 @@ Origin: YDB-041 bulk-upsert investigation, closed 2026-09-29.
 
 ---
 
+## Persistent container state lives on external volumes, never overlayfs
+
+Any container that must survive a restart/rebuild — database content,
+index data, object stores, queue logs, etcd/minio state — mounts it from
+an external bind path (`${DATA_ROOT:-./data}/<service>` or an equivalent
+outside docker-root). Named/anonymous Docker volumes count as overlayfs
+for this rule (they die with `docker volume prune` and hide from backups).
+
+- Violations found and fixed 2026-10-11: synquest ran with NO mounts
+  (Lucene index on overlayfs — every recreate silently reindexed from
+  scratch); milvus-minio carries an anonymous `/data` volume alongside
+  its bound `/minio_data` (upstream default, tolerated, data path bound).
+- Precedent: 2026-09-29 YDB incident (unmounted `/ydb_data` → fixed ~35s
+  commits); bench stacks script enforces external mounts for etcd/minio/
+  milvus/qdrant; bench PG/Cassandra/MinIO compose services bind-mount.
+- Reviewers: any PR adding a stateful service without a bind mount fails
+  this rule. Every mount lands in the compose file next to a comment
+  naming the state it preserves.
+
+Origin: storage audit 2026-10-11 (bench-vector-stacks + compose mounts
+verified live via `docker inspect`).
+
+---
+
 ## Composition boundaries
 
 A composition pairs one metadata stack with one vector engine under separate

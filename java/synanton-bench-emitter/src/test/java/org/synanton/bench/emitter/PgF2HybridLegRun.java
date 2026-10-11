@@ -1,9 +1,11 @@
 package org.synanton.bench.emitter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
@@ -48,7 +50,8 @@ class PgF2HybridLegRun {
     private static final EmbeddingModelRef MODEL = EmbeddingModelRef.of(
             "synanton-bge-small-embedding", "bge-small-en-v1.5", "tei-1.9");
     private static final GenerationId GEN = new GenerationId("f2-gen-1");
-    private static final String TENANT = "demo";
+    private static final String TENANT =
+            System.getenv().getOrDefault("BENCH_TENANT", "demo");
     /**
      * PG vector score space is {@code -distance} (negative). pgvector's
      * {@code <=>} is cosine distance in [0, 2], so -2.0 keeps every hit —
@@ -103,11 +106,40 @@ class PgF2HybridLegRun {
         return Base64.getEncoder().encodeToString(buf.array());
     }
 
+    /** TCP reachability probe: legs skip cleanly where bench stacks are absent (CI). */
+    private static boolean reachable(String host, int port) {
+        try (Socket probe = new Socket()) {
+            probe.connect(new InetSocketAddress(host, port), 3000);
+            return true;
+        } catch (java.io.IOException expectedWithoutBenchStack) {
+            return false;
+        }
+    }
+
+    private static String pgHost(String jdbcUrl) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("jdbc:postgresql://([^:/]+)(:(\\d+))?/")
+                .matcher(jdbcUrl);
+        return m.find() ? m.group(1) : "invalid";
+    }
+
+    private static int pgPort(String jdbcUrl) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("jdbc:postgresql://([^:/]+)(:(\\d+))?/")
+                .matcher(jdbcUrl);
+        return (m.find() && m.group(3) != null) ? Integer.parseInt(m.group(3)) : 5432;
+    }
+
     @Test
     void shouldProducePgF2Artifact() throws Exception {
         String cassandraHost = System.getenv().getOrDefault("BENCH_CASSANDRA_HOST", "localhost");
         int cassandraPort = Integer.parseInt(System.getenv().getOrDefault("BENCH_CASSANDRA_PORT", "9042"));
         String teiBase = System.getenv().getOrDefault("BENCH_TEI_SMALL_BASE_URL", "http://localhost:30801/v1");
+
+        assumeTrue(reachable(cassandraHost, cassandraPort),
+                "bench Cassandra unreachable — skipping leg (CI-safe)");
+        assumeTrue(reachable(pgHost(URL), pgPort(URL)),
+                "bench PG unreachable — skipping leg (CI-safe)");
 
         try (var admin = java.sql.DriverManager.getConnection(URL, ADMIN, ADMIN_PASSWORD);
                 var drop = admin.createStatement()) {

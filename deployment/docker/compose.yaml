@@ -242,6 +242,10 @@ services:
       - "8090:8090"
     volumes:
       - ../../demo-data/documents:/demo-data/documents:ro
+      # Bench staging trees (RAG-Multi-Corpus md/, etc.): derived data, never
+      # committed. Populate via scripts (see datasets.md); ingest by path
+      # /staging/<tree> with an explicit tenant.
+      - ../../bench-staging:/staging:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 15s
@@ -273,6 +277,12 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
       - "8083:8083"
+    volumes:
+      # External-storage rule: the Lucene index survives container Thomas.
+      # First start after adding this comes up EMPTY (overlayfs index
+      # abandoned) — POST /reindex to rebuild from Cassandra (all vectors
+      # persist there, both models).
+      - ${DATA_ROOT:-./data}/synquest:/var/lib/synquest
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 15s

@@ -46,7 +46,8 @@ class YdbF2HybridLegRun {
     private static final EmbeddingModelRef MODEL = EmbeddingModelRef.of(
             "synanton-bge-small-embedding", "bge-small-en-v1.5", "tei-1.9");
     private static final GenerationId GEN = new GenerationId("f2-gen-1");
-    private static final String TENANT = "demo";
+    private static final String TENANT =
+            System.getenv().getOrDefault("BENCH_TENANT", "demo");
 
     private record TextQuery(String id, String text) {}
 
@@ -142,6 +143,28 @@ class YdbF2HybridLegRun {
         String cassandraHost = System.getenv().getOrDefault("BENCH_CASSANDRA_HOST", "localhost");
         int cassandraPort = Integer.parseInt(System.getenv().getOrDefault("BENCH_CASSANDRA_PORT", "9042"));
         String teiBase = System.getenv().getOrDefault("BENCH_TEI_SMALL_BASE_URL", "http://localhost:30801/v1");
+
+        // Bench-stack legs: skip cleanly where Cassandra is absent (CI)
+        // instead of failing the build; runs wherever the stacks are up.
+        try (java.net.Socket probe = new java.net.Socket()) {
+            probe.connect(new InetSocketAddress(cassandraHost, cassandraPort), 3000);
+        } catch (java.io.IOException expectedWithoutBenchStack) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false,
+                    "bench Cassandra unreachable — skipping leg (CI-safe)");
+        }
+        // Same for YDB itself (default grpcs://localhost:2135/local).
+        String ydbEndpoint = System.getenv().getOrDefault("YDB_ENDPOINT", "grpcs://localhost:2135/local");
+        java.util.regex.Matcher ydbUrl = java.util.regex.Pattern.compile("://([^:/]+)(:(\\d+))?/")
+                .matcher(ydbEndpoint);
+        boolean ydbParsed = ydbUrl.find();
+        String ydbHost = ydbParsed ? ydbUrl.group(1) : "invalid";
+        int ydbPort = (ydbParsed && ydbUrl.group(3) != null) ? Integer.parseInt(ydbUrl.group(3)) : 2135;
+        try (java.net.Socket probe = new java.net.Socket()) {
+            probe.connect(new InetSocketAddress(ydbHost, ydbPort), 3000);
+        } catch (java.io.IOException expectedWithoutBenchStack) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false,
+                    "bench YDB unreachable — skipping leg (CI-safe)");
+        }
 
         TableClient client = client();
         prefix = "t_f2_ydb_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8);

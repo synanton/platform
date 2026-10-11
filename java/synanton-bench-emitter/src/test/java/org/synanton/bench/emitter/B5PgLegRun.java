@@ -1,6 +1,10 @@
 package org.synanton.bench.emitter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,6 +50,23 @@ class B5PgLegRun {
 
     @Test
     void shouldProducePgB5Artifact() throws Exception {
+        // Bench-PG leg: skip cleanly where no PG listens (CI) instead of
+        // failing the build; runs wherever BENCH_PG_URL resolves.
+        java.util.regex.Matcher pgUrl =
+                java.util.regex.Pattern.compile("jdbc:postgresql://([^:/]+)(:(\\d+))?/")
+                        .matcher(URL);
+        assumeTrue(pgUrl.find(), "unparseable BENCH_PG_URL=" + URL);
+        String pgHost = pgUrl.group(1);
+        int pgPort = pgUrl.group(3) != null ? Integer.parseInt(pgUrl.group(3)) : 5432;
+        boolean reachable = false;
+        try (Socket probe = new Socket()) {
+            probe.connect(new InetSocketAddress(pgHost, pgPort), 3000);
+            reachable = true;
+        } catch (java.io.IOException expectedWithoutBenchPg) {
+            // fall through to the assumption below
+        }
+        assumeTrue(reachable,
+                "bench PG unreachable at " + pgHost + ":" + pgPort + " — skipping leg (CI-safe)");
         try (var admin = java.sql.DriverManager.getConnection(URL, ADMIN, ADMIN_PASSWORD);
                 var drop = admin.createStatement()) {
             drop.execute("DROP TABLE IF EXISTS documents, chunks, provenance,"

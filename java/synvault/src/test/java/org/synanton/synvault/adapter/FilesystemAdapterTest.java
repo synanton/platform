@@ -76,4 +76,20 @@ class FilesystemAdapterTest {
         var refs = adapter.list("file://" + dir).toList();
         assertThat(refs.get(0).mimeType()).isEqualTo("text/markdown");
     }
+
+    @Test
+    void openDecodesPercentEncodedNames(@TempDir Path dir) throws IOException {
+        // RAG-Multi-Corpus filenames carry spaces and &; list() emits
+        // file:// URIs with percent-encoding, open() must decode them.
+        Path file = dir.resolve("Awards & Recognitions.md");
+        Files.writeString(file, "bank awards");
+
+        var refs = adapter.list("file://" + dir).toList();
+        assertThat(refs).hasSize(1);
+
+        try (InputStream is = adapter.open(refs.get(0))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("bank awards");
+        }
+        assertThat(adapter.lastModified(refs.get(0))).isPresent();
+}
 }

@@ -277,6 +277,9 @@ public class YdbSynquestEngine
             Session session, String tenant, SearchRequest request, Optional<String> active, long start) {
         try {
             String terms = escapeQuotes(request.queryText());
+            if ("1".equals(System.getenv("YDB_LOG_YQL"))) {
+                System.err.println("YQL-TERMS len=" + terms.length() + " head=" + terms.substring(0, Math.min(120, terms.length())).replace("\n", "\\n"));
+            }
             String queryVec =
                     request.queryEmbedding().isPresent()
                             ? floatList(request.queryEmbedding().get())
@@ -289,6 +292,12 @@ public class YdbSynquestEngine
                                 "UNSUPPORTED: hybrid requires a query embedding"));
             }
             Params params = Params.create().put("$t", PrimitiveValue.newText(tenant));
+            if (terms.isBlank()) {
+                // Escaping can erase quote-only queries (RAGMC q787, 2026-10-11):
+                // degrade to vector-only for the query instead of failing it.
+                return CompletableFuture.completedFuture(
+                        vectorSearch(session, tenant, request, active));
+            }
             SearchResult collected =
                     collectHybrid(
                             request,
@@ -734,6 +743,9 @@ public class YdbSynquestEngine
     }
 
     private DataQueryResult query(Session session, String yql, Params params, TxControl<?> control) {
+        if ("1".equals(System.getenv("YDB_LOG_YQL"))) {
+            System.err.println("YQL-DIAG " + (yql.length() > 600 ? yql.substring(0, 300) + " ... [truncated] ... " + yql.substring(yql.length() - 300) : yql));
+        }
         return session
                 .executeDataQuery(yql, control, params, new ExecuteDataQuerySettings())
                 .join()
@@ -1078,7 +1090,10 @@ public class YdbSynquestEngine
     }
 
     private static String escapeQuotes(String text) {
-        return text.replace("\"", " ");
+        // Strip backslashes FIRST: CSV/JSON double-escaping leaves \" literals;
+        // removing only the quote leaves a lone backslash that escapes the
+        // closing YQL quote and breaks the whole statement (RAGMC q554, 2026-10-11).
+        return text.replace("\\", " ").replace("\"", " ");
     }
 
     /**
