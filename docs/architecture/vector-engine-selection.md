@@ -42,7 +42,7 @@ claims are flagged, not made.
 | Engine | Recall bge-base 768d | Recall bge-small 384d | Latency (measured) | Status |
 |---|---|---|---|---|
 | Lucene-hybrid (service) | 0.861 | 0.847 | p50/p95 tens of ms | measured, n=12 |
-| Lucene-vector (service) | — | 0.889 | same path | measured, n=12 |
+| Lucene-vector (service) | — | 0.7917 (133/6) | same path | measured, n=28 |
 | Lucene-standalone | 0.778 | 0.806 | p50 2.7 / p95 31 ms (toy) | measured, n=12 |
 | Milvus (HNSW M16) | 0.847 | 0.847 | p50 3.5 / p95 50.5 ms (toy) + leg timings | measured, n=12 |
 | Qdrant (HNSW) | 0.847 | 0.847 | p50 2.2 / p95 27.1 ms (toy) + leg timings | measured, n=12 |
@@ -51,10 +51,11 @@ claims are flagged, not made.
 | Cassandra+Lucene | `unmeasured` (BM25 latencies p50 4.5/p95 36 ms) | — | BM25-only | partial |
 | Tantivy / Quickwit / Weaviate / Vespa / OpenSearch | `unmeasured` | `unmeasured` | per B0.3 | unmeasured |
 
-Ranking by mean: PG=YDB (1.0) > Lucene-vector-384 (0.889) >
-Lucene-hybrid-768 (0.861) > Milvus=Qdrant both models + Lucene-hybrid-384
-(0.847) > Lucene-standalone-384 (0.806) > Lucene-standalone-768 (0.778).
-Milvus=Qdrant are byte-identical per query on both models. All cells n=12.
+Ranking by mean: PG=YDB (0.9821) > Lucene-hybrid both models
+(0.9226/0.9167) > Milvus=Qdrant both models (0.8452/0.8810) >
+Lucene-standalone (0.7976/0.8274) > Lucene-vector-384 (0.7917).
+Milvus=Qdrant are byte-identical per query on both models. All cells n=28
+(human gold) except where noted.
 
 Latency at bench scale carries JVM/GC/RPC noise; treat p95 gaps under ~2×
 as ties. Overhead models (Milvus ~1.8×, Qdrant fixed/node) per B0.3.

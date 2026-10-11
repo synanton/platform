@@ -433,12 +433,16 @@ Cross-cutting:
   | Engine | bge-base 768d | bge-small 384d |
   |---|---|---|
   | Lucene-hybrid (service) | 0.9226 (155/6) | 0.9167 (77/3) |
-  | Lucene-vector (service) | — | 0.889* (n=12, rerun flagged) |
+  | Lucene-vector (service) | — | 0.7917 (133/6, n=28 rerun) |
   | Lucene-standalone | 0.7976 (67/3) | 0.8274 (139/6) |
   | Milvus HNSW | 0.8452 (71/3) | 0.8810 (74/3) |
   | Qdrant HNSW | 0.8452 (71/3) | 0.8810 (74/3) |
   | PG (384-locked) | — | 0.9821 (55/2) |
   | YDB-hybrid (384-locked) | — | 0.9821 (55/2) |
+- Service-vector trails service-hybrid at n=28 (0.7917 vs 0.9167): more
+  queries exposed more dense-only misses — fusion earns its keep on average
+  even as q2 shows its failure mode. Ranking now: PG=YDB > Lucene-hyb both
+  models > Milvus=Qdrant > Lucene-st > Lucene-vec.
 - Model effect compresses further at n=28 (base≈small within engine);
   engine ranking stable: PG=YDB > Lucene-hyb > Milvus=Qdrant > Lucene-st.
   Milvus=Qdrant byte-identical per query on both models, all 28.
