@@ -443,6 +443,26 @@ Cross-cutting:
 - 10 queries human-confirmed (evergreen/pricing, SOC2/MFA, Atlanta hub,
   workforce, CNC/tooling, BMS/DfM, IND filings, guidance, thin-doc hubs,
   market size). Gold hits n=50 — the Fusion B calibration gate.
+- Uniform-k matrix, human gold, n=50, bge-small 384d (r@5 / r@10):
+  Lucene-hyb 0.9433/0.9433 (top-5 lists); Milvus=Qdrant 0.6533/0.7633;
+  Lucene-st 0.6533/0.7333; PG 0.7833/0.9700; YDB 0.8433/0.9700.
+  k moves conclusions more than engines do at fixed k — every reported
+  number carries its k.
+- q39 multi-gold validated: outsourcing floods top-5, vendor-agreement
+  retrievable deeper — the imbalance finding reproduces on new queries.
+
+### F-3 n=60 round 6 (q51–q60): pure-vector collapse deepens (2026-10-12)
+
+- 10 queries human-confirmed (EBITDA/margin, NADCAP, EMS scale, routing
+  pilot, ocean lane, RBA audits, vendor scale, capex jobs, bridge, climate).
+- Recall@5, human gold, n=60, small-384: Lucene-hyb 0.9111, YDB 0.8111,
+  PG 0.7444, Milvus=Qdrant 0.6194, Lucene-st 0.6028.
+- Round-6 queries are term-precise (numbers/acronyms/facilities): pure-vector
+  legs miss 25–26 of them; hybrid/PG/YDB hold via lexical rescue. The gap
+  between lexical-assisted and pure-vector methods is now the dominant
+  effect in the matrix — larger than any engine gap.
+- PG≠YDB for the first time (0.7444 vs 0.8111): YDB hybrid's fulltext leg
+  rescues queries PG's vector path misses (q28/q35/q37/q57 class).
 - Uniform-k matrix, human gold, n=50, bge-small 384d:
 
   | Engine | recall@5 | recall@10 |

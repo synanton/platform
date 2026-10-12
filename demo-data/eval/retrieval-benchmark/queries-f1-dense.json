@@ -911,5 +911,186 @@
       "rationale": "$84B 2024 value + 3.8% CAGR only in market-analysis (Market Overview). Distinct from q12's EV-driver framing.",
       "supersedes": null
     }
+  },
+  {
+    "query_id": "f1-q51",
+    "text": "EBITDA margin gross margin financial ratios earnings",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "b81bb34b-7afb-5f87-9107-917edc1273f4"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "$112M EBITDA / 34.2% gross margin table only in acme (Financial Highlights). Distinct from q4 (revenue-focused).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q52",
+    "text": "NADCAP heat treatment nondestructive testing aerospace accreditation",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "d1436931-c546-57c5-9ea3-45535e141c75"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "NADCAP special processes + AS9100D aerospace lines only in globex (Quality section). Term-precise acronym probe (q6 class).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q53",
+    "text": "revenue employees fiscal year EMS revenue mid-tier",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "9f460a4c-4276-5a53-8da0-336a8dfd47f3"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "$490M FY2024 + 3,100 employees + mid-tier EMS only in initech Overview. Number-heavy probe.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q54",
+    "text": "routing optimization carrier selection transit variability freight cost reduction pilot",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Dynamic routing pilot (4% variability, 2.1% cost, Columbus-Atlanta) only in logistics (Continuous Improvement).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q55",
+    "text": "ocean transit days cost per unit Krakow Mississauga lane",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "28-day / $12.10 ocean lane row only in logistics lane table. Distinct from q34 (air-target framing).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q56",
+    "text": "third-party audits high-risk facilities geography performance lower risk classification",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "ad3520fd-851a-57fd-8638-f68a0deae1df"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Four high-risk RBA audits (Globex/Initech classified lower-risk) only in compliance (Labor section). Distinct from q32 (overtime findings).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q57",
+    "text": "active vendors countries tiered supplier network inbound volume",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "b81bb34b-7afb-5f87-9107-917edc1273f4"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "340 vendors / 18 countries / 62% concentration only in acme (Supply Chain section). Scale-number probe.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q58",
+    "text": "jobs added capacity increase percent die casting cell expansion completion",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "d1436931-c546-57c5-9ea3-45535e141c75"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "400 jobs + 18% capacity by mid-2026 only in globex (Recent Developments). Distinct from q18 ($95M/EV framing).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q59",
+    "text": "automotive castings harnesses suppliers production lines components",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "d1436931-c546-57c5-9ea3-45535e141c75",
+      "9f460a4c-4276-5a53-8da0-336a8dfd47f3"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Bridge probe: Globex (castings) + Initech (harnesses) jointly supply automotive lines. Multi-gold by design; tests cross-supplier pairing like q20.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q60",
+    "text": "flood river corridors grid infrastructure climate exposure continuity planning",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "9c4be5e5-6386-5ea6-aabb-2c81934e2524"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Climate Risk Factor 3 (flood corridors, aging grid, 3-of-5-years) only in risk-factors. Distinct from q38 (Poland instance).",
+      "supersedes": null
+    }
   }
 ]
