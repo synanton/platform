@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Single container shared per class; one collection per test.
  */
 @Testcontainers
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "BENCH_LIVE_CONTRACT", matches = "1", disabledReason = "needs container images (no egress in CI); run locally with BENCH_LIVE_CONTRACT=1")
 class QdrantVectorRetrieverTest extends VectorRetrieverContract {
 
     @Container
