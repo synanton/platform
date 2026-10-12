@@ -520,6 +520,37 @@ Cross-cutting:
   not a model verdict. `snippet-chars` is now a prop (default 200,
   production behavior unchanged).
 
+### RQ1 chunking comparison — planned, not started (2026-10-12)
+
+- Gap: `ChunkStage` (fixed-window) is test-only; production hardwires
+  `SemanticChunkStage`. Ticket RQ1 (fixed vs semantic vs hierarchical)
+  needs a chunker switch: `ingest.chunk.strategy` prop (`fixed-window` |
+  `semantic`, default current behavior) + wiring in `IngestionJobRunner`.
+- Design (approved direction, unbuilt): variant ingests per strategy (chunk
+  SHAs differ → separate EmbeddingRows naturally; same tenant or
+  strategy-suffixed tenants TBD) → per-variant legs → recall/NDCG deltas
+  on demo n=28 + RAGMC. Hierarchical = DocumentStructureBuilder sections,
+  third variant after the two-way comparison lands.
+- Not started: needs a clean build window (ingest + legs + analysis).
+  Reranker: Qwen3-Reranker-0.6B on node2 via bench NodePort :30802.
+- Method trap found and fixed: QWEN3 chat template REQUIRED (scores invert
+  without it — relevant 0.35 vs distractors 0.68, GPU-5 2026-09-25 record).
+  First rerank run without the template scored 0.756; with template 0.917.
+  Template now applied in-code with the provenance cited.
+- Result (n=28 demo, depth≈15, top-10): baseline 0.988 → reranked 0.917.
+  Only q7 + q28 move (both 1.0→0.0 — table-heavy gold demoted by semantic
+  similarity); 26/28 unchanged. Ticket T13/T14 expectation (rerank helps)
+  NOT confirmed here.
+- Caveats that bound the verdict: 200-char service snippets starve the
+  cross-encoder; 0.6B model; baseline 0.988 leaves almost no headroom
+  (rerank can mostly hurt). Fair retest needs harder queries or a weaker
+  baseline — recorded, not run.
+- Revision (full snippets via `snippet-chars: 2000`): 0.988 → 0.988 with
+  26/28 orderings changed but recall identical — active reranking that
+  preserves quality. The 200-char cap was a confound in the verdict above,
+  not a model verdict. `snippet-chars` is now a prop (default 200,
+  production behavior unchanged).
+
 ### Phase A — RAG-Multi-Corpus legs, n=1216 (2026-10-11)
 
 - Corpus: 236 md files staged (`bench-staging/ragmc/`, gitignored), tenant
