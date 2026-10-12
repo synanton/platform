@@ -595,6 +595,20 @@ Cross-cutting:
   not a model verdict. `snippet-chars` is now a prop (default 200,
   production behavior unchanged).
 
+### P1 rerank closure — negative with characterized failure mode (2026-10-12)
+
+- n=60, full snippets, depth≈50, top-10: baseline 0.9944 → reranked 0.9278.
+  Exactly 4 queries move, all 1.0→0.0: q28 (safety stock), q35 (currency),
+  q38 (flooding), q52 (NADCAP) — every one a term-precise gold (numbers,
+  acronyms, named entities) that lexical legs catch and the cross-encoder
+  downweights for semantic dissimilarity. 56/60 untouched.
+- P1 closed: cross-encoder rerank is measurable, template-correct, and
+  strictly non-improving on this corpus (two independent runs agree).
+  The failure mode is characterizable, not noise: semantic similarity
+  demotes term-precise matches. Service-side `SearchReranker` wiring would
+  inherit the same verdict — not recommended without a corpus where
+  semantic reorder helps (none observed in 88 queries).
+
 ### RQ1 chunking comparison — planned, not started (2026-10-12)
 
 - Gap: `ChunkStage` (fixed-window) is test-only; production hardwires
