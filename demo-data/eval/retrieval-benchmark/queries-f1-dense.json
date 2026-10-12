@@ -731,5 +731,185 @@
       "rationale": "Kanban-triggered 2-hour replenishment from Mississauga VMI hub only in initech profile. Vendor-agreements states VMI obligations (10-day supply) \u2014 different facet (terms vs operation), excluded pending human call.",
       "supersedes": null
     }
+  },
+  {
+    "query_id": "f1-q41",
+    "text": "evergreen term termination notice most-favored pricing top parts",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "96aaae57-8f4e-5f55-8e84-ecee37df393d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Rolling 3-year evergreen (180-day notice) + most-favored pricing on top-20 parts only in vendor-agreements (Initech section).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q42",
+    "text": "SOC 2 certification multi-factor authentication patch corrective watchlist",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "ad3520fd-851a-57fd-8638-f68a0deae1df"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "SOC 2 Type II commitment + MFA/patch watchlist only in compliance-report (Cybersecurity section). Risk-factors SOC2 mention is generic \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q43",
+    "text": "Atlanta distribution automotive customer base regional hub",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Atlanta GA southeast DC serving automotive base only in logistics-network (Key Facilities). Acme mentions Atlanta office (different facet: offices, not hub) \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q44",
+    "text": "employees offices founded Springfield company size workforce",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "b81bb34b-7afb-5f87-9107-917edc1273f4"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "4,200 employees + Springfield/Denver/Atlanta/Toronto + founded 1987 only in acme Overview. Globex/Initech employment figures are different companies \u2014 excluded.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q45",
+    "text": "CNC machining centers tooling division shipment volume customer share",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "d1436931-c546-57c5-9ea3-45535e141c75"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "240 CNC centers + in-house tooling + 14% Acme volume only in globex (Capabilities/Customers).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q46",
+    "text": "corrective action closure battery management design for manufacturability",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "9f460a4c-4276-5a53-8da0-336a8dfd47f3"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "94% closure rate + BMS modules + DfM services only in initech (Products/Quality sections).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q47",
+    "text": "investigational new drug application approval filings formulations",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "IND/NDA filings for Product formulations (Whereas-B) only in outsourcing-agreement. Pharma-domain depth probe.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q48",
+    "text": "full-year revenue guidance automotive production outlook range",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "e1ea63d9-10cc-516b-8a08-7fac26217721"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "$870-890M FY2025 guidance + automotive-production risk only in quarterly-report-q1 (Outlook). Acme profile has FY2024 actuals (different period) \u2014 excluded.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q49",
+    "text": "Rotterdam Singapore hubs inbound consolidation vendor shipments",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "2328cf2e-a5ce-5375-8c0d-0a08a0cc51aa"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Thin-doc test: 19-line structured sample is the ONLY source naming Rotterdam/Singapore hubs. Logistics-network covers other hubs \u2014 excluded (different facilities). Tests thin-doc retrievability.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q50",
+    "text": "market size billion growth rate industrial components forecast",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "0d1ff376-bced-5eb4-9310-b448ae0d582d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "$84B 2024 value + 3.8% CAGR only in market-analysis (Market Overview). Distinct from q12's EV-driver framing.",
+      "supersedes": null
+    }
   }
 ]

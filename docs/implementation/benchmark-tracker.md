@@ -438,6 +438,27 @@ Cross-cutting:
   vs n=28. Candidate mitigations (recorded): per-doc dedup caps, doc-frequency
   score normalization — both need design review before touching retrieval.
 
+### F-3 n=50 round 5 (q41–q50): k-aligned matrix, fusion-B gate met (2026-10-12)
+
+- 10 queries human-confirmed (evergreen/pricing, SOC2/MFA, Atlanta hub,
+  workforce, CNC/tooling, BMS/DfM, IND filings, guidance, thin-doc hubs,
+  market size). Gold hits n=50 — the Fusion B calibration gate.
+- Uniform-k matrix, human gold, n=50, bge-small 384d:
+
+  | Engine | recall@5 | recall@10 |
+  |---|---|---|
+  | Lucene-hybrid (service) | 0.9433 | 0.9433 |
+  | Milvus = Qdrant HNSW | 0.6533 | 0.7633 |
+  | Lucene-standalone | 0.6533 | 0.7333 |
+  | PG+pgvector | 0.7833 | 0.9700 |
+  | YDB-hybrid | 0.8433 | 0.9700 |
+
+- k moves conclusions more than engines do at fixed k: PG/YDB 0.78→0.97
+  from @5 to @10 (their gold sits ranks 6–10). Rule (third demonstration):
+  every reported number carries its k; cross-method cells compare at equal k.
+- q39 multi-gold validated: outsourcing floods top-5, vendor-agreement
+  retrievable deeper — the imbalance finding reproduces on new queries.
+
 ### F-3 n=28 round 3 (q21–q28) + Fusion B spike (2026-10-11)
 
 - 8 queries human-confirmed (pharma parties/terms, switch login, mental
