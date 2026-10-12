@@ -530,6 +530,17 @@ Cross-cutting:
   default-off; fitting the value needs a bigger gold set. Classic RRF
   remains the production behavior.
 
+### Fusion B — grid search ties RRF, spike closed (2026-10-12)
+
+- Calibration run per the spike gate (n=50 human gold): per-leg min-max
+  normalization over dense∪lexical unions, weights swept 0.00–1.00.
+  Best (w_d=0.45) = 0.9433 = RRF baseline exactly. Pure legs lose both ends.
+- Verdict: score-fusion as specced has no headroom here — do not implement.
+  Revisit only with deeper legs (top-100 union untested) or a corpus where
+  the methods disagree. Spike doc closed with evidence.
+- Side effect kept: per-leg scores/ranks retention in runner hits
+  (schema-safe extras) — the calibration dataset pattern for future tuning.
+
 ### P1 rerank leg — built, measured, negative result (2026-10-11)
 
 - Runner-side rerank eval: `benchmark-runner rerank` subcommand (reorders a

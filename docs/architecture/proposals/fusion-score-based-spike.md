@@ -1,6 +1,6 @@
 # Spike: score-based fusion for hybrid retrieval (Fusion option B)
 
-**Status:** Design spike — analysis only, no implementation. Time-boxed.
+**Status:** CLOSED 2026-10-12 — do not implement (evidence below).
 **Trigger:** F-tune (2026-10-11): RRF structurally buries single-leg hits
 (q2 outsourcing: dense #3 + lexical #12–18 → fused out); `rrf_k` inert;
 depth exonerated; union boost trades misses between queries instead of
@@ -49,3 +49,16 @@ Defer implementation until the calibration corpus reaches n≥50. The union
 boost (default-off) covers experimentation meanwhile. Revisit trigger: gold
 expansion round 4, or a query class where RRF demonstrably inverts quality
 ordering (stronger than q2's top-5 miss).
+
+## 5. Outcome (2026-10-12): grid search ties RRF — do not implement
+
+- Ran the calibration the gate asked for: n=50 human gold, per-leg
+  min-max normalization, weights swept 0.00–1.00 in 0.05 steps over the
+  dense∪lexical union, top-5 scored.
+- Best weight (w_d=0.45) scores **0.9433 — exactly the RRF baseline**.
+  Score-fusion ≡ rank-fusion here; no weight beats RRF, pure-dense (1.00)
+  and pure-lexical (0.00) both lose.
+- Verdict: option B as specced has no headroom on this corpus. Close the
+  spike; revisit only with (a) deeper legs (top-100, not top-10 — the union
+  may be the binding constraint, untested), or (b) a corpus where RRF and
+  score-fusion actually disagree (here they converge).

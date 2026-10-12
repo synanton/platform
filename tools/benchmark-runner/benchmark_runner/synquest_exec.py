@@ -97,6 +97,11 @@ class SynquestExecutor(CompositionExecutor):
                 # properties; P1 rerank eval). Absent on engines without snippets.
                 if h.get("snippet"):
                     entry["snippet"] = h["snippet"]
+                # Retained for fusion calibration (Fusion B spike): per-leg
+                # raw scores + ranks. Absent on engines that don't report them.
+                for key in ("score_dense", "score_lexical", "rank_dense", "rank_lexical"):
+                    if h.get(key) is not None:
+                        entry[key] = h[key]
                 hits.append(entry)
             trace = response.get("trace", {})
             timing = float(trace.get("totalMs", trace.get("total_ms", 0.0)))
