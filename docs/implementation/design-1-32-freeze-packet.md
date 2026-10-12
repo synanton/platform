@@ -1,0 +1,43 @@
+# Design 1.32 freeze packet (mirrors the Week-2 packet pattern)
+
+Freezing = marking the Platform API contract immutable; afterwards any change
+needs a versioned design revision, never a silent edit. Per Architecture 1.0
+§14/L424, no 1.26–1.34 plane begins implementation until 1.32 (and 1.27) are
+frozen — this packet unblocks the whole downstream sequence.
+
+## 1. Freeze candidates (verify current before signing)
+
+| Surface | Sections | Freeze form |
+|---|---|---|
+| Resource model + identity + references | §§7–9 | Doc marked frozen; no TBDs present (verified 2026-10-12) |
+| API + resource versioning | §§10–11, §72 | Same |
+| Error model + codes + categories | §§61–64 | Same |
+| Operation resource + states + errors + cancellation | §§55–60 | Same |
+| Pagination / sorting / filtering / field selection | §§66–70 | Same |
+| Idempotency + correlation + request IDs | §§22–26 | Same |
+| AuthN/Z + tenant/principal context | §§15–19 | Same (semantics owned by 1.23/1.29; 1.32 exposes them) |
+
+## 2. Pre-freeze checks (all must pass day-of)
+
+- [ ] No TBD/TODO/placeholder language in §§7–11, 15–19, 22–26, 55–70
+  (grep-verified, not eyeballed).
+- [ ] Cross-track references resolve: 1.23 (security), 1.27 (eventing),
+  1.28 (ingestion), 1.29 (identity), 1.30 (AI runtime), 1.31 (search)
+  sections cited by number exist in their docs.
+- [ ] Versioning principle (§§10–11) states the post-freeze change rule
+  explicitly (major = incompatible + new design rev; minor/additive =
+  backward compatible).
+- [ ] 1.27 freeze packet exists or is scheduled alongside (the gate is joint).
+
+## 3. Freeze commit contents
+
+1. Status line in `synanton-design-1.32.md`: Approved → Frozen, with date.
+2. Tracker entry: date, owner, freeze commit hash, checklist results.
+3. This packet archived as executed (fill in below).
+
+## 4. Execution record (fill at scheduling)
+
+- Date:
+- Owner:
+- Freeze commit:
+- Exceptions (if any §2 item waived, with reason + follow-up):
