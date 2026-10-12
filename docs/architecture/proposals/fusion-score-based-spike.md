@@ -62,3 +62,26 @@ ordering (stronger than q2's top-5 miss).
   spike; revisit only with (a) deeper legs (top-100, not top-10 — the union
   may be the binding constraint, untested), or (b) a corpus where RRF and
   score-fusion actually disagree (here they converge).
+
+## 6. Future: more intelligent fusion (open, 2026-10-12)
+
+Static weights and rank sums are exhausted on this evidence. Candidate
+directions when fusion is revisited, in increasing ambition:
+
+- **Per-query adaptive weighting** (leg agreement as signal): when dense and
+  lexical agree (high rank overlap), trust the consensus; when they diverge,
+  back the stronger leg by its margin rather than splitting the difference.
+  Needs the disagreement taxonomy first (q2-class vs q7-class is the seed).
+- **Cascade / multi-stage**: cheap legs (BM25 + dense) produce candidates;
+  a learned or LLM judge re-scores only the disputed band (ranks 3–15 where
+  all our misses live), never the full list. Bounds cost, targets the
+  observed failure region.
+- **Learned fusion (learning-to-rank)**: cross-encoder features + leg ranks
+  as LTR inputs, trained on gold. Requires the n≥50 calibration set to grow
+  into the hundreds — the current 60 is an eval set, not a training set.
+- **Graph-proximity as a third signal** (ticket RQ3/T10–T12): entity overlap
+  between query and chunk as an independent leg. Unbuilt; would enter fusion
+  as a third list under the same RRF before any of the above replaces it.
+
+None of these is approved work. The trigger stays: a corpus or query class
+where the current mechanism demonstrably inverts quality ordering.
