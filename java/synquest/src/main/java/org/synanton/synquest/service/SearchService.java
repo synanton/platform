@@ -327,9 +327,13 @@ public class SearchService {
         }
         return ids;
     }
-
-    private Hit toHit(Document doc, double score, double dense, double lexical, int rankDense, int rankLexical) {        String text = doc.get("text");
-        String snippet = text != null && text.length() > 200 ? text.substring(0, 200) + "…" : text;
+    private Hit toHit(Document doc, double score, double dense, double lexical, int rankDense, int rankLexical) {
+        String text = doc.get("text");
+        // Snippet length is deployment policy (rerank legs need full chunks;
+        // UI previews want short). Default 200 preserves prior behavior.
+        int cap = props.search() != null ? props.search().snippetChars() : 200;
+        String snippet = text != null && cap > 0 && text.length() > cap
+                ? text.substring(0, cap) + "…" : text;
         String sectionId = doc.get("section_id");
         return new Hit(
                 UUID.fromString(doc.get("content_ref_id")),

@@ -1,6 +1,7 @@
 package org.synanton.synquest.milvus;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.milvus.client.MilvusServiceClient;
@@ -74,6 +75,14 @@ class MilvusB5LegRun {
 
     @Test
     void shouldProduceMilvusB5Artifact() throws Exception {
+        // Bench-stack leg: skip cleanly where Milvus is absent (CI).
+        String milvusHost = System.getenv().getOrDefault("BENCH_MILVUS_HOST", "localhost");
+        int milvusPort = Integer.parseInt(System.getenv().getOrDefault("BENCH_MILVUS_PORT", "19530"));
+        try (java.net.Socket probe = new java.net.Socket()) {
+            probe.connect(new java.net.InetSocketAddress(milvusHost, milvusPort), 3000);
+        } catch (java.io.IOException expectedWithoutBenchStack) {
+            assumeTrue(false, "bench Milvus unreachable — skipping leg (CI-safe)");
+        }
         String collection =
                 "t_b5_milvus_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         MilvusVectorRetriever adapter = new MilvusVectorRetriever(client(), collection, 2);

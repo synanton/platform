@@ -20,6 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Standalone trio (etcd + minio + milvus) shared per class; one collection per test.
  */
 @Testcontainers
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "BENCH_LIVE_CONTRACT", matches = "1", disabledReason = "needs container images (no egress in CI); run locally with BENCH_LIVE_CONTRACT=1")
 class MilvusVectorRetrieverTest extends VectorRetrieverContract {
 
     static final Network NETWORK = Network.newNetwork();

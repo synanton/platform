@@ -1,6 +1,7 @@
 package org.synanton.synquest.qdrant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qdrant.client.QdrantClient;
@@ -75,6 +76,14 @@ class QdrantB5LegRun {
 
     @Test
     void shouldProduceQdrantB5Artifact() throws Exception {
+        // Bench-stack leg: skip cleanly where Qdrant is absent (CI).
+        String qdrantHost = System.getenv().getOrDefault("BENCH_QDRANT_HOST", "localhost");
+        int qdrantPort = Integer.parseInt(System.getenv().getOrDefault("BENCH_QDRANT_PORT", "6334"));
+        try (java.net.Socket probe = new java.net.Socket()) {
+            probe.connect(new java.net.InetSocketAddress(qdrantHost, qdrantPort), 3000);
+        } catch (java.io.IOException expectedWithoutBenchStack) {
+            assumeTrue(false, "bench Qdrant unreachable — skipping leg (CI-safe)");
+        }
         String collection =
                 "t_b5_qdrant_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         QdrantVectorRetriever adapter = new QdrantVectorRetriever(client(), collection, 2);

@@ -30,6 +30,9 @@ synquest:
     # weight — boosting them promotes BM25 tail noise). Tune only against
     # gold; see RrfFusion.
     default-single-leg-boost: 1.0
+    # Snippet length cap in chars (0 = full chunk text). Rerank evaluation
+    # needs full text; UI previews want short. Default preserves behavior.
+    snippet-chars: 200
   embedding:
     model: ${EMBED_MODEL:bge-base-en-v1.5}
     # Dense index dimension (<= 1024, the Lucene 9.11 KNN cap). Changing it needs a /reindex.
