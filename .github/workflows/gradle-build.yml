@@ -54,4 +54,7 @@ jobs:
           wait_healthy
 
       - name: Run buildAll task
-        run: ./gradlew clean buildAll --no-build-cache
+        # -PskipUi: the syntology-admin SPA needs pnpm/npm egress, unavailable
+        # on CI runners; the UI ships via its own docker build (which runs
+        # pnpm inside the image). Java contract comes from buildAll regardless.
+        run: ./gradlew clean buildAll --no-build-cache -PskipUi
