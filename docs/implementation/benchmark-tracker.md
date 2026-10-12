@@ -578,6 +578,21 @@ Cross-cutting:
   on demo n=28 + RAGMC. Hierarchical = DocumentStructureBuilder sections,
   third variant after the two-way comparison lands.
 - Not started: needs a clean build window (ingest + legs + analysis).
+
+### RQ1 first leg — fixed-window switch live, semantic wins by 0.02 (2026-10-12)
+
+- Switch implemented: `chunkStage` bean selects on
+  `ingest.chunk.strategy` (fail-loud on unknown); runner depends on the
+  port interface; yml default corrected to `semantic` (the old
+  `fixed-window` default was dead text — production never honored it).
+- Variant: tenant `demo-fixed`, 41 fixed chunks (400-word windows) vs 81
+  semantic chunks. Gold mapped across tenants by source file.
+- Recall@5, human gold, n=50, small-384: **fixed 0.9233 vs semantic 0.9433**.
+  Identical misses except q45 (CNC/tooling spec table — fixed splits it).
+  RQ1 first answer: chunking matters little here (+0.02 semantic); the
+  corpus (short docs, 1–2 chunks each) barely exercises chunking. A real
+  chunking verdict needs long documents (outsourcing 43 chunks is the only
+  one) — recorded as the method limit, not run twice.
   Reranker: Qwen3-Reranker-0.6B on node2 via bench NodePort :30802.
 - Method trap found and fixed: QWEN3 chat template REQUIRED (scores invert
   without it — relevant 0.35 vs distractors 0.68, GPU-5 2026-09-25 record).

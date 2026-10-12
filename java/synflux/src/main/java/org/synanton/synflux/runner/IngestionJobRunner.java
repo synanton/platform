@@ -5,6 +5,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.JobRow;
 import org.synanton.synflux.config.SynfluxProperties;
 import org.synanton.synflux.domain.ChunkedDocument;
+import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synflux.pipeline.stage.*;
@@ -30,7 +31,7 @@ public class IngestionJobRunner {
     private final IngestionCacheClient cacheClient;
     private final AcquireStage acquireStage;
     private final ExtractionStage extractionStage;
-    private final SemanticChunkStage semanticChunkStage;
+    private final PipelineStage<ParsedDocument, ChunkedDocument> chunkStage;
     private final PipelineStage<ChunkedDocument, ChunkedDocument> annotationStage;
     private final PipelineStage<ChunkedDocument, ChunkedDocument> enrichStage;
     private final PipelineStage<ChunkedDocument, ChunkedDocument> embedStage;
@@ -44,7 +45,7 @@ public class IngestionJobRunner {
         IngestionCacheClient cacheClient,
         AcquireStage acquireStage,
         ExtractionStage extractionStage,
-        SemanticChunkStage semanticChunkStage,
+        PipelineStage<ParsedDocument, ChunkedDocument> chunkStage,
         PipelineStage<ChunkedDocument, ChunkedDocument> annotationStage,
         PipelineStage<ChunkedDocument, ChunkedDocument> enrichStage,
         PipelineStage<ChunkedDocument, ChunkedDocument> embedStage,
@@ -55,7 +56,7 @@ public class IngestionJobRunner {
         this.cacheClient = cacheClient;
         this.acquireStage = acquireStage;
         this.extractionStage = extractionStage;
-        this.semanticChunkStage = semanticChunkStage;
+        this.chunkStage = chunkStage;
         this.annotationStage = annotationStage;
         this.enrichStage = enrichStage;
         this.embedStage = embedStage;
@@ -138,7 +139,7 @@ public class IngestionJobRunner {
                         }
 
                         var parsed = extractionStage.apply(acquired, ctx);
-                        var chunked = semanticChunkStage.apply(parsed, ctx);
+                        var chunked = chunkStage.apply(parsed, ctx);
 
                         // AAP-1: annotation runs on chunked content today. Once v1.23's masking
                         // stage (SEC-4) lands, this MUST move after it - see AnnotationStage's

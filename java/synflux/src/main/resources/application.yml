@@ -16,7 +16,10 @@ synflux:
     parallelism: 4
     max-file-size-bytes: 104857600
     chunk:
-      strategy: fixed-window
+      # RQ1 switch: semantic is the running behavior (fixed-window was
+      # test-only until the switch landed); override per deployment via
+      # SYNFLUX_INGEST_CHUNK_STRATEGY for comparison legs.
+      strategy: ${SYNFLUX_INGEST_CHUNK_STRATEGY:semantic}
       target-tokens: 400
       overlap-tokens: 50
   pipeline:
