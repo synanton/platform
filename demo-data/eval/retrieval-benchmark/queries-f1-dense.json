@@ -514,5 +514,222 @@
       "rationale": "$6.3M safety stock + secondary casting supplier qualification only in quarterly-report-q1. Risk-factors dual-sourcing theme is generic \u2014 excluded pending human call.",
       "supersedes": null
     }
+  },
+  {
+    "query_id": "f1-q29",
+    "text": "capacity reservation minimum order quantity supply agreement",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "96aaae57-8f4e-5f55-8e84-ecee37df393d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "85% capacity reservation + 500-unit MOQ only in vendor-agreements (Globex section).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q30",
+    "text": "supplier audit access production records sub-tier lists",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "96aaae57-8f4e-5f55-8e84-ecee37df393d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-12",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Annual audits with 30 days notice + sub-tier lists only in vendor-agreements. Near-miss: none (outsourcing audit clauses are pharma-context).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q31",
+    "text": "wastewater discharge corrective action environmental audit",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "ad3520fd-851a-57fd-8638-f68a0deae1df"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Ohio wastewater non-conformances + 60-day corrective action only in compliance-report (Environmental section).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q32",
+    "text": "overtime tracking tier-two sub-supplier labor remediation",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "ad3520fd-851a-57fd-8638-f68a0deae1df"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "RBA overtime findings at tier-two sub-supplier remediated via Initech program \u2014 compliance-report Labor section only.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q33",
+    "text": "less-than-truckload next-day transit dedicated truckload departures",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Dedicated TL 3x/week + LTL next-day + milk-run frequencies only in logistics-network (Transportation section).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q34",
+    "text": "ocean freight air expedite volume target Mississauga Krakow",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "8c803827-4301-59ce-9d72-e3240b68b9c7"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "28-day ocean + <5% air target on Mississauga-Krakow lane only in logistics-network.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q35",
+    "text": "currency exposure single region concentration risk committee",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "b81bb34b-7afb-5f87-9107-917edc1273f4"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Acme Risk Profile (single-region concentration, Initech currency exposure, quarterly review) \u2014 company-specific framing. Risk-factors report is the generic near-miss, excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q36",
+    "text": "automation robotics wage inflation skilled trades labor costs",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "0d1ff376-bced-5eb4-9310-b448ae0d582d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Robotics adoption vs wage inflation (3-5yr horizon) only in market-analysis (Labor section). Initech Krakow automation is company-specific \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q37",
+    "text": "supplier portal capacity forecasts ERP manual transactions",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "e1ea63d9-10cc-516b-8a08-7fac26217721"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Digital supplier portal (340 manual transactions/week eliminated) only in quarterly-report-q1 (Operational Highlights).",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q38",
+    "text": "Poland flooding sub-supplier disruption recovery outlook",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "e1ea63d9-10cc-516b-8a08-7fac26217721"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Q4-2024 Poland flooding at Initech sub-supplier + outlook risks only in quarterly-report-q1. Risk-factors climate theme is generic \u2014 excluded pending human call.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q39",
+    "text": "steering committee delivery commitments supply disruption notice",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "6afc3c88-465c-52d3-83d8-d141ea0e3572",
+      "96aaae57-8f4e-5f55-8e84-ecee37df393d"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Steering Committee + 48-hour disruption notice (Globex \u00a77.4/vendor-agreements? No \u2014 pharma \u00a73/\u00a77: 48h notice is Globex vendor-agreement term!). CONFLICT: both docs have 48h-steering-committee concepts. Provisional gold = pharma (supply-commitments framing); FLAG for human adjudication \u2014 may be multi-gold.",
+      "supersedes": null
+    }
+  },
+  {
+    "query_id": "f1-q40",
+    "text": "vendor managed inventory kanban two-hour delivery window",
+    "top_k": 5,
+    "top_k_dense": 10,
+    "top_k_lexical": 10,
+    "rrf_k": 60,
+    "gold": [
+      "9f460a4c-4276-5a53-8da0-336a8dfd47f3"
+    ],
+    "gold_provenance": {
+      "annotator": "human-confirmed (chat 2026-10-12)",
+      "date": "2026-10-11",
+      "confidence": "medium (single annotator, no adjudication)",
+      "rationale": "Kanban-triggered 2-hour replenishment from Mississauga VMI hub only in initech profile. Vendor-agreements states VMI obligations (10-day supply) \u2014 different facet (terms vs operation), excluded pending human call.",
+      "supersedes": null
+    }
   }
 ]
