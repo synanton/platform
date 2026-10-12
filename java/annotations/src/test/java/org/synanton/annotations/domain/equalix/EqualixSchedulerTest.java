@@ -81,7 +81,13 @@ class EqualixSchedulerTest {
             Thread.sleep(50);
         }
         assertThat(runRepository.all()).hasSize(1);
+        // Status flips to SUCCEEDED asynchronously after recording — poll
+        // for the terminal state too (second CI flake of the same race).
         ProcessingRun run = runRepository.all().getFirst();
+        while (run.status() != ProcessingRun.SUCCEEDED && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+            run = runRepository.all().getFirst();
+        }
         assertThat(run.producer()).isEqualTo("equalix-test");
         assertThat(run.producerVersion()).isEqualTo("9.9");
         assertThat(run.scope()).contains("evaluation_run:chunk:t1");
