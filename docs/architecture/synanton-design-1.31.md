@@ -558,6 +558,16 @@ RRF has an important advantage:
 
 > It does not require lexical and vector scores to be numerically comparable.
 
+> **Measured (benchmark track, n=60 human gold, 2026-10/11):** RRF's rank-only
+> form structurally buries single-leg hits (a dense-#3 + lexical-#12 hit loses
+> to dual-mediocre competitors at every tested `k`; `rrf_k` ∈ {10…120} inert;
+> fetch depth exonerated). A dense-only union boost trades misses between
+> queries instead of removing them. Score-based fusion calibrated on n=50
+> ties RRF exactly (0.9433) — do not implement without deeper legs or a
+> disagreeing corpus. RRF remains the initial mechanism, with its failure
+> mode (single-leg burial) now characterized rather than hypothetical.
+> Full record: benchmark tracker F-tune entries.
+
 ---
 
 # 27. Candidate Generation
@@ -619,6 +629,15 @@ Possible signals include:
 Security is not a ranking signal.
 
 Security is a prerequisite for candidate eligibility.
+
+> **Measured (benchmark track, n=60 human gold, 2026-10/11):** cross-mode
+> comparison is now quantified — hybrid leads pure-vector where lexical
+> rescue applies (scorecard/table gold), pure-vector leads where dense finds
+> what fusion buries (pharma-contract q2 class); neither mode dominates.
+> Engine ranking at fixed model: PG=YDB > Lucene-hybrid > Milvus=Qdrant
+  (byte-identical) > Lucene-standalone. Corpus-dependence is the rule
+  (PG/YDB lead demo, trail RAGMC) — no engine choice follows from quality
+  alone. Full matrix: selection framework §1b.
 
 ---
 
@@ -1108,6 +1127,14 @@ Reranker top 20
 ```
 
 The reranker must not search the entire corpus.
+
+> **Measured (benchmark track, Qwen3-Reranker-0.6B, 2026-10-11):** template-correct
+> rerank of fused top-lists is strictly non-improving here (n=28: 0.988→0.917;
+> n=60: 0.9944→0.9278) — the cross-encoder demotes term-precise gold (numbers,
+> acronyms, entities) that lexical legs catch. Without the QWEN3 chat template
+> scores invert (relevant 0.35 vs distractors 0.68). Reranking stays optional
+> until a corpus shows it helping; the `rerank` runner subcommand + QWEN3
+> template requirement are the standing measurement path.
 
 ---
 
