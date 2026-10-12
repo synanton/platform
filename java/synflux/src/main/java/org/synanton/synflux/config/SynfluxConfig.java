@@ -52,11 +52,25 @@ public class SynfluxConfig {
                 HOT_BUCKET);
     }
 
+    /**
+     * RQ1 chunker switch: {@code ingest.chunk.strategy} selects the chunking
+     * ({@code semantic} default = current behavior, {@code fixed-window} =
+     * word-count windows for the RQ1 comparison legs). Unknown values fail
+     * loud at startup, never silently fall back.
+     */
     @Bean
-    public SemanticChunkStage semanticChunkStage(SynfluxProperties props) {
+    public PipelineStage<org.synanton.synflux.domain.ParsedDocument,
+            org.synanton.synflux.domain.ChunkedDocument> chunkStage(SynfluxProperties props) {
         SynfluxProperties.Ingest.Chunk chunk = props.ingest() != null ? props.ingest().chunk() : null;
-        int maxTokens = chunk != null ? chunk.targetTokens() : 512;
-        return new SemanticChunkStage(ChunkerConfig.of(maxTokens));
+        String strategy = chunk != null && chunk.strategy() != null ? chunk.strategy() : "semantic";
+        int targetTokens = chunk != null ? chunk.targetTokens() : 512;
+        int overlapTokens = chunk != null ? chunk.overlapTokens() : 50;
+        return switch (strategy) {
+            case "fixed-window" -> new ChunkStage(targetTokens, overlapTokens);
+            case "semantic" -> new SemanticChunkStage(ChunkerConfig.of(targetTokens));
+            default -> throw new IllegalStateException(
+                    "unknown ingest.chunk.strategy: " + strategy + " (want fixed-window|semantic)");
+        };
     }
 
     @Bean
