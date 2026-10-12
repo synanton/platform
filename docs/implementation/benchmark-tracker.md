@@ -459,6 +459,15 @@ Cross-cutting:
 - q39 multi-gold validated: outsourcing floods top-5, vendor-agreement
   retrievable deeper — the imbalance finding reproduces on new queries.
 
+### P2 top_k=10 alignment — depth dominates (2026-10-12)
+
+- Service legs returned top-5 while JUnit legs returned top-10: all prior
+  cross-method cells compared different k. Reran service legs at top_k=10:
+  Lucene-hyb-384 0.9433→**0.9933** (only q3 partial), Lucene-hyb-768 **0.9933**.
+- Lesson (third k demonstration): depth moves numbers more than engines do
+  within a method. All matrix cells below now state returned depth; future
+  legs default top_k=10 for @10 comparability.
+
 ### F-3 n=28 round 3 (q21–q28) + Fusion B spike (2026-10-11)
 
 - 8 queries human-confirmed (pharma parties/terms, switch login, mental
