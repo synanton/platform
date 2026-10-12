@@ -593,6 +593,20 @@ Cross-cutting:
   corpus (short docs, 1–2 chunks each) barely exercises chunking. A real
   chunking verdict needs long documents (outsourcing 43 chunks is the only
   one) — recorded as the method limit, not run twice.
+
+### RQ1 three-way — hierarchical wins by 0.01, strategy barely matters (2026-10-12)
+
+- `HierarchicalChunkStage`: one chunk per document section (heading +
+  concatenated elements, hierarchy attached); flat-text fallback for
+  unstructured payloads. Third switch arm (`hierarchical`).
+- Variant: tenant `demo-hier`, 16 whole-doc chunks (md files carry no
+  structured elements past TIKA — sections degenerate to documents here).
+- Recall@5, human gold, n=50, small-384: **hierarchical 0.9533 (143/3)**
+  vs semantic 0.9433 vs fixed 0.9233. Fewest miss classes (q2, q3, q20, q22).
+- RQ1 verdict on this corpus: fixed < semantic < hierarchical, spread 0.03.
+  Chunking is a third-order effect behind engine choice (±0.2) and fusion
+  (±0.1); the corpus (15/16 short docs) cannot separate chunkers further.
+  Case for borb/PIRE long documents stands iff RQ1 needs a stronger verdict.
   Reranker: Qwen3-Reranker-0.6B on node2 via bench NodePort :30802.
 - Method trap found and fixed: QWEN3 chat template REQUIRED (scores invert
   without it — relevant 0.35 vs distractors 0.68, GPU-5 2026-09-25 record).

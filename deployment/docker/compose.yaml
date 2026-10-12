@@ -232,6 +232,11 @@ services:
       SYNFLUX_EMBEDDING_EMBED_BASE_URL: http://host.docker.internal:30801/v1
       SYNFLUX_EMBEDDING_MODEL_ID: synanton-bge-small-embedding
       SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "true"
+      # RQ1 chunker switch (ingest.chunk.strategy): semantic default.
+      # Override per run (CHUNK_STRATEGY=fixed-window|hierarchical) for
+      # comparison legs into a strategy-suffixed tenant. Never leave a
+      # non-default baked in: the next plain restart must serve production.
+      SYNFLUX_INGEST_CHUNK_STRATEGY: ${CHUNK_STRATEGY:-semantic}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8090
       EXTRACTION_CLIENT_ENABLED: "true"
