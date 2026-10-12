@@ -73,6 +73,13 @@ class EqualixSchedulerTest {
         scheduler.start();
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        // The latch fires when the executor runs, but the run record lands
+        // afterwards — poll for it instead of asserting once (flaked in CI
+        // under load, 2026-10-12).
+        long deadline = System.currentTimeMillis() + 5000;
+        while (runRepository.all().size() != 1 && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
         assertThat(runRepository.all()).hasSize(1);
         ProcessingRun run = runRepository.all().getFirst();
         assertThat(run.producer()).isEqualTo("equalix-test");
