@@ -68,6 +68,15 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--endpoint", action="append", required=True,
                        help="synquest base URL (repeatable)")
     probe.set_defaults(func=cmd_probe)
+    rerank = sub.add_parser("rerank", help="re-rank a run's top-N per query via a cross-encoder (P1 eval)")
+    rerank.add_argument("--in", dest="input", required=True, help="input Result Manifest path")
+    rerank.add_argument("--queries", required=True, help="queries JSON (for texts + gold)")
+    rerank.add_argument("--out", required=True, help="output Result Manifest path")
+    rerank.add_argument("--endpoint", required=True, help="rerank base URL (serves POST /v1/rerank)")
+    rerank.add_argument("--model", required=True, help="rerank model id (stamped into environment)")
+    rerank.add_argument("--depth", type=int, default=50, help="candidates reranked per query")
+    rerank.add_argument("--top-k", type=int, default=10, help="hits kept per query after rerank")
+    rerank.set_defaults(func=cmd_rerank)
     return parser
 
 
@@ -189,6 +198,31 @@ def cmd_probe(args: argparse.Namespace) -> int:
             all_ok = False
             print(f"DOWN {endpoint}: {status['reason']}")
     return 0 if all_ok else 1
+
+
+def cmd_rerank(args: argparse.Namespace) -> int:
+    from .rerank import recall_report, rerank_run, RerankFailed
+
+    try:
+        document = json_module.loads(Path(args.input).read_text())
+        queries = json_module.loads(Path(args.queries).read_text())
+    except (OSError, ValueError) as e:
+        print(f"error: cannot load input: {e}", file=sys.stderr)
+        return EXIT_MANIFEST_ERROR
+    try:
+        out = rerank_run(document, queries, args.endpoint, args.model,
+                         args.depth, args.top_k)
+    except RerankFailed as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_COST_FIRED
+    before = recall_report(document, queries)["mean"]
+    after = recall_report(out, queries)["mean"]
+    Path(args.out).write_text(json_module.dumps(out, indent=1))
+    print(f"wrote {args.out}")
+    print(f"recall before={before} after={after} "
+          f"(reranked={out['metrics_summary'].get('reranked_queries')}, "
+          f"skipped={out['metrics_summary'].get('rerank_skipped')})")
+    return 0
 
 
 if __name__ == "__main__":

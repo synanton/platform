@@ -1,0 +1,18 @@
+# Bench-owned NodePort for the vLLM reranker (no Service in the gpu-runtime
+# blueprints; same pattern as tei-embedding-bench-svc.yaml).
+# Reranker pod floats across... pinned per plan D2 (node2); NodePort is
+# node-independent (kube-proxy routes), so any node's :30802 works.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-reranker-bench
+  namespace: gpu-plane
+spec:
+  selector:
+    app: vllm-reranker
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+      nodePort: 30802
+  type: NodePort

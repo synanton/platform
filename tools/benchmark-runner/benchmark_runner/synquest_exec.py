@@ -86,12 +86,18 @@ class SynquestExecutor(CompositionExecutor):
             if query.get("execution_mode"):
                 payload["execution_mode"] = query["execution_mode"]
             response = post_search(self.endpoint, payload, self.timeout_s)
-            hits = [
-                {"chunk_id": h.get("content_ref_id", h.get("chunk_id", "")),
-                 "rank": i,
-                 "score": float(h.get("score", 0.0))}
-                for i, h in enumerate(response.get("hits", []))
-            ]
+            hits = []
+            for i, h in enumerate(response.get("hits", [])):
+                entry = {
+                    "chunk_id": h.get("content_ref_id", h.get("chunk_id", "")),
+                    "rank": i,
+                    "score": float(h.get("score", 0.0)),
+                }
+                # Retained for rerank legs (schema allows additional hit
+                # properties; P1 rerank eval). Absent on engines without snippets.
+                if h.get("snippet"):
+                    entry["snippet"] = h["snippet"]
+                hits.append(entry)
             trace = response.get("trace", {})
             timing = float(trace.get("totalMs", trace.get("total_ms", 0.0)))
             results.append(
