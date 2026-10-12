@@ -424,6 +424,20 @@ Cross-cutting:
 - Live compose state restored to small/384d (committed state) after the
   768d service window; index self-healed (81/81, 0 mismatches).
 
+### F-3 n=40 round 4 (q29–q40): corpus-imbalance finding (2026-10-12)
+
+- 12 queries human-confirmed (terms, audits, labor, freight, risk, market,
+  portal, flooding, steering-committee multi-gold, VMI ops).
+- Recall@10, human gold, n=40, bge-small 384d: PG 0.9875, YDB 0.9875,
+  Lucene-hyb 0.9292, Milvus 0.7542, Qdrant 0.7542, Lucene-st 0.7167.
+  (Service-hyb run live; JUnit legs rerun with the 40-query file.)
+- Finding: pure-vector legs drown in outsourcing-agreement (43/81 chunks =
+  53% of the index) — q29/q30/q35/q37/q38/q40 return outsourcing walls.
+  Not a gold error: dense top-k saturates with the majority doc. Hybrid
+  (lexical rescue) and PG/YDB hold up; pure-vector collapses by up to 0.13
+  vs n=28. Candidate mitigations (recorded): per-doc dedup caps, doc-frequency
+  score normalization — both need design review before touching retrieval.
+
 ### F-3 n=28 round 3 (q21–q28) + Fusion B spike (2026-10-11)
 
 - 8 queries human-confirmed (pharma parties/terms, switch login, mental
