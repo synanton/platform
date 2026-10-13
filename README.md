@@ -7,7 +7,7 @@ Synanton is an AI-native enterprise knowledge platform exploring how enterprise 
 The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
 
 > **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) — a capstone document integrating Designs 1.22–1.34, all now **Approved (architecture)**.  
-> **Current focus:** implementation is still concentrated on the 1.22 baseline, the 1.23 security model, and 1.25 annotations/recalculation (partial — AAP-1/AAP-2 landed). Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture with implementation not yet started.
+> **Current focus:** implementation is still concentrated on the 1.22 baseline, the 1.23 security model, and 1.25 annotations/recalculation (partial — AAP-1/AAP-2 landed), plus the 1.26 Content Cache reference implementation (Go service with HTTP/gRPC/S3 tiers, jobs, and conformance suite; Java port, Postgres and gRPC adapters). Designs 1.27–1.34 (eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture with implementation not yet started.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
@@ -416,6 +416,9 @@ The architecture is designed so GPU infrastructure can scale independently from 
 | `control-plane` | Administration and model-serving directory | ✅ |
 | `synanton-mcp` | MCP protocol bridge | ✅ |
 | `annotations` | Annotation registry, provenance and recalculation foundation | 🔶 In progress |
+| `content-cache-api` | Content Cache port (ContentStore, v1 references), in-memory and filesystem fakes | ✅ |
+| `content-cache-postgres` | JDBC ContentStore adapter with testcontainers contract tests | ✅ |
+| `content-cache-grpc` | gRPC ContentStore client (explicit-unsupported lifecycle ops) | ✅ |
 | `analytics` | Events, facts, aggregates, metrics and reports | 🔲 Planned |
 | `gpu-contract` | Versioned GPU execution protobuf contract | ✅ |
 | `gpu-client` | Shared GPU-plane client: mTLS channel, canonical error codes, fail-closed tenant-aware EMBED client (`gpu-plane` profile in `synquest`/`synflux`) | ✅ |
@@ -441,7 +444,7 @@ Synanton intentionally evolves through versioned architecture documents.
 | [1.23](docs/architecture/synanton-design-1.23.md) | Secure semantic representations | Approved; normative security baseline for every later plane; implementation in progress |
 | 1.24 | Annotation foundation | Consolidated into 1.25 (no separate document was ever published) |
 | [1.25](docs/architecture/synanton-design-1.25.md) | Annotations, derived knowledge, recalculation, analytics and reporting | Approved (architecture); partial implementation — AAP-1/AAP-2 landed, AAP-3–AAP-8 not started |
-| [1.26](docs/architecture/synanton-design-1.26.md) | Content Cache Plane | Approved (architecture); implementation not started |
+| [1.26](docs/architecture/synanton-design-1.26.md) | Content Cache Plane | Approved (architecture); implementation in progress (reference service + Java adapters) |
 | [1.27](docs/architecture/synanton-design-1.27.md) | Eventing and Workflow Plane — common execution fabric for 1.28–1.32 | Approved (architecture); **next implementation step** — see [implementation plan](docs/implementation/eventing-workflow-plane/INDEX.md) |
 | [1.28](docs/architecture/synanton-design-1.28.md) | Ingestion Plane | Approved (architecture); implementation not started |
 | [1.29](docs/architecture/synanton-design-1.29.md) | Identity, Tenant & Policy Plane | Approved (architecture); implementation not started |
@@ -621,6 +624,9 @@ java/
   synanton-mcp/
   annotations/
   analytics/
+  content-cache-api/
+  content-cache-postgres/
+  content-cache-grpc/
   gpu-contract/
   gpu-gateway/
   extraction-contract/
@@ -694,7 +700,7 @@ Start here:
 - [Platform API Plane (v1.32) — implementation plan, not started](docs/implementation/platform-api-plane/INDEX.md)
 - [Cross-plane Architecture Review Resolution (1.26–1.33)](docs/architecture/proposals/synanton-architecture-review-resolution.md)
 
-Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture — see the table above for links to each, and their companion ADRs under [`docs/architecture/decisions/`](docs/architecture/decisions/). None of them has implementation started yet; **1.27 and 1.32 are next** (see their implementation plans linked above) since the capstone's implementation sequence (§14) gates every other new plane on those two contracts being frozen first.
+Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture — see the table above for links to each, and their companion ADRs under [`docs/architecture/decisions/`](docs/architecture/decisions/). Except for 1.26 (reference implementation in progress — see its row above), none of them has implementation started yet; **1.27 and 1.32 are next** (see their implementation plans linked above) since the capstone's implementation sequence (§14) gates every other new plane on those two contracts being frozen first.
 
 The broader project documentation is maintained separately and explains the architecture, concepts, use cases, operations, integrations and design history.
 
@@ -738,7 +744,7 @@ Storage engines, graph implementations, LLM providers, extraction implementation
 
 Synanton is an **active open-source research and engineering project**.
 
-Architecturally, the design series is now well ahead of implementation: Designs 1.22–1.34 are all **Approved (architecture)**, integrated by the [Synanton Platform Architecture 1.0 capstone document](docs/architecture/synanton-platform-architecture-1.0.md). Implementation, however, remains concentrated where it has always been furthest along — the 1.22 baseline, the 1.23 security model, and 1.25's annotation foundation and recalculation (AAP-1/AAP-2). The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. The nine newly approved planes (1.26 content cache, 1.27 eventing/workflow, 1.28 ingestion, 1.29 identity, 1.30 AI runtime, 1.31 search/retrieval, 1.32 platform API, 1.33 Kubernetes lifecycle, 1.34 temporal versioning) have **no implementation started**; per the capstone document's implementation sequence, none of them should begin ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen.
+Architecturally, the design series is now well ahead of implementation: Designs 1.22–1.34 are all **Approved (architecture)**, integrated by the [Synanton Platform Architecture 1.0 capstone document](docs/architecture/synanton-platform-architecture-1.0.md). Implementation, however, remains concentrated where it has always been furthest along — the 1.22 baseline, the 1.23 security model, and 1.25's annotation foundation and recalculation (AAP-1/AAP-2) — plus the 1.26 Content Cache reference implementation now in progress. The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. Of the nine newly approved planes, eight (1.27 eventing/workflow, 1.28 ingestion, 1.29 identity, 1.30 AI runtime, 1.31 search/retrieval, 1.32 platform API, 1.33 Kubernetes lifecycle, 1.34 temporal versioning) have **no implementation started**; per the capstone document's implementation sequence, none of them should begin ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen.
 
 **Next implementation steps: 1.27 and 1.32.** Both are gating contracts every other unbuilt plane depends on, and both are ready to start — see their phased implementation plans: [Eventing and Workflow Plane](docs/implementation/eventing-workflow-plane/INDEX.md) and [Platform API Plane](docs/implementation/platform-api-plane/INDEX.md). Their foundational phases run in parallel (neither blocks the other's Phase 1); later integration phases wait on 1.26/1.28/1.30/1.31.
 

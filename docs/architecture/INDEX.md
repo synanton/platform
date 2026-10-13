@@ -63,7 +63,7 @@ last_reviewed: "2026-09-12"
 | 1.29 | [`synanton-design-1.29.md`](./synanton-design-1.29.md) | Approved (architecture) - implementation not started; see [ADR-006](./decisions/adr-006-identity-tenant-policy-plane.md) |
 | 1.28 | [`synanton-design-1.28.md`](./synanton-design-1.28.md) | Approved (architecture) - implementation not started; see [ADR-005](./decisions/adr-005-ingestion-plane.md) |
 | 1.27 | [`synanton-design-1.27.md`](./synanton-design-1.27.md) | Approved (architecture) - implementation not started; common eventing/workflow fabric for 1.28-1.31; see [ADR-004](./decisions/adr-004-eventing-workflow-plane.md) |
-| 1.26 | [`synanton-design-1.26.md`](./synanton-design-1.26.md) | Approved (architecture) - implementation not started; see [ADR-003](./decisions/adr-003-content-cache-plane.md) |
+| 1.26 | [`synanton-design-1.26.md`](./synanton-design-1.26.md) | Approved (architecture) - implementation in progress (Go reference service + Java adapters); see [ADR-003](./decisions/adr-003-content-cache-plane.md) |
 | 1.25 | [`synanton-design-1.25.md`](./synanton-design-1.25.md) | Approved (architecture) - implementation phased (AAP-1/AAP-2 landed; annotations, recalculation, analytics/reporting; consolidates 1.24) |
 | 1.23 | [`synanton-design-1.23.md`](./synanton-design-1.23.md) | In progress (classification-aware search) |
 | 1.22 | [`synanton-design-1.22.md`](./synanton-design-1.22.md) | **CURRENT baseline** |
