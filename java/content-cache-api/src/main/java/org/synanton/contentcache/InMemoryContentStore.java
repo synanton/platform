@@ -97,6 +97,19 @@ public final class InMemoryContentStore implements ContentStore {
         }
     }
 
+    /**
+     * Returns the recorded digest for an artifact, or empty when the
+     * artifact is missing or belongs to another tenant. Metadata query
+     * for tooling and tests; indistinguishable from not-found by design.
+     */
+    public synchronized java.util.Optional<String> digestOf(String tenantId, String artifactId) {
+        try {
+            return java.util.Optional.of(lookupById(tenantId, artifactId).digest());
+        } catch (ContentNotFoundException | IllegalArgumentException e) {
+            return java.util.Optional.empty();
+        }
+    }
+
     @Override
     public synchronized void markForDeletion(ContentReference reference, String ownerId) {
         lookup(reference);
@@ -145,9 +158,18 @@ public final class InMemoryContentStore implements ContentStore {
 
     private Stored lookup(ContentReference reference) {
         Objects.requireNonNull(reference, "reference");
-        requireTenant(reference.tenantId());
-        Stored stored = artifacts.get(key(reference.tenantId(), reference.artifactId()));
-        if (stored == null || !stored.digest().equals(reference.digest())) {
+        Stored stored = lookupById(reference.tenantId(), reference.artifactId());
+        if (!stored.digest().equals(reference.digest())) {
+            throw new ContentNotFoundException("artifact not found");
+        }
+        return stored;
+    }
+
+    private Stored lookupById(String tenantId, String artifactId) {
+        requireTenant(tenantId);
+        Objects.requireNonNull(artifactId, "artifactId");
+        Stored stored = artifacts.get(key(tenantId, artifactId));
+        if (stored == null) {
             throw new ContentNotFoundException("artifact not found");
         }
         return stored;

@@ -48,6 +48,7 @@ include(
     "java:annotations",
     "java:content-cache-api",
     "java:content-cache-postgres",
+    "java:content-cache-grpc",
     "java:storage-contract",
     "java:synvault-api",
     "java:synquest-api",
