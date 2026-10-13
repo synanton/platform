@@ -411,7 +411,7 @@ This section reflects the state of the codebase at the time this document was ac
 | 1.22 | Approved — base | Furthest along; platform baseline in production use |
 | 1.23 | Approved — normative security | In progress |
 | 1.25 (incl. 1.24) | Approved | Partial — AAP-1 (annotation foundation) and AAP-2 (Resolutor/Equalix recalculation) landed; AAP-3–AAP-8 not started (see [ADR-002](./decisions/adr-002-annotations-analytics-plane.md)) |
-| 1.26 | Approved | Not started |
+| 1.26 | Approved | Content Service reference adapter approved ([proposal v3](../proposals/Content-service/content-cache-commitix-integration-proposal.md)); implementation in progress |
 | 1.27 | Approved | Not started |
 | 1.28 | Approved | Not started |
 | 1.29 | Approved | Not started |
