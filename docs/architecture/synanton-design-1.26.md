@@ -1,6 +1,6 @@
 # Synanton Design 1.26 — Content Cache Plane
 
-**Status:** Approved (architecture) — implementation not started
+**Status:** Approved (architecture) — implementation in progress (Content Service reference adapter approved via [Content Cache / Commitix Integration Proposal v3](../proposals/Content-service/content-cache-commitix-integration-proposal.md))
 **Version:** 1.26
 **Document ID:** `synanton-design-1.26`
 **Date:** 2026-09-05
