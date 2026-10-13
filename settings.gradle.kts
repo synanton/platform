@@ -46,6 +46,8 @@ include(
     "java:extraction-contract",
     "java:extraction-client",
     "java:annotations",
+    "java:content-cache-api",
+    "java:content-cache-postgres",
     "java:storage-contract",
     "java:synvault-api",
     "java:synquest-api",
