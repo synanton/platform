@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package content.v1;
+
+option go_package = "github.com/synanton/content-service/gen/content/v1;contentv1";
+
+// The .proto file here mirrors content-service proto/content/v1/content.proto
+// (wire contract owned by Content Cache 1.26). The java_* options below are
+// additive and do not affect the wire contract.
+
+// Java codegen options below are additive and do not affect the wire
+// contract. Source: content-service proto/content/v1/content.proto.
+option java_package = "io.synanton.content.v1";
+option java_outer_classname = "ContentProto";
+option java_multiple_files = true;
+
+// Content Cache 1.26 reference implementation surface (Phase 1 subset).
+//
+// Every operation is tenant-scoped: tenant_id is required and cross-tenant
+// reads fail with NOT_FOUND, indistinguishable from missing content.
+// The wire format of ContentReference values is opaque and versioned;
+// clients must treat reference strings as handles, never parse them
+// for storage internals.
+service ContentService {
+  // Publish an immutable artifact. Idempotent by (tenant_id, digest).
+  rpc Put(PutRequest) returns (PutResponse);
+
+  // Retrieve payload bytes with integrity verification.
+  rpc Get(GetRequest) returns (GetResponse);
+
+  // Existence check without fetching bytes.
+  rpc Head(HeadRequest) returns (HeadResponse);
+
+  // Advertise conformance level and optional features.
+  rpc Capabilities(CapabilitiesRequest) returns (CapabilitiesResponse);
+}
+
+message PutRequest {
+  string tenant_id = 1;
+  bytes payload = 2;
+  string content_type = 3;
+  string owner_id = 4;
+  int32 retention_days = 5;
+  int32 serializer_version = 6;
+}
+
+message PutResponse {
+  // Opaque versioned reference (v1:...), max 512 characters.
+  string reference = 1;
+  string artifact_id = 2;
+  string digest = 3;
+  bool dedup_hit = 4;
+  string storage_tier = 5;
+}
+
+message GetRequest {
+  string tenant_id = 1;
+  string artifact_id = 2;
+}
+
+message GetResponse {
+  bytes payload = 1;
+  string digest = 2;
+  string content_type = 3;
+  string artifact_id = 4;
+}
+
+message HeadRequest {
+  string tenant_id = 1;
+  string artifact_id = 2;
+}
+
+message HeadResponse {
+  bool exists = 1;
+  string artifact_id = 2;
+}
+
+message CapabilitiesRequest {}
+
+message CapabilitiesResponse {
+  string conformance_level = 1;
+  repeated string features = 2;
+  repeated string storage_tiers = 3;
+}
