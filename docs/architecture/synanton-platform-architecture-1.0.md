@@ -4,7 +4,7 @@
 > **Version:** 1.0
 > **Document ID:** `synanton-platform-architecture-1.0`
 > **Date:** 2026-09-07
-> **Status:** Approved (architecture) — capstone document; implementation not started for 1.26–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
+> **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26, not started for 1.27–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
 > **Basis:** [SNTP-14 / GitHub Issue #39](https://github.com/synanton/platform/issues/39); promoted from [`docs/architecture/proposals/synanton-platform-1.0-proposal.md`](./proposals/synanton-platform-1.0-proposal.md); extended by SNTP-15 with Design 1.34 (Temporal Versioned Knowledge and Retrieval)
 > **Audience:** Architects, module owners, security engineers, SREs, platform engineers, technical decision makers
 > **Related docs:** [ADR-011](./decisions/adr-011-platform-architecture-1.0.md), [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md), [Architecture Review Resolution](./proposals/synanton-architecture-review-resolution.md), and every design document listed in §3
