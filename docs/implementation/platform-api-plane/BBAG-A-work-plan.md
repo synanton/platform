@@ -138,8 +138,17 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
 
 ## Appendix B — MCP Search Tool Sketch
 
-`search` tool: description + inputSchema {query (required), filters, limit
-1–100, cursor}; searches platform content within authenticated tenant/permissions.
+`search` tool: description + inputSchema {query (required), top_k}
+conforming to `SearchToolHandler.inputSchema()` (decision 2026-10-15:
+conform to the existing handler, not the earlier {query, filters, limit,
+cursor} sketch — filters/cursor deferred to Generation B as additive
+optional properties; top_k stays, not renamed to limit).
+
+> **D1/D4 divergence is intentional, not drift.** D1 REST `/search` uses
+> {query, filters, limit, cursor} (standard REST patterns; pagination
+> expected; filters pass through to 1.31 opaquely). D4 MCP uses
+> {query, top_k} (one-shot tool call; no cursor state; retrieval-idiomatic).
+> Different consumers, different ergonomics.
 
 ## Plan Amendments (BBAG-A review, 2026-10-15)
 
