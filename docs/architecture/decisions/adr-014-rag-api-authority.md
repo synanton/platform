@@ -1,8 +1,6 @@
 # ADR-014: RAG API (§51–52) Authority — 1.30-Owned, Exposed via 1.32
 
-**Status:** Decided 2026-10-15
-**Owner:** Architecture
-**Due:** Before M0-contract-freeze — satisfied
+**Status:** Accepted 2026-10-15
 **Basis:** 1.32 §§51–52 frame RAG as a higher-level *application* API over
 Search; RAG is AI-execution-centric, not an external product contract.
 
