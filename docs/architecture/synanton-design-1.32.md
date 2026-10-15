@@ -4,7 +4,8 @@
 > **Version:** 1.32
 > **Document ID:** `synanton-design-1.32`
 > **Date:** 2026-09-07
-> **Status:** Approved (architecture) — implementation not started
+> **Status:** Frozen 2026-10-15 (BBAG-A M0-entry) — implementation may begin against this contract; changes need a versioned design revision, never a silent edit
+> **Freeze record:** `docs/implementation/design-1-32-freeze-packet.md` §4 (executed). §§51–52 RAG API carved out: 1.30-owned semantics, 1.32-normalized contract — authority resolved (A5), implementation deferred to future 1.32 generations (no §51–52 endpoints in BBAG-A OpenAPI).
 > **Normative security baseline:** Design 1.23 (see §16, §35, §46, §64, §106)
 > **Audience:** Architects, platform engineers, API developers, application developers, integrators, SRE, security engineers, and technical decision makers
 > **Related Designs:**

@@ -37,7 +37,13 @@ frozen — this packet unblocks the whole downstream sequence.
 
 ## 4. Execution record (fill at scheduling)
 
-- Date:
-- Owner:
-- Freeze commit:
-- Exceptions (if any §2 item waived, with reason + follow-up):
+- Date: 2026-10-15
+- Owner: Architecture (freeze decision recorded; BBAG-A M0-entry satisfied)
+- Freeze commit: (this commit — see log)
+- §51–52 carve-out: RAG exposure is 1.30-owned semantics with 1.32-normalized
+  contract (errors, auth, tenant scoping); 1.30 breakage absorbed at the 1.32
+  boundary. The normalization rule applies to future 1.32 generations, NOT to
+  BBAG-A's OpenAPI (no §51–52 endpoints there) — authority rule vs deferred
+  implementation, kept distinct.
+- 1.27: co-scheduled, non-gating (per A1 one-directional advisory).
+- Exceptions: none.
