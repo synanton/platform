@@ -1,0 +1,28 @@
+# M0-Contract-Freeze Declaration (BBAG-A)
+
+**Status:** Draft — review date TBD.
+**Owner:** Andrei Minin.
+**Authors:** OpenAPI spec (D1) — Andrei Minin; MCP schema (D4) — Andrei Minin,
+gated on the D10 audit; error model (RFC 9457 normalization) — Andrei Minin.
+**Sign-off authorities:** Architecture, Security, DX (per WS0 acceptance).
+
+## Exit criteria (WS0)
+
+- 1.32 freeze packet landed (done — packet §4 executed, freeze-commit recorded).
+- A5 resolved (ADR-014: RAG 1.30-owned, 1.32-normalized).
+- OpenAPI spec passes linting; MCP tool schema validated against the pinned
+  MCP revision (A3/D10); error model approved.
+- Contract review approved by Architecture, Security, DX.
+
+## Coupling note (vertical slice)
+
+BBAG-A search is structurally complete but semantically empty until the
+vertical slice (ingestion → content cache → eventing → knowledge → search)
+lands content — freeze the boundary first, then fill it. BBAG-A search ships
+against fixtures; consumer-ready declaration waits for slice content.
+1.27 remains co-scheduled, non-gating.
+
+## On declaration
+
+M0-contract-freeze declared → WS1–WS8 execute in parallel against the frozen
+contract. D10 audit (3–5d, timeboxed) gates D4/M3 only.

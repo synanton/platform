@@ -33,6 +33,13 @@ public class SearchToolHandler implements ToolHandler {
     @Override public String description() {
         return "Search the tenant's knowledge corpus and return ranked hits with an optional synthesised answer.";
     }
+    /**
+     * Frozen D4 contract for BBAG-A (decision 2026-10-15, PR #208): {query, top_k}.
+     * Deliberately divergent from D1 REST {query, filters, limit, cursor} —
+     * MCP one-shot ergonomics differ; filters/cursor are Generation B
+     * additive properties. Do not extend without a D4 amendment (see D4 /
+     * Appendix B in the BBAG-A work plan, platform PR #208).
+     */
     @Override public Map<String, Object> inputSchema() {
         return Map.of(
             "type", "object",
