@@ -19,7 +19,8 @@ RP-initiated logout), Search API over 1.31 (tenant-scoped, permission-filtered),
 MCP search adapter over the same contract.
 Out of scope: Ontology API (read and write), async/long-running ops (1.27),
 full MCP ecosystem, admin/tenant/identity management, ingestion/eventing/
-knowledge internals, non-search MCP resources and prompts.
+knowledge internals, non-search MCP resources and prompts, filter semantics
+(owned by 1.31 — 1.32 passes filters through opaquely).
 Deferred but reserved: read-only Ontology discovery, more MCP tools,
 Operation model for async tasks, device code / CIBA flows.
 
@@ -167,8 +168,8 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
   per release; any ranking inversion reopens the row).
 - Revisit trigger (review): if the RRF-burial rate exceeds 5% of gold-bearing
   queries on any release corpus, escalate to Generation B advanced-semantics
-  scoping. (Initial proposal — calibrate against the first rerun; q2-class
-  rate on current corpora is the baseline.)
+  scoping. (Calibrate: set at 1.5× the observed burial rate on the release
+  corpus; 5% is provisional until the first calibration run.)
 - Two failure modes distinguished: dense-#3 burial is a *ranking* failure
   (RRF math discards leg strength); corpus-dependent rankings are a
   *generalization* failure (no engine dominates both corpora). Both justify
@@ -183,13 +184,14 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
   published per the MCP authorization spec; (c) token validation depth
   (audience binding, scope, tenant, explicit passthrough rejection).
   Timebox: 3–5 working days with a written audit note as the deliverable
-  (a D-item in §5, making the M3 date defensible in review); if the audit
+  (D10 in §5, making the M3 date defensible in review); if the audit
   cannot answer (a)/(b)/(c) in the window, default is refactor, not rebuild.
 - Forced decision: integrate-and-conform / refactor / rebuild. Not a
   discovery project.
-- Spec revisions for the audit: pin the MCP authorization spec + transport
-  spec (section numbers) and their retrieval date at audit start — no
-  drifting against a moving target.
+- Spec revisions for the audit: pin the MCP spec revision specifically (dated
+  revision — the MCP spec has moved several times; an unpinned reference
+  drifts between audit and implementation), alongside the authorization-spec
+  sections and retrieval date.
 
 ### A4. WS6 corpus pointer + tenancy-mapping caveat
 
@@ -217,7 +219,8 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
   (bench legs aren't production-under-load). Supported by evidence, not
   proven — headroom kept, number not tightened. The load test defines its
   envelope explicitly (target RPS + concurrency); SLO review triggers if
-  headroom drops below 2x measured.
+  headroom drops below 2x measured. The trigger gates GA: headroom below 2x
+  blocks the GA declaration until re-validated, not merely noted.
 
 ### A7. Appendix and acceptance refinements
 
