@@ -148,10 +148,14 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
   landed or explicitly scheduled. Until then M0–M2 dates are aspirational.
 - Split milestone: **M0-entry** (freeze packet landed/scheduled) vs
   **M0-contract-freeze** (BBAG-A OpenAPI + MCP schema + error model approved).
-- 1.27 gate answer (recommended, owner to confirm): BBAG-A is synchronous-only
+- 1.27 gate answer: BBAG-A is synchronous-only
   by scope (§2.2, WS2) — no 1.27 content gates it functionally. 1.27 is
   co-scheduled, not co-frozen for this generation; async-contract slippage
   cannot float BBAG-A. The Operation model stays reserved (future extension).
+- Confirmed (review): asymmetric — 1.27 does not gate BBAG-A entry or exit,
+  but BBAG-A outputs are advisory inputs to 1.27 contract design (a future
+  Operation wrapping BBAG-A search takes the 1.32 response shape as input).
+  One-directional, recorded.
 
 ### A2. WS2 evidence citation + risk downgrade
 
@@ -161,6 +165,15 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
 - Risk row "Search semantics unclear / contract churn" downgraded to
   **monitored via corpus benchmarks** (demo n=60 + RAGMC n=1216 legs rerun
   per release; any ranking inversion reopens the row).
+- Revisit trigger (review): if the RRF-burial rate exceeds 5% of gold-bearing
+  queries on any release corpus, escalate to Generation B advanced-semantics
+  scoping. (Initial proposal — calibrate against the first rerun; q2-class
+  rate on current corpora is the baseline.)
+- Two failure modes distinguished: dense-#3 burial is a *ranking* failure
+  (RRF math discards leg strength); corpus-dependent rankings are a
+  *generalization* failure (no engine dominates both corpora). Both justify
+  minimalism; they map to different future work (fusion design vs engine
+  selection evidence).
 
 ### A3. WS3 audit gate + reframe
 
@@ -169,8 +182,14 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
   (a) Streamable HTTP vs older transport; (b) protected resource metadata
   published per the MCP authorization spec; (c) token validation depth
   (audience binding, scope, tenant, explicit passthrough rejection).
+  Timebox: 3–5 working days with a written audit note as the deliverable
+  (a D-item in §5, making the M3 date defensible in review); if the audit
+  cannot answer (a)/(b)/(c) in the window, default is refactor, not rebuild.
 - Forced decision: integrate-and-conform / refactor / rebuild. Not a
   discovery project.
+- Spec revisions for the audit: pin the MCP authorization spec + transport
+  spec (section numbers) and their retrieval date at audit start — no
+  drifting against a moving target.
 
 ### A4. WS6 corpus pointer + tenancy-mapping caveat
 
@@ -179,6 +198,8 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
 - Caveat: benchmark tenancy semantics must be mapped to the 1.29
   tenant/principal model in a validation step — the corpus is authoritative
   for leakage testing but must not silently redefine tenant boundaries.
+  The mapping is a reviewed artifact (Identity reviews before isolation
+  tests are trusted), not a code comment.
 
 ### A5. RAG API deferral line (§2.3)
 
@@ -186,23 +207,30 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
 - Authority question open for Generation B scoping: §51 frames it as a
   higher-level *application* API over Search, which reads 1.30-owned and
   would make the deferral trivial by authority; if ruled 1.32-owned, the
-  deferral is a real scope decision. Confirm before Gen B, not now.
+  deferral is a real scope decision. Owner: Architecture; decision due
+  before M0-contract-freeze (cheap now, shapes the boundary later).
 
 ### A6. p95 evidence note (WS2/WS5)
 
 - WS2/WS5 acceptance records bench evidence (tens-of-ms across all legs)
   as the basis for the <150ms SLO; the WS5 load test remains the validator
   (bench legs aren't production-under-load). Supported by evidence, not
-  proven — headroom kept, number not tightened.
+  proven — headroom kept, number not tightened. The load test defines its
+  envelope explicitly (target RPS + concurrency); SLO review triggers if
+  headroom drops below 2x measured.
 
 ### A7. Appendix and acceptance refinements
 
 - Appendix B: `filters` is an opaque key-value object — clients must not
   guess its schema; server ignores unknown keys (fail-closed on malformed).
+  Explicit non-goal: filter semantics are owned by 1.31; 1.32 passes them
+  through opaquely (consumers must not expect 1.32 to reject bad filters).
 - Appendix A: `/logout` is GET (OIDC RP-Initiated Logout 1.0 uses GET to the
   end-session endpoint); drop the POST alternative at contract freeze unless
-  a second spec requires it.
+  a second spec requires it. Confirm OIDC discovery advertises the
+  end_session_endpoint with a matching method.
 - WS1 acceptance: refresh-token reuse detection revokes the entire token
-  family, not just the reused token (concrete negative case).
+  family, not just the reused token (concrete negative case — exercised in
+  WS6 negative tests, not just unit tests).
 - WS8 beta acceptance: "no critical incidents and error budget burn within
   policy" (GA keeps the stricter "no SLO breach").
