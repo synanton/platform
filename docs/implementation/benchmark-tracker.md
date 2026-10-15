@@ -739,6 +739,17 @@ Cross-cutting:
   D4.1 cross-reference pass repeated; runbook validation log green
   against the frozen CLI.
 
+### 1.32 freeze + A5 executed (2026-10-15)
+
+- 1.32 external contract frozen for Generation A (resource/error/Operation/
+  OpenAPI); freeze packet §4 executed, no exceptions. 1.27 co-scheduled,
+  non-gating (A1 one-directional advisory).
+- A5 resolved: RAG §§51–52 are 1.30-owned, 1.32-normalized exposure
+  (ADR-014). BBAG-A deferral trivial by authority; normalization rule
+  applies to future generations only (no §51–52 endpoints in BBAG-A OpenAPI).
+- BBAG-A M0-entry satisfied; M0-contract-freeze schedulable (owners + review
+  date pending: OpenAPI/MCP-schema/error-model authors, Arch/Security/DX).
+
 ## Alias map (transition only — drop after all branches renamed)
 
 - 028b → BENCH-BASE · 028c → CASS-EMIT-024a · 028d → YDB-EMIT-024b ·
