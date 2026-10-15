@@ -39,7 +39,7 @@ frozen — this packet unblocks the whole downstream sequence.
 
 - Date: 2026-10-15
 - Owner: Architecture (freeze decision recorded; BBAG-A M0-entry satisfied)
-- Freeze commit: (this commit — see log)
+- Freeze commit: 581f0cb (Merge pull request #206 — self-contained record as of this commit)
 - §51–52 carve-out: RAG exposure is 1.30-owned semantics with 1.32-normalized
   contract (errors, auth, tenant scoping); 1.30 breakage absorbed at the 1.32
   boundary. The normalization rule applies to future 1.32 generations, NOT to
