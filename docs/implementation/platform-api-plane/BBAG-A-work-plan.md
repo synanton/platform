@@ -139,3 +139,70 @@ Discovery `GET /.well-known/openid-configuration` + `.../oauth-authorization-ser
 
 `search` tool: description + inputSchema {query (required), filters, limit
 1–100, cursor}; searches platform content within authenticated tenant/permissions.
+
+## Plan Amendments (BBAG-A review, 2026-10-15)
+
+### A1. WS0/M0 entry condition + 1.27 gate answer
+
+- Entry condition: the 1.32 freeze packet (`docs/implementation/design-1-32-freeze-packet.md`)
+  landed or explicitly scheduled. Until then M0–M2 dates are aspirational.
+- Split milestone: **M0-entry** (freeze packet landed/scheduled) vs
+  **M0-contract-freeze** (BBAG-A OpenAPI + MCP schema + error model approved).
+- 1.27 gate answer (recommended, owner to confirm): BBAG-A is synchronous-only
+  by scope (§2.2, WS2) — no 1.27 content gates it functionally. 1.27 is
+  co-scheduled, not co-frozen for this generation; async-contract slippage
+  cannot float BBAG-A. The Operation model stays reserved (future extension).
+
+### A2. WS2 evidence citation + risk downgrade
+
+- Rationale cites: q2 case (dense-#3 buried by RRF — benchmark tracker F-tune)
+  and corpus-dependent engine rankings (framework §1b-ii) as the measured
+  basis for the minimal normalized contract.
+- Risk row "Search semantics unclear / contract churn" downgraded to
+  **monitored via corpus benchmarks** (demo n=60 + RAGMC n=1216 legs rerun
+  per release; any ranking inversion reopens the row).
+
+### A3. WS3 audit gate + reframe
+
+- Reframe WS3 from "Implement MCP endpoint" to "Harden and conform MCP module".
+- Timeboxed audit gate before M3 sizing — answer three spec questions:
+  (a) Streamable HTTP vs older transport; (b) protected resource metadata
+  published per the MCP authorization spec; (c) token validation depth
+  (audience binding, scope, tenant, explicit passthrough rejection).
+- Forced decision: integrate-and-conform / refactor / rebuild. Not a
+  discovery project.
+
+### A4. WS6 corpus pointer + tenancy-mapping caveat
+
+- Isolation/boundary tests reuse the RAGMC 5-enterprise corpus + staged
+  tenant infra (`docs/benchmark/datasets.md`) instead of building fixtures.
+- Caveat: benchmark tenancy semantics must be mapped to the 1.29
+  tenant/principal model in a validation step — the corpus is authoritative
+  for leakage testing but must not silently redefine tenant boundaries.
+
+### A5. RAG API deferral line (§2.3)
+
+- Add to Deferred but Reserved: "RAG API (1.32 §§51–52) deferred."
+- Authority question open for Generation B scoping: §51 frames it as a
+  higher-level *application* API over Search, which reads 1.30-owned and
+  would make the deferral trivial by authority; if ruled 1.32-owned, the
+  deferral is a real scope decision. Confirm before Gen B, not now.
+
+### A6. p95 evidence note (WS2/WS5)
+
+- WS2/WS5 acceptance records bench evidence (tens-of-ms across all legs)
+  as the basis for the <150ms SLO; the WS5 load test remains the validator
+  (bench legs aren't production-under-load). Supported by evidence, not
+  proven — headroom kept, number not tightened.
+
+### A7. Appendix and acceptance refinements
+
+- Appendix B: `filters` is an opaque key-value object — clients must not
+  guess its schema; server ignores unknown keys (fail-closed on malformed).
+- Appendix A: `/logout` is GET (OIDC RP-Initiated Logout 1.0 uses GET to the
+  end-session endpoint); drop the POST alternative at contract freeze unless
+  a second spec requires it.
+- WS1 acceptance: refresh-token reuse detection revokes the entire token
+  family, not just the reused token (concrete negative case).
+- WS8 beta acceptance: "no critical incidents and error budget burn within
+  policy" (GA keeps the stricter "no SLO breach").
