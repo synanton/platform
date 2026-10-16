@@ -122,7 +122,7 @@ delegation, `*` issuance, actuator, D4 product call.
 | 3 | OpenAPI (D1) lint | Contract | DX |
 | 4 | MCP schema (D4) — unblocked by D10; awaiting product call | Contract | Product |
 | 5 | Error-model approval | Contract | Architecture |
-| 6 | Architecture + Security + DX sign-off | Process | all three |
+| 6 | Architecture + Security + DX sign-off — **incl. external auth-boundary dependency** (see freeze decl, External dependency) | Process | all three |
 
 **Q3 CRITICAL is a security gate, not a contract item.** M0 does not freeze while
 it is open, irrespective of D1/D4 status, and it cannot be traded against a schema
