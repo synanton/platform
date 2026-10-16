@@ -28,11 +28,12 @@ paths:
     get:
       tags: [oauth]
       operationId: oauthAuthorize
-      summary: Authorization endpoint — renders the login flow.
+      summary: Authorization endpoint — proxies to the external AS.
       description: |
-        The single login entry point (W4(a) Replace). Clients direct the user
-        agent here with PKCE parameters; the platform renders authentication
-        and issues the authorization code. No separate /auth/login exists.
+        The single login entry point (W4(a) Replace). The platform proxies to the
+        external authorization server's authorization endpoint, which renders
+        authentication and issues the authorization code. Clients direct the user
+        agent here with PKCE parameters; no separate /auth/login exists.
       parameters:
         - name: response_type
           in: query
@@ -123,12 +124,18 @@ paths:
         "200": { description: Token revoked (or unknown — no signal). }
         "400":
           $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
 
   /v1/auth/callback:
     get:
       tags: [auth]
       operationId: authCallback
       summary: Platform redirect target — hands the code to the token endpoint.
+      description: |
+        Platform redirect target. Delivers tokens as a JSON response to the caller
+        (CLI/test/MCP client with local redirect). No browser UI in Gen-A scope;
+        server-side session delivery is a hardening item.
       parameters:
         - name: code
           in: query
@@ -193,7 +200,7 @@ components:
       bearerFormat: JWT
       description: |
         Bearer token issued via /oauth/token (external security service).
-        Issuer, audience, and required scope values are delegated — see below.
+        Issuer, audience, and required scope values are delegated — per the W4 auth-boundary record.
 
   schemas:
 
