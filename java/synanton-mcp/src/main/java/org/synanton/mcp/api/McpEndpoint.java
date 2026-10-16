@@ -88,7 +88,7 @@ public class McpEndpoint {
                 }
             });
         }
-        if (!scopes.isEmpty() && !scopeEnforcer.allowed(toolName, scopes)) {
+        if (!scopeEnforcer.allowed(toolName, scopes)) {
             return ResponseEntity.ok(buildResult(id, Map.of(
                     "content", List.of(Map.of("type", "text", "text", "scope denied: " + scopeEnforcer.requiredScope(toolName))),
                     "isError", true)));
