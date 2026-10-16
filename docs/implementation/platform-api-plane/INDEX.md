@@ -116,7 +116,7 @@ delegation, `*` issuance, actuator, D4 product call.
 |---|---|---|---|---|
 | 1 | **Q3 CRITICAL — fail-open scope** (D10) | **Security gate** | Security | Closed |
 | 2a | Q3-HIGH passthrough — L98 raw bearer verbatim (largest refactor item) | Security | Security | Open |
-| 2b | Q3-HIGH wildcard `*` issuance — external, security-service side | Security | Security | Open |
+| 2b | Q3-HIGH wildcard `*` issuance — external, security-service side (confirmation tracked under blocker 6) | Security | Security | Closed |
 | 2c | Revocation window — 60s cache TTL (MEDIUM) | Security | Security | Open |
 | 2d | Error semantics — `isError:false` on failure, internal leakage (MED–HIGH) | Security | Security | Open |
 | 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open |
@@ -124,7 +124,7 @@ delegation, `*` issuance, actuator, D4 product call.
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
 | 4b | D4 schema validation — awaits P2 pinned MCP revision | Contract | DX | Open |
 | 5 | Error-model approval | Contract | Architecture | Open |
-| 6 | Architecture + Security + DX sign-off — **incl. external auth-boundary dependency** (see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation |
+| 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation |
 
 **On 2e:** cross-tenant misattribution is live on the happy path — a valid,
 correctly-scoped tenant-A request scopes to `demo` downstream, no attacker required.
