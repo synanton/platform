@@ -120,7 +120,8 @@ delegation, `*` issuance, actuator, D4 product call.
 | 2c | Revocation window — 60s cache TTL (MEDIUM) | Security | Security | Open |
 | 2d | Error semantics — `isError:false` on failure, internal leakage (MED–HIGH) | Security | Security | Open |
 | 3 | OpenAPI (D1) lint | Contract | DX | Open |
-| 4 | MCP schema (D4) — unblocked by D10; awaiting product call | Contract | Product | Open |
+| 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
+| 4b | D4 schema validation — awaits P2 pinned MCP revision | Contract | DX | Open |
 | 5 | Error-model approval | Contract | Architecture | Open |
 | 6 | Architecture + Security + DX sign-off — **incl. external auth-boundary dependency** (see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation |
 
