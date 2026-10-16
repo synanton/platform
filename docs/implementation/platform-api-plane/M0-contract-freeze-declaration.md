@@ -76,3 +76,12 @@ this repo). Blocker 1's fix presumes correctly-derived scopes; if that validatio
 is incomplete, scope enforcement is applied to tokens that should not be trusted.
 To be confirmed by Security before blocker 6 sign-off — it does not block 2–5,
 but blocker 6 must not close with it unresolved or explicitly accepted.
+
+## Wildcard issuance (2b scope boundary)
+
+`*` in `ScopeEnforcer.allowed()` is a grant mechanism, not a policy: issuance
+policy (whether `*` is normally issueable, to whom, under what conditions) is
+security-service side and uninspectable from this repo. Repo-side `contains("*")`
+remains. Confirmation that `*` is not issueable in normal operation is Security's,
+due with the 2b workstream — no repo action, tracked here so the grant path is
+not mistaken for a reviewed issuance decision.
