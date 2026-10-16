@@ -1,7 +1,7 @@
 ---
 title: "Platform API Plane - Implementation Plan"
-status: "not started"
-last_reviewed: "2026-09-15"
+status: "in progress — Gen-A track active (BBAG-A); PAPI-0..7 not started"
+last_reviewed: "2026-10-15"
 ---
 
 # Platform API Plane - Implementation Plan
@@ -10,7 +10,7 @@ last_reviewed: "2026-09-15"
 **Architecture reference:** `docs/architecture/synanton-design-1.32.md`; [ADR-009](../../architecture/decisions/adr-009-platform-api-contract.md); capstone positioning in `docs/architecture/synanton-platform-architecture-1.0.md` §11, §14, §15.
 **Target repository:** `synanton/platform` (this repo).
 **Audience:** Architects, module owners, platform engineers, API consumers
-**Last Updated:** 2026-09-15
+**Last Updated:** 2026-10-15
 
 ---
 
@@ -52,6 +52,22 @@ Design 1.32 is written module-agnostically - it never names `synapt` (the existi
 
 Phases follow Design 1.32 §178 directly.
 
+## Status
+
+**Last reviewed:** 2026-10-15
+
+Two tracks. The PAPI phase plan (PAPI-0..PAPI-7) has not started. A second
+track, BBAG-A, is active and is currently the entry point to this plane.
+
+---
+
+### Track A — PAPI phases
+
+All eight phases Not started. PAPI-0 remains the formal gate for PAPI-1..7
+and is **partially decided**: Gen-A code home resolved by ADR-015
+(`java/platform-api`); full PAPI-0 (module/package layout, `synapt` terminal
+fate, `synanton-mcp` disposition, `/v1beta/` boundary) still pending.
+
 | Phase | Name | Status |
 |-------|------|--------|
 | PAPI-0 | Module-home decision | Not started |
@@ -62,6 +78,52 @@ Phases follow Design 1.32 §178 directly.
 | PAPI-5 | Ingestion API | Not started |
 | PAPI-6 | AI API | Not started |
 | PAPI-7 | Governance | Not started |
+
+---
+
+### Track B — BBAG-A (Gen-A slice)
+
+**State:** pre-M0.
+**Scope:** Login/Logout (OAuth2.1/OIDC/PKCE), Search API, MCP search adapter.
+Deferred: ontology, async/1.27, admin, full MCP.
+**Plan:** `BBAG-A-work-plan.md` v1.0 (2026-10-15) — WS0–WS8 + M0–M6 (W2–W10).
+Amendments A1–A7 landed, including the M0-entry/M0-freeze split (A1) and the
+1.27 non-gating amendment (A2).
+**M0 contract freeze:** Not declared — see `M0-contract-freeze-declaration.md`.
+**RAG authority:** Resolved (A5) by ADR-014 — RAG is 1.30-owned, exposed via 1.32.
+**Module home:** `java/platform-api` (ADR-015, Accepted 2026-10-16). `synapt`
+frozen for Gen-A.
+**Search interim:** ships against fixtures until the vertical slice lands.
+
+### D10 — MCP audit (complete)
+
+**Complete 2026-10-15. Decision: refactor** (not integrate, not rebuild).
+
+Findings:
+- **Q1** — transport is stateless JSON-RPC, not Streamable-HTTP; `McpSessionStore` orphaned.
+- **Q2 — FAIL** — no `oauth-protected-resource`; `GET /mcp` exposes a pre-auth tool catalog.
+- **Q3 — CRITICAL** — fail-open scope; **HIGH** — passthrough/wildcard; plus error-semantics leaks.
+- **Q4** — tool surface ungated.
+- **Q5** — shape `{query, top_k}` vs `{query, filters, limit, cursor}`. Recommend
+  conforming to the existing shape; defer `filters`/`cursor` to Gen-B.
+
+Work items 1–7 ordered against `java/synanton-mcp`. Open: `/auth/validate-header`
+delegation, `*` issuance, actuator, D4 product call.
+
+### M0 blockers
+
+| # | Blocker | Class | Owner |
+|---|---|---|---|
+| 1 | **Q3 CRITICAL — fail-open scope** (D10) | **Security gate** | Security |
+| 2 | Q3 HIGH — passthrough / wildcard | Security | Security |
+| 3 | OpenAPI (D1) lint | Contract | DX |
+| 4 | MCP schema (D4) — unblocked by D10; awaiting product call | Contract | Product |
+| 5 | Error-model approval | Contract | Architecture |
+| 6 | Architecture + Security + DX sign-off | Process | all three |
+
+**Q3 CRITICAL is a security gate, not a contract item.** M0 does not freeze while
+it is open, irrespective of D1/D4 status, and it cannot be traded against a schema
+decision. Items 2–6 may be sequenced against each other; item 1 gates them all.
 
 ---
 
@@ -250,7 +312,12 @@ Per §55's boundary note and ADR-009, PAPI-1 through PAPI-3 (foundation, resourc
 | # | Deliverable |
 |---|---|
 | 1 | `search-adapter` per §154, fronting whatever Search 1.31 ships (query, filters, pagination, profiles, provenance, consistency hints). |
-| 2 | Interim: until 1.31 lands, `search-adapter` may front the existing `synquest` hybrid search kernel directly, with a migration path noted rather than blocking on 1.31. |
+| 2 | Interim: fixtures pre-vertical-slice, then `synquest` post-slice until 1.31 lands (`search-adapter` fronts the existing `synquest` hybrid search kernel once slice-fed data exists), with a migration path noted rather than blocking on 1.31. |
+
+**Interim sequencing:** fixtures until the vertical slice lands (matches BBAG-A and
+the M0 coupling note), then synquest until 1.31 ships. Rationale: synquest without
+slice-fed data has nothing meaningful to search, so fixtures is the correct interim
+until ingestion → knowledge → search is live.
 
 ### Definition of Done
 
@@ -347,6 +414,26 @@ PAPI-1 is the hard serialization point, matching Design 1.27's own EWP-1 precede
 | `ExtractionStatus` vs. Operation-state divergence goes undecided | A second async status model with a different shape, the exact failure Design 1.27's Motivation section warns about | PAPI-3 deliverable 4 is an explicit, tested mapping - not deferred |
 | PAPI-4/5/6 block entirely on 1.28/1.30/1.31 with no interim path | Platform API plan stalls waiting on three separate "Not started" designs | Each phase's deliverables include an explicit interim-adapter option over the existing `synquest`/`synflux`/`gateway` modules |
 | Pagination/security leakage shipped without a permanent regression test | A silent authorization bypass through count/facet metadata | PAPI-7 deliverable 2 promotes the PAPI-2 DoD check into a permanent CI suite |
+
+### Accepted risk — PAPI-3 deferral (`ExtractionStatus` reconciliation)
+
+**Recorded:** 2026-10-15 · **Owner:** Architecture (PAPI-3)
+
+**Risk.** BBAG-A amendment A2 defers async/1.27 as non-gating, so the first vertical
+slice ships without exercising the Operation state machine or the `ExtractionStatus`
+→ Operation-state mapping. Without an explicit trigger, PAPI-3 may inherit a second,
+divergent async model — the failure Design 1.27's motivation section warns against.
+
+**Basis for acceptance.** The Gen-A slice is synchronous (login, search, MCP search).
+The deferred item is not on its critical path.
+
+**Gen-B entry criterion.** Before any Gen-B work that accepts long-running work,
+PAPI-3 must publish an explicit, tested mapping from `synanton.extraction.v1`
+`ExtractionStatus` onto the public Operation state machine (Design 1.32 §56).
+Divergences to reconcile:
+- terminal-success naming — `COMPLETED` (extraction) vs `SUCCEEDED` (1.32 §56)
+- `PARTIAL` (extraction) has no home in the 1.32 state list
+- `CANCEL_REQUESTED` exists in 1.32 but has no extraction-plane counterpart
 
 ---
 
