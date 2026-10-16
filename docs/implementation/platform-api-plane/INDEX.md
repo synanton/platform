@@ -119,10 +119,23 @@ delegation, `*` issuance, actuator, D4 product call.
 | 2b | Q3-HIGH wildcard `*` issuance — external, security-service side | Security | Security | Open |
 | 2c | Revocation window — 60s cache TTL (MEDIUM) | Security | Security | Open |
 | 2d | Error semantics — `isError:false` on failure, internal leakage (MED–HIGH) | Security | Security | Open |
+| 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open |
 | 3 | OpenAPI (D1) lint | Contract | DX | Open |
 | 4 | MCP schema (D4) — unblocked by D10; awaiting product call | Contract | Product | Open |
 | 5 | Error-model approval | Contract | Architecture | Open |
 | 6 | Architecture + Security + DX sign-off — **incl. external auth-boundary dependency** (see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation |
+
+**On 2e:** cross-tenant misattribution is live on the happy path — a valid,
+correctly-scoped tenant-A request scopes to `demo` downstream, no attacker required.
+Severity call (incident track vs next-sprint fix) is Security's, on deployment-status
+confirmation, and is to be recorded **before** the row is worked — not after.
+
+**Fix direction (not decided):** MCP currently sends `X-Tenant-Id`; synapt/relix read
+`X-Tenant`, syntology reads `X-Tenant-ID` (correct). No single header value satisfies
+all three. Options: (i) MCP sends both — works, redundant; (ii) synapt/relix switch to
+`X-Tenant-ID` — smallest coordinated change, MCP untouched; (iii) standardize on one
+new header across all three — cleanest, widest coordination. Recommend (ii) pending
+downstream preference.
 
 **Q3 CRITICAL is a security gate, not a contract item.** M0 does not freeze while
 it is open, irrespective of D1/D4 status, and it cannot be traded against a schema
