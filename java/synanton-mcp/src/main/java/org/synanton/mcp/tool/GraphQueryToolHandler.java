@@ -46,7 +46,7 @@ public class GraphQueryToolHandler implements ToolHandler {
     }
 
     @Override
-    public McpContent invoke(Map<String, Object> arguments, String tenantId, String authHeader) {
+    public ToolResult invoke(Map<String, Object> arguments, String tenantId) {
         String queryShape = (String) arguments.getOrDefault("query_shape", "NEIGHBORS");
         Object params = arguments.getOrDefault("params", Map.of());
 
@@ -55,20 +55,19 @@ public class GraphQueryToolHandler implements ToolHandler {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(relixUrl + "/graph/query"))
                 .header("Content-Type", "application/json")
-                .header("Authorization", authHeader)
                 .header("X-Tenant-Id", tenantId)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .timeout(Duration.ofMillis(timeoutMs))
                 .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                return new McpContent("Error: graph service returned " + response.statusCode());
+                return ToolResult.error("graph service returned " + response.statusCode());
             }
             JsonNode json = objectMapper.readTree(response.body());
-            return new McpContent(formatGraphResult(queryShape, json));
+            return ToolResult.ok(formatGraphResult(queryShape, json));
         } catch (Exception e) {
             log.warn("Graph query tool failed for shape '{}': {}", queryShape, e.getMessage());
-            return new McpContent("Error: graph service unavailable (relix not yet deployed in Phase 3) - " + e.getMessage());
+            return ToolResult.error("graph service unavailable");
         }
     }
 

@@ -10,7 +10,7 @@ public class ListTenantsToolHandler implements ToolHandler {
     @Override public String description() { return "Enumerate accessible tenants for caller."; }
     @Override public Map<String, Object> inputSchema() { return Map.of("type", "object", "properties", Map.of()); }
     @Override
-    public McpContent invoke(Map<String, Object> arguments, String tenantId, String authHeader) {
-        return new McpContent("[{\"tenant_id\":\"" + tenantId + "\"}]");
+    public ToolResult invoke(Map<String, Object> arguments, String tenantId) {
+        return ToolResult.ok("[{\"tenant_id\":\"" + tenantId + "\"}]");
     }
 }

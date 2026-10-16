@@ -23,7 +23,7 @@ public class Phase4StubTools implements ToolHandler {
     }
 
     @Override
-    public McpContent invoke(Map<String, Object> arguments, String tenantId, String authHeader) {
-        return new McpContent("tenant=" + tenantId + " budget remaining unknown");
+    public ToolResult invoke(Map<String, Object> arguments, String tenantId) {
+        return ToolResult.ok("tenant=" + tenantId + " budget remaining unknown");
     }
 }
