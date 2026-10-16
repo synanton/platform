@@ -56,6 +56,15 @@ mapping acknowledged.
 
 **Outcome:** Closed.
 
+## Row 5 — error model approved
+
+**Approved by:** Andrei Minin, 2026-10-16
+**Artifact:** W2 — `docs/api/error-model.md` + `docs/api/rest/components/Problem.yaml`
+(RFC 9457 + the 10 categories from Design 1.32 §62; extension fields per Appendix C).
+**Consumed by:** W3 (search spec), W4 (auth spec) — `$ref`, not redefinition.
+**Slice/hardening boundary recorded:** `type` URI registry and per-category
+`details` schemas are hardening, not gate.
+
 ## Coupling note (vertical slice)
 
 BBAG-A search is structurally complete but semantically empty until the
