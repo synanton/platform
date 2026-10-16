@@ -115,7 +115,10 @@ delegation, `*` issuance, actuator, D4 product call.
 | # | Blocker | Class | Owner |
 |---|---|---|---|
 | 1 | **Q3 CRITICAL — fail-open scope** (D10) | **Security gate** | Security |
-| 2 | Q3 HIGH — passthrough / wildcard | Security | Security |
+| 2a | Q3-HIGH passthrough — L98 raw bearer verbatim (largest refactor item) | Security | Security |
+| 2b | Q3-HIGH wildcard `*` issuance — external, security-service side | Security | Security |
+| 2c | Revocation window — 60s cache TTL (MEDIUM) | Security | Security |
+| 2d | Error semantics — `isError:false` on failure, internal leakage (MED–HIGH) | Security | Security |
 | 3 | OpenAPI (D1) lint | Contract | DX |
 | 4 | MCP schema (D4) — unblocked by D10; awaiting product call | Contract | Product |
 | 5 | Error-model approval | Contract | Architecture |
