@@ -66,8 +66,7 @@ Work items: 7 identified, 5 remaining in this list, 2 relocated 2026-10-15
 **Note (2026-10-15, A1):** Items 2 and 5 have been relocated out of this list.
 Item 2 (fail-open, Q3-CRITICAL) is now **M0 freeze gate 1** in
 `M0-contract-freeze-declaration.md` (Exit criteria 1) — it is not a D10 refactor
-task and is not sequenced against items 1, 3, 4, 6, 7. Item 5 (passthrough /
-wildcard, Q3-HIGH) is relocated as an open security item under the same
+task and is not sequenced against items 1, 3, 4, 6, 7. Item 5 (passthrough, Q3-HIGH) is relocated as an open security item under the same
 declaration; it is tracked, not gating. Numbering is retained so cross-references
 stay stable; the list is not renumbered.
 
