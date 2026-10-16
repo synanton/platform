@@ -11,7 +11,7 @@ public record McpProperties(
     long toolTimeoutMs,
     AuthCache authCache
 ) {
-    public record AuthCache(long ttlSeconds, long maxSize) {}
+    public record AuthCache(long ttlSeconds, long maxSize, Long negativeTtlSeconds) {}
 
     public String securityUrl() { return securityUrl != null ? securityUrl : "http://localhost:8081"; }
     public String synaptUrl() { return synaptUrl != null ? synaptUrl : "http://localhost:8085"; }
