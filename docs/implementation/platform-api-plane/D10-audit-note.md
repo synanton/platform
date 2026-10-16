@@ -85,3 +85,4 @@ stay stable; the list is not renumbered.
 
 `/auth/validate-header` behavior (Q3-e), `*` issuance policy (Q3-b),
 actuator exposure, D4 product call (Q5).
+Fix note (Q3-CRITICAL): deleting the L91 short-circuit is not itself the exit — confirm `ScopeEnforcer.allowed(toolName, emptySet)` returns false; M0 Exit criteria 1, bullet 1 is the test.
