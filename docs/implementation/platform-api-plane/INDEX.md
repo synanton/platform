@@ -122,7 +122,7 @@ delegation, `*` issuance, actuator, D4 product call.
 | 2d-i | Error semantics — endpoint catch leaked internals (PR 225) | Security | Security | Closed |
 | 2d-ii | Error semantics — handler `Error:` strings ride `isError:false` | Security | Security | Closed — ToolResult discriminated return; isError honored (PR 229) |
 | 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open |
-| 3 | OpenAPI (D1) lint | Contract | DX | Open |
+| 3 | OpenAPI (D1) lint | Contract | DX | Open — spec exists (W4); Vacuum CI wiring missing, lint run pending |
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
 | 4b | D4 schema validation — awaits P2 pinned MCP revision | Contract | DX | Open |
 | 5 | Error-model approval | Contract | Architecture | Open |
@@ -461,6 +461,7 @@ Divergences to reconcile:
 1. A phase is not done until its numbered Definition of Done is fully satisfied - partial completion is reported as partial.
 2. PAPI-0's decision doc must exist and be linked from this file before PAPI-1 work is ticketed.
 3. Each Deliverable row above is sized to be one ticket; split further only if a reviewer asks.
+4. Before declaring any gate executable, trace its closing chain back to current state (artifact exists, tooling wired, owner named) — an assumed link is a skipped verification.
 
 ---
 
