@@ -16,6 +16,7 @@ last_reviewed: "2026-08-26"
 |----------|-------------|
 | [`error-model.md`](./error-model.md) | Canonical error model (RFC 9457 + extensions) — W2 artifact, subject of gate row 5 |
 | [`rest/components/Problem.yaml`](./rest/components/Problem.yaml) | Problem-detail component, `$ref`'d by W3/W4 specs (single source) |
+| [`rest/openapi-auth.yaml`](./rest/openapi-auth.yaml) | Authentication API (W4) — AS-facade shape per ADR-018 |
 | [`cli/synctl-helper.md`](./cli/synctl-helper.md) | `synctl helper` CLI reference |
 | [`cli/synctl-wizard.md`](./cli/synctl-wizard.md) | `synctl wizard` CLI reference |
 | [`grpc/spi-guide.md`](./grpc/spi-guide.md) | gRPC SPI implementation guide |
