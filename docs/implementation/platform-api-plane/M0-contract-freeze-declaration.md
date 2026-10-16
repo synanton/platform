@@ -4,8 +4,16 @@
 
 ## Exit criteria (WS0)
 
-1. **GATE — Q3-CRITICAL (D10): fail-open scope closed.** Not tradeable against
-   criteria 3–5. While open, M0 does not freeze regardless of D1/D4 status.
+1. **GATE — Q3-CRITICAL (D10): fail-open scope closed.** The `!scopes.isEmpty()`
+   short-circuit in `McpEndpoint` L91 is removed, so `scopeEnforcer.allowed()`
+   runs on every tools/call. Closes when, against a live token:
+   - absent/empty scope set → **denied** (the exact fail-open shape)
+   - unparseable scopes claim (non-textual, non-array) → **denied**
+   - insufficient scope for the requested tool → **denied**
+   - valid scope for tool A used against tool B → denied for B, **permitted for A**
+   Evidence: test names + run output attached to the blocker, reviewed by Security.
+   Not tradeable against criteria 3–5. While open, M0 does not freeze regardless
+   of D1/D4 status.
 2. 1.32 freeze packet landed (done — packet §4 executed, freeze-commit recorded).
 3. A5 resolved (ADR-014: RAG 1.30-owned, 1.32-normalized).
 4. OpenAPI spec passes linting; MCP tool schema validated against the pinned MCP
