@@ -18,6 +18,11 @@ Consequences:
 - F3 re-enters: token-exchange support (RFC 8693) becomes relevant to /oauth/token's grant types — a separate question from 2a's downstream-credential F3, same external inquiry. Two dependents become three.
 - Sub-choices flagged, not decided: (a) does /oauth/authorize coexist with /auth/login or replace it; (b) is /oauth/token pass-through, platform-issued, or exchange. Both shape the spec; neither blocks this ADR.
 - Rejected: pure RP (fails WS1); full AS (contradicts outward validation delegation).
+- **Code issuance is external.** `/oauth/authorize` proxies to the external
+  authorization server; the platform does not mint authorization codes and
+  holds no code-trust relationship with the security service. Confirmed
+  2026-10-16 during W4 review — ADR-018's "federates user authentication"
+  is literal, not a description of co-issuance.
 - Neutral: W1, W2, W3 unaffected.
 
 ## Context
