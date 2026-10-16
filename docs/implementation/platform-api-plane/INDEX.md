@@ -125,8 +125,8 @@ delegation, `*` issuance, actuator, D4 product call.
 | 3 | OpenAPI (D1) lint | Contract | DX | Open — spec exists (W4); Vacuum CI wiring missing, lint run pending |
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
 | 4b | D4 schema validation — awaits P2 pinned MCP revision | Contract | DX | Open |
-| 5 | Error-model approval | Contract | Architecture | Closed — W2 approved |
-| 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation |
+| 5 | Error-model approval | Contract | Architecture | Open |
+| 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation; A+S+DX held by a single reviewer |
 
 **On 2e:** cross-tenant misattribution is live on the happy path — a valid,
 correctly-scoped tenant-A request scopes to `demo` downstream, no attacker required.
