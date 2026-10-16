@@ -115,11 +115,14 @@ delegation, `*` issuance, actuator, D4 product call.
 | # | Blocker | Class | Owner |
 |---|---|---|---|
 | 1 | **Q3 CRITICAL — fail-open scope** (D10) | **Security gate** | Security |
-| 2 | Q3 HIGH — passthrough / wildcard | Security | Security |
+| 2a | Q3-HIGH passthrough — L98 raw bearer verbatim (largest refactor item) | Security | Security |
+| 2b | Q3-HIGH wildcard `*` issuance — external, security-service side | Security | Security |
+| 2c | Revocation window — 60s cache TTL (MEDIUM) | Security | Security |
+| 2d | Error semantics — `isError:false` on failure, internal leakage (MED–HIGH) | Security | Security |
 | 3 | OpenAPI (D1) lint | Contract | DX |
 | 4 | MCP schema (D4) — unblocked by D10; awaiting product call | Contract | Product |
 | 5 | Error-model approval | Contract | Architecture |
-| 6 | Architecture + Security + DX sign-off | Process | all three |
+| 6 | Architecture + Security + DX sign-off — **incl. external auth-boundary dependency** (see freeze decl, External dependency) | Process | all three |
 
 **Q3 CRITICAL is a security gate, not a contract item.** M0 does not freeze while
 it is open, irrespective of D1/D4 status, and it cannot be traded against a schema
