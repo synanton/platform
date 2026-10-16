@@ -1,0 +1,30 @@
+name: OpenAPI Lint
+
+on:
+  push:
+    paths:
+      - 'docs/api/**'
+      - '.github/workflows/openapi-lint.yml'
+  pull_request:
+    paths:
+      - 'docs/api/**'
+      - '.github/workflows/openapi-lint.yml'
+
+jobs:
+  vacuum:
+    name: Vacuum OpenAPI 3.1 lint (ADR-017)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Download Vacuum v0.33.1
+        run: |
+          curl -sL "https://github.com/daveshanley/vacuum/releases/download/v0.33.1/vacuum_0.33.1_Linux_x86_64.tar.gz" \
+            -o /tmp/vacuum.tar.gz
+          tar -xzf /tmp/vacuum.tar.gz -C /tmp vacuum
+          chmod +x /tmp/vacuum
+          /tmp/vacuum --version
+
+      - name: Lint auth spec
+        run: /tmp/vacuum lint docs/api/rest/openapi-auth.yaml
