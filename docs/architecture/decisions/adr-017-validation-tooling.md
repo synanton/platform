@@ -1,6 +1,6 @@
 # ADR-017: Validation Tooling — Vacuum (OpenAPI), networknt (MCP Schema)
 
-**Status:** Proposed 2026-10-16
+**Status:** Accepted 2026-10-16
 **Basis:** Four labels hinge on artifact validation and no tooling exists for either artifact type: gate row 3 (D1 OpenAPI lint), row 4b (D4 schema validation), WS0 acceptance criteria "lint passes" and "MCP schema validated". Both artifact types are greenfield — no OpenAPI spec, no JSON-Schema validator on the module classpath (jackson-databind, assertj, mockito only). CI is GitHub Actions + Gradle; the org already carries a Go toolchain via equalix-go.
 
 ## Decision

@@ -91,3 +91,12 @@ cost of throughput against `/auth/validate-header`.
 is a separate hardening concern from the window itself — a heap dump or local
 disclosure exposes live credentials. Tracked as blocker 2f, open; not gating
 M0.
+
+## Wildcard issuance (2b scope boundary)
+
+`*` in `ScopeEnforcer.allowed()` is a grant mechanism, not a policy: issuance
+policy (whether `*` is normally issueable, to whom, under what conditions) is
+security-service side and uninspectable from this repo. Repo-side `contains("*")`
+remains. Confirmation that `*` is not issueable in normal operation is Security's,
+due with the 2b workstream — no repo action, tracked here so the grant path is
+not mistaken for a reviewed issuance decision.
