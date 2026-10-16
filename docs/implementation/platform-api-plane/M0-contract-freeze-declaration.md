@@ -76,3 +76,18 @@ this repo). Blocker 1's fix presumes correctly-derived scopes; if that validatio
 is incomplete, scope enforcement is applied to tokens that should not be trusted.
 To be confirmed by Security before blocker 6 sign-off — it does not block 2–5,
 but blocker 6 must not close with it unresolved or explicitly accepted.
+
+## Documented limitations (blocker 2c)
+
+**Revocation window.** Validated identities are cached for up to
+`authCache.ttlSeconds` (default 60s; configurable, default fallback in code).
+Because the cache is keyed on the raw bearer (`McpAuthFilter` L57 / L72), a
+token revoked upstream remains usable here until its entry expires — no
+per-token invalidation is possible, only flush-on-expiry. The window is
+bounded by TTL and accepted as-is; operators may lower `ttlSeconds` at the
+cost of throughput against `/auth/validate-header`.
+
+**Cache key.** The key is the raw bearer token, not a hash or identifier. This
+is a separate hardening concern from the window itself — a heap dump or local
+disclosure exposes live credentials. Tracked as blocker 2f, open; not gating
+M0.

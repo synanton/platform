@@ -117,7 +117,8 @@ delegation, `*` issuance, actuator, D4 product call.
 | 1 | **Q3 CRITICAL — fail-open scope** (D10) | **Security gate** | Security | Closed |
 | 2a | Q3-HIGH passthrough — L98 raw bearer verbatim (largest refactor item) | Security | Security | Open |
 | 2b | Q3-HIGH wildcard `*` issuance — external, security-service side | Security | Security | Open |
-| 2c | Revocation window — 60s cache TTL (MEDIUM) | Security | Security | Open |
+| 2c | Revocation window — 60s TTL on validated identity cache; no per-token invalidation (flush-only) | Security | Security | Closed — documented |
+| 2f | Cache key hygiene — raw bearer as Caffeine key; heap-dump exposure | Security | Security | Open |
 | 2d | Error semantics — `isError:false` on failure, internal leakage (MED–HIGH) | Security | Security | Open |
 | 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open |
 | 3 | OpenAPI (D1) lint | Contract | DX | Open |
