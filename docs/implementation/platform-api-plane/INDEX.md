@@ -64,7 +64,9 @@ track, BBAG-A, is active and is currently the entry point to this plane.
 ### Track A — PAPI phases
 
 All eight phases Not started. PAPI-0 remains the formal gate for PAPI-1..7
-and is undecided; `settings.gradle.kts` contains no `java/platform-api`.
+and is **partially decided**: Gen-A code home resolved by ADR-015
+(`java/platform-api`); full PAPI-0 (module/package layout, `synapt` terminal
+fate, `synanton-mcp` disposition, `/v1beta/` boundary) still pending.
 
 | Phase | Name | Status |
 |-------|------|--------|
@@ -89,11 +91,9 @@ Amendments A1–A7 landed, including the M0-entry/M0-freeze split (A1) and the
 1.27 non-gating amendment (A2).
 **M0 contract freeze:** Not declared — see `M0-contract-freeze-declaration.md`.
 **RAG authority:** Resolved (A5) by ADR-014 — RAG is 1.30-owned, exposed via 1.32.
-**Module home:** ADR-015 *Proposed 2026-10-15* (new `java/platform-api`, `synapt`
-frozen for Gen-A). Not in force until Architecture signs — see Track B note below.
+**Module home:** `java/platform-api` (ADR-015, Accepted 2026-10-16). `synapt`
+frozen for Gen-A.
 **Search interim:** ships against fixtures until the vertical slice lands.
-
-Note on ADR-015: because it's Proposed, not Accepted, Track B's code-home line must not read as settled. Once Architecture signs, flip the ADR status and tighten that line to a plain statement.
 
 ### D10 — MCP audit (complete)
 

@@ -1,6 +1,6 @@
 # ADR-015: Gen-A API Code Home — New `java/platform-api`, `synapt` Frozen
 
-**Status:** Proposed 2026-10-15
+**Status:** Accepted 2026-10-16
 **Basis:** BBAG-A's Gen-A slice (Login/Logout, Search API, MCP search adapter) needs a code home before M0 freeze; PAPI-0 remains undecided and `settings.gradle.kts` contains neither `java/platform-api` nor a `synapt` decision. Module home is an internal packaging choice — the external contract (`/v1/...` paths, Appendix-C errors, Operation shape) is invariant under it, so reversal cost is a Gradle include change plus a package rename.
 
 ## Decision
