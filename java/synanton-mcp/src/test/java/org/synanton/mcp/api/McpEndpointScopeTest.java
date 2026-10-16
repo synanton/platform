@@ -79,6 +79,20 @@ class McpEndpointScopeTest {
         verify(handler).invoke(any(), any(), any());
     }
 
+    // 2d-i — endpoint catch: generic message with request_id, no exception text
+    @Test
+    @SuppressWarnings("unchecked")
+    void toolsCall_handlerThrows_clientSeesCorrelationIdNotInternals() throws Exception {
+        when(handler.invoke(any(), any(), any())).thenThrow(new RuntimeException("s3cr3t-internals"));
+        Map<String, Object> result = call("[\"search\"]", "search");
+        assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
+        java.util.List<Map<String, Object>> content =
+                (java.util.List<Map<String, Object>>) result.get("content");
+        String text = (String) content.get(0).get("text");
+        assertThat(text).contains("request_id:");
+        assertThat(text).doesNotContain("s3cr3t-internals");
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> call(String scopesJson, String toolName) throws Exception {
         JsonNode identity = MAPPER.readTree("{\"scopes\":" + scopesJson + "}");

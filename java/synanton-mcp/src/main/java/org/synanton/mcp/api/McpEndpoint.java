@@ -14,6 +14,7 @@ import org.synanton.mcp.tool.ToolRegistry;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 public class McpEndpoint {
@@ -41,6 +42,7 @@ public class McpEndpoint {
 
     @PostMapping("/mcp")
     public ResponseEntity<Map<String, Object>> handle(@RequestBody String body, HttpServletRequest request) {
+        String requestId = UUID.randomUUID().toString();
         JsonNode identity = (JsonNode) request.getAttribute("mcpIdentity");
         String authHeader = request.getHeader("Authorization");
         String tenantId = "demo";
@@ -56,7 +58,7 @@ public class McpEndpoint {
             return switch (method) {
                 case "initialize" -> ResponseEntity.ok(buildResult(id, buildCapabilities()));
                 case "tools/list" -> ResponseEntity.ok(buildResult(id, Map.of("tools", toolRegistry.listTools())));
-                case "tools/call" -> handleToolCall(id, req.path("params"), tenantId, authHeader, identity);
+                case "tools/call" -> handleToolCall(id, req.path("params"), tenantId, authHeader, identity, requestId);
                 default -> ResponseEntity.ok(buildError(id, -32601, "Method not found: " + method));
             };
         } catch (Exception e) {
@@ -66,7 +68,7 @@ public class McpEndpoint {
     }
 
     private ResponseEntity<Map<String, Object>> handleToolCall(
-            String id, JsonNode params, String tenantId, String authHeader, JsonNode identity) {
+            String id, JsonNode params, String tenantId, String authHeader, JsonNode identity, String requestId) {
         String toolName = params.path("name").asText("");
         JsonNode argsNode = params.path("arguments");
         Map<String, Object> args = new LinkedHashMap<>();
@@ -98,8 +100,9 @@ public class McpEndpoint {
             McpContent content = handler.get().invoke(args, tenantId, authHeader);
             return ResponseEntity.ok(buildResult(id, Map.of("content", List.of(Map.of("type", content.type(), "text", content.text())), "isError", false)));
         } catch (Exception e) {
-            log.error("Tool {} invocation failed", toolName, e);
-            return ResponseEntity.ok(buildResult(id, Map.of("content", List.of(Map.of("type", "text", "text", "Error: " + e.getMessage())), "isError", true)));
+            log.error("tool invocation failed request_id={}", requestId, e);
+            return ResponseEntity.ok(buildResult(id, Map.of("content", List.of(Map.of("type", "text",
+                "text", "Internal error (request_id: " + requestId + ")")), "isError", true)));
         }
     }
 
