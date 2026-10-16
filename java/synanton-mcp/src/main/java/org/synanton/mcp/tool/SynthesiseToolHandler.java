@@ -12,7 +12,7 @@ public class SynthesiseToolHandler implements ToolHandler {
         return Map.of("type", "object", "properties", Map.of("query", Map.of("type", "string")));
     }
     @Override
-    public McpContent invoke(Map<String, Object> arguments, String tenantId, String authHeader) {
-        return new McpContent("synthesis deferred to gateway for tenant " + tenantId);
+    public ToolResult invoke(Map<String, Object> arguments, String tenantId) {
+        return ToolResult.ok("synthesis deferred to gateway for tenant " + tenantId);
     }
 }

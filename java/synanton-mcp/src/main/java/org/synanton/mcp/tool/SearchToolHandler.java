@@ -52,7 +52,7 @@ public class SearchToolHandler implements ToolHandler {
     }
 
     @Override
-    public McpContent invoke(Map<String, Object> arguments, String tenantId, String authHeader) {
+    public ToolResult invoke(Map<String, Object> arguments, String tenantId) {
         String query = (String) arguments.getOrDefault("query", "");
         int topK = ((Number) arguments.getOrDefault("top_k", 10)).intValue();
 
@@ -61,20 +61,19 @@ public class SearchToolHandler implements ToolHandler {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(synaptUrl + "/search"))
                 .header("Content-Type", "application/json")
-                .header("Authorization", authHeader)
                 .header("X-Tenant-Id", tenantId)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .timeout(Duration.ofMillis(timeoutMs))
                 .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                return new McpContent("Error: search service returned " + response.statusCode());
+                return ToolResult.error("search service returned " + response.statusCode());
             }
             JsonNode json = objectMapper.readTree(response.body());
-            return new McpContent(formatSearchResult(query, json));
+            return ToolResult.ok(formatSearchResult(query, json));
         } catch (Exception e) {
             log.warn("Search tool failed for query '{}': {}", query, e.getMessage());
-            return new McpContent("Error: search service unavailable - " + e.getMessage());
+            return ToolResult.error("search service unavailable");
         }
     }
 

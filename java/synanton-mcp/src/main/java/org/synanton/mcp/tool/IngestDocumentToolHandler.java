@@ -12,7 +12,7 @@ public class IngestDocumentToolHandler implements ToolHandler {
         return Map.of("type", "object", "properties", Map.of("uri", Map.of("type", "string")));
     }
     @Override
-    public McpContent invoke(Map<String, Object> arguments, String tenantId, String authHeader) {
-        return new McpContent("ingest enqueued for " + arguments.getOrDefault("uri", "") + " tenant=" + tenantId);
+    public ToolResult invoke(Map<String, Object> arguments, String tenantId) {
+        return ToolResult.ok("ingest enqueued for " + arguments.getOrDefault("uri", "") + " tenant=" + tenantId);
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.synanton.mcp.tool.McpContent;
 import org.synanton.mcp.tool.ScopeEnforcer;
 import org.synanton.mcp.tool.ToolRegistry;
+import org.synanton.mcp.tool.ToolResult;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +45,6 @@ public class McpEndpoint {
     public ResponseEntity<Map<String, Object>> handle(@RequestBody String body, HttpServletRequest request) {
         String requestId = UUID.randomUUID().toString();
         JsonNode identity = (JsonNode) request.getAttribute("mcpIdentity");
-        String authHeader = request.getHeader("Authorization");
         String tenantId = "demo";
         if (identity != null) {
             tenantId = identity.path("tenantId").asText("demo");
@@ -58,7 +58,7 @@ public class McpEndpoint {
             return switch (method) {
                 case "initialize" -> ResponseEntity.ok(buildResult(id, buildCapabilities()));
                 case "tools/list" -> ResponseEntity.ok(buildResult(id, Map.of("tools", toolRegistry.listTools())));
-                case "tools/call" -> handleToolCall(id, req.path("params"), tenantId, authHeader, identity, requestId);
+                case "tools/call" -> handleToolCall(id, req.path("params"), tenantId, identity, requestId);
                 default -> ResponseEntity.ok(buildError(id, -32601, "Method not found: " + method));
             };
         } catch (Exception e) {
@@ -68,7 +68,7 @@ public class McpEndpoint {
     }
 
     private ResponseEntity<Map<String, Object>> handleToolCall(
-            String id, JsonNode params, String tenantId, String authHeader, JsonNode identity, String requestId) {
+            String id, JsonNode params, String tenantId, JsonNode identity, String requestId) {
         String toolName = params.path("name").asText("");
         JsonNode argsNode = params.path("arguments");
         Map<String, Object> args = new LinkedHashMap<>();
@@ -97,8 +97,9 @@ public class McpEndpoint {
         }
 
         try {
-            McpContent content = handler.get().invoke(args, tenantId, authHeader);
-            return ResponseEntity.ok(buildResult(id, Map.of("content", List.of(Map.of("type", content.type(), "text", content.text())), "isError", false)));
+            ToolResult result = handler.get().invoke(args, tenantId);
+            McpContent content = result.content();
+            return ResponseEntity.ok(buildResult(id, Map.of("content", List.of(Map.of("type", content.type(), "text", content.text())), "isError", result.isError())));
         } catch (Exception e) {
             log.error("tool invocation failed request_id={}", requestId, e);
             return ResponseEntity.ok(buildResult(id, Map.of("content", List.of(Map.of("type", "text",

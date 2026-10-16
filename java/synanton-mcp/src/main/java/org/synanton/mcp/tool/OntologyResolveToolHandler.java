@@ -46,7 +46,7 @@ public class OntologyResolveToolHandler implements ToolHandler {
     }
 
     @Override
-    public McpContent invoke(Map<String, Object> arguments, String tenantId, String authHeader) {
+    public ToolResult invoke(Map<String, Object> arguments, String tenantId) {
         String label = (String) arguments.getOrDefault("label", "");
         String version = (String) arguments.getOrDefault("version", "");
 
@@ -56,19 +56,18 @@ public class OntologyResolveToolHandler implements ToolHandler {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .header("Authorization", authHeader)
                 .header("X-Tenant-Id", tenantId)
                 .GET()
                 .timeout(Duration.ofMillis(timeoutMs))
                 .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 404) return new McpContent("Entity '" + label + "' not found in ontology.");
-            if (response.statusCode() != 200) return new McpContent("Error: ontology service returned " + response.statusCode());
+            if (response.statusCode() == 404) return ToolResult.ok("Entity '" + label + "' not found in ontology.");
+            if (response.statusCode() != 200) return ToolResult.error("ontology service returned " + response.statusCode());
             JsonNode json = objectMapper.readTree(response.body());
-            return new McpContent(formatOntologyResult(label, json));
+            return ToolResult.ok(formatOntologyResult(label, json));
         } catch (Exception e) {
             log.warn("Ontology resolve tool failed for label '{}': {}", label, e.getMessage());
-            return new McpContent("Error: ontology service unavailable - " + e.getMessage());
+            return ToolResult.error("ontology service unavailable");
         }
     }
 

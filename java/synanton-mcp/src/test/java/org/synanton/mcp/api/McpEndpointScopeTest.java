@@ -17,7 +17,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.synanton.mcp.tool.McpContent;
+import org.synanton.mcp.tool.ToolResult;
 import org.synanton.mcp.tool.ScopeEnforcer;
 import org.synanton.mcp.tool.ToolHandler;
 import org.synanton.mcp.tool.ToolRegistry;
@@ -43,7 +43,7 @@ class McpEndpointScopeTest {
     void toolsCall_emptyScopeSet_denied() throws Exception {
         Map<String, Object> result = call("[]", "search");
         assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
-        verify(handler, never()).invoke(any(), any(), any());
+        verify(handler, never()).invoke(any(), any());
     }
 
     // Crit.1 bullet 2 — unparseable scopes (string, not array) → denied
@@ -51,7 +51,7 @@ class McpEndpointScopeTest {
     void toolsCall_unparseableScopes_denied() throws Exception {
         Map<String, Object> result = call("\"search\"", "search");
         assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
-        verify(handler, never()).invoke(any(), any(), any());
+        verify(handler, never()).invoke(any(), any());
     }
 
     // Crit.1 bullet 3 — insufficient scope → denied
@@ -59,7 +59,7 @@ class McpEndpointScopeTest {
     void toolsCall_insufficientScope_denied() throws Exception {
         Map<String, Object> result = call("[\"tenant:list\"]", "search");
         assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
-        verify(handler, never()).invoke(any(), any(), any());
+        verify(handler, never()).invoke(any(), any());
     }
 
     // Crit.1 bullet 4a — scope for tool A used against tool B → denied for B
@@ -67,23 +67,23 @@ class McpEndpointScopeTest {
     void toolsCall_scopeForToolA_deniedForToolB() throws Exception {
         Map<String, Object> result = call("[\"search\"]", "graph_query");
         assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
-        verify(handler, never()).invoke(any(), any(), any());
+        verify(handler, never()).invoke(any(), any());
     }
 
     // Crit.1 bullet 4b — positive control: valid scope for tool A permits A
     @Test
     void toolsCall_scopeForToolA_permittedForToolA() throws Exception {
-        when(handler.invoke(any(), any(), any())).thenReturn(new McpContent("ok"));
+        when(handler.invoke(any(), any())).thenReturn(ToolResult.ok("ok"));
         Map<String, Object> result = call("[\"search\"]", "search");
         assertThat(result.get("isError")).isEqualTo(Boolean.FALSE);
-        verify(handler).invoke(any(), any(), any());
+        verify(handler).invoke(any(), any());
     }
 
     // 2d-i — endpoint catch: generic message with request_id, no exception text
     @Test
     @SuppressWarnings("unchecked")
     void toolsCall_handlerThrows_clientSeesCorrelationIdNotInternals() throws Exception {
-        when(handler.invoke(any(), any(), any())).thenThrow(new RuntimeException("s3cr3t-internals"));
+        when(handler.invoke(any(), any())).thenThrow(new RuntimeException("s3cr3t-internals"));
         Map<String, Object> result = call("[\"search\"]", "search");
         assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
         java.util.List<Map<String, Object>> content =
@@ -91,6 +91,15 @@ class McpEndpointScopeTest {
         String text = (String) content.get(0).get("text");
         assertThat(text).contains("request_id:");
         assertThat(text).doesNotContain("s3cr3t-internals");
+    }
+
+    // 2d-ii — handler-reported error surfaces as isError:true
+    @Test
+    void toolsCall_handlerError_deliveredAsError() throws Exception {
+        when(handler.invoke(any(), any())).thenReturn(ToolResult.error("search service unavailable"));
+        Map<String, Object> result = call("[\"search\"]", "search");
+        assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
+        verify(handler).invoke(any(), any());
     }
 
     @SuppressWarnings("unchecked")
