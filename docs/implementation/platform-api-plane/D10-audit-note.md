@@ -30,6 +30,8 @@ Verify actuator exposure separately.
 - **Fail-open scope (CRITICAL):** empty scope set skips the guard — delete
   the `!scopes.isEmpty()` clause.
 - **Wildcard scope (HIGH):** `*` grants — confirm not issueable normally.
+> **Wildcard** relocated 2026-10-15 → same open security item as work-item 5.
+> Tracked, not gating. See `M0-contract-freeze-declaration.md` exit criteria 4–5.
 - **Passthrough confirmed (HIGH):** raw bearer forwarded verbatim by
   SearchToolHandler — largest refactor item.
 - **Revocation window (MEDIUM):** 60s cache TTL — document or tighten.
@@ -58,11 +60,25 @@ Fixed per-handler schemas; freezable. Confirmed.
 
 ## Work items, in order
 
+Work items: 7 identified, 5 remaining in this list, 2 relocated 2026-10-15
+(item 2 → M0 gate; item 5 → open security item).
+
+**Note (2026-10-15, A1):** Items 2 and 5 have been relocated out of this list.
+Item 2 (fail-open, Q3-CRITICAL) is now **M0 freeze gate 1** in
+`M0-contract-freeze-declaration.md` (Exit criteria 1) — it is not a D10 refactor
+task and is not sequenced against items 1, 3, 4, 6, 7. Item 5 (passthrough /
+wildcard, Q3-HIGH) is relocated as an open security item under the same
+declaration; it is tracked, not gating. Numbering is retained so cross-references
+stay stable; the list is not renumbered.
+
 1. Session posture: declare stateless, remove/mark store, fix version pin.
-2. Fail-open scope guard; reject unauthenticated (drop `demo` default).
+2. ~~Fail-open scope guard; reject unauthenticated (drop `demo` default).~~ **MOVED 2026-10-15 → M0 freeze gate 1.**
+   Not a D10 work item. See `M0-contract-freeze-declaration.md` Exit criteria 1.
 3. WWW-Authenticate + resource metadata; close GET bypass.
 4. Error semantics + message hygiene.
-5. Token passthrough.
+5. ~~Token passthrough (Q3-HIGH).~~ **MOVED 2026-10-15 → open security item.**
+   Wildcard is tracked alongside it (see Q3 body pointer). Tracked, not gating.
+   Sequenced against `M0-contract-freeze-declaration.md` exit criteria 4–5.
 6. Tool curation for BBAG-A.
 7. D4 schema reconciliation (product call).
 

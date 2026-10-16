@@ -1,18 +1,19 @@
 # M0-Contract-Freeze Declaration (BBAG-A)
 
-**Status:** Draft — review date TBD.
-**Owner:** Andrei Minin.
-**Authors:** OpenAPI spec (D1) — Andrei Minin; MCP schema (D4) — Andrei Minin,
-gated on the D10 audit; error model (RFC 9457 normalization) — Andrei Minin.
-**Sign-off authorities:** Architecture, Security, DX (per WS0 acceptance).
+**Status:** Draft — review date TBD; last amended 2026-10-15 (A1: gate restructure; D10 complete). **Owner:** Andrei Minin. **Authors:** OpenAPI spec (D1) — Andrei Minin; MCP schema (D4) — Andrei Minin, D10 audit complete 2026-10-15 (decision: refactor), awaiting product call on schema shape; error model (RFC 9457 normalization) — Andrei Minin. **Sign-off authorities:** Architecture, Security, DX (per WS0 acceptance).
 
 ## Exit criteria (WS0)
 
-- 1.32 freeze packet landed (done — packet §4 executed, freeze-commit recorded).
-- A5 resolved (ADR-014: RAG 1.30-owned, 1.32-normalized).
-- OpenAPI spec passes linting; MCP tool schema validated against the pinned
-  MCP revision (A3/D10); error model approved.
-- Contract review approved by Architecture, Security, DX.
+1. **GATE — Q3-CRITICAL (D10): fail-open scope closed.** Not tradeable against
+   criteria 3–5. While open, M0 does not freeze regardless of D1/D4 status.
+2. 1.32 freeze packet landed (done — packet §4 executed, freeze-commit recorded).
+3. A5 resolved (ADR-014: RAG 1.30-owned, 1.32-normalized).
+4. OpenAPI spec passes linting; MCP tool schema validated against the pinned MCP
+   revision (A3/D10); error model approved.
+5. Contract review approved by Architecture, Security, DX.
+
+Q3-HIGH (passthrough / wildcard) is tracked as an open security item but is not a
+freeze gate; it may be sequenced against criteria 4–5.
 
 ## Coupling note (vertical slice)
 
@@ -24,5 +25,4 @@ against fixtures; consumer-ready declaration waits for slice content.
 
 ## On declaration
 
-M0-contract-freeze declared → WS1–WS8 execute in parallel against the frozen
-contract. D10 audit (3–5d, timeboxed) gates D4/M3 only.
+M0-contract-freeze declared → WS1–WS8 execute in parallel against the frozen contract. D10 audit complete 2026-10-15 (decision: refactor); it gated D4/M3, and its Q3-CRITICAL finding is now a freeze gate in its own right — see Exit criteria 1.
