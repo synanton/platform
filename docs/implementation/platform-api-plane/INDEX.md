@@ -121,7 +121,7 @@ delegation, `*` issuance, actuator, D4 product call.
 | 2f | Cache key hygiene — raw bearer as Caffeine key; heap-dump exposure | Security | Security | Closed — keyed on SHA-256 (PR 226) |
 | 2d-i | Error semantics — endpoint catch leaked internals (PR 225) | Security | Security | Closed |
 | 2d-ii | Error semantics — handler `Error:` strings ride `isError:false` | Security | Security | Closed — ToolResult discriminated return; isError honored (PR 229) |
-| 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open |
+| 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open — 2e-i/ii landed (PR 241); 2e-iii blocked on F2; 2e-iv pending executors |
 | 3 | OpenAPI (D1) lint | Contract | DX | Open — spec exists (W4); Vacuum CI wiring missing, lint run pending |
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
 | 4b | D4 schema validation — awaits P2 pinned MCP revision | Contract | DX | Open |
