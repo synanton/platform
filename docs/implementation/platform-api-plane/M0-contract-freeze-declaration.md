@@ -23,6 +23,13 @@
 Q3-HIGH (passthrough / wildcard) is tracked as an open security item but is not a
 freeze gate; it may be sequenced against criteria 4–5.
 
+**Not gating M0:** Q2 (discovery — no `oauth-protected-resource`, `GET /mcp`
+pre-auth catalog; D10 work-item 3) is deliberately non-gating:
+discovery, not enforcement. `*` issuance control is security-service side,
+uninspectable from this repo per the audit scope; routed to blocker 2's cluster
+via the D10 item-5 pointer. `contains("*")` in `ScopeEnforcer.allowed()`
+correctly remains. Both tracked; neither blocks freeze.
+
 ## Coupling note (vertical slice)
 
 BBAG-A search is structurally complete but semantically empty until the
