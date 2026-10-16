@@ -115,12 +115,12 @@ delegation, `*` issuance, actuator, D4 product call.
 | # | Blocker | Class | Owner | State |
 |---|---|---|---|---|
 | 1 | **Q3 CRITICAL — fail-open scope** (D10) | **Security gate** | Security | Closed |
-| 2a | Q3-HIGH passthrough — L98 raw bearer verbatim (largest refactor item) | Security | Security | Open |
+| 2a | Q3-HIGH passthrough — L98 raw bearer (largest refactor item) | Security | Security | Closed — bearer removed from all downstream calls; F2 credential mechanism deferred to hardening |
 | 2b | Q3-HIGH wildcard `*` issuance — external, security-service side (confirmation tracked under blocker 6) | Security | Security | Closed |
 | 2c | Revocation window — 60s TTL on validated identity cache; no per-token invalidation (flush-only) | Security | Security | Closed — documented |
-| 2f | Cache key hygiene — raw bearer as Caffeine key; heap-dump exposure (PR 226) | Security | Security | Closed |
+| 2f | Cache key hygiene — raw bearer as Caffeine key; heap-dump exposure | Security | Security | Closed — keyed on SHA-256 (PR 226) |
 | 2d-i | Error semantics — endpoint catch leaked internals (PR 225) | Security | Security | Closed |
-| 2d-ii | Error semantics — handler `Error:` strings ride `isError:false`; needs ToolHandler contract change, rides 2a | Security | Security | Open |
+| 2d-ii | Error semantics — handler `Error:` strings ride `isError:false` | Security | Security | Closed — ToolResult discriminated return; isError honored (PR 229) |
 | 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open |
 | 3 | OpenAPI (D1) lint | Contract | DX | Open |
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |

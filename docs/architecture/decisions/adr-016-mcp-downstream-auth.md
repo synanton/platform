@@ -6,7 +6,7 @@
 ## Decision
 
 1. Downstream credential = service identity (option A), not token exchange (option B). B's case was "preserve downstream validation" — there is none to preserve. Token exchange (RFC 8693) is not implemented and is not needed for 2a.
-2. Interface target = option C — ToolHandler.invoke(arguments, tenantId). The authHeader parameter is deleted. All 9 handlers updated; 3 that forwarded the bearer (Search, GraphQuery, OntologyResolve) drop the outbound Authorization header; the other 6 are unchanged.
+2. Interface target = option C — ToolHandler.invoke(arguments, tenantId). The authHeader parameter is deleted. All 7 handlers updated; 3 that forwarded the bearer (Search, GraphQuery, OntologyResolve) drop the outbound Authorization header; the other 4 are unchanged. *(Corrected 2026-10-16: audit's "9" was `ScopeEnforcer` map size; `list_content` and `execution_trace` have no handler beans.)*
 3. A shared downstream client owns the credential — one place issues/attaches service identity, not per-handler.
 4. F2 pending — the exact mechanism (mTLS, signed assertion, or "none" on a firm network trust-boundary answer) is deferred. ADR covers the A-vs-B decision; mechanism is a follow-up under 2a.
 5. 2e is separate — tenant propagation is scoped and shipped independently of 2a. Bundling would delay the tenant fix behind F2.
