@@ -1,0 +1,54 @@
+Problem:
+  type: object
+  description: |
+    RFC 9457 problem detail. Canonical source: docs/api/error-model.md.
+    Referenced, not redefined, by W3 and W4.
+  required: [type, title, status, code, retryable, request_id]
+  properties:
+    type:
+      type: string
+      format: uri-reference
+      default: about:blank
+    title:
+      type: string
+    status:
+      type: integer
+      minimum: 100
+      maximum: 599
+    detail:
+      type: string
+    instance:
+      type: string
+      format: uri-reference
+    code:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - AUTHENTICATION_REQUIRED
+        - AUTHORIZATION_DENIED
+        - RESOURCE_NOT_FOUND
+        - RESOURCE_CONFLICT
+        - PRECONDITION_FAILED
+        - RATE_LIMITED
+        - DEPENDENCY_UNAVAILABLE
+        - OPERATION_FAILED
+        - INTERNAL_ERROR
+    retryable:
+      type: boolean
+    request_id:
+      type: string
+    details:
+      type: object
+      additionalProperties: true
+  example:
+    type: "https://errors.synanton.local/validation-error"
+    title: "Validation Error"
+    status: 400
+    detail: "Field 'top_k' must be a positive integer."
+    instance: "/v1/search"
+    code: VALIDATION_ERROR
+    retryable: false
+    request_id: "3f7a1c9e-..."
+    details:
+      field: "top_k"
+      constraint: "minimum"
