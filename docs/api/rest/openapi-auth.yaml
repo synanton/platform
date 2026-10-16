@@ -1,0 +1,223 @@
+openapi: 3.1.0
+
+info:
+  title: Synanton Platform — Authentication API
+  version: 1.0.0
+  description: |
+    Login and logout flows under the AS-facade shape (ADR-018): the platform
+    fronts OAuth 2.1 issuance (/oauth/*, discovery) backed by the external
+    security service. Platform UI flow paths are versioned under `/v1/`;
+    protocol endpoints are unprefixed; discovery is root-anchored.
+
+servers:
+  - url: https://{host}
+    variables:
+      host:
+        default: api.synanton.local
+        description: Deployment host.
+
+tags:
+  - name: auth
+    description: Platform login flow and logout.
+  - name: oauth
+    description: Protocol endpoints (facade over the external security service).
+
+paths:
+
+  /oauth/authorize:
+    get:
+      tags: [oauth]
+      operationId: oauthAuthorize
+      summary: Authorization endpoint — renders the login flow.
+      description: |
+        The single login entry point (W4(a) Replace). Clients direct the user
+        agent here with PKCE parameters; the platform renders authentication
+        and issues the authorization code. No separate /auth/login exists.
+      parameters:
+        - name: response_type
+          in: query
+          required: true
+          schema: { type: string, enum: [code] }
+        - name: client_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: redirect_uri
+          in: query
+          required: true
+          schema: { type: string, format: uri }
+          description: Must match a registered redirect URI.
+        - name: scope
+          in: query
+          required: false
+          schema: { type: string }
+        - name: state
+          in: query
+          required: true
+          schema: { type: string }
+        - name: code_challenge
+          in: query
+          required: true
+          schema: { type: string }
+        - name: code_challenge_method
+          in: query
+          required: true
+          schema: { type: string, enum: [S256] }
+      responses:
+        "302":
+          description: Redirect carrying the authorization code.
+          headers:
+            Location: { schema: { type: string, format: uri } }
+        "400":
+          $ref: "#/components/responses/Problem"
+
+  /oauth/token:
+    post:
+      tags: [oauth]
+      operationId: oauthToken
+      summary: Token endpoint — pass-through to the external security service.
+      description: |
+        W4(b) pass-through: the platform proxies the token request; issuance
+        stays external. Supported grants are whatever the security service
+        offers; token exchange (RFC 8693) support is an open F3 question.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [grant_type]
+              properties:
+                grant_type: { type: string }
+                code: { type: string }
+                redirect_uri: { type: string, format: uri }
+                code_verifier: { type: string }
+                refresh_token: { type: string }
+      responses:
+        "200":
+          description: Token response.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /oauth/revoke:
+    post:
+      tags: [oauth]
+      operationId: oauthRevoke
+      summary: Revocation endpoint — pass-through.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+                token_type_hint: { type: string, enum: [access_token, refresh_token] }
+      responses:
+        "200": { description: Token revoked (or unknown — no signal). }
+        "400":
+          $ref: "#/components/responses/Problem"
+
+  /v1/auth/callback:
+    get:
+      tags: [auth]
+      operationId: authCallback
+      summary: Platform redirect target — hands the code to the token endpoint.
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema: { type: string }
+        - name: state
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Token response.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /v1/auth/logout:
+    post:
+      tags: [auth]
+      operationId: authLogout
+      summary: End the session.
+      security:
+        - BearerAuth: []
+      responses:
+        "204": { description: Session ended. }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /.well-known/oauth-authorization-server:
+    get:
+      tags: [oauth]
+      operationId: oauthDiscovery
+      summary: AS metadata (protocol-fixed, root-anchored).
+      responses:
+        "200":
+          description: Authorization-server metadata document.
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+
+  /.well-known/openid-configuration:
+    get:
+      tags: [oauth]
+      operationId: oidcDiscovery
+      summary: OIDC discovery (protocol-fixed, root-anchored).
+      responses:
+        "200":
+          description: OpenID provider metadata document.
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token issued via /oauth/token (external security service).
+        Issuer, audience, and required scope values are delegated — see below.
+
+  schemas:
+
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, enum: [Bearer] }
+        expires_in: { type: integer, minimum: 0 }
+        refresh_token: { type: string }
+        scope: { type: string, description: Space-delimited. }
+        id_token: { type: string, description: OIDC ID token (JWT). }
+
+    Problem:
+      $ref: "./components/Problem.yaml#/Problem"
+      description: |
+        RFC 9457 problem detail. Owned by W2 — referenced here, with
+        issuer/audience/scope values delegated to the external service and
+        tenant_id shape to W1.
+
+  responses:
+    Problem:
+      description: RFC 9457 problem detail.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
