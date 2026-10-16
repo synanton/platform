@@ -1,6 +1,6 @@
 # ADR-016: MCP Downstream Auth — Service Identity, Not Token Exchange
 
-**Status:** Proposed 2026-10-16
+**Status:** Accepted 2026-10-16
 **Basis:** Blocker 2a (Q3-HIGH passthrough) requires deciding what MCP forwards downstream in place of the caller's raw bearer. Fact-find F1 resolved: no downstream service enforces authorization on the forwarded credential — zero Authorization reads across synapt, relix, and syntology main sources. The forwarded bearer was pure confused-deputy surface with no enforcement value. A second finding, tenant header misalignment, is live independently and is scoped separately as 2e.
 
 ## Decision
