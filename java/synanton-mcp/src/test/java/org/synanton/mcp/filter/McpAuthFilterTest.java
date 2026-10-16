@@ -109,17 +109,22 @@ class McpAuthFilterTest {
         request.addHeader("X-Tenant-Id", "forged");
         final String[] boundTenant = new String[1];
         final String[] nodeTenant = new String[1];
+        final java.util.List<String> nodeScopes = new java.util.ArrayList<>();
         FilterChain chain = (req, res) -> {
             boundTenant[0] = McpIdentityContext.get().tenantId();
-            nodeTenant[0] = ((com.fasterxml.jackson.databind.JsonNode)
-                    ((jakarta.servlet.http.HttpServletRequest) req)
-                            .getAttribute("mcpIdentity")).path("tenantId").asText();
+            com.fasterxml.jackson.databind.JsonNode node =
+                    (com.fasterxml.jackson.databind.JsonNode)
+                            ((jakarta.servlet.http.HttpServletRequest) req)
+                                    .getAttribute("mcpIdentity");
+            nodeTenant[0] = node.path("tenantId").asText();
+            node.path("scopes").forEach(s -> nodeScopes.add(s.asText()));
         };
 
         filter().doFilterInternal(request, new MockHttpServletResponse(), chain);
 
         assertThat(boundTenant[0]).isEqualTo("t-real");
         assertThat(nodeTenant[0]).isEqualTo("t-real");
+        assertThat(nodeScopes).containsExactly("search");
     }
 
     // Missing credentials are rejected without touching the provider.
