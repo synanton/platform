@@ -1,6 +1,6 @@
 # ADR-018: OAuth Surface — Platform as Authorization-Server Facade
 
-**Status:** Proposed 2026-10-16
+**Status:** Accepted 2026-10-16
 **Basis:** W4 cannot be drafted without the top-level OAuth shape. BBAG-A WS1 specifies POST /oauth/token, POST /oauth/revoke, discovery and AS metadata, confidential and public clients, and refresh rotation with reuse detection — an authorization-server surface. A W4 draft modeled as a pure relying party was blocked for omitting all of it. Separately, the MCP filter delegates token validation outward (/auth/validate-header), which a self-contained AS would not do. Both facts are consistent with one shape: the platform fronts an AS, backed by the external security service.
 
 ## Decision
