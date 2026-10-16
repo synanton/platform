@@ -102,6 +102,24 @@ class McpEndpointScopeTest {
         verify(handler).invoke(any(), any());
     }
 
+    // Flag 4 — endpoint honors the filter-provided request_id when present.
+    @Test
+    void toolsCall_usesFilterRequestIdWhenPresent() throws Exception {
+        when(handler.invoke(any(), any())).thenThrow(new RuntimeException("boom"));
+        JsonNode identity = MAPPER.readTree("{\"scopes\":[\"search\"]}");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setAttribute("mcpIdentity", identity);
+        request.setAttribute("mcp.request_id", "filter-id-1");
+        String body = "{\"id\":\"1\",\"method\":\"tools/call\",\"params\":{\"name\":\"search\",\"arguments\":{}}}";
+        var entity = endpoint.handle(body, request);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> result = (Map<String, Object>) entity.getBody().get("result");
+        assertThat(result.get("isError")).isEqualTo(Boolean.TRUE);
+        java.util.List<Map<String, Object>> content =
+                (java.util.List<Map<String, Object>>) result.get("content");
+        assertThat((String) content.get(0).get("text")).contains("filter-id-1");
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> call(String scopesJson, String toolName) throws Exception {
         JsonNode identity = MAPPER.readTree("{\"scopes\":" + scopesJson + "}");

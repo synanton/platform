@@ -43,7 +43,12 @@ public class McpEndpoint {
 
     @PostMapping("/mcp")
     public ResponseEntity<Map<String, Object>> handle(@RequestBody String body, HttpServletRequest request) {
-        String requestId = UUID.randomUUID().toString();
+        // Single correlation id per request: the filter sets mcp.request_id;
+        // fall back to generation when invoked without the filter (tests,
+        // internal dispatch).
+        Object filterRequestId = request.getAttribute("mcp.request_id");
+        String requestId = filterRequestId instanceof String s && !s.isBlank()
+                ? s : UUID.randomUUID().toString();
         JsonNode identity = (JsonNode) request.getAttribute("mcpIdentity");
         String tenantId = "demo";
         if (identity != null) {
