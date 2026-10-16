@@ -16,6 +16,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +56,7 @@ public class McpAuthFilter extends OncePerRequestFilter {
             writeMcpAuthError(response, "Authorization required");
             return;
         }
-        JsonNode identity = authCache.getIfPresent(authHeader);
+        JsonNode identity = authCache.getIfPresent(cacheKey(authHeader));
         if (identity == null) {
             try {
                 HttpRequest secRequest = HttpRequest.newBuilder()
@@ -69,7 +71,7 @@ public class McpAuthFilter extends OncePerRequestFilter {
                     return;
                 }
                 identity = objectMapper.readTree(secResponse.body());
-                authCache.put(authHeader, identity);
+                authCache.put(cacheKey(authHeader), identity);
             } catch (Exception e) {
                 writeMcpAuthError(response, "Security service unavailable");
                 return;
@@ -77,6 +79,26 @@ public class McpAuthFilter extends OncePerRequestFilter {
         }
         request.setAttribute("mcpIdentity", identity);
         chain.doFilter(request, response);
+    }
+
+    /**
+     * Cache key for a bearer token. The raw bearer must never sit in the cache
+     * as a key (heap-dump exposure, blocker 2f) — the entry is addressed by
+     * SHA-256 of the token instead. Same identity, no behavior change beyond
+     * the key.
+     */
+    static String cacheKey(String authHeader) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(authHeader.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
     }
 
     private void writeMcpAuthError(HttpServletResponse response, String message) throws IOException {
