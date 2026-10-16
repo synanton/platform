@@ -1,6 +1,6 @@
 # M0-Contract-Freeze Declaration (BBAG-A)
 
-**Status:** Draft — review date TBD; last amended 2026-10-15 (A1: gate restructure; D10 complete). **Owner:** Andrei Minin. **Authors:** OpenAPI spec (D1) — Andrei Minin; MCP schema (D4) — Andrei Minin, D10 audit complete 2026-10-15 (decision: refactor), awaiting product call on schema shape; error model (RFC 9457 normalization) — Andrei Minin. **Sign-off authorities:** Architecture, Security, DX (per WS0 acceptance).
+**Status:** Draft — review date TBD; last amended 2026-10-16 (blocker 1 closed; A1 gate restructure 2026-10-15). **Owner:** Andrei Minin. **Authors:** OpenAPI spec (D1) — Andrei Minin; MCP schema (D4) — Andrei Minin, D10 audit complete 2026-10-15 (decision: refactor), awaiting product call on schema shape; error model (RFC 9457 normalization) — Andrei Minin. **Sign-off authorities:** Architecture, Security, DX (per WS0 acceptance).
 
 ## Exit criteria (WS0)
 
@@ -29,6 +29,32 @@ discovery, not enforcement. `*` issuance control is security-service side,
 uninspectable from this repo per the audit scope; routed to blocker 2's cluster
 via the D10 item-5 pointer. `contains("*")` in `ScopeEnforcer.allowed()`
 correctly remains. Both tracked; neither blocks freeze.
+
+## Blocker 1 — evidence (Q3-CRITICAL, fail-open scope)
+
+**Reviewed by:** Andrei Minin, 2026-10-16
+
+| Bullet | Test | Pre-fix | Post-fix |
+|---|---|---|---|
+| 1 — absent/empty scope → denied | `toolsCall_emptyScopeSet_denied` | FAIL — NeverWantedButInvoked: invoke | PASS |
+| 2 — unparseable scopes → denied | `toolsCall_unparseableScopes_denied` | FAIL — NeverWantedButInvoked: invoke | PASS |
+| 3 — insufficient scope → denied | `toolsCall_insufficientScope_denied` | PASS | PASS |
+| 4a — scope A vs tool B → denied | `toolsCall_scopeForToolA_deniedForToolB` | PASS | PASS |
+| 4b — positive control | `toolsCall_scopeForToolA_permittedForToolA` | PASS | PASS |
+
+**Fix:** PR 211 (`f640817`) — `McpEndpoint` L91 `!scopes.isEmpty()` short-circuit
+deleted; `scopeEnforcer.allowed()` runs on every `tools/call`.
+**Precondition:** `allowed(tool, emptySet) == false` (`ScopeEnforcer` L11),
+independently verified.
+**Intent:** L91 traces to migration commit `8f4cd8d2` (2026-08-18), no recorded
+purpose; no allow-list required.
+**Runs:** pre-fix 5 run / 2 failed; post-fix 5 run / 0 failed. Full module suite green.
+**Blast radius:** sole instance module-wide — search run; no sibling short-circuit
+guards an authorization call.
+**Boundary:** L98 passthrough (2a) out of scope; Q2 non-gating and `*` issuance
+mapping acknowledged.
+
+**Outcome:** Closed.
 
 ## Coupling note (vertical slice)
 
