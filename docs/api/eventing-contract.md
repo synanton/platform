@@ -119,7 +119,7 @@ The business key depends on the source-event class:
 | Event class | Business key for replay/dedup |
 |---|---|
 | `SourceChanged`, `SourcePublished`, `SourceUnchanged` | `(tenant_id, source_id, resource_id, version_id)` — §39 source-version identity |
-| `SourceDeleted` | `(tenant_id, connector_id, source_id, resource_id, deleted_at)` — tombstone identity |
+| `SourceDeleted` | `(tenant_id, connector_id, source_id, resource_id, deleted_at)` — tombstone identity; event carries tombstone/ref |
 | `IngestionStarted`, `IngestionCompleted`, `IngestionFailed` | `(tenant_id, run_id, event_type)` |
 | `SourceDiscovered`, `SourceAcquired`, `SourceValidated`, `SourceQuarantined` | `(tenant_id, run_id, source_identity, event_type)` |
 
@@ -128,6 +128,11 @@ In §39's idempotency tuple, `source_version` means this model's
 not the platform version ID (`docs/api/source-model.md`). `connector_id` is
 not in the §39 version key because `source_id` is unique within a tenant; the
 deletion key includes the full SourceIdentity plus the tombstone timestamp.
+When emitted, `SourceUnchanged` carries the existing `version_id`, not a new
+one. A `SourceDeleted` event carries the tombstone (or its
+`versions_manifest_ref`); a consumer without that manifest must not apply the
+deletion. A replayed deletion reuses the tombstone's original `deleted_at`, not
+the replay time.
 
 Consumers maintain source-specific companion records, not source columns on
 generic `processed_events`:
