@@ -222,23 +222,42 @@ ManifestEntry {
 }
 ```
 
-There is **one manifest entry per source resource admitted/discovered by a run**,
-recording that resource's final result, not one entry per transition or attempt.
-Attempts stay observable separately (§40). A resource interrupted by run
-cancellation receives `result: CANCELLED`; a resource not yet discovered/admitted
-has no entry. Therefore `entry_count` equals the sum of the eight mutually
-exclusive `SyncResult` counters.
+There is **one manifest entry per source resource when first discovered by a
+run**, recording that resource's final result, not one entry per transition or
+attempt. Attempts stay observable separately (§40). Discovery creates the entry;
+admission/processing updates its final result. A discovered resource interrupted
+by cancellation receives `result: CANCELLED`; a resource not yet discovered has
+no entry. Therefore `entry_count` equals the sum of the eight mutually exclusive
+`SyncResult` counters.
+
+The counters are final, mutually exclusive dispositions, not cumulative stage
+totals. `DISCOVERED` is final only for a discovery-only run where the resource
+was enumerated but not admitted for processing; once processing starts, the
+entry's final result is `CHANGED`, `UNCHANGED`, `FAILED`, or another terminal
+disposition.
 
 An empty manifest (`entry_count = 0`, all counters zero) is valid and
 interpreted with the terminal run state:
 
-- `FAILED` with an empty manifest means the run failed before discovering or
-  admitting any resource; the Operation/run error records why.
-- `COMPLETED`, `SKIPPED`, or `UNCHANGED` with an empty manifest means the
-  connector ran and found nothing to admit (or no changes to record).
+- `FAILED` with an empty manifest means the run failed before discovering any
+  resource; the Operation/run error records why.
+- `COMPLETED` or `UNCHANGED` with an empty manifest means the connector ran on
+  an empty source and found nothing to admit.
+- `SKIPPED` with an empty manifest means policy skipped the run before discovery;
+  the connector was not invoked.
+- `CANCELLED` with an empty manifest means cancellation arrived before any
+  resource was discovered.
+- An `Operation` in `EXPIRED` with an empty manifest and a nonterminal
+  `IngestionRun` status means the operation expired before resource discovery;
+  expiry is server policy, and does not add an `EXPIRED` state to the §38
+  ingestion-run state machine.
+- An authoritative deletion of a target source resource creates a `DELETED`
+  manifest entry even when that resource has no prior versions, so its run
+  manifest is not empty.
 
-The state plus the empty manifest distinguishes a failed start from a healthy
-empty-source sync; neither is an unrecorded run.
+The terminal state plus the empty manifest distinguishes failed start, healthy
+empty source, policy skip, and pre-discovery cancellation; none is an
+unrecorded run.
 
 The manifest is immutable after the run completes. `entries_ref` points to
 the paged manifest-entry record, not an unbounded inline array. The
