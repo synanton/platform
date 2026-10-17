@@ -312,7 +312,7 @@ Per §55's boundary note and ADR-009, PAPI-1 through PAPI-3 (foundation, resourc
 | 1 | `operation-service` implementing the Appendix B resource and §56 state machine. |
 | 2 | Idempotency support (`idempotency` module per §154) for operation-creating requests. |
 | 3 | Cancellation semantics (`CANCEL_REQUESTED` → `CANCELLED`) and retry-safety guidance per operation type. |
-| 4 | **`ExtractionStatus` reconciliation**: an explicit, tested mapping from `synanton.extraction.v1`'s `ExtractionStatus` (`ACCEPTED/QUEUED/RUNNING/COMPLETED/PARTIAL/FAILED/CANCELLED/EXPIRED`) onto the public Operation state machine (`ACCEPTED/QUEUED/RUNNING/SUCCEEDED/FAILED/CANCEL_REQUESTED/CANCELLED/EXPIRED`) - decide where `PARTIAL` maps (likely `SUCCEEDED` with a partial-result flag in the response body, not a new public state) and confirm no other already-shipped async model (GPU execution, annotation processing runs) needs the same treatment. |
+| 4 | **`ExtractionStatus` reconciliation**: an explicit, tested mapping from `synanton.extraction.v1`'s `ExtractionStatus` (`ACCEPTED/QUEUED/RUNNING/COMPLETED/PARTIAL/FAILED/CANCELLED/EXPIRED`) onto the public Operation state machine (`ACCEPTED/QUEUED/RUNNING/SUCCEEDED/FAILED/CANCEL_REQUESTED/CANCELLED/EXPIRED`) - decide where `PARTIAL` maps (likely `SUCCEEDED` with a partial-result flag in the response body, not a new public state) and confirm no other already-shipped async model (GPU execution, annotation processing runs) needs the same treatment. **Drafted** — `docs/api/operation-model.md`; the "other async model" check resolved to yes: GPU `ExecutionState` also reconciles. |
 | 5 | Durable operation-state persistence satisfying invariant 3 (acceptance implies durable record, not in-memory only). |
 
 ### Definition of Done
