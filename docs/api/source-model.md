@@ -1,6 +1,6 @@
 # Source Resource Model
 
-**Status:** Revised and frozen 2026-10-17 — source/resource cardinality and deletion semantics clarified after initial freeze in PR #282
+**Status:** Revised and frozen 2026-10-17 — source/resource cardinality, deletion semantics, and Content Cache reference clarified after initial freeze in PR #282
 **Source:** Design 1.28 §7.5–§17, §39–§40, §112–§113 (ingestion lifecycle); Design 1.32 §29–§32 (API surface)
 
 **Revision note (2026-10-17):** #248 implementation began on `FIX-source-lifecycle`
@@ -10,6 +10,11 @@ revision separates those entities and clarifies endpoint re-resolution and
 DELETE behavior before public API integration. The established
 `SourceIdentity` tuple, SourceVersion, event business keys, and tombstone shape
 remain unchanged.
+
+**Content Cache revision note (2026-10-17, #249):** each published SourceVersion
+now exposes the opaque Content Cache reference returned for its acquired source
+representation. This additive field preserves resolvability without making the
+reference a source identity, content digest, or storage location.
 
 The resource model for sources, source versions, and ingestion runs. A
 **projection** of Design 1.28 (ingestion lifecycle, authoritative) and Design
@@ -101,6 +106,7 @@ SourceVersion {
     source_identity
     version_id
     content_digest
+    content_cache_reference
     source_revision
     observed_at
 }
@@ -108,6 +114,11 @@ SourceVersion {
 
 The version carries both `source_identity` and `content_digest` side by side —
 neither substitutes for the other (1.28 §10–§11).
+`content_cache_reference` is the opaque immutable reference returned by Content
+Cache 1.26 for the acquired source representation. It is stored alongside, not
+in place of, the digest; clients pass it back to Content Cache without parsing
+or deriving backend details. A published SourceVersion is not committed until
+Content Cache returns the reference and the stored bytes pass integrity checks.
 The `source_version` term in §39's idempotency identity denotes this model's
 `version_id`; `source_revision` is the upstream version-detection signal used to
 derive it, not an alternate name for the platform version ID.
@@ -536,6 +547,7 @@ tombstone propagation) follows against this revised model.
 ## Cross-references
 
 - `docs/architecture/synanton-design-1.28.md` — authoritative ingestion lifecycle
+- `docs/architecture/synanton-design-1.26.md` — Content Cache artifact/reference contract
 - `docs/architecture/synanton-design-1.32.md` — authoritative API surface (§29–§32)
 - `docs/api/operation-model.md` — the Operation an ingestion run links to
 - `docs/api/eventing-contract.md` — the event contract source lifecycle uses

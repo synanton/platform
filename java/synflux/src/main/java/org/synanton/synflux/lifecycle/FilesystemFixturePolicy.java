@@ -33,6 +33,18 @@ public final class FilesystemFixturePolicy {
         }
     }
 
+    public void validateSeparateContentCacheRoot(Path contentCacheRoot) {
+        try {
+            Path sourceRoot = allowedRoot.toRealPath();
+            Path cacheRoot = contentCacheRoot.toRealPath();
+            if (cacheRoot.startsWith(sourceRoot) || sourceRoot.startsWith(cacheRoot)) {
+                throw new IllegalArgumentException("Content Cache root and fixture source root must be separate");
+            }
+        } catch (IOException | IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid Content Cache root", e);
+        }
+    }
+
     public String resourceId(String endpoint, ContentRef ref) {
         Path sourceRoot = validateRoot(endpoint);
         try {

@@ -14,5 +14,6 @@ public record SourceVersionRow(
     String sourceRevision,
     Instant observedAt,
     UUID contentRefId,
-    UUID incarnationId
+    UUID incarnationId,
+    String contentCacheReference
 ) {}

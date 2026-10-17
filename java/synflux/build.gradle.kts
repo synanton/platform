@@ -20,6 +20,7 @@ dependencyManagement {
 dependencies {
     implementation(project(":java:shared:common"))
     implementation(project(":java:ingestion-cache"))
+    implementation(project(":java:content-cache-api"))
     implementation(project(":java:synvault"))
     implementation(project(":java:synanton-llm-client"))
     implementation(project(":java:gpu-client"))

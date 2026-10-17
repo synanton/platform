@@ -1,5 +1,9 @@
 package org.synanton.synflux.pipeline.stage;
 
+import org.synanton.contentcache.ContentIntegrityException;
+import org.synanton.contentcache.ContentMetadata;
+import org.synanton.contentcache.ContentReference;
+import org.synanton.contentcache.ContentStore;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
@@ -21,8 +25,12 @@ public class AcquireStage implements PipelineStage<ContentRef, AcquiredDocument>
     private static final UUID NAMESPACE = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
     private final ContentPullPort pullPort;
+    private final ContentStore contentStore;
 
-    public AcquireStage(ContentPullPort pullPort) { this.pullPort = pullPort; }
+    public AcquireStage(ContentPullPort pullPort, ContentStore contentStore) {
+        this.pullPort = pullPort;
+        this.contentStore = contentStore;
+    }
 
     @Override
     public String name() { return "acquire"; }
@@ -37,7 +45,20 @@ public class AcquireStage implements PipelineStage<ContentRef, AcquiredDocument>
         }
         String sha256 = sha256Hex(bytes);
         UUID contentRefId = uuidv5(NAMESPACE, ctx.tenant() + ":" + sha256);
-        return new AcquiredDocument(ref, bytes, sha256, ref.mimeType(), ref.uri(), contentRefId);
+        var putResult = contentStore.put(ctx.tenant(), bytes,
+            ContentMetadata.of(ref.mimeType(), "synflux:" + ctx.jobId()));
+        ContentReference cacheReference = putResult.reference();
+        if (!ctx.tenant().equals(cacheReference.tenantId())
+                || !("sha256:" + sha256).equals(cacheReference.digest())) {
+            throw new ContentIntegrityException("Content Cache returned a reference for different source bytes");
+        }
+        byte[] cachedBytes = contentStore.get(cacheReference);
+        if (cachedBytes == null || cachedBytes.length != bytes.length || !sha256Hex(cachedBytes).equals(sha256)) {
+            throw new ContentIntegrityException("Content Cache round-trip failed size/digest verification");
+        }
+        return new AcquiredDocument(
+            ref, cachedBytes, sha256, ref.mimeType(), ref.uri(), contentRefId, cacheReference.encode()
+        );
     }
 
     private static String sha256Hex(byte[] data) {

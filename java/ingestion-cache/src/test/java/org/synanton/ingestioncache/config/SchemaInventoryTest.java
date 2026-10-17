@@ -92,4 +92,20 @@ class SchemaInventoryTest {
                         .collect(Collectors.toList());
         assertThat(actual).containsAll(EXPECTED_TABLES);
     }
+
+    @Test
+    void contentCacheReferencesAreStoredAlongsideLegacyLookupFields() {
+        List<String> actual = session
+            .execute("SELECT table_name, column_name FROM system_schema.columns " +
+                "WHERE keyspace_name='ingestion_cache'")
+            .all()
+            .stream()
+            .map(row -> row.getString("table_name") + "." + row.getString("column_name"))
+            .toList();
+
+        assertThat(actual).contains(
+            "manifest.content_cache_reference",
+            "source_versions.content_cache_reference"
+        );
+    }
 }

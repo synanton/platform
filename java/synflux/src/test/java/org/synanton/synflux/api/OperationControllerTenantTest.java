@@ -64,7 +64,12 @@ class OperationControllerTenantTest {
         mvc.perform(get("/v1/operations/{operationId}", operationId)
                 .header("Authorization", "Bearer " + token("tenant-a"))
                 .header("X-Tenant", "tenant-b"))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.operation_id").value(operationId.toString()))
+            .andExpect(jsonPath("$.requested_by.principal_id").value("alice"))
+            .andExpect(jsonPath("$.tenant_id").value("tenant-a"))
+            .andExpect(jsonPath("$.progress.completed").value(1))
+            .andExpect(jsonPath("$.operationId").doesNotExist());
 
         verify(cache).readOperation("tenant-a", operationId);
         verify(cache, never()).readOperation("tenant-b", operationId);

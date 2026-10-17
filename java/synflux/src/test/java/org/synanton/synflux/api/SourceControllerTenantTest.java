@@ -22,9 +22,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,24 +105,27 @@ class SourceControllerTenantTest {
 
     @Test
     void sourceVersionResponseUsesFrozenSnakeCaseFields() throws Exception {
+        String reference = "v1:tenant_id=tenant-a&artifact_id=artifact-1&digest=sha256%3Aabc";
         SourceRow source = new SourceRow("tenant-a", "source-a", "fixture", "file",
             "file:///fixture", Set.of(), "ACTIVE", Instant.parse("2026-10-17T10:00:00Z"), null);
-        SourceIdentityRow identity = new SourceIdentityRow("tenant-a", "fixture", "source-a", "doc.md");
+        SourceIdentityRow identity = new SourceIdentityRow("tenant-a", "fixture", "source-a", "manuals/a.md");
         SourceVersionRow version = new SourceVersionRow(
-            "tenant-a", "fixture", "source-a", "doc.md", UUID.randomUUID(), "digest-a", "revision-a",
-            Instant.parse("2026-10-17T10:01:00Z"), UUID.randomUUID(), null
+            "tenant-a", "fixture", "source-a", "manuals/a.md", UUID.randomUUID(), "sha256:abc", "etag:123",
+            Instant.parse("2026-10-17T11:00:00Z"), UUID.randomUUID(), null, reference
         );
         when(cache.readSource("tenant-a", "source-a")).thenReturn(Optional.of(source));
         when(cache.listSourceIdentities("tenant-a", "source-a", "fixture")).thenReturn(List.of(identity));
-        when(cache.listSourceVersions("tenant-a", "fixture", "source-a", "doc.md"))
+        when(cache.listSourceVersions("tenant-a", "fixture", "source-a", "manuals/a.md"))
             .thenReturn(List.of(version));
 
         mvc.perform(get("/v1/sources/source-a/versions")
                 .header("Authorization", "Bearer " + token("tenant-a")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].source_identity.tenant_id").value("tenant-a"))
-            .andExpect(jsonPath("$[0].content_digest").value("digest-a"))
-            .andExpect(jsonPath("$[0].source_revision").value("revision-a"))
+            .andExpect(jsonPath("$[0].content_digest").value("sha256:abc"))
+            .andExpect(jsonPath("$[0].content_cache_reference").value(reference))
+            .andExpect(jsonPath("$[0].source_revision").value("etag:123"))
+            .andExpect(jsonPath("$[0].version_id").value(version.versionId().toString()))
             .andExpect(jsonPath("$[0].contentDigest").doesNotExist())
             .andExpect(jsonPath("$[0].sourceIdentity").doesNotExist());
     }

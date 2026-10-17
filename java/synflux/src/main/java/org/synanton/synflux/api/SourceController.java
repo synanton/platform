@@ -234,13 +234,16 @@ public class SourceController {
         SourceIdentityResource sourceIdentity,
         UUID versionId,
         String contentDigest,
+        String contentCacheReference,
         String sourceRevision,
         java.time.Instant observedAt
     ) {
         private static SourceVersionResource from(SourceVersionRow row) {
             return new SourceVersionResource(
                 new SourceIdentityResource(row.tenantId(), row.connectorId(), row.sourceId(), row.resourceId()),
-                row.versionId(), row.contentDigest(), row.sourceRevision(), row.observedAt());
+                row.versionId(), row.contentDigest(), row.contentCacheReference(), row.sourceRevision(),
+                row.observedAt()
+            );
         }
     }
 }

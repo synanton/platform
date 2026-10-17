@@ -124,7 +124,7 @@ public class FixtureSourceWorkflow {
             activeOperations.remove(operation.operationId());
             IngestionRunRow failed = lifecycle.recordEmptyRun(
                 context, runId, operation.operationId(), sourceId,
-                FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY);
+                FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY, rejected);
             return new Submission(failed, operations.completeFromRun(running, failed));
         }
         return new Submission(scheduled, running);
@@ -171,29 +171,38 @@ public class FixtureSourceWorkflow {
                 FixtureIngestionService.EmptyRunDisposition.CANCELLED);
             return new Submission(cancelled, operations.completeFromRun(running, cancelled));
         }
+        ContentRef ref;
         try (Stream<ContentRef> discovered = contentPullPort.discover(context.tenantId(), source.sourceEndpoint())) {
-            ContentRef ref = discovered
+            ref = discovered
                 .filter(candidate -> filesystemPolicy.resourceId(source.sourceEndpoint(), candidate).equals(resourceId))
                 .min(Comparator.comparing(ContentRef::uri))
                 .orElse(null);
-            if (ref == null) {
-                IngestionRunRow failed = lifecycle.recordEmptyRun(
-                    context, runId, operationId, sourceId,
-                    FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY);
-                return new Submission(failed, operations.completeFromRun(running, failed));
-            }
-
-            if (operations.cancellationRequested(operationId)) {
-                IngestionRunRow cancelled = lifecycle.recordEmptyRun(
-                    context, runId, operationId, sourceId,
-                    FixtureIngestionService.EmptyRunDisposition.CANCELLED);
-                return new Submission(cancelled, operations.completeFromRun(running, cancelled));
-            }
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception failure) {
+            IngestionRunRow failed = lifecycle.recordEmptyRun(
+                context, runId, operationId, sourceId,
+                FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY, failure);
+            return new Submission(failed, operations.completeFromRun(running, failed));
+        }
+        if (ref == null) {
+            IngestionRunRow failed = lifecycle.recordEmptyRun(
+                context, runId, operationId, sourceId,
+                FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY);
+            return new Submission(failed, operations.completeFromRun(running, failed));
+        }
+        if (operations.cancellationRequested(operationId)) {
+            IngestionRunRow cancelled = lifecycle.recordEmptyRun(
+                context, runId, operationId, sourceId,
+                FixtureIngestionService.EmptyRunDisposition.CANCELLED);
+            return new Submission(cancelled, operations.completeFromRun(running, cancelled));
+        }
+        try {
             StageContext stageContext = new StageContext(context.tenantId(), runId.toString(), properties);
             AcquiredDocument acquired = acquireStage.apply(ref, stageContext);
             IngestionRunRow run = lifecycle.ingest(
                 context, runId, operationId, source.connectorId(), sourceId, resourceId,
-                ref, acquired.bytes(), ignored -> {
+                ref, acquired.bytes(), acquired.contentCacheReference(), ignored -> {
                     if (operations.cancellationRequested(operationId)) {
                         throw new CancellationException("Operation cancellation requested");
                     }
@@ -204,9 +213,8 @@ public class FixtureSourceWorkflow {
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception failure) {
-            IngestionRunRow failed = lifecycle.recordEmptyRun(
-                context, runId, operationId, sourceId,
-                FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY);
+            IngestionRunRow failed = lifecycle.recordAcquisitionFailure(
+                context, runId, operationId, source.connectorId(), sourceId, resourceId, failure);
             return new Submission(failed, operations.completeFromRun(running, failed));
         }
     }

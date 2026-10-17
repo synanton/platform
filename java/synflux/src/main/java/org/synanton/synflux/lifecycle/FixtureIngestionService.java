@@ -2,6 +2,8 @@ package org.synanton.synflux.lifecycle;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.synanton.contentcache.ContentIntegrityException;
+import org.synanton.contentcache.ContentStoreException;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.IngestionErrorRow;
 import org.synanton.ingestioncache.domain.IngestionManifestRow;
@@ -23,6 +25,7 @@ import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,7 +68,7 @@ public final class FixtureIngestionService {
             ContentRef ref,
             byte[] bytes,
             ContentPublisher publisher) {
-        return ingest(context, runId, operationId, ref.scheme(), sourceId, resourceId, ref, bytes, publisher);
+        return ingest(context, runId, operationId, ref.scheme(), sourceId, resourceId, ref, bytes, "", publisher);
     }
 
     public IngestionRunRow ingest(
@@ -77,6 +80,20 @@ public final class FixtureIngestionService {
             String resourceId,
             ContentRef ref,
             byte[] bytes,
+            ContentPublisher publisher) {
+        return ingest(context, runId, operationId, connectorId, sourceId, resourceId, ref, bytes, "", publisher);
+    }
+
+    public IngestionRunRow ingest(
+            VerifiedIngestionContext context,
+            UUID runId,
+            UUID operationId,
+            String connectorId,
+            String sourceId,
+            String resourceId,
+            ContentRef ref,
+            byte[] bytes,
+            String contentCacheReference,
             ContentPublisher publisher) {
         Objects.requireNonNull(context);
         Objects.requireNonNull(runId);
@@ -136,7 +153,8 @@ public final class FixtureIngestionService {
             }
             SourceVersionRow version = new SourceVersionRow(
                 tenantId, connectorId, sourceId, resourceId, versionId, digest, sourceRevision,
-                observedAt, Objects.requireNonNull(contentRefId, "publisher contentRefId"), incarnationId
+                observedAt, Objects.requireNonNull(contentRefId, "publisher contentRefId"), incarnationId,
+                contentCacheReference == null ? "" : contentCacheReference
             );
             boolean inserted = cache.insertSourceVersionAndOutboxIfAbsent(version, sourcePublishedEvent(version));
             if (!inserted) {
@@ -247,6 +265,16 @@ public final class FixtureIngestionService {
             UUID operationId,
             String sourceId,
             EmptyRunDisposition disposition) {
+        return recordEmptyRun(context, runId, operationId, sourceId, disposition, null);
+    }
+
+    public IngestionRunRow recordEmptyRun(
+            VerifiedIngestionContext context,
+            UUID runId,
+            UUID operationId,
+            String sourceId,
+            EmptyRunDisposition disposition,
+            Exception failure) {
         Objects.requireNonNull(context);
         Objects.requireNonNull(runId);
         Objects.requireNonNull(operationId);
@@ -271,7 +299,8 @@ public final class FixtureIngestionService {
         SyncResultRow result = new SyncResultRow(0, 0, 0, 0, 0, 0, 0, 0);
         String errorRef = disposition == EmptyRunDisposition.FAILED_BEFORE_DISCOVERY
             ? persistFailure(context.tenantId(), operationId, runId,
-                new IllegalStateException("Ingestion failed before discovery"), clock.instant())
+                failure == null ? new IllegalStateException("Ingestion failed before discovery") : failure,
+                clock.instant())
             : null;
         Instant completedAt = clock.instant();
         cache.insertIngestionManifestIfAbsent(new IngestionManifestRow(
@@ -284,6 +313,54 @@ public final class FixtureIngestionService {
         );
         cache.upsertIngestionRun(completed);
         return completed;
+    }
+
+    /** Records the final per-resource disposition when acquisition fails after discovery. */
+    public IngestionRunRow recordAcquisitionFailure(
+            VerifiedIngestionContext context,
+            UUID runId,
+            UUID operationId,
+            String connectorId,
+            String sourceId,
+            String resourceId,
+            Exception failure) {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(runId);
+        Objects.requireNonNull(operationId);
+        Objects.requireNonNull(failure);
+        requireText(connectorId, "connectorId");
+        requireText(sourceId, "sourceId");
+        validateResourceId(resourceId);
+
+        String tenantId = context.tenantId();
+        var existing = cache.readIngestionRun(tenantId, runId);
+        if (existing.isPresent()) {
+            IngestionRunRow run = existing.get();
+            if (!run.operationId().equals(operationId) || !run.sourceId().equals(sourceId)) {
+                throw new IllegalStateException("run_id is already bound to another operation or source");
+            }
+            if (run.completedAt() != null) {
+                return run;
+            }
+        }
+
+        Instant startedAt = existing.map(IngestionRunRow::startedAt).orElseGet(clock::instant);
+        cache.upsertIngestionRun(new IngestionRunRow(
+            tenantId, runId, operationId, sourceId, "ACQUIRING", startedAt, null, null, null
+        ));
+        ensureIdentity(context, connectorId, sourceId, resourceId, startedAt);
+
+        boolean quarantined = failure instanceof ContentIntegrityException;
+        String result = quarantined ? "QUARANTINED" : "FAILED";
+        String errorRef = quarantined
+            ? persistQuarantineFailure(tenantId, operationId, runId, clock.instant())
+            : persistFailure(tenantId, operationId, runId, failure, clock.instant());
+        SyncResultRow syncResult = new SyncResultRow(
+            0, 0, 0, 0, quarantined ? 0 : 1, 0, quarantined ? 1 : 0, 0
+        );
+        Instant completedAt = clock.instant();
+        return finishRun(tenantId, runId, operationId, sourceId, startedAt, result, syncResult, errorRef,
+            manifestEntry(tenantId, runId, connectorId, sourceId, resourceId, result, null, errorRef, completedAt));
     }
 
     public IngestionRunRow scheduleRun(
@@ -361,19 +438,33 @@ public final class FixtureIngestionService {
         String code = failure instanceof SourceRevisionConflictException
             || failure instanceof SourceIdentityConflictException
             ? "RESOURCE_CONFLICT"
-            : failure instanceof ContentPublicationException ? "DEPENDENCY_UNAVAILABLE" : "INTERNAL_ERROR";
+            : failure instanceof ContentIntegrityException ? "INTERNAL_ERROR"
+                : failure instanceof ContentStoreException || failure instanceof ContentPublicationException
+                    ? "DEPENDENCY_UNAVAILABLE" : "INTERNAL_ERROR";
         int status = "RESOURCE_CONFLICT".equals(code) ? 409
             : "DEPENDENCY_UNAVAILABLE".equals(code) ? 503 : 500;
         String title = "RESOURCE_CONFLICT".equals(code) ? "Source revision conflict"
-            : "DEPENDENCY_UNAVAILABLE".equals(code) ? "Content publication unavailable" : "Internal server error";
+            : "DEPENDENCY_UNAVAILABLE".equals(code) ? "Content Cache unavailable" : "Internal server error";
         String detail = failure instanceof SourceRevisionConflictException
             ? failure.getMessage()
             : "RESOURCE_CONFLICT".equals(code) ? "The source ID is bound to a different connector"
-            : "DEPENDENCY_UNAVAILABLE".equals(code) ? "Content publication dependency failed"
+            : "DEPENDENCY_UNAVAILABLE".equals(code) ? "Content Cache publication or retrieval failed"
                 : "Ingestion could not complete (" + failure.getClass().getSimpleName() + ")";
         cache.insertIngestionError(new IngestionErrorRow(
             tenantId, errorId, "about:blank", title, status, detail, "urn:operation:" + operationId,
             code, "DEPENDENCY_UNAVAILABLE".equals(code), runId.toString(), "{}", occurredAt
+        ));
+        return errorId.toString();
+    }
+
+    private String persistQuarantineFailure(
+            String tenantId, UUID operationId, UUID runId, Instant occurredAt) {
+        UUID errorId = UUID.randomUUID();
+        cache.insertIngestionError(new IngestionErrorRow(
+            tenantId, errorId, "about:blank", "Operation failed", 500,
+            "Acquired content failed integrity verification and was quarantined",
+            "urn:operation:" + operationId, "OPERATION_FAILED", false, runId.toString(),
+            "{\"reason\":\"QUARANTINED\",\"quarantined\":1}", occurredAt
         ));
         return errorId.toString();
     }
@@ -420,21 +511,23 @@ public final class FixtureIngestionService {
 
     private static SourceOutboxRow sourcePublishedEvent(SourceVersionRow version) {
         UUID eventId = uuidV5(TOMBSTONE_NAMESPACE, nameKey("SourcePublished", version.versionId().toString()));
-        Map<String, Object> payload = Map.of(
-            "event_id", eventId.toString(),
-            "event_type", "SourcePublished",
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("event_id", eventId.toString());
+        payload.put("event_type", "SourcePublished");
+        payload.put("tenant_id", version.tenantId());
+        payload.put("source_identity", Map.of(
             "tenant_id", version.tenantId(),
-            "source_identity", Map.of(
-                "tenant_id", version.tenantId(),
-                "connector_id", version.connectorId(),
-                "source_id", version.sourceId(),
-                "resource_id", version.resourceId()
-            ),
-            "version_id", version.versionId().toString(),
-            "content_digest", version.contentDigest(),
-            "content_ref_id", version.contentRefId().toString(),
-            "observed_at", version.observedAt().toString()
-        );
+            "connector_id", version.connectorId(),
+            "source_id", version.sourceId(),
+            "resource_id", version.resourceId()
+        ));
+        payload.put("version_id", version.versionId().toString());
+        payload.put("content_digest", version.contentDigest());
+        payload.put("content_ref_id", version.contentRefId().toString());
+        payload.put("observed_at", version.observedAt().toString());
+        if (!version.contentCacheReference().isBlank()) {
+            payload.put("content_cache_reference", version.contentCacheReference());
+        }
         try {
             String payloadJson = MAPPER.writeValueAsString(payload);
             return new SourceOutboxRow(

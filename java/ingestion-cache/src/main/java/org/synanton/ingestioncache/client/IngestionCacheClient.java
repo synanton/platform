@@ -36,11 +36,13 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.manifest " +
             "(tenant_id, content_ref_id, ingested_at, schema_version, chunk_strategy, chunk_strategy_version, " +
             "state, storage_tier, archive_location, source_uri, source_sha256, size_bytes, mime_type, " +
-            "embedding_quality, enrichment_model_id, ingest_usage) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "embedding_quality, enrichment_model_id, ingest_usage, content_cache_reference) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row.tenantId(), row.contentRefId(), row.ingestedAt(), row.schemaVersion(),
             row.chunkStrategy(), row.chunkStrategyVersion(), row.state(), row.storageTier(),
             row.archiveLocation(), row.sourceUri(), row.sourceSha256(), row.sizeBytes(),
-            row.mimeType(), row.embeddingQuality(), row.enrichmentModelId(), row.ingestUsage()
+            row.mimeType(), row.embeddingQuality(), row.enrichmentModelId(), row.ingestUsage(),
+            row.contentCacheReference()
         ));
     }
 
@@ -72,7 +74,7 @@ public class IngestionCacheClient {
             r.getString("source_sha256"), r.getLong("size_bytes"),
             r.getString("mime_type"), r.getString("embedding_quality"),
             r.getString("enrichment_model_id"),
-            stringOrEmpty(r, "ingest_usage")
+            stringOrEmpty(r, "ingest_usage"), stringOrEmpty(r, "content_cache_reference")
         );
     }
 
@@ -367,11 +369,11 @@ public class IngestionCacheClient {
         ResultSet result = session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.source_versions " +
             "(tenant_id, connector_id, source_id, resource_id, version_id, content_digest, source_revision, " +
-            "observed_at, content_ref_id, incarnation_id, event_id, event_type, event_payload_json, event_published) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,false) IF NOT EXISTS",
+            "observed_at, content_ref_id, incarnation_id, content_cache_reference, event_id, event_type, " +
+            "event_payload_json, event_published) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false) IF NOT EXISTS",
             version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
             version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
-            version.incarnationId(), event.eventId(), event.eventType(), event.payloadJson()
+            version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson()
         ));
         return result.wasApplied();
     }
@@ -459,7 +461,7 @@ public class IngestionCacheClient {
             row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
             row.getString("resource_id"), row.getUuid("version_id"), row.getString("content_digest"),
             row.getString("source_revision"), row.getInstant("observed_at"), row.getUuid("content_ref_id"),
-            row.getUuid("incarnation_id")
+            row.getUuid("incarnation_id"), stringOrEmpty(row, "content_cache_reference")
         );
     }
 
