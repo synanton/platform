@@ -37,6 +37,27 @@ SourceIdentity {
 `source_id` is a stable identifier (1.32 §8), not a database key, shard id, or
 storage location (1.32 §8).
 
+For the API route `/v1/sources/{source_id}`, `source_id` is unique within the
+trusted `tenant_id` scope. The full ingestion identity is finer-grained:
+`tenant_id + connector_id + source_id + resource_id` (§10). The URL lookup key
+does not replace the provenance identity.
+
+The Source resource exposes the lookup identity and sync timestamps:
+
+```json
+{
+  "source_id": "src_01...",
+  "connector_id": "conn_01...",
+  "resource_id": "drive-file-42",
+  "created_at": "2026-10-17T10:00:00Z",
+  "last_successful_sync_at": "2026-10-17T10:05:00Z"
+}
+```
+
+`tenant_id` is bound from verified request context, not copied from a body
+field. `last_successful_sync_at` is read-only and derived from the latest
+successful sync run.
+
 **Identity ≠ content digest.** Content digest identifies *what the acquired
 bytes hash to* (SHA-256 over a precisely defined representation, 1.28 §11).
 Digest equality **must not** imply source-resource identity — two resources
@@ -76,15 +97,27 @@ An ingestion run is the resource a client submits and monitors (1.32 §31–§32
 ```json
 {
   "run_id": "ing_01...",
-  "status": "RUNNING",
+  "status": "ACQUIRING",
   "operation_id": "op_01...",
   "source_id": "src_01..."
 }
 ```
 
-`run_id` identifies the run; `operation_id` links it to the public Operation
-(`operation-model.md`) for long-running work — the run resource and the
-Operation are linked by stable IDs, not conflated.
+`run_id` identifies the ingestion run; `operation_id` links it to the public
+Operation (`operation-model.md`) for long-running work — the two resources are
+linked by stable IDs, not conflated. This model chooses the ingestion-specific
+§38 vocabulary for `IngestionRun.status`, rather than mirroring generic
+`Operation.status`. Accordingly, this projection uses `ACQUIRING` in the
+example; the `RUNNING` value in the illustrative §32 response is not treated as
+the run-state vocabulary. The ingestion-run states are:
+
+```text
+DISCOVERED · SCHEDULED · ACQUIRING · VALIDATING · PUBLISHED · COMPLETED
+FAILED · CANCELLED · SKIPPED · UNCHANGED · DELETED · QUARANTINED
+```
+
+The state transitions are durable (§38). `Operation.status` remains the
+cross-plane lifecycle; `IngestionRun.status` reports ingestion-specific state.
 
 **Synchronization result (1.28 §15):** a sync run produces an explicit
 `SyncResult`:
@@ -122,8 +155,19 @@ durable tombstone retaining sufficient identity and provenance for downstream
 systems to determine what was deleted:
 
 ```text
-Source Resource → Tombstone → { Content Cache invalidation, Search projection removal, Knowledge invalidation, Analytics event }
+Tombstone {
+    source_identity        // tenant_id + connector_id + source_id + resource_id
+    deleted_at
+    deleted_by             // authenticated principal or source connector identity
+    reason                 // authoritative deletion reason
+    version_ids_at_deletion
+}
 ```
+
+This is the minimal #248 API tombstone shape selected to satisfy §17's
+"sufficient identity and provenance" requirement. Downstream effects include
+Content Cache invalidation, search-projection removal, knowledge invalidation,
+and an analytics event.
 
 ## Idempotency
 
@@ -141,11 +185,20 @@ documented change-detection strategy.
 times converges on **one** authoritative source version; attempts remain
 observable.
 
-**Idempotency keys (1.28 §112–§113):** API clients may supply explicit
-idempotency keys, persisted for the retention period; repeated commands with the
-same identity converge to the same logical operation. Keys are scoped
-`tenant_id + idempotency_key` — a Tenant A key must not collide with or access
-Tenant B's operation.
+**Two related idempotency identities, with distinct purposes:**
+
+- **Ingestion-version dedup (§39–§40):** `tenant_id + source_id + resource_id
+  + source_version` identifies one logical source version; repeated delivery
+  converges on one authoritative version.
+- **Client command key (§112–§113; 1.32 §23–§25):** API clients may supply an
+  idempotency key, persisted for its retention period. Scope it by
+  `tenant_id + principal_id + endpoint + idempotency_key` (the 1.32 default);
+  §113's `tenant_id + idempotency_key` is the minimum cross-tenant isolation
+  constraint, not the complete API scope. A stronger domain-specific identity
+  may be used where required.
+
+These are not competing keys: the first deduplicates source versions, the
+second deduplicates client commands/operations.
 
 ## API surface
 
@@ -169,19 +222,52 @@ POST /v1/ingestion-runs/{run_id}/cancel
 Tenant scope is derived from trusted request context, not URL parameters
 (1.32 §28) — see `identity-context.md`.
 
+### Source resource fields and mutability
+
+The API lookup key `source_id` is unique within the trusted tenant scope. The
+ingestion provenance identity remains the fuller
+`tenant_id + connector_id + source_id + resource_id` tuple.
+
+The Source API's `PATCH` surface is deliberately limited:
+
+- **Mutable:** `source_endpoint` and `capability_flags` (non-secret static
+  connector configuration; 1.28 §75).
+- **Immutable:** `tenant_id`, `connector_id`, `connector_type`, `source_id`,
+  `resource_id`, and all published `SourceVersion` identity/content fields.
+- **Not patched here:** credentials/tokens/certificates (secret configuration),
+  schedule/concurrency/retry policy (runtime policy), and retention/classification/
+  quotas (tenant policy). These are separately governed configuration. Changes
+  affecting ingestion behavior are versioned and recorded on the run (§75–§76).
+
+Source-level timestamps (read-only resource metadata selected for #248):
+`created_at` records resource creation; `last_successful_sync_at` is projected
+from the latest successful sync run. It anchors `SYNC_INCOMPLETE` assessment
+against the previous successful observation. `SourceVersion.observed_at`
+remains the observation time for each individual version (§10).
+
+Source-list pagination is out of scope for this #248 model; pagination
+conventions are owned by W7. This artifact defines no source-list cursor or
+continuation-token behavior.
+
 ## Events
 
-Source lifecycle transitions are events over the frozen 1.27 contract
-(`eventing-contract.md`): `source.discovered`, `source.version.created`,
-`source.deleted`, etc. The eventing contract does **not** enumerate event types
-(`event_type` is an open envelope field, §13), so these are **additive** — no
-contract revision needed. Deletion propagates as a tombstone event (§17).
+Source lifecycle transitions use the recommended event names from 1.28 §44,
+over the frozen 1.27 envelope (`eventing-contract.md`): `SourceDiscovered`,
+`SourceChanged`, `SourceUnchanged`, `SourceDeleted`, `IngestionStarted`,
+`SourceAcquired`, `SourceValidated`, `SourcePublished`, `IngestionCompleted`,
+`IngestionFailed`, `SourceQuarantined`. The eventing contract does **not**
+enumerate event types (`event_type` is an open envelope field, §13), but the
+1.28 names are the authority for this plane — do not substitute dotted/lowercase
+aliases without recording a deliberate divergence. Deletion propagates as a
+tombstone event (§17).
 
 ## Freeze scope
 
-This artifact freezes the resource model: identity, version, run, deletion, and
-idempotency shapes. Implementation (the ingestion pipeline, connector version
-detection, tombstone propagation) follows, against this model.
+This artifact freezes the resource model: identity, version, ingestion-run
+status, deletion states and tombstone shape, idempotency identities, the mutable
+Source PATCH surface, and source timestamps. Implementation (the ingestion
+pipeline, connector version detection, tombstone propagation) follows against
+this model.
 
 ## Cross-references
 
