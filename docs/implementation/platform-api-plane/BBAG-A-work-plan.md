@@ -57,7 +57,8 @@ D9 release plan + rollout (Platform).
   request/result, error); OpenAPI 3.1 for login/logout/search; MCP tool
   schema; versioning/deprecation policy; RFC 9457 errors; pagination,
   filtering, sorting, rate-limit headers; Ontology reserved. Acceptance:
-  lint passes; Architecture + Security + DX review; MCP schema validated.
+  lint passes; Architecture + Security + DX review; MCP schema validated
+  (satisfied 2026-10-17; see `java/synanton-mcp/MCP-COMPLIANCE.md` validation record).
 - **WS1 Identity:** OAuth 2.1 code+PKCE; discovery + AS metadata endpoints;
   short-lived access + rotating refresh + reuse detection; revocation;
   RP-initiated logout; search/MCP scopes; confidential + public clients;
