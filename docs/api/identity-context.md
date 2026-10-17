@@ -57,9 +57,14 @@ identity plane, not carried in the request context.
 
 ## Cardinality
 
-**principal : tenant is many-to-many** (Design 1.29 §37). A principal may
-belong to one or more tenants where the deployment model permits. A request
-therefore binds an explicit **(principal_id, tenant_id) pair** — not a
+Tenant membership is **explicit for every tenant-scoped principal** (Design
+1.29 §11.5). **Users may belong to one or more tenants** where the deployment
+model permits (§37) — a user principal is many-to-many with tenants. Service /
+workload / connector principals are ordinarily single-tenant (a search-service
+identity is not a member of arbitrary tenants); the design does not generalize
+many-to-many to them.
+
+A request binds an explicit **(principal_id, tenant_id) pair** — not a
 principal alone, and not a tenant alone.
 
 Tenant selection is **authorized**, not claimed (§38): a client cannot set
@@ -108,11 +113,17 @@ passthrough) and ADR-019 (signed short-lived context for downstream trust).
 | `principal_id`, `principal_type`, `tenant_id` | `authentication_assurance`, `session_id`, `trace_id` |
 | single-hop context | actor chain for async Operations |
 
-## Naming note
+## Naming — external `principal_id`, internal `subjectId`
 
-Design 1.29 uses `principal_id` / `principal_type`. The Gen-A implementation
-(`McpIdentityContext`, `VerifiedSecurityContext`) names the principal
-`subjectId`. These are the same concept; whether the external contract uses
-`principal_id` (1.29) or `subject_id` (implementation) is a naming decision to
-record, not to diverge on silently — same shape as the W3 `results`/`hits`
-flag.
+Design 1.29 is the semantic authority for the principal model; 1.32 exposes it
+as the public contract (1.29 §35; 1.32 §126: "Design 1.29 remains the semantic
+authority ... 1.32 does not redefine that model — it exposes it").
+
+- **External contract:** `principal_id` / `principal_type` (the 1.29 names).
+- **Internal carriers:** `McpIdentityContext` / `VerifiedSecurityContext` use
+  `subjectId` — internal implementation, not the external contract.
+- **The adapter maps** `subjectId` ↔ `principal_id` at the API boundary.
+
+This is a projection mapping, not an open question: the external surface speaks
+1.29's vocabulary; internal code keeps its own. No divergence to record —
+the boundary is where the mapping happens.

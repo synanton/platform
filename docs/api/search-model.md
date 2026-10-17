@@ -64,7 +64,7 @@ Gen-A ships `{query}` only; every other field is a reserved additive property
 | `results[].provenance_ref` | URI | link to the provenance resource |
 | `metadata.strategy` | string | retrieval strategy (e.g. `hybrid`) |
 | `metadata.configuration_generation` | integer | index/config generation |
-| `next_page_token` | string | opaque continuation token (§45) |
+| `next_page_token` | string | opaque continuation token (§45); **Gen-B** — absent in Gen-A (single page) |
 
 **No `answer` field.** A synthesised answer is a separate resource at
 `/v1/answers` (Appendix A, Appendix G) — 1.30-owned per ADR-014, exposed via
@@ -72,11 +72,12 @@ Gen-A ships `{query}` only; every other field is a reserved additive property
 
 ## Pagination
 
-Continuation-token based (§45): `next_page_token` in the response, sent back
-on the next request. The token **must be bound to the relevant search and
-security context** — a token issued to one tenant/principal is not valid for
-another. This is invariant 5's security-context-aware pagination applied to
-search specifically.
+Continuation-token based (§45), **Gen-B**. The response carries
+`next_page_token`; the next request carries `page_token`. The two land
+together — Gen-A returns a single page with no token. The token **must be bound
+to the relevant search and security context**: a token issued to one
+tenant/principal is not valid for another. Invariant 5's security-context-aware
+pagination, applied to search.
 
 ## Consistency
 
@@ -95,12 +96,17 @@ post-filter.
 | Gen-A | Gen-B (reserved, additive) |
 |---|---|
 | `{query}` request | `filters`, `limit`, `profile`, `consistency` |
-| `results[]` + `metadata` + `next_page_token` | facet metadata, ranking profiles, cursor semantics |
+| `results[]` + `metadata` (single bounded page) | `page_token` (request), `next_page_token` (response), facet metadata, ranking profiles |
 
-## Naming flag
+**Gen-A returns a single server-bounded page and emits no `next_page_token`.**
+Pagination is Gen-B: the request-side `page_token` and the response-side
+`next_page_token` land together, so a token is never emitted that a Gen-A
+client cannot present. This keeps the request and response sides consistent —
+a continuation token without a request-side counterpart is unusable.
 
-Design 1.32 §43 names the response array `results[]`; an earlier direction used
-`hits[]`. This draft conforms to the design (`results`). If `hits` is the
-intended public name, that is a deliberate divergence from §43 and should be
-recorded as such (same shape as the D1/D4 divergence note) — not changed
-silently.
+## Naming
+
+The response array is `results[]` — Design 1.32 §43, and the design is frozen
+(2026-10-15): `hits[]` is not available without a versioned design revision.
+This draft conforms to the frozen name. If `hits` is ever intended, it is a
+deliberate divergence requiring a design revision, not a silent rename.
