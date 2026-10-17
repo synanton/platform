@@ -218,6 +218,13 @@ source version or tombstone, and its `entries_ref` target, must remain
 resolvable at least as long as that reference is retained; source-version
 metadata retention and legal hold govern its lifetime.
 
+Here §9.7's **retry** means a subsequent attempt can consult the completed
+manifest for reconciliation and deduplication. **In-progress resume after a
+process failure is not provided by the manifest** — it uses durable workflow
+state and step/idempotency records (Design 1.27 §41, §44, §97; #250). This
+separates the run's final resource ledger from the workflow's live recovery
+checkpoint.
+
 **Operation lookup:** ingestion submission returns both `run_id` and
 `operation_id`. The manifest is keyed by `run_id`; clients retain that ID from
 the submission response. There is no direct manifest-by-Operation lookup in
