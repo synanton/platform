@@ -92,6 +92,17 @@ Consequences:
 - No Alternatives table, no Follow-ups table, no References section
 - Proposed → Architecture sign-off → Accepted; dated inline corrections for Accepted ADRs
 
+## Status Discipline
+
+- A gate row and the artifact it approves carry the same status. When a row
+  closes, flip its artifact in the same PR (`Draft` → `Frozen`, or
+  `Draft` → `Approved`). A row reading `Closed` beside an artifact reading
+  "subject of that row" is a contradiction, not a nuance — it happened with
+  W2 after gate row 5.
+- Conversely, a code PR closes code; a docs PR closes rows. Keep the window
+  between them short — rows went stale three times (2f, row 3, 4b) because
+  the docs flip trailed the merge.
+
 ## Key Paths
 
 | Path | Purpose |

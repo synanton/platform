@@ -387,7 +387,7 @@ EWP-1 is the hard serialization point, matching the extraction plane's SCEP-1 pr
 ## References
 
 - `docs/architecture/synanton-design-1.27.md` - §13, §16, §28, §30, §32, §41, §48, §69, §98-100, §101-102, §104-107
-- `docs/eventing/eventing-contract.md` - the frozen 1.27 contract (#247): event/command, ordering, idempotency, dead letters, workflow state
+- `docs/api/eventing-contract.md` - the frozen 1.27 contract (#247): event/command, ordering, idempotency, outbox/inbox, dead letters, workflow state
 - [ADR-004](../../architecture/decisions/adr-004-eventing-workflow-plane.md)
 - `docs/architecture/synanton-platform-architecture-1.0.md` - §6, §14, §15
 - `docs/implementation/content-extraction-plane/INDEX.md` - precedent for this document's phase/deliverable/DoD structure
