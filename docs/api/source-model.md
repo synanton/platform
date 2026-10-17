@@ -83,6 +83,9 @@ SourceVersion {
 
 The version carries both `source_identity` and `content_digest` side by side —
 neither substitutes for the other (1.28 §10–§11).
+The `source_version` term in §39's idempotency identity denotes this model's
+`version_id`; `source_revision` is the upstream version-detection signal used to
+derive it, not an alternate name for the platform version ID.
 
 **Version detection (1.28 §13):** connectors expose the strongest reliable
 signal available, preferred order: source-native revision → immutable object
@@ -131,33 +134,43 @@ carries the generic public Operation status.
 |---|---|---|
 | `COMPLETED`, `SyncResult.failed = 0`, `quarantined = 0` | `SUCCEEDED` | `outcome: FULL` |
 | `COMPLETED`, at least one success and any failed/quarantined entries | `SUCCEEDED` | `outcome: PARTIAL` (ADR-020) |
-| `FAILED` (no resource succeeded) | `FAILED` | W2 error instance describes the failure |
+| `FAILED` | `FAILED` | W2 error instance describes the failure; manifest/result preserve any completed prefix |
 | `CANCELLED` | `CANCELLED` | `outcome` absent; run result/manifest preserve any completed prefix and cancelled remainder |
 | `SKIPPED` / `UNCHANGED` / `DELETED` | `SUCCEEDED` | `outcome: FULL`; run status preserves the specific no-op/deletion result |
-| `QUARANTINED` (no resource published) | `FAILED` | `retryable: false`; W2 `OPERATION_FAILED`, `details.reason: QUARANTINED`; no artifact is published |
+| `QUARANTINED` (no resource published) | `FAILED` | `retryable: false`; W2 `OPERATION_FAILED`, `details.reason: QUARANTINED`, `details.quarantined`; no artifact is published |
 
 `outcome` is **present only on `SUCCEEDED`**; it is null/absent on `FAILED` and
 `CANCELLED`. A cancelled Operation records the run outcome, not an assertion
 that no work completed: successful resources remain in `IngestionRun.result`
 and the manifest, with interrupted admitted resources recorded as `CANCELLED`.
-It describes completion coverage, not whether new content was
+Cancellation is a run-level terminal state; a `COMPLETED` run cannot have a
+nonzero `SyncResult.cancelled` count. The `outcome` value describes completion
+coverage, not whether new content was
 created: an unchanged sync or authoritative deletion can be `SUCCEEDED`/`FULL`
 while `IngestionRun.status` preserves `UNCHANGED` or `DELETED`. A `COMPLETED`
 run with some successes and some failed/quarantined resources is
-`SUCCEEDED`/`PARTIAL`; if no resource succeeds, the run terminates `FAILED`
-(§38), not `COMPLETED`.
+`SUCCEEDED`/`PARTIAL`. `FAILED` may occur after a successful prefix; its
+Operation has no `outcome`, while `SyncResult` and the manifest preserve the
+completed resources and the failure. If no resource succeeds, the run
+terminates `FAILED` (§38), not `COMPLETED`.
 
 The run-specific status remains available on `IngestionRun`; the linked
 Operation exposes the cross-plane lifecycle. This mapping prevents a client
 holding both IDs from having to infer how terminal ingestion outcomes map.
 
+`outcome: PARTIAL` does not encode the cause of partiality. A client deciding
+whether to retry must inspect `IngestionRun.result` for failed/quarantined
+counts and consult the manifest for resource-level details; Operation status
+alone is intentionally a coarse run-level summary.
+
 `QUARANTINED` is not retried automatically: the artifact was acquired but
 withheld for security, validation, malware, or policy concerns (§43). A
 fully-quarantined run maps to `FAILED` with W2 `OPERATION_FAILED`,
 `retryable: false`, and summary `details.reason: QUARANTINED` plus
-`details.quarantined_count`. For mixed-success runs, the `SUCCEEDED` Operation
-uses `outcome: PARTIAL`; `IngestionRun.result.quarantined` gives the count.
-The Operation detail is a summary, not the per-resource record.
+`details.quarantined` (integer count, same name/value as
+`SyncResult.quarantined`). For mixed-success runs, the `SUCCEEDED` Operation
+uses `outcome: PARTIAL`; `IngestionRun.result.quarantined` gives the count. The
+Operation detail is a summary, not the per-resource record.
 
 **Synchronization result (1.28 §15):** a sync run produces an explicit
 `SyncResult` in the `IngestionRun.result` member. It is `null` while the run is
@@ -216,9 +229,16 @@ cancellation receives `result: CANCELLED`; a resource not yet discovered/admitte
 has no entry. Therefore `entry_count` equals the sum of the eight mutually
 exclusive `SyncResult` counters.
 
-An empty manifest (`entry_count = 0`, all counters zero) is valid: it means the
-run failed before discovering/admitting any resource. The Operation/run error
-records why; the empty manifest is not ambiguous with an unrecorded run.
+An empty manifest (`entry_count = 0`, all counters zero) is valid and
+interpreted with the terminal run state:
+
+- `FAILED` with an empty manifest means the run failed before discovering or
+  admitting any resource; the Operation/run error records why.
+- `COMPLETED`, `SKIPPED`, or `UNCHANGED` with an empty manifest means the
+  connector ran and found nothing to admit (or no changes to record).
+
+The state plus the empty manifest distinguishes a failed start from a healthy
+empty-source sync; neither is an unrecorded run.
 
 The manifest is immutable after the run completes. `entries_ref` points to
 the paged manifest-entry record, not an unbounded inline array. The
@@ -244,7 +264,7 @@ this contract.
 `error_ref` resolves to the structured W2 Problem detail for that manifest
 entry. The manifest is authoritative for per-resource failure/quarantine
 reasons. For a fully quarantined/failed Operation, the W2 error's `details`
-carry the aggregate (`reason: QUARANTINED`, `quarantined_count`); this is a
+carry the aggregate (`reason: QUARANTINED`, `quarantined` integer count); this is a
 summary, not a per-resource record. For mixed-success runs, the Operation is
 `SUCCEEDED/PARTIAL`, and `IngestionRun.result.quarantined` carries the aggregate
 count while the manifest carries individual reasons.
@@ -341,12 +361,19 @@ Source-version idempotency (§39–§40) and event-delivery idempotency
   `processed_source_versions` described in `eventing-contract.md` when a replay
   uses a new event ID.
 
-**Outbox boundary:** when an Ingestion Plane state change emits a source event,
-the state change and its outbox row are committed in the same Ingestion Plane
-transaction (Eventing 1.27 §26–§27). The Content Cache artifact is a separate
-store: it follows 1.28 §20's verified, atomic-publication sequence, and
-`SourcePublished` is dispatchable only after the artifact is durable. No
-cross-store transaction is implied.
+**Outbox publication order (#250):** Content Cache first completes 1.28 §20's
+verified, atomic artifact-publication sequence. After the artifact is durable,
+the Ingestion Plane commits the authoritative `SourceVersion` published state
+and its `SourcePublished` outbox row in the same local transaction; the
+dispatcher emits only after that commit. No transaction spanning Content Cache
+and the Ingestion Plane is implied.
+
+- Crash after Content Cache publication but before the Ingestion Plane commit:
+  an orphaned content-addressed artifact may remain, but there is no published
+  SourceVersion and no `SourcePublished` event; reconciliation can disposition
+  the orphan.
+- Crash after the version/outbox transaction but before dispatch: the outbox
+  retries on restart, with the referenced artifact already durable.
 
 ## API surface
 
