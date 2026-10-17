@@ -1,6 +1,6 @@
 # Source Resource Model
 
-**Status:** Draft — #248 artifact ("minimal source ingestion lifecycle")
+**Status:** Frozen 2026-10-17 — #248 source-model contract; implementation remains open under issue #248
 **Source:** Design 1.28 §7.5–§17, §39–§40, §112–§113 (ingestion lifecycle); Design 1.32 §29–§32 (API surface)
 
 The resource model for sources, source versions, and ingestion runs. A
