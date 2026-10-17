@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Operator-only process entry point; it is not reachable from tenant HTTP requests.
+ * The operator must pass an explicit tenant scope with {@code --tenant}.
+ */
 @Component
 public class SynfluxCli implements ApplicationRunner {
 
@@ -23,8 +27,11 @@ public class SynfluxCli implements ApplicationRunner {
 
         String path = args.getOptionValues("path") != null && !args.getOptionValues("path").isEmpty()
             ? args.getOptionValues("path").get(0) : "/demo-data/documents";
-        String tenant = args.getOptionValues("tenant") != null && !args.getOptionValues("tenant").isEmpty()
-            ? args.getOptionValues("tenant").get(0) : "demo";
+        if (args.getOptionValues("tenant") == null || args.getOptionValues("tenant").isEmpty()
+                || args.getOptionValues("tenant").get(0).isBlank()) {
+            throw new IllegalArgumentException("--tenant is required for CLI ingestion");
+        }
+        String tenant = args.getOptionValues("tenant").get(0);
         String source = args.getOptionValues("source") != null && !args.getOptionValues("source").isEmpty()
             ? args.getOptionValues("source").get(0) : "filesystem";
 

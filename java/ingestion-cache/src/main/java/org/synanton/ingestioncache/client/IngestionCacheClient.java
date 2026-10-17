@@ -235,6 +235,485 @@ public class IngestionCacheClient {
         return rows;
     }
 
+    // ---- Source lifecycle (v1.28) ----
+
+    /** Creates one tenant-scoped source configuration without allowing connector identity to drift. */
+    public SourceRow createSourceIfAbsent(SourceRow source) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.sources " +
+            "(tenant_id, source_id, connector_id, connector_type, source_endpoint, capability_flags, status, " +
+            "created_at, last_successful_sync_at) VALUES (?,?,?,?,?,?,?,?,?) IF NOT EXISTS",
+            source.tenantId(), source.sourceId(), source.connectorId(), source.connectorType(), source.sourceEndpoint(),
+            new HashSet<>(source.capabilityFlags()), source.status(), source.createdAt(), source.lastSuccessfulSyncAt()
+        ));
+        if (result.wasApplied()) {
+            return source;
+        }
+        SourceRow existing = readSource(source.tenantId(), source.sourceId())
+            .orElseThrow(() -> new IllegalStateException("Source insert lost without a readable row"));
+        if (!existing.connectorId().equals(source.connectorId())
+                || !existing.connectorType().equals(source.connectorType())) {
+            throw new SourceIdentityConflictException("source_id is already bound to a different connector identity");
+        }
+        return existing;
+    }
+
+    public Optional<SourceRow> readSource(String tenantId, String sourceId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.sources WHERE tenant_id=? AND source_id=?",
+            tenantId, sourceId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(new SourceRow(
+            row.getString("tenant_id"), row.getString("source_id"), row.getString("connector_id"),
+            row.getString("connector_type"),
+            stringOrEmpty(row, "source_endpoint"), new HashSet<>(setOrDefault(row, "capability_flags", List.of())),
+            row.getString("status"), row.getInstant("created_at"), row.getInstant("last_successful_sync_at")
+        ));
+    }
+
+    public List<SourceRow> listSources(String tenantId) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.sources WHERE tenant_id=?",
+            tenantId
+        ));
+        List<SourceRow> sources = new ArrayList<>();
+        for (Row row : result) {
+            sources.add(new SourceRow(
+                row.getString("tenant_id"), row.getString("source_id"), row.getString("connector_id"),
+                row.getString("connector_type"), stringOrEmpty(row, "source_endpoint"),
+                new HashSet<>(setOrDefault(row, "capability_flags", List.of())), row.getString("status"),
+                row.getInstant("created_at"), row.getInstant("last_successful_sync_at")
+            ));
+        }
+        return sources;
+    }
+
+    public void updateSourceConfiguration(
+            String tenantId, String sourceId, String sourceEndpoint, Set<String> capabilityFlags) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.sources SET source_endpoint=?, capability_flags=? " +
+            "WHERE tenant_id=? AND source_id=?",
+            sourceEndpoint, new HashSet<>(capabilityFlags), tenantId, sourceId
+        ));
+    }
+
+    public void markSourceDeleted(String tenantId, String sourceId) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.sources SET status='DELETED' WHERE tenant_id=? AND source_id=?",
+            tenantId, sourceId
+        ));
+    }
+
+    /** Adds a discovered resource identity to an existing configured source. */
+    public SourceIdentityRow createSourceIdentityIfAbsent(SourceIdentityRow identity) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.source_identities " +
+            "(tenant_id, source_id, connector_id, resource_id) VALUES (?,?,?,?) IF NOT EXISTS",
+            identity.tenantId(), identity.sourceId(), identity.connectorId(), identity.resourceId()
+        ));
+        if (result.wasApplied()) {
+            return identity;
+        }
+        return readSourceIdentity(identity.tenantId(), identity.connectorId(), identity.sourceId(), identity.resourceId())
+            .orElseThrow(() -> new IllegalStateException("SourceIdentity insert lost without a readable row"));
+    }
+
+    public Optional<SourceIdentityRow> readSourceIdentity(
+            String tenantId, String connectorId, String sourceId, String resourceId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_identities WHERE tenant_id=? AND source_id=? " +
+            "AND connector_id=? AND resource_id=?",
+            tenantId, sourceId, connectorId, resourceId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(new SourceIdentityRow(
+            row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
+            row.getString("resource_id")
+        ));
+    }
+
+    public List<SourceIdentityRow> listSourceIdentities(
+            String tenantId, String sourceId, String connectorId) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_identities WHERE tenant_id=? AND source_id=? " +
+            "AND connector_id=?",
+            tenantId, sourceId, connectorId
+        ));
+        List<SourceIdentityRow> identities = new ArrayList<>();
+        for (Row row : result) {
+            identities.add(new SourceIdentityRow(
+                row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
+                row.getString("resource_id")
+            ));
+        }
+        return identities;
+    }
+
+    public void markSourceSyncSucceeded(String tenantId, String sourceId, Instant syncedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.sources SET last_successful_sync_at=? WHERE tenant_id=? AND source_id=?",
+            syncedAt, tenantId, sourceId
+        ));
+    }
+
+    /** SourceVersion and its SourcePublished event share one immutable Cassandra row. */
+    public boolean insertSourceVersionAndOutboxIfAbsent(SourceVersionRow version, SourceOutboxRow event) {
+        if (!version.tenantId().equals(event.tenantId())
+                || !version.connectorId().equals(event.connectorId())
+                || !version.sourceId().equals(event.sourceId())
+                || !version.resourceId().equals(event.resourceId())
+                || !version.versionId().equals(event.sourceVersionId())) {
+            throw new IllegalArgumentException("SourceVersion and outbox event identities must match");
+        }
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.source_versions " +
+            "(tenant_id, connector_id, source_id, resource_id, version_id, content_digest, source_revision, " +
+            "observed_at, content_ref_id, incarnation_id, event_id, event_type, event_payload_json, event_published) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,false) IF NOT EXISTS",
+            version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
+            version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
+            version.incarnationId(), event.eventId(), event.eventType(), event.payloadJson()
+        ));
+        return result.wasApplied();
+    }
+
+    public List<SourceOutboxRow> listSourceOutbox(
+            String tenantId, String connectorId, String sourceId, String resourceId) {
+        ResultSet versions = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=?",
+            tenantId, connectorId, sourceId, resourceId
+        ));
+        List<SourceOutboxRow> rows = new ArrayList<>();
+        for (Row row : versions) {
+            UUID eventId = row.getUuid("event_id");
+            if (eventId != null) {
+                rows.add(new SourceOutboxRow(
+                    row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
+                    row.getString("resource_id"), eventId, row.getString("event_type"), row.getUuid("version_id"),
+                    null, row.getString("event_payload_json"), row.getInstant("observed_at"),
+                    row.getBoolean("event_published")
+                ));
+            }
+        }
+        ResultSet tombstones = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_tombstones WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=?",
+            tenantId, connectorId, sourceId, resourceId
+        ));
+        for (Row row : tombstones) {
+            UUID eventId = row.getUuid("event_id");
+            if (eventId != null) {
+                rows.add(new SourceOutboxRow(
+                    row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
+                    row.getString("resource_id"), eventId, row.getString("event_type"), null,
+                    row.getUuid("tombstone_id"), row.getString("event_payload_json"), row.getInstant("deleted_at"),
+                    row.getBoolean("event_published")
+                ));
+            }
+        }
+        return rows.stream().sorted(Comparator.comparing(SourceOutboxRow::createdAt)).toList();
+    }
+
+    public void markSourceOutboxPublished(SourceOutboxRow event) {
+        if (event.sourceVersionId() != null) {
+            session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.source_versions SET event_published=true WHERE tenant_id=? " +
+                "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+                event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(), event.sourceVersionId()
+            ));
+        } else {
+            session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.source_tombstones SET event_published=true WHERE tenant_id=? " +
+                "AND connector_id=? AND source_id=? AND resource_id=? AND tombstone_id=?",
+                event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(), event.tombstoneId()
+            ));
+        }
+    }
+
+    public Optional<SourceVersionRow> readSourceVersion(
+            String tenantId, String connectorId, String sourceId, String resourceId, UUID versionId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=? AND version_id=?",
+            tenantId, connectorId, sourceId, resourceId, versionId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(sourceVersionFrom(row));
+    }
+
+    public List<SourceVersionRow> listSourceVersions(
+            String tenantId, String connectorId, String sourceId, String resourceId) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=?",
+            tenantId, connectorId, sourceId, resourceId
+        ));
+        List<SourceVersionRow> rows = new ArrayList<>();
+        for (Row row : result) {
+            rows.add(sourceVersionFrom(row));
+        }
+        return rows;
+    }
+
+    private static SourceVersionRow sourceVersionFrom(Row row) {
+        return new SourceVersionRow(
+            row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
+            row.getString("resource_id"), row.getUuid("version_id"), row.getString("content_digest"),
+            row.getString("source_revision"), row.getInstant("observed_at"), row.getUuid("content_ref_id"),
+            row.getUuid("incarnation_id")
+        );
+    }
+
+    public boolean insertSourceTombstoneIfAbsent(SourceTombstoneRow tombstone, SourceOutboxRow event) {
+        if (!tombstone.tenantId().equals(event.tenantId())
+                || !tombstone.connectorId().equals(event.connectorId())
+                || !tombstone.sourceId().equals(event.sourceId())
+                || !tombstone.resourceId().equals(event.resourceId())
+                || !tombstone.tombstoneId().equals(event.tombstoneId())) {
+            throw new IllegalArgumentException("Tombstone and outbox event identities must match");
+        }
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.source_tombstones " +
+            "(tenant_id, connector_id, source_id, resource_id, deleted_at, tombstone_id, " +
+            "deleted_by_principal_id, deleted_by_principal_type, version_count, versions_manifest_ref, " +
+            "next_incarnation_id, event_id, event_type, event_payload_json, event_published) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false) IF NOT EXISTS",
+            tombstone.tenantId(), tombstone.connectorId(), tombstone.sourceId(), tombstone.resourceId(),
+            tombstone.deletedAt(), tombstone.tombstoneId(), tombstone.deletedByPrincipalId(),
+            tombstone.deletedByPrincipalType(), tombstone.versionCount(), tombstone.versionsManifestRef(),
+            tombstone.nextIncarnationId(), event.eventId(), event.eventType(), event.payloadJson()
+        ));
+        return result.wasApplied();
+    }
+
+    public Optional<SourceTombstoneRow> readLatestSourceTombstone(
+            String tenantId, String connectorId, String sourceId, String resourceId) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_tombstones WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=?",
+            tenantId, connectorId, sourceId, resourceId
+        ));
+        return result.all().stream()
+            .map(row -> new SourceTombstoneRow(
+                row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
+                row.getString("resource_id"), row.getUuid("tombstone_id"), row.getInstant("deleted_at"),
+                row.getString("deleted_by_principal_id"), row.getString("deleted_by_principal_type"),
+                row.getInt("version_count"), row.getUuid("versions_manifest_ref"), row.getUuid("next_incarnation_id")
+            ))
+            .max(Comparator.comparing(SourceTombstoneRow::deletedAt));
+    }
+
+    public void insertVersionManifestEntries(String tenantId, UUID manifestRef, List<UUID> versionIds) {
+        if (versionIds.isEmpty()) {
+            return;
+        }
+        BatchStatement batch = BatchStatement.newInstance(DefaultBatchType.LOGGED);
+        for (UUID versionId : versionIds) {
+            batch = batch.add(SimpleStatement.newInstance(
+                "INSERT INTO ingestion_cache.source_version_manifest_entries " +
+                "(tenant_id, manifest_ref, version_id) VALUES (?,?,?)",
+                tenantId, manifestRef, versionId
+            ));
+        }
+        session.execute(batch);
+    }
+
+    public List<UUID> readVersionManifest(String tenantId, UUID manifestRef) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT version_id FROM ingestion_cache.source_version_manifest_entries " +
+            "WHERE tenant_id=? AND manifest_ref=?",
+            tenantId, manifestRef
+        ));
+        List<UUID> versionIds = new ArrayList<>();
+        for (Row row : result) {
+            versionIds.add(row.getUuid("version_id"));
+        }
+        return versionIds;
+    }
+
+    public void upsertIngestionRun(IngestionRunRow run) {
+        SyncResultRow result = run.result();
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.ingestion_runs " +
+            "(tenant_id, run_id, operation_id, source_id, status, started_at, completed_at, discovered, changed, " +
+            "unchanged, deleted, failed, skipped, quarantined, cancelled, error_ref) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            run.tenantId(), run.runId(), run.operationId(), run.sourceId(), run.status(), run.startedAt(),
+            run.completedAt(), result == null ? null : result.discovered(),
+            result == null ? null : result.changed(), result == null ? null : result.unchanged(),
+            result == null ? null : result.deleted(), result == null ? null : result.failed(),
+            result == null ? null : result.skipped(), result == null ? null : result.quarantined(),
+            result == null ? null : result.cancelled(), run.errorRef()
+        ));
+    }
+
+    public void insertIngestionManifestIfAbsent(IngestionManifestRow manifest) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.ingestion_manifests " +
+            "(tenant_id, run_id, manifest_id, generated_at, entry_count, entries_ref) " +
+            "VALUES (?,?,?,?,?,?) IF NOT EXISTS",
+            manifest.tenantId(), manifest.runId(), manifest.manifestId(), manifest.generatedAt(),
+            manifest.entryCount(), manifest.entriesRef()
+        ));
+        if (!result.wasApplied()) {
+            IngestionManifestRow existing = readIngestionManifest(manifest.tenantId(), manifest.runId())
+                .orElseThrow(() -> new IllegalStateException("Manifest insert lost without a readable row"));
+            if (!existing.manifestId().equals(manifest.manifestId())
+                    || existing.entryCount() != manifest.entryCount()
+                    || !existing.entriesRef().equals(manifest.entriesRef())) {
+                throw new IllegalStateException("Completed ingestion manifest is immutable");
+            }
+        }
+    }
+
+    public Optional<IngestionManifestRow> readIngestionManifest(String tenantId, UUID runId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.ingestion_manifests WHERE tenant_id=? AND run_id=?",
+            tenantId, runId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(new IngestionManifestRow(
+            row.getString("tenant_id"), row.getUuid("run_id"), row.getUuid("manifest_id"),
+            row.getInstant("generated_at"), row.getInt("entry_count"), row.getString("entries_ref")
+        ));
+    }
+
+    public void insertIngestionError(IngestionErrorRow error) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.ingestion_errors " +
+            "(tenant_id, error_id, type, title, status, detail, instance, code, retryable, request_id, " +
+            "details_json, occurred_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            error.tenantId(), error.errorId(), error.type(), error.title(), error.status(), error.detail(),
+            error.instance(), error.code(), error.retryable(), error.requestId(), error.detailsJson(), error.occurredAt()
+        ));
+    }
+
+    public Optional<IngestionErrorRow> readIngestionError(String tenantId, UUID errorId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.ingestion_errors WHERE tenant_id=? AND error_id=?",
+            tenantId, errorId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(new IngestionErrorRow(
+            row.getString("tenant_id"), row.getUuid("error_id"), row.getString("type"),
+            row.getString("title"), row.getInt("status"), row.getString("detail"), row.getString("instance"),
+            row.getString("code"), row.getBoolean("retryable"), row.getString("request_id"),
+            row.getString("details_json"), row.getInstant("occurred_at")
+        ));
+    }
+
+    public Optional<IngestionRunRow> readIngestionRun(String tenantId, UUID runId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.ingestion_runs WHERE tenant_id=? AND run_id=?",
+            tenantId, runId
+        )).one();
+        if (row == null) {
+            return Optional.empty();
+        }
+        Instant completedAt = row.getInstant("completed_at");
+        SyncResultRow result = completedAt == null ? null : new SyncResultRow(
+            row.getInt("discovered"), row.getInt("changed"), row.getInt("unchanged"), row.getInt("deleted"),
+            row.getInt("failed"), row.getInt("skipped"), row.getInt("quarantined"), row.getInt("cancelled")
+        );
+        return Optional.of(new IngestionRunRow(
+            row.getString("tenant_id"), row.getUuid("run_id"), row.getUuid("operation_id"),
+            row.getString("source_id"), row.getString("status"), row.getInstant("started_at"),
+            completedAt, result, row.getString("error_ref")
+        ));
+    }
+
+    public void upsertManifestEntry(IngestionManifestEntryRow entry) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.ingestion_manifest_entries " +
+            "(tenant_id, run_id, connector_id, source_id, resource_id, result, source_version_id, error_ref, " +
+            "observed_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            entry.tenantId(), entry.runId(), entry.connectorId(), entry.sourceId(), entry.resourceId(),
+            entry.result(), entry.sourceVersionId(), entry.errorRef(), entry.observedAt()
+        ));
+    }
+
+    public List<IngestionManifestEntryRow> listManifestEntries(String tenantId, UUID runId) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.ingestion_manifest_entries WHERE tenant_id=? AND run_id=?",
+            tenantId, runId
+        ));
+        List<IngestionManifestEntryRow> entries = new ArrayList<>();
+        for (Row row : result) {
+            entries.add(new IngestionManifestEntryRow(
+                row.getString("tenant_id"), row.getUuid("run_id"), row.getString("connector_id"),
+                row.getString("source_id"), row.getString("resource_id"), row.getString("result"),
+                row.getUuid("source_version_id"), row.getString("error_ref"), row.getInstant("observed_at")
+            ));
+        }
+        return entries;
+    }
+
+    public boolean createOperationIfAbsent(OperationRow operation) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.operations " +
+            "(tenant_id, operation_id, operation_type, status, requested_by_principal_id, created_at, started_at, " +
+            "completed_at, progress_completed, progress_total, outcome, error_id, request_id, idempotency_key) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS",
+            operation.tenantId(), operation.operationId(), operation.type(), operation.status(),
+            operation.requestedByPrincipalId(), operation.createdAt(), operation.startedAt(), operation.completedAt(),
+            operation.progressCompleted(), operation.progressTotal(), operation.outcome(), operation.errorId(),
+            operation.requestId(), operation.idempotencyKey()
+        ));
+        return result.wasApplied();
+    }
+
+    public void upsertOperation(OperationRow operation) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.operations " +
+            "(tenant_id, operation_id, operation_type, status, requested_by_principal_id, created_at, started_at, " +
+            "completed_at, progress_completed, progress_total, outcome, error_id, request_id, idempotency_key) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            operation.tenantId(), operation.operationId(), operation.type(), operation.status(),
+            operation.requestedByPrincipalId(), operation.createdAt(), operation.startedAt(), operation.completedAt(),
+            operation.progressCompleted(), operation.progressTotal(), operation.outcome(), operation.errorId(),
+            operation.requestId(), operation.idempotencyKey()
+        ));
+    }
+
+    public Optional<OperationRow> readOperation(String tenantId, UUID operationId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.operations WHERE tenant_id=? AND operation_id=?",
+            tenantId, operationId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(new OperationRow(
+            row.getString("tenant_id"), row.getUuid("operation_id"), row.getString("operation_type"),
+            row.getString("status"), row.getString("requested_by_principal_id"), row.getInstant("created_at"),
+            row.getInstant("started_at"), row.getInstant("completed_at"), row.getInt("progress_completed"),
+            row.getInt("progress_total"), row.getString("outcome"), row.getUuid("error_id"),
+            row.getString("request_id"), row.getString("idempotency_key")
+        ));
+    }
+
+    /** Reserves the PAPI-3 tenant/principal/endpoint/idempotency-key command identity. */
+    public UUID reserveOperationIdempotency(
+            String tenantId,
+            String principalId,
+            String endpoint,
+            String idempotencyKey,
+            UUID candidateOperationId,
+            Instant reservedAt) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.operation_idempotency " +
+            "(tenant_id, principal_id, endpoint, idempotency_key, operation_id, created_at) " +
+            "VALUES (?,?,?,?,?,?) IF NOT EXISTS",
+            tenantId, principalId, endpoint, idempotencyKey, candidateOperationId, reservedAt
+        ));
+        if (result.wasApplied()) {
+            return candidateOperationId;
+        }
+        Row existing = session.execute(SimpleStatement.newInstance(
+            "SELECT operation_id FROM ingestion_cache.operation_idempotency WHERE tenant_id=? " +
+            "AND principal_id=? AND endpoint=? AND idempotency_key=?",
+            tenantId, principalId, endpoint, idempotencyKey
+        )).one();
+        if (existing == null) {
+            throw new IllegalStateException("Idempotency reservation lost without a readable row");
+        }
+        return existing.getUuid("operation_id");
+    }
+
     // ---- Analysis Cache (Phase 2) ----
 
     public void upsertAnalysis(AnalysisRow row) {

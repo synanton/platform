@@ -1,5 +1,6 @@
 package org.synanton.synflux.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -8,12 +9,14 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.JobRow;
 import org.synanton.ingestioncache.domain.OutboxRow;
 import org.synanton.synflux.runner.IngestionJobRunner;
+import org.synanton.synflux.security.TrustedRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,10 +47,10 @@ public class IngestController {
      * Kafka is not configured.
      */
     @PostMapping
-    public ResponseEntity<Map<String, Object>> enqueueJob(@RequestBody Map<String, String> body) {
-        String tenant = body.getOrDefault("tenant", "demo");
-        String source = body.getOrDefault("source", "filesystem");
-        String path = body.getOrDefault("path", "/demo-data/documents");
+    public ResponseEntity<Map<String, Object>> enqueueJob(@RequestBody IngestRequest request) {
+        String tenant = TrustedRequestContext.requireIngestionContext().tenantId();
+        String source = requiredText(request.source(), "source");
+        String path = requiredText(request.path(), "path");
         UUID jobId = UUID.randomUUID();
         String traceId = UUID.randomUUID().toString();
 
@@ -94,24 +97,35 @@ public class IngestController {
      * Legacy inline endpoint kept for manual fallback and Phase 1/2 compatibility.
      */
     @PostMapping("/run")
-    public Map<String, String> startJobInline(@RequestBody Map<String, String> body) {
-        String tenant = body.getOrDefault("tenant", "demo");
-        String source = body.getOrDefault("source", "filesystem");
-        String path = body.getOrDefault("path", "/demo-data/documents");
+    public Map<String, String> startJobInline(@RequestBody IngestRequest request) {
+        String tenant = TrustedRequestContext.requireIngestionContext().tenantId();
+        String source = requiredText(request.source(), "source");
+        String path = requiredText(request.path(), "path");
         UUID jobId = runner.startJob(tenant, source, path);
         return Map.of("jobId", jobId.toString(), "state", "RUNNING");
     }
 
     @GetMapping("/jobs/{id}")
-    public ResponseEntity<JobRow> getJob(@PathVariable UUID id,
-                                          @RequestParam(defaultValue = "demo") String tenant) {
+    public ResponseEntity<JobRow> getJob(@PathVariable UUID id) {
+        String tenant = TrustedRequestContext.requireIngestionContext().tenantId();
         return runner.getJob(tenant, id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/jobs")
-    public List<JobRow> listJobs(@RequestParam(defaultValue = "demo") String tenant) {
-        return runner.listJobs(tenant);
+    public List<JobRow> listJobs() {
+        return runner.listJobs(TrustedRequestContext.requireIngestionContext().tenantId());
+    }
+
+    private static String requiredText(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, field + " is required");
+        }
+        return value;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record IngestRequest(String source, String path) {
     }
 }

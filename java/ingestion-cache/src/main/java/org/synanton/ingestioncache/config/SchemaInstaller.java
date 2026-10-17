@@ -22,6 +22,7 @@ public class SchemaInstaller {
         "cql/V6__chunk_classification.cql",
         "cql/V7__annotations.cql",
         "cql/V8__chunk_hierarchy.cql",
+        "cql/V9__source_lifecycle.cql",
     };
 
     public static void install(CqlSession session) {

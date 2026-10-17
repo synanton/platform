@@ -16,20 +16,42 @@ import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.stage.*;
+import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
 import org.synanton.synvault.port.ContentPullPort;
 import org.synanton.synvault.port.ObjectStorePort;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Clock;
+import java.nio.file.Path;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Configuration
 @EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class})
 public class SynfluxConfig {
 
     private static final String HOT_BUCKET = "synanton-hot";
+
+    @Bean
+    public Clock synfluxClock() {
+        return Clock.systemUTC();
+    }
+
+    @Bean
+    public FilesystemFixturePolicy filesystemFixturePolicy(
+            @Value("${SYNFLUX_FIXTURE_ROOT}") String fixtureRoot) {
+        return new FilesystemFixturePolicy(Path.of(fixtureRoot));
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public ExecutorService sourceIngestionExecutor(SynfluxProperties properties) {
+        return Executors.newFixedThreadPool(properties.ingest().parallelism());
+    }
 
     @Bean
     public AcquireStage acquireStage(ContentPullPort pullPort) {
