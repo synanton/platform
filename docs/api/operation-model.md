@@ -10,7 +10,26 @@ machine, regardless of which internal plane performs the work. This is the
 
 ## Operation resource
 
-Design 1.32 Appendix B, projected:
+Design 1.32 Appendix B, verbatim (`synanton-design-1.32.md` L3174–3188):
+
+```yaml
+operation:
+  operation_id: op_01...
+  type: INGESTION
+  status: RUNNING
+  requested_by:
+    principal_id: prn_01...
+  tenant_id: ten_01...
+  created_at: ...
+  started_at: ...
+  completed_at: null
+  progress:
+    completed: 73
+    total: 100
+  error: null
+```
+
+The public resource is this list, plus the ADR-020 `outcome` field:
 
 ```json
 {
@@ -23,6 +42,7 @@ Design 1.32 Appendix B, projected:
   "started_at": "2026-10-17T10:00:02Z",
   "completed_at": null,
   "progress": { "completed": 73, "total": 100 },
+  "outcome": null,
   "error": null
 }
 ```
@@ -35,8 +55,10 @@ Design 1.32 Appendix B, projected:
 | `requested_by.principal_id` | string | from the verified identity context (W1) |
 | `tenant_id` | string | from the verified identity context (W1) |
 | `created_at` / `started_at` / `completed_at` | timestamp | lifecycle marks |
-| `progress` | object | `completed` / `total`; the partiality qualifier (see below) |
-| `error` | object | present only when `status = FAILED`; `{code, message, retryable}` (§57) |
+| `progress` | object | `completed` / `total` |
+| `outcome` | enum | `FULL` \| `PARTIAL`; present when `status = SUCCEEDED`. **Not in Appendix B** — added by ADR-020 |
+| `error` | object | present only when `status = FAILED`; a W2 error-model instance (see Error) |
+
 
 Endpoints (§55, §59):
 
@@ -47,33 +69,54 @@ POST /v1/operations/{operation_id}/cancel
 
 ## State machine
 
-Design 1.32 §56:
+Design 1.32 §56 names the eight states (verbatim: "Initial states:" followed by
+the list). It does **not** define a transition matrix. The transitions below are
+**inferred** — a PAPI-3 decision, not a projection — except where §59 defines one
+explicitly (`RUNNING → CANCEL_REQUESTED → CANCELLED`).
 
 ```text
 ACCEPTED ──▶ QUEUED ──▶ RUNNING ──┬──▶ SUCCEEDED
                                   ├──▶ FAILED
                                   └──▶ CANCEL_REQUESTED ──▶ CANCELLED
 
-ACCEPTED / QUEUED ──▶ CANCELLED        (cancel before running)
-any non-terminal  ──▶ EXPIRED          (expires_at passed, §12)
+ACCEPTED / QUEUED ──▶ CANCELLED        (inferred — cancel before running)
+any non-terminal  ──▶ EXPIRED          (inferred — expires_at passed, §12)
 ```
 
 - **Terminal states:** `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`.
-- **`CANCEL_REQUESTED` is a request, not an instantaneous transition** (§59):
-  the operation moves `RUNNING → CANCEL_REQUESTED → CANCELLED`. It is a
-  1.32-owned state — no internal plane models it (see reconciliation).
+- **`CANCEL_REQUESTED` is a request, not an instantaneous transition** (§59,
+  the one defined transition): `RUNNING → CANCEL_REQUESTED → CANCELLED`. It is
+  a 1.32-owned state — no internal plane models it (see reconciliation).
 - **`EXPIRED` is not a technical failure** (§12): `expires_at` passed.
+
+**Inferred transitions requiring a decision** (the design is silent): does
+`FAILED` arise only from `RUNNING`, or also from `QUEUED`/`ACCEPTED`? Can
+`CANCELLED` be reached without `CANCEL_REQUESTED` (cancel before start)? Both
+are marked inferred above; they are implementation decisions to record, not
+citations.
 
 ## Error
 
-Design 1.32 §57 — structured, no secrets:
+Design 1.32 §57 gives the Operation's embedded error (illustrative):
 
 ```json
 { "status": "FAILED", "error": { "code": "SOURCE_ACCESS_DENIED", "message": "The source could not be accessed.", "retryable": false } }
 ```
 
-The `error` shape is the Operation-level projection of the W2 error model
-(`docs/api/error-model.md`), not a parallel model.
+**The `error` field is a W2 error-model instance** (`docs/api/error-model.md`),
+not a second shape. A client parses one error vocabulary, whether the error is
+the HTTP response body or embedded in an Operation.
+
+**Naming resolution — `message` vs `detail`.** §57 and Appendix C name the
+human-readable occurrence string `message`; W2 (RFC 9457, row 5) names it
+`detail`. The public contract uses **W2's `detail`**. The design's `message` is
+the pre-RFC 9457 name; W2 superseded it when the error model was adopted. This
+is a W2-vs-design naming divergence, recorded here so it is not read as drift —
+same class as the D1/D4 divergence note.
+
+So the embedded error is `{ code, detail, retryable, request_id, ... }` per W2,
+with `detail` where §57 shows `message`. Messages must not expose secrets or
+sensitive backend details (§57).
 
 ## Retry
 
@@ -113,7 +156,7 @@ to **yes, this one does**.
 | `SUCCESS` | `SUCCEEDED` | **rename** — GPU's `SUCCESS` = 1.32's `SUCCEEDED` |
 | `FAILED` | `FAILED` | direct |
 | `CANCELLED` | `CANCELLED` | direct |
-| `TIMEOUT` | `FAILED` | **collapse** — gateway deadline exceeded is a failure (`retryable: true` if the operation is re-runnable) |
+| `TIMEOUT` | `FAILED` | **collapse** — gateway deadline exceeded maps to `FAILED` **with `error.retryable: true`**, so a client can distinguish a retryable deadline from a permanent failure. Without the `retryable` flag the collapse would be lossy. |
 | — | `ACCEPTED` / `CANCEL_REQUESTED` / `EXPIRED` | **1.32-only** — no GPU counterpart |
 
 ### The three divergences, resolved
@@ -122,13 +165,13 @@ to **yes, this one does**.
    both map to the single public `SUCCEEDED`. The public surface has one name
    for "it finished and worked"; internal planes keep their own.
 
-2. **`PARTIAL` (extraction) has no public state.** Maps to **`SUCCEEDED`,
-   qualified by `progress`**: `progress.completed < progress.total` with
-   `status = SUCCEEDED` is a partial success — observable, not misreported.
-   A `SUCCEEDED` operation with `completed == total` is a full success.
-   *Proposed additive extension to Appendix B:* an explicit
-   `outcome: FULL | PARTIAL` field, so partiality is a first-class field rather
-   than inferred from `progress`. Flagged as a design extension, not assumed.
+2. **`PARTIAL` (extraction) has no public state.** Maps to **`SUCCEEDED` with
+   `outcome: PARTIAL`** — the additive field defined in **ADR-020**. Partiality
+   is also visible via `progress.completed < progress.total`, but the `outcome`
+   field makes it first-class rather than inferred. A `SUCCEEDED` operation with
+   `outcome: FULL` is a full success. `outcome` is a change to the frozen 1.32
+   Operation resource and is carried by ADR-020 (a decision record), not by a
+   silent edit to the design doc.
 
 3. **`CANCEL_REQUESTED` is 1.32-owned.** Neither extraction nor GPU models a
    "cancellation requested but not yet applied" state. The platform owns it:
@@ -145,6 +188,7 @@ are frozen now, the `operation-service` implementation follows.
 
 - `docs/api/error-model.md` — W2; the `error` field's shape
 - `docs/api/identity-context.md` — W1; `requested_by` / `tenant_id` source
+- `docs/architecture/decisions/adr-020-operation-partial-outcome.md` — the `outcome` field
 - `docs/implementation/content-extraction-plane/INDEX.md` — joint owner of the
   extraction half of the reconciliation
 - `synanton.extraction.v1` — `extraction_service.proto` L111 (enum), §15/§24/§12
