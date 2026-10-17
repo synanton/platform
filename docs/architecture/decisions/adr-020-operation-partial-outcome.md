@@ -1,6 +1,6 @@
 # ADR-020: Operation Partial Outcome — Additive `outcome: FULL | PARTIAL`
 
-**Status:** Proposed 2026-10-17
+**Status:** Accepted 2026-10-17
 **Basis:** Design 1.32's Operation resource (Appendix B) has no field expressing a partial success, and `synanton.extraction.v1`'s `STATUS_PARTIAL` ("some items succeeded, some did not", §24) has no public Operation state. The 1.32 design is frozen (2026-10-15, "changes need a versioned design revision, never a silent edit"), so the extension is recorded here as a decision rather than edited into the design.
 
 ## Decision

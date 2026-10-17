@@ -14,7 +14,7 @@ last_reviewed: "2026-10-17"
 
 | Document | Decision |
 |----------|---------|
-| [ADR-020: Operation Partial Outcome](./adr-020-operation-partial-outcome.md) | Additive `outcome: FULL \| PARTIAL` on the Operation resource; partial extraction success is first-class, design doc stays frozen (Proposed 2026-10-17) |
+| [ADR-020: Operation Partial Outcome](./adr-020-operation-partial-outcome.md) | Additive `outcome: FULL \| PARTIAL` on the Operation resource; partial extraction success is first-class, design doc stays frozen (Accepted 2026-10-17) |
 | [ADR-019: Downstream Trust Predicate](./adr-019-downstream-trust-predicate.md) | Signed short-lived context for downstream trust (slice); mTLS as target state; Wave 1 interfaces landed (Accepted 2026-10-17) |
 | [ADR-018: OAuth Surface — AS Facade](./adr-018-oauth-facade.md) | Platform is an OAuth 2.1 authorization-server facade — fronts `/oauth/*` and discovery, federates to the external security service (Accepted 2026-10-16) |
 | [ADR-017: Validation Tooling](./adr-017-validation-tooling.md) | Vacuum for OpenAPI 3.1 lint; networknt JSON-Schema validator for MCP schema (Accepted 2026-10-16) |
