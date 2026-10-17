@@ -132,12 +132,15 @@ carries the generic public Operation status.
 | `COMPLETED`, `SyncResult.failed = 0`, `quarantined = 0` | `SUCCEEDED` | `outcome: FULL` |
 | `COMPLETED`, at least one success and any failed/quarantined entries | `SUCCEEDED` | `outcome: PARTIAL` (ADR-020) |
 | `FAILED` (no resource succeeded) | `FAILED` | W2 error instance describes the failure |
-| `CANCELLED` | `CANCELLED` | terminal cancellation |
+| `CANCELLED` | `CANCELLED` | `outcome` absent; run result/manifest preserve any completed prefix and cancelled remainder |
 | `SKIPPED` / `UNCHANGED` / `DELETED` | `SUCCEEDED` | `outcome: FULL`; run status preserves the specific no-op/deletion result |
 | `QUARANTINED` (no resource published) | `FAILED` | `retryable: false`; W2 `OPERATION_FAILED`, `details.reason: QUARANTINED`; no artifact is published |
 
 `outcome` is **present only on `SUCCEEDED`**; it is null/absent on `FAILED` and
-`CANCELLED`. It describes completion coverage, not whether new content was
+`CANCELLED`. A cancelled Operation records the run outcome, not an assertion
+that no work completed: successful resources remain in `IngestionRun.result`
+and the manifest, with interrupted admitted resources recorded as `CANCELLED`.
+It describes completion coverage, not whether new content was
 created: an unchanged sync or authoritative deletion can be `SUCCEEDED`/`FULL`
 while `IngestionRun.status` preserves `UNCHANGED` or `DELETED`. A `COMPLETED`
 run with some successes and some failed/quarantined resources is
@@ -159,8 +162,9 @@ The Operation detail is a summary, not the per-resource record.
 **Synchronization result (1.28 §15):** a sync run produces an explicit
 `SyncResult` in the `IngestionRun.result` member. It is `null` while the run is
 active and populated when the run reaches a terminal state. The 1.32 public
-summary adds `quarantined` to 1.28 §15's six counters so quarantine remains
-distinct from ordinary failure:
+summary extends 1.28 §15's six counters with `quarantined` and `cancelled`,
+preserving the distinct per-resource outcomes in §38/§43. These are explicit
+1.32 projection extensions, not claims that §15 already defines those counters:
 
 ```text
 SyncResult {
@@ -171,6 +175,7 @@ SyncResult {
     failed
     skipped
     quarantined
+    cancelled
 }
 ```
 
@@ -178,7 +183,7 @@ These states must not be collapsed into a generic success/failure — "checked,
 nothing changed" is distinct from "could not be checked" is distinct from
 "reported deletion". Each manifest entry has exactly one final result; the
 counters are mutually exclusive and **sum to `IngestionManifest.entry_count`**:
-`discovered + changed + unchanged + deleted + failed + skipped + quarantined`.
+`entry_count = discovered + changed + unchanged + deleted + failed + skipped + quarantined + cancelled`.
 
 ## Ingestion manifest
 
@@ -198,16 +203,22 @@ IngestionManifest {
 
 ManifestEntry {
     source_identity
-    result                 // one final result from the seven-value set below
+    result                 // DISCOVERED, CHANGED, UNCHANGED, DELETED, FAILED, SKIPPED, QUARANTINED, CANCELLED
     source_version_id?     // present when a version was created/observed
     error_ref?             // structured failure detail when applicable
 }
 ```
 
-There is **one manifest entry per source resource per run**, recording that
-resource's final result, not one entry per transition or attempt. Attempts stay
-observable separately (§40). Therefore `entry_count` equals the sum of the
-seven mutually exclusive `SyncResult` counters.
+There is **one manifest entry per source resource admitted/discovered by a run**,
+recording that resource's final result, not one entry per transition or attempt.
+Attempts stay observable separately (§40). A resource interrupted by run
+cancellation receives `result: CANCELLED`; a resource not yet discovered/admitted
+has no entry. Therefore `entry_count` equals the sum of the eight mutually
+exclusive `SyncResult` counters.
+
+An empty manifest (`entry_count = 0`, all counters zero) is valid: it means the
+run failed before discovering/admitting any resource. The Operation/run error
+records why; the empty manifest is not ambiguous with an unrecorded run.
 
 The manifest is immutable after the run completes. `entries_ref` points to
 the paged manifest-entry record, not an unbounded inline array. The
