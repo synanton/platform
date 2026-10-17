@@ -129,6 +129,12 @@ So the embedded error is `{ code, detail, retryable, request_id, ... }` per W2,
 with `detail` where §57 shows `message`. Messages must not expose secrets or
 sensitive backend details (§57).
 
+**Quarantine summary (#248):** when an Operation fails because a run is
+quarantined, its W2 `error.details` carries `reason: QUARANTINED` and
+`quarantined_count`. This is an aggregate summary only; the source model's
+IngestionManifest is authoritative for per-resource quarantine reasons and
+`error_ref`s.
+
 ## Retry
 
 Design 1.32 §60 — distinguish **HTTP request retry** from **operation retry**.
@@ -199,6 +205,7 @@ are frozen now, the `operation-service` implementation follows.
 
 - `docs/api/error-model.md` — W2; the `error` field's shape
 - `docs/api/identity-context.md` — W1; `requested_by` / `tenant_id` source
+- `docs/api/source-model.md` — #248 IngestionRun quarantine mapping and manifest details
 - `docs/architecture/decisions/adr-020-operation-partial-outcome.md` — the `outcome` field
 - `docs/implementation/content-extraction-plane/INDEX.md` — joint owner of the
   extraction half of the reconciliation

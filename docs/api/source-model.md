@@ -99,7 +99,8 @@ An ingestion run is the resource a client submits and monitors (1.32 §31–§32
   "run_id": "ing_01...",
   "status": "ACQUIRING",
   "operation_id": "op_01...",
-  "source_id": "src_01..."
+  "source_id": "src_01...",
+  "result": null
 }
 ```
 
@@ -128,18 +129,38 @@ carries the generic public Operation status.
 
 | IngestionRun terminal status (§38) | Operation status | Qualification |
 |---|---|---|
-| `COMPLETED` | `SUCCEEDED` | `outcome: FULL` |
-| `FAILED` | `FAILED` | W2 error instance describes the failure |
+| `COMPLETED`, `SyncResult.failed = 0`, `quarantined = 0` | `SUCCEEDED` | `outcome: FULL` |
+| `COMPLETED`, at least one success and any failed/quarantined entries | `SUCCEEDED` | `outcome: PARTIAL` (ADR-020) |
+| `FAILED` (no resource succeeded) | `FAILED` | W2 error instance describes the failure |
 | `CANCELLED` | `CANCELLED` | terminal cancellation |
 | `SKIPPED` / `UNCHANGED` / `DELETED` | `SUCCEEDED` | `outcome: FULL`; run status preserves the specific no-op/deletion result |
-| `QUARANTINED` | `FAILED` | W2 error details identify quarantine; no artifact is published |
+| `QUARANTINED` (no resource published) | `FAILED` | `retryable: false`; W2 `OPERATION_FAILED`, `details.reason: QUARANTINED`; no artifact is published |
+
+`outcome` is **present only on `SUCCEEDED`**; it is null/absent on `FAILED` and
+`CANCELLED`. It describes completion coverage, not whether new content was
+created: an unchanged sync or authoritative deletion can be `SUCCEEDED`/`FULL`
+while `IngestionRun.status` preserves `UNCHANGED` or `DELETED`. A `COMPLETED`
+run with some successes and some failed/quarantined resources is
+`SUCCEEDED`/`PARTIAL`; if no resource succeeds, the run terminates `FAILED`
+(§38), not `COMPLETED`.
 
 The run-specific status remains available on `IngestionRun`; the linked
 Operation exposes the cross-plane lifecycle. This mapping prevents a client
 holding both IDs from having to infer how terminal ingestion outcomes map.
 
+`QUARANTINED` is not retried automatically: the artifact was acquired but
+withheld for security, validation, malware, or policy concerns (§43). A
+fully-quarantined run maps to `FAILED` with W2 `OPERATION_FAILED`,
+`retryable: false`, and summary `details.reason: QUARANTINED` plus
+`details.quarantined_count`. For mixed-success runs, the `SUCCEEDED` Operation
+uses `outcome: PARTIAL`; `IngestionRun.result.quarantined` gives the count.
+The Operation detail is a summary, not the per-resource record.
+
 **Synchronization result (1.28 §15):** a sync run produces an explicit
-`SyncResult`:
+`SyncResult` in the `IngestionRun.result` member. It is `null` while the run is
+active and populated when the run reaches a terminal state. The 1.32 public
+summary adds `quarantined` to 1.28 §15's six counters so quarantine remains
+distinct from ordinary failure:
 
 ```text
 SyncResult {
@@ -149,12 +170,73 @@ SyncResult {
     deleted
     failed
     skipped
+    quarantined
 }
 ```
 
 These states must not be collapsed into a generic success/failure — "checked,
 nothing changed" is distinct from "could not be checked" is distinct from
-"reported deletion".
+"reported deletion". Each manifest entry has exactly one final result; the
+counters are mutually exclusive and **sum to `IngestionManifest.entry_count`**:
+`discovered + changed + unchanged + deleted + failed + skipped + quarantined`.
+
+## Ingestion manifest
+
+Design 1.28 §9.7 requires a durable description of resources discovered or
+processed during a run, enabling reconciliation, auditing, incremental sync,
+retry, and reporting. The design defines the semantic requirement, not a
+record schema; this is the minimal #248 shape:
+
+```text
+IngestionManifest {
+    manifest_id
+    run_id
+    generated_at
+    entry_count
+    entries_ref
+}
+
+ManifestEntry {
+    source_identity
+    result                 // one final result from the seven-value set below
+    source_version_id?     // present when a version was created/observed
+    error_ref?             // structured failure detail when applicable
+}
+```
+
+There is **one manifest entry per source resource per run**, recording that
+resource's final result, not one entry per transition or attempt. Attempts stay
+observable separately (§40). Therefore `entry_count` equals the sum of the
+seven mutually exclusive `SyncResult` counters.
+
+The manifest is immutable after the run completes. `entries_ref` points to
+the paged manifest-entry record, not an unbounded inline array. The
+`entries_ref` target is immutable and retained at least as long as the manifest.
+**Owner:** the Ingestion Plane owns this source-history metadata (not Content
+Cache, which owns content artifacts). **Retention:** a manifest referenced by a
+source version or tombstone, and its `entries_ref` target, must remain
+resolvable at least as long as that reference is retained; source-version
+metadata retention and legal hold govern its lifetime.
+
+Here §9.7's **retry** means a subsequent attempt can consult the completed
+manifest for reconciliation and deduplication. **In-progress resume after a
+process failure is not provided by the manifest** — it uses durable workflow
+state and step/idempotency records (Design 1.27 §41, §44, §97; #250). This
+separates the run's final resource ledger from the workflow's live recovery
+checkpoint.
+
+**Operation lookup:** ingestion submission returns both `run_id` and
+`operation_id`. The manifest is keyed by `run_id`; clients retain that ID from
+the submission response. There is no direct manifest-by-Operation lookup in
+this contract.
+
+`error_ref` resolves to the structured W2 Problem detail for that manifest
+entry. The manifest is authoritative for per-resource failure/quarantine
+reasons. For a fully quarantined/failed Operation, the W2 error's `details`
+carry the aggregate (`reason: QUARANTINED`, `quarantined_count`); this is a
+summary, not a per-resource record. For mixed-success runs, the Operation is
+`SUCCEEDED/PARTIAL`, and `IngestionRun.result.quarantined` carries the aggregate
+count while the manifest carries individual reasons.
 
 ## Deletion and tombstones
 
@@ -181,9 +263,8 @@ Tombstone {
         principal_id
         principal_type
     }
-    reason                 // authoritative deletion reason
     version_count
-    versions_manifest_ref  // reference to bounded external manifest of version IDs
+    versions_manifest_ref  // reference to immutable version-ID manifest
 }
 ```
 
@@ -191,9 +272,16 @@ This is the minimal #248 API tombstone shape selected to satisfy §17's
 "sufficient identity and provenance" requirement. `deleted_by` uses the 1.29
 principal namespace (including `CONNECTOR`), so the actor cannot be confused
 with a connector ID in another namespace. Version IDs are kept in a referenced
-manifest rather than an unbounded inline array. Downstream effects include
+manifest rather than an unbounded inline array. The Ingestion Plane owns the
+manifest metadata; `versions_manifest_ref` must remain resolvable for at least
+the tombstone's retention period (including applicable legal hold). Downstream
+effects include
 Content Cache invalidation, search-projection removal, knowledge invalidation,
 and an analytics event.
+
+There is no `deletion_state` field: tombstone existence itself means the
+authoritative deletion state is `DELETED`; non-authoritative observations
+(`NOT_VISIBLE`, `SYNC_INCOMPLETE`, etc.) do not produce tombstones.
 
 ## Idempotency
 
@@ -250,10 +338,6 @@ Tenant scope is derived from trusted request context, not URL parameters
 
 ### Source resource fields and mutability
 
-The API lookup key `source_id` is unique within the trusted tenant scope. The
-ingestion provenance identity remains the fuller
-`tenant_id + connector_id + source_id + resource_id` tuple.
-
 The Source API's `PATCH` surface is deliberately limited:
 
 - **Mutable:** `source_endpoint` and `capability_flags` (non-secret static
@@ -265,10 +349,11 @@ The Source API's `PATCH` surface is deliberately limited:
   quotas (tenant policy). These are separately governed configuration. Changes
   affecting ingestion behavior are versioned and recorded on the run (§75–§76).
 
-Changing `source_endpoint` must not silently change logical source identity. On
-PATCH, the connector re-resolves `resource_id`; if the new endpoint identifies
-a different logical resource, create a new source identity/history rather than
-appending versions from the different resource to the existing identity.
+Changing `source_endpoint` must not silently change logical source identity.
+On PATCH, the connector re-resolves `source_id` and `resource_id`; if the new
+endpoint identifies a different logical origin/resource, create a new source
+identity/history rather than appending versions from the different origin to
+the existing identity.
 
 Source-level timestamps (read-only resource metadata selected for #248):
 `created_at` records resource creation; `last_successful_sync_at` is projected
