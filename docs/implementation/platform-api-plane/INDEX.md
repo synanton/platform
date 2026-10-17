@@ -122,11 +122,12 @@ delegation, `*` issuance, actuator, D4 product call.
 | 2d-i | Error semantics — endpoint catch leaked internals (PR 225) | Security | Security | Closed |
 | 2d-ii | Error semantics — handler `Error:` strings ride `isError:false` | Security | Security | Closed — ToolResult discriminated return; isError honored (PR 229) |
 | 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open — 2e-i/ii landed (PR 241); 2e-iii blocked on F2; 2e-iv pending executors |
-| 3 | OpenAPI (D1) lint | Contract | DX | Open — spec exists (W4); Vacuum CI wiring missing, lint run pending |
+| 3 | OpenAPI (D1) lint | Contract | DX | Closed — Vacuum CI green (PR 256) |
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
 | 4b | D4 schema validation — awaits P2 pinned MCP revision | Contract | DX | Open |
 | 5 | Error-model approval | Contract | Architecture | Open |
 | 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation; A+S+DX held by a single reviewer |
+| F2 | Trust predicate — signed short-lived context (ADR-019); synapt/relix verification filters | Security | Security | Open — blocked on security-provider envelope wire format; Wave 1 interfaces landed (PR 256) |
 
 **On 2e:** cross-tenant misattribution is live on the happy path — a valid,
 correctly-scoped tenant-A request scopes to `demo` downstream, no attacker required.
