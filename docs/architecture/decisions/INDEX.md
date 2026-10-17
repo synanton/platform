@@ -1,19 +1,25 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-09-12"
+last_reviewed: "2026-10-17"
 ---
 
 # Architecture Decision Records (ADRs)
 
 **Purpose:** Captures significant architectural decisions with their context, rationale, and consequences.
 **Audience:** Architects, module owners
-**Last Updated:** 2026-09-12
+**Last Updated:** 2026-10-17
 
 ## Quick Links
 
 | Document | Decision |
 |----------|---------|
+| [ADR-020: Operation Partial Outcome](./adr-020-operation-partial-outcome.md) | Additive `outcome: FULL \| PARTIAL` on the Operation resource; partial extraction success is first-class, design doc stays frozen (Proposed 2026-10-17) |
+| [ADR-019: Downstream Trust Predicate](./adr-019-downstream-trust-predicate.md) | Signed short-lived context for downstream trust (slice); mTLS as target state; Wave 1 interfaces landed (Accepted 2026-10-17) |
+| [ADR-018: OAuth Surface — AS Facade](./adr-018-oauth-facade.md) | Platform is an OAuth 2.1 authorization-server facade — fronts `/oauth/*` and discovery, federates to the external security service (Accepted 2026-10-16) |
+| [ADR-017: Validation Tooling](./adr-017-validation-tooling.md) | Vacuum for OpenAPI 3.1 lint; networknt JSON-Schema validator for MCP schema (Accepted 2026-10-16) |
+| [ADR-016: MCP Downstream Auth](./adr-016-mcp-downstream-auth.md) | Service identity, not token exchange — the caller bearer is no longer forwarded downstream (Accepted 2026-10-16) |
+| [ADR-015: Gen-A API Code Home](./adr-015-gen-a-api-code-home.md) | New `java/platform-api` module; `synapt` frozen for the generation-A slice (Accepted 2026-10-16) |
 | [ADR-014: RAG API Authority](./adr-014-rag-api-authority.md) | RAG §§51–52 are 1.30-owned, 1.32-normalized exposure; BBAG-A deferral trivial by authority (decided 2026-10-15) |
 | [ADR-013: Vector Engine Selection per Deployment Context](./adr-013-vector-engine-selection.md) | Per-context engine defaults (PG+pgvector managed, Qdrant self-host/docker/on-prem, Lucene embedded) with rationale + revisit triggers — Accepted 2026-10-11 |
 | [ADR-012: Temporal Versioned Knowledge and Retrieval](./adr-012-temporal-versioned-knowledge-retrieval.md) | Cross-plane temporal semantics — version series owned by Ingestion (1.28), `current` as a set, correction classification, temporal eligibility as a pre-ranking search constraint (v1.34 approved 2026-09-12) |

@@ -50,7 +50,7 @@ The public resource is this list, plus the ADR-020 `outcome` field:
 | Field | Type | Notes |
 |---|---|---|
 | `operation_id` | string | stable id; the poll handle |
-| `type` | enum | operation type; §58 examples: `INGESTION`, `REINDEX`, `RECALCULATION`, `BULK_PROCESSING`, `AI_EXECUTION`, `EXPORT` (the set is open — §58 lists categories, not a frozen enum) |
+| `type` | string (open set) | operation type; §58 examples: `INGESTION`, `REINDEX`, `RECALCULATION`, `BULK_PROCESSING`, `AI_EXECUTION`, `EXPORT` — §58 lists categories, not a frozen enum |
 | `status` | enum | the state machine below (§56) |
 | `requested_by.principal_id` | string | from the verified identity context (W1) |
 | `tenant_id` | string | from the verified identity context (W1) |
@@ -88,6 +88,13 @@ any non-terminal  ──▶ EXPIRED          (inferred — expires_at passed, §
   the one defined transition): `RUNNING → CANCEL_REQUESTED → CANCELLED`. It is
   a 1.32-owned state — no internal plane models it (see reconciliation).
 - **`EXPIRED` is not a technical failure** (§12): `expires_at` passed.
+- **`expires_at` is server-side policy, not a resource field.** Appendix B has
+  no `expires_at`, and ADR-020 adds only `outcome`. So a client cannot read
+  *when* an operation will expire, and the `→ EXPIRED` trigger is not
+  observable in the contract — expiry is policy per operation type. `EXPIRED`
+  is a state a client may observe but not predict. *If client-predictable
+  expiry is needed, `expires_at` is an additive field and needs the ADR-020
+  treatment* — flagged, not assumed.
 
 **Inferred transitions requiring a decision** (the design is silent): does
 `FAILED` arise only from `RUNNING`, or also from `QUEUED`/`ACCEPTED`? Can
