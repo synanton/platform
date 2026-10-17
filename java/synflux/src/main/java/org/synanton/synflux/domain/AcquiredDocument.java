@@ -10,5 +10,16 @@ public record AcquiredDocument(
     String sha256,
     String mimeType,
     String sourceUri,
-    UUID contentRefId
-) {}
+    UUID contentRefId,
+    String contentCacheReference
+) {
+    public AcquiredDocument(
+            org.synanton.synvault.domain.ContentRef ref,
+            byte[] bytes,
+            String sha256,
+            String mimeType,
+            String sourceUri,
+            UUID contentRefId) {
+        this(ref, bytes, sha256, mimeType, sourceUri, contentRefId, "");
+    }
+}

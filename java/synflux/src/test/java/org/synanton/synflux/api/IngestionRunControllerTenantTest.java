@@ -72,7 +72,11 @@ class IngestionRunControllerTenantTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"tenant_id\":\"tenant-b\",\"source_id\":\"fixture\","
                     + "\"resource_id\":\"manuals/policy.md\"}"))
-            .andExpect(status().isAccepted());
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.run_id").value(runId.toString()))
+            .andExpect(jsonPath("$.operation_id").value(operationId.toString()))
+            .andExpect(jsonPath("$.runId").doesNotExist())
+            .andExpect(jsonPath("$.operationId").doesNotExist());
 
         ArgumentCaptor<VerifiedIngestionContext> context = ArgumentCaptor.forClass(VerifiedIngestionContext.class);
         verify(workflow).submit(context.capture(), eq("fixture"), eq("manuals/policy.md"),
