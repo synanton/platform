@@ -127,7 +127,7 @@ delegation, `*` issuance, actuator, D4 product call.
 | 4b | D4 schema validation — awaits P2 pinned MCP revision | Contract | DX | Open |
 | 5 | Error-model approval | Contract | Architecture | Open |
 | 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation; A+S+DX held by a single reviewer |
-| F2 | Trust predicate — signed short-lived context (ADR-019); synapt/relix verification filters | Security | Security | Open — blocked on security-provider envelope wire format; Wave 1 interfaces landed (PR 256) |
+| F2 | Trust predicate — downstream envelope verification (Wave 1 landed PR 256; tracked [#252 / SNTP-032](https://github.com/synanton/platform/issues/252)) | Security | Security | Open — hardening, not gating M0; blocked on security-provider envelope wire format |
 
 **On 2e:** cross-tenant misattribution is live on the happy path — a valid,
 correctly-scoped tenant-A request scopes to `demo` downstream, no attacker required.
