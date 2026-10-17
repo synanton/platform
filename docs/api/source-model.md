@@ -129,31 +129,38 @@ carries the generic public Operation status.
 
 | IngestionRun terminal status (§38) | Operation status | Qualification |
 |---|---|---|
-| `COMPLETED`, `SyncResult.failed = 0` | `SUCCEEDED` | `outcome: FULL` |
-| `COMPLETED`, some resources succeeded and some failed | `SUCCEEDED` | `outcome: PARTIAL` (ADR-020) |
-| `FAILED` | `FAILED` | W2 error instance describes the failure |
+| `COMPLETED`, `SyncResult.failed = 0`, `quarantined = 0` | `SUCCEEDED` | `outcome: FULL` |
+| `COMPLETED`, at least one success and any failed/quarantined entries | `SUCCEEDED` | `outcome: PARTIAL` (ADR-020) |
+| `FAILED` (no resource succeeded) | `FAILED` | W2 error instance describes the failure |
 | `CANCELLED` | `CANCELLED` | terminal cancellation |
 | `SKIPPED` / `UNCHANGED` / `DELETED` | `SUCCEEDED` | `outcome: FULL`; run status preserves the specific no-op/deletion result |
-| `QUARANTINED` | `FAILED` | `retryable: false`; W2 `OPERATION_FAILED`, `details.reason: QUARANTINED`; no artifact is published |
+| `QUARANTINED` (no resource published) | `FAILED` | `retryable: false`; W2 `OPERATION_FAILED`, `details.reason: QUARANTINED`; no artifact is published |
 
-`outcome` describes whether the requested run completed fully, not whether it
-created new content: an unchanged sync or authoritative deletion can be
-`SUCCEEDED`/`FULL` while the IngestionRun status preserves `UNCHANGED` or
-`DELETED`. If no resource succeeds, the run terminates `FAILED` (§38), not
-`COMPLETED`.
+`outcome` is **present only on `SUCCEEDED`**; it is null/absent on `FAILED` and
+`CANCELLED`. It describes completion coverage, not whether new content was
+created: an unchanged sync or authoritative deletion can be `SUCCEEDED`/`FULL`
+while `IngestionRun.status` preserves `UNCHANGED` or `DELETED`. A `COMPLETED`
+run with some successes and some failed/quarantined resources is
+`SUCCEEDED`/`PARTIAL`; if no resource succeeds, the run terminates `FAILED`
+(§38), not `COMPLETED`.
 
 The run-specific status remains available on `IngestionRun`; the linked
 Operation exposes the cross-plane lifecycle. This mapping prevents a client
 holding both IDs from having to infer how terminal ingestion outcomes map.
 
 `QUARANTINED` is not retried automatically: the artifact was acquired but
-withheld for security, validation, malware, or policy concerns (§43). The W2
-error detail identifies quarantine so generic retry policy cannot blindly
-re-submit it.
+withheld for security, validation, malware, or policy concerns (§43). A
+fully-quarantined run maps to `FAILED` with W2 `OPERATION_FAILED`,
+`retryable: false`, and summary `details.reason: QUARANTINED` plus
+`details.quarantined_count`. For mixed-success runs, the `SUCCEEDED` Operation
+uses `outcome: PARTIAL`; `IngestionRun.result.quarantined` gives the count.
+The Operation detail is a summary, not the per-resource record.
 
 **Synchronization result (1.28 §15):** a sync run produces an explicit
 `SyncResult` in the `IngestionRun.result` member. It is `null` while the run is
-active and populated when the run reaches a terminal state:
+active and populated when the run reaches a terminal state. The 1.32 public
+summary adds `quarantined` to 1.28 §15's six counters so quarantine remains
+distinct from ordinary failure:
 
 ```text
 SyncResult {
@@ -163,12 +170,15 @@ SyncResult {
     deleted
     failed
     skipped
+    quarantined
 }
 ```
 
 These states must not be collapsed into a generic success/failure — "checked,
 nothing changed" is distinct from "could not be checked" is distinct from
-"reported deletion".
+"reported deletion". Each manifest entry has exactly one final result; the
+counters are mutually exclusive and **sum to `IngestionManifest.entry_count`**:
+`discovered + changed + unchanged + deleted + failed + skipped + quarantined`.
 
 ## Ingestion manifest
 
@@ -188,18 +198,38 @@ IngestionManifest {
 
 ManifestEntry {
     source_identity
-    result                 // DISCOVERED, CHANGED, UNCHANGED, DELETED, FAILED, SKIPPED, QUARANTINED
-    source_version_id?    // present when a version was created/observed
+    result                 // one final result from the seven-value set below
+    source_version_id?     // present when a version was created/observed
     error_ref?             // structured failure detail when applicable
 }
 ```
 
+There is **one manifest entry per source resource per run**, recording that
+resource's final result, not one entry per transition or attempt. Attempts stay
+observable separately (§40). Therefore `entry_count` equals the sum of the
+seven mutually exclusive `SyncResult` counters.
+
 The manifest is immutable after the run completes. `entries_ref` points to
-the paged manifest-entry record, not an unbounded inline array. **Owner:** the
-Ingestion Plane owns this source-history metadata (not Content Cache, which owns
-content artifacts). **Retention:** a manifest referenced by a source version
-or tombstone must remain resolvable at least as long as that reference is
-retained; source-version metadata retention and legal hold govern its lifetime.
+the paged manifest-entry record, not an unbounded inline array. The
+`entries_ref` target is immutable and retained at least as long as the manifest.
+**Owner:** the Ingestion Plane owns this source-history metadata (not Content
+Cache, which owns content artifacts). **Retention:** a manifest referenced by a
+source version or tombstone, and its `entries_ref` target, must remain
+resolvable at least as long as that reference is retained; source-version
+metadata retention and legal hold govern its lifetime.
+
+**Operation lookup:** ingestion submission returns both `run_id` and
+`operation_id`. The manifest is keyed by `run_id`; clients retain that ID from
+the submission response. There is no direct manifest-by-Operation lookup in
+this contract.
+
+`error_ref` resolves to the structured W2 Problem detail for that manifest
+entry. The manifest is authoritative for per-resource failure/quarantine
+reasons. For a fully quarantined/failed Operation, the W2 error's `details`
+carry the aggregate (`reason: QUARANTINED`, `quarantined_count`); this is a
+summary, not a per-resource record. For mixed-success runs, the Operation is
+`SUCCEEDED/PARTIAL`, and `IngestionRun.result.quarantined` carries the aggregate
+count while the manifest carries individual reasons.
 
 ## Deletion and tombstones
 
@@ -226,7 +256,6 @@ Tombstone {
         principal_id
         principal_type
     }
-    deletion_state: DELETED // tombstones exist only for authoritative deletion
     version_count
     versions_manifest_ref  // reference to immutable version-ID manifest
 }
@@ -242,6 +271,10 @@ the tombstone's retention period (including applicable legal hold). Downstream
 effects include
 Content Cache invalidation, search-projection removal, knowledge invalidation,
 and an analytics event.
+
+There is no `deletion_state` field: tombstone existence itself means the
+authoritative deletion state is `DELETED`; non-authoritative observations
+(`NOT_VISIBLE`, `SYNC_INCOMPLETE`, etc.) do not produce tombstones.
 
 ## Idempotency
 
