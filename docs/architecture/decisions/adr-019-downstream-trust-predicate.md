@@ -1,6 +1,6 @@
 # ADR-019: Downstream Trust Predicate — Signed Short-Lived Context
 
-**Status:** Proposed 2026-10-16
+**Status:** Accepted 2026-10-17
 **Basis:** Propagation correctness landed — downstream reads tenant only from verified context, no fallback. But nothing proves the *sender* is trusted. An attacker who can reach synapt/relix directly can forward any envelope. F2 selects the mechanism that closes this. Security-provider already issues signed short-lived contexts and ships consumer middleware (`pkg/middleware`); mTLS infrastructure does not exist in the slice.
 
 ## Decision
