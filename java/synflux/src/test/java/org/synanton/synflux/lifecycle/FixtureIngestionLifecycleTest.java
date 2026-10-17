@@ -40,6 +40,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -459,6 +463,89 @@ class FixtureIngestionLifecycleTest {
             .extracting(event -> event.eventType())
             .containsExactly("SourcePublished");
         verify(persist).apply(any(), any());
+    }
+
+    @Test
+    void runningOperationExposesCancelRequestedThenCompletesAsCancelled(@TempDir Path fixtureRoot) throws Exception {
+        Path document = fixtureRoot.resolve("cancel/cancellation.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "cancel during extraction");
+        FilesystemAdapter adapter = new FilesystemAdapter();
+        ContentPullPort pullPort = new ContentPullPort(List.of(adapter));
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = mock(PersistStage.class);
+        CountDownLatch extractionStarted = new CountDownLatch(1);
+        CountDownLatch finishExtraction = new CountDownLatch(1);
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            extractionStarted.countDown();
+            if (!finishExtraction.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("test extraction release timed out");
+            }
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, "extracted", Map.of(), null);
+        });
+        when(persist.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument document, StageContext context) {
+                return document;
+            }
+        };
+
+        String tenantId = "tenant-cancel-workflow-" + UUID.randomUUID();
+        String sourceId = "cancel-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(), Set.of(), "ACTIVE",
+            Instant.parse("2026-10-17T11:59:00Z"), null
+        ));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort), extraction, chunk, identityStage, identityStage,
+            identityStage, persist, testProperties(), lifecycle, operationService, executor,
+            new FilesystemFixturePolicy(fixtureRoot));
+        VerifiedIngestionContext context = principal(tenantId);
+
+        try {
+            FixtureSourceWorkflow.Submission submitted = workflow.submit(
+                context, sourceId, "cancel/cancellation.md", "request-cancel", "cancel-key");
+            assertThat(submitted.operation().status()).isEqualTo("RUNNING");
+            assertThat(extractionStarted.await(10, TimeUnit.SECONDS)).isTrue();
+
+            OperationRow requested = workflow.cancelOperation(context, submitted.operation().operationId());
+            assertThat(requested.status()).isEqualTo("CANCEL_REQUESTED");
+            finishExtraction.countDown();
+
+            OperationRow terminal = null;
+            for (int attempt = 0; attempt < 100; attempt++) {
+                terminal = cache.readOperation(tenantId, submitted.operation().operationId()).orElseThrow();
+                if ("CANCELLED".equals(terminal.status())) {
+                    break;
+                }
+                Thread.sleep(20);
+            }
+            assertThat(terminal).isNotNull();
+            assertThat(terminal.status()).isEqualTo("CANCELLED");
+            IngestionRunRow run = cache.readIngestionRun(tenantId, submitted.run().runId()).orElseThrow();
+            assertThat(run.status()).isEqualTo("CANCELLED");
+            assertThat(run.result().cancelled()).isEqualTo(1);
+            assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "cancel/cancellation.md"))
+                .isEmpty();
+        } finally {
+            finishExtraction.countDown();
+            executor.shutdownNow();
+        }
     }
 
     private static IngestionRunRow ingest(

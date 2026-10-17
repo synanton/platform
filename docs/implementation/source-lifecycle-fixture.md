@@ -85,6 +85,11 @@ Set `SYNFLUX_FIXTURE_ROOT` to the explicitly mounted filesystem fixture root;
 Source endpoints outside that real path are rejected, so tenant configuration
 cannot use the fixture connector to read arbitrary host paths.
 
+`SynfluxCli --cli` is a process-level operator tool, not a tenant-user interface.
+It does not authenticate an HTTP subject or populate `TenantContext`; the local
+operator explicitly selects `--tenant`, and the runner receives that scope as a
+trusted process argument. Public tenant requests never use this path.
+
 `ExtractionStageRealGatewayTest` remains an existing manual-only test: it needs
 Docker CLI plus a sibling `content_extractor` checkout, while the configured
 Testcontainers client cannot negotiate this environment's Docker API version.

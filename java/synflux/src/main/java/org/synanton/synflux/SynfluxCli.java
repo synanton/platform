@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Operator-only process entry point; it is not reachable from tenant HTTP requests.
+ * The operator must pass an explicit tenant scope with {@code --tenant}.
+ */
 @Component
 public class SynfluxCli implements ApplicationRunner {
 
