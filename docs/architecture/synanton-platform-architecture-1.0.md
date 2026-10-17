@@ -5,6 +5,7 @@
 > **Document ID:** `synanton-platform-architecture-1.0`
 > **Date:** 2026-09-07
 > **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26, not started for 1.27–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
+> **Status revision 2026-10-17:** 1.32 contract set frozen (identity context, search model, error model, Operation model, auth spec — #246 closed); generation-A slice in progress. 1.27 contract freeze not started (#247). All other rows unchanged.
 > **Basis:** [SNTP-14 / GitHub Issue #39](https://github.com/synanton/platform/issues/39); promoted from [`docs/architecture/proposals/synanton-platform-1.0-proposal.md`](./proposals/synanton-platform-1.0-proposal.md); extended by SNTP-15 with Design 1.34 (Temporal Versioned Knowledge and Retrieval)
 > **Audience:** Architects, module owners, security engineers, SREs, platform engineers, technical decision makers
 > **Related docs:** [ADR-011](./decisions/adr-011-platform-architecture-1.0.md), [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md), [Architecture Review Resolution](./proposals/synanton-architecture-review-resolution.md), and every design document listed in §3
@@ -389,8 +390,8 @@ Optional capabilities advertised by any plane (e.g. Content Cache 1.26 storage-b
 
 The architecture recommends this order:
 
-1. **Finalize 1.32** and freeze common API/resource/error/Operation contracts.
-2. **Freeze 1.27** as the common asynchronous contract.
+1. **Finalize 1.32** and freeze common API/resource/error/Operation contracts. — *Done 2026-10-17 (#246).*
+2. **Freeze 1.27** as the common asynchronous contract. — *Pending (#247); the gating item for 1.28–1.31.*
 3. Implement the first vertical slice:
    `Ingestion → Content Cache → Eventing → Knowledge → Search`.
 4. Add Identity/security enforcement across the slice.
@@ -422,6 +423,8 @@ This section reflects the state of the codebase at the time this document was ac
 | 1.34 | Approved | Not started; per Design 1.34 §39, begins with a 1.28 (Ingestion) extension and should not precede 1.27/1.28 implementation |
 
 Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence in §14. In particular, no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen, per the ordering rationale in §6.
+
+> **Revision 2026-10-17:** the 1.32 row above reflects acceptance-time state. The 1.32 contract set is now frozen (five artifacts, #246 closed) and the generation-A slice — login/logout, search API, MCP adapter — is in progress. The §14 sequencing rule was relaxed for this slice by BBAG-A amendment A1, which split *M0-entry* (spec drafting and implementation may start) from *M0-freeze* (contracts frozen); see the [plane's implementation plan](../implementation/platform-api-plane/INDEX.md). 1.27 remains unfrozen and is the next gate for 1.28–1.31.
 
 ## 16. Acceptance Criteria for Platform 1.0
 
