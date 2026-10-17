@@ -131,11 +131,20 @@ In §39's idempotency tuple, `source_version` means this model's
 not the platform version ID (`docs/api/source-model.md`). `connector_id` is
 not in the §39 version key because `source_id` is unique within a tenant; the
 deletion key includes the full SourceIdentity plus the tombstone timestamp.
+`SourceChanged`, `SourcePublished`, and `SourceUnchanged` payloads carry
+`source_identity` and `version_id`; a consumer cannot derive the version key
+otherwise.
 When emitted, `SourceUnchanged` carries the existing `version_id`, not a new
 one. A `SourceDeleted` event carries the tombstone (or its
-`versions_manifest_ref`); a consumer without that manifest must not apply the
-deletion. A replayed deletion reuses the tombstone's original `deleted_at`, not
-the replay time.
+`versions_manifest_ref`); a consumer applies the tombstone only to the version
+IDs in that manifest. A replayed deletion reuses the tombstone's original
+`deleted_at`, not the replay time. If the manifest cannot be resolved, a
+consumer may fall back to applying the tombstone to versions of that
+`source_identity` whose `observed_at <= deleted_at`; versions observed after the
+tombstone must never be affected. If neither manifest nor version timestamps
+are available, the consumer must not apply the deletion; the missing manifest
+is logged/reconciled, not treated as permission to delete the current source
+wholesale.
 
 Consumers maintain source-specific companion records, not source columns on
 generic `processed_events`:
