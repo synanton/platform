@@ -1,6 +1,6 @@
 # Identity Context Model
 
-**Status:** Draft — W1 artifact (WS0 contract/governance)
+**Status:** Frozen 2026-10-17 — W1 artifact (WS0 contract/governance)
 **Source:** Design 1.29 §12–§14 (Principal), §34–§38 (actor chain, identity
 context, trust boundary, tenant membership/context)
 

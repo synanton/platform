@@ -1,6 +1,6 @@
 # Error Model
 
-**Status:** Draft — subject of gate row 5 (error-model approval)
+**Status:** Approved 2026-10-16 — gate row 5 closed
 **Source:** Design 1.32 §62 (categories), Appendix C (extension fields)
 
 RFC 9457 problem details, extended with four fields. This is the canonical

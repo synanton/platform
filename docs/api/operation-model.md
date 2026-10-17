@@ -1,6 +1,6 @@
 # Operation Resource Model
 
-**Status:** Draft — PAPI-3 artifact (#246 "Freeze Platform API 1.32 contracts")
+**Status:** Frozen 2026-10-17 — PAPI-3 artifact (#246 "Freeze Platform API 1.32 contracts")
 **Source:** Design 1.32 §55–§60, Appendix B; `synanton.extraction.v1` `ExtractionStatus` (§15/§24/§12); `synanton.gpu.v1` `ExecutionState`
 
 The public contract for long-running work. One resource shape, one state

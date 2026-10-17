@@ -1,6 +1,6 @@
 # Search Resource Model
 
-**Status:** Draft — W3 artifact (WS0 contract/governance)
+**Status:** Frozen 2026-10-17 — W3 artifact (WS0 contract/governance)
 **Source:** Design 1.32 §41–46 (Search API), Appendix A (resource list), Appendix F (search flow)
 
 The resource model for `POST /v1/search`. This is the canonical search
