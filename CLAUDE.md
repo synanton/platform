@@ -37,7 +37,7 @@
 
 ## Code Style
 
-- Hexagonal architecture: `adapter/in/`, `adapter/out/`, `domain/`, `config/`
+- Hexagonal architecture (`adapter/in/`, `adapter/out/`, `domain/`, `config/`) applies to the larger services (gateway, synapt, relix). Smaller modules like `synanton-mcp` use flat packages (`api/`, `tool/`, `filter/`) — match the module you're working in.
 - Lombok `@RequiredArgsConstructor` for DI; `final` fields
 - Max line length: 120 characters
 - No single-char variable names
@@ -52,9 +52,17 @@
 - Unit tests: `{ClassName}Test.java`, no Spring context, Mockito for isolation
 - Integration tests: Spring context, `integration/` package, black-box via API calls
 - Assertions: whole-object comparison (`isEqualTo`, `containsExactly`), not field-by-field
-- Test naming: generated names start with `"should"`
+- Test naming: descriptive `method_condition_expected` (e.g. `toolsCall_emptyScopeSet_denied`, `allowlistMatchesExpectedSetExactly`)
 - Use `Instant.now(clock)` not `Instant.now()`; `clock` must be a `Clock.fixed(...)` bean
 - Static imports for Mockito: `import static org.mockito.Mockito.*`
+
+## Security Invariants
+
+- **No tenant fallback.** Missing/blank tenant → reject. Never default to a tenant. See ADR-016 and the propagation contract.
+- **Tenant only from verified context.** Never read an inbound `X-Tenant*` header; never forward one downstream.
+- **Fail closed on verification failure** — reject, don't degrade.
+- Error responses conform to `docs/api/error-model.md`; `request_id` always present.
+- MCP capabilities bypass is `GET /mcp` only; `POST /mcp` is business traffic.
 
 ## ADRs
 
