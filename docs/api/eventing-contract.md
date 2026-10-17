@@ -1,7 +1,7 @@
 # Eventing 1.27 Contract
 
 **Status:** Frozen 2026-10-17 — #247 artifact ("Freeze Eventing 1.27 delivery and workflow contract")
-**Source:** Design 1.27 (§8–§19 event/command semantics, §20–§30 delivery/outbox/inbox, §31–§32 retry, §33–§34 dead letters, §40–§45 workflow, §47/§53 Equalix role, §73–§76 failure, §97 persistence, §104 phases)
+**Source:** Design 1.27 (§8–§19 event/command semantics, §20–§30 delivery/outbox/inbox, §31–§32 retry, §33–§34 dead letters, §35–§37 poison/backpressure/retention, §38–§39 replay, §40–§45 workflow, §47/§53 Equalix role, §73–§76 failure, §97 persistence, §104 phases)
 
 The frozen contract for the platform's common asynchronous execution fabric.
 This is a **projection** of Design 1.27, which is design-complete (2697 lines,
@@ -15,11 +15,14 @@ This is a **projection** of Design 1.27, which is design-complete (2697 lines,
 | Ticket item | Design source |
 |---|---|
 | event/command semantics | §8–§19 |
+| delivery guarantees | §23 |
 | ordering | §22 |
 | idempotency | §24–§25 |
+| retry and backoff | §31–§32, §73–§76 |
 | dead letters | §33–§34 |
+| poison events, backpressure, retention | §35–§37 |
 | durable workflow state | §41–§45, §97 |
-| retries | §23, §75–§76 |
+| replay and replay safety | §38–§39 (policy source; classifications not enumerated here) |
 | recovery | §76, §97 |
 
 ## Event
@@ -99,7 +102,106 @@ result
 
 Pattern: receive → check `event_id` → seen: ignore; unseen: process → record.
 State change and idempotency record should be coordinated in the same
-transaction where possible.
+transaction where possible (**mandatory for source-lifecycle consumers; see
+Business key vs event identity**).
+
+### Business key vs event identity
+
+**Composition clarification (#250, 2026-10-17; no change to the generic
+`processed_events` shape).** `processed_events (consumer_id, event_id)` answers
+"have I handled this event?" It does not answer "have I already applied this
+source version?" Those are different identities:
+
+| Identity | Prevents |
+|---|---|
+| `event_id` | double-handling the same event delivery |
+| Source business key | double-processing the same source version when deliberately re-emitted under a new event ID |
+
+The business key depends on the source-event class:
+
+| Event class | Business key for replay/dedup |
+|---|---|
+| `SourceChanged`, `SourcePublished`, `SourceUnchanged` | `(tenant_id, source_id, resource_id, version_id)` — §39 source-version identity |
+| `SourceDeleted` | `(tenant_id, connector_id, source_id, resource_id, deleted_at)` — tombstone identity; event carries tombstone/ref |
+| `IngestionStarted`, `IngestionCompleted`, `IngestionFailed` | `(tenant_id, run_id, event_type)` |
+| `SourceDiscovered`, `SourceAcquired`, `SourceValidated`, `SourceQuarantined` | `(tenant_id, run_id, source_identity, event_type)` |
+
+In §39's idempotency tuple, `source_version` means this model's
+`SourceVersion.version_id`; `source_revision` is the upstream detection signal,
+not the platform version ID (`docs/api/source-model.md`). `connector_id` is
+not in the §39 version key because `source_id` is unique within a tenant; the
+deletion key includes the full SourceIdentity plus the tombstone timestamp.
+`SourceChanged`, `SourcePublished`, and `SourceUnchanged` payloads carry
+`source_identity` and `version_id`; a consumer cannot derive the version key
+otherwise.
+When emitted, `SourceUnchanged` carries the existing `version_id`, not a new
+one. A `SourceDeleted` event carries the tombstone (or its
+`versions_manifest_ref`); a consumer applies the tombstone only to the version
+IDs in that manifest. A replayed deletion reuses the tombstone's original
+`deleted_at`, not the replay time. If the manifest cannot be resolved, a
+consumer may fall back to applying the tombstone to versions of that
+`source_identity` whose `observed_at <= deleted_at`; versions observed after the
+tombstone must never be affected. If neither manifest nor version timestamps
+are available, the consumer must not apply the deletion; the missing manifest
+is logged/reconciled, not treated as permission to delete the current source
+wholesale.
+
+Consumers maintain source-specific companion records, not source columns on
+generic `processed_events`:
+
+```text
+processed_source_versions
+-------------------------
+consumer_id
+tenant_id
+source_id
+resource_id
+version_id                 // §39 source_version; canonical SourceVersion ID
+processed_at
+
+processed_source_deletions
+--------------------------
+consumer_id
+tenant_id
+connector_id
+source_id
+resource_id
+deleted_at
+processed_at
+```
+
+`SourceDeleted` consumers key by the tombstone's stable `deleted_at` and apply
+the tombstone only to the version IDs in its manifest, never by deleting the
+current source identity wholesale. A replay of an old tombstone therefore
+cannot delete a recreated source. Run-level events use the run-scoped keys in
+the table above and durable workflow state.
+
+Both checks compose: `processed_events` suppresses redelivery of the same
+`event_id`; the event-class business key suppresses duplicate downstream effects
+when a durable fact is deliberately replayed under a new event ID. The source
+model is authoritative for these keys; replay eligibility remains governed by
+the event type's §39 policy.
+
+**Storage choice:** the companion records are consumer-owned; the generic
+`processed_events` shape above is unchanged. Their retention is at least as
+long as the referenced source version or tombstone. A consumer checks and
+records the relevant business key before applying downstream effects.
+
+**Consumer atomicity for #250:** the local business effect and its corresponding
+`processed_events` or source-business-key record must commit in one transaction
+in the consumer's store. If the effect crosses a store/service boundary, write
+an outbox intent in that same transaction and require idempotent application
+downstream. This narrows §24's general "where possible" guidance for the
+restart-recovery acceptance criterion; it does not claim a cross-service
+transaction.
+
+**Replay policy (Design 1.27 §38–§39):** replay applies only to durable facts
+from which consumers can safely reconstruct state; it is not re-execution of
+the original command. Replay eligibility is declared per event type in §39 and
+is **not enumerated here**. Consumers obtain `REPLAY_SAFE`,
+`REPLAY_WITH_POLICY`, or `NOT_REPLAYABLE` from the event-type contract/schema;
+they must not infer replayability from the event name. This artifact references
+the classification vocabulary, not a general replay procedure.
 
 ## Outbox and inbox
 
@@ -169,6 +271,32 @@ categories are retried:
 ```text
 TRANSIENT · PERMANENT · SECURITY · INVALID · DEPENDENCY · TIMEOUT · RESOURCE
 ```
+
+### Retry composition across layers
+
+**Composition clarification (#250, 2026-10-17; no envelope or generic
+`processed_events` shape change).** Request retry, ingestion-run retry, and
+workflow-step retry have distinct identities:
+
+| Layer | Mechanism | Identity |
+|---|---|---|
+| **Request retry** | Client re-issues the same HTTP request | `Idempotency-Key`, scoped `tenant + principal + endpoint + key` (1.32 §25) |
+| **Run retry** | Operator/policy starts a new ingestion run | New `run_id`; same source-version identity is deduplicated by the source model |
+| **Step retry** | Workflow redelivers after a retryable failure | Same `event_id` across delivery retries (§9) |
+
+- A request retry with the same key converges on the original logical Operation
+  (1.32 §23–§24); it does not start another run.
+- A deliberate new run is not an HTTP retry. If the source version already
+  exists, the source model records `UNCHANGED` and creates no duplicate version.
+  A `SourceUnchanged` fact may record the new observation per 1.28 §44; it is not
+  a duplicate `SourceChanged`/`SourcePublished` event.
+  A full retry may re-observe O(resource_count) resources and emit one
+  `SourceUnchanged` fact per unchanged resource; incremental connectors can
+  bound that work with their durable synchronization cursor.
+- A step retry/redelivery retains the same `event_id`; `processed_events`
+  suppresses duplicate handling. Intentional event replay is distinct from
+  retry (§38–§39). If a replay emits a new `event_id` for an existing source
+  version, the source business-key check above prevents duplicate effects.
 
 ## Dead letters
 

@@ -131,7 +131,8 @@ sensitive backend details (§57).
 
 **Quarantine summary (#248):** when an Operation fails because a run is
 quarantined, its W2 `error.details` carries `reason: QUARANTINED` and
-`quarantined_count`. This is an aggregate summary only; the source model's
+`quarantined` (the integer count, same name as `IngestionRun.result.quarantined`).
+This is an aggregate summary only; the source model's
 IngestionManifest is authoritative for per-resource quarantine reasons and
 `error_ref`s.
 
