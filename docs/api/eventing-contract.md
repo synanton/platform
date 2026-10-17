@@ -101,6 +101,46 @@ Pattern: receive → check `event_id` → seen: ignore; unseen: process → reco
 State change and idempotency record should be coordinated in the same
 transaction where possible.
 
+### Business key vs event identity
+
+**Composition clarification (#250, 2026-10-17; no change to the generic
+`processed_events` shape).** `processed_events (consumer_id, event_id)` answers
+"have I handled this event?" It does not answer "have I already applied this
+source version?" Those are different identities:
+
+| Identity | Prevents |
+|---|---|
+| `event_id` | double-handling the same event delivery |
+| Source business key | double-processing the same source version when deliberately re-emitted under a new event ID |
+
+For source-lifecycle consumers, the business key is the source model's §39
+idempotency identity `(tenant_id, source_id, resource_id, source_version)`.
+Consumers maintain a source-specific companion record, not source columns on
+generic `processed_events`:
+
+```text
+processed_source_versions
+-------------------------
+consumer_id
+tenant_id
+source_id
+resource_id
+source_version
+processed_at
+```
+
+Both checks compose: `processed_events` suppresses redelivery of the same
+`event_id`; `processed_source_versions` suppresses duplicate downstream
+effects when a replay/re-drive represents the same source version under a new
+event ID. The source record is authoritative for the business key; replay
+eligibility remains governed by the event type's §39 policy.
+
+**Storage choice:** `processed_source_versions` is a consumer-owned companion
+record; the generic `processed_events` shape above is unchanged. Its unique key
+is `(consumer_id, tenant_id, source_id, resource_id, source_version)`; the
+remaining field is `processed_at`. A source consumer checks/records this key
+before applying downstream effects for a re-emitted version.
+
 ## Outbox and inbox
 
 #250's "restart recovery" and "resume without rerunning committed effects"
@@ -169,6 +209,29 @@ categories are retried:
 ```text
 TRANSIENT · PERMANENT · SECURITY · INVALID · DEPENDENCY · TIMEOUT · RESOURCE
 ```
+
+### Retry composition across layers
+
+**Composition clarification (#250, 2026-10-17; no envelope or generic
+`processed_events` shape change).** Request retry, ingestion-run retry, and
+workflow-step retry have distinct identities:
+
+| Layer | Mechanism | Identity |
+|---|---|---|
+| **Request retry** | Client re-issues the same HTTP request | `Idempotency-Key`, scoped `tenant + principal + endpoint + key` (1.32 §25) |
+| **Run retry** | Operator/policy starts a new ingestion run | New `run_id`; same source-version identity is deduplicated by the source model |
+| **Step retry** | Workflow redelivers after a retryable failure | Same `event_id` across delivery retries (§9) |
+
+- A request retry with the same key converges on the original logical Operation
+  (1.32 §23–§24); it does not start another run.
+- A deliberate new run is not an HTTP retry. If the source version already
+  exists, the source model records `UNCHANGED` and creates no duplicate version.
+  A `SourceUnchanged` fact may record the new observation per 1.28 §44; it is not
+  a duplicate `SourceChanged`/`SourcePublished` event.
+- A step retry/redelivery retains the same `event_id`; `processed_events`
+  suppresses duplicate handling. Intentional event replay is distinct from
+  retry (§38–§39). If a replay emits a new `event_id` for an existing source
+  version, the source business-key check above prevents duplicate effects.
 
 ## Dead letters
 

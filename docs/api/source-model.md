@@ -325,6 +325,29 @@ observable.
 These are not competing keys: the first deduplicates source versions, the
 second deduplicates client commands/operations.
 
+## Composition with the eventing layer
+
+Source-version idempotency (§39–§40) and event-delivery idempotency
+(`processed_events`, Eventing 1.27 §24–§25) protect different boundaries:
+
+- A repeated source version converges on the existing version and is reported
+  as `UNCHANGED`; it does not create another `SourceVersion`.
+- A request retry with the same idempotency key converges on the same logical
+  Operation (1.32 §23–§25); a deliberate new run has a new `run_id` but retains
+  the same source-version identity for deduplication.
+- Event redelivery keeps the same `event_id`; a deliberate replay is governed
+  by the event type's replay policy (Eventing 1.27 §38–§39). Source consumers
+  also use the source business-key companion record
+  `processed_source_versions` described in `eventing-contract.md` when a replay
+  uses a new event ID.
+
+**Outbox boundary:** when an Ingestion Plane state change emits a source event,
+the state change and its outbox row are committed in the same Ingestion Plane
+transaction (Eventing 1.27 §26–§27). The Content Cache artifact is a separate
+store: it follows 1.28 §20's verified, atomic-publication sequence, and
+`SourcePublished` is dispatchable only after the artifact is durable. No
+cross-store transaction is implied.
+
 ## API surface
 
 1.32 §29–§32:
