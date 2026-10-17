@@ -142,6 +142,21 @@ agree on the record contract. The *store* is per-service — each service owns
 its outbox/inbox table (§97 PostgreSQL recommended, not required). The contract
 is the column set and semantics, not a shared database.
 
+**Relationship to `processed_events` (§24–§25).** Both are `(consumer_id,
+event_id)`-keyed and they coexist as two phases of deduplication, not two
+competing shapes:
+
+- `inbox_events` deduplicates at **intake** — an event received but not yet
+  processed.
+- `processed_events` records **completion** with the `result` — an event whose
+  business effect is committed.
+
+A consumer needing only single-phase dedup may use one; a consumer that must
+resume without rerunning committed effects (#250) uses both: the inbox stops
+double-intake, the processed record proves completion across restart. They
+differ in `status`/`result` and the intake-vs-completion timestamp because they
+answer different questions.
+
 ## Retry
 
 **Bounded exponential backoff (§31):** retryable failures use bounded
@@ -155,7 +170,9 @@ categories are retried:
 TRANSIENT · PERMANENT · SECURITY · INVALID · DEPENDENCY · TIMEOUT · RESOURCE
 ```
 
-## Dead letters**After retry exhaustion (§33):** the event moves to a dead-letter record that
+## Dead letters
+
+**After retry exhaustion (§33):** the event moves to a dead-letter record that
 **retains the original event identity**. Operators must be able to inspect,
 classify, and act on dead letters (§34). Dead letters are not silent drops — the
 identity is preserved so the event can be replayed or dispositioned.
