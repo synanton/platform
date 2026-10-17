@@ -24,7 +24,7 @@ jobs:
             -o /tmp/vacuum.tar.gz
           tar -xzf /tmp/vacuum.tar.gz -C /tmp vacuum
           chmod +x /tmp/vacuum
-          /tmp/vacuum --version
+          /tmp/vacuum version
 
       - name: Lint auth spec
-        run: /tmp/vacuum lint docs/api/rest/openapi-auth.yaml
+        run: /tmp/vacuum lint docs/api/rest/openapi-auth.yaml --fail-severity=error
