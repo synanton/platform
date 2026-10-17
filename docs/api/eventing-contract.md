@@ -1,7 +1,7 @@
 # Eventing 1.27 Contract
 
 **Status:** Frozen 2026-10-17 — #247 artifact ("Freeze Eventing 1.27 delivery and workflow contract")
-**Source:** Design 1.27 (§8–§19 event/command semantics, §20–§30 delivery/outbox/inbox, §31–§34 retry/dead letters, §35–§39 retention/replay, §40–§45 workflow, §47/§53 Equalix role, §73–§76 failure, §97 persistence, §104 phases)
+**Source:** Design 1.27 (§8–§19 event/command semantics, §20–§30 delivery/outbox/inbox, §31–§32 retry, §33–§34 dead letters, §35–§37 poison/backpressure/retention, §38–§39 replay, §40–§45 workflow, §47/§53 Equalix role, §73–§76 failure, §97 persistence, §104 phases)
 
 The frozen contract for the platform's common asynchronous execution fabric.
 This is a **projection** of Design 1.27, which is design-complete (2697 lines,
@@ -15,12 +15,14 @@ This is a **projection** of Design 1.27, which is design-complete (2697 lines,
 | Ticket item | Design source |
 |---|---|
 | event/command semantics | §8–§19 |
+| delivery guarantees | §23 |
 | ordering | §22 |
 | idempotency | §24–§25 |
+| retry and backoff | §31–§32, §73–§76 |
 | dead letters | §33–§34 |
+| poison events, backpressure, retention | §35–§37 |
 | durable workflow state | §41–§45, §97 |
-| retries | §23, §75–§76 |
-| replay and replay safety | §38–§39 (policy vocabulary; not a full replay procedure) |
+| replay and replay safety | §38–§39 (policy source; classifications not enumerated here) |
 | recovery | §76, §97 |
 
 ## Event
@@ -100,7 +102,8 @@ result
 
 Pattern: receive → check `event_id` → seen: ignore; unseen: process → record.
 State change and idempotency record should be coordinated in the same
-transaction where possible.
+transaction where possible (**mandatory for source-lifecycle consumers; see
+Business key vs event identity**).
 
 ### Business key vs event identity
 
@@ -185,9 +188,11 @@ transaction.
 
 **Replay policy (Design 1.27 §38–§39):** replay applies only to durable facts
 from which consumers can safely reconstruct state; it is not re-execution of
-the original command. Each event type declares `REPLAY_SAFE`,
-`REPLAY_WITH_POLICY`, or `NOT_REPLAYABLE`. This contract references those
-classifications but does not define a general replay procedure.
+the original command. Replay eligibility is declared per event type in §39 and
+is **not enumerated here**. Consumers obtain `REPLAY_SAFE`,
+`REPLAY_WITH_POLICY`, or `NOT_REPLAYABLE` from the event-type contract/schema;
+they must not infer replayability from the event name. This artifact references
+the classification vocabulary, not a general replay procedure.
 
 ## Outbox and inbox
 
