@@ -12,6 +12,7 @@
 
 - Java 21, Spring Boot 3.x, Gradle with Kotlin DSL
 - Pre-change safety: run `./gradlew compileJava` before applying changes; stop if it fails
+- After changing `gradle/libs.versions.toml` (or any dependency), run with `--refresh-dependencies` — Gradle's configuration cache can otherwise serve a stale classpath and fail compilation with "cannot find symbol" for a dependency that resolves in `dependencies`. Add `--no-configuration-cache` when a compile/test discrepancy appears.
 
 ## Running Services
 
