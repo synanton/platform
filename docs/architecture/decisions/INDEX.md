@@ -37,21 +37,34 @@ last_reviewed: "2026-10-17"
 
 ## How to Contribute
 
-Create a new ADR file named `adr-NNN-short-description.md` following the template:
+Create `adr-NNN-short-description.md` following the shape of ADR-014 (the live
+precedent for ADR-014 through ADR-020):
+
+- Title carries the decision: `# ADR-NNN: <decision>`
+- `**Status:**` and `**Basis:**` inline, dated. No separate `**Date:**` or
+  `**Deciders:**` field.
+- `## Decision` first — numbered decisions, with `Consequences:` as flat
+  bullets inside the section, each with a bold lead-in (`**M0:**`, `**Clients:**`).
+- `## Context` last — why the decision was needed.
+- No Alternatives / Follow-ups / References sections; rejected options go in
+  Consequences as `**Rejected:**` bullets.
+- Accepted ADRs are not rewritten; corrections are dated inline annotations
+  (see ADR-016's handler-count correction, ADR-018's consequence addition).
 
 ```markdown
-# ADR-NNN: Title
+# ADR-NNN: <decision>
 
-**Status:** Proposed | Accepted | Superseded | Deprecated
-**Date:** YYYY-MM-DD
-**Deciders:** [names or roles]
-
-## Context
-[What is the issue that motivates this decision?]
+**Status:** Proposed | Accepted | Superseded | Deprecated <YYYY-MM-DD>
+**Basis:** [what motivates the decision]
 
 ## Decision
-[What is the decision?]
 
-## Consequences
-[What becomes easier or harder as a result?]
+1. [decision]
+Consequences:
+- **[lead-in]:** [effect]
+- **Rejected:** [option and why]
+
+## Context
+
+[why this decision was needed, what it replaces]
 ```

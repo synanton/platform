@@ -71,19 +71,29 @@ POST /v1/operations/{operation_id}/cancel
 
 Design 1.32 §56 names the eight states (verbatim: "Initial states:" followed by
 the list). It does **not** define a transition matrix. The transitions below are
-**inferred** — a PAPI-3 decision, not a projection — except where §59 defines one
+a **PAPI-3 decision** (recorded, not projected) except where §59 defines one
 explicitly (`RUNNING → CANCEL_REQUESTED → CANCELLED`).
 
 ```text
 ACCEPTED ──▶ QUEUED ──▶ RUNNING ──┬──▶ SUCCEEDED
-                                  ├──▶ FAILED
-                                  └──▶ CANCEL_REQUESTED ──▶ CANCELLED
-
-ACCEPTED / QUEUED ──▶ CANCELLED        (inferred — cancel before running)
-any non-terminal  ──▶ EXPIRED          (inferred — expires_at passed, §12)
+  │            │                  ├──▶ FAILED
+  └────────────┴──▶ FAILED         └──▶ CANCEL_REQUESTED ──▶ CANCELLED
+  │            │
+  └────────────┴──▶ CANCELLED
+any non-terminal ──▶ EXPIRED          (expires_at passed, §12)
 ```
 
 - **Terminal states:** `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`.
+- **`FAILED` may arise from any non-terminal state, not only `RUNNING`.** An
+  operation can fail before it runs — admission rejection, scheduling failure,
+  resource unavailable at dequeue. Restricting `FAILED` to `RUNNING` would push
+  pre-run failures into `EXPIRED` or `CANCELLED`, both of which misrepresent what
+  happened. The `error.code` distinguishes the failure; the state does not.
+- **`CANCELLED` may be reached without `CANCEL_REQUESTED`.** A cancel before
+  execution has nothing to interrupt, so there is no request/acknowledge round
+  trip to model: `ACCEPTED`/`QUEUED → CANCELLED` directly. The
+  `CANCEL_REQUESTED` path (`RUNNING → CANCEL_REQUESTED → CANCELLED`) applies only
+  once work is in flight.
 - **`CANCEL_REQUESTED` is a request, not an instantaneous transition** (§59,
   the one defined transition): `RUNNING → CANCEL_REQUESTED → CANCELLED`. It is
   a 1.32-owned state — no internal plane models it (see reconciliation).
@@ -95,12 +105,6 @@ any non-terminal  ──▶ EXPIRED          (inferred — expires_at passed, §
   is a state a client may observe but not predict. *If client-predictable
   expiry is needed, `expires_at` is an additive field and needs the ADR-020
   treatment* — flagged, not assumed.
-
-**Inferred transitions requiring a decision** (the design is silent): does
-`FAILED` arise only from `RUNNING`, or also from `QUEUED`/`ACCEPTED`? Can
-`CANCELLED` be reached without `CANCEL_REQUESTED` (cancel before start)? Both
-are marked inferred above; they are implementation decisions to record, not
-citations.
 
 ## Error
 
