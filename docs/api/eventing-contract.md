@@ -1,7 +1,7 @@
 # Eventing 1.27 Contract
 
-**Status:** Draft — #247 artifact ("Freeze Eventing 1.27 delivery and workflow contract")
-**Source:** Design 1.27 (§8–§27 event/command, §33–§34 dead letters, §41–§45 workflow, §73–§76 failure, §97 persistence, §104 phases)
+**Status:** Frozen 2026-10-17 — #247 artifact ("Freeze Eventing 1.27 delivery and workflow contract")
+**Source:** Design 1.27 (§8–§19 event/command semantics, §20–§30 delivery/outbox/inbox, §31–§32 retry, §33–§34 dead letters, §40–§45 workflow, §47/§53 Equalix role, §73–§76 failure, §97 persistence, §104 phases)
 
 The frozen contract for the platform's common asynchronous execution fabric.
 This is a **projection** of Design 1.27, which is design-complete (2697 lines,
@@ -55,6 +55,11 @@ only to authorized platform operators.
 **Immutability (§6.3):** events are immutable facts. Events communicate durable
 facts; commands request work (§ executive summary).
 
+**Security metadata is a claim, not a grant (§15).** A consumer must not assume
+"internal event = trusted event." Authorization remains mandatory at the
+processing boundary; `security.classification` and `policy_version` describe
+what the producer asserted, not what the consumer may serve. See ADR-019.
+
 ## Command
 
 **Identity (§17):** every command has a `command_id`; retries reuse the same
@@ -96,9 +101,61 @@ Pattern: receive → check `event_id` → seen: ignore; unseen: process → reco
 State change and idempotency record should be coordinated in the same
 transaction where possible.
 
-## Dead letters
+## Outbox and inbox
 
-**After retry exhaustion (§33):** the event moves to a dead-letter record that
+#250's "restart recovery" and "resume without rerunning committed effects"
+criteria depend on the outbox and inbox patterns, so their record shapes are
+**frozen here** rather than deferred — the design provides them (§28, §30).
+
+**Outbox (§28):**
+
+```text
+outbox_events
+-------------
+event_id
+event_type
+event_version
+tenant_id
+aggregate_type
+aggregate_id
+payload
+created_at
+published_at
+attempt_count
+last_error
+```
+
+**Inbox (§30):**
+
+```text
+inbox_events
+------------
+consumer_id
+event_id
+received_at
+processed_at
+status
+```
+
+**Cross-plane boundary:** the *shapes* are frozen so consumers and producers
+agree on the record contract. The *store* is per-service — each service owns
+its outbox/inbox table (§97 PostgreSQL recommended, not required). The contract
+is the column set and semantics, not a shared database.
+
+## Retry
+
+**Bounded exponential backoff (§31):** retryable failures use bounded
+exponential backoff (e.g. 1s, 2s, 4s, 8s, 16s…), and a maximum retry policy
+must exist — retry is bounded, not unbounded.
+
+**Retry classification (§32):** errors are classified, and only appropriate
+categories are retried:
+
+```text
+TRANSIENT · PERMANENT · SECURITY · INVALID · DEPENDENCY · TIMEOUT · RESOURCE
+```
+
+## Dead letters**After retry exhaustion (§33):** the event moves to a dead-letter record that
 **retains the original event identity**. Operators must be able to inspect,
 classify, and act on dead letters (§34). Dead letters are not silent drops — the
 identity is preserved so the event can be replayed or dispositioned.
@@ -154,6 +211,23 @@ one of `RETRYABLE` · `FAILED` · `CANCELLED` · `WAITING` · `ESCALATED`. This
 distinguishes retryable from terminal — the property #250's acceptance criteria
 require.
 
+**Mapping to the public Operation state.** The internal command/workflow is
+linked to the external Operation by stable IDs (§18), but the two failure
+vocabularies must not be left to each consumer to reconcile. Three of the five
+workflow failure states have no public counterpart; the mapping is:
+
+| Workflow failure (§76) | Public Operation (`operation-model.md`) | Note |
+|---|---|---|
+| `RETRYABLE` | `RUNNING` | retry is progress, not failure |
+| `WAITING` | `RUNNING` | blocked on a dependency; not client-actionable |
+| `FAILED` | `FAILED` | terminal |
+| `CANCELLED` | `CANCELLED` | terminal |
+| `ESCALATED` | `FAILED` | terminal; operator intervention required — `error.code` distinguishes |
+
+Without this table the first #250 implementer and the second consumer pick
+different mappings for `RETRYABLE`/`WAITING`/`ESCALATED` — the divergence class
+the platform reconciles elsewhere (`ExtractionStatus`, GPU `ExecutionState`).
+
 **Persistence (§97):** workflow state must be recoverable independently of the
 process. PostgreSQL is a recommended initial implementation, not a Platform
 requirement.
@@ -167,11 +241,12 @@ cross-plane "what triggered this?" property.
 
 ## Equalix's role
 
-Equalix is a **workflow participant**, not the engine (§53). The Workflow Plane
-is the fabric; Equalix executes as a participant coordinating recalculation.
-The generic Workflow Plane must not duplicate Equalix's dependency-analysis
-logic (§53). This resolves the capstone's "Workflow / Equalix" box: the engine
-is 1.27; Equalix is a participant in it.
+Equalix is a **workflow participant**, not the engine. The Workflow Plane is
+the fabric and the durable state owner (§47: "requires a durable state owner.
+The Workflow Plane provides that owner"); Equalix executes as a participant
+coordinating recalculation (§53). The generic Workflow Plane must not duplicate
+Equalix's dependency-analysis logic (§53). This resolves the capstone's
+"Workflow / Equalix" box: the engine is 1.27; Equalix is a participant in it.
 
 ## First customer — #250
 
@@ -201,4 +276,4 @@ this contract.
 - `docs/implementation/eventing-workflow-plane/INDEX.md` — implementation plan
 - `docs/api/operation-model.md` — the public Operation the internal command links to
 - `docs/api/identity-context.md` — the tenant/principal source for event scope
-- [ADR-004](../architecture/decisions/adr-004-eventing-workflow-plane.md) — the plane decision
+- [ADR-004](../../architecture/decisions/adr-004-eventing-workflow-plane.md) — the plane decision
