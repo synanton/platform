@@ -236,6 +236,8 @@ interpreted with the terminal run state:
   admitting any resource; the Operation/run error records why.
 - `COMPLETED`, `SKIPPED`, or `UNCHANGED` with an empty manifest means the
   connector ran and found nothing to admit (or no changes to record).
+- `CANCELLED` with an empty manifest means cancellation arrived before any
+  resource was discovered/admitted.
 
 The state plus the empty manifest distinguishes a failed start from a healthy
 empty-source sync; neither is an unrecorded run.
