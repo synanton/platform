@@ -91,12 +91,31 @@ public class IngestionRunController {
         String status,
         java.time.Instant startedAt,
         java.time.Instant completedAt,
-        org.synanton.ingestioncache.domain.SyncResultRow result,
+        SyncResultResource result,
         String errorRef
     ) {
         private static RunResource from(IngestionRunRow run) {
             return new RunResource(run.runId(), run.operationId(), run.sourceId(), run.status(), run.startedAt(),
-                run.completedAt(), run.result(), run.errorRef());
+                run.completedAt(), SyncResultResource.from(run.result()), run.errorRef());
+        }
+    }
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public record SyncResultResource(
+        int discovered,
+        int changed,
+        int unchanged,
+        int deleted,
+        int failed,
+        int skipped,
+        int quarantined,
+        int cancelled
+    ) {
+        private static SyncResultResource from(org.synanton.ingestioncache.domain.SyncResultRow result) {
+            return result == null ? null : new SyncResultResource(
+                result.discovered(), result.changed(), result.unchanged(), result.deleted(), result.failed(),
+                result.skipped(), result.quarantined(), result.cancelled()
+            );
         }
     }
 }

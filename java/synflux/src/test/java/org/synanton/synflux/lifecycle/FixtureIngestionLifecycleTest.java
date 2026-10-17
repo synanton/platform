@@ -225,6 +225,38 @@ class FixtureIngestionLifecycleTest {
     }
 
     @Test
+    void concurrentSameIdempotencyKeyReservationsConvergeOnOneOperation() throws Exception {
+        VerifiedIngestionContext context = principal("tenant-operation-race-" + UUID.randomUUID());
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            var first = executor.submit(() -> {
+                ready.countDown();
+                start.await();
+                return operationService.accept(context, "request-a", "same-key");
+            });
+            var second = executor.submit(() -> {
+                ready.countDown();
+                start.await();
+                return operationService.accept(context, "request-b", "same-key");
+            });
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+
+            OperationRow operationA = first.get(10, TimeUnit.SECONDS);
+            OperationRow operationB = second.get(10, TimeUnit.SECONDS);
+            assertThat(operationA.operationId()).isEqualTo(operationB.operationId());
+            assertThat(cache.readOperation(context.tenantId(), operationA.operationId())).isPresent();
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     void incompleteDiscoveryDoesNotTombstone_butExplicitDeletionPreservesProvenance() {
         VerifiedIngestionContext context = principal("tenant-deletion");
         String sourceId = "fixture-corpus";
@@ -327,6 +359,8 @@ class FixtureIngestionLifecycleTest {
         VerifiedIngestionContext context = principal("tenant-empty-runs");
         var emptySource = lifecycle.recordEmptyRun(context, UUID.randomUUID(), UUID.randomUUID(),
             "empty-source", FixtureIngestionService.EmptyRunDisposition.EMPTY_SOURCE);
+        var unchangedSource = lifecycle.recordEmptyRun(context, UUID.randomUUID(), UUID.randomUUID(),
+            "unchanged-source", FixtureIngestionService.EmptyRunDisposition.UNCHANGED_SOURCE);
         var skipped = lifecycle.recordEmptyRun(context, UUID.randomUUID(), UUID.randomUUID(),
             "policy-source", FixtureIngestionService.EmptyRunDisposition.SKIPPED_POLICY);
         var cancelled = lifecycle.recordEmptyRun(context, UUID.randomUUID(), UUID.randomUUID(),
@@ -335,10 +369,11 @@ class FixtureIngestionLifecycleTest {
             "failed-source", FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY);
 
         assertThat(emptySource.status()).isEqualTo("COMPLETED");
+        assertThat(unchangedSource.status()).isEqualTo("UNCHANGED");
         assertThat(skipped.status()).isEqualTo("SKIPPED");
         assertThat(cancelled.status()).isEqualTo("CANCELLED");
         assertThat(failed.status()).isEqualTo("FAILED");
-        for (IngestionRunRow run : List.of(emptySource, skipped, cancelled, failed)) {
+        for (IngestionRunRow run : List.of(emptySource, unchangedSource, skipped, cancelled, failed)) {
             assertThat(run.result().entryCount()).isZero();
             assertThat(cache.readIngestionManifest(context.tenantId(), run.runId()).orElseThrow().entryCount())
                 .isZero();
@@ -441,7 +476,7 @@ class FixtureIngestionLifecycleTest {
         FixtureSourceWorkflow.Submission retry = workflow.ingest(
             context, sourceId, "manuals/workflow.md", "request-retry", "workflow-key");
         FixtureSourceWorkflow.Submission accepted = workflow.submit(
-            context, sourceId, "manuals/workflow.md", "request-submit", "second-workflow-key");
+            context, sourceId, "manuals/workflow.md", "request-submit", null);
         IngestionRunRow submittedRun = cache.readIngestionRun(context.tenantId(), accepted.run().runId()).orElseThrow();
         OperationRow submittedOperation = cache.readOperation(context.tenantId(), accepted.operation().operationId())
             .orElseThrow();
@@ -455,6 +490,7 @@ class FixtureIngestionLifecycleTest {
         assertThat(retry.run().runId()).isEqualTo(first.run().runId());
         assertThat(retry.operation().operationId()).isEqualTo(first.operation().operationId());
         assertThat(submittedRun.status()).isEqualTo("UNCHANGED");
+        assertThat(submittedRun.operationId()).isEqualTo(accepted.operation().operationId());
         assertThat(submittedOperation.status()).isEqualTo("SUCCEEDED");
         assertThat(submittedOperation.outcome()).isEqualTo("FULL");
         assertThat(cache.listSourceVersions(context.tenantId(), "filesystem", sourceId, "manuals/workflow.md"))

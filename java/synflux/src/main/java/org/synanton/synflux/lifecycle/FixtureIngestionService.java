@@ -262,6 +262,7 @@ public final class FixtureIngestionService {
         Instant startedAt = clock.instant();
         String status = switch (disposition) {
             case EMPTY_SOURCE -> "COMPLETED";
+            case UNCHANGED_SOURCE -> "UNCHANGED";
             case SKIPPED_POLICY -> "SKIPPED";
             case CANCELLED -> "CANCELLED";
             case FAILED_BEFORE_DISCOVERY -> "FAILED";
@@ -574,6 +575,7 @@ public final class FixtureIngestionService {
     public enum EmptyRunDisposition {
         FAILED_BEFORE_DISCOVERY,
         EMPTY_SOURCE,
+        UNCHANGED_SOURCE,
         SKIPPED_POLICY,
         CANCELLED,
         EXPIRED_BEFORE_DISCOVERY

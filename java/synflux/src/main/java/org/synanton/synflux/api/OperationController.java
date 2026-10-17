@@ -1,5 +1,9 @@
 package org.synanton.synflux.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -21,10 +25,12 @@ public class OperationController {
 
     private final IngestionCacheClient cache;
     private final FixtureSourceWorkflow workflow;
+    private final ObjectMapper objectMapper;
 
-    public OperationController(IngestionCacheClient cache, FixtureSourceWorkflow workflow) {
+    public OperationController(IngestionCacheClient cache, FixtureSourceWorkflow workflow, ObjectMapper objectMapper) {
         this.cache = cache;
         this.workflow = workflow;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping("/{operationId}")
@@ -35,7 +41,7 @@ public class OperationController {
         IngestionErrorRow error = operation.errorId() == null
             ? null
             : cache.readIngestionError(tenantId, operation.errorId()).orElse(null);
-        return OperationResource.from(operation, error);
+        return OperationResource.from(operation, error, objectMapper);
     }
 
     @PostMapping("/{operationId}/cancel")
@@ -49,7 +55,7 @@ public class OperationController {
         IngestionErrorRow error = operation.errorId() == null
             ? null
             : cache.readIngestionError(tenantId, operation.errorId()).orElse(null);
-        return OperationResource.from(operation, error);
+        return OperationResource.from(operation, error, objectMapper);
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -72,7 +78,8 @@ public class OperationController {
         String outcome,
         Map<String, Object> error
     ) {
-        private static OperationResource from(OperationRow row, IngestionErrorRow error) {
+        private static OperationResource from(
+                OperationRow row, IngestionErrorRow error, ObjectMapper objectMapper) {
             Map<String, Object> problem = error == null ? null : Map.of(
                 "type", error.type(),
                 "title", error.title(),
@@ -82,13 +89,28 @@ public class OperationController {
                 "code", error.code(),
                 "retryable", error.retryable(),
                 "request_id", error.requestId(),
-                "details", Map.of()
+                "details", details(objectMapper, error.detailsJson())
             );
             return new OperationResource(
                 row.operationId(), row.type(), row.status(), new RequestedBy(row.requestedByPrincipalId()),
                 row.tenantId(), row.createdAt(), row.startedAt(), row.completedAt(),
                 new Progress(row.progressCompleted(), row.progressTotal()), row.outcome(), problem
             );
+        }
+
+        private static Map<String, Object> details(ObjectMapper objectMapper, String detailsJson) {
+            if (detailsJson == null || detailsJson.isBlank()) {
+                return Map.of();
+            }
+            try {
+                JsonNode node = objectMapper.readTree(detailsJson);
+                if (node == null || !node.isObject()) {
+                    return Map.of();
+                }
+                return objectMapper.convertValue(node, new TypeReference<>() {});
+            } catch (JsonProcessingException | IllegalArgumentException malformedDetails) {
+                return Map.of();
+            }
         }
     }
 }

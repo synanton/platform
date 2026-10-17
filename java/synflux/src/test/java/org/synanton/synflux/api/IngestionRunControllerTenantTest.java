@@ -33,6 +33,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class IngestionRunControllerTenantTest {
@@ -40,12 +42,13 @@ class IngestionRunControllerTenantTest {
     private static final String SECRET = "synflux-test-jwt-secret-at-least-32-bytes";
 
     private FixtureSourceWorkflow workflow;
+    private IngestionCacheClient cache;
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
         workflow = mock(FixtureSourceWorkflow.class);
-        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        cache = mock(IngestionCacheClient.class);
         TenantContextFilter filter = new TenantContextFilter(new JwtVerifier(SECRET), "health-probe", "/actuator");
         mvc = MockMvcBuilders.standaloneSetup(new IngestionRunController(workflow, cache)).addFilters(filter).build();
     }
@@ -86,6 +89,23 @@ class IngestionRunControllerTenantTest {
             .andExpect(status().isUnauthorized());
 
         verify(workflow, never()).submit(any(), anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void runResponseUsesExplicitSnakeCaseSyncResultDto() throws Exception {
+        UUID runId = UUID.randomUUID();
+        UUID operationId = UUID.randomUUID();
+        Instant now = Instant.parse("2026-10-17T12:00:00Z");
+        IngestionRunRow run = new IngestionRunRow("tenant-a", runId, operationId, "source-a", "COMPLETED",
+            now, now, new SyncResultRow(0, 1, 0, 0, 0, 0, 0, 0), null);
+        when(cache.readIngestionRun("tenant-a", runId)).thenReturn(java.util.Optional.of(run));
+
+        mvc.perform(get("/v1/ingestion-runs/{runId}", runId)
+                .header("Authorization", "Bearer " + token("tenant-a")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.source_id").value("source-a"))
+            .andExpect(jsonPath("$.result.changed").value(1))
+            .andExpect(jsonPath("$.sourceId").doesNotExist());
     }
 
     private static String token(String tenantId) throws Exception {
