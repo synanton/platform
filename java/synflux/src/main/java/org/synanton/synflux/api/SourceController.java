@@ -142,24 +142,25 @@ public class SourceController {
     }
 
     @GetMapping("/{sourceId}/versions")
-    public List<SourceVersionRow> listVersions(@PathVariable String sourceId) {
+    public List<SourceVersionResource> listVersions(@PathVariable String sourceId) {
         SourceRow source = readSource(sourceId);
         return cache.listSourceIdentities(source.tenantId(), sourceId, source.connectorId()).stream()
             .flatMap(identity -> cache.listSourceVersions(
                 identity.tenantId(), identity.connectorId(), identity.sourceId(), identity.resourceId()).stream())
             .sorted(Comparator.comparing(SourceVersionRow::observedAt))
+            .map(SourceVersionResource::from)
             .toList();
     }
 
     @GetMapping("/{sourceId}/versions/{versionId}")
-    public SourceVersionRow getVersion(@PathVariable String sourceId, @PathVariable UUID versionId) {
+    public SourceVersionResource getVersion(@PathVariable String sourceId, @PathVariable UUID versionId) {
         SourceRow source = readSource(sourceId);
         for (SourceIdentityRow identity : cache.listSourceIdentities(
                 source.tenantId(), sourceId, source.connectorId())) {
             var version = cache.readSourceVersion(
                 identity.tenantId(), identity.connectorId(), identity.sourceId(), identity.resourceId(), versionId);
             if (version.isPresent()) {
-                return version.get();
+                return SourceVersionResource.from(version.get());
             }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "source version not found");
@@ -222,6 +223,24 @@ public class SourceController {
         private static SourceResource from(SourceRow row) {
             return new SourceResource(row.sourceId(), row.connectorId(), row.connectorType(), row.sourceEndpoint(),
                 row.capabilityFlags(), row.status(), row.createdAt(), row.lastSuccessfulSyncAt());
+        }
+    }
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public record SourceIdentityResource(String tenantId, String connectorId, String sourceId, String resourceId) {}
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public record SourceVersionResource(
+        SourceIdentityResource sourceIdentity,
+        UUID versionId,
+        String contentDigest,
+        String sourceRevision,
+        java.time.Instant observedAt
+    ) {
+        private static SourceVersionResource from(SourceVersionRow row) {
+            return new SourceVersionResource(
+                new SourceIdentityResource(row.tenantId(), row.connectorId(), row.sourceId(), row.resourceId()),
+                row.versionId(), row.contentDigest(), row.sourceRevision(), row.observedAt());
         }
     }
 }

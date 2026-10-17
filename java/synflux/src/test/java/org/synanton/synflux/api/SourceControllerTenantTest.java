@@ -11,7 +11,9 @@ import org.mockito.ArgumentCaptor;
 import org.synanton.common.jwt.JwtVerifier;
 import org.synanton.common.tenant.TenantContextFilter;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.domain.SourceIdentityRow;
 import org.synanton.ingestioncache.domain.SourceRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.synflux.lifecycle.FixtureSourceWorkflow;
 import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
 import org.springframework.http.MediaType;
@@ -22,6 +24,8 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class SourceControllerTenantTest {
@@ -96,6 +101,30 @@ class SourceControllerTenantTest {
             .andExpect(status().isBadRequest());
 
         verify(cache, never()).createSourceIfAbsent(org.mockito.ArgumentMatchers.any(SourceRow.class));
+    }
+
+    @Test
+    void sourceVersionResponseUsesFrozenSnakeCaseFields() throws Exception {
+        SourceRow source = new SourceRow("tenant-a", "source-a", "fixture", "file",
+            "file:///fixture", Set.of(), "ACTIVE", Instant.parse("2026-10-17T10:00:00Z"), null);
+        SourceIdentityRow identity = new SourceIdentityRow("tenant-a", "fixture", "source-a", "doc.md");
+        SourceVersionRow version = new SourceVersionRow(
+            "tenant-a", "fixture", "source-a", "doc.md", UUID.randomUUID(), "digest-a", "revision-a",
+            Instant.parse("2026-10-17T10:01:00Z"), UUID.randomUUID(), null
+        );
+        when(cache.readSource("tenant-a", "source-a")).thenReturn(Optional.of(source));
+        when(cache.listSourceIdentities("tenant-a", "source-a", "fixture")).thenReturn(List.of(identity));
+        when(cache.listSourceVersions("tenant-a", "fixture", "source-a", "doc.md"))
+            .thenReturn(List.of(version));
+
+        mvc.perform(get("/v1/sources/source-a/versions")
+                .header("Authorization", "Bearer " + token("tenant-a")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].source_identity.tenant_id").value("tenant-a"))
+            .andExpect(jsonPath("$[0].content_digest").value("digest-a"))
+            .andExpect(jsonPath("$[0].source_revision").value("revision-a"))
+            .andExpect(jsonPath("$[0].contentDigest").doesNotExist())
+            .andExpect(jsonPath("$[0].sourceIdentity").doesNotExist());
     }
 
     @Test

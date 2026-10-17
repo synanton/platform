@@ -115,7 +115,7 @@ public class FixtureSourceWorkflow {
         try {
             executor.execute(() -> {
                 try {
-                    ingest(context, sourceId, resourceId, requestId, idempotencyKey);
+                    process(context, source, sourceId, resourceId, runId, running);
                 } finally {
                     activeOperations.remove(operation.operationId());
                 }
@@ -154,9 +154,20 @@ public class FixtureSourceWorkflow {
         }
 
         OperationRow running = operations.markRunning(operation, 1);
-        if ("CANCELLED".equals(running.status()) || operations.cancellationRequested(operation.operationId())) {
+        return process(context, source, sourceId, resourceId, runId, running);
+    }
+
+    private Submission process(
+            VerifiedIngestionContext context,
+            SourceRow source,
+            String sourceId,
+            String resourceId,
+            UUID runId,
+            OperationRow running) {
+        UUID operationId = running.operationId();
+        if ("CANCELLED".equals(running.status()) || operations.cancellationRequested(operationId)) {
             IngestionRunRow cancelled = lifecycle.recordEmptyRun(
-                context, runId, operation.operationId(), sourceId,
+                context, runId, operationId, sourceId,
                 FixtureIngestionService.EmptyRunDisposition.CANCELLED);
             return new Submission(cancelled, operations.completeFromRun(running, cancelled));
         }
@@ -167,26 +178,26 @@ public class FixtureSourceWorkflow {
                 .orElse(null);
             if (ref == null) {
                 IngestionRunRow failed = lifecycle.recordEmptyRun(
-                    context, runId, operation.operationId(), sourceId,
+                    context, runId, operationId, sourceId,
                     FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY);
                 return new Submission(failed, operations.completeFromRun(running, failed));
             }
 
-            if (operations.cancellationRequested(operation.operationId())) {
+            if (operations.cancellationRequested(operationId)) {
                 IngestionRunRow cancelled = lifecycle.recordEmptyRun(
-                    context, runId, operation.operationId(), sourceId,
+                    context, runId, operationId, sourceId,
                     FixtureIngestionService.EmptyRunDisposition.CANCELLED);
                 return new Submission(cancelled, operations.completeFromRun(running, cancelled));
             }
             StageContext stageContext = new StageContext(context.tenantId(), runId.toString(), properties);
             AcquiredDocument acquired = acquireStage.apply(ref, stageContext);
             IngestionRunRow run = lifecycle.ingest(
-                context, runId, operation.operationId(), source.connectorId(), sourceId, resourceId,
+                context, runId, operationId, source.connectorId(), sourceId, resourceId,
                 ref, acquired.bytes(), ignored -> {
-                    if (operations.cancellationRequested(operation.operationId())) {
+                    if (operations.cancellationRequested(operationId)) {
                         throw new CancellationException("Operation cancellation requested");
                     }
-                    return publishThroughPipeline(acquired, stageContext, operation.operationId());
+                    return publishThroughPipeline(acquired, stageContext, operationId);
                 }
             );
             return new Submission(run, operations.completeFromRun(running, run));
@@ -194,7 +205,7 @@ public class FixtureSourceWorkflow {
             throw e;
         } catch (Exception failure) {
             IngestionRunRow failed = lifecycle.recordEmptyRun(
-                context, runId, operation.operationId(), sourceId,
+                context, runId, operationId, sourceId,
                 FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY);
             return new Submission(failed, operations.completeFromRun(running, failed));
         }
