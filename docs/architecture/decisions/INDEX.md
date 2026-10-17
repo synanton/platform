@@ -52,9 +52,9 @@ precedent for ADR-014 through ADR-020):
   (see ADR-016's handler-count correction, ADR-018's consequence addition).
 
 ```markdown
-# ADR-NNN: <decision>
+# ADR-NNN: [decision — one line]
 
-**Status:** Proposed | Accepted | Superseded | Deprecated <YYYY-MM-DD>
+**Status:** Proposed | Accepted | Superseded | Deprecated [YYYY-MM-DD]
 **Basis:** [what motivates the decision]
 
 ## Decision
