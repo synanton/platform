@@ -119,6 +119,25 @@ FAILED · CANCELLED · SKIPPED · UNCHANGED · DELETED · QUARANTINED
 The state transitions are durable (§38). `Operation.status` remains the
 cross-plane lifecycle; `IngestionRun.status` reports ingestion-specific state.
 
+**Status naming divergence from §32:** that section's example says
+`status: RUNNING`; this model selects the ingestion-specific §38 state
+(`ACQUIRING`, `VALIDATING`, etc.) for `IngestionRun`. The linked Operation
+carries the generic public Operation status.
+
+**Terminal IngestionRun → Operation mapping:**
+
+| IngestionRun terminal status (§38) | Operation status | Qualification |
+|---|---|---|
+| `COMPLETED` | `SUCCEEDED` | `outcome: FULL` |
+| `FAILED` | `FAILED` | W2 error instance describes the failure |
+| `CANCELLED` | `CANCELLED` | terminal cancellation |
+| `SKIPPED` / `UNCHANGED` / `DELETED` | `SUCCEEDED` | `outcome: FULL`; run status preserves the specific no-op/deletion result |
+| `QUARANTINED` | `FAILED` | W2 error details identify quarantine; no artifact is published |
+
+The run-specific status remains available on `IngestionRun`; the linked
+Operation exposes the cross-plane lifecycle. This mapping prevents a client
+holding both IDs from having to infer how terminal ingestion outcomes map.
+
 **Synchronization result (1.28 §15):** a sync run produces an explicit
 `SyncResult`:
 
@@ -158,14 +177,21 @@ systems to determine what was deleted:
 Tombstone {
     source_identity        // tenant_id + connector_id + source_id + resource_id
     deleted_at
-    deleted_by             // authenticated principal or source connector identity
+    deleted_by: {
+        principal_id
+        principal_type
+    }
     reason                 // authoritative deletion reason
-    version_ids_at_deletion
+    version_count
+    versions_manifest_ref  // reference to bounded external manifest of version IDs
 }
 ```
 
 This is the minimal #248 API tombstone shape selected to satisfy §17's
-"sufficient identity and provenance" requirement. Downstream effects include
+"sufficient identity and provenance" requirement. `deleted_by` uses the 1.29
+principal namespace (including `CONNECTOR`), so the actor cannot be confused
+with a connector ID in another namespace. Version IDs are kept in a referenced
+manifest rather than an unbounded inline array. Downstream effects include
 Content Cache invalidation, search-projection removal, knowledge invalidation,
 and an analytics event.
 
@@ -239,6 +265,11 @@ The Source API's `PATCH` surface is deliberately limited:
   quotas (tenant policy). These are separately governed configuration. Changes
   affecting ingestion behavior are versioned and recorded on the run (§75–§76).
 
+Changing `source_endpoint` must not silently change logical source identity. On
+PATCH, the connector re-resolves `resource_id`; if the new endpoint identifies
+a different logical resource, create a new source identity/history rather than
+appending versions from the different resource to the existing identity.
+
 Source-level timestamps (read-only resource metadata selected for #248):
 `created_at` records resource creation; `last_successful_sync_at` is projected
 from the latest successful sync run. It anchors `SYNC_INCOMPLETE` assessment
@@ -258,8 +289,9 @@ over the frozen 1.27 envelope (`eventing-contract.md`): `SourceDiscovered`,
 `IngestionFailed`, `SourceQuarantined`. The eventing contract does **not**
 enumerate event types (`event_type` is an open envelope field, §13), but the
 1.28 names are the authority for this plane — do not substitute dotted/lowercase
-aliases without recording a deliberate divergence. Deletion propagates as a
-tombstone event (§17).
+aliases without recording a deliberate divergence. **`SourceDeleted` is the
+deletion event; the tombstone is its payload/durable record, not a second event
+type** (§17).
 
 ## Freeze scope
 
