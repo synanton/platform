@@ -1,7 +1,15 @@
 # Source Resource Model
 
-**Status:** Frozen 2026-10-17 — #248 source-model contract; implementation remains open under issue #248
+**Status:** Revised and frozen 2026-10-17 — source/resource cardinality and deletion semantics clarified after initial freeze in PR #282
 **Source:** Design 1.28 §7.5–§17, §39–§40, §112–§113 (ingestion lifecycle); Design 1.32 §29–§32 (API surface)
+
+**Revision note (2026-10-17):** #248 implementation began on `FIX-source-lifecycle`
+before an implementation audit found that the initial frozen Source example
+collapsed connector configuration and discovered resource identity. This dated
+revision separates those entities and clarifies endpoint re-resolution and
+DELETE behavior before public API integration. The established
+`SourceIdentity` tuple, SourceVersion, event business keys, and tombstone shape
+remain unchanged.
 
 The resource model for sources, source versions, and ingestion runs. A
 **projection** of Design 1.28 (ingestion lifecycle, authoritative) and Design
@@ -34,21 +42,31 @@ SourceIdentity {
 }
 ```
 
+`SourceIdentity` denotes the identity of one resource within a configured
+source. The terms *source* and *resource* follow Design 1.28 §9.1–§9.2; this
+artifact retains “source identity” as the established name for the per-resource
+tuple in §10 and in eventing, manifests, and tombstones.
+
 `source_id` is a stable identifier (1.32 §8), not a database key, shard id, or
 storage location (1.32 §8).
 
-For the API route `/v1/sources/{source_id}`, `source_id` is unique within the
-trusted `tenant_id` scope. The full ingestion identity is finer-grained:
+For the API route `/v1/sources/{source_id}`, `source_id` identifies one
+configured source/connector and is unique within the trusted `tenant_id` scope.
+One configured source may discover many resource identities. The full
+per-resource ingestion identity is finer-grained:
 `tenant_id + connector_id + source_id + resource_id` (§10). The URL lookup key
 does not replace the provenance identity.
 
-The Source resource exposes the lookup identity and sync timestamps:
+The Source resource exposes connector configuration and source-level sync
+timestamps; it does not select one discovered resource:
 
 ```json
 {
   "source_id": "src_01...",
   "connector_id": "conn_01...",
-  "resource_id": "drive-file-42",
+  "source_endpoint": "file:///srv/fixture",
+  "capability_flags": ["DISCOVER", "AUTHORITATIVE_DELETE"],
+  "status": "ACTIVE",
   "created_at": "2026-10-17T10:00:00Z",
   "last_successful_sync_at": "2026-10-17T10:05:00Z"
 }
@@ -56,7 +74,14 @@ The Source resource exposes the lookup identity and sync timestamps:
 
 `tenant_id` is bound from verified request context, not copied from a body
 field. `last_successful_sync_at` is read-only and derived from the latest
-successful sync run.
+successful sync run across the configured source's resource identities.
+Per-resource `resource_id` values belong to `SourceIdentity`, `SourceVersion`,
+manifest entries, and tombstones. Version-list operations under a source return
+the source's resource versions; each version retains its full `source_identity`.
+Source creation therefore accepts connector configuration, not a `resource_id`;
+the connector discovers resource IDs during synchronization.
+`status` is server-managed and is `ACTIVE` or `DELETED`; `tenant_id` is never
+accepted in the request body.
 
 **Identity ≠ content digest.** Content digest identifies *what the acquired
 bytes hash to* (SHA-256 over a precisely defined representation, 1.28 §11).
@@ -405,6 +430,8 @@ PATCH  /v1/sources/{source_id}
 DELETE /v1/sources/{source_id}
 GET    /v1/sources
 
+DELETE /v1/sources/{source_id}/resources?resource_id={resource_id}
+
 GET /v1/sources/{source_id}/versions
 GET /v1/sources/{source_id}/versions/{version_id}
 
@@ -416,6 +443,10 @@ POST /v1/ingestion-runs/{run_id}/cancel
 Tenant scope is derived from trusted request context, not URL parameters
 (1.32 §28) — see `identity-context.md`.
 
+The `POST /v1/sources` request contains `source_id`, `connector_id`,
+`connector_type`, `source_endpoint`, and `capability_flags`; it does not contain
+`resource_id`. The response is the Source configuration shape shown above.
+
 ### Source resource fields and mutability
 
 The Source API's `PATCH` surface is deliberately limited:
@@ -423,23 +454,56 @@ The Source API's `PATCH` surface is deliberately limited:
 - **Mutable:** `source_endpoint` and `capability_flags` (non-secret static
   connector configuration; 1.28 §75).
 - **Immutable:** `tenant_id`, `connector_id`, `connector_type`, `source_id`,
-  `resource_id`, and all published `SourceVersion` identity/content fields.
+  and all published `SourceVersion` identity/content fields. `resource_id` is not
+  a Source configuration field; it is part of each discovered `SourceIdentity`.
 - **Not patched here:** credentials/tokens/certificates (secret configuration),
   schedule/concurrency/retry policy (runtime policy), and retention/classification/
   quotas (tenant policy). These are separately governed configuration. Changes
   affecting ingestion behavior are versioned and recorded on the run (§75–§76).
 
-Changing `source_endpoint` must not silently change logical source identity.
-On PATCH, the connector re-resolves `source_id` and `resource_id`; if the new
-endpoint identifies a different logical origin/resource, create a new source
-identity/history rather than appending versions from the different origin to
-the existing identity.
+Changing `source_endpoint` must not silently change logical source identity:
 
-Source-level timestamps (read-only resource metadata selected for #248):
-`created_at` records resource creation; `last_successful_sync_at` is projected
-from the latest successful sync run. It anchors `SYNC_INCOMPLETE` assessment
-against the previous successful observation. `SourceVersion.observed_at`
-remains the observation time for each individual version (§10).
+- If the new endpoint identifies a different logical origin, create a new
+  configured Source with a new `source_id`; do not append its resources to the
+  existing source's history.
+- If it remains the same logical origin but resolves to a different resource
+  set, resolve each connector-relative `resource_id` independently. Existing
+  resource IDs retain their history; newly found IDs create new
+  `SourceIdentity` records. A missing ID is deleted only when the connector
+  reports authoritative `DELETED` after complete discovery;
+  incomplete/failed discovery never tombstones it.
+
+### Source configuration deletion and resource deletion
+
+`DELETE /v1/sources/{source_id}` deletes the connector configuration only. The
+Source remains addressable with `status: DELETED` for history and idempotency;
+resource versions, artifacts, and tombstones are retained. Config deletion does
+not imply that every external resource was deleted and emits no per-resource
+`SourceDeleted` event.
+
+`DELETE /v1/sources/{source_id}/resources?resource_id={resource_id}` deletes
+one logical resource. `resource_id` is an opaque query value so connector-relative
+paths need not be represented as URL path segments. It creates the per-resource
+tombstone with verified principal provenance and emits `SourceDeleted`; the
+configured Source remains active.
+Connector-reported `DELETED` observations use the same resource-level lifecycle.
+Non-authoritative observations do not create tombstones.
+The request is tracked by the ordinary `IngestionRun`/Operation pair and its
+manifest records the resource disposition for retry and audit.
+
+If a client needs both configuration and content removed, it deletes each
+resource explicitly (or accepts authoritative per-resource connector deletions)
+before deleting the Source configuration. There is no `SourceConfigDeleted`
+event: configuration retirement is represented by the retained Source's
+`status: DELETED`; `SourceDeleted` remains exclusively per resource. This split
+avoids an implicit N-resource cascade and its partial-failure/retry ambiguity.
+
+Source-level timestamps (read-only Source configuration metadata selected for
+#248): `created_at` records configuration creation;
+`last_successful_sync_at` is projected from the latest successful sync run
+across the source's resources. It anchors `SYNC_INCOMPLETE` assessment against
+the previous successful observation. `SourceVersion.observed_at` remains the
+observation time for each individual version (§10).
 
 Source-list pagination is out of scope for this #248 model; pagination
 conventions are owned by W7. This artifact defines no source-list cursor or
@@ -456,15 +520,18 @@ enumerate event types (`event_type` is an open envelope field, §13), but the
 1.28 names are the authority for this plane — do not substitute dotted/lowercase
 aliases without recording a deliberate divergence. **`SourceDeleted` is the
 deletion event; the tombstone is its payload/durable record, not a second event
-type** (§17).
+type** (§17). It always denotes one `SourceIdentity` resource deletion;
+configuration retirement changes the Source's retained `status` and does not
+emit `SourceDeleted` or a separate `SourceConfigDeleted` event.
 
 ## Freeze scope
 
-This artifact freezes the resource model: identity, version, ingestion-run
-status, deletion states and tombstone shape, idempotency identities, the mutable
-Source PATCH surface, and source timestamps. Implementation (the ingestion
-pipeline, connector version detection, tombstone propagation) follows against
-this model.
+This artifact freezes the separation between configured Source and per-resource
+SourceIdentity, version, ingestion-run status, deletion states and tombstone
+shape, idempotency identities, the mutable Source PATCH surface, source
+timestamps, endpoint re-resolution, and config/resource deletion behavior.
+Implementation (the ingestion pipeline, connector version detection, and
+tombstone propagation) follows against this revised model.
 
 ## Cross-references
 

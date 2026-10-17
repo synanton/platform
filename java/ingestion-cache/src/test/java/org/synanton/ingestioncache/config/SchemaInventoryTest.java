@@ -26,9 +26,20 @@ class SchemaInventoryTest {
                     "chunks_payload",
                     "embedding_content_cache",
                     "image_caption_cache",
+                    "ingestion_errors",
+                    "ingestion_manifest_entries",
+                    "ingestion_manifests",
+                    "ingestion_runs",
                     "jobs",
                     "manifest",
-                    "manifest_transitions_outbox");
+                    "manifest_transitions_outbox",
+                    "operation_idempotency",
+                    "operations",
+                    "source_identities",
+                    "source_tombstones",
+                    "source_version_manifest_entries",
+                    "source_versions",
+                    "sources");
 
     private static CassandraContainer cassandra;
     private static CqlSession session;

@@ -23,8 +23,11 @@ public class SynfluxCli implements ApplicationRunner {
 
         String path = args.getOptionValues("path") != null && !args.getOptionValues("path").isEmpty()
             ? args.getOptionValues("path").get(0) : "/demo-data/documents";
-        String tenant = args.getOptionValues("tenant") != null && !args.getOptionValues("tenant").isEmpty()
-            ? args.getOptionValues("tenant").get(0) : "demo";
+        if (args.getOptionValues("tenant") == null || args.getOptionValues("tenant").isEmpty()
+                || args.getOptionValues("tenant").get(0).isBlank()) {
+            throw new IllegalArgumentException("--tenant is required for CLI ingestion");
+        }
+        String tenant = args.getOptionValues("tenant").get(0);
         String source = args.getOptionValues("source") != null && !args.getOptionValues("source").isEmpty()
             ? args.getOptionValues("source").get(0) : "filesystem";
 
