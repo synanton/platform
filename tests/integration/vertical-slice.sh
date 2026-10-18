@@ -505,8 +505,14 @@ GEN_REBUILT=$(json "d['metadata']['configuration_generation']" <<<"$(body_of "$o
 rprov=$(http GET "$SYNQUEST_URL$(json "d['results'][0]['provenance_ref']" <<<"$(body_of "$out")")" "$TOK_A")
 assert_eq "recovery hit's provenance_ref resolves" "$(status_of "$rprov")" "200"
 RVERSION_ID=$(json "d[0]['version_id']" <<<"$rversions")
-assert_eq "recovery hit references the recovered version" \
-    "$(json "d['source_version_ids'][0]" <<<"$(body_of "$rprov")")" "$RVERSION_ID"
+# Contains, not equals-first: a chunk is content-addressed, and set
+# attribution legitimately carries every source version that derives the same
+# bytes. For this run the set must include the recovered version.
+rprov_ids=$(json "' '.join(d['source_version_ids'])" <<<"$(body_of "$rprov")")
+case " $rprov_ids " in
+    *" $RVERSION_ID "*) pass "recovery hit references the recovered version" ;;
+    *) die "recovery hit missing the recovered version (got: $rprov_ids, expected to contain $RVERSION_ID)" ;;
+esac
 
 step "Criterion 5 — cross-tenant denial"
 # Projection readiness is per-tenant: template B's projection must exist for
