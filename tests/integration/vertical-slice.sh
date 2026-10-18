@@ -261,9 +261,10 @@ TOK_A=$(mint_token "$TENANT_A")
 TOK_B=$(mint_token "$TENANT_B")
 mkdir -p "$FIXTURE_HOST_DIR/$SOURCE_MAIN" "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY"
 TOKEN_MARK="zebra-slice-token-$STAMP"
+RECOVERY_TOKEN_MARK="zebra-recovery-token-$STAMP"
 printf 'Supply-chain policy %s.\nThe logistics clause governs freight.\n' "$TOKEN_MARK" \
     > "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md"
-printf 'Recovery fixture %s.\nThe restart clause governs resumption.\n' "$TOKEN_MARK" \
+printf 'Recovery fixture %s.\nThe restart clause governs resumption.\n' "$RECOVERY_TOKEN_MARK" \
     > "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md"
 FIXTURE_HOST_DIR="$(cd "$FIXTURE_HOST_DIR" && pwd)"
 FIXTURE_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md" | cut -d' ' -f1)
@@ -486,7 +487,7 @@ GEN_BEFORE=$(json "d['metadata']['configuration_generation']" <<<"$(body_of "$ou
 # The search uses the CURRENT run's UNIQUE token: fixed phrases like
 # "restart clause" match every prior stamped run's recovery doc, and the top
 # hit is then whichever chunk BM25 ranks first — not necessarily this run's.
-out=$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"$TOKEN_MARK\"}")
+out=$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"$RECOVERY_TOKEN_MARK\"}")
 [ "$(status_of "$out")" = "200" ] || die "recovery search failed"
 RECOVERY_ID=$(json "d['results'][0]['object_id']" <<<"$(body_of "$out")")
 assert_not_empty "recovery content searchable through the public API" "$RECOVERY_ID"
@@ -496,7 +497,7 @@ GEN_AFTER=$(json "d['metadata']['configuration_generation']" <<<"$(body_of "$out
 assert_not_empty "configuration_generation present" "$GEN_AFTER"
 
 http POST "$SYNQUEST_URL/v1/search-projection/rebuild" "$TOK_A" '{}' > /dev/null
-out=$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"$TOKEN_MARK\"}")
+out=$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"$RECOVERY_TOKEN_MARK\"}")
 GEN_REBUILT=$(json "d['metadata']['configuration_generation']" <<<"$(body_of "$out")")
 [ "$GEN_REBUILT" -gt "$GEN_AFTER" ] && pass "configuration_generation increased on rebuild — $GEN_AFTER to $GEN_REBUILT" \
     || die "configuration_generation must increase on rebuild — $GEN_AFTER to $GEN_REBUILT"
