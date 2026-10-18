@@ -380,12 +380,22 @@ esac
 # chunk exactly once. Rebuild (the recovery source is not auto-projected),
 # then the projection's chunk count must equal the canonical chunk rows
 # across both sources — exact, not "at least one".
+# F1: probe auto-projection BEFORE the explicit rebuild — reports whether a
+# recovered source becomes searchable on its own (event-driven projection) or
+# projection is manual/scheduled. Neither is a failure; production behavior
+# must not be silent.
+sleep 10
+pre=$(body_of "$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"restart clause\"}")")
+case "$(json "len(d['results'])" <<<"$pre")" in
+    0) printf '  NOTE auto-projection absent — recovered source searchable only after explicit rebuild (manual/scheduled projection)\n' ;;
+    *) pass "auto-projection present — recovered source searchable without rebuild" ;;
+esac
 MAIN_CONTENT_REF=$(cqlsh_query "SELECT content_ref_id FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_MAIN' AND resource_id='fixture-doc.md';" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
 MAIN_CHUNKS=$(cql_count "SELECT COUNT(*) FROM ingestion_cache.chunks_payload WHERE tenant_id='$TENANT_A' AND content_ref_id=$MAIN_CONTENT_REF;")
 http POST "$SYNQUEST_URL/v1/search-projection/rebuild" "$TOK_A" '{}' > /dev/null
 proj=$(body_of "$(http GET "$SYNQUEST_URL/v1/search-projection" "$TOK_A")")
 assert_eq "projection chunk count equals canonical chunks (consumer applied once)" \
-    "$(json "d['chunkCount']" <<<"$proj")" "$((MAIN_CHUNKS + CHUNKS_AFTER))"
+    "$(json "d['chunk_count']" <<<"$proj")" "$((MAIN_CHUNKS + CHUNKS_AFTER))"
 
 step "Criterion 4 — search returns the correct hit"
 GEN_BEFORE=$(json "d['metadata']['configuration_generation']" <<<"$(body_of "$out")" 2>/dev/null || true)
