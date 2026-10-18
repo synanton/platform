@@ -15,6 +15,8 @@ import org.synanton.contentcache.FileSystemContentStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.IngestionRunRow;
+import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.OperationRow;
 import org.synanton.ingestioncache.domain.SourceIdentityConflictException;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
@@ -26,6 +28,7 @@ import org.synanton.synflux.api.SourceController;
 import org.synanton.synflux.config.SynfluxProperties;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.ParsedDocument;
+import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synflux.pipeline.stage.AcquireStage;
@@ -112,7 +115,7 @@ class FixtureIngestionLifecycleTest {
         AtomicInteger publications = new AtomicInteger();
 
         IngestionRunRow first = ingest(context, sourceId, resourceId, firstRef, firstBytes,
-            ignored -> {
+            (ignored, versionId) -> {
                 publications.incrementAndGet();
                 return UUID.randomUUID();
             });
@@ -133,7 +136,7 @@ class FixtureIngestionLifecycleTest {
             .containsExactly("SourcePublished");
 
         IngestionRunRow unchanged = ingest(context, sourceId, resourceId, firstRef, firstBytes,
-            ignored -> {
+            (ignored, versionId) -> {
                 publications.incrementAndGet();
                 return UUID.randomUUID();
             });
@@ -147,7 +150,7 @@ class FixtureIngestionLifecycleTest {
             firstModified.plusSeconds(60), 6);
         byte[] changedBytes = "second".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         IngestionRunRow changed = ingest(context, sourceId, resourceId, changedRef, changedBytes,
-            ignored -> UUID.randomUUID());
+            (ignored, versionId) -> UUID.randomUUID());
         assertThat(changed.result().changed()).isEqualTo(1);
         assertThat(versions(context, sourceId, resourceId)).hasSize(2);
         assertThat(cache.readSourceVersion(context.tenantId(), "file", sourceId, resourceId,
@@ -166,9 +169,9 @@ class FixtureIngestionLifecycleTest {
         byte[] bytes = "same bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         UUID sharedContentRefId = UUID.randomUUID();
         ingest(context, "fixture-corpus", "a/guide.md", fileRef("file:///a/guide.md", modified, bytes.length),
-            bytes, ignored -> sharedContentRefId);
+            bytes, (ignored, versionId) -> sharedContentRefId);
         ingest(context, "fixture-corpus", "b/guide.md", fileRef("file:///b/guide.md", modified, bytes.length),
-            bytes, ignored -> sharedContentRefId);
+            bytes, (ignored, versionId) -> sharedContentRefId);
 
         SourceVersionRow first = versions(context, "fixture-corpus", "a/guide.md").getFirst();
         SourceVersionRow second = versions(context, "fixture-corpus", "b/guide.md").getFirst();
@@ -187,8 +190,8 @@ class FixtureIngestionLifecycleTest {
         ContentRef ref = fileRef("file:///shared/guide.md", modified, bytes.length);
         UUID sharedContentRefId = UUID.randomUUID();
 
-        ingest(firstTenant, "fixture-corpus", "guide.md", ref, bytes, ignored -> sharedContentRefId);
-        ingest(secondTenant, "fixture-corpus", "guide.md", ref, bytes, ignored -> sharedContentRefId);
+        ingest(firstTenant, "fixture-corpus", "guide.md", ref, bytes, (ignored, versionId) -> sharedContentRefId);
+        ingest(secondTenant, "fixture-corpus", "guide.md", ref, bytes, (ignored, versionId) -> sharedContentRefId);
 
         SourceVersionRow first = versions(firstTenant, "fixture-corpus", "guide.md").getFirst();
         SourceVersionRow second = versions(secondTenant, "fixture-corpus", "guide.md").getFirst();
@@ -212,10 +215,10 @@ class FixtureIngestionLifecycleTest {
         Instant modified = Instant.parse("2026-10-11T12:00:00Z");
         ContentRef ref = fileRef("file:///conflict/document.md", modified, 4);
         ingest(context, sourceId, resourceId, ref, "one!".getBytes(java.nio.charset.StandardCharsets.UTF_8),
-            ignored -> UUID.randomUUID());
+            (ignored, versionId) -> UUID.randomUUID());
 
         IngestionRunRow conflict = ingest(context, sourceId, resourceId, ref,
-            "two?".getBytes(java.nio.charset.StandardCharsets.UTF_8), ignored -> UUID.randomUUID());
+            "two?".getBytes(java.nio.charset.StandardCharsets.UTF_8), (ignored, versionId) -> UUID.randomUUID());
         var error = cache.readIngestionError(context.tenantId(), UUID.fromString(conflict.errorRef())).orElseThrow();
         assertThat(conflict.status()).isEqualTo("FAILED");
         assertThat(error.code()).isEqualTo("RESOURCE_CONFLICT");
@@ -277,7 +280,7 @@ class FixtureIngestionLifecycleTest {
         byte[] bytes = "policy".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         Instant modified = Instant.parse("2026-10-12T10:00:00Z");
         ingest(context, sourceId, resourceId, fileRef("file:///legal/policy.md", modified, bytes.length),
-            bytes, ignored -> UUID.randomUUID());
+            bytes, (ignored, versionId) -> UUID.randomUUID());
 
         IngestionRunRow incomplete = lifecycle.recordDeletion(
             context, UUID.randomUUID(), UUID.randomUUID(), "file", sourceId, resourceId,
@@ -314,7 +317,7 @@ class FixtureIngestionLifecycleTest {
         IngestionRunRow recreated = afterDeletion.ingest(
             context, UUID.randomUUID(), UUID.randomUUID(), "file", sourceId, resourceId,
             fileRef("file:///legal/policy.md", modified, bytes.length), bytes,
-            testReference(context.tenantId()), ignored -> UUID.randomUUID());
+            testReference(context.tenantId()), (ignored, versionId) -> UUID.randomUUID());
         assertThat(recreated.result().changed()).isEqualTo(1);
         List<SourceVersionRow> allVersions = versions(context, sourceId, resourceId);
         assertThat(allVersions).extracting(SourceVersionRow::versionId)
@@ -336,7 +339,7 @@ class FixtureIngestionLifecycleTest {
         UUID operationId = UUID.randomUUID();
         IngestionRunRow failed = lifecycle.ingest(context, UUID.randomUUID(), operationId, ref.scheme(), sourceId,
             resourceId, ref, bytes, testReference(context.tenantId()),
-            ignored -> { throw new IOException("fixture publish outage"); });
+            (ignored, versionId) -> { throw new IOException("fixture publish outage"); });
         assertThat(failed.status()).isEqualTo("FAILED");
         assertThat(failed.result().failed()).isEqualTo(1);
         var error = cache.readIngestionError(context.tenantId(), UUID.fromString(failed.errorRef())).orElseThrow();
@@ -345,7 +348,7 @@ class FixtureIngestionLifecycleTest {
         assertThat(error.retryable()).isTrue();
 
         IngestionRunRow retried = lifecycle.ingest(context, UUID.randomUUID(), operationId, ref.scheme(), sourceId,
-            resourceId, ref, bytes, testReference(context.tenantId()), ignored -> UUID.randomUUID());
+            resourceId, ref, bytes, testReference(context.tenantId()), (ignored, versionId) -> UUID.randomUUID());
         assertThat(retried.status()).isEqualTo("COMPLETED");
         assertThat(retried.operationId()).isEqualTo(operationId);
         assertThat(versions(context, sourceId, resourceId)).hasSize(1);
@@ -427,7 +430,7 @@ class FixtureIngestionLifecycleTest {
         // Legacy overload delegates with a blank Content Cache reference: publication
         // must be withheld, never persisted with an empty reference.
         IngestionRunRow run = lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(),
-            "invariant-source", "guide.md", ref, bytes, ignored -> UUID.randomUUID());
+            "invariant-source", "guide.md", ref, bytes, (ignored, versionId) -> UUID.randomUUID());
         var entries = cache.listManifestEntries(context.tenantId(), run.runId());
         var error = cache.readIngestionError(context.tenantId(), UUID.fromString(run.errorRef())).orElseThrow();
 
@@ -455,7 +458,7 @@ class FixtureIngestionLifecycleTest {
             context, UUID.randomUUID(), UUID.randomUUID(), "file", "fixture", "cancel/readme.md",
             fileRef("file:///cancel/readme.md", Instant.parse("2026-10-15T10:00:00Z"), bytes.length),
             bytes, testReference(context.tenantId()),
-            ignored -> { throw new CancellationException("cancel requested"); });
+            (ignored, versionId) -> { throw new CancellationException("cancel requested"); });
         assertThat(cancelled.status()).isEqualTo("CANCELLED");
         assertThat(cancelled.result().cancelled()).isEqualTo(1);
         assertThat(cancelled.errorRef()).isNull();
@@ -528,7 +531,7 @@ class FixtureIngestionLifecycleTest {
 
         IngestionRunRow run = lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(), ref.scheme(),
             "local-fixture", resourceId, ref, acquiredBytes, testReference(context.tenantId()),
-            ignored -> UUID.randomUUID());
+            (ignored, versionId) -> UUID.randomUUID());
 
         assertThat(run.status()).isEqualTo("COMPLETED");
         assertThat(versions(context, "local-fixture", "manuals/quick start.md")).hasSize(1);
@@ -724,6 +727,182 @@ class FixtureIngestionLifecycleTest {
             finishExtraction.countDown();
             workerExecutor.shutdownNow();
         }
+    }
+
+    @Test
+    void knowledgeChunksCarryProvenanceToSourceVersionAndContentArtifact(@TempDir Path fixtureRoot)
+            throws IOException {
+        Path document = fixtureRoot.resolve("knowledge/provenance.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "canonical knowledge with provenance");
+        FilesystemAdapter adapter = new FilesystemAdapter();
+        ContentPullPort pullPort = new ContentPullPort(List.of(adapter));
+        FileSystemContentStore contentStore = new FileSystemContentStore(
+            fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-knowledge-cache"));
+        AcquireStage acquire = new AcquireStage(pullPort, contentStore);
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = new PersistStage(cache);
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                var acquired = parsed.acquired();
+                var knowledgeChunk = new SemanticChunk("k0", acquired.contentRefId().toString(), 0,
+                    SemanticChunk.ChunkType.SECTION, "knowledge text", null, List.of("Section"), "Section",
+                    List.of("element-1", "element-2"), 1, 1, 3, false, Map.of(),
+                    SemanticChunk.PUBLIC_ONLY, "chunksha");
+                return new ChunkedDocument(parsed, List.of(knowledgeChunk));
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, "knowledge text", Map.of(), null);
+        });
+
+        String tenantId = "tenant-knowledge-" + UUID.randomUUID();
+        String sourceId = "knowledge-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(),
+            Set.of("DISCOVER"), "ACTIVE", Instant.parse("2026-10-17T11:59:00Z"), null
+        ));
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
+            cache, pullPort, acquire, extraction, chunk, identityStage, identityStage, identityStage,
+            persist, testProperties(), lifecycle, operationService, Runnable::run,
+            new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+
+        FixtureSourceWorkflow.Submission submission = workflow.ingest(
+            principal(tenantId), sourceId, "knowledge/provenance.md", "request-knowledge", "knowledge-key");
+
+        SourceVersionRow sourceVersion = cache.listSourceVersions(
+            tenantId, "filesystem", sourceId, "knowledge/provenance.md").getFirst();
+        List<ChunkRow> knowledgeChunks = cache.readChunks(tenantId, sourceVersion.contentRefId());
+        assertThat(knowledgeChunks).isNotEmpty();
+        for (ChunkRow knowledgeChunk : knowledgeChunks) {
+            assertThat(knowledgeChunk.sourceVersionId()).isEqualTo(sourceVersion.versionId());
+            assertThat(knowledgeChunk.contentRefId()).isEqualTo(sourceVersion.contentRefId());
+            assertThat(knowledgeChunk.processingRunId()).isNotNull();
+        }
+        // Both artifact references resolve: the source version's content_ref (chunk
+        // partition key) and the manifest's content_cache_reference (opaque handle).
+        var manifest = cache.readManifest(tenantId, sourceVersion.contentRefId()).orElseThrow();
+        assertThat(manifest.contentCacheReference()).isEqualTo(sourceVersion.contentCacheReference());
+        assertThat(manifest.processingRunId()).isEqualTo(knowledgeChunks.getFirst().processingRunId());
+
+        KnowledgeProcessingRunRow run = cache.readKnowledgeProcessingRun(
+            tenantId, knowledgeChunks.getFirst().processingRunId()).orElseThrow();
+        assertThat(run.status()).isEqualTo("COMPLETED");
+        assertThat(run.producer()).isEqualTo("synflux-knowledge");
+        assertThat(run.inputJson()).contains(sourceVersion.versionId().toString(),
+            sourceVersion.contentRefId().toString(), sourceVersion.contentCacheReference());
+        assertThat(run.outputJson()).contains("chunk_count");
+        // Reprocessing the same source version does not duplicate derived state.
+        assertThat(cache.readChunks(tenantId, sourceVersion.contentRefId()))
+            .hasSize(knowledgeChunks.size());
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "knowledge/provenance.md"))
+            .hasSize(1);
+        assertThat(submission.run().status()).isEqualTo("COMPLETED");
+    }
+
+    @Test
+    void changedSourceVersionProducesNewKnowledgeWithoutMutatingPriorDerivedState(@TempDir Path fixtureRoot)
+            throws IOException {
+        Path document = fixtureRoot.resolve("knowledge/changed.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "first rendition of the knowledge source");
+        FilesystemAdapter adapter = new FilesystemAdapter();
+        ContentPullPort pullPort = new ContentPullPort(List.of(adapter));
+        FileSystemContentStore contentStore = new FileSystemContentStore(
+            fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-changed-cache"));
+        AcquireStage acquire = new AcquireStage(pullPort, contentStore);
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = new PersistStage(cache);
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                var acquired = parsed.acquired();
+                var knowledgeChunk = new SemanticChunk("k0", acquired.contentRefId().toString(), 0,
+                    SemanticChunk.ChunkType.SECTION, new String(acquired.bytes(),
+                        java.nio.charset.StandardCharsets.UTF_8), null, List.of("Section"), "Section",
+                    List.of("element-1"), 1, 1, 5, false, Map.of(), SemanticChunk.PUBLIC_ONLY, "chunksha");
+                return new ChunkedDocument(parsed, List.of(knowledgeChunk));
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired,
+                new String(acquired.bytes(), java.nio.charset.StandardCharsets.UTF_8), Map.of(), null);
+        });
+
+        String tenantId = "tenant-knowledge-change-" + UUID.randomUUID();
+        String sourceId = "changed-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(),
+            Set.of("DISCOVER"), "ACTIVE", Instant.parse("2026-10-17T11:59:00Z"), null
+        ));
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
+            cache, pullPort, acquire, extraction, chunk, identityStage, identityStage, identityStage,
+            persist, testProperties(), lifecycle, operationService, Runnable::run,
+            new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        VerifiedIngestionContext context = principal(tenantId);
+
+        workflow.ingest(context, sourceId, "knowledge/changed.md", "request-first", "changed-key");
+        SourceVersionRow firstVersion = cache.listSourceVersions(
+            tenantId, "filesystem", sourceId, "knowledge/changed.md").getFirst();
+        List<ChunkRow> firstKnowledge = cache.readChunks(tenantId, firstVersion.contentRefId());
+        assertThat(firstKnowledge).isNotEmpty();
+        UUID firstRunId = firstKnowledge.getFirst().processingRunId();
+
+        Files.writeString(document, "second rendition with different canonical content");
+        FixtureSourceWorkflow.Submission changed = workflow.ingest(
+            context, sourceId, "knowledge/changed.md", "request-second", "changed-key-2");
+        SourceVersionRow secondVersion = cache.listSourceVersions(
+            tenantId, "filesystem", sourceId, "knowledge/changed.md").stream()
+            .filter(version -> !version.versionId().equals(firstVersion.versionId()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("changed source produced no new version: " + changed.run().status()));
+
+        // Prior source history and derived state are untouched; new knowledge is new state.
+        assertThat(cache.readSourceVersion(tenantId, "filesystem", sourceId, "knowledge/changed.md",
+            firstVersion.versionId())).contains(firstVersion);
+        assertThat(cache.readChunks(tenantId, firstVersion.contentRefId()))
+            .containsExactlyInAnyOrderElementsOf(firstKnowledge);
+        assertThat(cache.readChunks(tenantId, firstVersion.contentRefId()).getFirst().processingRunId())
+            .isEqualTo(firstRunId);
+        List<ChunkRow> secondKnowledge = cache.readChunks(tenantId, secondVersion.contentRefId());
+        assertThat(secondKnowledge).isNotEmpty();
+        assertThat(secondKnowledge).isNotEqualTo(firstKnowledge);
+        for (ChunkRow knowledgeChunk : secondKnowledge) {
+            assertThat(knowledgeChunk.sourceVersionId()).isEqualTo(secondVersion.versionId());
+        }
+        assertThat(secondKnowledge.getFirst().processingRunId()).isNotEqualTo(firstRunId);
+        assertThat(cache.readKnowledgeProcessingRun(tenantId, secondKnowledge.getFirst().processingRunId())
+            .orElseThrow().status()).isEqualTo("COMPLETED");
+        assertThat(changed.run().status()).isEqualTo("COMPLETED");
     }
 
     @Test
@@ -1020,7 +1199,7 @@ class FixtureIngestionLifecycleTest {
         IngestionRunRow run = lifecycle.ingest(
             context, UUID.randomUUID(), UUID.randomUUID(), "file", "outbox-source", "guide.md",
             fileRef("file:///outbox/guide.md", null, bytes.length), bytes,
-            testReference(context.tenantId()), ignored -> UUID.randomUUID());
+            testReference(context.tenantId()), (ignored, versionId) -> UUID.randomUUID());
         SourceOutboxRow original = cache.listSourceOutbox(
             context.tenantId(), "file", "outbox-source", "guide.md").getFirst();
         Instant failedAt = Instant.parse("2026-10-17T12:01:00Z");

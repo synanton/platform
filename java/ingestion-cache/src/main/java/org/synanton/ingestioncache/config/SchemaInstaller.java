@@ -25,6 +25,7 @@ public class SchemaInstaller {
         "cql/V9__source_lifecycle.cql",
         "cql/V10__content_cache_reference.cql",
         "cql/V11__durable_ingestion_workflows.cql",
+        "cql/V12__knowledge_processing_runs.cql",
     };
 
     public static void install(CqlSession session) {
