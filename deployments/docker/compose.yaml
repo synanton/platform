@@ -260,7 +260,7 @@ services:
       - "8090:8090"
     volumes:
       - ../../demo-data/documents:/demo-data/documents:ro
-      - ./data/content-cache:/content-cache
+      - content-cache:/content-cache
       # Bench staging trees (RAG-Multi-Corpus md/, etc.): derived data, never
       # committed. Populate via scripts (see datasets.md); ingest by path
       # /staging/<tree> with an explicit tenant.
@@ -538,3 +538,6 @@ services:
 networks:
   default:
     name: synanton-demo
+
+volumes:
+  content-cache:

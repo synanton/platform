@@ -7,8 +7,11 @@
 services:
   synflux:
     environment:
-      SERVER_ERROR_INCLUDE_MESSAGE: always
-      LOGGING_LEVEL_ORG_SYNANTON_COMMON_TENANT: TRACE
+      # Initial slice run: simplified path — no dense leg, no TEI. The dense
+      # leg returns via gpu-runtime's homelab/external TEI deployments when
+      # needed (see deployments/homelab).
+      SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "false"
+      SYNQUEST_EMBEDDING_REQUIRED: "false"
     build:
       context: ../..
       dockerfile: deployments/docker/synflux.prebuilt.Dockerfile
@@ -16,3 +19,8 @@ services:
     build:
       context: ../..
       dockerfile: deployments/docker/synquest.prebuilt.Dockerfile
+    environment:
+      # The M70q slice run is lexical-only (BM25): the dense leg stays off —
+      # TEI embedding is not running, and the projection must not require
+      # full vector coverage for the slice criteria.
+      SYNQUEST_EMBEDDING_REQUIRED: "false"

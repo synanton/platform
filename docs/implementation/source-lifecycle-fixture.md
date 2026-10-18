@@ -47,10 +47,12 @@ The crash is one-shot per process: restart **without** the variable and
 recovery resumes from the checkpoint. Timing-based kills are deliberately not
 used — they flake under load and cannot target the manifest/COMPLETED window.
 
-`after-manifest` crashes between the per-source manifest writes and
-`finishRun`'s completion-manifest write — so the acceptance run's assertion
-pair (0 completion-manifest rows pre-recovery, exactly 1 after, via the
-deterministic run-id) covers that interruption, not the visibility gate. The
+`after-manifest` crashes after the pipeline's artifact publication (chunks
+committed, content-addressed) and **before the version insert**
+(`insertSourceVersionAndOutboxIfAbsent`) and finishRun. The acceptance run's
+assertion pair: pre-recovery — no version row, no run-completion manifest
+(the failure case); post-recovery — exactly one of each (the recovery case;
+the deterministic ids land the re-run on the same rows). The
 manifest-invisible-until-COMPLETED gate is asserted separately by the
 `readManifest`/`listManifest` visibility tests (#293, #295); the two tests
 complement each other.
