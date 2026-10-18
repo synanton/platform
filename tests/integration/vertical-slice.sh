@@ -464,7 +464,10 @@ esac
 # projection is manual/scheduled. Neither is a failure; production behavior
 # must not be silent.
 sleep 10
-pre=$(body_of "$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"restart clause\"}")")
+# The probe must use the CURRENT run's unique token: fixed phrases match
+# prior stamped runs' content (already projected), which would report a false
+# "auto-projection present".
+pre=$(body_of "$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"$RECOVERY_TOKEN_MARK\"}")")
 case "$(json "len(d['results'])" <<<"$pre")" in
     0) printf '  NOTE auto-projection absent — recovered source searchable only after explicit rebuild (manual/scheduled projection)\n' ;;
     *) pass "auto-projection present — recovered source searchable without rebuild" ;;
