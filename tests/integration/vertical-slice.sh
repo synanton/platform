@@ -52,8 +52,6 @@ SYNQUEST_URL="${SYNQUEST_URL:-http://localhost:8083}"
 SYNANTON_JWT_SECRET="${SYNANTON_JWT_SECRET:?SYNANTON_JWT_SECRET must be set (both planes verify with it)}"
 TENANT_A="${TENANT_A:-slice-a}"
 TENANT_B="${TENANT_B:-slice-b}"
-FIXTURE_ROOT="${FIXTURE_ROOT:?FIXTURE_ROOT must be set — the worker-visible fixture root (SYNFLUX_FIXTURE_ROOT)}"
-FIXTURE_HOST_DIR="${FIXTURE_HOST_DIR:-$FIXTURE_ROOT}"
 WORKER_PROFILE="${WORKER_PROFILE:-compose}"
 K8S_NAMESPACE="${K8S_NAMESPACE:-synanton}"
 CASSANDRA_POD="${CASSANDRA_POD:-cassandra-0}"
@@ -121,11 +119,18 @@ wait_health() {  # wait_health <name> <url>
 }
 
 wait_operation() {  # wait_operation <op_id> -> final operation JSON
-    local op_id="$1" i out
+    local op_id="$1" i out code status
     for i in $(seq 1 90); do
-        out=$(body_of "$(http GET "$SYNFLUX_URL/v1/operations/$op_id" "$TOK_A")")
-        case "$(json "d['status']" <<<"$out" 2>/dev/null || echo '')" in
-            SUCCEEDED|FAILED|CANCELLED) printf '%s' "$out"; return 0 ;;
+        out=$(http GET "$SYNFLUX_URL/v1/operations/$op_id" "$TOK_A")
+        code=$(status_of "$out")
+        case "$code" in
+            000|502|503|504) sleep 2; continue ;;  # worker restarting / transient
+            401|403) die "auth failed while polling operation $op_id — not retrying" ;;
+            200)
+                status=$(json "d['status']" <<<"$(body_of "$out")" 2>/dev/null || echo '')
+                case "$status" in
+                    SUCCEEDED|FAILED|CANCELLED) printf '%s' "$(body_of "$out")"; return 0 ;;
+                esac ;;
         esac
         sleep 2
     done
@@ -138,6 +143,10 @@ cqlsh_query() {  # cqlsh_query <cql> -> query output (empty when unavailable)
         k8s)     kubectl -n "$K8S_NAMESPACE" exec "$CASSANDRA_POD" -- cqlsh -e "$1" 2>/dev/null ;;
         process) command -v cqlsh >/dev/null 2>&1 && cqlsh -e "$1" 2>/dev/null ;;
     esac
+}
+
+cql_count() {  # cql_count <cql-count-query> -> row count digits
+    cqlsh_query "$1" | grep -E '^[[:space:]]*[0-9]+[[:space:]]*$' | head -1 | tr -d '[:space:]'
 }
 
 start_worker() {  # start_worker [fault-point]
@@ -209,6 +218,22 @@ stop_worker() {
 # env var, so recovery resumes from the checkpoint instead of crash-looping.
 
 step "Setup"
+# Q8: canonical paths — cd && pwd -P resolves symlinks and spaces; the
+# empty-dir check fails fast instead of a silent empty mount mid-run.
+canonicalize() {
+    local path="$1"
+    [ -d "$path" ] || { echo "Not a directory: $path" >&2; exit 1; }
+    ( cd "$path" && pwd -P )
+}
+FIXTURE_HOST_DIR="$(canonicalize "${FIXTURE_HOST_DIR:-$SCRIPT_DIR/../../demo-data/documents}")"
+case "$WORKER_PROFILE" in
+    compose) FIXTURE_ROOT="${FIXTURE_ROOT:-/demo-data/documents}" ;;
+    *)       FIXTURE_ROOT="${FIXTURE_ROOT:-$FIXTURE_HOST_DIR}" ;;
+esac
+[ -n "$(ls -A "$FIXTURE_HOST_DIR" 2>/dev/null)" ] || {
+    echo "Fixture root is empty: $FIXTURE_HOST_DIR" >&2; exit 1; }
+[ "${#SYNANTON_JWT_SECRET}" -ge 32 ] || {
+    echo "SYNANTON_JWT_SECRET too short (${#SYNANTON_JWT_SECRET} bytes, need >= 32 — set it in .env)" >&2; exit 1; }
 TOK_A=$(mint_token "$TENANT_A")
 TOK_B=$(mint_token "$TENANT_B")
 mkdir -p "$FIXTURE_HOST_DIR/$SOURCE_MAIN" "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY"
@@ -220,14 +245,19 @@ printf 'Recovery fixture %s.\nThe restart clause governs resumption.\n' "$TOKEN_
 FIXTURE_HOST_DIR="$(cd "$FIXTURE_HOST_DIR" && pwd)"
 FIXTURE_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md" | cut -d' ' -f1)
 RECOVERY_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md" | cut -d' ' -f1)
-# Compose profile rebuilds synflux in start_worker; synquest needs one
-# explicit rebuild — the stale image predates the provenance endpoint and
-# would fail criterion 2 with a misleading 404.
+# Stale images predate the provenance endpoint and the fault hook and would
+# fail criteria 2 and 3 with misleading errors — rebuild both up front.
 if [ "$WORKER_PROFILE" = "compose" ]; then
-    (cd deployment/docker && docker compose -f "$COMPOSE_FILE" up -d --build synquest)
+    (cd deployment/docker && docker compose -f "$COMPOSE_FILE" up -d --build synflux synquest)
 fi
 wait_health synflux "$SYNFLUX_URL"
 wait_health synquest "$SYNQUEST_URL"
+# Container-side mount check: wrong mount target or permission shows up here,
+# not as "fixture not found" mid-run.
+if [ "$WORKER_PROFILE" = "compose" ] \
+    && ! docker compose -f "$COMPOSE_FILE" exec -T synflux ls "$FIXTURE_ROOT/$SOURCE_MAIN" > /dev/null 2>&1; then
+    echo "Fixture root not visible in the worker container: $FIXTURE_ROOT" >&2; exit 1
+fi
 
 step "Criterion 1 — ingest creates an immutable version"
 out=$(http POST "$SYNFLUX_URL/v1/sources" "$TOK_A" "{\"source_id\":\"$SOURCE_MAIN\",\"connector_id\":\"slice-conn\",\"connector_type\":\"file\",\"source_endpoint\":\"file://$FIXTURE_ROOT/$SOURCE_MAIN\",\"capability_flags\":[]}")
@@ -288,6 +318,7 @@ out=$(http POST "$SYNFLUX_URL/v1/ingestion-runs" "$TOK_A" \
     "{\"source_id\":\"$SOURCE_RECOVERY\",\"resource_id\":\"recovery-doc.md\"}")
 [ "$(status_of "$out")" = "202" ] || die "recovery run submission failed: $(body_of "$out")"
 RECOVERY_OP=$(json "d['operation_id']" <<<"$(body_of "$out")")
+RECOVERY_RUN=$(json "d['run_id']" <<<"$(body_of "$out")")
 
 # Worker crashes at the after-manifest point (version + manifest + chunks
 # committed, run not COMPLETED — the #293 visibility-gate window).
@@ -297,6 +328,21 @@ for _ in $(seq 1 60); do
 done
 worker_crashed || die "worker did not crash on the injected fault (after-manifest)"
 pass "worker crashed at the injected point (exit 70)"
+
+# Pre-recovery durable state (the Q3 failure case, asserted while the worker
+# is down — Cassandra is up): the manifest row exists, chunks are committed,
+# and the run is not COMPLETED. Deterministic IDs mean recovery overwrites
+# these exact rows — the counts must not change.
+RECOVERY_CONTENT_REF=$(cqlsh_query "SELECT content_ref_id FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_RECOVERY' AND resource_id='recovery-doc.md';" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+assert_not_empty "recovery content_ref visible in the version row" "$RECOVERY_CONTENT_REF"
+CHUNKS_BEFORE=$(cql_count "SELECT COUNT(*) FROM ingestion_cache.chunks_payload WHERE tenant_id='$TENANT_A' AND content_ref_id=$RECOVERY_CONTENT_REF;")
+assert_not_empty "chunks committed before recovery (count $CHUNKS_BEFORE)" "$CHUNKS_BEFORE"
+# The run manifest is written by finishRun — AFTER the crash point — so the
+# failure case shows zero rows; the recovery case writes exactly one (the
+# deterministic uuidV5 id makes the re-run land on the same row).
+MANIFESTS_BEFORE=$(cql_count "SELECT COUNT(*) FROM ingestion_cache.ingestion_manifests WHERE tenant_id='$TENANT_A' AND run_id=$RECOVERY_RUN;")
+assert_eq "run manifest absent before recovery — the failure case" "$MANIFESTS_BEFORE" "0"
+
 # Drop the fault var: the clean recreate lets recovery resume (one-shot per
 # process — with the var still baked in, the pod would crash-loop).
 stop_worker
@@ -310,16 +356,36 @@ rversions=$(body_of "$(http GET "$SYNFLUX_URL/v1/sources/$SOURCE_RECOVERY/versio
 assert_eq "exactly one SourceVersion after recovery — no duplicates" \
     "$(json "len(d)" <<<"$rversions")" "1"
 
-# The SourcePublished event rides inline on the version row
+# Flag 1: the deterministic-ID assumption, named and asserted — recovery
+# overwrites the same manifest and chunk rows, never forks them.
+CHUNKS_AFTER=$(cql_count "SELECT COUNT(*) FROM ingestion_cache.chunks_payload WHERE tenant_id='$TENANT_A' AND content_ref_id=$RECOVERY_CONTENT_REF;")
+assert_eq "chunk count unchanged by recovery (no re-processing forks)" "$CHUNKS_AFTER" "$CHUNKS_BEFORE"
+MANIFESTS_AFTER=$(cql_count "SELECT COUNT(*) FROM ingestion_cache.ingestion_manifests WHERE tenant_id='$TENANT_A' AND run_id=$RECOVERY_RUN;")
+assert_eq "exactly one manifest row after recovery" "$MANIFESTS_AFTER" "1"
+
+# Flag 3 / Q5: the SourcePublished event rides inline on the version row
 # (insertSourceVersionAndOutboxIfAbsent — IF NOT EXISTS): a duplicate
-# recovery pass cannot fork it. event_published flips only when the Kafka
-# adapter is up; if it is false here, dispatch is down, not dedup.
-events=$(cqlsh_query "SELECT version_id, event_published FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_RECOVERY' AND resource_id='recovery-doc.md';")
+# recovery pass cannot fork it. The dedup property is the event row's
+# existence and uniqueness; event_published is the DISPATCH adapter's flag —
+# outbox-only mode leaves it false by design (no Kafka bootstrap configured).
+events=$(cqlsh_query "SELECT event_id, event_published FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_RECOVERY' AND resource_id='recovery-doc.md';")
+EVENT_ROWS=$(grep -cE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$events" || true)
+assert_eq "exactly one SourcePublished event row — deduped" "$EVENT_ROWS" "1"
 case "$events" in
-    "") printf '  SKIP exactly one SourcePublished — no cqlsh for profile %s\n' "$WORKER_PROFILE" ;;
-    *) assert_eq "exactly one SourcePublished event — deduped" \
-        "$(grep -c '| True' <<<"$events")" "1" ;;
+    *"| True"*) pass "event dispatched once (dispatch adapter up)" ;;
+    *) printf '  SKIP dispatch flag — outbox-only mode (no broker configured); dedup holds\n' ;;
 esac
+
+# Flag 2: the consumer-side effect — the projection builder processed each
+# chunk exactly once. Rebuild (the recovery source is not auto-projected),
+# then the projection's chunk count must equal the canonical chunk rows
+# across both sources — exact, not "at least one".
+MAIN_CONTENT_REF=$(cqlsh_query "SELECT content_ref_id FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_MAIN' AND resource_id='fixture-doc.md';" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+MAIN_CHUNKS=$(cql_count "SELECT COUNT(*) FROM ingestion_cache.chunks_payload WHERE tenant_id='$TENANT_A' AND content_ref_id=$MAIN_CONTENT_REF;")
+http POST "$SYNQUEST_URL/v1/search-projection/rebuild" "$TOK_A" '{}' > /dev/null
+proj=$(body_of "$(http GET "$SYNQUEST_URL/v1/search-projection" "$TOK_A")")
+assert_eq "projection chunk count equals canonical chunks (consumer applied once)" \
+    "$(json "d['chunkCount']" <<<"$proj")" "$((MAIN_CHUNKS + CHUNKS_AFTER))"
 
 step "Criterion 4 — search returns the correct hit"
 GEN_BEFORE=$(json "d['metadata']['configuration_generation']" <<<"$(body_of "$out")" 2>/dev/null || true)
