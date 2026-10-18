@@ -14,8 +14,10 @@ public class SynfluxSecurityConfig {
     @Bean
     public FilterRegistrationBean<TenantContextFilter> tenantContextFilter(
             @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
+        // /health is anonymous (probe path — k8s probes cannot authenticate);
+        // every business path still requires a verified Bearer JWT.
         TenantContextFilter filter = new TenantContextFilter(
-            new JwtVerifier(jwtSecret), "");
+            new JwtVerifier(jwtSecret), "", "/health");
         FilterRegistrationBean<TenantContextFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registration;

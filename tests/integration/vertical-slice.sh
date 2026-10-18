@@ -56,6 +56,9 @@ WORKER_PROFILE="${WORKER_PROFILE:-compose}"
 K8S_NAMESPACE="${K8S_NAMESPACE:-synanton}"
 CASSANDRA_POD="${CASSANDRA_POD:-cassandra-0}"
 COMPOSE_FILE="${COMPOSE_FILE:-deployments/docker/compose.yaml}"
+# The worker helpers `cd deployments/docker` before invoking compose — a
+# relative COMPOSE_FILE would double-count the cd. Resolve absolute, once.
+COMPOSE_FILE="$(cd "$(dirname "$COMPOSE_FILE")" && pwd)/$(basename "$COMPOSE_FILE")"
 STAMP="$(date +%s)"
 SOURCE_MAIN="slice-main-$STAMP"
 SOURCE_RECOVERY="slice-recovery-$STAMP"
