@@ -34,6 +34,7 @@
 #
 # The script is environment-parameterized, not duplicated:
 #   WORKER_PROFILE  compose (default) | process | k8s
+#   KAFKA_PROFILE   outbox (default — no broker) | kafka
 #   COMPOSE_FILE    default deployments/docker/compose.yaml
 #   SYNFLUX_URL     default http://localhost:8090 (compose maps 8090)
 #   SYNQUEST_URL    default http://localhost:8083 (compose maps 8083)
@@ -152,11 +153,12 @@ cql_count() {  # cql_count <cql-count-query> -> row count digits
     cqlsh_query "$1" | grep -E '^[[:space:]]*[0-9]+[[:space:]]*$' | head -1 | tr -d '[:space:]'
 }
 
-# Compose invocations always carry the slice override (host-jar build path:
+# Compose invocations carry the slice override (host-jar build path:
 # buildkit cannot reach the Maven repos from this network — the boot jars
-# are built on the HOST and the *.prebuilt.Dockerfile variants package them).
-SLICE_OVERRIDE="$(dirname "$COMPOSE_FILE")/compose.slice.yaml"
-compose() { (cd "$(dirname "$COMPOSE_FILE")" && docker compose -f "$COMPOSE_FILE" -f "$SLICE_OVERRIDE" "$@"); }
+# are built on the HOST and the *.prebuilt.Dockerfile variants package them),
+# plus the outbox-only eventing override unless KAFKA_PROFILE=kafka.
+KAFKA_PROFILE="${KAFKA_PROFILE:-outbox}"   # outbox | kafka
+compose() { (cd "$(dirname "$COMPOSE_FILE")" && docker compose -f "$COMPOSE_FILE" -f "$(dirname "$COMPOSE_FILE")/compose.slice.yaml" $( [ "$KAFKA_PROFILE" = kafka ] || echo "-f $(dirname "$COMPOSE_FILE")/compose.outbox-only.yaml" ) "$@"); }
 
 start_worker() {  # start_worker [fault-point]
     case "$WORKER_PROFILE" in
