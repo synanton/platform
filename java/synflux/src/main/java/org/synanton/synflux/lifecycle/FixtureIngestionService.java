@@ -142,6 +142,14 @@ public final class FixtureIngestionService {
                         "UNCHANGED", versionId, null, observedAt));
             }
 
+            // Every published SourceVersion must carry a resolvable opaque Content Cache
+            // reference. A blank reference means provenance cannot be resolved, so the
+            // artifact is withheld (QUARANTINED) — never published unverifiable.
+            if (contentCacheReference == null || contentCacheReference.isBlank()) {
+                throw new ContentIntegrityException(
+                    "SourceVersion cannot be published without a Content Cache reference");
+            }
+
             UUID contentRefId;
             try {
                 contentRefId = publisher.publish(bytes);
@@ -178,6 +186,15 @@ public final class FixtureIngestionService {
                     new SyncResultRow(0, 0, 0, 0, 0, 0, 0, 1), null,
                     manifestEntry(tenantId, runId, connectorId, sourceId, resourceId,
                         "CANCELLED", null, null, completedAt));
+            }
+            if (failure instanceof ContentIntegrityException) {
+                String errorRef = persistQuarantineFailure(tenantId, operationId, runId,
+                    "Acquired content could not be verified against a Content Cache reference",
+                    completedAt);
+                return finishRun(tenantId, runId, operationId, sourceId, startedAt, "QUARANTINED",
+                    new SyncResultRow(0, 0, 0, 0, 0, 0, 1, 0), errorRef,
+                    manifestEntry(tenantId, runId, connectorId, sourceId, resourceId,
+                        "QUARANTINED", null, errorRef, completedAt));
             }
             String errorRef = persistFailure(tenantId, operationId, runId, failure, completedAt);
             IngestionManifestEntryRow entry = manifestEntry(
@@ -353,7 +370,8 @@ public final class FixtureIngestionService {
         boolean quarantined = failure instanceof ContentIntegrityException;
         String result = quarantined ? "QUARANTINED" : "FAILED";
         String errorRef = quarantined
-            ? persistQuarantineFailure(tenantId, operationId, runId, clock.instant())
+            ? persistQuarantineFailure(tenantId, operationId, runId,
+                "Acquired content failed integrity verification and was quarantined", clock.instant())
             : persistFailure(tenantId, operationId, runId, failure, clock.instant());
         SyncResultRow syncResult = new SyncResultRow(
             0, 0, 0, 0, quarantined ? 0 : 1, 0, quarantined ? 1 : 0, 0
@@ -458,11 +476,11 @@ public final class FixtureIngestionService {
     }
 
     private String persistQuarantineFailure(
-            String tenantId, UUID operationId, UUID runId, Instant occurredAt) {
+            String tenantId, UUID operationId, UUID runId, String detail, Instant occurredAt) {
         UUID errorId = UUID.randomUUID();
         cache.insertIngestionError(new IngestionErrorRow(
             tenantId, errorId, "about:blank", "Operation failed", 500,
-            "Acquired content failed integrity verification and was quarantined",
+            detail,
             "urn:operation:" + operationId, "OPERATION_FAILED", false, runId.toString(),
             "{\"reason\":\"QUARANTINED\",\"quarantined\":1}", occurredAt
         ));

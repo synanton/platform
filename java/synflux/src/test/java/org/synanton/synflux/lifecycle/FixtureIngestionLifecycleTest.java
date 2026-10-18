@@ -303,8 +303,9 @@ class FixtureIngestionLifecycleTest {
         FixtureIngestionService afterDeletion = new FixtureIngestionService(cache,
             Clock.fixed(Instant.parse("2026-10-17T12:00:01Z"), ZoneOffset.UTC));
         IngestionRunRow recreated = afterDeletion.ingest(
-            context, UUID.randomUUID(), UUID.randomUUID(), sourceId, resourceId,
-            fileRef("file:///legal/policy.md", modified, bytes.length), bytes, ignored -> UUID.randomUUID());
+            context, UUID.randomUUID(), UUID.randomUUID(), "file", sourceId, resourceId,
+            fileRef("file:///legal/policy.md", modified, bytes.length), bytes,
+            testReference(context.tenantId()), ignored -> UUID.randomUUID());
         assertThat(recreated.result().changed()).isEqualTo(1);
         List<SourceVersionRow> allVersions = versions(context, sourceId, resourceId);
         assertThat(allVersions).extracting(SourceVersionRow::versionId)
@@ -324,8 +325,9 @@ class FixtureIngestionLifecycleTest {
         byte[] bytes = "retry me".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         ContentRef ref = fileRef("file:///retry/readme.md", null, bytes.length);
         UUID operationId = UUID.randomUUID();
-        IngestionRunRow failed = lifecycle.ingest(context, UUID.randomUUID(), operationId, sourceId, resourceId,
-            ref, bytes, ignored -> { throw new IOException("fixture publish outage"); });
+        IngestionRunRow failed = lifecycle.ingest(context, UUID.randomUUID(), operationId, ref.scheme(), sourceId,
+            resourceId, ref, bytes, testReference(context.tenantId()),
+            ignored -> { throw new IOException("fixture publish outage"); });
         assertThat(failed.status()).isEqualTo("FAILED");
         assertThat(failed.result().failed()).isEqualTo(1);
         var error = cache.readIngestionError(context.tenantId(), UUID.fromString(failed.errorRef())).orElseThrow();
@@ -333,8 +335,8 @@ class FixtureIngestionLifecycleTest {
         assertThat(error.status()).isEqualTo(503);
         assertThat(error.retryable()).isTrue();
 
-        IngestionRunRow retried = lifecycle.ingest(context, UUID.randomUUID(), operationId, sourceId, resourceId,
-            ref, bytes, ignored -> UUID.randomUUID());
+        IngestionRunRow retried = lifecycle.ingest(context, UUID.randomUUID(), operationId, ref.scheme(), sourceId,
+            resourceId, ref, bytes, testReference(context.tenantId()), ignored -> UUID.randomUUID());
         assertThat(retried.status()).isEqualTo("COMPLETED");
         assertThat(retried.operationId()).isEqualTo(operationId);
         assertThat(versions(context, sourceId, resourceId)).hasSize(1);
@@ -407,14 +409,43 @@ class FixtureIngestionLifecycleTest {
     }
 
     @Test
+    void missingContentCacheReferenceIsQuarantinedAndNeverPublished() {
+        VerifiedIngestionContext context = principal("tenant-reference-invariant");
+        byte[] bytes = "unverifiable provenance".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        ContentRef ref = fileRef("file:///invariant/guide.md", null, bytes.length);
+
+        // Legacy overload delegates with a blank Content Cache reference: publication
+        // must be withheld, never persisted with an empty reference.
+        IngestionRunRow run = lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(),
+            "invariant-source", "guide.md", ref, bytes, ignored -> UUID.randomUUID());
+        var entries = cache.listManifestEntries(context.tenantId(), run.runId());
+        var error = cache.readIngestionError(context.tenantId(), UUID.fromString(run.errorRef())).orElseThrow();
+
+        assertThat(run.status()).isEqualTo("QUARANTINED");
+        assertThat(run.result().quarantined()).isEqualTo(1);
+        assertThat(run.result().failed()).isZero();
+        assertThat(entries).singleElement().satisfies(entry -> {
+            assertThat(entry.result()).isEqualTo("QUARANTINED");
+            assertThat(entry.sourceVersionId()).isNull();
+        });
+        assertThat(error.code()).isEqualTo("OPERATION_FAILED");
+        assertThat(error.retryable()).isFalse();
+        assertThat(error.detailsJson()).contains("\"reason\":\"QUARANTINED\"");
+        assertThat(cache.listSourceVersions(context.tenantId(), "file", "invariant-source", "guide.md"))
+            .isEmpty();
+        assertThat(cache.listSourceOutbox(context.tenantId(), "file", "invariant-source", "guide.md"))
+            .isEmpty();
+    }
+
+    @Test
     void cancellationRecordsCancelledDispositionWithoutPublishingVersion() {
         VerifiedIngestionContext context = principal("tenant-cancelled-run");
         byte[] bytes = "cancel me".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         IngestionRunRow cancelled = lifecycle.ingest(
-            context, UUID.randomUUID(), UUID.randomUUID(), "fixture", "cancel/readme.md",
+            context, UUID.randomUUID(), UUID.randomUUID(), "file", "fixture", "cancel/readme.md",
             fileRef("file:///cancel/readme.md", Instant.parse("2026-10-15T10:00:00Z"), bytes.length),
-            bytes, ignored -> { throw new CancellationException("cancel requested"); });
-
+            bytes, testReference(context.tenantId()),
+            ignored -> { throw new CancellationException("cancel requested"); });
         assertThat(cancelled.status()).isEqualTo("CANCELLED");
         assertThat(cancelled.result().cancelled()).isEqualTo(1);
         assertThat(cancelled.errorRef()).isNull();
@@ -485,8 +516,9 @@ class FixtureIngestionLifecycleTest {
             acquiredBytes = input.readAllBytes();
         }
 
-        IngestionRunRow run = lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(), "local-fixture",
-            resourceId, ref, acquiredBytes, ignored -> UUID.randomUUID());
+        IngestionRunRow run = lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(), ref.scheme(),
+            "local-fixture", resourceId, ref, acquiredBytes, testReference(context.tenantId()),
+            ignored -> UUID.randomUUID());
 
         assertThat(run.status()).isEqualTo("COMPLETED");
         assertThat(versions(context, "local-fixture", "manuals/quick start.md")).hasSize(1);
@@ -768,8 +800,14 @@ class FixtureIngestionLifecycleTest {
             ContentRef ref,
             byte[] bytes,
             FixtureIngestionService.ContentPublisher publisher) {
-        return lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(), sourceId, resourceId,
-            ref, bytes, publisher);
+        return lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(), ref.scheme(), sourceId, resourceId,
+            ref, bytes, testReference(context.tenantId()), publisher);
+    }
+
+    /** Well-formed opaque reference in the v1 wire format the Content Cache port returns. */
+    private static String testReference(String tenantId) {
+        return new ContentReference(tenantId, UUID.randomUUID().toString(),
+            "sha256:" + UUID.randomUUID(), 1, 1).encode();
     }
 
     private static List<SourceVersionRow> versions(
