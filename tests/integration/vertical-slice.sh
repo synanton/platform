@@ -266,6 +266,9 @@ TOK_B=$(mint_token "$TENANT_B")
 # and `git add -A` committed 68 generated files from one debugging session).
 # The worker sees the run root below the configured fixture root.
 RUN_FIXTURE_HOST_DIR="$(mktemp -d "$FIXTURE_HOST_DIR/slice-run-XXXXXXXX")"
+# mktemp creates mode 700; the worker runs as a non-root user (uid 100) and
+# mounts the tree read-only — it must be able to list the run root.
+chmod 755 "$RUN_FIXTURE_HOST_DIR"
 RUN_FIXTURE_ROOT="$FIXTURE_ROOT/$(basename "$RUN_FIXTURE_HOST_DIR")"
 cleanup() {
     local exit_code=$?
@@ -497,15 +500,16 @@ fi
 # F1: probe auto-projection BEFORE the explicit rebuild — reports whether a
 # recovered source becomes searchable on its own (event-driven projection) or
 # projection is manual/scheduled. Neither is a failure; production behavior
-# must not be silent.
+# must not be silent. A hit COUNT is not enough: BM25 OR-matches the token's
+# parts ("zebra", "token", the shared stamp) that the main fixture also
+# contains. The hit must be the RECOVERED chunk — resolved by the
+# content-derived ref captured pre-recovery.
 sleep 10
-# The probe must use the CURRENT run's unique token: fixed phrases match
-# prior stamped runs' content (already projected), which would report a false
-# "auto-projection present".
 pre=$(body_of "$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"$RECOVERY_TOKEN_MARK\"}")")
-case "$(json "len(d['results'])" <<<"$pre")" in
-    0) printf '  NOTE auto-projection absent — recovered source searchable only after explicit rebuild (manual/scheduled projection)\n' ;;
-    *) pass "auto-projection present — recovered source searchable without rebuild" ;;
+pre_top=$(json "d['results'][0]['object_id'] if d['results'] else ''" <<<"$pre" 2>/dev/null || true)
+case "$pre_top" in
+    "$RECOVERY_CONTENT_REF"*) pass "auto-projection present — recovered source searchable without rebuild" ;;
+    *) printf '  NOTE auto-projection absent — recovered source searchable only after explicit rebuild (manual/scheduled projection)\n' ;;
 esac
 MAIN_CONTENT_REF=$(cqlsh_query "SELECT content_ref_id FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_MAIN' AND resource_id='fixture-doc.md';" 2>/dev/null | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || true)
 # The tenant accumulates chunks from every prior run (stamped source ids
