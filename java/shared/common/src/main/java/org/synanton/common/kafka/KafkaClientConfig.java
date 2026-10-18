@@ -5,7 +5,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,14 +14,18 @@ import java.util.function.Function;
 
 /**
  * Creates shared Kafka producer and consumer-factory beans.
- * Only activated when {@code kafka.bootstrap-servers} is set, so services
- * that do not use Kafka are unaffected.
+ * Only activated when {@code kafka.bootstrap-servers} is set to a non-blank
+ * value, so services that do not use Kafka are unaffected. An empty string
+ * (compose passing {@code KAFKA_BOOTSTRAP_SERVERS: ""} for outbox-only runs)
+ * must NOT activate the beans: the KafkaProducer constructor fails the boot
+ * on unresolvable bootstrap DNS — a broker's absence must degrade to
+ * outbox-only eventing, not crash the service.
  */
 @Configuration
-@ConditionalOnProperty(name = "kafka.bootstrap-servers")
+@ConditionalOnExpression("'${kafka.bootstrap-servers:}'.trim().length() > 0")
 public class KafkaClientConfig {
 
-    @Value("${kafka.bootstrap-servers}")
+    @Value("${kafka.bootstrap-servers:}")
     private String bootstrapServers;
 
     @Value("${kafka.producer.acks:all}")
