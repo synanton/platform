@@ -41,7 +41,7 @@ Everything needed before the Analytics Plane can be trusted at production scale:
 | `docs/implementation/annotations-analytics-plane/clickhouse-poc-results.md` | New - recorded PoC measurements (Appendix D values) |
 | `docs/observability/alerts/analytics.yml` | New alert rules |
 | `docs/runbooks/clickhouse-operations.md` | New operational runbook |
-| `deployment/docker/compose.yaml` | ClickHouse resource limits, backup volume config |
+| `deployments/docker/compose.yaml` | ClickHouse resource limits, backup volume config |
 | `java/analytics/.../quality/DataQualityMonitor.java` | New - quality metric surfacing |
 | `scripts/run-analytics-load-test.sh` | New - load test harness |
 

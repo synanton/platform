@@ -28,7 +28,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 RUNTIME="$REPO_ROOT/../gpu-runtime"
-D="$REPO_ROOT/deployment/docker"
+D="$REPO_ROOT/deployments/docker"
 
 CMD="${1:-up}"; shift || true
 PLANE="gpu5"

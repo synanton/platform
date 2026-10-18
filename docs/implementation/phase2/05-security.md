@@ -165,8 +165,8 @@ All users map to `tenant_id = "demo"`. This mapping is hardcoded in a `UserDetai
 | # | Prereq | Home | Notes |
 |---|--------|------|-------|
 | P1 | Add `java/security` to `settings.gradle.kts`. | root | New module. |
-| P2 | RSA keypair generated and stored in a PKCS12 keystore. Committed as `deployment/docker/security/demo.p12` (dev-only key; **not for production**). | deployment | One-time: `keytool -genkeypair -alias synanton -keyalg RSA -keysize 2048 -keystore demo.p12 -storetype PKCS12 -validity 3650`. |
-| P3 | Htpasswd file committed as `deployment/docker/security/users.htpasswd` with `alice` and `bob` entries. | deployment | `htpasswd -B -c users.htpasswd alice` then `htpasswd -B users.htpasswd bob`. |
+| P2 | RSA keypair generated and stored in a PKCS12 keystore. Committed as `deployments/docker/security/demo.p12` (dev-only key; **not for production**). | deployment | One-time: `keytool -genkeypair -alias synanton -keyalg RSA -keysize 2048 -keystore demo.p12 -storetype PKCS12 -validity 3650`. |
+| P3 | Htpasswd file committed as `deployments/docker/security/users.htpasswd` with `alice` and `bob` entries. | deployment | `htpasswd -B -c users.htpasswd alice` then `htpasswd -B users.htpasswd bob`. |
 | P4 | `shared/common` `SubjectAssertion` record finalised (coordinates with `SA2-1` in synapt plan). | shared/common | Blocking: security's validate endpoint returns this type. |
 | P5 | Topology Phase 2 started - at minimum the `organizations` table is seeded with `tenant_id=demo` so security can validate `tenant_id` claims. | [06-topology.md](./06-topology.md) | Can start in parallel; security has a config fallback `security.known-tenants=["demo"]` for pre-topology environments. |
 

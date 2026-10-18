@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-COMPOSE_FILE="$REPO_ROOT/deployment/docker/compose.yaml"
+COMPOSE_FILE="$REPO_ROOT/deployments/docker/compose.yaml"
 
 PHASE="${1:-1}"
 TENANT="${TENANT:-demo}"

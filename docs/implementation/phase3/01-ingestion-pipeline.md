@@ -194,7 +194,7 @@ Port 8086. Stateless Spring Boot service. No persistent store - relies entirely 
 | # | Prereq | Home | Notes |
 |---|--------|------|-------|
 | 1 | Phase 2 ingestion pipeline DoD met (`state=EMBEDDED` end-to-end). | - | Non-negotiable. |
-| 2 | Kafka 3.7 KRaft available via `docker compose --profile phase3`. | `deployment/docker/compose.yaml` | Add `kafka` service with KRaft config; no ZooKeeper. |
+| 2 | Kafka 3.7 KRaft available via `docker compose --profile phase3`. | `deployments/docker/compose.yaml` | Add `kafka` service with KRaft config; no ZooKeeper. |
 | 3 | `shared/common` module exists and is in `settings.gradle.kts`. | root | Phase 2 assumes it; Phase 3 extends it. |
 | 4 | `security` Phase 3 deployed - `TenantContextFilter` depends on `SubjectAssertion` from the security JWT/API-key resolution chain. | `security` | Can be stubbed for integration tests. |
 | 5 | Topics pre-created: `ingestion_requests` (4p, RF=1), `ingestion_events` (4p, RF=1), `ingestion_completed` (4p, RF=1). | Kafka init script | `scripts/kafka-init.sh` creates topics on first run. |

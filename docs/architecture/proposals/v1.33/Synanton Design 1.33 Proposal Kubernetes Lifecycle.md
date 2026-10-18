@@ -33,15 +33,15 @@ Design 1.33 establishes three independent operator domains:
 
 1. **Synanton Platform Operator** --- future operator responsible for
 
-​    lifecycle of the core Synanton platform.
+    lifecycle of the core Synanton platform.
 
 2. **Content Extractor Operator** --- separate operator responsible for
 
-​    lifecycle of the Structured Content Extraction Plane.
+    lifecycle of the Structured Content Extraction Plane.
 
 3. **GPU Runtime Operator** --- separate operator responsible for
 
-​    lifecycle of the physically isolated GPU Execution Plane.
+    lifecycle of the physically isolated GPU Execution Plane.
 
 All three operators are proposed as **Go projects**, while the
   underlying Synanton services remain free to use their existing
@@ -110,7 +110,7 @@ Kubernetes is a deployment substrate and lifecycle mechanism, not a new
 Design 1.25 already separates extraction from knowledge processing and
   treats operational scalability, workload isolation, deployment,
   monitoring, upgrades and schema migration as operational concerns.
-  Design 1.33 makes the deployment/lifecycle contract explicit and extends
+  Design 1.33 makes the deployments/lifecycle contract explicit and extends
   it to future Kubernetes operators.
 
 \------------------------------------------------------------------------
@@ -988,7 +988,7 @@ Add:
 \### Phase 7 --- Optional Composition
 
 Only after the independent operators are production-ready consider a
-  higher-level deployment/composition operator.
+  higher-level deployments/composition operator.
 
 \------------------------------------------------------------------------
 

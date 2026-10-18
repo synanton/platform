@@ -14,7 +14,7 @@
 #   container IPs or --add-host over bare names for cross-container traffic.
 #   (Milvus ETCD_ENDPOINTS below uses the etcd container IP captured at start.)
 # - Port 8091 is taken by gpu-7-external-gateway; synvault remaps to 18091
-#   (deployment/docker/compose.yaml). Do not bind 8091 on this host.
+#   (deployments/docker/compose.yaml). Do not bind 8091 on this host.
 # - Two compose files resolve to project name "docker" and recreate each
 #   other's containers — start stacks explicitly (below), not via compose.
 set -euo pipefail
@@ -114,7 +114,7 @@ docker compose -f docker/docker-compose.bench.yml up -d postgres
 # Idempotent: re-run anytime; live tunnels are left alone. Without them, dense
 # runs fail closed (503) by design — never silently lexical.
 #   NodePort object (bench-owned, gpu-runtime blueprint stays ClusterIP-only):
-#   kubectl apply -f deployment/bench/tei-embedding-bench-svc.yaml  (from node0)
+#   kubectl apply -f deployments/bench/tei-embedding-bench-svc.yaml  (from node0)
 #
 # TEI endpoint resolution (2026-10-11): K8s GPU injection on node1 is faulty
 # (operator track), so TEI currently serves from manual docker on node1

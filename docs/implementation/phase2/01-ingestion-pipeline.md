@@ -305,7 +305,7 @@ Ordered by dependency. Each task ≤ 2 days for one engineer.
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| W-6 | Extend `deployment/docker/compose.yaml` with `vllm-llm` and `vllm-embed` services. GPU device reservations via `deploy.resources.reservations.devices`, one card each. Healthchecks: HTTP `GET /health` on both. | Compose extension |
+| W-6 | Extend `deployments/docker/compose.yaml` with `vllm-llm` and `vllm-embed` services. GPU device reservations via `deploy.resources.reservations.devices`, one card each. Healthchecks: HTTP `GET /health` on both. | Compose extension |
 | W-7 | Compose profile `phase2` - brings up Phase 1 stack + the two vLLM containers. Default profile still runs Phase 1-only for developers without a GPU rig. | Compose profiles |
 | W-8 | `scripts/pull-models.sh` - pre-downloads Llama 3.1 8B AWQ and BGE-base into a persistent Docker volume (`hf-cache`) so container startup isn't slow. Uses the developer's HF token. | Script |
 | W-9 | Update `scripts/run-ingestion-demo.sh` - accepts `--phase=1|2` flag; Phase 2 waits for vLLM readiness before triggering ingest. | Script edit |
@@ -434,7 +434,7 @@ python -m vllm.entrypoints.openai.api_server
 
 Phase 2 is complete when **all** of the following hold on a rig with 2× 8 GB GPUs:
 
-1. `docker compose --profile phase2 -f deployment/docker/compose.yaml up -d` brings Cassandra, MinIO, `vllm-llm`, `vllm-embed` all to healthy state within 3 minutes.
+1. `docker compose --profile phase2 -f deployments/docker/compose.yaml up -d` brings Cassandra, MinIO, `vllm-llm`, `vllm-embed` all to healthy state within 3 minutes.
 2. `nvidia-smi` shows `vllm-llm` on GPU-0 using ≤ 7.5 GB, `vllm-embed` on GPU-1 using ≤ 2 GB.
 3. `./scripts/run-ingestion-demo.sh --phase=2` completes with exit code 0 on a fresh `demo-data/documents/` corpus (~10 files). Runtime target ≤ 10 minutes for a 10-doc corpus.
 4. `curl :8081/manifest/demo` returns rows with `state=EMBEDDED`, `enrichment_model_id="llama-3.1-8b-instruct"`, `embedding_quality=FULL`.

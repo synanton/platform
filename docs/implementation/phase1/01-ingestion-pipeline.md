@@ -63,7 +63,7 @@ flowchart LR
 - `cassandra:5` - single node, keyspace `ingestion_cache`.
 - `minio/minio:latest` - single instance, bucket `synanton-hot`.
 
-`docker compose up` in `deployment/docker/` brings up both storage containers; the two Java services run via `bootRun` or as JARs.
+`docker compose up` in `deployments/docker/` brings up both storage containers; the two Java services run via `bootRun` or as JARs.
 
 **Trust zones.** All local; no auth. `MockTenantFilter` from the syntology demo pattern is copied so that requests carry `X-Tenant: demo`.
 
@@ -187,7 +187,7 @@ These are cross-cutting and blocking. Assign them **first**.
 |---|--------|------|-------|
 | P1 | `java/shared/common/` gains: `TenantContext`, `ProblemDetail`, `SubjectAssertion` (stub), `MockTenantFilter` | `java/shared/common/` | Currently empty; needed by both new services. Small - one file per class. |
 | P2 | Add `java/synvault`, `java/synflux`, `java/ingestion-cache` to `settings.gradle.kts` | root | Survey shows they're intentionally excluded. |
-| P3 | Add Cassandra + MinIO to `deployment/docker/compose.yaml` | `deployment/docker/` | File does not exist yet - create with just these two services + a `demo-data` bind mount. |
+| P3 | Add Cassandra + MinIO to `deployments/docker/compose.yaml` | `deployments/docker/` | File does not exist yet - create with just these two services + a `demo-data` bind mount. |
 | P4 | `demo-data/documents/` seed folder with ~10 small text/markdown files | `demo-data/documents/` | Content doesn't matter; a mix of `.txt`, `.md`, `.html` exercises the parser branches. |
 | P5 | Root `bin/synflux` shell script wrapping `gradle :java:synflux:run --args=...` | `bin/` (new) | Convenience for demos. |
 
@@ -238,8 +238,8 @@ Ordered by dependency. Each task is scoped to ≤ 2 days of work for one enginee
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| W-1 | `deployment/docker/compose.yaml` - Cassandra + MinIO + healthchecks. Mount `../demo-data` into `/demo-data` on both Java services (for filesystem crawl). | Compose file |
-| W-2 | `deployment/docker/synvault.Dockerfile`, `deployment/docker/synflux.Dockerfile` - multi-stage build, Java 21 JRE base. Optional for Phase 1 (services can also run via `bootRun`). | Two Dockerfiles |
+| W-1 | `deployments/docker/compose.yaml` - Cassandra + MinIO + healthchecks. Mount `../demo-data` into `/demo-data` on both Java services (for filesystem crawl). | Compose file |
+| W-2 | `deployments/docker/synvault.Dockerfile`, `deployments/docker/synflux.Dockerfile` - multi-stage build, Java 21 JRE base. Optional for Phase 1 (services can also run via `bootRun`). | Two Dockerfiles |
 | W-3 | `scripts/run-ingestion-demo.sh` - brings up Docker, waits for health, runs the CLI ingest against `demo-data/documents`, then `curl`s the manifest to prove it worked. | Script |
 | W-4 | End-to-end acceptance test: spin containers via Testcontainers → run ingest against a fixture folder → assert manifest count matches file count → assert MinIO bucket contains expected keys. Lives in `test/acceptance/` (new). | `IngestionE2EAcceptanceIT` |
 | W-5 | README section at repo root: "Run the ingestion demo" - three commands. | README edit |
@@ -337,7 +337,7 @@ Only the S3 endpoint changes between demo and production; everything else stays 
 
 Phase 1 is complete when **all** of the following hold on a fresh clone:
 
-1. `docker compose -f deployment/docker/compose.yaml up -d` brings Cassandra and MinIO to healthy state.
+1. `docker compose -f deployments/docker/compose.yaml up -d` brings Cassandra and MinIO to healthy state.
 2. `./gradlew :java:synvault:bootRun` and `./gradlew :java:synflux:bootRun` start cleanly in separate terminals.
 3. `./scripts/run-ingestion-demo.sh` completes with exit code 0 and prints "Ingested N documents from demo-data/documents".
 4. `curl :8081/manifest/demo` returns a JSON array with N entries, each with `state=CHUNKED`, `storage_tier=HOT`, `archive_location` pointing to `s3://synanton-hot/demo/…`.
@@ -364,7 +364,7 @@ Each phase's plan lives as its own doc; this one closes when Phase 1's Definitio
 - `java/synvault/`, `java/synflux/`, `java/synflux-router/` are placeholders (`.gitkeep` only). No Gradle files, no source. Not listed in `settings.gradle.kts`.
 - No `ingestion-cache` submodule anywhere.
 - `java/shared/common/` has `build.gradle.kts` but no source files.
-- `deployment/docker/compose.yaml` does not exist yet.
+- `deployments/docker/compose.yaml` does not exist yet.
 - `demo-data/documents/` does not exist yet (`demo-data/` has empty `users/` and `ontologies/`).
 - `test/acceptance/` does not exist yet.
 - Existing implementation work is concentrated in `java/syntology/` (~1,100 LOC) - see [standalone-syntology-demo.md](./standalone-syntology-demo.md).

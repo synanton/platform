@@ -12,4 +12,4 @@ if [[ ! -f .env ]]; then
   cp .env.example .env
 fi
 
-exec docker compose -f deployment/docker/compose.yaml --env-file .env up --build "$@"
+exec docker compose -f deployments/docker/compose.yaml --env-file .env up --build "$@"

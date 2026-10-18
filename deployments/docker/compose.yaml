@@ -30,7 +30,7 @@ services:
   security:
     build:
       context: ../..
-      dockerfile: deployment/docker/security.Dockerfile
+      dockerfile: deployments/docker/security.Dockerfile
     environment:
       SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
       SECURITY_HTPASSWD_PATH: /etc/synanton/users
@@ -46,7 +46,7 @@ services:
   topology:
     build:
       context: ../..
-      dockerfile: deployment/docker/topology.Dockerfile
+      dockerfile: deployments/docker/topology.Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,7 +68,7 @@ services:
   syntology:
     build:
       context: ../..
-      dockerfile: deployment/docker/syntology.Dockerfile
+      dockerfile: deployments/docker/syntology.Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -95,7 +95,7 @@ services:
   syntology-admin:
     build:
       context: ../..
-      dockerfile: deployment/docker/syntology-admin.Dockerfile
+      dockerfile: deployments/docker/syntology-admin.Dockerfile
     depends_on:
       security:
         condition: service_healthy
@@ -154,7 +154,7 @@ services:
   extraction-gateway:
     build:
       context: ../../../content_extractor
-      dockerfile: deployment/docker/extraction-gateway.Dockerfile
+      dockerfile: deployments/docker/extraction-gateway.Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -183,7 +183,7 @@ services:
   synvault:
     build:
       context: ../..
-      dockerfile: deployment/docker/synvault.Dockerfile
+      dockerfile: deployments/docker/synvault.Dockerfile
     depends_on:
       cassandra:
         condition: service_healthy
@@ -213,7 +213,7 @@ services:
   synflux:
     build:
       context: ../..
-      dockerfile: deployment/docker/synflux.Dockerfile
+      dockerfile: deployments/docker/synflux.Dockerfile
     depends_on:
       cassandra:
         condition: service_healthy
@@ -266,7 +266,7 @@ services:
   synquest:
     build:
       context: ../..
-      dockerfile: deployment/docker/synquest.Dockerfile
+      dockerfile: deployments/docker/synquest.Dockerfile
     depends_on:
       cassandra:
         condition: service_healthy
@@ -303,7 +303,7 @@ services:
   planner:
     build:
       context: ../..
-      dockerfile: deployment/docker/planner.Dockerfile
+      dockerfile: deployments/docker/planner.Dockerfile
     environment:
       RELIX_BASE_URL: http://relix:8084
       SERVER_PORT: 8085
@@ -317,7 +317,7 @@ services:
   gateway:
     build:
       context: ../..
-      dockerfile: deployment/docker/gateway.Dockerfile
+      dockerfile: deployments/docker/gateway.Dockerfile
     depends_on:
       planner:
         condition: service_healthy
@@ -337,7 +337,7 @@ services:
   synapt:
     build:
       context: ../..
-      dockerfile: deployment/docker/synapt.Dockerfile
+      dockerfile: deployments/docker/synapt.Dockerfile
     depends_on:
       gateway:
         condition: service_healthy
@@ -392,7 +392,7 @@ services:
   synflux-router:
     build:
       context: ../..
-      dockerfile: deployment/docker/synflux-router.Dockerfile
+      dockerfile: deployments/docker/synflux-router.Dockerfile
     profiles: [phase3]
     depends_on:
       kafka-init:

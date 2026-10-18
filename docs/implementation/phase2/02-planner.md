@@ -159,7 +159,7 @@ The prompt receives `entity_types_csv` (distinct types from `EntityLabelIndex`) 
 |---|--------|------|-------|
 | P1 | Phase 1 planner DoD met - heuristic classifier works end-to-end. | - | Non-negotiable. |
 | P2 | `synanton-llm-client` (from ingestion Phase 2) is published as a Gradle artifact. | `java/synanton-llm-client` | Blocking: planner depends on `LlmClient` interface. |
-| P3 | `vllm-llm` container is up in the `phase2` compose profile and healthy. | `deployment/docker/compose.yaml` | Already landed with ingestion Phase 2. |
+| P3 | `vllm-llm` container is up in the `phase2` compose profile and healthy. | `deployments/docker/compose.yaml` | Already landed with ingestion Phase 2. |
 | P4 | Add `synanton-llm-client` as a Gradle dependency in `java/planner/build.gradle.kts`. | planner | One-line change. |
 
 ---

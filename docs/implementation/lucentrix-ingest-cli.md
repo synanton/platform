@@ -13,7 +13,7 @@ Lucentrix is a sibling Maven project that crawls external sources and **pushes r
 
 ```bash
 # Synanton
-docker compose -f deployment/docker/compose.yaml up -d cassandra minio minio-init synvault synflux
+docker compose -f deployments/docker/compose.yaml up -d cassandra minio minio-init synvault synflux
 
 # Lucentrix (separate repo)
 cd ../lucentrix

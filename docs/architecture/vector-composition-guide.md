@@ -1,7 +1,7 @@
 # Vector composition configuration guide (DOC-D2.1)
 
-**Schemas:** `schemas/deployment/synquest-composition.schema.json` (`0.1.0-draft`).
-**Examples:** `schemas/deployment/examples/composition-*.yaml` (all six).
+**Schemas:** `schemas/deployments/synquest-composition.schema.json` (`0.1.0-draft`).
+**Examples:** `schemas/deployments/examples/composition-*.yaml` (all six).
 **Rule engine:** `ProviderRegistry.resolveComposition` + `validateComposition`
 (`java/storage-provider`). **Ports:** `VectorRetriever`, `SynquestIndexWriter`
 (`java/synquest-api`).

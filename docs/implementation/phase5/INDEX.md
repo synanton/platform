@@ -72,7 +72,7 @@ Derived from `synanton-phases-plan.md` §9 and pulled forward with concrete acce
 Docker Compose additions:
 
 ```
-deployment/docker/compose.yaml:
+deployments/docker/compose.yaml:
   vllm-vision:          image: vllm/vllm-openai:latest  # profile: phase5-vision
   synquest-rs:          build: rust/synquest-rs         # profile: phase5-rust
   kafka-dr:             image: bitnami/kafka:latest     # profile: dr

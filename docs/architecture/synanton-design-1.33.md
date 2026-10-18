@@ -111,7 +111,7 @@ Kubernetes is a deployment substrate and lifecycle mechanism, not a new
 Design 1.25 already separates extraction from knowledge processing and
   treats operational scalability, workload isolation, deployment,
   monitoring, upgrades and schema migration as operational concerns.
-  Design 1.33 makes the deployment/lifecycle contract explicit and extends
+  Design 1.33 makes the deployments/lifecycle contract explicit and extends
   it to future Kubernetes operators.
 
 ---
@@ -982,7 +982,7 @@ Add:
 ### Phase 7 — Optional Composition
 
 Only after the independent operators are production-ready consider a
-  higher-level deployment/composition operator.
+  higher-level deployments/composition operator.
 
 ---
 

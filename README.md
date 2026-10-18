@@ -521,7 +521,7 @@ GPU runtime is **not** on this path. Ingest embeddings still use `HttpLlmClient`
 ```bash
 # From the content_extractor repo root (sibling of this repo)
 cd ../content_extractor
-docker build -f deployment/docker/extraction-gateway.Dockerfile -t synanton/extraction-gateway .
+docker build -f deployments/docker/extraction-gateway.Dockerfile -t synanton/extraction-gateway .
 
 docker run --rm -p 8092:8092 -p 9091:9091 \
   -e EXTRACTION_DB_URL=jdbc:postgresql://<postgres-host>:5432/<db> \
@@ -562,7 +562,7 @@ relix:
 cp .env.example .env
 
 # Start Cassandra + MinIO + extraction-gateway + synvault + synflux
-docker compose -f deployment/docker/compose.yaml up -d --build \
+docker compose -f deployments/docker/compose.yaml up -d --build \
   cassandra minio minio-init extraction-gateway synvault synflux
 
 # Ingest demo-data/documents/
@@ -579,7 +579,7 @@ curl http://localhost:8091/manifest/demo | python3 -m json.tool
 ```bash
 # Download models (~6 GB, needs HF token for Llama 3.1)
 export HF_TOKEN=<your_token>
-docker compose -f deployment/docker/compose.yaml --profile phase2 pull
+docker compose -f deployments/docker/compose.yaml --profile phase2 pull
 
 ./scripts/run-ingestion-demo.sh --phase=2
 ```
@@ -637,7 +637,7 @@ java/
 ui/
   syntology-admin/
 
-deployment/
+deployments/
   docker/
 
 docs/

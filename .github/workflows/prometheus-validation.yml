@@ -14,14 +14,14 @@ jobs:
       - name: Check Prometheus rules syntax
         run: |
           docker run --rm -v "$PWD:/work" -w /work --entrypoint "" prom/prometheus:v2.55.0 \
-            sh -c 'promtool check rules deployment/observability/prometheus/rules/*.yml'
+            sh -c 'promtool check rules deployments/observability/prometheus/rules/*.yml'
 
       - name: Verify runbook links presence
         run: |
           set -euo pipefail
           missing=0
           
-          for file in deployment/observability/prometheus/rules/*.yml; do
+          for file in deployments/observability/prometheus/rules/*.yml; do
             [ -e "$file" ] || continue  
           
             while read -r line; do

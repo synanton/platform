@@ -10,7 +10,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARGET="${ROOT_DIR}/deployment/docker/data/synquest"
+TARGET="${ROOT_DIR}/deployments/docker/data/synquest"
 
 if [[ ! -e "${TARGET}" ]]; then
   echo "absent (nothing to fix): ${TARGET}"
@@ -18,4 +18,4 @@ if [[ ! -e "${TARGET}" ]]; then
 fi
 echo "chown 100:101: ${TARGET} (synquest Lucene index)"
 sudo chown -R 100:101 "${TARGET}"
-echo "done. Restart synquest: docker compose -f deployment/docker/compose.yaml up -d synquest"
+echo "done. Restart synquest: docker compose -f deployments/docker/compose.yaml up -d synquest"
