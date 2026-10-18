@@ -26,7 +26,7 @@ TAG="slice-$(date +%Y%m%d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLATFORM_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 # The extraction gateway lives in the sibling content_extractor repo
-# (compose builds it from there — deployment/docker/compose.yaml).
+# (compose builds it from there — deployments/docker/compose.yaml).
 CONTENT_EXTRACTOR_ROOT="${CONTENT_EXTRACTOR_ROOT:-$PLATFORM_ROOT/../content_extractor}"
 
 log()  { printf '\033[1;34m[mirror]\033[0m %s\n' "$*"; }
@@ -36,9 +36,9 @@ pass() { printf '\033[1;32m[mirror]\033[0m %s\n' "$*"; }
 
 # ── Preconditions ────────────────────────────────────────────────────────────
 command -v docker >/dev/null || die "docker not found on this machine"
-[ -f "$PLATFORM_ROOT/deployment/docker/synflux.Dockerfile" ] \
+[ -f "$PLATFORM_ROOT/deployments/docker/synflux.Dockerfile" ] \
     || die "platform repo not found at $PLATFORM_ROOT"
-[ -f "$CONTENT_EXTRACTOR_ROOT/deployment/docker/extraction-gateway.Dockerfile" ] \
+[ -f "$CONTENT_EXTRACTOR_ROOT/deployments/docker/extraction-gateway.Dockerfile" ] \
     || die "content_extractor repo not found at $CONTENT_EXTRACTOR_ROOT (set CONTENT_EXTRACTOR_ROOT)"
 
 HOMELAB_CONFIG="$SCRIPT_DIR/../config"
@@ -158,9 +158,9 @@ build_and_push() {
 }
 
 log "built images (tag ${TAG})"
-build_and_push synflux              "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployment/docker/synflux.Dockerfile"  || true
-build_and_push synquest             "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployment/docker/synquest.Dockerfile" || true
-build_and_push extraction-gateway   "$CONTENT_EXTRACTOR_ROOT"  "$CONTENT_EXTRACTOR_ROOT/deployment/docker/extraction-gateway.Dockerfile" || true
+build_and_push synflux              "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synflux.Dockerfile"  || true
+build_and_push synquest             "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synquest.Dockerfile" || true
+build_and_push extraction-gateway   "$CONTENT_EXTRACTOR_ROOT"  "$CONTENT_EXTRACTOR_ROOT/deployments/docker/extraction-gateway.Dockerfile" || true
 
 # ── 2. Mirrored third-party images (pinned; record digests at freeze) ───────
 declare -A IMAGES=(
