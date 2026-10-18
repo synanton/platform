@@ -95,6 +95,25 @@ public final class FixtureIngestionService {
             byte[] bytes,
             String contentCacheReference,
             ContentPublisher publisher) {
+        return ingest(context, runId, operationId, connectorId, sourceId, resourceId, ref, bytes,
+            contentCacheReference, workflowId(operationId), operationId.toString(), operationId.toString(), false, publisher);
+    }
+
+    public IngestionRunRow ingest(
+            VerifiedIngestionContext context,
+            UUID runId,
+            UUID operationId,
+            String connectorId,
+            String sourceId,
+            String resourceId,
+            ContentRef ref,
+            byte[] bytes,
+            String contentCacheReference,
+            String workflowId,
+            String correlationId,
+            String causationId,
+            boolean deferRetryableFailure,
+            ContentPublisher publisher) {
         Objects.requireNonNull(context);
         Objects.requireNonNull(runId);
         Objects.requireNonNull(operationId);
@@ -164,7 +183,8 @@ public final class FixtureIngestionService {
                 observedAt, Objects.requireNonNull(contentRefId, "publisher contentRefId"), incarnationId,
                 contentCacheReference == null ? "" : contentCacheReference
             );
-            boolean inserted = cache.insertSourceVersionAndOutboxIfAbsent(version, sourcePublishedEvent(version));
+            boolean inserted = cache.insertSourceVersionAndOutboxIfAbsent(
+                version, sourcePublishedEvent(version, runId, operationId, workflowId, correlationId, causationId));
             if (!inserted) {
                 SourceVersionRow concurrent = cache.readSourceVersion(
                     tenantId, connectorId, sourceId, resourceId, versionId
@@ -195,6 +215,14 @@ public final class FixtureIngestionService {
                     new SyncResultRow(0, 0, 0, 0, 0, 0, 1, 0), errorRef,
                     manifestEntry(tenantId, runId, connectorId, sourceId, resourceId,
                         "QUARANTINED", null, errorRef, completedAt));
+            }
+            if (deferRetryableFailure && retryable(failure)) {
+                String errorRef = persistFailure(tenantId, operationId, runId, failure, completedAt);
+                IngestionRunRow retrying = new IngestionRunRow(
+                    tenantId, runId, operationId, sourceId, "ACQUIRING", startedAt, null, null, errorRef
+                );
+                cache.upsertIngestionRun(retrying);
+                return retrying;
             }
             String errorRef = persistFailure(tenantId, operationId, runId, failure, completedAt);
             IngestionManifestEntryRow entry = manifestEntry(
@@ -259,7 +287,8 @@ public final class FixtureIngestionService {
                 tenantId, connectorId, sourceId, resourceId, tombstoneId, deletedAt,
                 context.principalId(), context.principalType(), versionIds.size(), manifestRef, nextIncarnationId
             );
-            cache.insertSourceTombstoneIfAbsent(tombstone, sourceDeletedEvent(tombstone));
+            cache.insertSourceTombstoneIfAbsent(tombstone,
+                sourceDeletedEvent(tombstone, runId, operationId));
             return finishRun(tenantId, runId, operationId, sourceId, startedAt, "DELETED",
                 new SyncResultRow(0, 0, 0, 1, 0, 0, 0, 0), null,
                 manifestEntry(tenantId, runId, connectorId, sourceId, resourceId,
@@ -381,6 +410,41 @@ public final class FixtureIngestionService {
             manifestEntry(tenantId, runId, connectorId, sourceId, resourceId, result, null, errorRef, completedAt));
     }
 
+    /** Persists a retryable attempt failure while leaving the run available for recovery. */
+    public IngestionRunRow recordRetryableFailure(
+            VerifiedIngestionContext context,
+            UUID runId,
+            UUID operationId,
+            String sourceId,
+            Exception failure) {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(runId);
+        Objects.requireNonNull(operationId);
+        Objects.requireNonNull(failure);
+        requireText(sourceId, "sourceId");
+        if (!retryable(failure)) {
+            throw new IllegalArgumentException("failure is not retryable", failure);
+        }
+
+        String tenantId = context.tenantId();
+        var existing = cache.readIngestionRun(tenantId, runId);
+        if (existing.isPresent()
+                && (!existing.get().operationId().equals(operationId)
+                    || !existing.get().sourceId().equals(sourceId))) {
+            throw new IllegalStateException("run_id is already bound to another operation or source");
+        }
+        if (existing.isPresent() && existing.get().completedAt() != null) {
+            return existing.get();
+        }
+        Instant startedAt = existing.map(IngestionRunRow::startedAt).orElseGet(clock::instant);
+        String errorRef = persistFailure(tenantId, operationId, runId, failure, clock.instant());
+        IngestionRunRow retrying = new IngestionRunRow(
+            tenantId, runId, operationId, sourceId, "ACQUIRING", startedAt, null, null, errorRef
+        );
+        cache.upsertIngestionRun(retrying);
+        return retrying;
+    }
+
     public IngestionRunRow scheduleRun(
             VerifiedIngestionContext context, UUID runId, UUID operationId, String sourceId) {
         Objects.requireNonNull(context);
@@ -422,7 +486,7 @@ public final class FixtureIngestionService {
                     || !existing.get().sourceId().equals(sourceId))) {
             throw new IllegalStateException("run_id is already bound to another operation or source");
         }
-        if (existing.isPresent() && "SCHEDULED".equals(existing.get().status())) {
+        if (existing.isPresent() && existing.get().completedAt() == null) {
             return java.util.Optional.empty();
         }
         return existing;
@@ -527,27 +591,53 @@ public final class FixtureIngestionService {
         }
     }
 
-    private static SourceOutboxRow sourcePublishedEvent(SourceVersionRow version) {
+    private static boolean retryable(Exception failure) {
+        Throwable cause = failure;
+        while (cause != null) {
+            if (cause instanceof ContentIntegrityException
+                    || cause instanceof SourceRevisionConflictException
+                    || cause instanceof SourceIdentityConflictException) {
+                return false;
+            }
+            if (cause instanceof ContentStoreException || cause instanceof java.io.IOException
+                    || cause instanceof java.util.concurrent.TimeoutException) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private static SourceOutboxRow sourcePublishedEvent(
+            SourceVersionRow version,
+            UUID runId,
+            UUID operationId,
+            String workflowId,
+            String correlationId,
+            String causationId) {
         UUID eventId = uuidV5(TOMBSTONE_NAMESPACE, nameKey("SourcePublished", version.versionId().toString()));
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("event_id", eventId.toString());
-        payload.put("event_type", "SourcePublished");
-        payload.put("tenant_id", version.tenantId());
-        payload.put("source_identity", Map.of(
+        Map<String, Object> eventPayload = new LinkedHashMap<>();
+        eventPayload.put("source_identity", Map.of(
             "tenant_id", version.tenantId(),
             "connector_id", version.connectorId(),
             "source_id", version.sourceId(),
             "resource_id", version.resourceId()
         ));
-        payload.put("version_id", version.versionId().toString());
-        payload.put("content_digest", version.contentDigest());
-        payload.put("content_ref_id", version.contentRefId().toString());
-        payload.put("observed_at", version.observedAt().toString());
+        eventPayload.put("version_id", version.versionId().toString());
+        eventPayload.put("content_digest", version.contentDigest());
+        eventPayload.put("content_ref_id", version.contentRefId().toString());
+        eventPayload.put("observed_at", version.observedAt().toString());
+        eventPayload.put("run_id", runId.toString());
+        eventPayload.put("operation_id", operationId.toString());
+        eventPayload.put("workflow_id", workflowId);
         if (!version.contentCacheReference().isBlank()) {
-            payload.put("content_cache_reference", version.contentCacheReference());
+            eventPayload.put("content_cache_reference", version.contentCacheReference());
         }
+        Map<String, Object> envelope = eventEnvelope(
+            eventId, "SourcePublished", version.tenantId(), correlationId, causationId,
+            version.observedAt(), eventPayload);
         try {
-            String payloadJson = MAPPER.writeValueAsString(payload);
+            String payloadJson = MAPPER.writeValueAsString(envelope);
             return new SourceOutboxRow(
                 version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(),
                 eventId, "SourcePublished", version.versionId(), null, payloadJson, version.observedAt(), false
@@ -557,13 +647,13 @@ public final class FixtureIngestionService {
         }
     }
 
-    private static SourceOutboxRow sourceDeletedEvent(SourceTombstoneRow tombstone) {
+    private static SourceOutboxRow sourceDeletedEvent(
+            SourceTombstoneRow tombstone, UUID runId, UUID operationId) {
         UUID eventId = uuidV5(TOMBSTONE_NAMESPACE,
             nameKey("SourceDeleted", tombstone.tombstoneId().toString()));
-        Map<String, Object> payload = Map.of(
-            "event_id", eventId.toString(),
-            "event_type", "SourceDeleted",
-            "tenant_id", tombstone.tenantId(),
+        String workflowId = workflowId(operationId);
+        String deleteCommandId = commandId(UUID.fromString(workflowId), "DELETE").toString();
+        Map<String, Object> eventPayload = Map.of(
             "source_identity", Map.of(
                 "tenant_id", tombstone.tenantId(),
                 "connector_id", tombstone.connectorId(),
@@ -572,17 +662,55 @@ public final class FixtureIngestionService {
             ),
             "deleted_at", tombstone.deletedAt().toString(),
             "tombstone_id", tombstone.tombstoneId().toString(),
-            "versions_manifest_ref", tombstone.versionsManifestRef().toString()
+            "versions_manifest_ref", tombstone.versionsManifestRef().toString(),
+            "run_id", runId.toString(),
+            "operation_id", operationId.toString(),
+            "workflow_id", workflowId
         );
         try {
             return new SourceOutboxRow(
                 tombstone.tenantId(), tombstone.connectorId(), tombstone.sourceId(), tombstone.resourceId(),
-                eventId, "SourceDeleted", null, tombstone.tombstoneId(), MAPPER.writeValueAsString(payload),
+                eventId, "SourceDeleted", null, tombstone.tombstoneId(),
+                MAPPER.writeValueAsString(eventEnvelope(eventId, "SourceDeleted", tombstone.tenantId(),
+                    workflowId, deleteCommandId, tombstone.deletedAt(), eventPayload)),
                 tombstone.deletedAt(), false
             );
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not serialize SourceDeleted event", e);
         }
+    }
+
+    private static Map<String, Object> eventEnvelope(
+            UUID eventId,
+            String eventType,
+            String tenantId,
+            String correlationId,
+            String causationId,
+            Instant occurredAt,
+            Map<String, Object> payload) {
+        Map<String, Object> envelope = new LinkedHashMap<>();
+        envelope.put("event_id", eventId.toString());
+        envelope.put("event_type", eventType);
+        envelope.put("event_version", 1);
+        envelope.put("occurred_at", occurredAt.toString());
+        envelope.put("producer", Map.of("service", "synflux", "version", "1"));
+        envelope.put("tenant", Map.of("id", tenantId));
+        envelope.put("tenant_id", tenantId);
+        envelope.put("correlation_id", correlationId);
+        envelope.put("causation_id", causationId);
+        envelope.put("security", Map.of("classification", "UNCLASSIFIED", "policy_version", "1"));
+        envelope.put("payload", payload);
+        return envelope;
+    }
+
+    private static String workflowId(UUID operationId) {
+        return UUID.nameUUIDFromBytes(
+            ("synflux-ingestion-workflow:" + operationId).getBytes(StandardCharsets.UTF_8)).toString();
+    }
+
+    private static UUID commandId(UUID workflowId, String stepId) {
+        return UUID.nameUUIDFromBytes(("synflux-workflow-command:" + workflowId + ":" + stepId)
+            .getBytes(StandardCharsets.UTF_8));
     }
 
     private static UUID sourceVersionId(

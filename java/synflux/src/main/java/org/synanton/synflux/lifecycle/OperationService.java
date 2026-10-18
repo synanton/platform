@@ -51,6 +51,22 @@ public class OperationService {
             .orElseThrow(() -> new IllegalStateException("Operation creation lost without a readable row"));
     }
 
+    /** Recreates the public Operation projection if a crash split it from durable workflow creation. */
+    public OperationRow recoverAccepted(
+            VerifiedIngestionContext context, UUID operationId, String requestId, String idempotencyKey) {
+        var existing = cache.readOperation(context.tenantId(), operationId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        OperationRow accepted = new OperationRow(
+            context.tenantId(), operationId, "INGESTION", "ACCEPTED", context.principalId(),
+            clock.instant(), null, null, 0, 0, null, null, requestId, idempotencyKey
+        );
+        cache.createOperationIfAbsent(accepted);
+        return cache.readOperation(context.tenantId(), operationId)
+            .orElseThrow(() -> new IllegalStateException("Recovered Operation is not readable"));
+    }
+
     public OperationRow markRunning(OperationRow operation, int total) {
         operation = cache.readOperation(operation.tenantId(), operation.operationId()).orElse(operation);
         if (cancellationRequested(operation.operationId())) {
@@ -100,6 +116,16 @@ public class OperationService {
     public boolean cancellationRequested(UUID operationId) {
         AtomicBoolean flag = cancellationFlags.get(operationId);
         return flag != null && flag.get();
+    }
+
+    public boolean cancellationRequested(String tenantId, UUID operationId) {
+        if (cancellationRequested(operationId)) {
+            return true;
+        }
+        return cache.readOperation(tenantId, operationId)
+            .map(operation -> "CANCEL_REQUESTED".equals(operation.status())
+                || "CANCELLED".equals(operation.status()))
+            .orElse(false);
     }
 
     public OperationRow completeFromRun(OperationRow operation, IngestionRunRow run) {

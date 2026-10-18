@@ -24,6 +24,7 @@ public class SchemaInstaller {
         "cql/V8__chunk_hierarchy.cql",
         "cql/V9__source_lifecycle.cql",
         "cql/V10__content_cache_reference.cql",
+        "cql/V11__durable_ingestion_workflows.cql",
     };
 
     public static void install(CqlSession session) {

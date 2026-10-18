@@ -1,6 +1,6 @@
 # Source lifecycle fixture
 
-**Status:** #248 implementation slice with tenant-scoped Source, run, and Operation routes; durable recovery follows #250
+**Status:** #248 source lifecycle plus #250 durable workflow recovery and source-event dispatch retries
 **Contract:** [`../api/source-model.md`](../api/source-model.md)
 
 The deterministic fixture flow uses the existing filesystem `ContentAdapter`,
@@ -15,7 +15,7 @@ submission and the public Operation record.
 With Docker available to Testcontainers, run:
 
 ```bash
-./gradlew :java:content-cache-api:test :java:ingestion-cache:test :java:synflux:test --no-configuration-cache
+./gradlew :java:content-cache-api:test :java:content-cache-grpc:test :java:ingestion-cache:test :java:synflux:test --no-configuration-cache
 ```
 
 The test installs the real Cassandra schema migration and exercises the same
@@ -23,7 +23,9 @@ service and public fixture workflow. It covers first/unchanged/changed ingestion
 distinct source identities with identical bytes, tenant isolation,
 authoritative deletion and tombstone provenance, incomplete discovery, a
 post-deletion re-creation, revision conflicts, failure/retry, cancellation, and
-empty-manifest terminal cases. REST tests verify tenant isolation on source, run,
+empty-manifest terminal cases. It also covers recovery after an injected crash,
+retryable dependency failure, bounded outbox retries/dead-letter, and stable
+same-key Operation/run identity. REST tests verify tenant isolation on source, run,
 and Operation reads/submissions. The end-to-end workflow test discovers and
 reads a real temporary file, exercises acquisition/extraction/chunk/persist
 stages, and checks Operation idempotency and outbox deduplication.
@@ -70,8 +72,50 @@ stages, and checks Operation idempotency and outbox deduplication.
 - `SourcePublished` and `SourceDeleted` event envelopes are stored atomically
   with their immutable SourceVersion/tombstone rows. Their event IDs are
   deterministic and the event publication flag is transport metadata; duplicate
-  source delivery cannot create a second event. The dispatcher/recovery workflow
-  remains in #250.
+  source delivery cannot create a second event. Envelopes carry the frozen 1.27
+  event version, tenant, producer, correlation, causation, security, and payload
+  fields. The dispatcher scans registered tenants, publishes only after broker
+  acknowledgement, and persists bounded backoff attempts and last errors. After
+  exhaustion, the original event ID/payload is retained in the dead-letter table;
+  replay requeues that same immutable event rather than rewriting source history.
+- Durable workflow and step records live in `ingestion-cache` Cassandra for this
+  source lifecycle slice, keeping Operation/run recovery alongside the source
+  history and its co-located outbox intent. Workflow IDs are stable and distinct
+  from Operation/run IDs; step command IDs are stable across retries. Recovery
+  scans the registered tenant directory, resumes due non-terminal workflows, and
+  restores a completed acquisition step through its persisted Content Cache
+  reference. The generic PostgreSQL-only workflow engine remains the broader EWP-4
+  deliverable; #250 implements its first source-specific customer without adding
+  a new broker or a second source outbox.
+- **Compensation classes are internal to the ingestion workflow** — they direct
+  restart behavior and are not part of the frozen eventing contract (§44 defines
+  `step_id`, `command`, `expected events`, `timeout`, `retry policy`; compensation
+  is a local saga extension recorded on the step row). `DISCOVER` is `REVERSIBLE`
+  (re-discovery is side-effect free). `ACQUIRE` is `COMPENSATABLE`: its handler is
+  the source model's orphan-artifact reconciliation, not inline deletion — a
+  permanently failed downstream step leaves the durable Content Cache artifact in
+  place for reconciliation per source-model "Outbox publication order" (crash
+  before the Ingestion Plane commit may orphan the artifact). `INGEST` is
+  `IRREVERSIBLE`: once the SourceVersion/outbox transaction commits, recovery
+  finalizes the workflow from the terminal run and never re-runs the ingest step.
+- Dead-letter requeue retains the original event identity (Eventing §33–§34): it
+  is redelivery of an event that never published, not §38–§39 replay. A
+  deliberately re-emitted source fact under a new event ID is governed by the
+  source business key — `SourcePublished`/`SourceChanged`/`SourceUnchanged` are
+  `REPLAY_WITH_POLICY`: the `(tenant_id, source_id, resource_id, version_id)` key
+  converges duplicates to `UNCHANGED` with no second event (source model §39–§40),
+  and `SourceDeleted` replays reuse the tombstone's original `deleted_at`.
+- Concurrent workers are serialized by a Cassandra LWT workflow lease: the first
+  worker to claim runs the workflow, a loser returns the current state without
+  doing work, and an expired lease is takeable — a crashed holder is replaced
+  after expiry with the same operation_id continuing. The source-version
+  `IF NOT EXISTS` write is the second guard: even a lease race converges on one
+  authoritative version and one deterministically-IDed event.
+- Retryable dependency errors leave the workflow in `RETRYABLE`, the Operation
+  `RUNNING`, and the IngestionRun `ACQUIRING`; bounded exponential backoff is
+  persisted with the step. Retry exhaustion finalizes the IngestionRun and
+  Operation with the existing W2 failure projection. Integrity failures remain
+  terminal `QUARANTINED` outcomes.
 - Only `DeletionSignal.DELETED` creates a tombstone. `SYNC_INCOMPLETE`,
   `NOT_VISIBLE`, `NOT_FOUND`, `ACCESS_DENIED`, and `UNKNOWN` are retained as
   skipped outcomes. Tombstones retain the verified principal and a resolvable
@@ -88,10 +132,11 @@ stages, and checks Operation idempotency and outbox deduplication.
   on the ingestion executor. Operation GET/cancel and run GET use verified tenant
   scope. Source creation and Source CRUD/version routes are under `/v1/sources`.
 
-Migrations V9 and V10 create the tenant-scoped Source catalog,
+Migrations V9–V11 create the tenant-scoped Source catalog,
 per-resource SourceIdentity rows, immutable source versions, tombstones and
 version manifests, ingestion runs/manifests/entries, W2 error records,
-Operations, command idempotency rows, and opaque Content Cache reference
+Operations, command idempotency rows, tenant registry, durable workflow/step
+state, retry metadata for source events, and opaque Content Cache reference
 columns on SourceVersion and the content manifest. Version and tombstone event
 envelopes are co-located in their respective history rows to preserve the
 artifact-before-publication ordering.

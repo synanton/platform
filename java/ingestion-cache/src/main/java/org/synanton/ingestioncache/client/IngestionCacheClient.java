@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class IngestionCacheClient {
 
+    private static final int TENANT_REGISTRY_BUCKETS = 32;
     private static final Logger log = LoggerFactory.getLogger(IngestionCacheClient.class);
     private final CqlSession session;
 
@@ -27,6 +28,33 @@ public class IngestionCacheClient {
 
     public IngestionCacheClient(CqlSession session) {
         this.session = session;
+    }
+
+    /** Registers a tenant before creating durable work that recovery workers must enumerate. */
+    public void registerTenant(String tenantId, Instant registeredAt) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId must not be blank");
+        }
+        Objects.requireNonNull(registeredAt, "registeredAt");
+        int bucket = Math.floorMod(tenantId.hashCode(), TENANT_REGISTRY_BUCKETS);
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.tenant_registry (bucket, tenant_id, registered_at) " +
+            "VALUES (?,?,?) IF NOT EXISTS",
+            bucket, tenantId, registeredAt
+        ));
+    }
+
+    /** Enumerates registered tenants from bounded partitions, not a hard-coded tenant allowlist. */
+    public List<String> listTenantIds() {
+        List<String> tenants = new ArrayList<>();
+        for (int bucket = 0; bucket < TENANT_REGISTRY_BUCKETS; bucket++) {
+            ResultSet result = session.execute(SimpleStatement.newInstance(
+                "SELECT tenant_id FROM ingestion_cache.tenant_registry WHERE bucket=?", bucket));
+            for (Row row : result) {
+                tenants.add(row.getString("tenant_id"));
+            }
+        }
+        return tenants.stream().distinct().sorted().toList();
     }
 
     // ---- Manifest ----
@@ -241,6 +269,7 @@ public class IngestionCacheClient {
 
     /** Creates one tenant-scoped source configuration without allowing connector identity to drift. */
     public SourceRow createSourceIfAbsent(SourceRow source) {
+        registerTenant(source.tenantId(), source.createdAt());
         ResultSet result = session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.sources " +
             "(tenant_id, source_id, connector_id, connector_type, source_endpoint, capability_flags, status, " +
@@ -258,6 +287,163 @@ public class IngestionCacheClient {
             throw new SourceIdentityConflictException("source_id is already bound to a different connector identity");
         }
         return existing;
+    }
+
+    public WorkflowStateRow createWorkflowStateIfAbsent(WorkflowStateRow workflow) {
+        registerTenant(workflow.tenantId(), workflow.createdAt());
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.workflow_states " +
+            "(tenant_id, workflow_id, workflow_type, workflow_version, operation_id, run_id, source_id, " +
+            "resource_id, principal_id, principal_type, request_id, idempotency_key, state, current_step, " +
+            "created_at, updated_at, started_at, completed_at, correlation_id, failure_code, failure_message, " +
+            "retry_count, next_attempt_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS",
+            workflow.tenantId(), workflow.workflowId(), workflow.workflowType(), workflow.workflowVersion(),
+            workflow.operationId(), workflow.runId(), workflow.sourceId(), workflow.resourceId(),
+            workflow.principalId(), workflow.principalType(), workflow.requestId(), workflow.idempotencyKey(),
+            workflow.state(), workflow.currentStep(), workflow.createdAt(), workflow.updatedAt(),
+            workflow.startedAt(), workflow.completedAt(), workflow.correlationId(), workflow.failureCode(),
+            workflow.failureMessage(), workflow.retryCount(), workflow.nextAttemptAt()
+        ));
+        if (result.wasApplied()) {
+            return workflow;
+        }
+        WorkflowStateRow existing = readWorkflowState(workflow.tenantId(), workflow.workflowId())
+            .orElseThrow(() -> new IllegalStateException("Workflow insert lost without a readable row"));
+        if (!existing.operationId().equals(workflow.operationId())
+                || !existing.runId().equals(workflow.runId())
+                || !existing.sourceId().equals(workflow.sourceId())
+                || !existing.resourceId().equals(workflow.resourceId())) {
+            throw new IllegalStateException("workflow_id is already bound to another operation or resource");
+        }
+        return existing;
+    }
+
+    public void upsertWorkflowState(WorkflowStateRow workflow) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.workflow_states " +
+            "(tenant_id, workflow_id, workflow_type, workflow_version, operation_id, run_id, source_id, " +
+            "resource_id, principal_id, principal_type, request_id, idempotency_key, state, current_step, " +
+            "created_at, updated_at, started_at, completed_at, correlation_id, failure_code, failure_message, " +
+            "retry_count, next_attempt_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            workflow.tenantId(), workflow.workflowId(), workflow.workflowType(), workflow.workflowVersion(),
+            workflow.operationId(), workflow.runId(), workflow.sourceId(), workflow.resourceId(),
+            workflow.principalId(), workflow.principalType(), workflow.requestId(), workflow.idempotencyKey(),
+            workflow.state(), workflow.currentStep(), workflow.createdAt(), workflow.updatedAt(),
+            workflow.startedAt(), workflow.completedAt(), workflow.correlationId(), workflow.failureCode(),
+            workflow.failureMessage(), workflow.retryCount(), workflow.nextAttemptAt()
+        ));
+    }
+
+    public Optional<WorkflowStateRow> readWorkflowState(String tenantId, UUID workflowId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.workflow_states WHERE tenant_id=? AND workflow_id=?",
+            tenantId, workflowId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(workflowStateFrom(row));
+    }
+
+    public List<WorkflowStateRow> listWorkflowStates(String tenantId) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.workflow_states WHERE tenant_id=?", tenantId));
+        List<WorkflowStateRow> workflows = new ArrayList<>();
+        for (Row row : result) {
+            workflows.add(workflowStateFrom(row));
+        }
+        return workflows;
+    }
+
+    private static WorkflowStateRow workflowStateFrom(Row row) {
+        return new WorkflowStateRow(
+            row.getString("tenant_id"), row.getUuid("workflow_id"), row.getString("workflow_type"),
+            row.getInt("workflow_version"), row.getUuid("operation_id"), row.getUuid("run_id"),
+            row.getString("source_id"), row.getString("resource_id"), row.getString("principal_id"),
+            row.getString("principal_type"), row.getString("request_id"), row.getString("idempotency_key"),
+            row.getString("state"), row.getString("current_step"), row.getInstant("created_at"),
+            row.getInstant("updated_at"), row.getInstant("started_at"), row.getInstant("completed_at"),
+            row.getString("correlation_id"), row.getString("failure_code"), row.getString("failure_message"),
+            intOrDefault(row, "retry_count", 0), row.getInstant("next_attempt_at")
+        );
+    }
+
+    public void upsertWorkflowStep(WorkflowStepRow step) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.workflow_steps " +
+            "(tenant_id, workflow_id, step_id, command_id, command_type, expected_events_json, timeout_millis, " +
+            "retry_policy_json, compensation, status, attempt_count, input_json, output_json, started_at, " +
+            "completed_at, next_attempt_at, last_error) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            step.tenantId(), step.workflowId(), step.stepId(), step.commandId(), step.commandType(),
+            step.expectedEventsJson(), step.timeoutMillis(), step.retryPolicyJson(), step.compensation(),
+            step.status(), step.attemptCount(), step.inputJson(), step.outputJson(), step.startedAt(),
+            step.completedAt(), step.nextAttemptAt(), step.lastError()
+        ));
+    }
+
+    public Optional<WorkflowStepRow> readWorkflowStep(String tenantId, UUID workflowId, String stepId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.workflow_steps WHERE tenant_id=? AND workflow_id=? AND step_id=?",
+            tenantId, workflowId, stepId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(workflowStepFrom(row));
+    }
+
+    private static WorkflowStepRow workflowStepFrom(Row row) {
+        return new WorkflowStepRow(
+            row.getString("tenant_id"), row.getUuid("workflow_id"), row.getString("step_id"),
+            row.getUuid("command_id"), row.getString("command_type"), row.getString("expected_events_json"),
+            row.getLong("timeout_millis"), row.getString("retry_policy_json"), row.getString("compensation"),
+            row.getString("status"), intOrDefault(row, "attempt_count", 0), row.getString("input_json"),
+            row.getString("output_json"), row.getInstant("started_at"), row.getInstant("completed_at"),
+            row.getInstant("next_attempt_at"), row.getString("last_error")
+        );
+    }
+
+    /** Claims one workflow until its lease expires; concurrent Synflux instances converge on one worker. */
+    public boolean claimWorkflowLease(
+            String tenantId, UUID workflowId, UUID leaseOwner, Instant now, Instant leaseExpiresAt) {
+        ResultSet inserted = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.workflow_leases " +
+            "(tenant_id, workflow_id, lease_owner, lease_expires_at) VALUES (?,?,?,?) IF NOT EXISTS",
+            tenantId, workflowId, leaseOwner, leaseExpiresAt
+        ));
+        if (inserted.wasApplied()) {
+            return true;
+        }
+        Row existing = session.execute(SimpleStatement.newInstance(
+            "SELECT lease_owner, lease_expires_at FROM ingestion_cache.workflow_leases " +
+            "WHERE tenant_id=? AND workflow_id=?",
+            tenantId, workflowId
+        )).one();
+        if (existing == null) {
+            return false;
+        }
+        Instant expiresAt = existing.getInstant("lease_expires_at");
+        UUID existingOwner = existing.getUuid("lease_owner");
+        if (expiresAt != null && expiresAt.isAfter(now)) {
+            return false;
+        }
+        ResultSet reclaimed = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.workflow_leases SET lease_owner=?, lease_expires_at=? " +
+            "WHERE tenant_id=? AND workflow_id=? IF lease_owner=?",
+            leaseOwner, leaseExpiresAt, tenantId, workflowId, existingOwner
+        ));
+        return reclaimed.wasApplied();
+    }
+
+    public boolean renewWorkflowLease(
+            String tenantId, UUID workflowId, UUID leaseOwner, Instant leaseExpiresAt) {
+        ResultSet renewed = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.workflow_leases SET lease_expires_at=? " +
+            "WHERE tenant_id=? AND workflow_id=? IF lease_owner=?",
+            leaseExpiresAt, tenantId, workflowId, leaseOwner
+        ));
+        return renewed.wasApplied();
+    }
+
+    public void releaseWorkflowLease(String tenantId, UUID workflowId, UUID leaseOwner) {
+        session.execute(SimpleStatement.newInstance(
+            "DELETE FROM ingestion_cache.workflow_leases WHERE tenant_id=? AND workflow_id=? IF lease_owner=?",
+            tenantId, workflowId, leaseOwner
+        ));
     }
 
     public Optional<SourceRow> readSource(String tenantId, String sourceId) {
@@ -370,10 +556,13 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.source_versions " +
             "(tenant_id, connector_id, source_id, resource_id, version_id, content_digest, source_revision, " +
             "observed_at, content_ref_id, incarnation_id, content_cache_reference, event_id, event_type, " +
-            "event_payload_json, event_published) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false) IF NOT EXISTS",
+            "event_payload_json, event_published, event_published_at, event_attempt_count, event_last_error, " +
+            "event_next_attempt_at, event_dead_lettered) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?) IF NOT EXISTS",
             version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
             version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
-            version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson()
+            version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson(),
+            event.publishedAt(), event.attemptCount(), event.lastError(), event.nextAttemptAt(), event.deadLettered()
         ));
         return result.wasApplied();
     }
@@ -393,7 +582,9 @@ public class IngestionCacheClient {
                     row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
                     row.getString("resource_id"), eventId, row.getString("event_type"), row.getUuid("version_id"),
                     null, row.getString("event_payload_json"), row.getInstant("observed_at"),
-                    row.getBoolean("event_published")
+                    row.getBoolean("event_published"), row.getInstant("event_published_at"),
+                    intOrDefault(row, "event_attempt_count", 0), row.getString("event_last_error"),
+                    row.getInstant("event_next_attempt_at"), boolOrDefault(row, "event_dead_lettered", false)
                 ));
             }
         }
@@ -409,27 +600,124 @@ public class IngestionCacheClient {
                     row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
                     row.getString("resource_id"), eventId, row.getString("event_type"), null,
                     row.getUuid("tombstone_id"), row.getString("event_payload_json"), row.getInstant("deleted_at"),
-                    row.getBoolean("event_published")
+                    row.getBoolean("event_published"), row.getInstant("event_published_at"),
+                    intOrDefault(row, "event_attempt_count", 0), row.getString("event_last_error"),
+                    row.getInstant("event_next_attempt_at"), boolOrDefault(row, "event_dead_lettered", false)
                 ));
             }
         }
-        return rows.stream().sorted(Comparator.comparing(SourceOutboxRow::createdAt)).toList();
+        return rows.stream().sorted(Comparator.comparing(SourceOutboxRow::createdAt)
+            .thenComparing(SourceOutboxRow::eventId)).toList();
     }
 
-    public void markSourceOutboxPublished(SourceOutboxRow event) {
+    public List<SourceOutboxRow> listUnpublishedSourceOutbox(String tenantId, int limit, Instant now) {
+        List<SourceOutboxRow> pending = new ArrayList<>();
+        for (SourceRow source : listSources(tenantId)) {
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                boolean orderingBlocked = false;
+                for (SourceOutboxRow event : listSourceOutbox(
+                        tenantId, source.connectorId(), source.sourceId(), identity.resourceId())) {
+                    if (event.published()) {
+                        continue;
+                    }
+                    if (event.deadLettered() || (event.nextAttemptAt() != null && event.nextAttemptAt().isAfter(now))) {
+                        orderingBlocked = true;
+                        continue;
+                    }
+                    if (!orderingBlocked) {
+                        pending.add(event);
+                    }
+                }
+            }
+        }
+        return pending.stream().sorted(Comparator.comparing(SourceOutboxRow::createdAt))
+            .limit(limit).toList();
+    }
+
+    public void markSourceOutboxPublished(SourceOutboxRow event, Instant publishedAt) {
         if (event.sourceVersionId() != null) {
             session.execute(SimpleStatement.newInstance(
-                "UPDATE ingestion_cache.source_versions SET event_published=true WHERE tenant_id=? " +
+                "UPDATE ingestion_cache.source_versions SET event_published=true, event_published_at=?, " +
+                "event_last_error=null, event_next_attempt_at=null WHERE tenant_id=? " +
                 "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
-                event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(), event.sourceVersionId()
+                publishedAt, event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(),
+                event.sourceVersionId()
             ));
         } else {
             session.execute(SimpleStatement.newInstance(
-                "UPDATE ingestion_cache.source_tombstones SET event_published=true WHERE tenant_id=? " +
+                "UPDATE ingestion_cache.source_tombstones SET event_published=true, event_published_at=?, " +
+                "event_last_error=null, event_next_attempt_at=null WHERE tenant_id=? " +
                 "AND connector_id=? AND source_id=? AND resource_id=? AND tombstone_id=?",
+                publishedAt, event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(),
+                event.tombstoneId()
+            ));
+        }
+    }
+
+    public void recordSourceOutboxFailure(
+            SourceOutboxRow event,
+            int attemptCount,
+            String error,
+            Instant nextAttemptAt,
+            boolean deadLettered,
+            Instant occurredAt) {
+        if (deadLettered) {
+            session.execute(SimpleStatement.newInstance(
+                "INSERT INTO ingestion_cache.dead_letter_events " +
+                "(tenant_id, event_id, event_type, aggregate_type, aggregate_id, payload_json, created_at, " +
+                "dead_lettered_at, attempt_count, last_error) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                event.tenantId(), event.eventId(), event.eventType(), "SourceIdentity",
+                event.connectorId() + ":" + event.sourceId() + ":" + event.resourceId(), event.payloadJson(),
+                event.createdAt(), occurredAt, attemptCount, error
+            ));
+        }
+        if (event.sourceVersionId() != null) {
+            session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.source_versions SET event_attempt_count=?, event_last_error=?, " +
+                "event_next_attempt_at=?, event_dead_lettered=? WHERE tenant_id=? AND connector_id=? " +
+                "AND source_id=? AND resource_id=? AND version_id=?",
+                attemptCount, error, nextAttemptAt, deadLettered, event.tenantId(), event.connectorId(),
+                event.sourceId(), event.resourceId(), event.sourceVersionId()
+            ));
+        } else {
+            session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.source_tombstones SET event_attempt_count=?, event_last_error=?, " +
+                "event_next_attempt_at=?, event_dead_lettered=? WHERE tenant_id=? AND connector_id=? " +
+                "AND source_id=? AND resource_id=? AND tombstone_id=?",
+                attemptCount, error, nextAttemptAt, deadLettered, event.tenantId(), event.connectorId(),
+                event.sourceId(), event.resourceId(), event.tombstoneId()
+            ));
+        }
+    }
+
+    /** Requeues the immutable dead-lettered event without changing its source fact or event ID. */
+    public boolean replaySourceOutbox(SourceOutboxRow event) {
+        ResultSet result;
+        if (event.sourceVersionId() != null) {
+            result = session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.source_versions SET event_published=false, event_published_at=null, " +
+                "event_attempt_count=0, event_last_error=null, event_next_attempt_at=null, " +
+                "event_dead_lettered=false WHERE tenant_id=? AND connector_id=? AND source_id=? " +
+                "AND resource_id=? AND version_id=? IF event_dead_lettered=true",
+                event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(), event.sourceVersionId()
+            ));
+        } else {
+            result = session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.source_tombstones SET event_published=false, event_published_at=null, " +
+                "event_attempt_count=0, event_last_error=null, event_next_attempt_at=null, " +
+                "event_dead_lettered=false WHERE tenant_id=? AND connector_id=? AND source_id=? " +
+                "AND resource_id=? AND tombstone_id=? IF event_dead_lettered=true",
                 event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(), event.tombstoneId()
             ));
         }
+        if (result.wasApplied()) {
+            session.execute(SimpleStatement.newInstance(
+                "DELETE FROM ingestion_cache.dead_letter_events WHERE tenant_id=? AND event_id=?",
+                event.tenantId(), event.eventId()
+            ));
+        }
+        return result.wasApplied();
     }
 
     public Optional<SourceVersionRow> readSourceVersion(
@@ -477,12 +765,14 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.source_tombstones " +
             "(tenant_id, connector_id, source_id, resource_id, deleted_at, tombstone_id, " +
             "deleted_by_principal_id, deleted_by_principal_type, version_count, versions_manifest_ref, " +
-            "next_incarnation_id, event_id, event_type, event_payload_json, event_published) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false) IF NOT EXISTS",
+            "next_incarnation_id, event_id, event_type, event_payload_json, event_published, event_published_at, " +
+            "event_attempt_count, event_last_error, event_next_attempt_at, event_dead_lettered) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?) IF NOT EXISTS",
             tombstone.tenantId(), tombstone.connectorId(), tombstone.sourceId(), tombstone.resourceId(),
             tombstone.deletedAt(), tombstone.tombstoneId(), tombstone.deletedByPrincipalId(),
             tombstone.deletedByPrincipalType(), tombstone.versionCount(), tombstone.versionsManifestRef(),
-            tombstone.nextIncarnationId(), event.eventId(), event.eventType(), event.payloadJson()
+            tombstone.nextIncarnationId(), event.eventId(), event.eventType(), event.payloadJson(),
+            event.publishedAt(), event.attemptCount(), event.lastError(), event.nextAttemptAt(), event.deadLettered()
         ));
         return result.wasApplied();
     }
@@ -932,30 +1222,56 @@ public class IngestionCacheClient {
     // ---- Outbox (Phase 3) ----
 
     public void insertOutboxRow(OutboxRow row) {
+        registerTenant(row.tenantId(), row.createdAt());
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.manifest_transitions_outbox " +
-            "(tenant_id, event_id, manifest_id, transition_from, transition_to, topic, payload_json, published, created_at) " +
-            "VALUES (?, now(), ?, ?, ?, ?, ?, false, ?)",
+            "(tenant_id, event_id, manifest_id, transition_from, transition_to, topic, payload_json, published, " +
+            "created_at, published_at, attempt_count, last_error, next_attempt_at, dead_lettered) " +
+            "VALUES (?, now(), ?, ?, ?, ?, ?, false, ?, null, 0, null, null, false)",
             row.tenantId(), row.manifestId(), row.transitionFrom(), row.transitionTo(),
             row.topic(), row.payloadJson(), row.createdAt()
         ));
     }
 
-    public List<OutboxRow> listUnpublishedOutbox(String tenantId, int limit) {
+    public List<OutboxRow> listUnpublishedOutbox(String tenantId, int limit, Instant now) {
         var rs = session.execute(SimpleStatement.newInstance(
             "SELECT * FROM ingestion_cache.manifest_transitions_outbox WHERE tenant_id=? AND published=false LIMIT ? ALLOW FILTERING",
             tenantId, limit
         ));
         List<OutboxRow> rows = new ArrayList<>();
-        for (Row r : rs) rows.add(rowToOutbox(r));
+        for (Row r : rs) {
+            OutboxRow row = rowToOutbox(r);
+            if (!row.deadLettered() && (row.nextAttemptAt() == null || !row.nextAttemptAt().isAfter(now))) {
+                rows.add(row);
+            }
+        }
         return rows;
     }
 
-    public void markOutboxPublished(String tenantId, UUID eventId) {
+    public void markOutboxPublished(String tenantId, UUID eventId, Instant publishedAt) {
         session.execute(SimpleStatement.newInstance(
-            "UPDATE ingestion_cache.manifest_transitions_outbox SET published=true WHERE tenant_id=? AND event_id=?",
-            tenantId, eventId
+            "UPDATE ingestion_cache.manifest_transitions_outbox SET published=true, published_at=?, " +
+            "last_error=null, next_attempt_at=null WHERE tenant_id=? AND event_id=?",
+            publishedAt, tenantId, eventId
         ));
+    }
+
+    public void recordOutboxFailure(OutboxRow row, int attemptCount, String error, Instant nextAttemptAt,
+            boolean deadLettered, Instant occurredAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.manifest_transitions_outbox SET attempt_count=?, last_error=?, " +
+            "next_attempt_at=?, dead_lettered=? WHERE tenant_id=? AND event_id=?",
+            attemptCount, error, nextAttemptAt, deadLettered, row.tenantId(), row.eventId()
+        ));
+        if (deadLettered) {
+            session.execute(SimpleStatement.newInstance(
+                "INSERT INTO ingestion_cache.dead_letter_events " +
+                "(tenant_id, event_id, event_type, aggregate_type, aggregate_id, payload_json, created_at, " +
+                "dead_lettered_at, attempt_count, last_error) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                row.tenantId(), row.eventId(), row.topic(), "Manifest", row.manifestId().toString(),
+                row.payloadJson(), row.createdAt(), occurredAt, attemptCount, error
+            ));
+        }
     }
 
     private OutboxRow rowToOutbox(Row r) {
@@ -968,7 +1284,12 @@ public class IngestionCacheClient {
             r.getString("topic"),
             r.getString("payload_json"),
             r.getBoolean("published"),
-            r.getInstant("created_at")
+            r.getInstant("created_at"),
+            r.getInstant("published_at"),
+            intOrDefault(r, "attempt_count", 0),
+            r.getString("last_error"),
+            r.getInstant("next_attempt_at"),
+            boolOrDefault(r, "dead_lettered", false)
         );
     }
 
