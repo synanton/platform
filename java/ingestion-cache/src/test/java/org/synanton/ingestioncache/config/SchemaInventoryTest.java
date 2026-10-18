@@ -24,6 +24,7 @@ class SchemaInventoryTest {
                     "analysis_cache",
                     "annotations",
                     "chunks_payload",
+                    "chunk_source_versions",
                     "dead_letter_events",
                     "embedding_content_cache",
                     "image_caption_cache",
@@ -120,6 +121,8 @@ class SchemaInventoryTest {
             "source_tombstones.event_last_error",
             "chunks_payload.source_version_ids",
             "chunks_payload.processing_run_id",
+            "chunk_source_versions.chunk_sha256",
+            "chunk_source_versions.processing_run_id",
             "manifest.processing_run_id",
             "knowledge_processing_runs.producer_version",
             "knowledge_processing_runs.input_source_version_ids"

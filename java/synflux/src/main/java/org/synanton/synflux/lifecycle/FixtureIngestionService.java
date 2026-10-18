@@ -201,6 +201,11 @@ public final class FixtureIngestionService {
         } catch (Exception failure) {
             log.warn("Fixture ingestion run {} failed", runId, failure);
             Instant completedAt = clock.instant();
+            // A lease-less worker must leave the run non-terminal: the new leaseholder
+            // resumes it. Recording CANCELLED/FAILED here would fork the workflow.
+            if (failure instanceof WorkflowLeaseLostException) {
+                throw failure;
+            }
             if (failure instanceof CancellationException) {
                 return finishRun(tenantId, runId, operationId, sourceId, startedAt, "CANCELLED",
                     new SyncResultRow(0, 0, 0, 0, 0, 0, 0, 1), null,

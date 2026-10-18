@@ -22,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -65,7 +66,7 @@ class PersistStageTest {
         stage.apply(doc(refId), context);
 
         ArgumentCaptor<List<ChunkRow>> chunks = ArgumentCaptor.forClass(List.class);
-        verify(cache).insertChunks(chunks.capture());
+        verify(cache).recordKnowledgeChunks(eq("demo"), eq(refId), eq(versionId), any(), chunks.capture());
         assertThat(chunks.getValue()).singleElement().satisfies(row -> {
             assertThat(row.sourceVersionIds()).containsExactly(versionId);
             assertThat(row.processingRunId()).isNotNull();
@@ -73,10 +74,10 @@ class PersistStageTest {
         });
 
         ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
-        verify(cache, org.mockito.Mockito.times(2)).upsertKnowledgeProcessingRun(runs.capture());
+        verify(cache, org.mockito.Mockito.times(3)).upsertKnowledgeProcessingRun(runs.capture());
         UUID runId = runs.getAllValues().getFirst().processingRunId();
-        assertThat(runs.getAllValues().getFirst().status()).isEqualTo("RUNNING");
-        assertThat(runs.getAllValues().getLast().status()).isEqualTo("COMPLETED");
+        assertThat(runs.getAllValues().stream().map(KnowledgeProcessingRunRow::status).toList())
+            .containsExactly("RUNNING", "PUBLISHING", "COMPLETED");
         assertThat(runs.getAllValues().getLast().processingRunId()).isEqualTo(runId);
         assertThat(runs.getAllValues().getFirst().producer()).isEqualTo("synflux-knowledge");
         assertThat(runs.getAllValues().getFirst().producerVersion()).isEqualTo("semantic-v1:1");
@@ -123,7 +124,7 @@ class PersistStageTest {
         UUID refId = UUID.randomUUID();
         UUID versionId = UUID.randomUUID();
         org.mockito.Mockito.doThrow(new IllegalStateException("cassandra down"))
-            .when(cache).insertChunks(anyList());
+            .when(cache).recordKnowledgeChunks(any(), any(), any(), any(), anyList());
 
         assertThatThrownBy(() -> stage.apply(doc(refId),
             new StageContext("demo", "job", props()).withSourceVersionId(versionId)))
@@ -131,44 +132,63 @@ class PersistStageTest {
 
         ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
         verify(cache, org.mockito.Mockito.times(2)).upsertKnowledgeProcessingRun(runs.capture());
-        assertThat(runs.getAllValues().getLast().status()).isEqualTo("FAILED");
+        assertThat(runs.getAllValues().stream().map(KnowledgeProcessingRunRow::status).toList())
+            .containsExactly("RUNNING", "FAILED");
         assertThat(runs.getAllValues().getLast().errorCode()).isEqualTo("IllegalStateException");
         assertThat(runs.getAllValues().getLast().errorMessage()).contains("cassandra down");
         verify(cache, never()).upsertManifest(any());
     }
 
     @Test
-    void priorRunAccumulatesObservingSourceVersions() {
+    void crashAfterManifestWriteBeforeCompletedLeavesRunFailedNotSuccessful() {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        PersistStage stage = new PersistStage(cache);
+        UUID refId = UUID.randomUUID();
+        UUID versionId = UUID.randomUUID();
+        // Failure injected after the manifest is durable, before the COMPLETED
+        // transition — the manifest must not read as successful knowledge.
+        org.mockito.Mockito.doAnswer(invocation -> {
+            KnowledgeProcessingRunRow run = invocation.getArgument(0);
+            if ("COMPLETED".equals(run.status())) {
+                throw new IllegalStateException("crash before COMPLETED");
+            }
+            return null;
+        }).when(cache).upsertKnowledgeProcessingRun(any());
+
+        assertThatThrownBy(() -> stage.apply(doc(refId),
+            new StageContext("demo", "job", props()).withSourceVersionId(versionId)))
+            .isInstanceOf(IllegalStateException.class);
+
+        ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
+        verify(cache, org.mockito.Mockito.times(4)).upsertKnowledgeProcessingRun(runs.capture());
+        // The COMPLETED transition was attempted and crashed; the FAILED record wins.
+        assertThat(runs.getAllValues().stream().map(KnowledgeProcessingRunRow::status).toList())
+            .containsExactly("RUNNING", "PUBLISHING", "COMPLETED", "FAILED");
+        verify(cache).upsertManifest(any());
+    }
+
+    @Test
+    void chunkWriteAppendsOnlyThisRunsVersionAndRecordsJunction() {
         IngestionCacheClient cache = mock(IngestionCacheClient.class);
         PersistStage stage = new PersistStage(cache);
         UUID refId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-        UUID firstVersion = UUID.fromString("22222222-2222-2222-2222-222222222222");
-        UUID secondVersion = UUID.fromString("33333333-3333-3333-3333-333333333333");
-        StageContext context = new StageContext("demo", "job", props()).withSourceVersionId(secondVersion);
-        // Prior chunk rows attribute the artifact to the first observing version.
-        ContentRef contentRef = new ContentRef("file", "file:///tmp/a.md", "text/markdown", 10, Instant.now());
-        ChunkRow priorChunk = new ChunkRow("demo", refId, 0, "hello", "bb",
-            2, 2, "Section", "SECTION", "Section", "[\"e1\"]", 3, "", false,
-            SemanticChunk.PUBLIC_ONLY, "", "", 0,
-            java.util.Set.of(firstVersion), UUID.randomUUID());
-        when(cache.readChunks("demo", refId)).thenReturn(List.of(priorChunk));
+        UUID versionId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        StageContext context = new StageContext("demo", "job", props()).withSourceVersionId(versionId);
 
         stage.apply(doc(refId), context);
 
-        ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
-        verify(cache, org.mockito.Mockito.times(2)).upsertKnowledgeProcessingRun(runs.capture());
-        assertThat(runs.getAllValues().getFirst().inputSourceVersionIds())
-            .containsExactlyInAnyOrder(firstVersion, secondVersion);
         ArgumentCaptor<List<ChunkRow>> chunks = ArgumentCaptor.forClass(List.class);
-        verify(cache).insertChunks(chunks.capture());
+        verify(cache).recordKnowledgeChunks(
+                eq("demo"), eq(refId), eq(versionId), any(), chunks.capture());
         for (ChunkRow row : chunks.getValue()) {
-            assertThat(row.sourceVersionIds()).containsExactlyInAnyOrder(firstVersion, secondVersion);
+            // The row's set is the server-side append delta: this run's version only.
+            assertThat(row.sourceVersionIds()).containsExactly(versionId);
         }
     }
 
     private static UUID capturedRunId(IngestionCacheClient cache) {
         ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
-        verify(cache, org.mockito.Mockito.times(2)).upsertKnowledgeProcessingRun(runs.capture());
+        verify(cache, org.mockito.Mockito.times(3)).upsertKnowledgeProcessingRun(runs.capture());
         return runs.getAllValues().getFirst().processingRunId();
     }
 }

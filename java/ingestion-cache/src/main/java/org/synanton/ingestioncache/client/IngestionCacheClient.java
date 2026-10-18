@@ -74,12 +74,32 @@ public class IngestionCacheClient {
         ));
     }
 
+    /**
+     * Reads the content manifest, gated on the publishing run being COMPLETED:
+     * a manifest whose run is RUNNING/PUBLISHING/FAILED is not visible to readers
+     * — partial knowledge is never published as successful. Manifests without a
+     * processing run (pre-#251 rows) remain visible.
+     */
     public Optional<ManifestRow> readManifest(String tenantId, UUID contentRefId) {
         var row = session.execute(SimpleStatement.newInstance(
             "SELECT * FROM ingestion_cache.manifest WHERE tenant_id=? AND content_ref_id=?",
             tenantId, contentRefId
         )).one();
-        return row == null ? Optional.empty() : Optional.of(rowToManifest(row));
+        if (row == null) {
+            return Optional.empty();
+        }
+        ManifestRow manifest = rowToManifest(row);
+        if (manifest.processingRunId() != null) {
+            Row run = session.execute(SimpleStatement.newInstance(
+                "SELECT status FROM ingestion_cache.knowledge_processing_runs " +
+                "WHERE tenant_id=? AND processing_run_id=?",
+                tenantId, manifest.processingRunId()
+            )).one();
+            if (run == null || !"COMPLETED".equals(run.getString("status"))) {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(manifest);
     }
 
     public List<ManifestRow> listManifest(String tenantId, int limit) {
@@ -149,6 +169,72 @@ public class IngestionCacheClient {
             ));
         }
         session.execute(batch);
+    }
+
+    /**
+     * Canonical-knowledge write path: inserts the chunk rows, appends the observing
+     * source version with a server-side set delta (no application-side
+     * read-modify-write — concurrent runs cannot lose an attribution), and records
+     * the (source version, chunk, run) mapping in the junction table for reverse
+     * lookup. All idempotent: reprocessing overwrites identical rows.
+     */
+    public void recordKnowledgeChunks(
+            String tenantId, UUID contentRefId, UUID sourceVersionId, UUID processingRunId,
+            List<ChunkRow> chunks) {
+        registerTenant(tenantId, Instant.now());
+        var batch = BatchStatement.newInstance(DefaultBatchType.LOGGED);
+        for (ChunkRow c : chunks) {
+            batch = batch.add(SimpleStatement.newInstance(
+                "INSERT INTO ingestion_cache.chunks_payload " +
+                "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
+                "page_start, page_end, section_path, chunk_type, heading, " +
+                "source_elements, token_count, structured_content, is_partial_section, classification, " +
+                "section_id, parent_section_id, heading_level, processing_run_id) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
+                c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
+                c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
+                c.structuredContentJson(), c.isPartialSection(),
+                new java.util.HashSet<>(c.classification()),
+                c.sectionId(), c.parentSectionId(), c.headingLevel(),
+                c.processingRunId()
+            ));
+            batch = batch.add(SimpleStatement.newInstance(
+                "INSERT INTO ingestion_cache.chunk_source_versions " +
+                "(tenant_id, source_version_id, content_ref_id, chunk_ordinal, chunk_sha256, processing_run_id) " +
+                "VALUES (?,?,?,?,?,?)",
+                tenantId, sourceVersionId, contentRefId, c.chunkOrdinal(), c.chunkSha256(), processingRunId
+            ));
+        }
+        session.execute(batch);
+        // The attribution append runs AFTER the batch: a collection delta inside a
+        // logged batch shares the batch timestamp with the row INSERT and can be
+        // lost. A separate statement has a strictly later timestamp.
+        for (ChunkRow c : chunks) {
+            session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.chunks_payload " +
+                "SET source_version_ids = source_version_ids + {" + sourceVersionId + "} " +
+                "WHERE tenant_id=? AND content_ref_id=? AND chunk_ordinal=?",
+                tenantId, contentRefId, c.chunkOrdinal()
+            ));
+        }
+    }
+
+    public List<ChunkRow> readChunksForSourceVersion(String tenantId, UUID sourceVersionId) {
+        var result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.chunk_source_versions WHERE tenant_id=? AND source_version_id=?",
+            tenantId, sourceVersionId
+        ));
+        List<ChunkRow> rows = new ArrayList<>();
+        for (Row r : result) {
+            rows.add(new ChunkRow(
+                r.getString("tenant_id"), r.getUuid("content_ref_id"),
+                r.getInt("chunk_ordinal"), "", stringOrEmpty(r, "chunk_sha256"),
+                -1, -1, "", "", "", "[]", 0, "", false, ChunkRow.PUBLIC_ONLY, "", "", 0,
+                java.util.Set.of(sourceVersionId), r.getUuid("processing_run_id")
+            ));
+        }
+        return rows.stream().sorted(Comparator.comparingInt(ChunkRow::chunkOrdinal)).toList();
     }
 
     public List<ChunkRow> readChunks(String tenantId, UUID contentRefId) {

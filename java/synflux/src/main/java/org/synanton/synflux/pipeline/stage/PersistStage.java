@@ -79,15 +79,11 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             producerVersion(ctx), configurationJson);
 
         // The run record is upserted RUNNING before any chunk write: chunks never
-        // exist without a run row (§251 review, atomicity finding). Attribution
-        // accumulates from the existing chunk rows: identical bytes delivered under
-        // two source versions share the same content-addressed chunk rows, and the
-        // set on those rows attributes them to every observing version.
-        Set<UUID> attributedVersions = java.util.Set.of(ctx.sourceVersionId());
-        for (ChunkRow existing : cacheClient.readChunks(ctx.tenant(), acquired.contentRefId())) {
-            attributedVersions = union(attributedVersions, existing.sourceVersionIds());
-        }
-        Set<UUID> provenanceVersions = attributedVersions;
+        // exist without a run row (§251 review, atomicity finding). Attribution: each
+        // run records the single source version it processes; the chunk's
+        // source_version_ids set accumulates across runs via a server-side delta, so
+        // concurrent runs cannot lose an attribution (§251 review, set-race finding).
+        Set<UUID> provenanceVersions = java.util.Set.of(ctx.sourceVersionId());
         Instant startedAt = Instant.now();
         cacheClient.upsertKnowledgeProcessingRun(new KnowledgeProcessingRunRow(
             ctx.tenant(), processingRunId, PRODUCER, producerVersion(ctx), configurationJson,
@@ -98,8 +94,19 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
                 .map(c -> toChunkRow(ctx, acquired.contentRefId(), provenanceVersions, processingRunId, c))
                 .collect(Collectors.toList());
             if (!chunkRows.isEmpty()) {
-                cacheClient.insertChunks(chunkRows);
+                cacheClient.recordKnowledgeChunks(
+                    ctx.tenant(), acquired.contentRefId(), ctx.sourceVersionId(), processingRunId, chunkRows);
             }
+            // PUBLISHING gate: the manifest is written only after the chunks are
+            // durable, and the run only transitions COMPLETED after the manifest is
+            // durable. Readers filter manifests on run status = COMPLETED, so a crash
+            // in this window leaves the manifest invisible — partial knowledge is
+            // never published as successful.
+            cacheClient.upsertKnowledgeProcessingRun(new KnowledgeProcessingRunRow(
+                ctx.tenant(), processingRunId, PRODUCER, producerVersion(ctx), configurationJson,
+                inputJson(acquired, ctx), null, "PUBLISHING", startedAt, null, null, null,
+                provenanceVersions
+            ));
             cacheClient.upsertManifest(new ManifestRow(
                 ctx.tenant(), acquired.contentRefId(), Instant.now(),
                 1, "semantic-v1", 1, state, "CONTENT_CACHE", "",
@@ -131,6 +138,7 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         return doc;
     }
 
+    /** {@code sourceVersionIds} on the written row is the append delta: this run's version. */
     private static ChunkRow toChunkRow(
             StageContext ctx, java.util.UUID contentRefId, Set<UUID> sourceVersionIds,
             UUID processingRunId, SemanticChunk c) {
@@ -184,18 +192,6 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         configuration.put("enrichment_enabled", ctx.props().pipeline().enrichmentEnabled());
         configuration.put("embedding_enabled", ctx.props().pipeline().embeddingEnabled());
         return toJson(configuration);
-    }
-
-    private static Set<UUID> union(Set<UUID> existing, UUID addition) {
-        var out = new java.util.HashSet<>(existing == null ? Set.of() : existing);
-        out.add(addition);
-        return Set.copyOf(out);
-    }
-
-    private static Set<UUID> union(Set<UUID> existing, Set<UUID> additions) {
-        var out = new java.util.HashSet<>(existing == null ? Set.of() : existing);
-        out.addAll(additions == null ? Set.of() : additions);
-        return Set.copyOf(out);
     }
 
     private static String inputJson(org.synanton.synflux.domain.AcquiredDocument artifact, StageContext ctx) {

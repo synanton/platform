@@ -27,6 +27,7 @@ public class SchemaInstaller {
         "cql/V11__durable_ingestion_workflows.cql",
         "cql/V12__knowledge_processing_runs.cql",
         "cql/V13__chunk_source_version_sets.cql",
+        "cql/V14__chunk_source_version_junction.cql",
     };
 
     public static void install(CqlSession session) {

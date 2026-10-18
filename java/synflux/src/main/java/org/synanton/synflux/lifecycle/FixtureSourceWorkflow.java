@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -240,18 +241,32 @@ public class FixtureSourceWorkflow {
             return new Submission(current, cache.readOperation(context.tenantId(), operation.operationId())
                 .orElse(operation));
         }
+        // Lease-loss propagation: a live worker whose renewal fails must stop before
+        // its next side effect, not run to completion lease-less. The guard is checked
+        // at every side-effecting boundary (discovery, acquire, each pipeline stage,
+        // the version commit); on loss the exception propagates without a terminal
+        // record, leaving the workflow non-terminal for the new leaseholder to resume.
+        AtomicBoolean leaseLost = new AtomicBoolean(false);
         ScheduledFuture<?> heartbeat = leaseRenewer.scheduleAtFixedRate(() -> {
             Instant now = clock.instant();
             if (!cache.renewWorkflowLease(context.tenantId(), workflow.workflowId(), leaseOwner,
                     now.plusSeconds(WORKFLOW_LEASE_SECONDS))) {
-                log.warn("Lost workflow lease for {}", workflow.workflowId());
+                leaseLost.set(true);
+                log.warn("Lost workflow lease for {} — halting before the next side effect",
+                    workflow.workflowId());
             }
         }, WORKFLOW_LEASE_SECONDS / 3, WORKFLOW_LEASE_SECONDS / 3, TimeUnit.SECONDS);
         try {
-            return processClaimed(context, source, sourceId, resourceId, runId, operation, workflow);
+            return processClaimed(context, source, sourceId, resourceId, runId, operation, workflow, leaseLost);
         } finally {
             heartbeat.cancel(false);
             cache.releaseWorkflowLease(context.tenantId(), workflow.workflowId(), leaseOwner);
+        }
+    }
+
+    private void requireLease(AtomicBoolean leaseLost) {
+        if (leaseLost.get()) {
+            throw new WorkflowLeaseLostException();
         }
     }
 
@@ -262,7 +277,8 @@ public class FixtureSourceWorkflow {
             String resourceId,
             UUID runId,
             OperationRow operation,
-            WorkflowStateRow workflow) {
+            WorkflowStateRow workflow,
+            AtomicBoolean leaseLost) {
         UUID operationId = operation.operationId();
         IngestionRunRow persistedRun = cache.readIngestionRun(context.tenantId(), runId).orElse(null);
         if (persistedRun != null && persistedRun.completedAt() != null) {
@@ -281,7 +297,10 @@ public class FixtureSourceWorkflow {
 
         ContentRef ref;
         try {
-            ref = loadOrDiscover(context, source, sourceId, resourceId, activeWorkflow);
+            requireLease(leaseLost);
+            ref = loadOrDiscover(context, source, sourceId, resourceId, activeWorkflow, leaseLost);
+        } catch (WorkflowLeaseLostException e) {
+            throw e;
         } catch (Exception failure) {
             return failOrRetryBeforeDiscovery(context, sourceId, runId, activeWorkflow, operation, failure);
         }
@@ -298,8 +317,11 @@ public class FixtureSourceWorkflow {
         StageContext stageContext = new StageContext(context.tenantId(), runId.toString(), properties);
         AcquiredDocument acquired;
         try {
-            acquired = loadOrAcquire(ref, stageContext, activeWorkflow);
+            requireLease(leaseLost);
+            acquired = loadOrAcquire(ref, stageContext, activeWorkflow, leaseLost);
         } catch (ResponseStatusException e) {
+            throw e;
+        } catch (WorkflowLeaseLostException e) {
             throw e;
         } catch (Exception failure) {
             return failOrRetryAfterDiscovery(
@@ -315,17 +337,19 @@ public class FixtureSourceWorkflow {
         WorkflowStepRow ingestStep = beginStep(activeWorkflow, "INGEST", Map.of(
             "content_ref_id", acquired.contentRefId().toString(),
             "content_cache_reference", acquired.contentCacheReference()));
+        requireLease(leaseLost);
         boolean deferRetryable = activeWorkflow.retryCount() < MAX_RETRIES;
         IngestionRunRow run = lifecycle.ingest(
             context, runId, operationId, source.connectorId(), sourceId, resourceId,
             ref, acquired.bytes(), acquired.contentCacheReference(), activeWorkflow.workflowId().toString(),
             activeWorkflow.correlationId(),
             ingestStep.commandId().toString(), deferRetryable, (bytes, sourceVersionId) -> {
+                requireLease(leaseLost);
                 if (operations.cancellationRequested(context.tenantId(), operationId)) {
                     throw new CancellationException("Operation cancellation requested");
                 }
                 return publishThroughPipeline(
-                    acquired, stageContext.withSourceVersionId(sourceVersionId), operationId);
+                    acquired, stageContext.withSourceVersionId(sourceVersionId), operationId, leaseLost);
             }
         );
         if (run.completedAt() == null) {
@@ -342,7 +366,8 @@ public class FixtureSourceWorkflow {
             SourceRow source,
             String sourceId,
             String resourceId,
-            WorkflowStateRow workflow) throws Exception {
+            WorkflowStateRow workflow,
+            AtomicBoolean leaseLost) throws Exception {
         WorkflowStepRow existing = cache.readWorkflowStep(context.tenantId(), workflow.workflowId(), "DISCOVER")
             .orElse(null);
         if (existing != null && existing.completed()) {
@@ -358,12 +383,14 @@ public class FixtureSourceWorkflow {
                 .min(Comparator.comparing(ContentRef::uri))
                 .orElse(null);
         }
+        requireLease(leaseLost);
         completeStep(step, ref == null ? RefCheckpoint.notFound() : RefCheckpoint.from(ref));
         workflowStepObserver.afterStepCompleted("DISCOVER");
         return ref;
     }
 
-    private AcquiredDocument loadOrAcquire(ContentRef ref, StageContext context, WorkflowStateRow workflow)
+    private AcquiredDocument loadOrAcquire(
+            ContentRef ref, StageContext context, WorkflowStateRow workflow, AtomicBoolean leaseLost)
             throws Exception {
         WorkflowStepRow existing = cache.readWorkflowStep(context.tenant(), workflow.workflowId(), "ACQUIRE")
             .orElse(null);
@@ -374,7 +401,9 @@ public class FixtureSourceWorkflow {
         }
         WorkflowStepRow step = beginStep(workflow, "ACQUIRE", Map.of(
             "source_uri", ref.uri(), "source_size", ref.sizeBytes()));
+        requireLease(leaseLost);
         AcquiredDocument acquired = acquireStage.apply(ref, context);
+        requireLease(leaseLost);
         completeStep(step, new AcquisitionCheckpoint(
             acquired.contentRefId(), acquired.sha256(), acquired.contentCacheReference()));
         workflowStepObserver.afterStepCompleted("ACQUIRE");
@@ -721,27 +750,29 @@ public class FixtureSourceWorkflow {
         return cancelled;
     }
 
-    private UUID publishThroughPipeline(AcquiredDocument acquired, StageContext context, UUID operationId)
+    private UUID publishThroughPipeline(
+            AcquiredDocument acquired, StageContext context, UUID operationId, AtomicBoolean leaseLost)
             throws Exception {
-        checkCancellation(context.tenant(), operationId);
+        checkGuards(context.tenant(), operationId, leaseLost);
         ParsedDocument parsed = extractionStage.apply(acquired, context);
-        checkCancellation(context.tenant(), operationId);
+        checkGuards(context.tenant(), operationId, leaseLost);
         ChunkedDocument chunked = chunkStage.apply(parsed, context);
-        checkCancellation(context.tenant(), operationId);
+        checkGuards(context.tenant(), operationId, leaseLost);
         ChunkedDocument annotated = context.props().pipeline().annotationEnabled()
             ? annotationStage.apply(chunked, context) : chunked;
-        checkCancellation(context.tenant(), operationId);
+        checkGuards(context.tenant(), operationId, leaseLost);
         ChunkedDocument enriched = context.props().pipeline().enrichmentEnabled()
             ? enrichmentStage.apply(annotated, context) : annotated;
-        checkCancellation(context.tenant(), operationId);
+        checkGuards(context.tenant(), operationId, leaseLost);
         ChunkedDocument embedded = context.props().pipeline().embeddingEnabled()
             ? embeddingStage.apply(enriched, context) : enriched;
-        checkCancellation(context.tenant(), operationId);
+        checkGuards(context.tenant(), operationId, leaseLost);
         persistStage.apply(embedded, context);
         return acquired.contentRefId();
     }
 
-    private void checkCancellation(String tenantId, UUID operationId) {
+    private void checkGuards(String tenantId, UUID operationId, AtomicBoolean leaseLost) {
+        requireLease(leaseLost);
         if (operations.cancellationRequested(tenantId, operationId)) {
             throw new CancellationException("Operation cancellation requested");
         }
