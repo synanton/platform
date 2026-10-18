@@ -142,12 +142,23 @@ stages, and checks Operation idempotency and outbox deduplication.
     the tombstone reference and does not filter.
   - The run records live in `ingestion-cache` Cassandra alongside the chunks;
     search projections (#255) consume this canonical state and never become
-    authoritative.
+    authoritative. Every manifest read path (point reads and the search-index
+    rebuild) is gated on run status = COMPLETED, so the PUBLISHING window never
+    leaks partial knowledge into search.
 - Retryable dependency errors leave the workflow in `RETRYABLE`, the Operation
   `RUNNING`, and the IngestionRun `ACQUIRING`; bounded exponential backoff is
   persisted with the step. Retry exhaustion finalizes the IngestionRun and
   Operation with the existing W2 failure projection. Integrity failures remain
   terminal `QUARANTINED` outcomes.
+- **Lease loss and resumption:** a worker that loses its lease (renewal failure
+  after a GC pause, network partition, or slow heartbeat) halts before its next
+  side effect and leaves the workflow non-terminal — resumption does not require
+  a peer: the recovery scheduler re-claims any non-terminal workflow whose lease
+  has expired, single-worker deployments included. Resumption correctness rests
+  on stage idempotency between checkpoints — discovery is read-only, the Content
+  Cache put is content-addressed, chunk rows are deterministic
+  (processing_run_id-keyed), and the version commit is `IF NOT EXISTS` — so
+  re-running a stage converges instead of duplicating.
 - Only `DeletionSignal.DELETED` creates a tombstone. `SYNC_INCOMPLETE`,
   `NOT_VISIBLE`, `NOT_FOUND`, `ACCESS_DENIED`, and `UNKNOWN` are retained as
   skipped outcomes. Tombstones retain the verified principal and a resolvable
@@ -164,7 +175,7 @@ stages, and checks Operation idempotency and outbox deduplication.
   on the ingestion executor. Operation GET/cancel and run GET use verified tenant
   scope. Source creation and Source CRUD/version routes are under `/v1/sources`.
 
-Migrations V9–V13 create the tenant-scoped Source catalog,
+Migrations V9–V14 create the tenant-scoped Source catalog,
 per-resource SourceIdentity rows, immutable source versions, tombstones and
 version manifests, ingestion runs/manifests/entries, W2 error records,
 Operations, command idempotency rows, tenant registry, durable workflow/step

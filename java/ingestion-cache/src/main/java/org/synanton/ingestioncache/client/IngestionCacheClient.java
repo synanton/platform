@@ -85,21 +85,26 @@ public class IngestionCacheClient {
             "SELECT * FROM ingestion_cache.manifest WHERE tenant_id=? AND content_ref_id=?",
             tenantId, contentRefId
         )).one();
-        if (row == null) {
-            return Optional.empty();
+        return row == null ? Optional.empty()
+            : manifestVisible(rowToManifest(row)) ? Optional.of(rowToManifest(row)) : Optional.empty();
+    }
+
+    /**
+     * Shared visibility gate for every manifest read path (point reads and the
+     * search-index rebuild both go through this): a manifest whose publishing run
+     * has not reached COMPLETED is invisible, so the PUBLISHING window never leaks
+     * partial knowledge into search.
+     */
+    private boolean manifestVisible(ManifestRow manifest) {
+        if (manifest.processingRunId() == null) {
+            return true;
         }
-        ManifestRow manifest = rowToManifest(row);
-        if (manifest.processingRunId() != null) {
-            Row run = session.execute(SimpleStatement.newInstance(
-                "SELECT status FROM ingestion_cache.knowledge_processing_runs " +
-                "WHERE tenant_id=? AND processing_run_id=?",
-                tenantId, manifest.processingRunId()
-            )).one();
-            if (run == null || !"COMPLETED".equals(run.getString("status"))) {
-                return Optional.empty();
-            }
-        }
-        return Optional.of(manifest);
+        Row run = session.execute(SimpleStatement.newInstance(
+            "SELECT status FROM ingestion_cache.knowledge_processing_runs " +
+            "WHERE tenant_id=? AND processing_run_id=?",
+            manifest.tenantId(), manifest.processingRunId()
+        )).one();
+        return run != null && "COMPLETED".equals(run.getString("status"));
     }
 
     public List<ManifestRow> listManifest(String tenantId, int limit) {
@@ -108,7 +113,12 @@ public class IngestionCacheClient {
             tenantId, limit
         ));
         List<ManifestRow> rows = new ArrayList<>();
-        for (Row r : result) rows.add(rowToManifest(r));
+        for (Row r : result) {
+            ManifestRow manifest = rowToManifest(r);
+            if (manifestVisible(manifest)) {
+                rows.add(manifest);
+            }
+        }
         return rows;
     }
 
