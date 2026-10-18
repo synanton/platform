@@ -118,10 +118,11 @@ class SchemaInventoryTest {
             "workflow_steps.retry_policy_json",
             "source_versions.event_attempt_count",
             "source_tombstones.event_last_error",
-            "chunks_payload.source_version_id",
+            "chunks_payload.source_version_ids",
             "chunks_payload.processing_run_id",
             "manifest.processing_run_id",
-            "knowledge_processing_runs.producer_version"
+            "knowledge_processing_runs.producer_version",
+            "knowledge_processing_runs.input_source_version_ids"
         );
     }
 }

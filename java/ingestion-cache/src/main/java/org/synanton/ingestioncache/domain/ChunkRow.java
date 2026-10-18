@@ -23,8 +23,12 @@ public record ChunkRow(
     String sectionId,
     String parentSectionId,
     int headingLevel,
-    /** Source version this chunk derives from — the §13 provenance chain Source → Chunk. */
-    UUID sourceVersionId,
+    /**
+     * Source versions this chunk derives from — the §13 provenance chain
+     * Source → Chunk. A set because a chunk is content-addressed: identical bytes
+     * delivered under two source versions derive the same chunk, attributed to both.
+     */
+    java.util.Set<UUID> sourceVersionIds,
     /** Processing run that produced this chunk (Design 1.25 §12). */
     UUID processingRunId
 ) {
@@ -81,5 +85,15 @@ public record ChunkRow(
             pageStart, pageEnd, sectionPath, chunkType, heading, sourceElementsJson, tokenCount,
             structuredContentJson, isPartialSection, classification, sectionId, parentSectionId,
             headingLevel, null, null);
+    }
+
+    /** Attributes this chunk to one more observing source version (content-addressed dedup). */
+    public ChunkRow withSourceVersion(UUID sourceVersionId) {
+        java.util.Set<UUID> attributed = new java.util.HashSet<>(sourceVersionIds);
+        attributed.add(sourceVersionId);
+        return new ChunkRow(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256,
+            pageStart, pageEnd, sectionPath, chunkType, heading, sourceElementsJson, tokenCount,
+            structuredContentJson, isPartialSection, classification, sectionId, parentSectionId,
+            headingLevel, attributed, processingRunId);
     }
 }

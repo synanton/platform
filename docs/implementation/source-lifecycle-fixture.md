@@ -113,19 +113,36 @@ stages, and checks Operation idempotency and outbox deduplication.
   authoritative version and one deterministically-IDed event.
 - **Canonical knowledge (#251):** the persist stage publishes deterministic
   semantic chunks as the canonical knowledge record (Design 1.25 §5), each chunk
-  carrying its `source_version_id`, the content artifact (`content_ref_id`
+  carrying `source_version_ids` (set), the content artifact (`content_ref_id`
   partition key), source-element provenance, and the `processing_run_id` that
   produced it. The manifest links the opaque Content Cache reference to both
   references. A Processing Run (§12) records producer (`synflux-knowledge`),
   producer version, configuration, input/output references, status, and failure
-  details; its ID is a deterministic function of tenant, artifact, and
-  configuration, so reprocessing the same inputs with the same processing version
-  is idempotent. A changed source version derives new chunks under the new
-  content ref without touching prior versions or their derived state. A failed
-  persist records a `FAILED` run and publishes no manifest — partial failures are
-  never successful knowledge. The run records live in `ingestion-cache`
-  Cassandra alongside the chunks; search projections (#255) consume this
-  canonical state and never become authoritative.
+  details.
+  - **Attribution (content-addressed chunks):** identical bytes delivered under
+    two source versions derive the same chunks; the chunk's `source_version_ids`
+    set attributes it to every observing version, so each version's provenance
+    path resolves without forking the deduped artifact. The run accumulates the
+    same set.
+  - **Run identity:** the run ID is a deterministic function of tenant, artifact,
+    **source version**, producer version, and canonicalized configuration
+    (sorted keys). Reprocessing the same inputs with the same processing version
+    is idempotent; a processing-version change produces a new run whose chunks
+    replace the prior rendition at the artifact's keys — canonical knowledge
+    reflects the current processing version, and the prior run row remains as
+    execution history.
+  - **Partial-failure window:** the run row is upserted `RUNNING` before any
+    chunk write, so chunks never exist without a run row. A persist failure
+    records `FAILED` and publishes no manifest; recovery is the deterministic
+    re-run, which overwrites the same chunk rows and completes. Search-side
+    visibility of chunks under a `FAILED` run is filtered by run status at the
+    search-projection boundary (#255).
+  - **Deletion:** chunk visibility after source-version deletion is governed by
+    W3's eligibility check at the search-projection boundary — this stage emits
+    the tombstone reference and does not filter.
+  - The run records live in `ingestion-cache` Cassandra alongside the chunks;
+    search projections (#255) consume this canonical state and never become
+    authoritative.
 - Retryable dependency errors leave the workflow in `RETRYABLE`, the Operation
   `RUNNING`, and the IngestionRun `ACQUIRING`; bounded exponential backoff is
   persisted with the step. Retry exhaustion finalizes the IngestionRun and
@@ -147,7 +164,7 @@ stages, and checks Operation idempotency and outbox deduplication.
   on the ingestion executor. Operation GET/cancel and run GET use verified tenant
   scope. Source creation and Source CRUD/version routes are under `/v1/sources`.
 
-Migrations V9–V12 create the tenant-scoped Source catalog,
+Migrations V9–V13 create the tenant-scoped Source catalog,
 per-resource SourceIdentity rows, immutable source versions, tombstones and
 version manifests, ingestion runs/manifests/entries, W2 error records,
 Operations, command idempotency rows, tenant registry, durable workflow/step
