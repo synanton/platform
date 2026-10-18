@@ -1018,8 +1018,9 @@ class FixtureIngestionLifecycleTest {
         VerifiedIngestionContext context = principal("tenant-source-outbox-retry-" + UUID.randomUUID());
         byte[] bytes = "outbox source event".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         IngestionRunRow run = lifecycle.ingest(
-            context, UUID.randomUUID(), UUID.randomUUID(), "outbox-source", "guide.md",
-            fileRef("file:///outbox/guide.md", null, bytes.length), bytes, ignored -> UUID.randomUUID());
+            context, UUID.randomUUID(), UUID.randomUUID(), "file", "outbox-source", "guide.md",
+            fileRef("file:///outbox/guide.md", null, bytes.length), bytes,
+            testReference(context.tenantId()), ignored -> UUID.randomUUID());
         SourceOutboxRow original = cache.listSourceOutbox(
             context.tenantId(), "file", "outbox-source", "guide.md").getFirst();
         Instant failedAt = Instant.parse("2026-10-17T12:01:00Z");
