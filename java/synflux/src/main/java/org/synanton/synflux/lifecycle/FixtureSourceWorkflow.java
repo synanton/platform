@@ -16,6 +16,7 @@ import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.synanton.synflux.pipeline.stage.AcquireStage;
 import org.synanton.synflux.pipeline.stage.ExtractionStage;
 import org.synanton.synflux.pipeline.stage.PersistStage;
@@ -85,15 +86,15 @@ public class FixtureSourceWorkflow {
             ContentPullPort contentPullPort,
             AcquireStage acquireStage,
             ExtractionStage extractionStage,
-            PipelineStage<ParsedDocument, ChunkedDocument> chunkStage,
-            PipelineStage<ChunkedDocument, ChunkedDocument> annotationStage,
-            PipelineStage<ChunkedDocument, ChunkedDocument> enrichmentStage,
-            PipelineStage<ChunkedDocument, ChunkedDocument> embeddingStage,
+            @Qualifier("chunkStage") PipelineStage<ParsedDocument, ChunkedDocument> chunkStage,
+            @Qualifier("annotationStage") PipelineStage<ChunkedDocument, ChunkedDocument> annotationStage,
+            @Qualifier("enrichStage") PipelineStage<ChunkedDocument, ChunkedDocument> enrichmentStage,
+            @Qualifier("embedStage") PipelineStage<ChunkedDocument, ChunkedDocument> embeddingStage,
             PersistStage persistStage,
             SynfluxProperties properties,
             FixtureIngestionService lifecycle,
             OperationService operations,
-            Executor executor,
+            @Qualifier("sourceIngestionExecutor") Executor executor,
             FilesystemFixturePolicy filesystemPolicy,
             Clock clock) {
         this.cache = cache;

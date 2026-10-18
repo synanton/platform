@@ -1,0 +1,9 @@
+# Outbox-only eventing (run 1 of the #253 sequence): no broker. Empty string
+# disables the Kafka adapter on Spring Boot >= 3.2 (@ConditionalOnProperty no
+# longer matches an empty value) — without it the producer's constructor fails
+# the boot on unresolvable DNS ("Couldn't resolve server kafka:9092").
+# Run 2 (kafka up) drops this file.
+services:
+  synflux:
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: ""

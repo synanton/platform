@@ -1,0 +1,26 @@
+# Slice-run override (deployments/homelab composition runs, #253):
+# hosts whose buildkit cannot reach the Maven repos (TLS resets observed
+# 2026-10-18 on M70q) build the boot jars on the HOST and package them with
+# the *.prebuilt.Dockerfile variants. dockerfile paths are context-relative
+# (build context = repo root). Apply after compose.yaml:
+#   docker compose -f compose.yaml -f compose.slice.yaml <cmd>
+services:
+  synflux:
+    environment:
+      # Initial slice run: simplified path — no dense leg, no TEI. The dense
+      # leg returns via gpu-runtime's homelab/external TEI deployments when
+      # needed (see deployments/homelab).
+      SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "false"
+      SYNQUEST_EMBEDDING_REQUIRED: "false"
+    build:
+      context: ../..
+      dockerfile: deployments/docker/synflux.prebuilt.Dockerfile
+  synquest:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/synquest.prebuilt.Dockerfile
+    environment:
+      # The M70q slice run is lexical-only (BM25): the dense leg stays off —
+      # TEI embedding is not running, and the projection must not require
+      # full vector coverage for the slice criteria.
+      SYNQUEST_EMBEDDING_REQUIRED: "false"

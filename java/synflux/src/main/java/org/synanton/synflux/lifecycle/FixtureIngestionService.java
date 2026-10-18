@@ -571,9 +571,17 @@ public final class FixtureIngestionService {
         );
     }
 
-    private static String sourceRevision(ContentRef ref, int size, String digest) {
+    static String sourceRevision(ContentRef ref, int size, String digest) {
         if (ref.lastModified() != null) {
-            return "modified-size:" + ref.lastModified() + ":" + size;
+            // Integer epoch millis, not Instant.toString(): the workflow
+            // checkpoints serialize the Instant as JSON, which ROUND-TRIPS AT
+            // MILLISECOND precision. A fresh discovery sees full nanoseconds
+            // (file systems do); a crash-recovery re-run reads the checkpoint
+            // and sees the truncated value — so the derived version id differed
+            // between attempts for the SAME source and bytes (M70q run 1: chunk
+            // attributed to two version ids, one of which was never inserted).
+            // Millis are stable across both paths.
+            return "modified-size:" + ref.lastModified().toEpochMilli() + ":" + size;
         }
         return "sha256:" + digest;
     }

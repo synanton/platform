@@ -1,5 +1,6 @@
 package org.synanton.synquest.service;
 
+import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.synquest.api.dto.SearchRequest;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
  * generates tenant-scoped BM25 candidates. The public query contract never sees
  * Lucene types — candidates carry stable canonical references only.
  */
+@Component
 public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
 
     public static final String STRATEGY = "bm25";
