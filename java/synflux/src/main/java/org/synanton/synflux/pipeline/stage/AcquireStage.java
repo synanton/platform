@@ -61,6 +61,29 @@ public class AcquireStage implements PipelineStage<ContentRef, AcquiredDocument>
         );
     }
 
+    /** Rehydrates a completed acquisition step after workflow recovery. */
+    public AcquiredDocument restore(
+            ContentRef ref, UUID contentRefId, String digest, String encodedReference, StageContext ctx) {
+        final ContentReference cacheReference;
+        try {
+            cacheReference = ContentReference.parse(encodedReference);
+        } catch (IllegalArgumentException malformedReference) {
+            throw new ContentIntegrityException("Persisted Content Cache reference is malformed");
+        }
+        if (!ctx.tenant().equals(cacheReference.tenantId())
+                || !("sha256:" + digest).equals(cacheReference.digest())) {
+            throw new ContentIntegrityException("Persisted Content Cache reference does not match workflow tenant/digest");
+        }
+        byte[] cachedBytes = contentStore.get(cacheReference);
+        if (cachedBytes == null || cachedBytes.length != ref.sizeBytes()
+                || !sha256Hex(cachedBytes).equals(digest)) {
+            throw new ContentIntegrityException("Recovered Content Cache bytes failed size/digest verification");
+        }
+        return new AcquiredDocument(
+            ref, cachedBytes, digest, ref.mimeType(), ref.uri(), contentRefId, encodedReference
+        );
+    }
+
     private static String sha256Hex(byte[] data) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(data));

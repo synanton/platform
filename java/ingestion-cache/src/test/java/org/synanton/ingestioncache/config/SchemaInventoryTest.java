@@ -24,6 +24,7 @@ class SchemaInventoryTest {
                     "analysis_cache",
                     "annotations",
                     "chunks_payload",
+                    "dead_letter_events",
                     "embedding_content_cache",
                     "image_caption_cache",
                     "ingestion_errors",
@@ -39,7 +40,11 @@ class SchemaInventoryTest {
                     "source_tombstones",
                     "source_version_manifest_entries",
                     "source_versions",
-                    "sources");
+                    "sources",
+                    "tenant_registry",
+                    "workflow_states",
+                    "workflow_leases",
+                    "workflow_steps");
 
     private static CassandraContainer cassandra;
     private static CqlSession session;
@@ -105,7 +110,13 @@ class SchemaInventoryTest {
 
         assertThat(actual).contains(
             "manifest.content_cache_reference",
-            "source_versions.content_cache_reference"
+            "source_versions.content_cache_reference",
+            "workflow_states.workflow_id",
+            "workflow_steps.command_id",
+            "workflow_steps.expected_events_json",
+            "workflow_steps.retry_policy_json",
+            "source_versions.event_attempt_count",
+            "source_tombstones.event_last_error"
         );
     }
 }
