@@ -64,13 +64,13 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.manifest " +
             "(tenant_id, content_ref_id, ingested_at, schema_version, chunk_strategy, chunk_strategy_version, " +
             "state, storage_tier, archive_location, source_uri, source_sha256, size_bytes, mime_type, " +
-            "embedding_quality, enrichment_model_id, ingest_usage, content_cache_reference) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "embedding_quality, enrichment_model_id, ingest_usage, content_cache_reference, processing_run_id) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row.tenantId(), row.contentRefId(), row.ingestedAt(), row.schemaVersion(),
             row.chunkStrategy(), row.chunkStrategyVersion(), row.state(), row.storageTier(),
             row.archiveLocation(), row.sourceUri(), row.sourceSha256(), row.sizeBytes(),
             row.mimeType(), row.embeddingQuality(), row.enrichmentModelId(), row.ingestUsage(),
-            row.contentCacheReference()
+            row.contentCacheReference(), row.processingRunId()
         ));
     }
 
@@ -102,7 +102,8 @@ public class IngestionCacheClient {
             r.getString("source_sha256"), r.getLong("size_bytes"),
             r.getString("mime_type"), r.getString("embedding_quality"),
             r.getString("enrichment_model_id"),
-            stringOrEmpty(r, "ingest_usage"), stringOrEmpty(r, "content_cache_reference")
+            stringOrEmpty(r, "ingest_usage"), stringOrEmpty(r, "content_cache_reference"),
+            r.getUuid("processing_run_id")
         );
     }
 
@@ -114,14 +115,15 @@ public class IngestionCacheClient {
             "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
             "page_start, page_end, section_path, chunk_type, heading, " +
             "source_elements, token_count, structured_content, is_partial_section, classification, " +
-            "section_id, parent_section_id, heading_level) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "section_id, parent_section_id, heading_level, source_version_id, processing_run_id) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             chunk.tenantId(), chunk.contentRefId(), chunk.chunkOrdinal(), chunk.chunkText(),
             chunk.chunkSha256(), chunk.pageStart(), chunk.pageEnd(), chunk.sectionPath(),
             chunk.chunkType(), chunk.heading(), chunk.sourceElementsJson(), chunk.tokenCount(),
             chunk.structuredContentJson(), chunk.isPartialSection(),
             new java.util.HashSet<>(chunk.classification()),
-            chunk.sectionId(), chunk.parentSectionId(), chunk.headingLevel()
+            chunk.sectionId(), chunk.parentSectionId(), chunk.headingLevel(),
+            chunk.sourceVersionId(), chunk.processingRunId()
         ));
     }
 
@@ -133,14 +135,15 @@ public class IngestionCacheClient {
                 "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
                 "page_start, page_end, section_path, chunk_type, heading, " +
                 "source_elements, token_count, structured_content, is_partial_section, classification, " +
-                "section_id, parent_section_id, heading_level) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "section_id, parent_section_id, heading_level, source_version_id, processing_run_id) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
                 c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
                 c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
                 c.structuredContentJson(), c.isPartialSection(),
                 new java.util.HashSet<>(c.classification()),
-                c.sectionId(), c.parentSectionId(), c.headingLevel()
+                c.sectionId(), c.parentSectionId(), c.headingLevel(),
+                c.sourceVersionId(), c.processingRunId()
             ));
         }
         session.execute(batch);
@@ -169,10 +172,42 @@ public class IngestionCacheClient {
                 setOrDefault(r, "classification", ChunkRow.PUBLIC_ONLY),
                 stringOrEmpty(r, "section_id"),
                 stringOrEmpty(r, "parent_section_id"),
-                intOrDefault(r, "heading_level", 0)
+                intOrDefault(r, "heading_level", 0),
+                r.getUuid("source_version_id"),
+                r.getUuid("processing_run_id")
             ));
         }
         return rows;
+    }
+
+    // ---- Knowledge processing runs (Design 1.25 §12) ----
+
+    public void upsertKnowledgeProcessingRun(KnowledgeProcessingRunRow run) {
+        registerTenant(run.tenantId(), run.startedAt());
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.knowledge_processing_runs " +
+            "(tenant_id, processing_run_id, producer, producer_version, configuration_json, input_json, " +
+            "output_json, status, started_at, completed_at, error_code, error_message) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            run.tenantId(), run.processingRunId(), run.producer(), run.producerVersion(),
+            run.configurationJson(), run.inputJson(), run.outputJson(), run.status(),
+            run.startedAt(), run.completedAt(), run.errorCode(), run.errorMessage()
+        ));
+    }
+
+    public Optional<KnowledgeProcessingRunRow> readKnowledgeProcessingRun(String tenantId, UUID processingRunId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.knowledge_processing_runs WHERE tenant_id=? AND processing_run_id=?",
+            tenantId, processingRunId
+        )).one();
+        return row == null ? Optional.empty() : Optional.of(new KnowledgeProcessingRunRow(
+            row.getString("tenant_id"), row.getUuid("processing_run_id"),
+            row.getString("producer"), row.getString("producer_version"),
+            stringOrEmpty(row, "configuration_json"), stringOrEmpty(row, "input_json"),
+            stringOrEmpty(row, "output_json"), row.getString("status"),
+            row.getInstant("started_at"), row.getInstant("completed_at"),
+            row.getString("error_code"), row.getString("error_message")
+        ));
     }
 
     private static boolean boolOrDefault(Row r, String column, boolean fallback) {

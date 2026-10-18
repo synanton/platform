@@ -111,6 +111,21 @@ stages, and checks Operation idempotency and outbox deduplication.
   after expiry with the same operation_id continuing. The source-version
   `IF NOT EXISTS` write is the second guard: even a lease race converges on one
   authoritative version and one deterministically-IDed event.
+- **Canonical knowledge (#251):** the persist stage publishes deterministic
+  semantic chunks as the canonical knowledge record (Design 1.25 §5), each chunk
+  carrying its `source_version_id`, the content artifact (`content_ref_id`
+  partition key), source-element provenance, and the `processing_run_id` that
+  produced it. The manifest links the opaque Content Cache reference to both
+  references. A Processing Run (§12) records producer (`synflux-knowledge`),
+  producer version, configuration, input/output references, status, and failure
+  details; its ID is a deterministic function of tenant, artifact, and
+  configuration, so reprocessing the same inputs with the same processing version
+  is idempotent. A changed source version derives new chunks under the new
+  content ref without touching prior versions or their derived state. A failed
+  persist records a `FAILED` run and publishes no manifest — partial failures are
+  never successful knowledge. The run records live in `ingestion-cache`
+  Cassandra alongside the chunks; search projections (#255) consume this
+  canonical state and never become authoritative.
 - Retryable dependency errors leave the workflow in `RETRYABLE`, the Operation
   `RUNNING`, and the IngestionRun `ACQUIRING`; bounded exponential backoff is
   persisted with the step. Retry exhaustion finalizes the IngestionRun and
@@ -132,11 +147,12 @@ stages, and checks Operation idempotency and outbox deduplication.
   on the ingestion executor. Operation GET/cancel and run GET use verified tenant
   scope. Source creation and Source CRUD/version routes are under `/v1/sources`.
 
-Migrations V9–V11 create the tenant-scoped Source catalog,
+Migrations V9–V12 create the tenant-scoped Source catalog,
 per-resource SourceIdentity rows, immutable source versions, tombstones and
 version manifests, ingestion runs/manifests/entries, W2 error records,
 Operations, command idempotency rows, tenant registry, durable workflow/step
-state, retry metadata for source events, and opaque Content Cache reference
+state, retry metadata for source events, knowledge processing runs, provenance
+columns on chunks and the manifest, and opaque Content Cache reference
 columns on SourceVersion and the content manifest. Version and tombstone event
 envelopes are co-located in their respective history rows to preserve the
 artifact-before-publication ordering.

@@ -171,7 +171,7 @@ public final class FixtureIngestionService {
 
             UUID contentRefId;
             try {
-                contentRefId = publisher.publish(bytes);
+                contentRefId = publisher.publish(bytes, versionId);
             } catch (Exception publicationFailure) {
                 if (publicationFailure instanceof CancellationException cancellation) {
                     throw cancellation;
@@ -791,7 +791,7 @@ public final class FixtureIngestionService {
 
     @FunctionalInterface
     public interface ContentPublisher {
-        UUID publish(byte[] bytes) throws Exception;
+        UUID publish(byte[] bytes, UUID sourceVersionId) throws Exception;
     }
 
     private static final class ContentPublicationException extends RuntimeException {

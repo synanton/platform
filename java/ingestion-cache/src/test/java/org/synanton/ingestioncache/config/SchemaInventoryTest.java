@@ -32,6 +32,7 @@ class SchemaInventoryTest {
                     "ingestion_manifests",
                     "ingestion_runs",
                     "jobs",
+                    "knowledge_processing_runs",
                     "manifest",
                     "manifest_transitions_outbox",
                     "operation_idempotency",
@@ -116,7 +117,11 @@ class SchemaInventoryTest {
             "workflow_steps.expected_events_json",
             "workflow_steps.retry_policy_json",
             "source_versions.event_attempt_count",
-            "source_tombstones.event_last_error"
+            "source_tombstones.event_last_error",
+            "chunks_payload.source_version_id",
+            "chunks_payload.processing_run_id",
+            "manifest.processing_run_id",
+            "knowledge_processing_runs.producer_version"
         );
     }
 }

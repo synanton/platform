@@ -20,8 +20,32 @@ public record ManifestRow(
     String embeddingQuality,
     String enrichmentModelId,
     String ingestUsage,
-    String contentCacheReference
+    String contentCacheReference,
+    UUID processingRunId
 ) {
+    public ManifestRow(
+            String tenantId,
+            UUID contentRefId,
+            Instant ingestedAt,
+            int schemaVersion,
+            String chunkStrategy,
+            int chunkStrategyVersion,
+            String state,
+            String storageTier,
+            String archiveLocation,
+            String sourceUri,
+            String sourceSha256,
+            long sizeBytes,
+            String mimeType,
+            String embeddingQuality,
+            String enrichmentModelId,
+            String ingestUsage,
+            String contentCacheReference) {
+        this(tenantId, contentRefId, ingestedAt, schemaVersion, chunkStrategy, chunkStrategyVersion, state,
+            storageTier, archiveLocation, sourceUri, sourceSha256, sizeBytes, mimeType, embeddingQuality,
+            enrichmentModelId, ingestUsage, contentCacheReference, null);
+    }
+
     public ManifestRow(
             String tenantId,
             UUID contentRefId,
@@ -41,6 +65,6 @@ public record ManifestRow(
             String ingestUsage) {
         this(tenantId, contentRefId, ingestedAt, schemaVersion, chunkStrategy, chunkStrategyVersion, state,
             storageTier, archiveLocation, sourceUri, sourceSha256, sizeBytes, mimeType, embeddingQuality,
-            enrichmentModelId, ingestUsage, null);
+            enrichmentModelId, ingestUsage, null, null);
     }
 }

@@ -320,11 +320,12 @@ public class FixtureSourceWorkflow {
             context, runId, operationId, source.connectorId(), sourceId, resourceId,
             ref, acquired.bytes(), acquired.contentCacheReference(), activeWorkflow.workflowId().toString(),
             activeWorkflow.correlationId(),
-            ingestStep.commandId().toString(), deferRetryable, ignored -> {
+            ingestStep.commandId().toString(), deferRetryable, (bytes, sourceVersionId) -> {
                 if (operations.cancellationRequested(context.tenantId(), operationId)) {
                     throw new CancellationException("Operation cancellation requested");
                 }
-                return publishThroughPipeline(acquired, stageContext, operationId);
+                return publishThroughPipeline(
+                    acquired, stageContext.withSourceVersionId(sourceVersionId), operationId);
             }
         );
         if (run.completedAt() == null) {
