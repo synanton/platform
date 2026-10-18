@@ -20,7 +20,7 @@ import java.util.UUID;
  * Content Cache artifact (two-path resolution), and the processing run that
  * produced it.
  *
- * <p>object_id is the canonical chunk id {content_ref}#{ordinal} — stable
+ * <p>object_id is the canonical chunk id {content_ref}:{ordinal} — stable
  * because chunks are content-addressed (identical bytes derive the same
  * chunk ordinal). The reference resolves only while the producing run is
  * COMPLETED (manifest visibility, #295); otherwise 404 — a provenance
@@ -87,7 +87,7 @@ public class KnowledgeProvenanceController {
         static ParsedObjectId parse(String objectId) {
             int sep = objectId == null ? -1 : objectId.lastIndexOf(':');
             if (sep <= 0 || sep == objectId.length() - 1) {
-                throw new IllegalArgumentException("object_id must be {content_ref}#{ordinal}");
+                throw new IllegalArgumentException("object_id must be {content_ref}:{ordinal}");
             }
             try {
                 int ordinal = Integer.parseInt(objectId.substring(sep + 1));
@@ -96,7 +96,7 @@ public class KnowledgeProvenanceController {
                 }
                 return new ParsedObjectId(UUID.fromString(objectId.substring(0, sep)), ordinal);
             } catch (RuntimeException bad) {
-                throw new IllegalArgumentException("object_id must be {content_ref}#{ordinal}", bad);
+                throw new IllegalArgumentException("object_id must be {content_ref}:{ordinal}", bad);
             }
         }
     }

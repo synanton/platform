@@ -237,6 +237,11 @@ services:
       # comparison legs into a strategy-suffixed tenant. Never leave a
       # non-default baked in: the next plain restart must serve production.
       SYNFLUX_INGEST_CHUNK_STRATEGY: ${CHUNK_STRATEGY:-semantic}
+      # Vertical-slice acceptance run (#253): the documented failure-injection
+      # hook. Empty default = normal operation; the env is one-shot per process,
+      # so restart without it to let recovery resume.
+      SYNANTON_FAULT_INJECT: ${SYNANTON_FAULT_INJECT:-}
+      SYNFLUX_FIXTURE_ROOT: /demo-data/documents
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8090
       EXTRACTION_CLIENT_ENABLED: "true"

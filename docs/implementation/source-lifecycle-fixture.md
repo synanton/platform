@@ -30,6 +30,26 @@ and Operation reads/submissions. The end-to-end workflow test discovers and
 reads a real temporary file, exercises acquisition/extraction/chunk/persist
 stages, and checks Operation idempotency and outbox deduplication.
 
+## Failure injection — the documented public trigger (#253)
+
+`SYNANTON_FAULT_INJECT` makes the worker crash (exit 70) on reaching a named
+workflow point, leaving the workflow non-terminal on purpose — the
+composition-level trigger for the recovery paths the unit tests prove at
+module level (#289 lease-loss, #293 visibility gate). Points:
+
+| Point | Worker state at crash |
+|---|---|
+| `after-discover` | discovery checkpoint written, before acquire |
+| `after-acquire` | content in the Content Cache, before the version/manifest |
+| `after-manifest` | version, manifest, and chunks committed, run not COMPLETED — the #293 visibility-gate window |
+
+The crash is one-shot per process: restart **without** the variable and
+recovery resumes from the checkpoint. Timing-based kills are deliberately not
+used — they flake under load and cannot target the manifest/COMPLETED window.
+`tests/integration/vertical-slice.sh` (criterion 3) drives exactly this
+sequence, and the compose file passes the variable through so the same script
+runs on M70q (compose/process) and the k8s cluster unchanged.
+
 ## Lifecycle behavior
 
 - The fixture's configured `source_id` is stable across files; each normalized
