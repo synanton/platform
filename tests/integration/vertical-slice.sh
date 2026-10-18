@@ -234,6 +234,10 @@ esac
     echo "Fixture root is empty: $FIXTURE_HOST_DIR" >&2; exit 1; }
 [ "${#SYNANTON_JWT_SECRET}" -ge 32 ] || {
     echo "SYNANTON_JWT_SECRET too short (${#SYNANTON_JWT_SECRET} bytes, need >= 32 — set it in .env)" >&2; exit 1; }
+# The compose profile's containers must verify with the SAME secret the
+# tokens are minted with — export it so `docker compose up` overrides the
+# yaml default (otherwise tokens and containers silently diverge → 401s).
+export SYNANTON_JWT_SECRET
 TOK_A=$(mint_token "$TENANT_A")
 TOK_B=$(mint_token "$TENANT_B")
 mkdir -p "$FIXTURE_HOST_DIR/$SOURCE_MAIN" "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY"
