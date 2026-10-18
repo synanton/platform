@@ -790,7 +790,7 @@ class FixtureIngestionLifecycleTest {
         List<ChunkRow> knowledgeChunks = cache.readChunks(tenantId, sourceVersion.contentRefId());
         assertThat(knowledgeChunks).isNotEmpty();
         for (ChunkRow knowledgeChunk : knowledgeChunks) {
-            assertThat(knowledgeChunk.sourceVersionId()).isEqualTo(sourceVersion.versionId());
+            assertThat(knowledgeChunk.sourceVersionIds()).containsExactly(sourceVersion.versionId());
             assertThat(knowledgeChunk.contentRefId()).isEqualTo(sourceVersion.contentRefId());
             assertThat(knowledgeChunk.processingRunId()).isNotNull();
         }
@@ -804,7 +804,8 @@ class FixtureIngestionLifecycleTest {
             tenantId, knowledgeChunks.getFirst().processingRunId()).orElseThrow();
         assertThat(run.status()).isEqualTo("COMPLETED");
         assertThat(run.producer()).isEqualTo("synflux-knowledge");
-        assertThat(run.inputJson()).contains(sourceVersion.versionId().toString(),
+        assertThat(run.inputSourceVersionIds()).containsExactly(sourceVersion.versionId());
+        assertThat(run.inputJson()).contains(
             sourceVersion.contentRefId().toString(), sourceVersion.contentCacheReference());
         assertThat(run.outputJson()).contains("chunk_count");
         // Reprocessing the same source version does not duplicate derived state.
@@ -813,6 +814,32 @@ class FixtureIngestionLifecycleTest {
         assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "knowledge/provenance.md"))
             .hasSize(1);
         assertThat(submission.run().status()).isEqualTo("COMPLETED");
+
+        // Identical bytes under a second resource derive the same content-addressed
+        // chunks: the chunk is attributed to BOTH source versions, and each version's
+        // provenance path resolves without forking the deduped artifact.
+        Files.writeString(fixtureRoot.resolve("knowledge/provenance-copy.md"), "canonical knowledge with provenance");
+        workflow.ingest(principal(tenantId), sourceId, "knowledge/provenance-copy.md",
+            "request-knowledge-copy", "knowledge-copy-key");
+        SourceVersionRow secondVersion = cache.listSourceVersions(
+            tenantId, "filesystem", sourceId, "knowledge/provenance-copy.md").getFirst();
+        assertThat(secondVersion.contentRefId()).isEqualTo(sourceVersion.contentRefId());
+        List<ChunkRow> sharedChunks = cache.readChunks(tenantId, sourceVersion.contentRefId());
+        for (ChunkRow knowledgeChunk : sharedChunks) {
+            assertThat(knowledgeChunk.sourceVersionIds())
+                .containsExactlyInAnyOrder(sourceVersion.versionId(), secondVersion.versionId());
+        }
+        KnowledgeProcessingRunRow copyRun = cache.readKnowledgeProcessingRun(
+            tenantId, sharedChunks.getFirst().processingRunId()).orElseThrow();
+        assertThat(copyRun.inputSourceVersionIds())
+            .containsExactlyInAnyOrder(sourceVersion.versionId(), secondVersion.versionId());
+        // Two runs exist (one per observing version); the shared manifest and chunk
+        // rows carry the latest writer's run id, while remaining attributed to both
+        // versions and the first run row remains as execution history.
+        assertThat(cache.readManifest(tenantId, sourceVersion.contentRefId()).orElseThrow()
+            .processingRunId()).isEqualTo(copyRun.processingRunId());
+        assertThat(cache.readKnowledgeProcessingRun(tenantId, manifest.processingRunId()).orElseThrow()
+            .status()).isEqualTo("COMPLETED");
     }
 
     @Test
@@ -897,7 +924,7 @@ class FixtureIngestionLifecycleTest {
         assertThat(secondKnowledge).isNotEmpty();
         assertThat(secondKnowledge).isNotEqualTo(firstKnowledge);
         for (ChunkRow knowledgeChunk : secondKnowledge) {
-            assertThat(knowledgeChunk.sourceVersionId()).isEqualTo(secondVersion.versionId());
+            assertThat(knowledgeChunk.sourceVersionIds()).containsExactly(secondVersion.versionId());
         }
         assertThat(secondKnowledge.getFirst().processingRunId()).isNotEqualTo(firstRunId);
         assertThat(cache.readKnowledgeProcessingRun(tenantId, secondKnowledge.getFirst().processingRunId())

@@ -115,7 +115,7 @@ public class IngestionCacheClient {
             "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
             "page_start, page_end, section_path, chunk_type, heading, " +
             "source_elements, token_count, structured_content, is_partial_section, classification, " +
-            "section_id, parent_section_id, heading_level, source_version_id, processing_run_id) " +
+            "section_id, parent_section_id, heading_level, source_version_ids, processing_run_id) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             chunk.tenantId(), chunk.contentRefId(), chunk.chunkOrdinal(), chunk.chunkText(),
             chunk.chunkSha256(), chunk.pageStart(), chunk.pageEnd(), chunk.sectionPath(),
@@ -123,7 +123,8 @@ public class IngestionCacheClient {
             chunk.structuredContentJson(), chunk.isPartialSection(),
             new java.util.HashSet<>(chunk.classification()),
             chunk.sectionId(), chunk.parentSectionId(), chunk.headingLevel(),
-            chunk.sourceVersionId(), chunk.processingRunId()
+            chunk.sourceVersionIds() == null ? null : new java.util.HashSet<>(chunk.sourceVersionIds()),
+            chunk.processingRunId()
         ));
     }
 
@@ -135,7 +136,7 @@ public class IngestionCacheClient {
                 "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
                 "page_start, page_end, section_path, chunk_type, heading, " +
                 "source_elements, token_count, structured_content, is_partial_section, classification, " +
-                "section_id, parent_section_id, heading_level, source_version_id, processing_run_id) " +
+                "section_id, parent_section_id, heading_level, source_version_ids, processing_run_id) " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
                 c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
@@ -143,7 +144,8 @@ public class IngestionCacheClient {
                 c.structuredContentJson(), c.isPartialSection(),
                 new java.util.HashSet<>(c.classification()),
                 c.sectionId(), c.parentSectionId(), c.headingLevel(),
-                c.sourceVersionId(), c.processingRunId()
+                c.sourceVersionIds() == null ? null : new java.util.HashSet<>(c.sourceVersionIds()),
+                c.processingRunId()
             ));
         }
         session.execute(batch);
@@ -156,6 +158,10 @@ public class IngestionCacheClient {
         ));
         List<ChunkRow> rows = new ArrayList<>();
         for (Row r : result) {
+            java.util.Set<UUID> sourceVersions = new java.util.HashSet<>();
+            if (!r.isNull("source_version_ids")) {
+                r.getSet("source_version_ids", UUID.class).forEach(sourceVersions::add);
+            }
             rows.add(new ChunkRow(
                 r.getString("tenant_id"), r.getUuid("content_ref_id"),
                 r.getInt("chunk_ordinal"), r.getString("chunk_text"),
@@ -173,7 +179,7 @@ public class IngestionCacheClient {
                 stringOrEmpty(r, "section_id"),
                 stringOrEmpty(r, "parent_section_id"),
                 intOrDefault(r, "heading_level", 0),
-                r.getUuid("source_version_id"),
+                java.util.Set.copyOf(sourceVersions),
                 r.getUuid("processing_run_id")
             ));
         }
@@ -187,11 +193,12 @@ public class IngestionCacheClient {
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.knowledge_processing_runs " +
             "(tenant_id, processing_run_id, producer, producer_version, configuration_json, input_json, " +
-            "output_json, status, started_at, completed_at, error_code, error_message) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "output_json, status, started_at, completed_at, error_code, error_message, " +
+            "input_source_version_ids) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
             run.tenantId(), run.processingRunId(), run.producer(), run.producerVersion(),
             run.configurationJson(), run.inputJson(), run.outputJson(), run.status(),
-            run.startedAt(), run.completedAt(), run.errorCode(), run.errorMessage()
+            run.startedAt(), run.completedAt(), run.errorCode(), run.errorMessage(),
+            run.inputSourceVersionIds() == null ? null : new java.util.HashSet<>(run.inputSourceVersionIds())
         ));
     }
 
@@ -206,8 +213,22 @@ public class IngestionCacheClient {
             stringOrEmpty(row, "configuration_json"), stringOrEmpty(row, "input_json"),
             stringOrEmpty(row, "output_json"), row.getString("status"),
             row.getInstant("started_at"), row.getInstant("completed_at"),
-            row.getString("error_code"), row.getString("error_message")
+            row.getString("error_code"), row.getString("error_message"),
+            setOfUuidsOrDefault(row, "input_source_version_ids")
         ));
+    }
+
+    private static java.util.Set<UUID> setOfUuidsOrDefault(Row row, String column) {
+        try {
+            if (row.isNull(column)) {
+                return java.util.Set.of();
+            }
+            java.util.Set<UUID> out = new java.util.HashSet<>();
+            row.getSet(column, UUID.class).forEach(out::add);
+            return java.util.Set.copyOf(out);
+        } catch (IllegalArgumentException e) {
+            return java.util.Set.of();
+        }
     }
 
     private static boolean boolOrDefault(Row r, String column, boolean fallback) {
