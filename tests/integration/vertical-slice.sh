@@ -277,10 +277,12 @@ if [ "$WORKER_PROFILE" = "compose" ]; then
     # cache; buildkit cannot reach the Maven repos on this network) and the
     # *.prebuilt.Dockerfiles only package them. Build them here so the run
     # stays one command.
-    "$SCRIPT_DIR/../../gradlew" -q -p "$SCRIPT_DIR/../../.." \
+    PLATFORM_ROOT="$SCRIPT_DIR/../.."
+    CONTENT_EXTRACTOR_ROOT="$SCRIPT_DIR/../../../content_extractor"
+    "$PLATFORM_ROOT/gradlew" -q -p "$PLATFORM_ROOT" \
         :java:synflux:bootJar :java:synquest:bootJar -x test
-    "$SCRIPT_DIR/../../../content_extractor/gradlew" -q \
-        -p "$SCRIPT_DIR/../../../content_extractor" :java:extraction-gateway:bootJar -x test
+    "$CONTENT_EXTRACTOR_ROOT/gradlew" -q \
+        -p "$CONTENT_EXTRACTOR_ROOT" :java:extraction-gateway:bootJar -x test
     # Package the host-built jars into images. The build context is a tiny
     # staging tree, not the repo: a repo-root context walks runtime data
     # (docker/data — some dirs root-owned, permission-denied to the client)
