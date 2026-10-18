@@ -3,6 +3,11 @@
 # Runs as a Docker Compose init container after Kafka is healthy.
 set -euo pipefail
 
+# The apache/kafka image keeps its CLI under /opt/kafka/bin WITHOUT putting
+# it on PATH — bare `kafka-topics.sh` fails with "not found", which this
+# script's retry loop silently interprets as "Kafka not up" (run-2 prep).
+export PATH="/opt/kafka/bin:${PATH}"
+
 BOOTSTRAP="${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}"
 PARTITIONS="${KAFKA_PARTITIONS:-4}"
 RF="${KAFKA_REPLICATION_FACTOR:-1}"
