@@ -92,7 +92,7 @@ class SearchServiceHierarchyTest {
         List<Hit> expanded = service.search(req(3, "section", null)).hits();
         assertThat(expanded).extracting(Hit::chunkOrdinal).containsExactly(1, 2, 3);
         assertThat(expanded.get(0).expandedFrom()).isNull();              // the hit itself
-        assertThat(expanded.get(1).expandedFrom()).isEqualTo(ref + "#1");
+        assertThat(expanded.get(1).expandedFrom()).isEqualTo(ref + ":1");
         assertThat(expanded).allMatch(h -> "s4".equals(h.sectionId()));
         assertThat(expanded.get(2).score()).isEqualTo(expanded.get(0).score()); // inherited
     }

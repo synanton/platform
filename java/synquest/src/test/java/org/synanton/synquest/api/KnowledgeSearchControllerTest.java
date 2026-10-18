@@ -41,13 +41,14 @@ class KnowledgeSearchControllerTest {
     private static final String SECRET = "synquest-test-jwt-secret-at-least-32-bytes";
 
     private KnowledgeSearchBackend backend;
+    private org.synanton.synquest.service.SearchService searchService;
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
         backend = mock(KnowledgeSearchBackend.class);
-        var controller = new KnowledgeSearchController(backend,
-                mock(org.synanton.synquest.service.SearchService.class));
+        searchService = mock(org.synanton.synquest.service.SearchService.class);
+        var controller = new KnowledgeSearchController(backend, searchService);
         mvc = MockMvcBuilders.standaloneSetup(controller)
                 .addFilters(new TenantContextFilter(new JwtVerifier(SECRET), ""))
                 .build();
@@ -67,7 +68,7 @@ class KnowledgeSearchControllerTest {
     private static KnowledgeSearchBackend.KnowledgeCandidate candidate(String tenantId) {
         UUID contentRefId = UUID.nameUUIDFromBytes(("chunk:" + tenantId).getBytes(
                 java.nio.charset.StandardCharsets.UTF_8));
-        return new KnowledgeCandidate(contentRefId + "#0", contentRefId, 0, 0.42,
+        return new KnowledgeCandidate(contentRefId + ":0", contentRefId, 0, 0.42,
                 "Supply chain", "The supply-chain policy governs logistics.", "file:///doc.md",
                 Set.of(UUID.nameUUIDFromBytes(("version:" + tenantId).getBytes(
                         java.nio.charset.StandardCharsets.UTF_8))));
@@ -77,7 +78,9 @@ class KnowledgeSearchControllerTest {
     void searchBindsTenantFromVerifiedJwtAndReturnsFrozenShape() throws Exception {
         var candidate = candidate("tenant-a");
         when(backend.isReady("tenant-a")).thenReturn(true);
-        when(backend.strategy()).thenReturn("lexical");
+        when(backend.strategy()).thenReturn("bm25");
+        when(searchService.stats("tenant-a"))
+                .thenReturn(new org.synanton.synquest.api.dto.IndexStats("tenant-a", 1, 7L, "GREEN"));
         when(backend.candidates(eq("tenant-a"), eq("supply-chain"), eq(20)))
                 .thenReturn(List.of(candidate));
 
@@ -91,7 +94,8 @@ class KnowledgeSearchControllerTest {
                     org.assertj.core.api.Assertions.assertThat(json)
                             .contains("\"object_id\":\"" + candidate.objectId() + "\"")
                             .contains("\"provenance_ref\":\"/v1/knowledge/" + candidate.objectId() + "/provenance\"")
-                            .contains("\"strategy\":\"lexical\"")
+                            .contains("\"strategy\":\"bm25\"")
+                            .contains("\"configuration_generation\":7")
                             .contains("\"source_version_ids\"");
                     // Backend topology must not leak into the public contract.
                     org.assertj.core.api.Assertions.assertThat(json)
@@ -105,7 +109,9 @@ class KnowledgeSearchControllerTest {
     void tenantInRequestBodyIsIgnoredTenantComesOnlyFromVerifiedContext() throws Exception {
         var candidate = candidate("tenant-b");
         when(backend.isReady("tenant-a")).thenReturn(true);
-        when(backend.strategy()).thenReturn("lexical");
+        when(backend.strategy()).thenReturn("bm25");
+        when(searchService.stats("tenant-a"))
+                .thenReturn(new org.synanton.synquest.api.dto.IndexStats("tenant-a", 1, 7L, "GREEN"));
         when(backend.candidates(eq("tenant-a"), eq("supply-chain"), eq(20)))
                 .thenReturn(List.of(candidate));
 

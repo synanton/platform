@@ -82,7 +82,7 @@ class LuceneKnowledgeSearchBackendTest {
         var candidates = backend.candidates(tenant, TERM, 10);
         assertThat(candidates).hasSize(1);
         var candidate = candidates.getFirst();
-        assertThat(candidate.objectId()).isEqualTo(contentRefId + "#0");
+        assertThat(candidate.objectId()).isEqualTo(contentRefId + ":0");
         assertThat(candidate.contentRefId()).isEqualTo(contentRefId);
         assertThat(candidate.sourceVersionIds()).containsExactly(versionId);
         assertThat(candidate.provenanceRef())

@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
 
-    public static final String STRATEGY = "lexical";
+    public static final String STRATEGY = "bm25";
 
     private final LuceneIndexBuilder indexBuilder;
     private final SearchService searchService;
@@ -41,6 +41,15 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
     @Override
     public boolean isReady(String tenantId) {
         return searchService.isReady(tenantId);
+    }
+
+    @Override
+    public long generation(String tenantId) {
+        try {
+            return searchService.stats(tenantId).indexGeneration();
+        } catch (java.io.IOException unreadable) {
+            return -1;
+        }
     }
 
     @Override
