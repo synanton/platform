@@ -6,6 +6,9 @@
 #   docker compose -f compose.yaml -f compose.slice.yaml <cmd>
 services:
   synflux:
+    environment:
+      SERVER_ERROR_INCLUDE_MESSAGE: always
+      LOGGING_LEVEL_ORG_SYNANTON_COMMON_TENANT: TRACE
     build:
       context: ../..
       dockerfile: deployments/docker/synflux.prebuilt.Dockerfile

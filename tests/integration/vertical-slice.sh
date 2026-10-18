@@ -245,6 +245,9 @@ esac
     echo "Fixture root is empty: $FIXTURE_HOST_DIR" >&2; exit 1; }
 [ "${#SYNANTON_JWT_SECRET}" -ge 32 ] || {
     echo "SYNANTON_JWT_SECRET too short (${#SYNANTON_JWT_SECRET} bytes, need >= 32 — set it in .env)" >&2; exit 1; }
+case "$SYNANTON_JWT_SECRET" in
+    replace-me*|*placeholder*) echo "SYNANTON_JWT_SECRET is still the .env.example placeholder — generate a real one (openssl rand -base64 48)" >&2; exit 1 ;;
+esac
 # The compose profile's containers must verify with the SAME secret the
 # tokens are minted with — export it so `docker compose up` overrides the
 # yaml default (otherwise tokens and containers silently diverge → 401s).
