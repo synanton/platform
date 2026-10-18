@@ -46,6 +46,14 @@ module level (#289 lease-loss, #293 visibility gate). Points:
 The crash is one-shot per process: restart **without** the variable and
 recovery resumes from the checkpoint. Timing-based kills are deliberately not
 used — they flake under load and cannot target the manifest/COMPLETED window.
+
+`after-manifest` crashes between the per-source manifest writes and
+`finishRun`'s completion-manifest write — so the acceptance run's assertion
+pair (0 completion-manifest rows pre-recovery, exactly 1 after, via the
+deterministic run-id) covers that interruption, not the visibility gate. The
+manifest-invisible-until-COMPLETED gate is asserted separately by the
+`readManifest`/`listManifest` visibility tests (#293, #295); the two tests
+complement each other.
 `tests/integration/vertical-slice.sh` (criterion 3) drives exactly this
 sequence, and the compose file passes the variable through so the same script
 runs on M70q (compose/process) and the k8s cluster unchanged.

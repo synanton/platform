@@ -111,7 +111,11 @@ public class KnowledgeSearchController {
         return context;
     }
 
-    public record ProjectionStats(boolean ready, String tenantId, int chunkCount, String strategy) {}
+    public record ProjectionStats(
+            @JsonProperty("ready") boolean ready,
+            @JsonProperty("tenant_id") String tenantId,
+            @JsonProperty("chunk_count") int chunkCount,
+            @JsonProperty("strategy") String strategy) {}
 
     public record ProjectionRebuildResult(
             @JsonProperty("status") String status,
