@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.synanton.common.jwt.SubjectAssertion;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.contentcache.ContentIntegrityException;
+import org.synanton.contentcache.ContentStoreException;
 import org.synanton.contentcache.ContentReference;
 import org.synanton.contentcache.FileSystemContentStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -16,8 +17,11 @@ import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.IngestionRunRow;
 import org.synanton.ingestioncache.domain.OperationRow;
 import org.synanton.ingestioncache.domain.SourceIdentityConflictException;
+import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
+import org.synanton.ingestioncache.domain.WorkflowStateRow;
+import org.synanton.ingestioncache.domain.WorkflowStepRow;
 import org.synanton.synflux.api.SourceController;
 import org.synanton.synflux.config.SynfluxProperties;
 import org.synanton.synflux.domain.ChunkedDocument;
@@ -54,7 +58,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class FixtureIngestionLifecycleTest {
@@ -378,7 +387,8 @@ class FixtureIngestionLifecycleTest {
         FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
             cache, pullPort, acquire, extraction, chunk, identityStage, identityStage, identityStage,
             persist, testProperties(), lifecycle, operationService, Runnable::run,
-            new FilesystemFixturePolicy(fixtureRoot));
+            new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
 
         FixtureSourceWorkflow.Submission submission = workflow.ingest(
             principal(tenantId), sourceId, "quarantine/document.md", "request-quarantine", null);
@@ -539,7 +549,8 @@ class FixtureIngestionLifecycleTest {
         FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
             cache, pullPort, acquire, extraction, chunk, identityStage, identityStage, identityStage,
             persist, properties, lifecycle, operationService, Runnable::run,
-            new FilesystemFixturePolicy(fixtureRoot));
+            new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
         VerifiedIngestionContext context = principal(tenantId);
 
         FixtureSourceWorkflow.Submission first = workflow.ingest(
@@ -638,14 +649,21 @@ class FixtureIngestionLifecycleTest {
         FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
             cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
             identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
-            operationService, workerExecutor, new FilesystemFixturePolicy(fixtureRoot));
+            operationService, workerExecutor, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        FixtureSourceWorkflow duplicateWorkflow = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            new OperationService(cache, Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC)),
+            Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
         VerifiedIngestionContext context = principal(tenantId);
 
         try {
             FixtureSourceWorkflow.Submission first = workflow.submit(
                 context, sourceId, "manuals/concurrent.md", "request-first", "concurrent-key");
             assertThat(extractionStarted.await(10, TimeUnit.SECONDS)).isTrue();
-            FixtureSourceWorkflow.Submission retry = workflow.submit(
+            FixtureSourceWorkflow.Submission retry = duplicateWorkflow.submit(
                 context, sourceId, "manuals/concurrent.md", "request-retry", "concurrent-key");
             finishExtraction.countDown();
 
@@ -674,6 +692,437 @@ class FixtureIngestionLifecycleTest {
             finishExtraction.countDown();
             workerExecutor.shutdownNow();
         }
+    }
+
+    @Test
+    void restartAfterAcquireCheckpointRestoresCachedBytesWithoutRepeatingAcquire(@TempDir Path fixtureRoot)
+            throws Exception {
+        Path document = fixtureRoot.resolve("restart/recover.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "restart-safe source content");
+        ContentPullPort pullPort = new ContentPullPort(List.of(new FilesystemAdapter()));
+        Path cacheRoot = fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-restart-cache");
+        FileSystemContentStore firstContentStore = spy(new FileSystemContentStore(cacheRoot));
+        FileSystemContentStore reopenedContentStore = spy(new FileSystemContentStore(cacheRoot));
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = mock(PersistStage.class);
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, "recovered text", Map.of(), null);
+        });
+        when(persist.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+
+        String tenantId = "tenant-workflow-restart-" + UUID.randomUUID();
+        String sourceId = "restart-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(), Set.of("DISCOVER"),
+            "ACTIVE", Instant.parse("2026-10-17T11:59:00Z"), null));
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        VerifiedIngestionContext context = principal(tenantId);
+        FixtureSourceWorkflow beforeRestart = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, firstContentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        beforeRestart.setWorkflowStepObserver(stepId -> {
+            if ("ACQUIRE".equals(stepId)) {
+                throw new AssertionError("injected process crash after durable acquire checkpoint");
+            }
+        });
+
+        assertThatThrownBy(() -> beforeRestart.submit(
+            context, sourceId, "restart/recover.md", "request-restart", "restart-key"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("injected process crash");
+        WorkflowStateRow persistedWorkflow = cache.listWorkflowStates(tenantId).getFirst();
+        assertThat(persistedWorkflow.state()).isEqualTo("RUNNING");
+        assertThat(persistedWorkflow.workflowId()).isNotEqualTo(persistedWorkflow.operationId())
+            .isNotEqualTo(persistedWorkflow.runId());
+        assertThat(cache.readWorkflowStep(tenantId, persistedWorkflow.workflowId(), "ACQUIRE").orElseThrow()
+            .status()).isEqualTo("COMPLETED");
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "restart/recover.md")).isEmpty();
+
+        FixtureSourceWorkflow afterRestart = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, reopenedContentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:01Z"), ZoneOffset.UTC));
+        afterRestart.recoverPending();
+
+        WorkflowStateRow completedWorkflow = cache.readWorkflowState(tenantId, persistedWorkflow.workflowId())
+            .orElseThrow();
+        IngestionRunRow recoveredRun = cache.readIngestionRun(tenantId, persistedWorkflow.runId()).orElseThrow();
+        OperationRow recoveredOperation = cache.readOperation(tenantId, persistedWorkflow.operationId()).orElseThrow();
+        assertThat(completedWorkflow.state()).isEqualTo("COMPLETED");
+        assertThat(recoveredRun.status()).isEqualTo("COMPLETED");
+        assertThat(recoveredOperation.status()).isEqualTo("SUCCEEDED");
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "restart/recover.md"))
+            .hasSize(1);
+        var sourceEvent = cache.listSourceOutbox(tenantId, "filesystem", sourceId, "restart/recover.md")
+            .getFirst();
+        WorkflowStepRow ingestStep = cache.readWorkflowStep(
+            tenantId, persistedWorkflow.workflowId(), "INGEST").orElseThrow();
+        assertThat(sourceEvent.payloadJson())
+            .contains("\"event_version\":1", "\"tenant_id\":\"" + tenantId + "\"",
+                "\"correlation_id\":\"request-restart\"",
+                "\"causation_id\":\"" + ingestStep.commandId() + "\"",
+                "\"workflow_id\":\"" + persistedWorkflow.workflowId() + "\"",
+                "\"operation_id\":\"" + persistedWorkflow.operationId() + "\"",
+                "\"run_id\":\"" + persistedWorkflow.runId() + "\"");
+        verify(firstContentStore, times(1)).put(eq(tenantId), any(byte[].class), any());
+        verify(reopenedContentStore, never()).put(eq(tenantId), any(byte[].class), any());
+        verify(extraction, times(1)).apply(any(), any());
+        verify(persist, times(1)).apply(any(), any());
+    }
+
+    @Test
+    void crashAfterIngestCommitFinalizesOnRecoveryWithoutRerunningIngest(@TempDir Path fixtureRoot)
+            throws Exception {
+        Path document = fixtureRoot.resolve("irreversible/commit.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "irreversible boundary content");
+        ContentPullPort pullPort = new ContentPullPort(List.of(new FilesystemAdapter()));
+        FileSystemContentStore contentStore = new FileSystemContentStore(
+            fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-irreversible-cache"));
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = mock(PersistStage.class);
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, "committed text", Map.of(), null);
+        });
+        when(persist.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+
+        String tenantId = "tenant-irreversible-" + UUID.randomUUID();
+        String sourceId = "irreversible-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(), Set.of("DISCOVER"),
+            "ACTIVE", Instant.parse("2026-10-17T11:59:00Z"), null));
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        VerifiedIngestionContext context = principal(tenantId);
+        FixtureSourceWorkflow crashingWorker = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        // The crash lands after the SourceVersion/outbox transaction committed and the
+        // INGEST step checkpoint was recorded, but before the workflow row was finalized.
+        crashingWorker.setWorkflowStepObserver(stepId -> {
+            if ("INGEST".equals(stepId)) {
+                throw new AssertionError("injected process crash after ingest commit");
+            }
+        });
+
+        assertThatThrownBy(() -> crashingWorker.submit(
+            context, sourceId, "irreversible/commit.md", "request-irreversible", "irreversible-key"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("injected process crash");
+        WorkflowStateRow stuckWorkflow = cache.listWorkflowStates(tenantId).getFirst();
+        IngestionRunRow committedRun = cache.readIngestionRun(tenantId, stuckWorkflow.runId()).orElseThrow();
+        assertThat(committedRun.status()).isEqualTo("COMPLETED");
+        assertThat(stuckWorkflow.state()).isEqualTo("RUNNING");
+        assertThat(cache.readWorkflowStep(tenantId, stuckWorkflow.workflowId(), "INGEST").orElseThrow()
+            .status()).isEqualTo("COMPLETED");
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "irreversible/commit.md"))
+            .hasSize(1);
+
+        FixtureSourceWorkflow recoveringWorker = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:01Z"), ZoneOffset.UTC));
+        recoveringWorker.recoverPending();
+
+        WorkflowStateRow finalizedWorkflow = cache.readWorkflowState(tenantId, stuckWorkflow.workflowId())
+            .orElseThrow();
+        IngestionRunRow finalizedRun = cache.readIngestionRun(tenantId, stuckWorkflow.runId()).orElseThrow();
+        OperationRow finalizedOperation = cache.readOperation(tenantId, stuckWorkflow.operationId()).orElseThrow();
+        assertThat(finalizedWorkflow.state()).isEqualTo("COMPLETED");
+        assertThat(finalizedRun.status()).isEqualTo("COMPLETED");
+        assertThat(finalizedOperation.status()).isEqualTo("SUCCEEDED");
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "irreversible/commit.md"))
+            .hasSize(1);
+        assertThat(cache.listSourceOutbox(tenantId, "filesystem", sourceId, "irreversible/commit.md"))
+            .hasSize(1);
+        // IRREVERSIBLE: the ingest side effects are never re-executed after the commit.
+        verify(extraction, times(1)).apply(any(), any());
+        verify(persist, times(1)).apply(any(), any());
+    }
+
+    @Test
+    void expiredLeaseIsTakenOverAndExactlyOneWorkerCompletes(@TempDir Path fixtureRoot)
+            throws Exception {
+        Path document = fixtureRoot.resolve("lease/takeover.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "lease takeover content");
+        ContentPullPort pullPort = new ContentPullPort(List.of(new FilesystemAdapter()));
+        FileSystemContentStore contentStore = new FileSystemContentStore(
+            fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-lease-cache"));
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = mock(PersistStage.class);
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, "takeover text", Map.of(), null);
+        });
+        when(persist.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+
+        String tenantId = "tenant-lease-" + UUID.randomUUID();
+        String sourceId = "lease-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(), Set.of("DISCOVER"),
+            "ACTIVE", Instant.parse("2026-10-17T11:59:00Z"), null));
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        VerifiedIngestionContext context = principal(tenantId);
+        FixtureSourceWorkflow crashingWorker = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        crashingWorker.setWorkflowStepObserver(stepId -> {
+            if ("ACQUIRE".equals(stepId)) {
+                throw new AssertionError("injected worker A crash holding the lease");
+            }
+        });
+        assertThatThrownBy(() -> crashingWorker.submit(
+            context, sourceId, "lease/takeover.md", "request-lease", "lease-key"))
+            .isInstanceOf(AssertionError.class);
+        WorkflowStateRow orphanedWorkflow = cache.listWorkflowStates(tenantId).getFirst();
+
+        // Worker A died holding the lease: the row exists, unexpired, owned by A.
+        UUID ownerA = UUID.randomUUID();
+        Instant leaseStart = Instant.parse("2026-10-17T12:00:00Z");
+        assertThat(cache.claimWorkflowLease(tenantId, orphanedWorkflow.workflowId(), ownerA,
+            leaseStart, leaseStart.plusSeconds(30))).isTrue();
+        // A different owner cannot claim while the lease is live.
+        assertThat(cache.claimWorkflowLease(tenantId, orphanedWorkflow.workflowId(), UUID.randomUUID(),
+            leaseStart.plusSeconds(5), leaseStart.plusSeconds(35))).isFalse();
+
+        // Worker B recovers while A's lease is live: skipped, no work executed.
+        FixtureSourceWorkflow liveLeaseWorker = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(leaseStart.plusSeconds(5), ZoneOffset.UTC));
+        liveLeaseWorker.recoverPending();
+        assertThat(cache.readIngestionRun(tenantId, orphanedWorkflow.runId()).orElseThrow().completedAt())
+            .isNull();
+        verify(extraction, never()).apply(any(), any());
+
+        // After expiry, worker C takes over and the same operation completes exactly once.
+        FixtureSourceWorkflow takeoverWorker = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(leaseStart.plusSeconds(45), ZoneOffset.UTC));
+        takeoverWorker.recoverPending();
+
+        WorkflowStateRow completedWorkflow = cache.readWorkflowState(tenantId, orphanedWorkflow.workflowId())
+            .orElseThrow();
+        IngestionRunRow completedRun = cache.readIngestionRun(tenantId, orphanedWorkflow.runId()).orElseThrow();
+        OperationRow completedOperation = cache.readOperation(tenantId, orphanedWorkflow.operationId()).orElseThrow();
+        assertThat(completedWorkflow.state()).isEqualTo("COMPLETED");
+        assertThat(completedRun.status()).isEqualTo("COMPLETED");
+        assertThat(completedOperation.status()).isEqualTo("SUCCEEDED");
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "lease/takeover.md"))
+            .hasSize(1);
+        assertThat(cache.listSourceOutbox(tenantId, "filesystem", sourceId, "lease/takeover.md"))
+            .hasSize(1);
+        verify(extraction, times(1)).apply(any(), any());
+        verify(persist, times(1)).apply(any(), any());
+    }
+
+    @Test
+    void sourceOutboxRetryMetadataAndDeadLetterRetainStableEventIdentity() {
+        VerifiedIngestionContext context = principal("tenant-source-outbox-retry-" + UUID.randomUUID());
+        byte[] bytes = "outbox source event".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        IngestionRunRow run = lifecycle.ingest(
+            context, UUID.randomUUID(), UUID.randomUUID(), "outbox-source", "guide.md",
+            fileRef("file:///outbox/guide.md", null, bytes.length), bytes, ignored -> UUID.randomUUID());
+        SourceOutboxRow original = cache.listSourceOutbox(
+            context.tenantId(), "file", "outbox-source", "guide.md").getFirst();
+        Instant failedAt = Instant.parse("2026-10-17T12:01:00Z");
+
+        cache.recordSourceOutboxFailure(original, 1, "broker timeout", failedAt.plusSeconds(1), false, failedAt);
+        SourceOutboxRow retry = cache.listSourceOutbox(
+            context.tenantId(), "file", "outbox-source", "guide.md").getFirst();
+        assertThat(retry.eventId()).isEqualTo(original.eventId());
+        assertThat(retry.attemptCount()).isEqualTo(1);
+        assertThat(retry.lastError()).isEqualTo("broker timeout");
+        assertThat(retry.nextAttemptAt()).isEqualTo(failedAt.plusSeconds(1));
+        assertThat(retry.deadLettered()).isFalse();
+
+        cache.recordSourceOutboxFailure(retry, 5, "retry limit reached", null, true, failedAt.plusSeconds(10));
+        SourceOutboxRow deadLettered = cache.listSourceOutbox(
+            context.tenantId(), "file", "outbox-source", "guide.md").getFirst();
+        assertThat(deadLettered.eventId()).isEqualTo(original.eventId());
+        assertThat(deadLettered.deadLettered()).isTrue();
+        assertThat(cache.listUnpublishedSourceOutbox(context.tenantId(), 100, failedAt.plusSeconds(20)))
+            .isEmpty();
+        var deadLetter = session.execute(SimpleStatement.newInstance(
+            "SELECT event_id, attempt_count, last_error FROM ingestion_cache.dead_letter_events " +
+                "WHERE tenant_id=? AND event_id=?", context.tenantId(), original.eventId())).one();
+        assertThat(deadLetter).isNotNull();
+        assertThat(deadLetter.getUuid("event_id")).isEqualTo(original.eventId());
+        assertThat(deadLetter.getInt("attempt_count")).isEqualTo(5);
+        assertThat(deadLetter.getString("last_error")).isEqualTo("retry limit reached");
+        assertThat(run.status()).isEqualTo("COMPLETED");
+
+        SourceVersionRow sourceVersion = cache.listSourceVersions(
+            context.tenantId(), "file", "outbox-source", "guide.md").getFirst();
+        assertThat(cache.replaySourceOutbox(deadLettered)).isTrue();
+        SourceOutboxRow replay = cache.listUnpublishedSourceOutbox(
+            context.tenantId(), 100, failedAt.plusSeconds(20)).getFirst();
+        assertThat(replay.eventId()).isEqualTo(deadLettered.eventId());
+        assertThat(replay.payloadJson()).isEqualTo(deadLettered.payloadJson());
+        assertThat(replay.attemptCount()).isZero();
+        assertThat(cache.readSourceVersion(context.tenantId(), "file", "outbox-source", "guide.md",
+            sourceVersion.versionId())).contains(sourceVersion);
+    }
+
+    @Test
+    void retryableAcquireFailureKeepsOperationRunningAndRecoversAtPersistedDeadline(@TempDir Path fixtureRoot)
+            throws IOException {
+        Path document = fixtureRoot.resolve("retry/recover.md");
+        Files.createDirectories(document.getParent());
+        byte[] bytes = "retryable source content".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        Files.write(document, bytes);
+        ContentPullPort pullPort = new ContentPullPort(List.of(new FilesystemAdapter()));
+        AcquireStage acquire = mock(AcquireStage.class);
+        AtomicInteger acquireAttempts = new AtomicInteger();
+        when(acquire.apply(any(), any())).thenAnswer(invocation -> {
+            if (acquireAttempts.incrementAndGet() == 1) {
+                throw new ContentStoreException("temporary Content Cache outage");
+            }
+            ContentRef ref = invocation.getArgument(0);
+            return new org.synanton.synflux.domain.AcquiredDocument(
+                ref, bytes, "digest", ref.mimeType(), ref.uri(), UUID.randomUUID(), "cache-reference");
+        });
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = mock(PersistStage.class);
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, "recovered text", Map.of(), null);
+        });
+        when(persist.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+
+        String tenantId = "tenant-workflow-retry-" + UUID.randomUUID();
+        String sourceId = "retry-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(), Set.of("DISCOVER"),
+            "ACTIVE", Instant.parse("2026-10-17T11:59:00Z"), null));
+        Instant baseTime = Instant.parse("2026-10-17T12:00:00Z");
+        OperationService operationService = new OperationService(cache, Clock.fixed(baseTime, ZoneOffset.UTC));
+        FixtureSourceWorkflow firstAttempt = new FixtureSourceWorkflow(
+            cache, pullPort, acquire, extraction, chunk, identityStage, identityStage, identityStage,
+            persist, testProperties(), lifecycle, operationService, Runnable::run,
+            new FilesystemFixturePolicy(fixtureRoot), Clock.fixed(baseTime, ZoneOffset.UTC));
+
+        FixtureSourceWorkflow.Submission accepted = firstAttempt.submit(
+            principal(tenantId), sourceId, "retry/recover.md", "request-retry", "retry-key");
+        WorkflowStateRow retryingWorkflow = cache.listWorkflowStates(tenantId).getFirst();
+        IngestionRunRow retryingRun = cache.readIngestionRun(tenantId, accepted.run().runId()).orElseThrow();
+        OperationRow runningOperation = cache.readOperation(tenantId, accepted.operation().operationId()).orElseThrow();
+        WorkflowStepRow failedAcquireStep = cache.readWorkflowStep(
+            tenantId, retryingWorkflow.workflowId(), "ACQUIRE").orElseThrow();
+        assertThat(retryingWorkflow.state()).isEqualTo("RETRYABLE");
+        assertThat(retryingWorkflow.nextAttemptAt()).isEqualTo(baseTime.plusSeconds(1));
+        assertThat(retryingRun.completedAt()).isNull();
+        assertThat(runningOperation.status()).isEqualTo("RUNNING");
+        assertThat(failedAcquireStep.commandId()).isEqualTo(UUID.nameUUIDFromBytes(
+            ("synflux-workflow-command:" + retryingWorkflow.workflowId() + ":ACQUIRE")
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        var firstError = cache.readIngestionError(
+            tenantId, UUID.fromString(retryingRun.errorRef())).orElseThrow();
+        assertThat(firstError.code()).isEqualTo("DEPENDENCY_UNAVAILABLE");
+        assertThat(firstError.retryable()).isTrue();
+
+        FixtureSourceWorkflow restarted = new FixtureSourceWorkflow(
+            cache, pullPort, acquire, extraction, chunk, identityStage, identityStage, identityStage,
+            persist, testProperties(), lifecycle, operationService, Runnable::run,
+            new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(baseTime.plusSeconds(5), ZoneOffset.UTC));
+        restarted.recoverPending();
+
+        IngestionRunRow completedRun = cache.readIngestionRun(tenantId, accepted.run().runId()).orElseThrow();
+        OperationRow completedOperation = cache.readOperation(
+            tenantId, accepted.operation().operationId()).orElseThrow();
+        WorkflowStepRow acquireStep = cache.readWorkflowStep(
+            tenantId, retryingWorkflow.workflowId(), "ACQUIRE").orElseThrow();
+        assertThat(completedRun.status()).isEqualTo("COMPLETED");
+        assertThat(completedOperation.status()).isEqualTo("SUCCEEDED");
+        assertThat(cache.readWorkflowState(tenantId, retryingWorkflow.workflowId()).orElseThrow().state())
+            .isEqualTo("COMPLETED");
+        assertThat(acquireStep.status()).isEqualTo("COMPLETED");
+        assertThat(acquireStep.attemptCount()).isEqualTo(2);
+        assertThat(acquireStep.commandId()).isEqualTo(failedAcquireStep.commandId());
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "retry/recover.md"))
+            .hasSize(1);
     }
 
     @Test
@@ -727,7 +1176,8 @@ class FixtureIngestionLifecycleTest {
         FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
             cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk, identityStage, identityStage,
             identityStage, persist, testProperties(), lifecycle, operationService, executor,
-            new FilesystemFixturePolicy(fixtureRoot));
+            new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
         VerifiedIngestionContext context = principal(tenantId);
 
         try {

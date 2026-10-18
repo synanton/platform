@@ -2,6 +2,7 @@ package org.synanton.synflux.config;
 
 import org.synanton.contentcache.ContentStore;
 import org.synanton.contentcache.FileSystemContentStore;
+import org.synanton.common.kafka.KafkaClientConfig;
 import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
 import org.synanton.extraction.client.ExtractionPlaneClient;
@@ -27,6 +28,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +39,7 @@ import java.util.concurrent.Executors;
 
 @Configuration
 @EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class})
+@Import(KafkaClientConfig.class)
 public class SynfluxConfig {
 
     private static final String HOT_BUCKET = "synanton-hot";
