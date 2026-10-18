@@ -4,9 +4,10 @@
 **Contract:** [`../api/source-model.md`](../api/source-model.md)
 
 The deterministic fixture flow uses the existing filesystem `ContentAdapter`,
-the normal Synflux acquisition/extraction/chunk/persist stages, and the
-Cassandra-backed `ingestion-cache` source lifecycle records. `FixtureIngestionService`
-owns per-resource history; `FixtureSourceWorkflow` connects it to source/run
+the Content Cache `ContentStore` port, the normal Synflux
+acquisition/extraction/chunk/persist stages, and the Cassandra-backed
+`ingestion-cache` source lifecycle records. `FixtureIngestionService` owns
+per-resource history; `FixtureSourceWorkflow` connects it to source/run
 submission and the public Operation record.
 
 ## Local reproduction
@@ -14,7 +15,7 @@ submission and the public Operation record.
 With Docker available to Testcontainers, run:
 
 ```bash
-./gradlew :java:ingestion-cache:test :java:synflux:test --no-configuration-cache
+./gradlew :java:content-cache-api:test :java:ingestion-cache:test :java:synflux:test --no-configuration-cache
 ```
 
 The test installs the real Cassandra schema migration and exercises the same
@@ -37,14 +38,31 @@ stages, and checks Operation idempotency and outbox deduplication.
   available version signal. If modification time is absent, SHA-256 is used as
   the explicit fallback. SHA-256 of acquired bytes is always persisted as the
   content digest, separately from source identity and version identity.
+- `AcquireStage` publishes raw source bytes through `ContentStore.put`, retains
+  the returned opaque ContentReference, then reads the bytes back through that
+  reference and verifies tenant, SHA-256, and size before extraction. The
+  reference is persisted on SourceVersion and the ingestion manifest. Chunk and
+  annotation stages continue to use the established internal `contentRefId`.
+  An integrity failure after resource discovery produces a per-resource
+  `QUARANTINED` manifest entry and non-retryable Operation error; it does not
+  publish a SourceVersion or SourcePublished event.
+- The local reference adapter is `FileSystemContentStore` from content-cache-api;
+  set `SYNFLUX_CONTENT_CACHE_BACKEND=filesystem` and
+  `SYNFLUX_CONTENT_CACHE_ROOT` for local Synflux. Its cache root must be separate
+  from `SYNFLUX_FIXTURE_ROOT`. A deployment can provide a ContentStore bean over
+  the Content Service adapter. ExtractionStage's ObjectStorePort write remains
+  a temporary handoff to the extraction gateway; PersistStage no longer treats
+  an S3 path as the canonical source artifact.
 - Source-version IDs are deterministic UUIDv5 values derived from full source
   identity, the selected version signal, and (after deletion) a new incarnation
   ID. Cassandra `IF NOT EXISTS` writes preserve immutability and make duplicate
   delivery converge. Reuse of one revision signal for different bytes is a
   non-retryable W2 `RESOURCE_CONFLICT`.
-- The publisher callback represents the existing content publication pipeline.
-  The SourceVersion is made authoritative only after the callback returns its
-  content-addressed `content_ref_id`.
+- `ContentStore.put` produces the opaque Content Cache reference before
+  extraction; downstream Synflux stages consume the bytes read back through that
+  reference. The SourceVersion is made authoritative only after the normal
+  processing/persist callback succeeds, and stores both the Content Cache
+  reference and the existing internal `content_ref_id` used by chunk indexes.
 - `SourcePublished` and `SourceDeleted` event envelopes are stored atomically
   with their immutable SourceVersion/tombstone rows. Their event IDs are
   deterministic and the event publication flag is transport metadata; duplicate
@@ -66,11 +84,12 @@ stages, and checks Operation idempotency and outbox deduplication.
   on the ingestion executor. Operation GET/cancel and run GET use verified tenant
   scope. Source creation and Source CRUD/version routes are under `/v1/sources`.
 
-Migration `V9__source_lifecycle.cql` creates the tenant-scoped Source catalog,
+Migrations V9 and V10 create the tenant-scoped Source catalog,
 per-resource SourceIdentity rows, immutable source versions, tombstones and
 version manifests, ingestion runs/manifests/entries, W2 error records,
-Operations and command idempotency rows. Version and tombstone event envelopes
-are co-located in their respective history rows to preserve the
+Operations, command idempotency rows, and opaque Content Cache reference
+columns on SourceVersion and the content manifest. Version and tombstone event
+envelopes are co-located in their respective history rows to preserve the
 artifact-before-publication ordering.
 
 ## Integration boundary and follow-up

@@ -1,5 +1,7 @@
 package org.synanton.synflux.config;
 
+import org.synanton.contentcache.ContentStore;
+import org.synanton.contentcache.FileSystemContentStore;
 import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
 import org.synanton.extraction.client.ExtractionPlaneClient;
@@ -20,6 +22,8 @@ import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
 import org.synanton.synvault.port.ContentPullPort;
 import org.synanton.synvault.port.ObjectStorePort;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,8 +58,19 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public AcquireStage acquireStage(ContentPullPort pullPort) {
-        return new AcquireStage(pullPort);
+    @ConditionalOnProperty(name = "SYNFLUX_CONTENT_CACHE_BACKEND", havingValue = "filesystem")
+    @ConditionalOnMissingBean(ContentStore.class)
+    public ContentStore filesystemContentStore(
+            @Value("${SYNFLUX_CONTENT_CACHE_ROOT}") String contentCacheRoot,
+            FilesystemFixturePolicy fixturePolicy) {
+        FileSystemContentStore store = new FileSystemContentStore(Path.of(contentCacheRoot));
+        fixturePolicy.validateSeparateContentCacheRoot(store.root());
+        return store;
+    }
+
+    @Bean
+    public AcquireStage acquireStage(ContentPullPort pullPort, ContentStore contentStore) {
+        return new AcquireStage(pullPort, contentStore);
     }
 
     @Bean
@@ -126,9 +141,8 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public PersistStage persistStage(IngestionCacheClient cacheClient, ObjectStorePort objectStore,
-                                     SynfluxProperties props) {
-        return new PersistStage(cacheClient, objectStore, HOT_BUCKET);
+    public PersistStage persistStage(IngestionCacheClient cacheClient) {
+        return new PersistStage(cacheClient);
     }
 
     @Bean

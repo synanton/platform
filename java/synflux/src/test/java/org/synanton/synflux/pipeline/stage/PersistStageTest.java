@@ -10,9 +10,7 @@ import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synvault.domain.ContentRef;
-import org.synanton.synvault.port.ObjectStorePort;
 
-import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +27,7 @@ class PersistStageTest {
     @Test
     void shouldPersistSemanticProvenanceAndChunkedState() {
         IngestionCacheClient cache = mock(IngestionCacheClient.class);
-        ObjectStorePort store = mock(ObjectStorePort.class);
-        PersistStage stage = new PersistStage(cache, store, "synanton-hot");
+        PersistStage stage = new PersistStage(cache);
 
         UUID refId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         ContentRef contentRef = new ContentRef("file", "file:///tmp/a.md", "text/markdown", 10, Instant.now());

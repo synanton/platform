@@ -1,10 +1,16 @@
 package org.synanton.synflux.lifecycle;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.synanton.common.jwt.SubjectAssertion;
+import org.synanton.common.tenant.TenantContext;
+import org.synanton.contentcache.ContentIntegrityException;
+import org.synanton.contentcache.ContentReference;
+import org.synanton.contentcache.FileSystemContentStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.IngestionRunRow;
@@ -12,6 +18,7 @@ import org.synanton.ingestioncache.domain.OperationRow;
 import org.synanton.ingestioncache.domain.SourceIdentityConflictException;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
+import org.synanton.synflux.api.SourceController;
 import org.synanton.synflux.config.SynfluxProperties;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.ParsedDocument;
@@ -20,9 +27,9 @@ import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synflux.pipeline.stage.AcquireStage;
 import org.synanton.synflux.pipeline.stage.ExtractionStage;
 import org.synanton.synflux.pipeline.stage.PersistStage;
-import org.synanton.synvault.port.ContentPullPort;
 import org.synanton.synvault.adapter.FilesystemAdapter;
 import org.synanton.synvault.domain.ContentRef;
+import org.synanton.synvault.port.ContentPullPort;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -34,23 +41,20 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.Map;
-
+import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class FixtureIngestionLifecycleTest {
@@ -337,6 +341,72 @@ class FixtureIngestionLifecycleTest {
     }
 
     @Test
+    void contentIntegrityFailureAfterDiscoveryIsQuarantinedWithoutPublishingSourceVersion(
+            @TempDir Path fixtureRoot) throws IOException {
+        Path document = fixtureRoot.resolve("quarantine/document.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "untrusted content");
+        ContentPullPort pullPort = new ContentPullPort(List.of(new FilesystemAdapter()));
+        AcquireStage acquire = mock(AcquireStage.class);
+        when(acquire.apply(any(), any())).thenThrow(new ContentIntegrityException("round-trip digest mismatch"));
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = mock(PersistStage.class);
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+
+        String tenantId = "tenant-quarantine-" + UUID.randomUUID();
+        String sourceId = "quarantine-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(), Set.of(), "ACTIVE",
+            Instant.parse("2026-10-17T11:59:00Z"), null));
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
+            cache, pullPort, acquire, extraction, chunk, identityStage, identityStage, identityStage,
+            persist, testProperties(), lifecycle, operationService, Runnable::run,
+            new FilesystemFixturePolicy(fixtureRoot));
+
+        FixtureSourceWorkflow.Submission submission = workflow.ingest(
+            principal(tenantId), sourceId, "quarantine/document.md", "request-quarantine", null);
+        IngestionRunRow run = cache.readIngestionRun(tenantId, submission.run().runId()).orElseThrow();
+        OperationRow operation = cache.readOperation(tenantId, submission.operation().operationId()).orElseThrow();
+        var entries = cache.listManifestEntries(tenantId, run.runId());
+        var error = cache.readIngestionError(tenantId, UUID.fromString(run.errorRef())).orElseThrow();
+
+        assertThat(run.status()).isEqualTo("QUARANTINED");
+        assertThat(run.result().quarantined()).isEqualTo(1);
+        assertThat(run.result().failed()).isZero();
+        assertThat(entries).singleElement().satisfies(entry -> {
+            assertThat(entry.result()).isEqualTo("QUARANTINED");
+            assertThat(entry.sourceVersionId()).isNull();
+            assertThat(entry.errorRef()).isEqualTo(run.errorRef());
+        });
+        assertThat(error.code()).isEqualTo("OPERATION_FAILED");
+        assertThat(error.retryable()).isFalse();
+        assertThat(error.detailsJson()).contains("\"reason\":\"QUARANTINED\"", "\"quarantined\":1");
+        assertThat(operation.status()).isEqualTo("FAILED");
+        assertThat(operation.errorId()).isEqualTo(error.errorId());
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, "quarantine/document.md"))
+            .isEmpty();
+        assertThat(cache.listSourceOutbox(tenantId, "filesystem", sourceId, "quarantine/document.md"))
+            .isEmpty();
+    }
+
+    @Test
     void cancellationRecordsCancelledDispositionWithoutPublishingVersion() {
         VerifiedIngestionContext context = principal("tenant-cancelled-run");
         byte[] bytes = "cancel me".getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -430,9 +500,11 @@ class FixtureIngestionLifecycleTest {
         Files.writeString(document, "fixture workflow text");
         FilesystemAdapter adapter = new FilesystemAdapter();
         ContentPullPort pullPort = new ContentPullPort(List.of(adapter));
-        AcquireStage acquire = new AcquireStage(pullPort);
+        FileSystemContentStore contentStore = new FileSystemContentStore(
+            fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-content-cache"));
+        AcquireStage acquire = new AcquireStage(pullPort, contentStore);
         ExtractionStage extraction = mock(ExtractionStage.class);
-        PersistStage persist = mock(PersistStage.class);
+        PersistStage persist = new PersistStage(cache);
         PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
             @Override
             public String name() { return "test-chunk"; }
@@ -454,7 +526,6 @@ class FixtureIngestionLifecycleTest {
             return new ParsedDocument(acquired, new String(acquired.bytes(), java.nio.charset.StandardCharsets.UTF_8),
                 Map.of(), null);
         });
-        when(persist.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         String tenantId = "tenant-workflow-" + UUID.randomUUID();
         String sourceId = "workflow-fixture-" + UUID.randomUUID();
@@ -495,10 +566,114 @@ class FixtureIngestionLifecycleTest {
         assertThat(submittedOperation.outcome()).isEqualTo("FULL");
         assertThat(cache.listSourceVersions(context.tenantId(), "filesystem", sourceId, "manuals/workflow.md"))
             .hasSize(1);
+        SourceVersionRow sourceVersion = cache.listSourceVersions(
+            context.tenantId(), "filesystem", sourceId, "manuals/workflow.md").getFirst();
+        assertThat(sourceVersion.contentCacheReference()).isNotBlank();
+        FileSystemContentStore reopenedContentStore = new FileSystemContentStore(contentStore.root());
+        assertThat(cache.readManifest(context.tenantId(), sourceVersion.contentRefId()).orElseThrow()
+            .contentCacheReference()).isEqualTo(sourceVersion.contentCacheReference());
+        TenantContext.set(new SubjectAssertion("alice", -1, List.of(), tenantId,
+            Instant.parse("2026-10-17T12:00:00Z")));
+        try {
+            SourceController.SourceVersionResource apiVersion = new SourceController(
+                cache, Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC), workflow,
+                new FilesystemFixturePolicy(fixtureRoot)).listVersions(sourceId).getFirst();
+            assertThat(apiVersion.contentCacheReference()).isEqualTo(sourceVersion.contentCacheReference());
+            assertThat(reopenedContentStore.get(ContentReference.parse(apiVersion.contentCacheReference())))
+                .isEqualTo(Files.readAllBytes(document));
+        } finally {
+            TenantContext.clear();
+        }
         assertThat(cache.listSourceOutbox(context.tenantId(), "filesystem", sourceId, "manuals/workflow.md"))
             .extracting(event -> event.eventType())
             .containsExactly("SourcePublished");
-        verify(persist).apply(any(), any());
+    }
+
+    @Test
+    void concurrentSameKeySubmissionsConvergeOnOneOperationAndRun(@TempDir Path fixtureRoot) throws Exception {
+        Path document = fixtureRoot.resolve("manuals/concurrent.md");
+        Files.createDirectories(document.getParent());
+        Files.writeString(document, "concurrent submission");
+        ContentPullPort pullPort = new ContentPullPort(List.of(new FilesystemAdapter()));
+        FileSystemContentStore contentStore = new FileSystemContentStore(
+            fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-concurrent-cache"));
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = mock(PersistStage.class);
+        CountDownLatch extractionStarted = new CountDownLatch(1);
+        CountDownLatch finishExtraction = new CountDownLatch(1);
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            extractionStarted.countDown();
+            if (!finishExtraction.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("test extraction release timed out");
+            }
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, "concurrent text", Map.of(), null);
+        });
+        when(persist.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument value, StageContext context) {
+                return value;
+            }
+        };
+
+        String tenantId = "tenant-concurrent-submit-" + UUID.randomUUID();
+        String sourceId = "concurrent-source-" + UUID.randomUUID();
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "file", fixtureRoot.toUri().toString(), Set.of(), "ACTIVE",
+            Instant.parse("2026-10-17T11:59:00Z"), null));
+        ExecutorService workerExecutor = Executors.newSingleThreadExecutor();
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, workerExecutor, new FilesystemFixturePolicy(fixtureRoot));
+        VerifiedIngestionContext context = principal(tenantId);
+
+        try {
+            FixtureSourceWorkflow.Submission first = workflow.submit(
+                context, sourceId, "manuals/concurrent.md", "request-first", "concurrent-key");
+            assertThat(extractionStarted.await(10, TimeUnit.SECONDS)).isTrue();
+            FixtureSourceWorkflow.Submission retry = workflow.submit(
+                context, sourceId, "manuals/concurrent.md", "request-retry", "concurrent-key");
+            finishExtraction.countDown();
+
+            IngestionRunRow terminalRun = null;
+            OperationRow terminalOperation = null;
+            for (int attempt = 0; attempt < 100; attempt++) {
+                terminalRun = cache.readIngestionRun(tenantId, first.run().runId()).orElseThrow();
+                terminalOperation = cache.readOperation(tenantId, first.operation().operationId()).orElseThrow();
+                if (terminalRun.completedAt() != null && "SUCCEEDED".equals(terminalOperation.status())) {
+                    break;
+                }
+                Thread.sleep(20);
+            }
+
+            assertThat(retry.operation().operationId()).isEqualTo(first.operation().operationId());
+            assertThat(retry.run().runId()).isEqualTo(first.run().runId());
+            assertThat(terminalRun.status()).isEqualTo("COMPLETED");
+            assertThat(terminalRun.operationId()).isEqualTo(terminalOperation.operationId());
+            assertThat(terminalOperation.status()).isEqualTo("SUCCEEDED");
+            assertThat(session.execute(SimpleStatement.newInstance(
+                "SELECT run_id FROM ingestion_cache.ingestion_runs WHERE tenant_id=?", tenantId)).all())
+                .hasSize(1);
+            assertThat(cache.listSourceOutbox(
+                tenantId, "filesystem", sourceId, "manuals/concurrent.md")).hasSize(1);
+        } finally {
+            finishExtraction.countDown();
+            workerExecutor.shutdownNow();
+        }
     }
 
     @Test
@@ -508,6 +683,8 @@ class FixtureIngestionLifecycleTest {
         Files.writeString(document, "cancel during extraction");
         FilesystemAdapter adapter = new FilesystemAdapter();
         ContentPullPort pullPort = new ContentPullPort(List.of(adapter));
+        FileSystemContentStore contentStore = new FileSystemContentStore(
+            fixtureRoot.resolveSibling(fixtureRoot.getFileName() + "-cancel-cache"));
         ExtractionStage extraction = mock(ExtractionStage.class);
         PersistStage persist = mock(PersistStage.class);
         CountDownLatch extractionStarted = new CountDownLatch(1);
@@ -548,7 +725,7 @@ class FixtureIngestionLifecycleTest {
         OperationService operationService = new OperationService(cache,
             Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
         FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
-            cache, pullPort, new AcquireStage(pullPort), extraction, chunk, identityStage, identityStage,
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk, identityStage, identityStage,
             identityStage, persist, testProperties(), lifecycle, operationService, executor,
             new FilesystemFixturePolicy(fixtureRoot));
         VerifiedIngestionContext context = principal(tenantId);
