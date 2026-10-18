@@ -20,6 +20,7 @@ import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.stage.*;
 import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
+import org.synanton.synflux.lifecycle.FixtureIngestionService;
 import org.synanton.synvault.port.ContentPullPort;
 import org.synanton.synvault.port.ObjectStorePort;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -58,6 +59,14 @@ public class SynfluxConfig {
     @Bean(destroyMethod = "shutdown")
     public ExecutorService sourceIngestionExecutor(SynfluxProperties properties) {
         return Executors.newFixedThreadPool(properties.ingest().parallelism());
+    }
+
+    // The slice's lifecycle service has no Spring annotation and was only ever
+    // constructed manually in tests — the composed boot needs the bean.
+    @Bean
+    public FixtureIngestionService fixtureIngestionService(
+            org.synanton.ingestioncache.client.IngestionCacheClient cache, Clock clock) {
+        return new FixtureIngestionService(cache, clock);
     }
 
     @Bean
