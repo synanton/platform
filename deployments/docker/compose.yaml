@@ -242,8 +242,16 @@ services:
       # so restart without it to let recovery resume.
       SYNANTON_FAULT_INJECT: ${SYNANTON_FAULT_INJECT:-}
       SYNFLUX_FIXTURE_ROOT: /demo-data/documents
+      # Local Content Cache adapter (#249): filesystem backend, root separate
+      # from the fixture root, persisted on the host so workflow recovery can
+      # restore acquisition bytes across container recreation (criterion 3).
+      SYNFLUX_CONTENT_CACHE_BACKEND: filesystem
+      SYNFLUX_CONTENT_CACHE_ROOT: /content-cache
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8090
+      # Identity (the JWT filter bean requires it; the Oct 12 image predates
+      # the requirement — drift the compose env caught at first real boot).
+      SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
       EXTRACTION_CLIENT_ENABLED: "true"
       EXTRACTION_ENDPOINT: extraction-gateway:9091
     extra_hosts:
@@ -252,6 +260,7 @@ services:
       - "8090:8090"
     volumes:
       - ../../demo-data/documents:/demo-data/documents:ro
+      - ./data/content-cache:/content-cache
       # Bench staging trees (RAG-Multi-Corpus md/, etc.): derived data, never
       # committed. Populate via scripts (see datasets.md); ingest by path
       # /staging/<tree> with an explicit tenant.
@@ -275,6 +284,7 @@ services:
       CASSANDRA_PORT: 9042
       CASSANDRA_LOCAL_DC: datacenter1
       SERVER_PORT: 8083
+      SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
       SYNQUEST_INDEX_PATH: /var/lib/synquest
       # Dense legs embed via node1 TEI (bge-base, 768d) through an SSH tunnel
       # bound on all host interfaces (host-gateway). Fail closed: a dense run

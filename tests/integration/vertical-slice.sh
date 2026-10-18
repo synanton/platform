@@ -142,7 +142,7 @@ wait_operation() {  # wait_operation <op_id> -> final operation JSON
 
 cqlsh_query() {  # cqlsh_query <cql> -> query output (empty when unavailable)
     case "$WORKER_PROFILE" in
-        compose) docker compose -f "$COMPOSE_FILE" exec -T cassandra cqlsh -e "$1" 2>/dev/null ;;
+        compose) compose exec -T cassandra cqlsh -e "$1" 2>/dev/null ;;
         k8s)     kubectl -n "$K8S_NAMESPACE" exec "$CASSANDRA_POD" -- cqlsh -e "$1" 2>/dev/null ;;
         process) command -v cqlsh >/dev/null 2>&1 && cqlsh -e "$1" 2>/dev/null ;;
     esac
@@ -152,15 +152,21 @@ cql_count() {  # cql_count <cql-count-query> -> row count digits
     cqlsh_query "$1" | grep -E '^[[:space:]]*[0-9]+[[:space:]]*$' | head -1 | tr -d '[:space:]'
 }
 
+# Compose invocations always carry the slice override (host-jar build path:
+# buildkit cannot reach the Maven repos from this network — the boot jars
+# are built on the HOST and the *.prebuilt.Dockerfile variants package them).
+SLICE_OVERRIDE="$(dirname "$COMPOSE_FILE")/compose.slice.yaml"
+compose() { (cd "$(dirname "$COMPOSE_FILE")" && docker compose -f "$COMPOSE_FILE" -f "$SLICE_OVERRIDE" "$@"); }
+
 start_worker() {  # start_worker [fault-point]
     case "$WORKER_PROFILE" in
         compose)
             # The fault env is baked into the recreated container; the injected
             # crash is one-shot per process, and the clean recreate below drops it.
             if [ -n "${1:-}" ]; then
-                (cd deployments/docker && SYNANTON_FAULT_INJECT="$1" docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate synflux)
+                SYNANTON_FAULT_INJECT="$1" compose up -d --force-recreate synflux
             else
-                (cd deployments/docker && docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate synflux)
+                compose up -d --force-recreate synflux
             fi
             ;;
         process)
@@ -189,7 +195,7 @@ start_worker() {  # start_worker [fault-point]
 worker_crashed() {  # worker_crashed -> 0 when the injected crash was observed
     case "$WORKER_PROFILE" in
         compose)
-            docker compose -f "$COMPOSE_FILE" logs --since 5m synflux 2>/dev/null | grep -q 'FAULT INJECTED'
+            compose logs --since 5m synflux 2>/dev/null | grep -q 'FAULT INJECTED'
             ;;
         process)
             ! kill -0 "${WORKER_PID:-0}" 2>/dev/null
@@ -205,7 +211,7 @@ worker_crashed() {  # worker_crashed -> 0 when the injected crash was observed
 
 stop_worker() {
     case "$WORKER_PROFILE" in
-        compose) docker compose -f "$COMPOSE_FILE" stop synflux ;;
+        compose) compose stop synflux ;;
         process)
             [ -n "${WORKER_PID:-}" ] && kill "$WORKER_PID" 2>/dev/null || true
             pkill -f 'org.synanton.SynfluxApplication' 2>/dev/null || true
@@ -252,17 +258,39 @@ printf 'Recovery fixture %s.\nThe restart clause governs resumption.\n' "$TOKEN_
 FIXTURE_HOST_DIR="$(cd "$FIXTURE_HOST_DIR" && pwd)"
 FIXTURE_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md" | cut -d' ' -f1)
 RECOVERY_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md" | cut -d' ' -f1)
-# Stale images predate the provenance endpoint and the fault hook and would
-# fail criteria 2 and 3 with misleading errors — rebuild both up front.
+# The slice app layer: synflux + synquest + extraction-gateway (the
+# extraction client is enabled — ingestion calls the gateway; without it
+# the workflow fails at extraction). --build picks up the host-built jars
+# via the slice override.
 if [ "$WORKER_PROFILE" = "compose" ]; then
-    (cd deployments/docker && docker compose -f "$COMPOSE_FILE" up -d --build synflux synquest)
+    # Package the host-built jars into images. The build context is a tiny
+    # staging tree, not the repo: a repo-root context walks runtime data
+    # (docker/data — some dirs root-owned, permission-denied to the client)
+    # and defeats .dockerignore at the sender's pre-walk. compose is NOT
+    # used for building: its bake cross-resolves dockerfile paths across
+    # services with different contexts.
+    STAGE="$(mktemp -d)"
+    mkdir -p "$STAGE/java/synflux/build/libs" "$STAGE/java/synquest/build/libs" \
+             "$STAGE/java/extraction-gateway/build/libs"
+    cp java/synflux/build/libs/synflux*.jar "$STAGE/java/synflux/build/libs/"
+    cp java/synquest/build/libs/synquest*.jar "$STAGE/java/synquest/build/libs/"
+    cp "$SCRIPT_DIR/../../../content_extractor/java/extraction-gateway/build/libs/extraction-gateway"*.jar \
+        "$STAGE/java/extraction-gateway/build/libs/"
+    docker build -q -f "$SCRIPT_DIR/../../deployments/docker/synflux.prebuilt.Dockerfile" \
+        -t docker-synflux:latest "$STAGE"
+    docker build -q -f "$SCRIPT_DIR/../../deployments/docker/synquest.prebuilt.Dockerfile" \
+        -t docker-synquest:latest "$STAGE"
+    docker build -q -f "$SCRIPT_DIR/../../deployments/docker/extraction-gateway.prebuilt.Dockerfile" \
+        -t docker-extraction-gateway:latest "$STAGE"
+    rm -rf "$STAGE"
+    compose up -d synflux synquest extraction-gateway
 fi
 wait_health synflux "$SYNFLUX_URL"
 wait_health synquest "$SYNQUEST_URL"
 # Container-side mount check: wrong mount target or permission shows up here,
 # not as "fixture not found" mid-run.
 if [ "$WORKER_PROFILE" = "compose" ] \
-    && ! docker compose -f "$COMPOSE_FILE" exec -T synflux ls "$FIXTURE_ROOT/$SOURCE_MAIN" > /dev/null 2>&1; then
+    && ! compose exec -T synflux ls "$FIXTURE_ROOT/$SOURCE_MAIN" > /dev/null 2>&1; then
     echo "Fixture root not visible in the worker container: $FIXTURE_ROOT" >&2; exit 1
 fi
 

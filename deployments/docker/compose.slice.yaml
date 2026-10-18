@@ -1,0 +1,15 @@
+# Slice-run override (deployments/homelab composition runs, #253):
+# hosts whose buildkit cannot reach the Maven repos (TLS resets observed
+# 2026-10-18 on M70q) build the boot jars on the HOST and package them with
+# the *.prebuilt.Dockerfile variants. dockerfile paths are context-relative
+# (build context = repo root). Apply after compose.yaml:
+#   docker compose -f compose.yaml -f compose.slice.yaml <cmd>
+services:
+  synflux:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/synflux.prebuilt.Dockerfile
+  synquest:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/synquest.prebuilt.Dockerfile

@@ -1,5 +1,14 @@
-docker/data/
-docker/data-bench/
-.git/
-build/
-*/build/
+# The slice's thin Dockerfiles package only the host-built boot jars —
+# keep the build context to exactly that. A repo-root context otherwise
+# walks runtime data (docker/data, deployments/docker/data), demo fixtures,
+# and build outputs, and fails on permission-denied files.
+*
+!java/
+!java/synflux/
+!java/synquest/
+!java/synflux/build/
+!java/synquest/build/
+!java/synflux/build/libs/
+!java/synquest/build/libs/
+!java/synflux/build/libs/*.jar
+!java/synquest/build/libs/*.jar
