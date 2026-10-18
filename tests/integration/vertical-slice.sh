@@ -471,15 +471,23 @@ events=$(cqlsh_query "SELECT event_id, event_published FROM ingestion_cache.sour
 EVENT_ROWS=$(grep -cE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$events" || true)
 assert_eq "exactly one SourcePublished event row — deduped" "$EVENT_ROWS" "1"
 RECOVERY_VERSION_ID=$(json "d[0]['version_id']" <<<"$rversions")
-case "$events" in
-    *"| True"*)
-        pass "event dispatched once (dispatch adapter up)" ;;
-    *)
-        if [ "$KAFKA_PROFILE" = "kafka" ]; then
-            die "event not dispatched although the Kafka profile is active — the broker put it on the outbox/dead-letter path instead"
-        fi
-        printf '  SKIP dispatch flag — outbox-only mode (no broker configured); dedup holds\n' ;;
-esac
+if [ "$KAFKA_PROFILE" = "kafka" ]; then
+    # Dispatch is asynchronous (OutboxPublisher polls every 2s) — the event
+    # row exists before the broker ack. Poll briefly; a permanently false
+    # flag means the outbox/dead-letter path, which fails the run.
+    dispatch_ok=0
+    for _ in $(seq 1 15); do
+        dispatch_ok=$(cqlsh_query "SELECT event_published FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_RECOVERY' AND resource_id='recovery-doc.md';" | grep -c ' True' || true)
+        [ "$dispatch_ok" = "1" ] && break
+        sleep 2
+    done
+    assert_eq "event dispatched to the broker (event_published=true)" "$dispatch_ok" "1"
+else
+    case "$events" in
+        *"| True"*) pass "event dispatched once (dispatch adapter up)" ;;
+        *) printf '  SKIP dispatch flag — outbox-only mode (no broker configured); dedup holds\n' ;;
+    esac
+fi
 
 if [ "$KAFKA_PROFILE" = "kafka" ]; then
     # Run 2 (Kafka path): the broker must hold exactly one SourcePublished
