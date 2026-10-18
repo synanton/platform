@@ -83,18 +83,35 @@ stages, and checks Operation idempotency and outbox deduplication.
   reference. The generic PostgreSQL-only workflow engine remains the broader EWP-4
   deliverable; #250 implements its first source-specific customer without adding
   a new broker or a second source outbox.
+- **Compensation classes are internal to the ingestion workflow** — they direct
+  restart behavior and are not part of the frozen eventing contract (§44 defines
+  `step_id`, `command`, `expected events`, `timeout`, `retry policy`; compensation
+  is a local saga extension recorded on the step row). `DISCOVER` is `REVERSIBLE`
+  (re-discovery is side-effect free). `ACQUIRE` is `COMPENSATABLE`: its handler is
+  the source model's orphan-artifact reconciliation, not inline deletion — a
+  permanently failed downstream step leaves the durable Content Cache artifact in
+  place for reconciliation per source-model "Outbox publication order" (crash
+  before the Ingestion Plane commit may orphan the artifact). `INGEST` is
+  `IRREVERSIBLE`: once the SourceVersion/outbox transaction commits, recovery
+  finalizes the workflow from the terminal run and never re-runs the ingest step.
+- Dead-letter requeue retains the original event identity (Eventing §33–§34): it
+  is redelivery of an event that never published, not §38–§39 replay. A
+  deliberately re-emitted source fact under a new event ID is governed by the
+  source business key — `SourcePublished`/`SourceChanged`/`SourceUnchanged` are
+  `REPLAY_WITH_POLICY`: the `(tenant_id, source_id, resource_id, version_id)` key
+  converges duplicates to `UNCHANGED` with no second event (source model §39–§40),
+  and `SourceDeleted` replays reuse the tombstone's original `deleted_at`.
+- Concurrent workers are serialized by a Cassandra LWT workflow lease: the first
+  worker to claim runs the workflow, a loser returns the current state without
+  doing work, and an expired lease is takeable — a crashed holder is replaced
+  after expiry with the same operation_id continuing. The source-version
+  `IF NOT EXISTS` write is the second guard: even a lease race converges on one
+  authoritative version and one deterministically-IDed event.
 - Retryable dependency errors leave the workflow in `RETRYABLE`, the Operation
   `RUNNING`, and the IngestionRun `ACQUIRING`; bounded exponential backoff is
   persisted with the step. Retry exhaustion finalizes the IngestionRun and
   Operation with the existing W2 failure projection. Integrity failures remain
   terminal `QUARANTINED` outcomes.
-- `WorkflowState` and per-step checkpoints are persisted in `ingestion-cache`
-  Cassandra. Stable workflow and command IDs derive from the accepted Operation;
-  the recovery scheduler scans non-terminal workflows and resumes from the last
-  completed step. A completed acquisition step is restored through its opaque
-  Content Cache reference, not fetched and stored again. Retryable dependency
-  failures keep the Operation `RUNNING` and the IngestionRun `ACQUIRING` with a
-  bounded persisted retry deadline; exhaustion becomes a terminal W2 failure.
 - Only `DeletionSignal.DELETED` creates a tombstone. `SYNC_INCOMPLETE`,
   `NOT_VISIBLE`, `NOT_FOUND`, `ACCESS_DENIED`, and `UNKNOWN` are retained as
   skipped outcomes. Tombstones retain the verified principal and a resolvable
