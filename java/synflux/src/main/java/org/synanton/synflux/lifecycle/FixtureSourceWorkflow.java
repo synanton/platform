@@ -94,7 +94,7 @@ public class FixtureSourceWorkflow {
             SynfluxProperties properties,
             FixtureIngestionService lifecycle,
             OperationService operations,
-            Executor executor,
+            @Qualifier("sourceIngestionExecutor") Executor executor,
             FilesystemFixturePolicy filesystemPolicy,
             Clock clock) {
         this.cache = cache;
