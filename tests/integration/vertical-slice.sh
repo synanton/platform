@@ -273,6 +273,14 @@ RECOVERY_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md" | 
 # the workflow fails at extraction). --build picks up the host-built jars
 # via the slice override.
 if [ "$WORKER_PROFILE" = "compose" ]; then
+    # The override contract: the boot jars are built on the HOST (warm Gradle
+    # cache; buildkit cannot reach the Maven repos on this network) and the
+    # *.prebuilt.Dockerfiles only package them. Build them here so the run
+    # stays one command.
+    "$SCRIPT_DIR/../../gradlew" -q -p "$SCRIPT_DIR/../../.." \
+        :java:synflux:bootJar :java:synquest:bootJar -x test
+    "$SCRIPT_DIR/../../../content_extractor/gradlew" -q \
+        -p "$SCRIPT_DIR/../../../content_extractor" :java:extraction-gateway:bootJar -x test
     # Package the host-built jars into images. The build context is a tiny
     # staging tree, not the repo: a repo-root context walks runtime data
     # (docker/data — some dirs root-owned, permission-denied to the client)
