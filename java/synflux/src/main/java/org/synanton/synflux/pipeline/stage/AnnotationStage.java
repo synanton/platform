@@ -97,7 +97,7 @@ public class AnnotationStage implements PipelineStage<ChunkedDocument, ChunkedDo
                 rule.definitionId(), rule.definitionVersion(), rule.annotationType(), rule.namespace(), rule.name(),
                 match.value(), rule.producer(), rule.producerVersion(), match.confidence(),
                 classification, UNCLASSIFIED_REPRESENTATION,
-                "chunk:" + contentRefId + "#" + chunk.ordinal(), processingRunId, Instant.now(), null
+                "chunk:" + contentRefId + ":" + chunk.ordinal(), processingRunId, Instant.now(), null
         );
     }
 }

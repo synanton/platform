@@ -307,6 +307,7 @@ public class FixtureSourceWorkflow {
         if (ref == null) {
             return failBeforeDiscovery(context, sourceId, runId, activeWorkflow, operation, null);
         }
+        FaultInjection.crashAt("after-discover");
         if (operations.cancellationRequested(context.tenantId(), operationId)) {
             IngestionRunRow cancelled = lifecycle.recordEmptyRun(
                 context, runId, operationId, sourceId, FixtureIngestionService.EmptyRunDisposition.CANCELLED);
@@ -334,6 +335,7 @@ public class FixtureSourceWorkflow {
             return new Submission(cancelled, operations.completeFromRun(operation, cancelled));
         }
 
+        FaultInjection.crashAt("after-acquire");
         WorkflowStepRow ingestStep = beginStep(activeWorkflow, "INGEST", Map.of(
             "content_ref_id", acquired.contentRefId().toString(),
             "content_cache_reference", acquired.contentCacheReference()));
@@ -348,8 +350,10 @@ public class FixtureSourceWorkflow {
                 if (operations.cancellationRequested(context.tenantId(), operationId)) {
                     throw new CancellationException("Operation cancellation requested");
                 }
-                return publishThroughPipeline(
+                var published = publishThroughPipeline(
                     acquired, stageContext.withSourceVersionId(sourceVersionId), operationId, leaseLost);
+                FaultInjection.crashAt("after-manifest");
+                return published;
             }
         );
         if (run.completedAt() == null) {
