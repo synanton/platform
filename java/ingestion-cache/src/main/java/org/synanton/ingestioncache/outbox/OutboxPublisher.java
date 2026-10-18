@@ -43,6 +43,10 @@ public class OutboxPublisher {
             r -> { Thread t = new Thread(r, "outbox-publisher"); t.setDaemon(true); return t; }
     );
 
+    // Two constructors (the Clock variant is a test seam) leave Spring unable
+    // to choose without an explicit marker — the bean is only created when a
+    // KafkaProducer exists (the Kafka profile), so this surfaced at run 2.
+    @org.springframework.beans.factory.annotation.Autowired
     public OutboxPublisher(IngestionCacheClient cacheClient, KafkaProducer<String, String> producer) {
         this(cacheClient, producer, Clock.systemUTC());
     }
