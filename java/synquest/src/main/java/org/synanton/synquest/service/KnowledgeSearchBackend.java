@@ -23,6 +23,13 @@ public interface KnowledgeSearchBackend {
     boolean isReady(String tenantId);
 
     /**
+     * Observable projection generation (the retrieval backend's commit
+     * generation) — changes when the projection is rebuilt, letting clients
+     * detect that results may have changed under the same query.
+     */
+    long generation(String tenantId);
+
+    /**
      * Rebuilds the tenant's projection from canonical knowledge. Idempotent:
      * re-projecting the same canonical state yields the same projection, so
      * duplicate or out-of-order projection triggers converge.

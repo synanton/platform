@@ -60,7 +60,8 @@ public class KnowledgeSearchController {
                             candidate.provenanceRef(),
                             List.copyOf(candidate.sourceVersionIds())))
                     .toList();
-            return ResponseEntity.ok(new SearchPage(results, new SearchPageMetadata(backend.strategy())));
+            return ResponseEntity.ok(new SearchPage(results, new SearchPageMetadata(
+                    backend.strategy(), searchService.stats(tenant.tenantId()).indexGeneration())));
         } catch (IllegalStateException notReady) {
             log.warn("Search projection not ready for tenant '{}'", tenant.tenantId());
             return ResponseEntity.status(503).build();
@@ -118,7 +119,9 @@ public class KnowledgeSearchController {
             @JsonProperty("chunk_count") int chunkCount,
             @JsonProperty("strategy") String strategy) {}
 
-    public record SearchPageMetadata(@JsonProperty("strategy") String strategy) {}
+    public record SearchPageMetadata(
+            @JsonProperty("strategy") String strategy,
+            @JsonProperty("configuration_generation") long configurationGeneration) {}
 
     public record SearchHitResource(
             @JsonProperty("object_id") String objectId,

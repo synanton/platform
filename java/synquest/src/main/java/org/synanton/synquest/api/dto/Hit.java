@@ -56,6 +56,6 @@ public record Hit(
     }
 
     public String chunkId() {
-        return contentRefId + "#" + chunkOrdinal;
+        return contentRefId + ":" + chunkOrdinal;
     }
 }

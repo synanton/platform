@@ -131,7 +131,7 @@ public class LuceneIndexBuilder {
                             tenant, manifest.contentRefId(), chunk.chunkOrdinal(), embeddingModel);
 
                     Document doc = new Document();
-                    String id = manifest.contentRefId() + "#" + chunk.chunkOrdinal();
+                    String id = manifest.contentRefId() + ":" + chunk.chunkOrdinal();
                     doc.add(new StringField(FIELD_ID, id, Field.Store.YES));
                     doc.add(new StringField(FIELD_CONTENT_REF_ID, manifest.contentRefId().toString(), Field.Store.YES));
                     doc.add(new NumericDocValuesField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));

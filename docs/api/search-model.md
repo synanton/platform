@@ -110,3 +110,25 @@ The response array is `results[]` — Design 1.32 §43, and the design is frozen
 (2026-10-15): `hits[]` is not available without a versioned design revision.
 This draft conforms to the frozen name. If `hits` is ever intended, it is a
 deliberate divergence requiring a design revision, not a silent rename.
+
+## Gen-A projection notes (2026-10-18)
+
+Recorded with the first Gen-A implementation (#255, SNTP-035) so a future
+reader can tell frozen text from projection decisions:
+
+- `object_id` is the canonical chunk id `{content_ref}:{ordinal}`, ordinal
+  zero-based. The separator is `:` (RFC 3986 pchar, absent from UUIDs) so
+  `provenance_ref` needs no client-side encoding — a `#` separator would be a
+  URL fragment and never reach the server. The id is stable for unchanged
+  content because chunks are content-addressed: identical bytes derive the
+  same chunk ordinal.
+- `results[].source_version_ids` is an **additive extension** beyond the
+  frozen shape: a projection of the chunk schema's provenance set (set
+  attribution, #292), not new design surface. `provenance_ref` remains the
+  normative resolution path.
+- `provenance_ref` resolves via `GET /v1/knowledge/{object_id}/provenance`
+  while the producing run is COMPLETED (manifest visibility); otherwise 404 —
+  a provenance reference never resolves to invisible knowledge.
+- Tenant and principal are derived only from the verified Bearer JWT. A
+  tenant in the request body or query is ignored, per the Security section —
+  the API creates no parallel access-control system.
