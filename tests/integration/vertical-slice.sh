@@ -18,6 +18,14 @@
 #   5. Cross-tenant denial → tenant B sees zero results, body tenant ignored,
 #      provenance 404
 #
+# Plus: exactly one SourcePublished event after recovery (the event rides
+# inline on the single version row, deduped by IF NOT EXISTS — a duplicate
+# recovery pass cannot fork it; requires the Kafka adapter up for the
+# published flag to flip).
+#
+# Worker-profile status: compose exercised on M70q; the k8s profile is
+# UNTESTED — the first cluster run exercises it.
+#
 # Not asserted here, deliberately: outcome PARTIAL / quarantined resources —
 # the Content Cache integrity exceptions that produce QUARANTINED runs are
 # internal-corruption class with no honest data-driven generator in the slice;
@@ -34,8 +42,13 @@
 #   K8S_NAMESPACE   k8s profile only
 set -euo pipefail
 
-SYNFLUX_URL="${SYNFLUX_URL:-http://localhost:8080}"
-SYNQUEST_URL="${SYNQUEST_URL:-http://localhost:8081}"
+# Dev secret hygiene: source .env at the repo root when present, so the
+# secret never needs to appear in shell history or CI logs.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+[ -f "$SCRIPT_DIR/../../.env" ] && . "$SCRIPT_DIR/../../.env"
+
+SYNFLUX_URL="${SYNFLUX_URL:-http://localhost:8090}"
+SYNQUEST_URL="${SYNQUEST_URL:-http://localhost:8083}"
 SYNANTON_JWT_SECRET="${SYNANTON_JWT_SECRET:?SYNANTON_JWT_SECRET must be set (both planes verify with it)}"
 TENANT_A="${TENANT_A:-slice-a}"
 TENANT_B="${TENANT_B:-slice-b}"
@@ -43,6 +56,7 @@ FIXTURE_ROOT="${FIXTURE_ROOT:?FIXTURE_ROOT must be set — the worker-visible fi
 FIXTURE_HOST_DIR="${FIXTURE_HOST_DIR:-$FIXTURE_ROOT}"
 WORKER_PROFILE="${WORKER_PROFILE:-compose}"
 K8S_NAMESPACE="${K8S_NAMESPACE:-synanton}"
+CASSANDRA_POD="${CASSANDRA_POD:-cassandra-0}"
 COMPOSE_FILE="${COMPOSE_FILE:-deployment/docker/compose.yaml}"
 STAMP="$(date +%s)"
 SOURCE_MAIN="slice-main-$STAMP"
@@ -77,16 +91,19 @@ PYEOF
 }
 
 http() {  # http <method> <url> <token> [body] -> <status>\n<response-body>
-    local method="$1" url="$2" token="$3" body="${4:-}" tmp
+    # Connection-refused yields status 000 (curl exit 7) — a retryable
+    # condition for the pollers, never a script abort under set -e.
+    local method="$1" url="$2" token="$3" body="${4:-}" tmp code
     tmp=$(mktemp)
     if [ -n "$body" ]; then
-        curl -s -o "$tmp" -w '%{http_code}' -X "$method" "$url" \
+        code=$(curl -s -o "$tmp" -w '%{http_code}' -X "$method" "$url" \
             -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
-            -H 'Idempotency-Key: '"$STAMP-$RANDOM" -d "$body"
+            -H 'Idempotency-Key: '"$STAMP-$RANDOM" -d "$body" || true)
     else
-        curl -s -o "$tmp" -w '%{http_code}' -X "$method" "$url" -H "Authorization: Bearer $token"
+        code=$(curl -s -o "$tmp" -w '%{http_code}' -X "$method" "$url" \
+            -H "Authorization: Bearer $token" || true)
     fi
-    printf '\n%s' "$(cat "$tmp")"
+    printf '%s\n%s' "${code:-000}" "$(cat "$tmp")"
     rm -f "$tmp"
 }
 
@@ -107,12 +124,20 @@ wait_operation() {  # wait_operation <op_id> -> final operation JSON
     local op_id="$1" i out
     for i in $(seq 1 90); do
         out=$(body_of "$(http GET "$SYNFLUX_URL/v1/operations/$op_id" "$TOK_A")")
-        case "$(json "d['status']" <<<"$out")" in
+        case "$(json "d['status']" <<<"$out" 2>/dev/null || echo '')" in
             SUCCEEDED|FAILED|CANCELLED) printf '%s' "$out"; return 0 ;;
         esac
         sleep 2
     done
     die "operation $op_id did not reach a terminal state in 180s"
+}
+
+cqlsh_query() {  # cqlsh_query <cql> -> query output (empty when unavailable)
+    case "$WORKER_PROFILE" in
+        compose) docker compose -f "$COMPOSE_FILE" exec -T cassandra cqlsh -e "$1" 2>/dev/null ;;
+        k8s)     kubectl -n "$K8S_NAMESPACE" exec "$CASSANDRA_POD" -- cqlsh -e "$1" 2>/dev/null ;;
+        process) command -v cqlsh >/dev/null 2>&1 && cqlsh -e "$1" 2>/dev/null ;;
+    esac
 }
 
 start_worker() {  # start_worker [fault-point]
@@ -158,7 +183,10 @@ worker_crashed() {  # worker_crashed -> 0 when the injected crash was observed
             ! kill -0 "${WORKER_PID:-0}" 2>/dev/null
             ;;
         k8s)
-            kubectl -n "$K8S_NAMESPACE" logs deploy/synflux --since=5m 2>/dev/null | grep -q 'FAULT INJECTED'
+            # Pod restarts rotate container logs — the durable signal is the
+            # last terminated container's exit code 70, not log text.
+            [ "$(kubectl -n "$K8S_NAMESPACE" get pods -l app=synflux -o jsonpath='{.items[0].status.containerStatuses[0].lastState.terminated.exitCode}' 2>/dev/null)" = "70" ] \
+                || kubectl -n "$K8S_NAMESPACE" logs deploy/synflux --since=5m 2>/dev/null | grep -q 'FAULT INJECTED'
             ;;
     esac
 }
@@ -189,8 +217,15 @@ printf 'Supply-chain policy %s.\nThe logistics clause governs freight.\n' "$TOKE
     > "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md"
 printf 'Recovery fixture %s.\nThe restart clause governs resumption.\n' "$TOKEN_MARK" \
     > "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md"
+FIXTURE_HOST_DIR="$(cd "$FIXTURE_HOST_DIR" && pwd)"
 FIXTURE_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md" | cut -d' ' -f1)
 RECOVERY_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md" | cut -d' ' -f1)
+# Compose profile rebuilds synflux in start_worker; synquest needs one
+# explicit rebuild — the stale image predates the provenance endpoint and
+# would fail criterion 2 with a misleading 404.
+if [ "$WORKER_PROFILE" = "compose" ]; then
+    (cd deployment/docker && docker compose -f "$COMPOSE_FILE" up -d --build synquest)
+fi
 wait_health synflux "$SYNFLUX_URL"
 wait_health synquest "$SYNQUEST_URL"
 
@@ -274,6 +309,17 @@ assert_eq "recovered outcome FULL" "$(json "d['outcome']" <<<"$op")" "FULL"
 rversions=$(body_of "$(http GET "$SYNFLUX_URL/v1/sources/$SOURCE_RECOVERY/versions" "$TOK_A")")
 assert_eq "exactly one SourceVersion after recovery — no duplicates" \
     "$(json "len(d)" <<<"$rversions")" "1"
+
+# The SourcePublished event rides inline on the version row
+# (insertSourceVersionAndOutboxIfAbsent — IF NOT EXISTS): a duplicate
+# recovery pass cannot fork it. event_published flips only when the Kafka
+# adapter is up; if it is false here, dispatch is down, not dedup.
+events=$(cqlsh_query "SELECT version_id, event_published FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_RECOVERY' AND resource_id='recovery-doc.md';")
+case "$events" in
+    "") printf '  SKIP exactly one SourcePublished — no cqlsh for profile %s\n' "$WORKER_PROFILE" ;;
+    *) assert_eq "exactly one SourcePublished event — deduped" \
+        "$(grep -c '| True' <<<"$events")" "1" ;;
+esac
 
 step "Criterion 4 — search returns the correct hit"
 GEN_BEFORE=$(json "d['metadata']['configuration_generation']" <<<"$(body_of "$out")" 2>/dev/null || true)
