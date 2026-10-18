@@ -394,6 +394,11 @@ public class SearchService {
         return ref != null ? ref.get() : null;
     }
 
+    /** True when a searcher is loaded for the tenant (projection built and swapped in). */
+    public boolean isReady(String tenant) {
+        return getSearcher(tenant) != null;
+    }
+
     private static int parseInt(String value, int fallback) {
         if (value == null || value.isBlank()) {
             return fallback;
