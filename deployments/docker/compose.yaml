@@ -378,9 +378,11 @@ services:
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       CLUSTER_ID: synanton-local-kafka-cluster
     volumes:
-      - ${DATA_ROOT:-./data}/kafka:/var/lib/kafka/data
+      - kafka-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      # The apache/kafka image keeps the CLI under /opt/kafka/bin without
+      # putting it on sh's PATH — the absolute path is required.
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 12
@@ -541,3 +543,4 @@ networks:
 
 volumes:
   content-cache:
+  kafka-data:

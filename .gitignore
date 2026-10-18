@@ -59,3 +59,9 @@ bench-staging/
 
 # opencode tooling
 .opencode/
+
+# Acceptance-run generated fixtures (the slice script writes per-run roots
+# under the fixture tree; default-deny so git add -A can never commit them)
+demo-data/documents/slice-run-*/
+demo-data/documents/slice-main-*/
+demo-data/documents/slice-recovery-*/

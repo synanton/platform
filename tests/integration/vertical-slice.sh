@@ -259,16 +259,36 @@ esac
 export SYNANTON_JWT_SECRET
 TOK_A=$(mint_token "$TENANT_A")
 TOK_B=$(mint_token "$TENANT_B")
-mkdir -p "$FIXTURE_HOST_DIR/$SOURCE_MAIN" "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY"
+# Hermetic fixtures: every run writes its fixtures under its OWN root inside
+# the fixture tree, and the cleanup trap removes that root on exit — normal,
+# error, interrupt, or kill. The baseline fixture tree is never written to
+# (a previous version wrote slice-main-*/slice-recovery-* directly into it,
+# and `git add -A` committed 68 generated files from one debugging session).
+# The worker sees the run root below the configured fixture root.
+RUN_FIXTURE_HOST_DIR="$(mktemp -d "$FIXTURE_HOST_DIR/slice-run-XXXXXXXX")"
+# mktemp creates mode 700; the worker runs as a non-root user (uid 100) and
+# mounts the tree read-only — it must be able to list the run root.
+chmod 755 "$RUN_FIXTURE_HOST_DIR"
+RUN_FIXTURE_ROOT="$FIXTURE_ROOT/$(basename "$RUN_FIXTURE_HOST_DIR")"
+cleanup() {
+    local exit_code=$?
+    if [ -d "$RUN_FIXTURE_HOST_DIR" ]; then
+        rm -rf "$RUN_FIXTURE_HOST_DIR"
+    fi
+    trap - EXIT INT TERM
+    exit "$exit_code"
+}
+trap cleanup EXIT INT TERM
+
+mkdir -p "$RUN_FIXTURE_HOST_DIR/$SOURCE_MAIN" "$RUN_FIXTURE_HOST_DIR/$SOURCE_RECOVERY"
 TOKEN_MARK="zebra-slice-token-$STAMP"
 RECOVERY_TOKEN_MARK="zebra-recovery-token-$STAMP"
 printf 'Supply-chain policy %s.\nThe logistics clause governs freight.\n' "$TOKEN_MARK" \
-    > "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md"
+    > "$RUN_FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md"
 printf 'Recovery fixture %s.\nThe restart clause governs resumption.\n' "$RECOVERY_TOKEN_MARK" \
-    > "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md"
-FIXTURE_HOST_DIR="$(cd "$FIXTURE_HOST_DIR" && pwd)"
-FIXTURE_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md" | cut -d' ' -f1)
-RECOVERY_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md" | cut -d' ' -f1)
+    > "$RUN_FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md"
+FIXTURE_SHA=$(sha256sum "$RUN_FIXTURE_HOST_DIR/$SOURCE_MAIN/fixture-doc.md" | cut -d' ' -f1)
+RECOVERY_SHA=$(sha256sum "$RUN_FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md" | cut -d' ' -f1)
 # The slice app layer: synflux + synquest + extraction-gateway (the
 # extraction client is enabled — ingestion calls the gateway; without it
 # the workflow fails at extraction). --build picks up the host-built jars
@@ -311,12 +331,12 @@ wait_health synquest "$SYNQUEST_URL"
 # Container-side mount check: wrong mount target or permission shows up here,
 # not as "fixture not found" mid-run.
 if [ "$WORKER_PROFILE" = "compose" ] \
-    && ! compose exec -T synflux ls "$FIXTURE_ROOT/$SOURCE_MAIN" > /dev/null 2>&1; then
+    && ! compose exec -T synflux ls "$RUN_FIXTURE_ROOT/$SOURCE_MAIN" > /dev/null 2>&1; then
     echo "Fixture root not visible in the worker container: $FIXTURE_ROOT" >&2; exit 1
 fi
 
 step "Criterion 1 — ingest creates an immutable version"
-out=$(http POST "$SYNFLUX_URL/v1/sources" "$TOK_A" "{\"source_id\":\"$SOURCE_MAIN\",\"connector_id\":\"slice-conn\",\"connector_type\":\"file\",\"source_endpoint\":\"file://$FIXTURE_ROOT/$SOURCE_MAIN\",\"capability_flags\":[]}")
+out=$(http POST "$SYNFLUX_URL/v1/sources" "$TOK_A" "{\"source_id\":\"$SOURCE_MAIN\",\"connector_id\":\"slice-conn\",\"connector_type\":\"file\",\"source_endpoint\":\"file://$RUN_FIXTURE_ROOT/$SOURCE_MAIN\",\"capability_flags\":[]}")
 [ "$(status_of "$out")" = "201" ] || die "source creation failed: $(body_of "$out")"
 pass "source created"
 
@@ -364,7 +384,7 @@ assert_eq "provenance digest matches fixture bytes" \
     "$(json "d['source_sha256']" <<<"$(body_of "$prov")")" "$FIXTURE_SHA"
 
 step "Criterion 3 — restart recovery (SYNANTON_FAULT_INJECT=after-manifest)"
-out=$(http POST "$SYNFLUX_URL/v1/sources" "$TOK_A" "{\"source_id\":\"$SOURCE_RECOVERY\",\"connector_id\":\"slice-conn\",\"connector_type\":\"file\",\"source_endpoint\":\"file://$FIXTURE_ROOT/$SOURCE_RECOVERY\",\"capability_flags\":[]}")
+out=$(http POST "$SYNFLUX_URL/v1/sources" "$TOK_A" "{\"source_id\":\"$SOURCE_RECOVERY\",\"connector_id\":\"slice-conn\",\"connector_type\":\"file\",\"source_endpoint\":\"file://$RUN_FIXTURE_ROOT/$SOURCE_RECOVERY\",\"capability_flags\":[]}")
 [ "$(status_of "$out")" = "201" ] || die "recovery source creation failed: $(body_of "$out")"
 
 stop_worker
@@ -450,10 +470,28 @@ assert_eq "exactly one manifest row after recovery" "$MANIFESTS_AFTER" "1"
 events=$(cqlsh_query "SELECT event_id, event_published FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_RECOVERY' AND resource_id='recovery-doc.md';")
 EVENT_ROWS=$(grep -cE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$events" || true)
 assert_eq "exactly one SourcePublished event row — deduped" "$EVENT_ROWS" "1"
+RECOVERY_VERSION_ID=$(json "d[0]['version_id']" <<<"$rversions")
 case "$events" in
-    *"| True"*) pass "event dispatched once (dispatch adapter up)" ;;
-    *) printf '  SKIP dispatch flag — outbox-only mode (no broker configured); dedup holds\n' ;;
+    *"| True"*)
+        pass "event dispatched once (dispatch adapter up)" ;;
+    *)
+        if [ "$KAFKA_PROFILE" = "kafka" ]; then
+            die "event not dispatched although the Kafka profile is active — the broker put it on the outbox/dead-letter path instead"
+        fi
+        printf '  SKIP dispatch flag — outbox-only mode (no broker configured); dedup holds\n' ;;
 esac
+
+if [ "$KAFKA_PROFILE" = "kafka" ]; then
+    # Run 2 (Kafka path): the broker must hold exactly one SourcePublished
+    # message for the recovered version — not zero (silent dispatch failure)
+    # and not two (duplicate publish). The topic auto-creates on first send
+    # (kafka-init does not pre-create source_events).
+    kafka_events=$(compose exec -T kafka /opt/kafka/bin/kafka-console-consumer.sh \
+        --bootstrap-server localhost:9092 --topic source_events --from-beginning --timeout-ms 8000 2>/dev/null || true)
+    dispatch_payloads=$(grep -c "$RECOVERY_VERSION_ID" <<<"$kafka_events" || true)
+    assert_eq "exactly one SourcePublished message on the topic for the recovered version" \
+        "$dispatch_payloads" "1"
+fi
 
 # Flag 2: the consumer-side effect — the projection builder processed each
 # chunk exactly once. Rebuild (the recovery source is not auto-projected),
@@ -462,15 +500,16 @@ esac
 # F1: probe auto-projection BEFORE the explicit rebuild — reports whether a
 # recovered source becomes searchable on its own (event-driven projection) or
 # projection is manual/scheduled. Neither is a failure; production behavior
-# must not be silent.
+# must not be silent. A hit COUNT is not enough: BM25 OR-matches the token's
+# parts ("zebra", "token", the shared stamp) that the main fixture also
+# contains. The hit must be the RECOVERED chunk — resolved by the
+# content-derived ref captured pre-recovery.
 sleep 10
-# The probe must use the CURRENT run's unique token: fixed phrases match
-# prior stamped runs' content (already projected), which would report a false
-# "auto-projection present".
 pre=$(body_of "$(http POST "$SYNQUEST_URL/v1/search" "$TOK_A" "{\"query\":\"$RECOVERY_TOKEN_MARK\"}")")
-case "$(json "len(d['results'])" <<<"$pre")" in
-    0) printf '  NOTE auto-projection absent — recovered source searchable only after explicit rebuild (manual/scheduled projection)\n' ;;
-    *) pass "auto-projection present — recovered source searchable without rebuild" ;;
+pre_top=$(json "d['results'][0]['object_id'] if d['results'] else ''" <<<"$pre" 2>/dev/null || true)
+case "$pre_top" in
+    "$RECOVERY_CONTENT_REF"*) pass "auto-projection present — recovered source searchable without rebuild" ;;
+    *) printf '  NOTE auto-projection absent — recovered source searchable only after explicit rebuild (manual/scheduled projection)\n' ;;
 esac
 MAIN_CONTENT_REF=$(cqlsh_query "SELECT content_ref_id FROM ingestion_cache.source_versions WHERE tenant_id='$TENANT_A' AND connector_id='slice-conn' AND source_id='$SOURCE_MAIN' AND resource_id='fixture-doc.md';" 2>/dev/null | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || true)
 # The tenant accumulates chunks from every prior run (stamped source ids
