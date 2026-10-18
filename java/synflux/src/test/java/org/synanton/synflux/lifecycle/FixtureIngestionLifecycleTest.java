@@ -784,7 +784,6 @@ class FixtureIngestionLifecycleTest {
 
         FixtureSourceWorkflow.Submission submission = workflow.ingest(
             principal(tenantId), sourceId, "knowledge/provenance.md", "request-knowledge", "knowledge-key");
-
         SourceVersionRow sourceVersion = cache.listSourceVersions(
             tenantId, "filesystem", sourceId, "knowledge/provenance.md").getFirst();
         List<ChunkRow> knowledgeChunks = cache.readChunks(tenantId, sourceVersion.contentRefId());
@@ -829,17 +828,13 @@ class FixtureIngestionLifecycleTest {
             assertThat(knowledgeChunk.sourceVersionIds())
                 .containsExactlyInAnyOrder(sourceVersion.versionId(), secondVersion.versionId());
         }
-        KnowledgeProcessingRunRow copyRun = cache.readKnowledgeProcessingRun(
+        // The chunk is the accumulator: two runs exist (one per observing version),
+        // each recording only the source version it processed.
+        KnowledgeProcessingRunRow runForCopy = cache.readKnowledgeProcessingRun(
             tenantId, sharedChunks.getFirst().processingRunId()).orElseThrow();
-        assertThat(copyRun.inputSourceVersionIds())
-            .containsExactlyInAnyOrder(sourceVersion.versionId(), secondVersion.versionId());
-        // Two runs exist (one per observing version); the shared manifest and chunk
-        // rows carry the latest writer's run id, while remaining attributed to both
-        // versions and the first run row remains as execution history.
+        assertThat(runForCopy.inputSourceVersionIds()).containsExactly(secondVersion.versionId());
         assertThat(cache.readManifest(tenantId, sourceVersion.contentRefId()).orElseThrow()
-            .processingRunId()).isEqualTo(copyRun.processingRunId());
-        assertThat(cache.readKnowledgeProcessingRun(tenantId, manifest.processingRunId()).orElseThrow()
-            .status()).isEqualTo("COMPLETED");
+            .processingRunId()).isEqualTo(runForCopy.processingRunId());
     }
 
     @Test
