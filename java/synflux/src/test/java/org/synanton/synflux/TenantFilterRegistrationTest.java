@@ -7,10 +7,10 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationContext;
 import org.synanton.common.tenant.TenantContextFilter;
 import org.testcontainers.containers.CassandraContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,24 +33,31 @@ import static org.assertj.core.api.Assertions.assertThat;
  * registered, the verified-context filter is, and no other auto-registered
  * tenant filter can overwrite the context.
  */
-@Testcontainers
 @SpringBootTest(properties = {
         "SYNANTON_JWT_SECRET=filter-registration-test-secret-32bytes!!",
-        "SYNFLUX_FIXTURE_ROOT=/tmp/opencode/filter-test-fixtures",
+        "SYNFLUX_FIXTURE_ROOT=/tmp/synflux-filter-test-fixtures",
         "SYNFLUX_CONTENT_CACHE_BACKEND=filesystem",
-        "SYNFLUX_CONTENT_CACHE_ROOT=/tmp/opencode/filter-test-cc",
+        "SYNFLUX_CONTENT_CACHE_ROOT=/tmp/synflux-filter-test-cc",
         "EXTRACTION_CLIENT_ENABLED=false",
 })
 class TenantFilterRegistrationTest {
 
-    @Container
+    static final String FIXTURE_ROOT = "/tmp/synflux-filter-test-fixtures";
+    static final String CONTENT_CACHE_ROOT = "/tmp/synflux-filter-test-cc";
+
     static final CassandraContainer CASSANDRA =
             new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
 
     static {
+        // Static init runs before the Spring test context loads: the boot's
+        // FilesystemFixturePolicy requires both roots to exist.
+        try {
+            Files.createDirectories(Path.of(FIXTURE_ROOT));
+            Files.createDirectories(Path.of(CONTENT_CACHE_ROOT));
+        } catch (Exception e) {
+            throw new IllegalStateException("could not prepare test directories", e);
+        }
         CASSANDRA.start();
-        // The boot's SchemaInstaller creates the keyspace; point it at the
-        // container's mapped port via the standard relaxed-binding names.
         System.setProperty("CASSANDRA_CONTACT_POINTS", CASSANDRA.getHost());
         System.setProperty("CASSANDRA_PORT", String.valueOf(CASSANDRA.getMappedPort(9042)));
         System.setProperty("CASSANDRA_LOCAL_DC", "datacenter1");
