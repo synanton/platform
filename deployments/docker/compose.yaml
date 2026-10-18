@@ -378,7 +378,7 @@ services:
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       CLUSTER_ID: synanton-local-kafka-cluster
     volumes:
-      - ${DATA_ROOT:-./data}/kafka:/var/lib/kafka/data
+      - kafka-data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 10s
@@ -541,3 +541,4 @@ networks:
 
 volumes:
   content-cache:
+  kafka-data:

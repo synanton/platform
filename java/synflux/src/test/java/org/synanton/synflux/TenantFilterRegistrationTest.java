@@ -77,10 +77,13 @@ class TenantFilterRegistrationTest {
                 .as("the JWT tenant filter must be registered")
                 .contains(TenantContextFilter.class.getSimpleName());
 
+        // The next legacy filter will have a different class name — guard the
+        // FAMILY by naming convention, not one class: anything that smells of
+        // demo/mock/anonymous tenancy must never be registered in this boot.
         assertThat(registeredFilters)
-                .as("the demo-era mock filter must never be scanned into this boot "
-                        + "(it overwrites the verified tenant context with Anonymous(\"demo\"))")
-                .noneMatch(name -> name.contains("MockTenantFilter"));
+                .as("no demo/mock/anonymous tenant filter may be registered")
+                .noneMatch(name -> name.contains("Mock") || name.contains("Demo")
+                        || name.contains("Anonymous"));
 
         assertThat(context.getBeanNamesForType(
                 org.synanton.synvault.filter.MockTenantFilter.class))
