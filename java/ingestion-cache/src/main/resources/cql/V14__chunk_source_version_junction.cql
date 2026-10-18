@@ -15,4 +15,7 @@ CREATE TABLE IF NOT EXISTS ingestion_cache.chunk_source_versions (
 );
 
 -- Backfill: none. Pre-#251 chunk rows carry no version provenance, and slice
--- data is disposable — provenance re-derives on reprocessing.
+-- data is disposable — provenance re-derives on reprocessing. A production
+-- deployment with prior chunks that must survive needs a backfill job
+-- (populate chunk_source_versions from the chunks' originating runs) before
+-- this migration; slice deployments accept the re-derivation.
