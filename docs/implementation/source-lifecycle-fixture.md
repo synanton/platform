@@ -65,6 +65,10 @@ stages, and checks Operation idempotency and outbox deduplication.
   reference. The SourceVersion is made authoritative only after the normal
   processing/persist callback succeeds, and stores both the Content Cache
   reference and the existing internal `content_ref_id` used by chunk indexes.
+  A blank or missing reference is a publication-blocker: the resource is
+  recorded `QUARANTINED` (non-retryable) and no SourceVersion or outbox event
+  is created — every published SourceVersion carries a resolvable opaque
+  reference, regardless of which ingest entry point produced it.
 - `SourcePublished` and `SourceDeleted` event envelopes are stored atomically
   with their immutable SourceVersion/tombstone rows. Their event IDs are
   deterministic and the event publication flag is transport metadata; duplicate
