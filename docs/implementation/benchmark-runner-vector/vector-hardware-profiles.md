@@ -252,7 +252,7 @@ Formula: 1.1 × (4 × dimension + 8 × m) B/vector, m default 16. Replication no
 
 | Field | Value | Tier | Quant | Marking | Source |
 |---|---|---|---|---|---|
-| CPU profile | index ~7.5 MB/s/core | — | — | sourced | quickwit.io/docs/deployment/cluster-sizing |
+| CPU profile | index ~7.5 MB/s/core | — | — | sourced | quickwit.io/docs/deployments/cluster-sizing |
 | Mem 384d | n/a | — | — | n/a (absent) | lexical-only; no per-vector figure |
 | Mem 768d | n/a | — | — | n/a (absent) | same |
 | Mem 1536d | n/a | — | — | n/a (absent) | same |

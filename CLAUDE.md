@@ -32,7 +32,7 @@
 - `docs/architecture/decisions/` — ADRs (see ADRs section below for shape)
 - `docs/implementation/platform-api-plane/` — Platform API implementation plan and M0 gate (single source of truth for blocker status)
 - `docs/api/` — API reference (error model, OpenAPI specs)
-- `deployment/docker/` — Docker Compose files per service
+- `deployments/docker/` — Docker Compose files per service
 - `scripts/` — run and benchmark scripts
 - `tests/integration/` — integration test scripts
 

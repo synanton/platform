@@ -37,7 +37,7 @@ __pycache__/
 # Docker / runtime data - keep seed files, ignore live data
 demo-data/ontologies/**/*.tdb2
 demo-data/ontologies/.lock
-deployment/docker/**/volumes/
+deployments/docker/**/volumes/
 
 # Secrets
 .env
@@ -55,7 +55,7 @@ runs/
 bench-staging/
 /docker/data/*
 /docker/data-bench/*
-/deployment/docker/data/*
+/deployments/docker/data/*
 
 # opencode tooling
 .opencode/

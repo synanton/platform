@@ -168,7 +168,7 @@ Phase 2 `synapt` called `synflux POST /ingest/run` via HTTP. That call is remove
 | # | Prereq | Home | Notes |
 |---|--------|------|-------|
 | 1 | `synapt` Phase 2 DoD met - JWT auth, trace-id, error redaction working. | - | Non-negotiable. |
-| 2 | Redis 7.x in compose under `--profile phase3`. | `deployment/docker/compose.yaml` | Uses Lettuce via `spring-boot-starter-data-redis`. |
+| 2 | Redis 7.x in compose under `--profile phase3`. | `deployments/docker/compose.yaml` | Uses Lettuce via `spring-boot-starter-data-redis`. |
 | 3 | Kafka in compose (Phase 3 base requirement). | `01-ingestion-pipeline` Phase 3 | `ingestion_requests` topic exists. |
 | 4 | `security` Phase 3 API-key resolution deployed - `TenantContextFilter` must extract `tenantId` from `SubjectAssertion`. | `06-security Phase 3` | Stub acceptable for unit tests. |
 | 5 | `topology` Phase 3 `GET /tenants/{id}/policy` endpoint deployed - or static config fallback used. | `07-topology Phase 3` | 60 s cache means topology can be slow to start. |

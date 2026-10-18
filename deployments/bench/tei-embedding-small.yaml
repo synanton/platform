@@ -4,9 +4,9 @@
 # Weights: /mnt/local-fast/models/bge-small-en-v1.5 (verified in place).
 # Apply from a host with cluster access (node0):
 #   kubectl scale deploy/tei-embedding -n gpu-plane --replicas=0
-#   kubectl apply -f deployment/bench/tei-embedding-small.yaml
+#   kubectl apply -f deployments/bench/tei-embedding-small.yaml
 # Restore afterwards:
-#   kubectl delete -f deployment/bench/tei-embedding-small.yaml
+#   kubectl delete -f deployments/bench/tei-embedding-small.yaml
 #   kubectl scale deploy/tei-embedding -n gpu-plane --replicas=1
 apiVersion: apps/v1
 kind: Deployment

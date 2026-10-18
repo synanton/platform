@@ -189,7 +189,7 @@ Timeout per gRPC call: `relix.connector.timeout-ms=5000` (configurable). On `Sta
 | 2 | `shared/proto` Gradle module added; `protoc` + `grpc-java` plugin configured. | root `settings.gradle.kts` | One-time module setup. |
 | 3 | `io.grpc:grpc-netty-shaded:1.63.0` and related deps added to BOM. | `gradle/libs.versions.toml` | Pin version to avoid Netty conflicts. |
 | 4 | `topology Phase 3` `GET /topology/connectors` endpoint available - or static config fallback used. | topology | Static config is the Phase 3 default; topology discovery is a Phase 3 bonus if topology lands first. |
-| 5 | Neo4j compose profile defined (`--profile neo4j`) even though it is not required for DoD. | `deployment/docker/compose.yaml` | Needed for optional integration tests. |
+| 5 | Neo4j compose profile defined (`--profile neo4j`) even though it is not required for DoD. | `deployments/docker/compose.yaml` | Needed for optional integration tests. |
 
 ---
 
@@ -204,7 +204,7 @@ Timeout per gRPC call: `relix.connector.timeout-ms=5000` (configurable). On `Sta
 | RX3-5 | Integration test: `InMemoryConnectorGrpcIT` - gRPC client calls port 9090, asserts NEIGHBORS returns the same results as Phase 2 in-process test. | `InMemoryConnectorGrpcIT` | 1 day |
 | RX3-6 | Create `java/relix-neo4j-connector/` Gradle module; implement Neo4j gRPC server; wire all three query shapes. | New module | 2 days |
 | RX3-7 | Neo4j integration test: `Neo4jConnectorIT` (Testcontainers Neo4j) - seed graph, call NEIGHBORS, PATH, COMMUNITY, assert non-empty results. | `Neo4jConnectorIT` | 1 day |
-| RX3-8 | Add `neo4j` compose profile to `deployment/docker/compose.yaml` with `relix-neo4j-connector` and `neo4j` services. | Compose addition | 0.5 day |
+| RX3-8 | Add `neo4j` compose profile to `deployments/docker/compose.yaml` with `relix-neo4j-connector` and `neo4j` services. | Compose addition | 0.5 day |
 | RX3-9 | Add `relix_connector_timeout_total` and `relix_connector_call_duration_seconds` Prometheus metrics. | Metrics + Grafana dashboard stub | 0.5 day |
 
 ---

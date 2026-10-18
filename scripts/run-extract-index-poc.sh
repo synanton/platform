@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-COMPOSE_FILE="$REPO_ROOT/deployment/docker/compose.yaml"
+COMPOSE_FILE="$REPO_ROOT/deployments/docker/compose.yaml"
 TENANT="${TENANT:-demo}"
 
 echo "=== Synanton extract + index PoC ==="
@@ -20,7 +20,7 @@ docker compose -f "$COMPOSE_FILE" up -d \
 if ! docker ps --filter "name=^extraction-gateway$" --filter "status=running" --format '{{.Names}}' | grep -q extraction-gateway; then
   echo "NOTE: extraction-gateway is not running. It's built/run separately from the"
   echo "      content_extractor repo (see the comment above the removed service in"
-  echo "      deployment/docker/compose.yaml for the docker run command)."
+  echo "      deployments/docker/compose.yaml for the docker run command)."
   echo "      Without it, synflux falls back to the local Tika extractor"
   echo "      (EXTRACTION_CLIENT_ENABLED=true, fallback=FALLBACK_LOCAL_TIKA by default)."
 fi

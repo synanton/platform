@@ -191,7 +191,7 @@ The `demo` tenant has a stable UUID (`00000000-0000-0000-0000-000000000001`) for
 | # | Prereq | Home | Notes |
 |---|--------|------|-------|
 | P1 | Add `java/topology` to `settings.gradle.kts`. | root | New module. |
-| P2 | PostgreSQL container already in `deployment/docker/compose.yaml` (added in Phase 1 for future use with an empty schema). | compose | Already present; Phase 2 adds the `topology` schema and Flyway. |
+| P2 | PostgreSQL container already in `deployments/docker/compose.yaml` (added in Phase 1 for future use with an empty schema). | compose | Already present; Phase 2 adds the `topology` schema and Flyway. |
 | P3 | Add `org.postgresql:postgresql`, `org.flywaydb:flyway-core`, `org.springframework.boot:spring-boot-starter-jdbc` dependencies. | topology build.gradle.kts | Standard Spring Boot stack. |
 | P4 | Create `topology` schema in PostgreSQL: `CREATE SCHEMA IF NOT EXISTS topology;` - included in Flyway baseline. | V1 migration | Done automatically by Flyway. |
 
@@ -210,7 +210,7 @@ Ordered by dependency. Each task ≤ 1-2 days.
 | TP-5 | REST controllers: `GET /tenants/{id}` → 200/404; `GET /tenants/{id}/policy` → 200/404. `GlobalExceptionHandler` for `TenantNotFoundException`. | Controllers + @WebMvcTest |
 | TP-6 | `application.yaml`; `TopologyApplication` boot class; Spring Actuator with datasource health indicator. | Boot + config |
 | TP-7 | Testcontainers integration test (`TopologyIT`): spin PostgreSQL, run Flyway, assert: (a) `GET /tenants/demo` → 200 with correct name and regulatory_profile; (b) `GET /tenants/demo/policy` → 200 with tiering_policy.hot_days=30; (c) `GET /tenants/unknown` → 404. | `TopologyIT` |
-| TP-8 | Update `deployment/docker/compose.yaml` `phase2` profile: add `topology` service; configure `TOPOLOGY_DB_URL`, `TOPOLOGY_DB_USER`, `TOPOLOGY_DB_PASSWORD` env vars. | Compose extension |
+| TP-8 | Update `deployments/docker/compose.yaml` `phase2` profile: add `topology` service; configure `TOPOLOGY_DB_URL`, `TOPOLOGY_DB_USER`, `TOPOLOGY_DB_PASSWORD` env vars. | Compose extension |
 | TP-9 | Update security service `application-phase2.yaml` to replace `security.known-tenants=["demo"]` with a `topology.base-url=http://topology:8087` config and a `TopologyClient` bean that calls `GET /tenants/{id}` for tenant validation. | Security + topology integration |
 | TP-10 | Metrics: `topology_tenant_lookup_total{outcome}` counter, `topology_policy_cache_hit_total`. | Metrics + assertion |
 

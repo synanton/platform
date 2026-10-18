@@ -53,7 +53,7 @@ echo "  allocatable: 1"
 echo "== scaling ${UP} -> 1"
 kubectl -n gpu-plane scale "deploy/${UP}" --replicas=1 >/dev/null
 echo "== waiting for rollout"
-kubectl -n gpu-plane rollout status "deployment/${UP}" --timeout=300s
+kubectl -n gpu-plane rollout status "deployments/${UP}" --timeout=300s
 
 echo "== probing ${UP} for ${DIM}d vectors"
 # NodePort is firewalled from most hosts; probe from node1 itself.

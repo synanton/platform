@@ -1288,7 +1288,7 @@ The first integrated slice should demonstrate:
 
 Do not begin with Parquet compaction, multi-region storage, 99.95%
 availability promises, or production-scale retention jobs. Those are
-deployment/service-level commitments and should follow an implemented
+deployments/service-level commitments and should follow an implemented
 contract, measured workload, and explicit conformance target. A PoC must
 not claim those SLOs without evidence.
 

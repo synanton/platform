@@ -147,7 +147,7 @@ If fusion produced empty hits and an empty graph, synthesis is skipped; `answer=
 |---|--------|------|-------|
 | P1 | Phase 1 gateway DoD met - plan execution and fusion work end-to-end. | - | Non-negotiable. |
 | P2 | `synanton-llm-client` JAR available on the classpath. | `java/synanton-llm-client` | Blocking. |
-| P3 | `vllm-llm` container up and healthy in the `phase2` compose profile. | `deployment/docker/compose.yaml` | Already present from ingestion Phase 2. |
+| P3 | `vllm-llm` container up and healthy in the `phase2` compose profile. | `deployments/docker/compose.yaml` | Already present from ingestion Phase 2. |
 | P4 | Add `synanton-llm-client` and `mustache-compiler` dependencies to `java/gateway/build.gradle.kts`. | gateway | Two lines. |
 
 ---

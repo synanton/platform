@@ -43,7 +43,7 @@ Start the stack above first so the `synanton-demo` network and the `postgres`/
 
 ```bash
 cd ../../../content_extractor
-docker build -t docker-extraction-gateway -f deployment/docker/extraction-gateway.Dockerfile .
+docker build -t docker-extraction-gateway -f deployments/docker/extraction-gateway.Dockerfile .
 docker run -d --name extraction-gateway --network synanton-demo \
   -e EXTRACTION_DB_URL=jdbc:postgresql://postgres:5432/synanton \
   -e EXTRACTION_DB_USER=synanton \
@@ -168,10 +168,10 @@ memory, resume faster next time), use `docker compose stop` directly rather
 than this script:
 
 ```bash
-docker compose -f deployment/docker/compose.yaml stop
+docker compose -f deployments/docker/compose.yaml stop
 docker stop extraction-gateway 2>/dev/null || true
 # later:
-docker compose -f deployment/docker/compose.yaml start
+docker compose -f deployments/docker/compose.yaml start
 docker start extraction-gateway 2>/dev/null || true
 ```
 

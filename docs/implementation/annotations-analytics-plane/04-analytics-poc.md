@@ -22,7 +22,7 @@ Stand up the Analytics Plane's durable event boundary and initial storage: a Kaf
 3. **Analytics Storage Contract** - `java/analytics/.../storage/`:
    - `AnalyticsStorage` interface: `writeFacts`, `queryAggregate`, `queryMetric` - no ClickHouse-specific method leaks through (design §38-39).
    - `ClickHouseAnalyticsStorage` adapter implementing it.
-   - Add `clickhouse` service to `deployment/docker/compose.yaml` (PoC profile, single node).
+   - Add `clickhouse` service to `deployments/docker/compose.yaml` (PoC profile, single node).
 4. **`analytical_facts` schema** - ClickHouse DDL in `java/analytics/src/main/resources/clickhouse/V1__analytical_facts.sql` (or module-appropriate migration mechanism - evaluate `clickhouse-migrations`/Flyway-ClickHouse-community driver vs. a bespoke bootstrap script; record the choice here once made):
    - Initial tables per design §32: `analytics_events`, `content_facts`, `chunk_facts`, `annotation_facts`, `processing_facts`, `projection_facts`, `search_facts`, `security_facts`, `recalculation_facts`, `cost_facts`.
    - `annotation_facts` schema follows design §31's `AnalyticalFact` shape exactly (`fact_id`, `tenant_id`, `source_id`, `chunk_id`, `definition_id`, `definition_version`, `annotation_type`, `namespace`, `name`, `value`, `producer`, `producer_version`, `target_type`, `target_id`, `confidence`, `processing_duration`, `evaluation_run_id`, `source_classification`, `representation_used`, `provenance`, `observed_at`, `invalidated_at`).
@@ -51,7 +51,7 @@ Stand up the Analytics Plane's durable event boundary and initial storage: a Kaf
 | `java/analytics/src/main/resources/clickhouse/V1__analytical_facts.sql` | New - fact tables |
 | `java/synflux/.../pipeline/stage/AnnotationStage.java` | Emit `analytics_events` |
 | `java/gateway/.../query/*` | Emit search facts |
-| `deployment/docker/compose.yaml` | Add `clickhouse` service |
+| `deployments/docker/compose.yaml` | Add `clickhouse` service |
 
 ---
 

@@ -73,7 +73,7 @@ Derived from `synanton-phases-plan.md` §8 and pulled forward with concrete acce
 Docker Compose stack additions:
 
 ```
-deployment/docker/compose.yaml:
+deployments/docker/compose.yaml:
   redis:              image: redis:7-alpine
   prometheus:         image: prom/prometheus:v2.55.0
   alertmanager:       image: prom/alertmanager:v0.28.0

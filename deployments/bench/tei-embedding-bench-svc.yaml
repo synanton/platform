@@ -1,7 +1,7 @@
 # Bench-owned NodePort for TEI (gpu-runtime blueprint stays ClusterIP-only).
 # TEI pod is nodeName-pinned to node1, so node1:<nodePort> is stable.
 # Applied from a host with cluster access (node0):
-#   kubectl apply -f deployment/bench/tei-embedding-bench-svc.yaml
+#   kubectl apply -f deployments/bench/tei-embedding-bench-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:

@@ -51,13 +51,13 @@ cd platform
 This starts Cassandra, MinIO, `synvault`, `synflux`, `synquest`, and (per `compose.yaml`) `extraction-gateway` as a dependency of `synvault`. Confirm all seven are healthy:
 
 ```bash
-docker compose -f deployment/docker/compose.yaml ps
+docker compose -f deployments/docker/compose.yaml ps
 ```
 
 **Rebuild `extraction-gateway` if `content_extractor` changed since the image was last built:**
 
 ```bash
-docker compose -f deployment/docker/compose.yaml up -d --build extraction-gateway
+docker compose -f deployments/docker/compose.yaml up -d --build extraction-gateway
 ```
 
 **Set up the benchmark harness:**
@@ -73,7 +73,7 @@ retrieval-eval check-config   # confirms local dataset paths resolve - informati
 
 | Step | Action | Expected | Marker |
 |---|---|---|---|
-| 1 | Confirm `extraction-gateway` is healthy: `docker compose -f ../../deployment/docker/compose.yaml ps extraction-gateway` | `STATUS` column shows `healthy` | `[WORKS]` |
+| 1 | Confirm `extraction-gateway` is healthy: `docker compose -f ../../deployments/docker/compose.yaml ps extraction-gateway` | `STATUS` column shows `healthy` | `[WORKS]` |
 | 2 | Stop it: `docker stop docker-extraction-gateway-1` | Container `Exited` | `[WORKS]` |
 | 3 | Ingest `rb-fixed`: `retrieval-eval ingest --tenant rb-fixed` | `Ingested 16 documents (errors=0)` | `[WORKS]` |
 | 4 | Restart it: `docker start docker-extraction-gateway-1`, wait for `healthy` (poll `docker inspect docker-extraction-gateway-1 --format '{{.State.Health.Status}}'`) | Reaches `healthy` within ~15s | `[WORKS]` |

@@ -34,7 +34,7 @@
 #
 # The script is environment-parameterized, not duplicated:
 #   WORKER_PROFILE  compose (default) | process | k8s
-#   COMPOSE_FILE    default deployment/docker/compose.yaml
+#   COMPOSE_FILE    default deployments/docker/compose.yaml
 #   SYNFLUX_URL     default http://localhost:8090 (compose maps 8090)
 #   SYNQUEST_URL    default http://localhost:8083 (compose maps 8083)
 #   SYNANTON_JWT_SECRET   shared HS256 secret of both planes
@@ -55,7 +55,7 @@ TENANT_B="${TENANT_B:-slice-b}"
 WORKER_PROFILE="${WORKER_PROFILE:-compose}"
 K8S_NAMESPACE="${K8S_NAMESPACE:-synanton}"
 CASSANDRA_POD="${CASSANDRA_POD:-cassandra-0}"
-COMPOSE_FILE="${COMPOSE_FILE:-deployment/docker/compose.yaml}"
+COMPOSE_FILE="${COMPOSE_FILE:-deployments/docker/compose.yaml}"
 STAMP="$(date +%s)"
 SOURCE_MAIN="slice-main-$STAMP"
 SOURCE_RECOVERY="slice-recovery-$STAMP"
@@ -155,9 +155,9 @@ start_worker() {  # start_worker [fault-point]
             # The fault env is baked into the recreated container; the injected
             # crash is one-shot per process, and the clean recreate below drops it.
             if [ -n "${1:-}" ]; then
-                (cd deployment/docker && SYNANTON_FAULT_INJECT="$1" docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate synflux)
+                (cd deployments/docker && SYNANTON_FAULT_INJECT="$1" docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate synflux)
             else
-                (cd deployment/docker && docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate synflux)
+                (cd deployments/docker && docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate synflux)
             fi
             ;;
         process)
@@ -248,7 +248,7 @@ RECOVERY_SHA=$(sha256sum "$FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md" | 
 # Stale images predate the provenance endpoint and the fault hook and would
 # fail criteria 2 and 3 with misleading errors — rebuild both up front.
 if [ "$WORKER_PROFILE" = "compose" ]; then
-    (cd deployment/docker && docker compose -f "$COMPOSE_FILE" up -d --build synflux synquest)
+    (cd deployments/docker && docker compose -f "$COMPOSE_FILE" up -d --build synflux synquest)
 fi
 wait_health synflux "$SYNFLUX_URL"
 wait_health synquest "$SYNQUEST_URL"

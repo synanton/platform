@@ -327,7 +327,7 @@ Per-tenant policy (`topology.organizations.tiering_policy`):
 4. `ColdRehydrationIT`: cold doc via `rehydrate` fetched from Glacier within 5 min (Expedited); second call returns from `cold_rehydration_cache`.
 5. `ResidencyOnTierMoveIT`: cross-region tier movement refused with `residency_refusal` audit.
 6. `SynvaultTierMoveStalled` and `SynvaultRehydrateSlo` alerts wired.
-7. Terraform module for S3 buckets + lifecycle + KMS shipped in `deployment/terraform/synvault-tier/`.
+7. Terraform module for S3 buckets + lifecycle + KMS shipped in `deployments/terraform/synvault-tier/`.
 8. Phase 4 residency + tenant-scope regression suite passes.
 
 ---

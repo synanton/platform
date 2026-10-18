@@ -37,7 +37,7 @@
 Every alert in `synanton-design-1.19.md` §45 must have:
 
 1. A **source metric** emitted by at least one module (see Alert Catalogue table below).
-2. A **rule** in `deployment/observability/prometheus/rules/*.yml`.
+2. A **rule** in `deployments/observability/prometheus/rules/*.yml`.
 3. A **runbook link** in `docs/operations/runbooks/{alert-name}.md`.
 4. A **route** in `alertmanager.yml` (severity-based: `page` → PagerDuty, `warn` → Slack `#synanton-warn`).
 
@@ -77,7 +77,7 @@ Every alert in `synanton-design-1.19.md` §45 must have:
 ### 3.2 Rule file layout
 
 ```
-deployment/observability/prometheus/
+deployments/observability/prometheus/
   prometheus.yml
   rules/
     budget.yml
@@ -195,7 +195,7 @@ All dashboards versioned in-repo; loaded by Grafana via provisioning. Every dash
 
 ## 7. Deployment Surface
 
-`deployment/docker/compose.yaml` (excerpt):
+`deployments/docker/compose.yaml` (excerpt):
 
 ```yaml
 services:
@@ -221,7 +221,7 @@ services:
     ports: ["16686:16686","4317:4317","4318:4318"]
 ```
 
-Kubernetes overlay (`deployment/k8s/observability/`) ships equivalent manifests with:
+Kubernetes overlay (`deployments/k8s/observability/`) ships equivalent manifests with:
 
 - Prometheus ServiceMonitor CRDs for every module.
 - Alertmanager routes to real PagerDuty / Slack integrations (secrets from external secret manager).
@@ -285,7 +285,7 @@ Kubernetes overlay (`deployment/k8s/observability/`) ships equivalent manifests 
 Provisioning is code-owned (in-repo). Runtime overrides limited to secrets:
 
 ```yaml
-# deployment/observability/prometheus/prometheus.yml
+# deployments/observability/prometheus/prometheus.yml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -324,8 +324,8 @@ Alertmanager receivers via `SECRET_PAGERDUTY_KEY`, `SECRET_SLACK_WEBHOOK` env va
 
 ## 14. Definition of Done (Phase 4)
 
-1. Prometheus, Alertmanager, Grafana, Jaeger all running in `deployment/docker/compose.yaml` under `--profile observability`.
-2. `promtool check rules deployment/observability/prometheus/rules/` returns 0.
+1. Prometheus, Alertmanager, Grafana, Jaeger all running in `deployments/docker/compose.yaml` under `--profile observability`.
+2. `promtool check rules deployments/observability/prometheus/rules/` returns 0.
 3. `promtool test rules` passes for every rule.
 4. Every alert in §3.1 has (a) a source metric emitted, (b) a rule file entry, (c) a runbook file in `docs/operations/runbooks/`, (d) an Alertmanager route.
 5. `alert-coverage-gate` CI job asserts no orphaned metrics or missing rules.

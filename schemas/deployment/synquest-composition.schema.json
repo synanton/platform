@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://synanton.dev/schemas/deployment/synquest-composition.schema.json",
+  "$id": "https://synanton.dev/schemas/deployments/synquest-composition.schema.json",
   "title": "Synquest composition configuration",
   "description": "VEC-B2.3 draft — JSON/YAML schema for synquest.metadata, synquest.vector, synquest.fusion, synquest.execution. Forward-looking: Java binding lands with B2 adapters/B4 modes; this schema freezes the key space now. Version 0.1.0-draft.",
   "type": "object",
