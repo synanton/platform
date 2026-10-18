@@ -92,6 +92,15 @@ Consequences:
 - No Alternatives table, no Follow-ups table, no References section
 - Proposed → Architecture sign-off → Accepted; dated inline corrections for Accepted ADRs
 
+## Branch Discipline
+
+After `git checkout -b <branch> origin/main`, assert the base before
+committing: `git log --oneline origin/main..HEAD` must show nothing. Extra
+commits mean the checkout started from the wrong base (a stale ref or a
+previous branch's tip) — rebuilding is cheap before the first push, expensive
+after (force-push invalidates anyone who pulled, and dragged-in history
+surfaces unrelated files in CI diffs).
+
 ## Status Discipline
 
 - A gate row and the artifact it approves carry the same status. When a row
