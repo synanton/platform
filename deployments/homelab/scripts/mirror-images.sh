@@ -21,6 +21,12 @@
 # requires basic auth), and outbound internet for the mirrored images.
 set -euo pipefail
 
+case "${1:-}" in
+    *=*) echo "error: '$1' looks like an environment assignment. Use the env prefix instead:" >&2
+         echo "  PREBUILT=0 ./mirror-images.sh         # or PREBUILT=1 (the default)" >&2
+         echo "  ./mirror-images.sh                    # registry defaults to local-registry:5000" >&2
+         exit 1 ;;
+esac
 REGISTRY="${1:-local-registry:5000}"
 TAG="slice-$(date +%Y%m%d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,8 +44,11 @@ pass() { printf '\033[1;32m[mirror]\033[0m %s\n' "$*"; }
 command -v docker >/dev/null || die "docker not found on this machine"
 [ -f "$PLATFORM_ROOT/deployments/docker/synflux.Dockerfile" ] \
     || die "platform repo not found at $PLATFORM_ROOT"
-[ -f "$CONTENT_EXTRACTOR_ROOT/deployments/docker/extraction-gateway.Dockerfile" ] \
-    || die "content_extractor repo not found at $CONTENT_EXTRACTOR_ROOT (set CONTENT_EXTRACTOR_ROOT)"
+# NOTE: the sibling repo keeps the singular `deployment/` (only this repo
+# renamed to `deployments/`) — do not "fix" this to the plural.
+CONTENT_EXTRACTOR_DOCKERFILE="$CONTENT_EXTRACTOR_ROOT/deployment/docker/extraction-gateway.Dockerfile"
+[ -f "$CONTENT_EXTRACTOR_DOCKERFILE" ] \
+    || die "content_extractor not found: expected $CONTENT_EXTRACTOR_DOCKERFILE (set CONTENT_EXTRACTOR_ROOT)"
 
 HOMELAB_CONFIG="$SCRIPT_DIR/../config"
 
@@ -92,12 +101,21 @@ ensure_env_file() {
 }
 
 ensure_registry_login() {
-    # Credentials from .env win; the probe is the same endpoint kubelet's
-    # image pull will hit. 200 = authed, 401 = bad creds, else = unreachable.
+    # Credentials from .env win; the probe hits the same endpoint kubelet's
+    # image pull will hit. The registry is HTTPS with a self-signed cert
+    # (plain HTTP returns nginx's 400) — probe HTTPS first with -k, then fall
+    # back to HTTP. 200 = authed, 401/400 = needs auth, 000 = unreachable.
     local probe
-    probe=$(curl -s -o /dev/null -w '%{http_code}' -m 5 \
+    probe=$(curl -sk -o /dev/null -w '%{http_code}' -m 5 \
         ${REGISTRY_USER:+-u "$REGISTRY_USER:$REGISTRY_PASSWORD"} \
-        "http://${REGISTRY}/v2/" 2>/dev/null || echo 000)
+        "https://${REGISTRY}/v2/" 2>/dev/null || true)
+    probe="${probe:-000}"
+    if [ "$probe" = "000" ]; then
+        probe=$(curl -s -o /dev/null -w '%{http_code}' -m 5 \
+            ${REGISTRY_USER:+-u "$REGISTRY_USER:$REGISTRY_PASSWORD"} \
+            "http://${REGISTRY}/v2/" 2>/dev/null || true)
+        probe="${probe:-000}"
+    fi
     case "$probe" in
         200) pass "registry reachable and authed (${REGISTRY})"; return 0 ;;
         401|400)
@@ -222,11 +240,26 @@ for local_name in "${!IMAGES[@]}"; do
   tag="${src##*:}"
   dest="${REGISTRY}/synanton/${local_name}:${tag}"
   echo "== ${src} -> ${dest}"
-  if ! docker pull "${src}" 2>/dev/null; then
-      manual_hint "$src" "$dest"
-      continue
+  # mirror-first: Docker Hub pulls hang on this network; mirror.gcr.io works.
+  # docker.io is the fallback for images the mirror does not carry.
+  # Offline-first: an image already present locally needs no pull (the
+  # compose runs cache minio/mc/cassandra locally). Otherwise mirror-first
+  # (Docker Hub pulls hang on this network), docker.io as the last resort.
+  # NOTE: a mirror pull lands under the MIRROR's name — tag from whatever
+  # name now holds the image, not blindly from $src.
+  local_image="$src"
+  if ! docker image inspect "$local_image" >/dev/null 2>&1; then
+      mirror_src="mirror.gcr.io/${src#docker.io/}"
+      if docker pull "$mirror_src" >/dev/null 2>&1; then
+          local_image="$mirror_src"
+      elif docker pull "${src}" >/dev/null 2>&1; then
+          local_image="$src"
+      else
+          manual_hint "$src" "$dest"
+          continue
+      fi
   fi
-  docker tag "${src}" "${dest}"
+  docker tag "$local_image" "${dest}"
   if ! docker push "${dest}" 2>/dev/null; then
       note "push failed — is this machine logged in?  docker login ${REGISTRY}"
       manual_hint "$src" "$dest"
