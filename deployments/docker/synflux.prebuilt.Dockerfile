@@ -4,7 +4,8 @@
 # HOST (warm Gradle cache) and only packaged here. Requires the host jar
 # from `./gradlew :java:synflux:bootJar -x test` before `docker compose build`.
 FROM eclipse-temurin:21-jre-alpine
-RUN addgroup -S synanton && adduser -S -G synanton synanton \
+RUN apk add --no-cache wget \
+    && addgroup -S synanton && adduser -S -G synanton synanton \
     && mkdir -p /content-cache && chown synanton:synanton /content-cache
 USER synanton
 WORKDIR /app
