@@ -34,11 +34,20 @@ HOMELAB_ENV="$ROOT/deployments/homelab/config/.env"
 : "${SYNANTON_JWT_SECRET:?set SYNANTON_JWT_SECRET in $HOMELAB_ENV}"
 export SYNANTON_JWT_SECRET
 
-kubectl -n "$NAMESPACE" port-forward svc/synflux "$LOCAL_SYNFLUX_PORT:8090" >/dev/null 2>&1 &
+# Port-forwards bind to a POD; the fault-injection restarts replace pods, so a
+# single forward dies mid-run. Supervise each: re-establish when it drops.
+forward_loop() {  # forward_loop <svc> <local:remote>
+    local svc="$1" ports="$2"
+    while true; do
+        kubectl -n "$NAMESPACE" port-forward "svc/$svc" "$ports" >/dev/null 2>&1
+        sleep 1
+    done
+}
+forward_loop synflux "$LOCAL_SYNFLUX_PORT:8090" &
 PF_SYNFLUX=$!
-kubectl -n "$NAMESPACE" port-forward svc/synquest "$LOCAL_SYNQUEST_PORT:8083" >/dev/null 2>&1 &
+forward_loop synquest "$LOCAL_SYNQUEST_PORT:8083" &
 PF_SYNQUEST=$!
-trap 'kill $PF_SYNFLUX $PF_SYNQUEST 2>/dev/null || true' EXIT INT TERM
+trap 'kill $PF_SYNFLUX $PF_SYNQUEST 2>/dev/null || true; pkill -f "port-forward svc/synflux" 2>/dev/null || true; pkill -f "port-forward svc/synquest" 2>/dev/null || true' EXIT INT TERM
 
 sleep 3
 curl -sf "http://localhost:$LOCAL_SYNFLUX_PORT/health" >/dev/null || die "synflux port-forward failed"
