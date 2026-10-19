@@ -126,8 +126,8 @@ delegation, `*` issuance, actuator, D4 product call.
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
 | 4b | D4 schema validation | Contract | DX | Closed — validated against 2025-03-26 subset (networknt 3.0.8); see MCP-COMPLIANCE.md |
 | 5 | Error-model approval | Contract | Architecture | Open |
-| 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — pending external auth-boundary confirmation; A+S+DX held by a single reviewer |
-| F2 | Trust predicate — downstream envelope verification (Wave 1 landed PR 256; tracked [#252 / SNTP-032](https://github.com/synanton/platform/issues/252)) | Security | Security | Open — hardening, not gating M0; blocked on security-provider envelope wire format |
+| 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — evidence identified (security-provider `docs/api.md`, `design.md` §7, `README` §9.1/§11.2); audience residual named in ADR-019; awaiting A+S+DX review |
+| F2 | Trust predicate — downstream envelope verification (Wave 1 landed PR 256; tracked [#252 / SNTP-032](https://github.com/synanton/platform/issues/252)) | Security | Security | Open — hardening, not gating M0; wire format confirmed 2026-10-19 (ADR-019 dated corrections); predicate work in #252 with the audience residual named |
 
 **On 2e:** cross-tenant misattribution is live on the happy path — a valid,
 correctly-scoped tenant-A request scopes to `demo` downstream, no attacker required.

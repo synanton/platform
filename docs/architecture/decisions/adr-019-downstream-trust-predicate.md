@@ -16,9 +16,39 @@ Consequences:
 - **Security-provider:** envelope format and signing scheme become a consumer contract. Needs a spec document.
 - **MCP:** forwards the envelope it receives from the security-provider validation call, unchanged. No new signing key on MCP.
 - **synapt/relix:** add envelope verification before any tenant read. Prefer `pkg/middleware` (Go) where available; HTTP verification via `/v1/security-context/validate` otherwise. The verification *order* is: channel/transport → envelope signature → expiry → audience → tenant extraction.
+- **Both consumers are Java** (`java/synapt`, `java/relix`) — neither uses
+  `pkg/middleware`. Both verify by `POST /v1/security-context/validate`, not by
+  local HMAC verification. Header convention confirmed: `Authorization: Bearer
+  <context_token>`; tenant header `X-Tenant-ID`. One HTTP hop per validation,
+  bounded by each consumer's cache TTL (dated correction, 2026-10-19).
+- **The verifier rejects tokens that smuggle document-handling directives.**
+  Claims named `mask`, `represent`, `display`, `classification`, or `redact` are
+  rejected outright. A consumer that reads such a claim from the context token
+  would be accepting an authorization directive from a channel that cannot
+  authorize one. Consumers must not add their own interpretation of these
+  names — a context token authorizes *identity*, not *processing behavior*
+  (dated correction, 2026-10-19).
 - **Health checks and operational endpoints:** explicitly exempt, explicitly tested. The exemption list is code, not convention.
 - **HMAC key lifecycle is a security design concern, not an implementation detail.** Key distribution, rotation, and per-message key selection must be specified alongside the envelope format. PR 241's `ValidatedIdentityResponse` carries a `keyId` field; whether the signed envelope carries one, and whether it selects the verification key, is a wire-spec question for the security-provider — not assumed here.
 - **Rejected:** mTLS-only for the slice — requires mesh infrastructure not present. Both mechanisms eventually; signed context is the slice.
+- **Wire format confirmed 2026-10-19 (dated correction).** `context_token` is an
+  HMAC-SHA256 JWT signed with a shared key (`middleware.HMACVerifier{Key,
+  ExpectedIssuer: "synanton-security-provider"}`), carrying the canonical
+  `SecurityContextProto` claims (`principal_id`, `principal_type`, `tenant_id`,
+  `authentication`, `assurance_level`, `authenticated_at`, `expires_at`,
+  `initiated_by`, `delegated_by`, `trace_id`). **No `kid` claim exists** — key
+  rotation requires coordinated consumer restart, not per-message key selection.
+  The ADR's open question ("whether the signed envelope carries a `keyId`") is
+  answered: it does not.
+- **Audience binding is structural, not enforced (2026-10-19).** The token carries
+  `aud: "synanton-internal"` — a single shared internal marker, not a per-service
+  audience. `HMACVerifier.Verify` checks signature, issuer, expiry, and required
+  claims; it does not check `aud`. Even a strict check could not distinguish
+  services: the value is the same for every envelope. **Consequence:** cross-service
+  replay protection rests on (a) the token's short lifetime (bounded by
+  `expires_at`) and (b) each consumer's authorization checks on the claims —
+  *not* on the envelope. That is the residual trust-boundary gap and it is a
+  design property, not an implementation defect.
 - **Neutral:** ADR-016's service identity decision stands; this adds the channel-independent proof that complements it.
 
 ## Context
