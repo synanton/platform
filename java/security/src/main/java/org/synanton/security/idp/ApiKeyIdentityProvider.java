@@ -74,7 +74,7 @@ public class ApiKeyIdentityProvider implements IdentityProviderPort {
             }
         }
 
-        ValidatedIdentity identity = new ValidatedIdentity(subjectId, tenantId, "API_KEY", scopes, keyId);
+        ValidatedIdentity identity = new ValidatedIdentity(subjectId, tenantId, "API_KEY", scopes, keyId, null);
         cache.put(lookupHash, identity);
         return identity;
     }

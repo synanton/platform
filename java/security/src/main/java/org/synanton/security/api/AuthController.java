@@ -45,7 +45,8 @@ public class AuthController {
                 identity.tenantId(),
                 identity.identityProfile(),
                 java.util.List.of(identity.scopes()),
-                identity.keyId()
+                identity.keyId(),
+                identity.expiresAt()
         ));
     }
 
@@ -55,5 +56,6 @@ public class AuthController {
     public record ValidateResponse(boolean valid, String subject, int uid, java.util.List<Integer> gid,
                                    String identityProfile, String keyId) {}
     public record ValidatedIdentityResponse(String subjectId, String tenantId, String identityProfile,
-                                            java.util.List<String> scopes, String keyId) {}
+                                            java.util.List<String> scopes, String keyId,
+                                            java.time.Instant expiresAt) {}
 }

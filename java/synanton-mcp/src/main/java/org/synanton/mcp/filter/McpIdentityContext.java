@@ -28,7 +28,13 @@ public final class McpIdentityContext {
         return CURRENT.get() != null;
     }
 
-    public record Identity(String tenantId, String subjectId, java.util.List<String> scopes) {
+    public record Identity(String tenantId, String subjectId, java.util.List<String> scopes,
+                           java.time.Instant expiresAt) {
+        /** Convenience for callers without credential expiry (API keys, tests). */
+        public Identity(String tenantId, String subjectId, java.util.List<String> scopes) {
+            this(tenantId, subjectId, scopes, null);
+        }
+
         public Identity {
             if (tenantId == null || tenantId.isBlank()) {
                 throw new IllegalArgumentException("tenantId required");

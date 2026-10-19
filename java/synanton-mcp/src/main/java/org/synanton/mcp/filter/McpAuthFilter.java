@@ -99,8 +99,10 @@ public class McpAuthFilter extends OncePerRequestFilter {
 
             switch (provider.validate(bearer)) {
                 case SecurityProviderClient.Result.Ok ok -> {
-                    // No token_exp on the wire response — TTL is configured-only.
-                    authCache.put(key, new CachedIdentity(ok.identity(), ttl));
+                    // TTL is capped by the credential's remaining lifetime: a
+                    // cached identity must never outlive the token (#242).
+                    authCache.put(key, new CachedIdentity(ok.identity(),
+                            effectiveTtl(ttl, ok.identity().expiresAt())));
                     proceed(ok.identity(), request, response, chain);
                 }
                 case SecurityProviderClient.Result.Invalid ignored -> {
@@ -149,6 +151,22 @@ public class McpAuthFilter extends OncePerRequestFilter {
             return null;
         }
         return h.regionMatches(true, 0, "Bearer ", 0, 7) ? h.substring(7).trim() : null;
+    }
+
+    /**
+     * Identity-cache TTL: the configured bound, capped by the credential's
+     * remaining lifetime. An expired (or expiring-now) token yields ZERO so
+     * the entry is not cached (#242).
+     */
+    static java.time.Duration effectiveTtl(java.time.Duration configured, java.time.Instant expiresAt) {
+        if (expiresAt == null) {
+            return configured;
+        }
+        java.time.Duration remaining = java.time.Duration.between(java.time.Instant.now(), expiresAt);
+        if (remaining.isNegative() || remaining.isZero()) {
+            return java.time.Duration.ZERO;
+        }
+        return remaining.compareTo(configured) < 0 ? remaining : configured;
     }
 
     private void reject(HttpServletResponse response, int status, String code, boolean retryable,

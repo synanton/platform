@@ -53,7 +53,7 @@ public class SecurityProviderClient {
                 return new Result.Invalid("no tenant context");
             }
             return new Result.Ok(new McpIdentityContext.Identity(
-                    v.tenantId(), v.subjectId(), v.scopes()));
+                    v.tenantId(), v.subjectId(), v.scopes(), v.expiresAt()));
         } catch (RestClientResponseException e) {
             int status = e.getStatusCode().value();
             if (status == 401 || status == 403) {
@@ -67,5 +67,5 @@ public class SecurityProviderClient {
     }
 
     record ValidatedIdentity(String subjectId, String tenantId, String identityProfile,
-                             List<String> scopes, String keyId) {}
+                             List<String> scopes, String keyId, java.time.Instant expiresAt) {}
 }

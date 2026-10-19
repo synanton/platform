@@ -29,7 +29,8 @@ public class JwtIdentityProvider implements IdentityProviderPort {
                 assertion.tenantId(),
                 "JWT",
                 new String[0],
-                null
+                null,
+                assertion.exp()
         );
     }
 }
