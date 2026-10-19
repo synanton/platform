@@ -46,7 +46,11 @@ set -euo pipefail
 # Dev secret hygiene: source .env at the repo root when present, so the
 # secret never needs to appear in shell history or CI logs.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-[ -f "$SCRIPT_DIR/../../.env" ] && . "$SCRIPT_DIR/../../.env"
+# An explicitly provided secret wins (the cluster run passes the homelab
+# .env's value); otherwise fall back to the repo .env used by compose.
+if [ -z "${SYNANTON_JWT_SECRET:-}" ] && [ -f "$SCRIPT_DIR/../../.env" ]; then
+    . "$SCRIPT_DIR/../../.env"
+fi
 
 SYNFLUX_URL="${SYNFLUX_URL:-http://localhost:8090}"
 SYNQUEST_URL="${SYNQUEST_URL:-http://localhost:8083}"

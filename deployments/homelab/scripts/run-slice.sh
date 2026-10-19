@@ -24,7 +24,15 @@ die() { printf '\033[1;31m[run-slice]\033[0m %s\n' "$*" >&2; exit 1; }
 
 FIXTURE_HOST_DIR="$FIXTURE_NFS_MOUNT/$FIXTURE_NFS_SUBDIR"
 [ -d "$FIXTURE_HOST_DIR" ] || die "fixture mount not found: $FIXTURE_HOST_DIR (mount node1:/mnt/WD6000/nfs_share, or set FIXTURE_NFS_MOUNT)"
-[ -f "$ROOT/.env" ] || die "missing $ROOT/.env (the acceptance script sources the JWT secret from it)"
+[ -f "$ROOT/.env" ] || die "missing $ROOT/.env (the acceptance script sources a default JWT secret from it)"
+# The cluster verifies with the secret in config/.env — pass it explicitly;
+# the repo .env carries the compose dev secret.
+HOMELAB_ENV="$ROOT/deployments/homelab/config/.env"
+[ -f "$HOMELAB_ENV" ] || die "missing $HOMELAB_ENV"
+# shellcheck disable=SC1090
+. "$HOMELAB_ENV"
+: "${SYNANTON_JWT_SECRET:?set SYNANTON_JWT_SECRET in $HOMELAB_ENV}"
+export SYNANTON_JWT_SECRET
 
 kubectl -n "$NAMESPACE" port-forward svc/synflux "$LOCAL_SYNFLUX_PORT:8090" >/dev/null 2>&1 &
 PF_SYNFLUX=$!
