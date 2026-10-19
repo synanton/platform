@@ -157,6 +157,28 @@ cql_count() {  # cql_count <cql-count-query> -> row count digits
     cqlsh_query "$1" | grep -E '^[[:space:]]*[0-9]+[[:space:]]*$' | head -1 | tr -d '[:space:]'
 }
 
+# k8s: a Deployment with required anti-affinity on exactly two nodes does not
+# settle by itself after env changes — stale ReplicaSet pods linger, a surge
+# pod can stay Pending, and readiness flaps. Delete every pod not owned by the
+# current ReplicaSet, then wait for available == replicas.
+k8s_settle() {
+    local replicas="${1:-${SYNFLUX_REPLICAS:-2}}" current_rs stale
+    kubectl -n "$K8S_NAMESPACE" rollout status deploy/synflux --timeout=300s
+    current_rs=$(kubectl -n "$K8S_NAMESPACE" get rs -l app=synflux \
+        --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1:].metadata.name}')
+    stale=$(kubectl -n "$K8S_NAMESPACE" get pods -l app=synflux \
+        -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.ownerReferences[0].name}{"\n"}{end}' \
+        | awk -v rs="$current_rs" '$2 != rs {print $1}')
+    if [ -n "$stale" ]; then
+        echo "$stale" | xargs -r kubectl -n "$K8S_NAMESPACE" delete pod --wait=false >/dev/null
+    fi
+    for _ in $(seq 1 60); do
+        [ "$(kubectl -n "$K8S_NAMESPACE" get deploy synflux -o jsonpath='{.status.availableReplicas}' 2>/dev/null)" = "$replicas" ] && return 0
+        sleep 2
+    done
+    return 1
+}
+
 # Compose invocations carry the slice override (host-jar build path:
 # buildkit cannot reach the Maven repos from this network — the boot jars
 # are built on the HOST and the *.prebuilt.Dockerfile variants package them),
@@ -196,7 +218,7 @@ start_worker() {  # start_worker [fault-point]
                 kubectl -n "$K8S_NAMESPACE" set env deploy/synflux "SYNANTON_FAULT_INJECT-"
             fi
             kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas="${SYNFLUX_REPLICAS:-2}"
-            kubectl -n "$K8S_NAMESPACE" rollout status deploy/synflux --timeout=300s
+            k8s_settle "${SYNFLUX_REPLICAS:-2}" || die "synflux deployment did not settle"
             ;;
         *) die "unknown WORKER_PROFILE $WORKER_PROFILE — compose, process or k8s" ;;
     esac
@@ -236,7 +258,13 @@ stop_worker() {
         k8s) # Scale to ZERO only — the caller clears the fault env and scales
              # back up (scale-0 → clear → scale-up). Scaling straight back up
              # here would restart pods with the fault still in the spec.
-             kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=0 ;;
+             kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=0
+             # Wait until the old pods are actually gone: their anti-affinity
+             # occupancy blocks the replacements scheduled next.
+             for _ in $(seq 1 60); do
+                 [ -z "$(kubectl -n "$K8S_NAMESPACE" get pods -l app=synflux --no-headers 2>/dev/null)" ] && break
+                 sleep 2
+             done ;;
     esac
 }
 
