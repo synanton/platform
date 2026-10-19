@@ -43,8 +43,10 @@ spec:
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef: {name: synflux-config}
-            - secretRef:    {name: synanton-jwt}
           env:
+            # envFrom would expose the secret's key name verbatim (`secret`);
+            # the app resolves SYNANTON_JWT_SECRET explicitly.
+            - {name: SYNANTON_JWT_SECRET, valueFrom: {secretKeyRef: {name: synanton-jwt, key: secret}}}
             - {name: MINIO_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-cred, key: user}}}
             - {name: MINIO_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-cred, key: password}}}
           ports:
