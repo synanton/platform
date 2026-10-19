@@ -50,10 +50,16 @@ public class McpEndpoint {
         String requestId = filterRequestId instanceof String s && !s.isBlank()
                 ? s : UUID.randomUUID().toString();
         JsonNode identity = (JsonNode) request.getAttribute("mcpIdentity");
-        String tenantId = "demo";
-        if (identity != null) {
-            tenantId = identity.path("tenantId").asText("demo");
+        JsonNode tenantNode = identity == null ? null : identity.get("tenantId");
+        if (tenantNode == null || tenantNode.asText("").isBlank()) {
+            // The auth filter always sets a tenant-bearing identity for POST
+            // /mcp; reaching here without one is an invariant violation.
+            // Defense in depth: never substitute a demo tenant.
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+                    "Missing tenant identity on the request");
         }
+        String tenantId = tenantNode.asText();
 
         try {
             JsonNode req = objectMapper.readTree(body);

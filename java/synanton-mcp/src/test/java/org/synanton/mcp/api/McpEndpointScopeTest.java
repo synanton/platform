@@ -106,7 +106,7 @@ class McpEndpointScopeTest {
     @Test
     void toolsCall_usesFilterRequestIdWhenPresent() throws Exception {
         when(handler.invoke(any(), any())).thenThrow(new RuntimeException("boom"));
-        JsonNode identity = MAPPER.readTree("{\"scopes\":[\"search\"]}");
+        JsonNode identity = MAPPER.readTree("{\"tenantId\":\"test-tenant\",\"scopes\":[\"search\"]}");
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute("mcpIdentity", identity);
         request.setAttribute("mcp.request_id", "filter-id-1");
@@ -122,7 +122,9 @@ class McpEndpointScopeTest {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> call(String scopesJson, String toolName) throws Exception {
-        JsonNode identity = MAPPER.readTree("{\"scopes\":" + scopesJson + "}");
+        // The auth filter always writes a tenant-bearing identity (and the
+        // Identity record rejects blank tenants) — mirror that contract here.
+        JsonNode identity = MAPPER.readTree("{\"tenantId\":\"test-tenant\",\"scopes\":" + scopesJson + "}");
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute("mcpIdentity", identity);
         String body = "{\"id\":\"1\",\"method\":\"tools/call\",\"params\":{\"name\":\""

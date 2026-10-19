@@ -124,6 +124,14 @@ public class McpAuthFilter extends OncePerRequestFilter {
     private void proceed(McpIdentityContext.Identity id,
                          HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        if (id.tenantId() == null || id.tenantId().isBlank()) {
+            // The provider validated the credential but produced no tenant:
+            // fail closed here, where the identity enters (the endpoint used
+            // to substitute "demo" — a live hole for null-tenant identities).
+            reject(response, 401, "AUTHENTICATION_REQUIRED", false,
+                    "Authentication required", UUID.randomUUID().toString());
+            return;
+        }
         McpIdentityContext.set(id);
         MDC.put("tenant_id", id.tenantId());
         // Contract with McpEndpoint: identity as a node carrying tenantId + scopes.
