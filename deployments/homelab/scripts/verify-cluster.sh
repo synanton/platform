@@ -24,12 +24,16 @@ check "1. registry pull from a worker"
 # registry requires basic auth and worker nodes have no assumed egress.
 kubectl apply -f "$ROOT/k8s/namespace.yaml" >/dev/null
 "$SCRIPT_DIR/create-registry-secret.sh" >/dev/null
-if kubectl -n "$NAMESPACE" run registry-probe --rm -i --restart=Never \
-        --overrides="{\"spec\":{\"nodeName\":\"node2\",\"imagePullSecrets\":[{\"name\":\"local-registry-cred\"}]}}" \
-        --image="$PROBE_IMAGE" --command -- echo ok 2>/dev/null | grep -q ok; then
+# kubectl's attach fallback prints the container output on stderr — capture
+# both streams, and match the exact line (noise contains the image name).
+probe_out=$(kubectl -n "$NAMESPACE" run registry-probe --rm -i --restart=Never \
+    --overrides="{\"spec\":{\"nodeName\":\"node2\",\"imagePullSecrets\":[{\"name\":\"local-registry-cred\"}]}}" \
+    --image="$PROBE_IMAGE" --command -- echo registry-pull-ok 2>&1 || true)
+if grep -q 'registry-pull-ok' <<<"$probe_out"; then
     ok "pulled $PROBE_IMAGE on node2"
 else
     bad "could not pull $PROBE_IMAGE on node2 — check the mirror tag and the pull secret"
+    printf '      %s\n' "$(echo "$probe_out" | tail -2)"
 fi
 
 check "2. local-ssd StorageClass exists (shared with gpu-runtime — do not modify)"
