@@ -48,6 +48,9 @@ spec:
         - name: data
           persistentVolumeClaim: {claimName: minio-data}
 ---
+# minio-cred-env (MC_HOST_local = endpoint + credentials in one value for the
+# Chainguard client) is created by deploy.sh from config/.env — `kubectl
+# apply` does not interpolate.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -59,29 +62,31 @@ spec:
   resources: {requests: {storage: 50Gi}}
 ---
 # Creates the object-store bucket the extraction handoff writes to.
+# The Chainguard client image has no shell: the wait is an initContainer
+# (`mc ready local`), the bucket creation is the main container, and both take
+# endpoint+credentials from MC_HOST_local (env values, no alias step).
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: minio-init
   namespace: synanton
 spec:
-  backoffLimit: 3
+  backoffLimit: 6
   template:
     spec:
       imagePullSecrets: [{name: local-registry-cred}]
       restartPolicy: OnFailure
+      initContainers:
+        - name: wait
+          image: local-registry:5000/synanton/minio-mc:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: {name: minio-cred-env}
+          command: ["ready", "local"]
       containers:
         - name: mc
           image: local-registry:5000/synanton/minio-mc:latest
           imagePullPolicy: IfNotPresent
-          env:
-            - {name: MINIO_ENDPOINT, value: minio:9000}
-            - {name: MINIO_USER, valueFrom: {secretKeyRef: {name: minio-cred, key: user}}}
-            - {name: MINIO_PASSWORD, valueFrom: {secretKeyRef: {name: minio-cred, key: password}}}
-          command:
-            - sh
-            - -c
-            - |
-              until mc alias set local "http://${MINIO_ENDPOINT}" "${MINIO_USER}" "${MINIO_PASSWORD}"; do sleep 2; done
-              mc mb --ignore-existing local/synanton-hot
-              echo "bucket ready"
+          envFrom:
+            - secretRef: {name: minio-cred-env}
+          command: ["mb", "--ignore-existing", "local/synanton-hot"]

@@ -56,6 +56,7 @@ bench-staging/
 /docker/data/*
 /docker/data-bench/*
 /deployments/docker/data/*
+/deployments/docker/data-cg/*
 
 # opencode tooling
 .opencode/

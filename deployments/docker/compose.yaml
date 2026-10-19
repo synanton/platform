@@ -126,14 +126,21 @@ services:
       retries: 12
     restart: unless-stopped
 
+  # MinIO withdrew its community images (docker.io/quay) on 2025-10-23;
+  # Chainguard's free rebuilds are the maintained drop-in:
+  # https://www.chainguard.dev/unchained/secure-and-free-minio-chainguard-containers
   minio:
-    image: minio/minio:latest
+    image: chainguard/minio:latest
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
-      - ${DATA_ROOT:-./data}/minio:/data
+      # The Chainguard image runs as uid 65532; the host dir must be writable
+      # by it. Prepared with mode 0777 by whoever brings the stack up
+      # (tests/integration/vertical-slice.sh does it; see docker/README.md):
+      # a bind dir created root-owned by the old root-running image is not.
+      - ${MINIO_DATA_DIR:-./data-cg/minio}:/data
     healthcheck:
       test: ["CMD-SHELL", "mc ready local"]
       interval: 10s
@@ -141,14 +148,16 @@ services:
       retries: 6
     restart: unless-stopped
 
+  # The Chainguard client image has no shell: mc runs directly and takes the
+  # endpoint+credentials from MC_HOST_<alias> (no `mc alias set` step).
   minio-init:
-    image: minio/mc:latest
+    image: chainguard/minio-client:latest
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint: >
-      sh -c "mc alias set local http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin} &&
-             mc mb --ignore-existing local/synanton-hot"
+    environment:
+      MC_HOST_local: http://${MINIO_ROOT_USER:-minioadmin}:${MINIO_ROOT_PASSWORD:-minioadmin}@minio:9000
+    command: ["mb", "--ignore-existing", "local/synanton-hot"]
     restart: "no"
 
   extraction-gateway:

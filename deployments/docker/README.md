@@ -27,3 +27,27 @@ retag to the name the compose file expects. This is the same mirror-first
 rule the homelab registry enforces on the cluster side (workers have no
 assumed egress): pull on a machine with internet, retag, push to
 `local-registry`.
+
+## MinIO source
+
+MinIO withdrew its community images from Docker Hub **and** Quay on
+2025-10-23 ([source-only distribution](https://github.com/minio/minio/issues/21647)).
+This stack uses **Chainguard's free rebuilds** instead
+([announcement](https://www.chainguard.dev/unchained/secure-and-free-minio-chainguard-containers)):
+
+- `chainguard/minio` (server) and `chainguard/minio-client` (`mc`), pinned by
+  digest in `mirror-images.sh` and the smoke compose.
+- Consequence of the minimal images: **the client has no shell** — `mc` runs
+  directly and reads the endpoint+credentials from `MC_HOST_<alias>` (no
+  `mc alias set` step).
+- The server runs as **uid 65532**: its data directory must be writable by it.
+  The compose stack uses `deployments/docker/data-cg/minio` (prepared 0777 by
+  whoever brings the stack up — the acceptance script does it; the old
+  root-owned `data/` tree cannot be chmodded without sudo).
+
+To move a pin deliberately:
+
+```bash
+docker pull chainguard/minio:latest
+docker inspect --format '{{index .RepoDigests 0}}' chainguard/minio:latest
+```

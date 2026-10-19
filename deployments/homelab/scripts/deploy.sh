@@ -35,6 +35,17 @@ MINIO_PASSWORD="${MINIO_PASSWORD:-minioadmin}"
 log "namespace"
 kubectl apply -f "$ROOT/k8s/namespace.yaml"
 
+# Fail on shipped placeholder values before they reach a deployment.
+check_not_placeholder() {
+    local name="$1" value="$2" placeholder="$3"
+    if [ "$value" = "$placeholder" ]; then
+        echo "error: $name is still set to the placeholder '$placeholder' — edit $ENV_FILE and set a real value" >&2
+        exit 1
+    fi
+}
+check_not_placeholder POSTGRES_PASSWORD "$POSTGRES_PASSWORD" "changeme"
+check_not_placeholder MINIO_PASSWORD "$MINIO_PASSWORD" "minioadmin"
+
 log "secrets (from config/.env)"
 kubectl -n "$NAMESPACE" create secret generic synanton-jwt \
     --from-literal=secret="$SYNANTON_JWT_SECRET" --dry-run=client -o yaml | kubectl apply -f -
@@ -42,6 +53,11 @@ kubectl -n "$NAMESPACE" create secret generic postgres-cred \
     --from-literal=password="$POSTGRES_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "$NAMESPACE" create secret generic minio-cred \
     --from-literal=user="$MINIO_USER" --from-literal=password="$MINIO_PASSWORD" \
+    --dry-run=client -o yaml | kubectl apply -f -
+# MC_HOST_local for the Chainguard minio-client (endpoint + credentials in one
+# value; the images have no shell to compose it at runtime).
+kubectl -n "$NAMESPACE" create secret generic minio-cred-env \
+    --from-literal=MC_HOST_local="http://$MINIO_USER:$MINIO_PASSWORD@minio:9000" \
     --dry-run=client -o yaml | kubectl apply -f -
 
 log "registry pull secret"
