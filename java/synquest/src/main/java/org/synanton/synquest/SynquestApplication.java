@@ -16,11 +16,21 @@ public class SynquestApplication {
         SpringApplication.run(SynquestApplication.class, args);
     }
 
+    /**
+     * Optional demo seed: initialise the named tenant's index at startup.
+     * Disabled unless {@code synquest.seed.demo-tenant} is set explicitly — the
+     * previous unconditional {@code initTenant("demo")} seeded demo state in
+     * every deployment.
+     */
     @Bean
-    ApplicationRunner indexInitializer(SearchService searchService) {
+    ApplicationRunner indexInitializer(SearchService searchService,
+            @org.springframework.beans.factory.annotation.Value("${synquest.seed.demo-tenant:}") String seedTenant) {
         return args -> {
+            if (seedTenant == null || seedTenant.isBlank()) {
+                return;
+            }
             // Run in a background thread so the server starts accepting requests immediately.
-            Thread.ofVirtual().name("index-init").start(() -> searchService.initTenant("demo"));
+            Thread.ofVirtual().name("index-init").start(() -> searchService.initTenant(seedTenant));
         };
     }
 }

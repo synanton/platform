@@ -25,11 +25,15 @@ public class QueryController {
             @RequestBody QueryRequest request,
             HttpServletRequest httpRequest
     ) {
-        // If tenant not in body, fall back to request attribute set by MockTenantFilter
+        // Body tenant wins; otherwise the context attribute set by the (opt-in)
+        // mock or a verified filter. No demo default: a missing tenant rejects.
         String tenant = request.tenant();
         if (tenant == null || tenant.isBlank()) {
             Object attr = httpRequest.getAttribute("tenant");
-            tenant = attr != null ? (String) attr : "demo";
+            tenant = attr instanceof String s && !s.isBlank() ? s : null;
+        }
+        if (tenant == null) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
         }
         QueryRequest enriched = new QueryRequest(tenant, request.query(), request.topK(), request.hints());
         return queryService.query(enriched);

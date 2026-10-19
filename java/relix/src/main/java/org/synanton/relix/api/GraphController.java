@@ -19,18 +19,33 @@ public class GraphController {
 
     @PostMapping("/graph/query")
     public GraphQueryResponse query(@RequestBody GraphQueryRequest req, HttpServletRequest httpReq) {
-        String tenant = req.tenant() != null ? req.tenant() : (String) httpReq.getAttribute("tenant");
+        String tenant = requireTenant(req.tenant(), httpReq);
         GraphQueryRequest effective = req.tenant() != null ? req
                 : new GraphQueryRequest(tenant, req.shape(), req.params());
         return graphQueryService.query(effective);
     }
 
+    /**
+     * Body tenant wins; otherwise the verified/mock context attribute; never a
+     * demo default. A missing tenant rejects (fail closed).
+     */
+    private static String requireTenant(String bodyTenant, HttpServletRequest request) {
+        if (bodyTenant != null && !bodyTenant.isBlank()) {
+            return bodyTenant;
+        }
+        Object attr = request.getAttribute("tenant");
+        String tenant = attr instanceof String s && !s.isBlank() ? s : null;
+        if (tenant == null) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
+        return tenant;
+    }
+
     @PostMapping("/graph/rebuild")
     public ResponseEntity<Map<String, String>> rebuild(
-            @RequestParam(defaultValue = "demo") String tenant,
+            @RequestParam(required = false) String tenant,
             HttpServletRequest httpReq) {
-        String effectiveTenant = tenant.equals("demo") ? (String) httpReq.getAttribute("tenant") : tenant;
-        if (effectiveTenant == null) effectiveTenant = "demo";
+        String effectiveTenant = requireTenant(tenant, httpReq);
         graphQueryService.rebuild(effectiveTenant);
         return ResponseEntity.ok(Map.of("status", "done", "tenant", effectiveTenant));
     }
@@ -41,10 +56,8 @@ public class GraphController {
     }
 
     @GetMapping("/graph/stats")
-    public GraphStats stats(@RequestParam(defaultValue = "demo") String tenant,
+    public GraphStats stats(@RequestParam(required = false) String tenant,
                              HttpServletRequest httpReq) {
-        String effectiveTenant = (String) httpReq.getAttribute("tenant");
-        if (effectiveTenant == null) effectiveTenant = tenant;
-        return graphQueryService.stats(effectiveTenant);
+        return graphQueryService.stats(requireTenant(tenant, httpReq));
     }
 }

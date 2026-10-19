@@ -5,6 +5,7 @@ plugins {
 }
 dependencies {
     implementation(project(":java:synanton-llm-client"))
+    implementation(project(":java:shared:common"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.actuator)

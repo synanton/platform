@@ -16,7 +16,6 @@ public record SynaptProperties(
 
     public SynaptProperties {
         if (gateway == null) gateway = new Gateway("http://gateway:8086", 10000);
-        if (tenant == null) tenant = new Tenant("demo");
         if (uiSecurity == null) uiSecurity = new UiSecurity("enforce");
         if (validation == null) validation = new Validation(false);
     }

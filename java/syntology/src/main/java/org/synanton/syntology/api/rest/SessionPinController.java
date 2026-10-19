@@ -82,15 +82,16 @@ public class SessionPinController {
      */
     private RequestContext resolveContext(String requestBodyTenantId) {
         TenantContext ctx = TenantContext.get();
-        if (ctx != null) {
-            String tenantId = ctx.tenantId() != null ? ctx.tenantId() : "demo";
+        if (ctx != null && ctx.tenantId() != null && !ctx.tenantId().isBlank()) {
             String subjectId = ctx.subject() != null ? ctx.subject() : "anonymous";
-            return new RequestContext(tenantId, subjectId);
+            return new RequestContext(ctx.tenantId(), subjectId);
         }
-        // Fall back: use request-body tenant if provided, else "demo"
-        String tenantId = (requestBodyTenantId != null && !requestBodyTenantId.isBlank())
-                ? requestBodyTenantId : "demo";
-        return new RequestContext(tenantId, "anonymous");
+        // No verified tenant: an explicit body tenant is the only fallback; a
+        // missing one rejects (the demo default was the defect).
+        if (requestBodyTenantId == null || requestBodyTenantId.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
+        return new RequestContext(requestBodyTenantId, "anonymous");
     }
 
     // ---- inner types ----

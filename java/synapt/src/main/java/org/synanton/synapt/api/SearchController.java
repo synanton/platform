@@ -31,7 +31,10 @@ public class SearchController {
             HttpServletRequest httpRequest
     ) {
         TenantContext ctx = TenantContext.get();
-        String tenant = ctx != null ? ctx.tenantId() : "demo";
+        if (ctx == null || ctx.tenantId() == null || ctx.tenantId().isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
+        String tenant = ctx.tenantId();
         String traceId = MDC.get("traceId");
         log.info("search tenant={} query='{}' topK={} traceId={}", tenant, request.query(), request.effectiveTopK(), traceId);
 
