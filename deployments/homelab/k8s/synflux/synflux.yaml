@@ -4,9 +4,12 @@ metadata:
   name: synflux
   namespace: synanton
 spec:
+  # NodePort: the acceptance run needs a stable address across pod restarts
+  # (fault injection replaces pods; port-forwards bind to one pod and die).
+  type: NodePort
   selector: {app: synflux}
   ports:
-    - {name: http, port: 8090}
+    - {name: http, port: 8090, nodePort: 30090}
 ---
 apiVersion: apps/v1
 kind: Deployment

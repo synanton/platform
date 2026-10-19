@@ -34,34 +34,27 @@ HOMELAB_ENV="$ROOT/deployments/homelab/config/.env"
 : "${SYNANTON_JWT_SECRET:?set SYNANTON_JWT_SECRET in $HOMELAB_ENV}"
 export SYNANTON_JWT_SECRET
 
-# Port-forwards bind to a POD; the fault-injection restarts replace pods, so a
-# single forward dies mid-run. Supervise each: re-establish when it drops.
-forward_loop() {  # forward_loop <svc> <local:remote>
-    local svc="$1" ports="$2"
-    while true; do
-        kubectl -n "$NAMESPACE" port-forward "svc/$svc" "$ports" >/dev/null 2>&1
-        sleep 1
-    done
-}
-forward_loop synflux "$LOCAL_SYNFLUX_PORT:8090" &
-PF_SYNFLUX=$!
-forward_loop synquest "$LOCAL_SYNQUEST_PORT:8083" &
-PF_SYNQUEST=$!
-trap 'kill $PF_SYNFLUX $PF_SYNQUEST 2>/dev/null || true; pkill -f "port-forward svc/synflux" 2>/dev/null || true; pkill -f "port-forward svc/synquest" 2>/dev/null || true' EXIT INT TERM
+# Stable NodePort endpoints (the fault-injection restarts replace pods; a
+# port-forward binds to one pod and dies). The services expose 30090/30083.
+NODE_IP="${NODE_IP:-192.168.10.30}"
+SYNFLUX_URL="http://$NODE_IP:30090"
+SYNQUEST_URL="http://$NODE_IP:30083"
+LOCAL_SYNFLUX_PORT=30090
+LOCAL_SYNQUEST_PORT=30083
 
-sleep 3
-curl -sf "http://localhost:$LOCAL_SYNFLUX_PORT/health" >/dev/null || die "synflux port-forward failed"
-curl -sf "http://localhost:$LOCAL_SYNQUEST_PORT/health" >/dev/null || die "synquest port-forward failed"
+sleep 1
+curl -sf "$SYNFLUX_URL/health" >/dev/null || die "synflux not reachable at $SYNFLUX_URL"
+curl -sf "$SYNQUEST_URL/health" >/dev/null || die "synquest not reachable at $SYNQUEST_URL"
 
-log "synflux:  http://localhost:$LOCAL_SYNFLUX_PORT"
-log "synquest: http://localhost:$LOCAL_SYNQUEST_PORT"
+log "synflux:  $SYNFLUX_URL"
+log "synquest: $SYNQUEST_URL"
 log "fixtures: $FIXTURE_HOST_DIR (pods see /fixtures)"
 
 WORKER_PROFILE=k8s \
 K8S_NAMESPACE="$NAMESPACE" \
 SYNFLUX_REPLICAS="${SYNFLUX_REPLICAS:-2}" \
-SYNFLUX_URL="http://localhost:$LOCAL_SYNFLUX_PORT" \
-SYNQUEST_URL="http://localhost:$LOCAL_SYNQUEST_PORT" \
+SYNFLUX_URL="$SYNFLUX_URL" \
+SYNQUEST_URL="$SYNQUEST_URL" \
 FIXTURE_HOST_DIR="$FIXTURE_HOST_DIR" \
 FIXTURE_ROOT="/fixtures" \
 "$ROOT/tests/integration/vertical-slice.sh"

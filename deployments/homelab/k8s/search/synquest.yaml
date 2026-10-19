@@ -4,9 +4,10 @@ metadata:
   name: synquest
   namespace: synanton
 spec:
+  type: NodePort
   selector: {app: synquest}
   ports:
-    - {name: http, port: 8083}
+    - {name: http, port: 8083, nodePort: 30083}
 ---
 apiVersion: apps/v1
 kind: Deployment
