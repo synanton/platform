@@ -288,6 +288,12 @@ cleanup() {
     if [ -d "$RUN_FIXTURE_HOST_DIR" ]; then
         rm -rf "$RUN_FIXTURE_HOST_DIR"
     fi
+    # A failed run may leave the fault env in the Deployment spec — k8s
+    # would then crash-loop every replacement pod (the documented hazard).
+    # Clear it on exit, idempotently (the successful path already cleared it).
+    if [ "$WORKER_PROFILE" = "k8s" ] && [ -n "${K8S_NAMESPACE:-}" ]; then
+        kubectl -n "$K8S_NAMESPACE" set env deploy/synflux SYNANTON_FAULT_INJECT- >/dev/null 2>&1 || true
+    fi
     trap - EXIT INT TERM
     exit "$exit_code"
 }
