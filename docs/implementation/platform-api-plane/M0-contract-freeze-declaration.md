@@ -1,6 +1,6 @@
 # M0-Contract-Freeze Declaration (BBAG-A)
 
-**Status:** Draft — review date TBD; last amended 2026-10-16 (blocker 1 closed; A1 gate restructure 2026-10-15). **Owner:** Andrei Minin. **Authors:** OpenAPI spec (D1) — Andrei Minin; MCP schema (D4) — Andrei Minin, D10 audit complete 2026-10-15 (decision: refactor), awaiting product call on schema shape; error model (RFC 9457 normalization) — Andrei Minin. **Sign-off authorities:** Architecture, Security, DX (per WS0 acceptance).
+**Status:** Frozen 2026-10-19 — all exit rows signed (row 6 record below). Last amended 2026-10-19 (row 6 sign-off; audience residual named in ADR-019). **Owner:** Andrei Minin. **Authors:** OpenAPI spec (D1) — Andrei Minin; MCP schema (D4) — Andrei Minin, D10 audit complete 2026-10-15 (decision: refactor), awaiting product call on schema shape; error model (RFC 9457 normalization) — Andrei Minin. **Sign-off authorities:** Architecture, Security, DX (per WS0 acceptance).
 
 ## Exit criteria (WS0)
 
@@ -64,6 +64,42 @@ mapping acknowledged.
 **Consumed by:** W3 (search spec), W4 (auth spec) — `$ref`, not redefinition.
 **Slice/hardening boundary recorded:** `type` URI registry and per-category
 `details` schemas are hardening, not gate.
+
+## Row 6 — Architecture + Security + DX sign-off
+
+**Signed by:** Andrei Minin, 2026-10-19 (single reviewer holds A, S, and DX —
+stated as a fact of the record, not a blocker).
+**Implementation reference:** #252 / SNTP-032 — predicate implemented in
+[#322](https://github.com/synanton/platform/pull/322) (green, CLEAN; the
+predicate is `SecurityEnvelopeFilter` + `HttpEnvelopeVerifier` in
+`shared/common`, registered in synapt and relix; 14-case matrix).
+
+### Evidence package (verified against the security-provider, 2026-10-19)
+
+| Citation | What it proves | Implementation match |
+|---|---|---|
+| `docs/api.md` § Conventions | tenant scope is an untrusted hint; mismatch fails closed `TENANT_DENIED` | filter returns 403 on `X-Tenant-ID` / `?tenant_id=` mismatch; tenant bound only from the validated context |
+| `docs/design.md` § Security context schema (frozen) | canonical claims; forbidden `mask*`/`represent*`/`display*`/`classification*`/`redact*` rejected on server and consumer | verifier parses the documented shape; consumer mirrors the claim-smuggling rejection |
+| `docs/api.md` § Consumer middleware | missing/invalid → 401; tenant hint mismatch → 403; **`X-User-ID` disagreeing with the validated principal → 403** | all three implemented — the third was found by this citation check and fixed in #322 |
+| `README` § 9.1 (local verification) | TTL bounds (≤5m high-risk / ≤15m standard); centralized-only operation classes | predicate validates centrally via HTTP; identity cache TTL 60s — within the centralized bound |
+| `README` § 11.2 (revocation SLO) | centralized ≤60s; local 5m/15m | cache TTL 60s matches the centralized revocation SLO exactly |
+
+### Residuals — stated, not implied
+
+1. **Audience binding is structural.** The envelope carries a single shared
+   `aud: "synanton-internal"`; the provider's verifier does not enforce it and
+   could not distinguish services even if it did. Cross-service replay
+   protection rests on token lifetime and per-consumer authorization, not the
+   envelope. Recorded in ADR-019's dated correction as a design property.
+2. **Provider development configuration is a deployment item, not a predicate
+   gap.** `configs/local.yaml` boots with `providers: []` — validation works,
+   but minting an envelope needs an auth provider in the provider's dev stack.
+   The predicate is executable today against a running provider.
+3. **Single-reviewer sign-off.** A, S, and DX are held by one person; this row
+   is a self-review. Stated so the record is honest.
+
+**Outcome:** Closed — M0 gate rows 1–6 closed; F2's predicate implemented
+(its gate remains "hardening, not gating M0"; #322 closes it on merge).
 
 ## Coupling note (vertical slice)
 
