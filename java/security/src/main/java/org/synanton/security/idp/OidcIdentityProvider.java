@@ -60,7 +60,9 @@ public class OidcIdentityProvider implements IdentityProviderPort {
             }
             List<String> roles = claims.getStringListClaim("roles");
             String[] scopes = roles == null ? new String[0] : roles.toArray(String[]::new);
-            return new ValidatedIdentity(subject, tenantId, "USER_SUBJECT", scopes, null);
+            java.util.Date exp = claims.getExpirationTime();
+            return new ValidatedIdentity(subject, tenantId, "USER_SUBJECT", scopes, null,
+                    exp == null ? null : exp.toInstant());
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
