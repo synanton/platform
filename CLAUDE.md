@@ -112,6 +112,20 @@ previous branch's tip) — rebuilding is cheap before the first push, expensive
 after (force-push invalidates anyone who pulled, and dragged-in history
 surfaces unrelated files in CI diffs).
 
+## Trust bar vs done
+
+A slice is **done** when its acceptance criteria pass. It is **trustworthy**
+when someone who was not involved can verify it works, understand what it does
+not do, and diagnose it when it breaks.
+
+Before declaring any milestone complete, ask the five questions in
+`docs/implementation/vertical-slice/trust-bar.md`. A milestone that passes its
+criteria but fails one of the five is done, not trustworthy — say which.
+
+When a test passes, ask: could this pass while the production code is broken?
+Four tests in the slice's development passed against shapes production never
+produces. That question found all four.
+
 ## Status Discipline
 
 - A gate row and the artifact it approves carry the same status. When a row
