@@ -252,8 +252,11 @@ case "$WORKER_PROFILE" in
     compose) FIXTURE_ROOT="${FIXTURE_ROOT:-/demo-data/documents}" ;;
     *)       FIXTURE_ROOT="${FIXTURE_ROOT:-$FIXTURE_HOST_DIR}" ;;
 esac
-[ -n "$(ls -A "$FIXTURE_HOST_DIR" 2>/dev/null)" ] || {
-    echo "Fixture root is empty: $FIXTURE_HOST_DIR" >&2; exit 1; }
+# The run writes its own per-run root; the baseline tree may legitimately be
+# empty (NFS fixture volume). What matters is writability — and, for compose,
+# that the worker container can see the tree (checked below).
+[ -w "$FIXTURE_HOST_DIR" ] || {
+    echo "Fixture root is not writable: $FIXTURE_HOST_DIR" >&2; exit 1; }
 [ "${#SYNANTON_JWT_SECRET}" -ge 32 ] || {
     echo "SYNANTON_JWT_SECRET too short (${#SYNANTON_JWT_SECRET} bytes, need >= 32 — set it in .env)" >&2; exit 1; }
 case "$SYNANTON_JWT_SECRET" in
