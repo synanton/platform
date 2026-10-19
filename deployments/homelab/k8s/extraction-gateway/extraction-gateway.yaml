@@ -43,6 +43,7 @@ spec:
             requests: {cpu: "1", memory: 2Gi}
             limits:   {cpu: "4", memory: 6Gi}
           readinessProbe:
-            httpGet: {path: /health, port: http}
+            # The gateway exposes Spring Actuator, not the slice's /health.
+            httpGet: {path: /actuator/health, port: http}
             initialDelaySeconds: 15
             periodSeconds: 10
