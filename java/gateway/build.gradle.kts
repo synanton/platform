@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(project(":java:synanton-llm-client"))
+    implementation(project(":java:shared:common"))
     implementation(project(":java:gpu-contract"))
     implementation(project(":java:gpu-client"))
 

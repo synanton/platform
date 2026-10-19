@@ -1,5 +1,6 @@
 package org.synanton.relix.service;
 
+import org.synanton.common.tenant.MissingTenantContextException;
 import org.synanton.relix.api.dto.GraphQueryRequest;
 import org.synanton.relix.graph.GraphConnector;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,10 @@ import java.util.UUID;
 public class OneHopExecutor {
 
     public GraphConnector.OneHopResult execute(GraphConnector connector, GraphQueryRequest req) {
-        String tenant = req.tenant() != null ? req.tenant() : "demo";
+        String tenant = req.tenant();
+        if (tenant == null || tenant.isBlank()) {
+            throw new MissingTenantContextException();
+        }
         UUID entityId = req.paramUuid("entity_id");
         List<String> edgeTypes = req.paramStringList("edge_types");
         String direction = req.paramString("direction");

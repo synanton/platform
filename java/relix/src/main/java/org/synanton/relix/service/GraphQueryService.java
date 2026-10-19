@@ -77,7 +77,11 @@ public class GraphQueryService {
 
         long traversalMs = System.currentTimeMillis() - traversalStart;
         long totalMs = System.currentTimeMillis() - t0;
-        long generation = graphConnector.stats(req.tenant() != null ? req.tenant() : "demo").graphGeneration();
+        String tenant = req.tenant();
+        if (tenant == null || tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
+        long generation = graphConnector.stats(tenant).graphGeneration();
         GraphTrace trace = new GraphTrace(req.shape(), generation, candidateCount, traversalMs, totalMs);
         return new GraphQueryResponse(entities, edges, paths, trace);
     }

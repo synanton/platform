@@ -28,18 +28,20 @@ public class SearchController {
         if (searchService.getStatus() == SearchService.Status.STARTING) {
             return ResponseEntity.status(503).build();
         }
-        String tenant = req.tenant() != null ? req.tenant()
-                : (String) httpReq.getAttribute("tenant");
-        SearchRequest effective = req.tenant() != null ? req
-                : new SearchRequest(tenant, req.query(), req.topK(), req.topKDense(), req.topKLexical(), req.rrfK(),
-                        req.rerank(), req.rerankCandidates(), req.expand(), req.expandMaxChunks(),
-                        req.executionMode());
-        return ResponseEntity.ok(searchService.search(effective));
+        String tenant = req.tenant();
+        if (tenant == null || tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException(
+                    "legacy /search requires an explicit tenant; /v1/search derives it from the verified identity");
+        }
+        return ResponseEntity.ok(searchService.search(req));
     }
 
     @PostMapping("/reindex")
     public ResponseEntity<Map<String, String>> reindex(
-            @RequestParam(defaultValue = "demo") String tenant) throws IOException {
+            @RequestParam(name = "tenant") String tenant) throws IOException {
+        if (tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
         searchService.reindex(tenant);
         return ResponseEntity.ok(Map.of("status", "done", "tenant", tenant));
     }
@@ -53,10 +55,11 @@ public class SearchController {
 
     @GetMapping("/index/stats")
     public ResponseEntity<IndexStats> stats(
-            @RequestParam(defaultValue = "demo") String tenant,
+            @RequestParam(name = "tenant") String tenant,
             HttpServletRequest httpReq) throws IOException {
-        String effectiveTenant = (String) httpReq.getAttribute("tenant");
-        if (effectiveTenant == null) effectiveTenant = tenant;
-        return ResponseEntity.ok(searchService.stats(effectiveTenant));
+        if (tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
+        return ResponseEntity.ok(searchService.stats(tenant));
     }
 }

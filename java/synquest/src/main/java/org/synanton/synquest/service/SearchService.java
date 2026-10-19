@@ -85,7 +85,10 @@ public class SearchService {
     }
 
     public SearchResponse search(SearchRequest req) throws IOException {
-        String tenant = req.tenant() != null ? req.tenant() : "demo";
+        String tenant = req.tenant();
+        if (tenant == null || tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
         HybridSearcher searcher = getSearcher(tenant);
         if (searcher == null) {
             throw new IllegalStateException("Index not ready for tenant: " + tenant);

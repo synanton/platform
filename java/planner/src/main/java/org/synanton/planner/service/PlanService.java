@@ -37,9 +37,13 @@ public class PlanService {
                 ? List.of() // relation verbs come from intent config in future phases
                 : List.of();
 
+        String tenant = req.tenant();
+        if (tenant == null || tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
         ClassifierRouter.Decision decision = classifierRouter.classify(
                 req.query(),
-                req.tenant() != null ? req.tenant() : "demo",
+                tenant,
                 labelIndex.getLabels(),
                 relationVerbs);
 
