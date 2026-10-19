@@ -306,3 +306,20 @@ security:
 - **Phase 4** - Fine-grained scope enforcement: `synapt` checks `SubjectAssertion.scopes` contains `search` before executing a search; `ingest` scope required for ingest.
 - **Phase 5** - MTLS: `MtlsIdentityProvider` implementation using client certificate extraction from `X-Client-Cert` header (reverse proxy mode) or TLS context.
 - **Phase 5** - OIDC federation: external IdP (Google, Azure AD) as an additional `IdentityProviderPort` implementation.
+
+## Dated note — identity boundaries fail closed (2026-10-19, #306)
+
+The demo-era fallbacks at the identity boundaries are removed:
+
+- **OIDC verification requires `tenant_id`.** A token without the claim is
+  rejected; it previously resolved to the hardcoded tenant `demo`.
+- **API-key issuance takes the key's tenant from the caller's verified
+  identity** (§4.2 above), and `POST /auth/api-keys` now requires a verified
+  caller — the security service registers the shared JWT
+  `TenantContextFilter` (`/auth/login`, `/auth/token`, `/capabilities`,
+  `/actuator` stay anonymous). Callers that relied on an implicit `demo`
+  tenant must present an explicit identity; that reliance was the defect.
+- **MCP:** a validated identity without a tenant is rejected at the filter,
+  and the endpoint no longer substitutes `demo`.
+
+These are declared breaking changes for demo scripts that omitted identity.
