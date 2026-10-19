@@ -31,7 +31,11 @@ public class SearchService {
     private final Map<String, AtomicReference<HybridSearcher>> searcherRefs = new ConcurrentHashMap<>();
     private final Map<String, Object> rebuildLocks = new ConcurrentHashMap<>();
 
-    private volatile Status status = Status.STARTING;
+    // The service itself is ready as soon as it can accept requests; tenant
+    // indexes are built on demand (/v1/search gates per tenant with 503).
+    // Previously this flipped to READY only when the boot seed initialised
+    // the demo tenant — coupling service health to demo data.
+    private volatile Status status = Status.READY;
 
     private final ExecutorService searchPool = Executors.newFixedThreadPool(
             Math.max(2, Runtime.getRuntime().availableProcessors()));
