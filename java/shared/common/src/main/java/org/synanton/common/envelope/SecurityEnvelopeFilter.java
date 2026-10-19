@@ -92,6 +92,14 @@ public final class SecurityEnvelopeFilter extends OncePerRequestFilter {
             reject(response, 403, "TENANT_DENIED");
             return;
         }
+        // The cited contract (api.md § Consumer middleware) has a second 403:
+        // an unsigned X-User-ID must agree with the validated principal.
+        String userHint = request.getHeader("X-User-ID");
+        if (userHint != null && !userHint.isBlank() && !userHint.equals(context.subjectId())) {
+            log.warn("user hint '{}' disagrees with validated principal '{}'", userHint, context.subjectId());
+            reject(response, 403, "TENANT_DENIED");
+            return;
+        }
         TenantContext.setAnonymous(context.tenantId());
         try {
             chain.doFilter(request, response);
