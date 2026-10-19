@@ -121,13 +121,13 @@ delegation, `*` issuance, actuator, D4 product call.
 | 2f | Cache key hygiene — raw bearer as Caffeine key; heap-dump exposure | Security | Security | Closed — keyed on SHA-256 (PR 226) |
 | 2d-i | Error semantics — endpoint catch leaked internals (PR 225) | Security | Security | Closed |
 | 2d-ii | Error semantics — handler `Error:` strings ride `isError:false` | Security | Security | Closed — ToolResult discriminated return; isError honored (PR 229) |
-| 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open — 2e-i/ii landed (PR 241); 2e-iii blocked on F2; 2e-iv pending executors |
+| 2e | Tenant propagation — MCP sends `X-Tenant-Id`; synapt/relix read `X-Tenant` (demo fallback) | Security | synapt/relix teams (Security shepherding) | Open — 2e-i/ii landed (PR 241); **2e-iii unblocked**: the F2 predicate (#322) replaces the header-read path; 2e-iv pending executors |
 | 3 | OpenAPI (D1) lint | Contract | DX | Closed — Vacuum CI green (PR 256) |
 | 4a | D4 product call — conform to `{query, top_k}`, divergence noted (`bc7557d`, Appendix B) | Contract | Product | Closed |
 | 4b | D4 schema validation | Contract | DX | Closed — validated against 2025-03-26 subset (networknt 3.0.8); see MCP-COMPLIANCE.md |
-| 5 | Error-model approval | Contract | Architecture | Open |
-| 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Open — evidence identified (security-provider `docs/api.md`, `design.md` §7, `README` §9.1/§11.2); audience residual named in ADR-019; awaiting A+S+DX review |
-| F2 | Trust predicate — downstream envelope verification (Wave 1 landed PR 256; tracked [#252 / SNTP-032](https://github.com/synanton/platform/issues/252)) | Security | Security | Open — hardening, not gating M0; wire format confirmed 2026-10-19 (ADR-019 dated corrections); predicate work in #252 with the audience residual named |
+| 5 | Error-model approval | Contract | Architecture | Closed — approved 2026-10-16 (freeze declaration § Row 5); INDEX state brought in line with the artifact |
+| 6 | Architecture + Security + DX sign-off — **incl. external dependencies** (auth-boundary, wildcard issuance; see freeze decl, External dependency) | Process | all three | Closed — signed 2026-10-19 (freeze declaration § Row 6); evidence: security-provider `docs/api.md` (Conventions, Consumer middleware), `design.md` §7, `README` §9.1/§11.2; residuals: audience structural (ADR-019), provider dev config (deployment), single reviewer |
+| F2 | Trust predicate — downstream envelope verification (Wave 1 landed PR 256; tracked [#252 / SNTP-032](https://github.com/synanton/platform/issues/252)) | Security | Security | In review — predicate implemented in [#322](https://github.com/synanton/platform/pull/322) (envelope filter + 14-case matrix; wire format confirmed 2026-10-19); closes on merge |
 
 **On 2e:** cross-tenant misattribution is live on the happy path — a valid,
 correctly-scoped tenant-A request scopes to `demo` downstream, no attacker required.
