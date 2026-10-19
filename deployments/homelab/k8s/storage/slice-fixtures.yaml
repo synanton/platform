@@ -1,0 +1,35 @@
+# Shared fixture tree for the slice run. NFS so BOTH synflux replicas see the
+# same documents (discovery/Acquire run on either replica); the operator
+# writes the per-run roots over the node1 export, which is already mounted on
+# the admin workstation at /mnt/wd6000.
+#
+# Preconditions (once, on node1): the directory exists and is exported.
+#   ssh node1 sudo mkdir -p /mnt/WD6000/nfs_share/synanton-slice
+#   # export already covers /mnt/WD6000/nfs_share (as-built §Storage)
+#
+# If the export path differs, change it here and in run-slice.sh's
+# FIXTURE_NFS_MOUNT.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: slice-fixtures
+  labels: {app.kubernetes.io/part-of: synanton}
+spec:
+  capacity: {storage: 10Gi}
+  accessModes: [ReadWriteMany]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  nfs:
+    server: 192.168.10.31
+    path: /mnt/WD6000/nfs_share/synanton-slice
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: slice-fixtures
+  namespace: synanton
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: ""
+  resources: {requests: {storage: 10Gi}}
+  volumeName: slice-fixtures

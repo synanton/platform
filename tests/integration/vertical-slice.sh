@@ -46,7 +46,11 @@ set -euo pipefail
 # Dev secret hygiene: source .env at the repo root when present, so the
 # secret never needs to appear in shell history or CI logs.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-[ -f "$SCRIPT_DIR/../../.env" ] && . "$SCRIPT_DIR/../../.env"
+# An explicitly provided secret wins (the cluster run passes the homelab
+# .env's value); otherwise fall back to the repo .env used by compose.
+if [ -z "${SYNANTON_JWT_SECRET:-}" ] && [ -f "$SCRIPT_DIR/../../.env" ]; then
+    . "$SCRIPT_DIR/../../.env"
+fi
 
 SYNFLUX_URL="${SYNFLUX_URL:-http://localhost:8090}"
 SYNQUEST_URL="${SYNQUEST_URL:-http://localhost:8083}"
@@ -153,6 +157,36 @@ cql_count() {  # cql_count <cql-count-query> -> row count digits
     cqlsh_query "$1" | grep -E '^[[:space:]]*[0-9]+[[:space:]]*$' | head -1 | tr -d '[:space:]'
 }
 
+# k8s: a Deployment with required anti-affinity on exactly two nodes does not
+# settle by itself after env changes — stale ReplicaSet pods linger, a surge
+# pod can stay Pending, and readiness flaps. Delete every pod not owned by the
+# current ReplicaSet, then wait for available == replicas.
+k8s_settle() {
+    local replicas="${1:-${SYNFLUX_REPLICAS:-2}}" current_rs stale
+    kubectl -n "$K8S_NAMESPACE" rollout status deploy/synflux --timeout=300s
+    # The CURRENT ReplicaSet is the one with desired replicas > 0 — NOT the
+    # newest by creation: clearing the fault env rolls back to an OLDER RS
+    # template, so "newest" would delete the healthy pods (observed: a
+    # self-inflicted churn that failed the health check).
+    current_rs=$(kubectl -n "$K8S_NAMESPACE" get rs -l app=synflux \
+        -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.replicas}{"\n"}{end}' \
+        | awk '$2 > 0 {print $1}' | head -1)
+    stale=""
+    if [ -n "$current_rs" ]; then
+        stale=$(kubectl -n "$K8S_NAMESPACE" get pods -l app=synflux \
+            -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.ownerReferences[0].name}{"\n"}{end}' \
+            | awk -v rs="$current_rs" '$2 != rs {print $1}')
+    fi
+    if [ -n "$stale" ]; then
+        echo "$stale" | xargs -r kubectl -n "$K8S_NAMESPACE" delete pod --wait=false >/dev/null
+    fi
+    for _ in $(seq 1 60); do
+        [ "$(kubectl -n "$K8S_NAMESPACE" get deploy synflux -o jsonpath='{.status.availableReplicas}' 2>/dev/null)" = "$replicas" ] && return 0
+        sleep 2
+    done
+    return 1
+}
+
 # Compose invocations carry the slice override (host-jar build path:
 # buildkit cannot reach the Maven repos from this network — the boot jars
 # are built on the HOST and the *.prebuilt.Dockerfile variants package them),
@@ -182,13 +216,17 @@ start_worker() {  # start_worker [fault-point]
             WORKER_PID=$!
             ;;
         k8s)
+            # Order matters: the fault env persists in the deployment spec, so
+            # k8s would crash-loop on every pod restart. The sequence is
+            # stop (scale 0) → set/clear the env → scale up — see
+            # stop_worker below and homelab scripts/fault-inject.sh.
             if [ -n "${1:-}" ]; then
                 kubectl -n "$K8S_NAMESPACE" set env deploy/synflux "SYNANTON_FAULT_INJECT=$1"
             else
                 kubectl -n "$K8S_NAMESPACE" set env deploy/synflux "SYNANTON_FAULT_INJECT-"
             fi
-            kubectl -n "$K8S_NAMESPACE" rollout restart deploy/synflux
-            kubectl -n "$K8S_NAMESPACE" rollout status deploy/synflux --timeout=180s
+            kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas="${SYNFLUX_REPLICAS:-2}"
+            k8s_settle "${SYNFLUX_REPLICAS:-2}" || die "synflux deployment did not settle"
             ;;
         *) die "unknown WORKER_PROFILE $WORKER_PROFILE — compose, process or k8s" ;;
     esac
@@ -225,8 +263,16 @@ stop_worker() {
             pkill -f 'SynfluxApplication' 2>/dev/null || true
             sleep 2
             ;;
-        k8s) kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=0
-             kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=1 ;;
+        k8s) # Scale to ZERO only — the caller clears the fault env and scales
+             # back up (scale-0 → clear → scale-up). Scaling straight back up
+             # here would restart pods with the fault still in the spec.
+             kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=0
+             # Wait until the old pods are actually gone: their anti-affinity
+             # occupancy blocks the replacements scheduled next.
+             for _ in $(seq 1 60); do
+                 [ -z "$(kubectl -n "$K8S_NAMESPACE" get pods -l app=synflux --no-headers 2>/dev/null)" ] && break
+                 sleep 2
+             done ;;
     esac
 }
 
@@ -246,8 +292,11 @@ case "$WORKER_PROFILE" in
     compose) FIXTURE_ROOT="${FIXTURE_ROOT:-/demo-data/documents}" ;;
     *)       FIXTURE_ROOT="${FIXTURE_ROOT:-$FIXTURE_HOST_DIR}" ;;
 esac
-[ -n "$(ls -A "$FIXTURE_HOST_DIR" 2>/dev/null)" ] || {
-    echo "Fixture root is empty: $FIXTURE_HOST_DIR" >&2; exit 1; }
+# The run writes its own per-run root; the baseline tree may legitimately be
+# empty (NFS fixture volume). What matters is writability — and, for compose,
+# that the worker container can see the tree (checked below).
+[ -w "$FIXTURE_HOST_DIR" ] || {
+    echo "Fixture root is not writable: $FIXTURE_HOST_DIR" >&2; exit 1; }
 [ "${#SYNANTON_JWT_SECRET}" -ge 32 ] || {
     echo "SYNANTON_JWT_SECRET too short (${#SYNANTON_JWT_SECRET} bytes, need >= 32 — set it in .env)" >&2; exit 1; }
 case "$SYNANTON_JWT_SECRET" in
@@ -274,6 +323,12 @@ cleanup() {
     local exit_code=$?
     if [ -d "$RUN_FIXTURE_HOST_DIR" ]; then
         rm -rf "$RUN_FIXTURE_HOST_DIR"
+    fi
+    # A failed run may leave the fault env in the Deployment spec — k8s
+    # would then crash-loop every replacement pod (the documented hazard).
+    # Clear it on exit, idempotently (the successful path already cleared it).
+    if [ "$WORKER_PROFILE" = "k8s" ] && [ -n "${K8S_NAMESPACE:-}" ]; then
+        kubectl -n "$K8S_NAMESPACE" set env deploy/synflux SYNANTON_FAULT_INJECT- >/dev/null 2>&1 || true
     fi
     trap - EXIT INT TERM
     exit "$exit_code"

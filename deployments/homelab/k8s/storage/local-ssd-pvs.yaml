@@ -1,0 +1,112 @@
+# Static PVs for the slice. The `local-ssd` StorageClass is shared with
+# gpu-runtime (models-node2/3 are bound to it) — do NOT modify the class.
+# These PVs carry an explicit `reclaimPolicy: Retain` (PV-level policy beats
+# the class default of Delete): a PVC delete must never delete Cassandra
+# data.
+#
+# Paths live under /mnt/local-fast (the hostPath the speech/gpu workloads
+# already use on these nodes). Create them on each node first:
+#   ssh nodeN sudo mkdir -p /mnt/local-fast/cassandra-N /mnt/local-fast/postgres /mnt/local-fast/minio /mnt/local-fast/synquest
+#
+# One Cassandra replica per node (RF=3 requires distinct nodes).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cassandra-data-node1
+  labels: {app.kubernetes.io/part-of: synanton, tier: local-ssd}
+spec:
+  capacity: {storage: 50Gi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-ssd
+  local: {path: /mnt/local-fast/cassandra-0}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - {key: kubernetes.io/hostname, operator: In, values: [node1]}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cassandra-data-node2
+  labels: {app.kubernetes.io/part-of: synanton, tier: local-ssd}
+spec:
+  capacity: {storage: 50Gi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-ssd
+  local: {path: /mnt/local-fast/cassandra-1}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - {key: kubernetes.io/hostname, operator: In, values: [node2]}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cassandra-data-node3
+  labels: {app.kubernetes.io/part-of: synanton, tier: local-ssd}
+spec:
+  capacity: {storage: 50Gi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-ssd
+  local: {path: /mnt/local-fast/cassandra-2}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - {key: kubernetes.io/hostname, operator: In, values: [node3]}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-data-node1
+  labels: {app.kubernetes.io/part-of: synanton, tier: local-ssd}
+spec:
+  capacity: {storage: 20Gi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-ssd
+  local: {path: /mnt/local-fast/postgres}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - {key: kubernetes.io/hostname, operator: In, values: [node1]}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-data-node1
+  labels: {app.kubernetes.io/part-of: synanton, tier: local-ssd}
+spec:
+  capacity: {storage: 50Gi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-ssd
+  local: {path: /mnt/local-fast/minio}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - {key: kubernetes.io/hostname, operator: In, values: [node1]}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: synquest-index-node1
+  labels: {app.kubernetes.io/part-of: synanton, tier: local-ssd}
+spec:
+  capacity: {storage: 20Gi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-ssd
+  local: {path: /mnt/local-fast/synquest}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - {key: kubernetes.io/hostname, operator: In, values: [node1]}

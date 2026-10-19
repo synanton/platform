@@ -21,6 +21,12 @@
 # requires basic auth), and outbound internet for the mirrored images.
 set -euo pipefail
 
+case "${1:-}" in
+    *=*) echo "error: '$1' looks like an environment assignment. Use the env prefix instead:" >&2
+         echo "  PREBUILT=0 ./mirror-images.sh         # or PREBUILT=1 (the default)" >&2
+         echo "  ./mirror-images.sh                    # registry defaults to local-registry:5000" >&2
+         exit 1 ;;
+esac
 REGISTRY="${1:-local-registry:5000}"
 TAG="slice-$(date +%Y%m%d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,8 +44,11 @@ pass() { printf '\033[1;32m[mirror]\033[0m %s\n' "$*"; }
 command -v docker >/dev/null || die "docker not found on this machine"
 [ -f "$PLATFORM_ROOT/deployments/docker/synflux.Dockerfile" ] \
     || die "platform repo not found at $PLATFORM_ROOT"
-[ -f "$CONTENT_EXTRACTOR_ROOT/deployments/docker/extraction-gateway.Dockerfile" ] \
-    || die "content_extractor repo not found at $CONTENT_EXTRACTOR_ROOT (set CONTENT_EXTRACTOR_ROOT)"
+# NOTE: the sibling repo keeps the singular `deployment/` (only this repo
+# renamed to `deployments/`) — do not "fix" this to the plural.
+CONTENT_EXTRACTOR_DOCKERFILE="$CONTENT_EXTRACTOR_ROOT/deployment/docker/extraction-gateway.Dockerfile"
+[ -f "$CONTENT_EXTRACTOR_DOCKERFILE" ] \
+    || die "content_extractor not found: expected $CONTENT_EXTRACTOR_DOCKERFILE (set CONTENT_EXTRACTOR_ROOT)"
 
 HOMELAB_CONFIG="$SCRIPT_DIR/../config"
 
@@ -92,12 +101,21 @@ ensure_env_file() {
 }
 
 ensure_registry_login() {
-    # Credentials from .env win; the probe is the same endpoint kubelet's
-    # image pull will hit. 200 = authed, 401 = bad creds, else = unreachable.
+    # Credentials from .env win; the probe hits the same endpoint kubelet's
+    # image pull will hit. The registry is HTTPS with a self-signed cert
+    # (plain HTTP returns nginx's 400) — probe HTTPS first with -k, then fall
+    # back to HTTP. 200 = authed, 401/400 = needs auth, 000 = unreachable.
     local probe
-    probe=$(curl -s -o /dev/null -w '%{http_code}' -m 5 \
+    probe=$(curl -sk -o /dev/null -w '%{http_code}' -m 5 \
         ${REGISTRY_USER:+-u "$REGISTRY_USER:$REGISTRY_PASSWORD"} \
-        "http://${REGISTRY}/v2/" 2>/dev/null || echo 000)
+        "https://${REGISTRY}/v2/" 2>/dev/null || true)
+    probe="${probe:-000}"
+    if [ "$probe" = "000" ]; then
+        probe=$(curl -s -o /dev/null -w '%{http_code}' -m 5 \
+            ${REGISTRY_USER:+-u "$REGISTRY_USER:$REGISTRY_PASSWORD"} \
+            "http://${REGISTRY}/v2/" 2>/dev/null || true)
+        probe="${probe:-000}"
+    fi
     case "$probe" in
         200) pass "registry reachable and authed (${REGISTRY})"; return 0 ;;
         401|400)
@@ -142,25 +160,66 @@ manual_hint() {
 }
 
 # ── 1. Built images (platform + content_extractor source) ───────────────────
+# PREBUILT=1 (default here): build the boot jars on the HOST (warm Gradle
+# cache; buildkit cannot reach the Maven repos on this network — TLS resets
+# observed 2026-10-18) and package them with the *.prebuilt.Dockerfile
+# variants from a tiny staging context. PREBUILT=0 uses the multi-stage
+# Dockerfiles (works where buildkit has Maven egress).
+PREBUILT="${PREBUILT:-1}"
+
+prebuilt_stage() {  # prebuilt_stage <name> <host-jar-glob>
+    local name="$1" jar_glob="$2" stage
+    stage="$(mktemp -d)"
+    mkdir -p "$stage/java/$name/build/libs"
+    cp $jar_glob "$stage/java/$name/build/libs/"
+    echo "$stage"
+}
+
 build_and_push() {
     local name="$1" context="$2" dockerfile="$3"
     local dest="${REGISTRY}/synanton/${name}:${TAG}"
-    log "building ${name}:${TAG} from $(basename "$(dirname "$dockerfile")")"
-    docker build -f "$dockerfile" -t "$dest" "$context" \
-        || { note "MANUAL STEP REQUIRED for ${name} — build failed; fix the source or build by hand:"
-             printf '      docker build -f %s -t %s %s\n      docker push %s\n' "$dockerfile" "$dest" "$context" "$dest"
-             FAILED_IMAGES+=("$dest")
-             return 1; }
+    if [ "$PREBUILT" = "1" ]; then
+        dockerfile="$PLATFORM_ROOT/deployments/docker/${name}.prebuilt.Dockerfile"
+        [ -f "$dockerfile" ] || { note "no prebuilt Dockerfile for ${name}"; build_full "$name" "$context" "$dockerfile"; return $?; }
+        log "packaging host-built ${name}:${TAG}"
+        # The gateway jar comes from the sibling repo.
+        local jar_glob
+        case "$name" in
+            extraction-gateway) jar_glob="$CONTENT_EXTRACTOR_ROOT/java/extraction-gateway/build/libs/extraction-gateway*.jar" ;;
+            *)                  jar_glob="$PLATFORM_ROOT/java/$name/build/libs/$name*.jar" ;;
+        esac
+        local stage; stage="$(prebuilt_stage "$name" "$jar_glob")"
+        docker build -f "$dockerfile" -t "$dest" "$stage" \
+            || { note "build failed for ${name} — are the host jars built? (run the gradle bootJar first)"; FAILED_IMAGES+=("$dest"); rm -rf "$stage"; return 1; }
+        rm -rf "$stage"
+    else
+        log "building ${name}:${TAG} from the multi-stage Dockerfile"
+        docker build -f "$dockerfile" -t "$dest" "$context" \
+            || { note "MANUAL STEP REQUIRED for ${name} — build failed; fix the source or build by hand:"
+                 printf '      docker build -f %s -t %s %s\n      docker push %s\n' "$dockerfile" "$dest" "$context" "$dest"
+                 FAILED_IMAGES+=("$dest")
+                 return 1; }
+    fi
     docker push "$dest" \
         || { note "push failed — is this machine logged in?  docker login ${REGISTRY}"
              manual_hint "$dest" "$dest"; return 1; }
     echo "  → ${dest}"
 }
 
+# Host jars for the prebuilt path (no-op if PREBUILT=0).
+build_host_jars() {
+    [ "$PREBUILT" = "1" ] || return 0
+    log "building boot jars on the host"
+    "$PLATFORM_ROOT/gradlew" -q -p "$PLATFORM_ROOT" \
+        :java:synflux:bootJar :java:synquest:bootJar -x test
+    "$CONTENT_EXTRACTOR_ROOT/gradlew" -q -p "$CONTENT_EXTRACTOR_ROOT" \
+        :java:extraction-gateway:bootJar -x test
+}
+
 log "built images (tag ${TAG})"
 build_and_push synflux              "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synflux.Dockerfile"  || true
 build_and_push synquest             "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synquest.Dockerfile" || true
-build_and_push extraction-gateway   "$CONTENT_EXTRACTOR_ROOT"  "$CONTENT_EXTRACTOR_ROOT/deployments/docker/extraction-gateway.Dockerfile" || true
+build_and_push extraction-gateway   "$CONTENT_EXTRACTOR_ROOT"  "$CONTENT_EXTRACTOR_ROOT/deployment/docker/extraction-gateway.Dockerfile" || true
 
 # ── 2. Mirrored third-party images (pinned; record digests at freeze) ───────
 declare -A IMAGES=(
@@ -181,11 +240,26 @@ for local_name in "${!IMAGES[@]}"; do
   tag="${src##*:}"
   dest="${REGISTRY}/synanton/${local_name}:${tag}"
   echo "== ${src} -> ${dest}"
-  if ! docker pull "${src}" 2>/dev/null; then
-      manual_hint "$src" "$dest"
-      continue
+  # mirror-first: Docker Hub pulls hang on this network; mirror.gcr.io works.
+  # docker.io is the fallback for images the mirror does not carry.
+  # Offline-first: an image already present locally needs no pull (the
+  # compose runs cache minio/mc/cassandra locally). Otherwise mirror-first
+  # (Docker Hub pulls hang on this network), docker.io as the last resort.
+  # NOTE: a mirror pull lands under the MIRROR's name — tag from whatever
+  # name now holds the image, not blindly from $src.
+  local_image="$src"
+  if ! docker image inspect "$local_image" >/dev/null 2>&1; then
+      mirror_src="mirror.gcr.io/${src#docker.io/}"
+      if docker pull "$mirror_src" >/dev/null 2>&1; then
+          local_image="$mirror_src"
+      elif docker pull "${src}" >/dev/null 2>&1; then
+          local_image="$src"
+      else
+          manual_hint "$src" "$dest"
+          continue
+      fi
   fi
-  docker tag "${src}" "${dest}"
+  docker tag "$local_image" "${dest}"
   if ! docker push "${dest}" 2>/dev/null; then
       note "push failed — is this machine logged in?  docker login ${REGISTRY}"
       manual_hint "$src" "$dest"

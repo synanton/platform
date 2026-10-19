@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: synflux
+  namespace: synanton
+spec:
+  # NodePort: the acceptance run needs a stable address across pod restarts
+  # (fault injection replaces pods; port-forwards bind to one pod and die).
+  type: NodePort
+  selector: {app: synflux}
+  ports:
+    - {name: http, port: 8090, nodePort: 30090}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: synflux
+  namespace: synanton
+spec:
+  replicas: 2
+  strategy:
+    # A required anti-affinity across exactly TWO compute nodes cannot host a
+    # surge pod (the default maxSurge=1 would need a third node) — the rollout
+    # deadlocks. Take one replica down first instead.
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 0, maxUnavailable: 1}
+  selector:
+    matchLabels: {app: synflux}
+  template:
+    metadata:
+      labels: {app: synflux}
+    spec:
+      imagePullSecrets: [{name: local-registry-cred}]
+      affinity:
+        podAntiAffinity:
+          # REQUIRED — the P1 lease-loss and set-race tests depend on the two
+          # replicas living on different nodes. `preferred` would let the
+          # scheduler co-locate them under pressure and silently invalidate
+          # the concurrency tests (a P1 test would pass as a false positive).
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels: {app: synflux}
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - {key: synanton.io/role, operator: In, values: [compute]}
+      containers:
+        - name: synflux
+          image: local-registry:5000/synanton/synflux:PLACEHOLDER_TAG
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: {name: synflux-config}
+          env:
+            # envFrom would expose the secret's key name verbatim (`secret`);
+            # the app resolves SYNANTON_JWT_SECRET explicitly.
+            - {name: SYNANTON_JWT_SECRET, valueFrom: {secretKeyRef: {name: synanton-jwt, key: secret}}}
+            - {name: MINIO_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-cred, key: user}}}
+            - {name: MINIO_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-cred, key: password}}}
+          ports:
+            - {name: http, containerPort: 8090}
+          resources:
+            requests: {cpu: "2", memory: 4Gi}
+            limits:   {cpu: "6", memory: 8Gi}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          volumeMounts:
+            - {name: fixtures, mountPath: /fixtures, readOnly: true}
+            # Shared across replicas: a workflow resumed on the other replica
+            # must find the acquisition bytes. A per-replica cache would turn
+            # recovery into a quarantine.
+            - {name: content-cache, mountPath: /content-cache}
+      volumes:
+        - name: fixtures
+          persistentVolumeClaim: {claimName: slice-fixtures}
+        - name: content-cache
+          persistentVolumeClaim: {claimName: content-cache}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: content-cache
+  namespace: synanton
+spec:
+  # RWX: shared between the two replicas (Longhorn's share-manager NFS).
+  accessModes: [ReadWriteMany]
+  storageClassName: longhorn
+  resources: {requests: {storage: 5Gi}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: synflux-config
+  namespace: synanton
+data:
+  SERVER_PORT: "8090"
+  CASSANDRA_CONTACT_POINTS: "cassandra-0.cassandra-headless.synanton.svc.cluster.local,cassandra-1.cassandra-headless.synanton.svc.cluster.local,cassandra-2.cassandra-headless.synanton.svc.cluster.local"
+  CASSANDRA_PORT: "9042"
+  CASSANDRA_LOCAL_DC: "datacenter1"
+  # Fixtures live on the shared NFS-backed volume; run-slice.sh writes the
+  # per-run root there before invoking the acceptance script.
+  SYNFLUX_FIXTURE_ROOT: "/fixtures"
+  SYNFLUX_CONTENT_CACHE_BACKEND: "filesystem"
+  SYNFLUX_CONTENT_CACHE_ROOT: "/content-cache"
+  # Initial cluster run: lexical-only (no TEI). The dense leg returns via
+  # gpu-runtime's homelab/external TEI deployments when needed.
+  SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "false"
+  EXTRACTION_CLIENT_ENABLED: "true"
+  EXTRACTION_ENDPOINT: "extraction-gateway:9091"
+  MINIO_ENDPOINT: "http://minio:9000"
+  # Outbox-only eventing for the cluster run: KAFKA_BOOTSTRAP_SERVERS stays
+  # unset (the Kafka adapter is a config choice — see #301).
+  #
+  # Fault injection is OFF: scripts/fault-inject.sh sets the env and clears
+  # it after the crash (one-shot per process; k8s would otherwise crash-loop).
+  SYNANTON_FAULT_INJECT: ""
