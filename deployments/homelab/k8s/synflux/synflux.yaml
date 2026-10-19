@@ -15,6 +15,12 @@ metadata:
   namespace: synanton
 spec:
   replicas: 2
+  strategy:
+    # A required anti-affinity across exactly TWO compute nodes cannot host a
+    # surge pod (the default maxSurge=1 would need a third node) — the rollout
+    # deadlocks. Take one replica down first instead.
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 0, maxUnavailable: 1}
   selector:
     matchLabels: {app: synflux}
   template:
