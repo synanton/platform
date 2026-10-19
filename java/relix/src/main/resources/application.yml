@@ -41,3 +41,15 @@ ingestion-cache:
   port: ${CASSANDRA_PORT:9042}
   keyspace: ingestion_cache
   local-dc: ${CASSANDRA_LOCAL_DC:datacenter1}
+  envelope:
+    # Downstream trust predicate (ADR-019 / #252): every business route
+    # requires a security-context envelope validated by the security-provider.
+    # Exempt operational routes are the exact EnvelopeExemptRoutes allowlist.
+    enabled: true
+    provider-url: ${SECURITY_PROVIDER_URL:http://security-provider:8080}
+    issuer: synanton-security-provider
+    # Single shared internal marker — not a per-service audience (ADR-019
+    # dated correction). Carried for parity/logging, not replay protection.
+    audience: synanton-internal
+    cache-ttl-seconds: 60
+    timeout-ms: 2000

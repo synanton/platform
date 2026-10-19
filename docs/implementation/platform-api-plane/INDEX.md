@@ -473,3 +473,15 @@ Divergences to reconcile:
 - `docs/architecture/synanton-platform-architecture-1.0.md` - §11, §14, §15
 - `docs/implementation/eventing-workflow-plane/INDEX.md` - joint owner of the `ExtractionStatus`/Operation reconciliation task (PAPI-3 deliverable 4)
 - `docs/implementation/content-extraction-plane/INDEX.md` - precedent for this document's phase/deliverable/DoD structure
+
+**F2 predicate wiring (2026-10-19, #252):** `SecurityEnvelopeFilter` +
+`HttpEnvelopeVerifier` (shared/common) are registered at HIGHEST_PRECEDENCE
+in synapt and relix. Every business route requires a validated
+security-context envelope; exempt operational routes are the exact
+`EnvelopeExemptRoutes` allowlist. The inbound `X-Tenant-ID` / `?tenant_id=`
+cross-check (403 on mismatch) is the behavior the provider's Go middleware
+has always had and the Java consumers lacked. Dev: `scripts/run-security-provider.sh`
+(Go source path; the provider's own compose stack is in its repo). The
+identity cache is bounded by `min(configured TTL, envelope expiry)` (#242).
+Audience is a single shared marker, not a per-service binding — see ADR-019's
+dated correction.

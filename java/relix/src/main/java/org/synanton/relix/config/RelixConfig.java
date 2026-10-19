@@ -63,4 +63,23 @@ public class RelixConfig {
     GraphConnector nebulaGraphConnector(GraphLoader graphLoader, NebulaSession nebulaSession, RelixProperties props) {
         return new NebulaGraphConnector(graphLoader, nebulaSession, props.graph().nebula().space());
     }
+
+    @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            name = "synanton.envelope.enabled", havingValue = "true", matchIfMissing = true)
+    org.springframework.boot.web.servlet.FilterRegistrationBean<
+            org.synanton.common.envelope.SecurityEnvelopeFilter> securityEnvelopeFilter(
+            @org.springframework.beans.factory.annotation.Value("${synanton.envelope.provider-url}") String providerUrl,
+            @org.springframework.beans.factory.annotation.Value("${synanton.envelope.issuer}") String issuer,
+            @org.springframework.beans.factory.annotation.Value("${synanton.envelope.audience}") String audience,
+            @org.springframework.beans.factory.annotation.Value("${synanton.envelope.cache-ttl-seconds}") long cacheTtlSeconds,
+            @org.springframework.beans.factory.annotation.Value("${synanton.envelope.timeout-ms}") long timeoutMs) {
+        var verifier = new org.synanton.common.envelope.HttpEnvelopeVerifier(
+                java.net.URI.create(providerUrl), java.time.Duration.ofMillis(timeoutMs));
+        var filter = new org.synanton.common.envelope.SecurityEnvelopeFilter(
+                verifier, issuer, audience, java.time.Duration.ofSeconds(cacheTtlSeconds));
+        var registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+        registration.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
 }
