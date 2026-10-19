@@ -76,6 +76,8 @@ public class OperationController {
         Instant completedAt,
         Progress progress,
         String outcome,
+        /** W2 open-typed details: feature_states, payload_descriptor (#294). */
+        Map<String, Object> details,
         Map<String, Object> error
     ) {
         private static OperationResource from(
@@ -94,7 +96,8 @@ public class OperationController {
             return new OperationResource(
                 row.operationId(), row.type(), row.status(), new RequestedBy(row.requestedByPrincipalId()),
                 row.tenantId(), row.createdAt(), row.startedAt(), row.completedAt(),
-                new Progress(row.progressCompleted(), row.progressTotal()), row.outcome(), problem
+                new Progress(row.progressCompleted(), row.progressTotal()), row.outcome(),
+                details(objectMapper, row.detailsJson()), problem
             );
         }
 

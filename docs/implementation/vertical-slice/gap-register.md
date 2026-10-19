@@ -23,12 +23,14 @@ reported as success by omission.
 (`audio`, `image`, `video` in v1.21). The slice's current path (`document_text`,
 `document_pdf`) has both adapters active, so the gap does not fire today.
 
-**Resolution:** `details.feature_states` on the Operation (W2 `details` is
-open-typed — no contract revision); `outcome: PARTIAL` when any requested
-feature is `FEATURE_UNSUPPORTED` or `FEATURE_NOT_APPLICABLE`. Test:
-`FEATURE_UNSUPPORTED → outcome: PARTIAL`.
+**Resolution:** `details.feature_states` + `details.payload_descriptor` on the
+Operation (W2 `details` is open-typed — no contract revision; persisted as
+`operations.details_json`, V15). `outcome: PARTIAL` when any requested feature is
+`FEATURE_UNSUPPORTED`; `FEATURE_NOT_APPLICABLE` means the feature was not
+requested and is not an omission. Tests: `unsupportedRequestedFeatureForcesPartial`,
+`shouldCarryFeatureStatesAndPayloadDescriptorFromThePlane`.
 
-**Owner:** unassigned. **Ticket:** #294.
+**Owner:** unassigned. **Ticket:** #294. **Status:** resolved (#294).
 
 ---
 

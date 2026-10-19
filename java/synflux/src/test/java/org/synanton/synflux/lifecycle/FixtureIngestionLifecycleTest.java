@@ -117,7 +117,7 @@ class FixtureIngestionLifecycleTest {
         IngestionRunRow first = ingest(context, sourceId, resourceId, firstRef, firstBytes,
             (ignored, versionId) -> {
                 publications.incrementAndGet();
-                return UUID.randomUUID();
+                return new FixtureIngestionService.PublishedContent(UUID.randomUUID());
             });
         assertThat(first.status()).isEqualTo("COMPLETED");
         assertThat(first.result().changed()).isEqualTo(1);
@@ -138,7 +138,7 @@ class FixtureIngestionLifecycleTest {
         IngestionRunRow unchanged = ingest(context, sourceId, resourceId, firstRef, firstBytes,
             (ignored, versionId) -> {
                 publications.incrementAndGet();
-                return UUID.randomUUID();
+                return new FixtureIngestionService.PublishedContent(UUID.randomUUID());
             });
         assertThat(unchanged.status()).isEqualTo("UNCHANGED");
         assertThat(unchanged.result().unchanged()).isEqualTo(1);
@@ -150,7 +150,7 @@ class FixtureIngestionLifecycleTest {
             firstModified.plusSeconds(60), 6);
         byte[] changedBytes = "second".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         IngestionRunRow changed = ingest(context, sourceId, resourceId, changedRef, changedBytes,
-            (ignored, versionId) -> UUID.randomUUID());
+            (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
         assertThat(changed.result().changed()).isEqualTo(1);
         assertThat(versions(context, sourceId, resourceId)).hasSize(2);
         assertThat(cache.readSourceVersion(context.tenantId(), "file", sourceId, resourceId,
@@ -169,9 +169,9 @@ class FixtureIngestionLifecycleTest {
         byte[] bytes = "same bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         UUID sharedContentRefId = UUID.randomUUID();
         ingest(context, "fixture-corpus", "a/guide.md", fileRef("file:///a/guide.md", modified, bytes.length),
-            bytes, (ignored, versionId) -> sharedContentRefId);
+            bytes, (ignored, versionId) -> new FixtureIngestionService.PublishedContent(sharedContentRefId));
         ingest(context, "fixture-corpus", "b/guide.md", fileRef("file:///b/guide.md", modified, bytes.length),
-            bytes, (ignored, versionId) -> sharedContentRefId);
+            bytes, (ignored, versionId) -> new FixtureIngestionService.PublishedContent(sharedContentRefId));
 
         SourceVersionRow first = versions(context, "fixture-corpus", "a/guide.md").getFirst();
         SourceVersionRow second = versions(context, "fixture-corpus", "b/guide.md").getFirst();
@@ -190,8 +190,8 @@ class FixtureIngestionLifecycleTest {
         ContentRef ref = fileRef("file:///shared/guide.md", modified, bytes.length);
         UUID sharedContentRefId = UUID.randomUUID();
 
-        ingest(firstTenant, "fixture-corpus", "guide.md", ref, bytes, (ignored, versionId) -> sharedContentRefId);
-        ingest(secondTenant, "fixture-corpus", "guide.md", ref, bytes, (ignored, versionId) -> sharedContentRefId);
+        ingest(firstTenant, "fixture-corpus", "guide.md", ref, bytes, (ignored, versionId) -> new FixtureIngestionService.PublishedContent(sharedContentRefId));
+        ingest(secondTenant, "fixture-corpus", "guide.md", ref, bytes, (ignored, versionId) -> new FixtureIngestionService.PublishedContent(sharedContentRefId));
 
         SourceVersionRow first = versions(firstTenant, "fixture-corpus", "guide.md").getFirst();
         SourceVersionRow second = versions(secondTenant, "fixture-corpus", "guide.md").getFirst();
@@ -215,10 +215,10 @@ class FixtureIngestionLifecycleTest {
         Instant modified = Instant.parse("2026-10-11T12:00:00Z");
         ContentRef ref = fileRef("file:///conflict/document.md", modified, 4);
         ingest(context, sourceId, resourceId, ref, "one!".getBytes(java.nio.charset.StandardCharsets.UTF_8),
-            (ignored, versionId) -> UUID.randomUUID());
+            (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
 
         IngestionRunRow conflict = ingest(context, sourceId, resourceId, ref,
-            "two?".getBytes(java.nio.charset.StandardCharsets.UTF_8), (ignored, versionId) -> UUID.randomUUID());
+            "two?".getBytes(java.nio.charset.StandardCharsets.UTF_8), (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
         var error = cache.readIngestionError(context.tenantId(), UUID.fromString(conflict.errorRef())).orElseThrow();
         assertThat(conflict.status()).isEqualTo("FAILED");
         assertThat(error.code()).isEqualTo("RESOURCE_CONFLICT");
@@ -280,7 +280,7 @@ class FixtureIngestionLifecycleTest {
         byte[] bytes = "policy".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         Instant modified = Instant.parse("2026-10-12T10:00:00Z");
         ingest(context, sourceId, resourceId, fileRef("file:///legal/policy.md", modified, bytes.length),
-            bytes, (ignored, versionId) -> UUID.randomUUID());
+            bytes, (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
 
         IngestionRunRow incomplete = lifecycle.recordDeletion(
             context, UUID.randomUUID(), UUID.randomUUID(), "file", sourceId, resourceId,
@@ -317,7 +317,7 @@ class FixtureIngestionLifecycleTest {
         IngestionRunRow recreated = afterDeletion.ingest(
             context, UUID.randomUUID(), UUID.randomUUID(), "file", sourceId, resourceId,
             fileRef("file:///legal/policy.md", modified, bytes.length), bytes,
-            testReference(context.tenantId()), (ignored, versionId) -> UUID.randomUUID());
+            testReference(context.tenantId()), (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
         assertThat(recreated.result().changed()).isEqualTo(1);
         List<SourceVersionRow> allVersions = versions(context, sourceId, resourceId);
         assertThat(allVersions).extracting(SourceVersionRow::versionId)
@@ -348,7 +348,7 @@ class FixtureIngestionLifecycleTest {
         assertThat(error.retryable()).isTrue();
 
         IngestionRunRow retried = lifecycle.ingest(context, UUID.randomUUID(), operationId, ref.scheme(), sourceId,
-            resourceId, ref, bytes, testReference(context.tenantId()), (ignored, versionId) -> UUID.randomUUID());
+            resourceId, ref, bytes, testReference(context.tenantId()), (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
         assertThat(retried.status()).isEqualTo("COMPLETED");
         assertThat(retried.operationId()).isEqualTo(operationId);
         assertThat(versions(context, sourceId, resourceId)).hasSize(1);
@@ -430,7 +430,7 @@ class FixtureIngestionLifecycleTest {
         // Legacy overload delegates with a blank Content Cache reference: publication
         // must be withheld, never persisted with an empty reference.
         IngestionRunRow run = lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(),
-            "invariant-source", "guide.md", ref, bytes, (ignored, versionId) -> UUID.randomUUID());
+            "invariant-source", "guide.md", ref, bytes, (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
         var entries = cache.listManifestEntries(context.tenantId(), run.runId());
         var error = cache.readIngestionError(context.tenantId(), UUID.fromString(run.errorRef())).orElseThrow();
 
@@ -531,7 +531,7 @@ class FixtureIngestionLifecycleTest {
 
         IngestionRunRow run = lifecycle.ingest(context, UUID.randomUUID(), UUID.randomUUID(), ref.scheme(),
             "local-fixture", resourceId, ref, acquiredBytes, testReference(context.tenantId()),
-            (ignored, versionId) -> UUID.randomUUID());
+            (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
 
         assertThat(run.status()).isEqualTo("COMPLETED");
         assertThat(versions(context, "local-fixture", "manuals/quick start.md")).hasSize(1);
@@ -1221,7 +1221,7 @@ class FixtureIngestionLifecycleTest {
         IngestionRunRow run = lifecycle.ingest(
             context, UUID.randomUUID(), UUID.randomUUID(), "file", "outbox-source", "guide.md",
             fileRef("file:///outbox/guide.md", null, bytes.length), bytes,
-            testReference(context.tenantId()), (ignored, versionId) -> UUID.randomUUID());
+            testReference(context.tenantId()), (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
         SourceOutboxRow original = cache.listSourceOutbox(
             context.tenantId(), "file", "outbox-source", "guide.md").getFirst();
         Instant failedAt = Instant.parse("2026-10-17T12:01:00Z");

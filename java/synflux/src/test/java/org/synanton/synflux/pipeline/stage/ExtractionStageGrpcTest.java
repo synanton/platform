@@ -27,6 +27,8 @@ import org.synanton.extraction.v1.ExtractionStatus;
 import org.synanton.extraction.v1.GetOperationsRequest;
 import org.synanton.extraction.v1.GetOperationsResponse;
 import org.synanton.extraction.v1.GetResultRequest;
+import org.synanton.extraction.v1.FeatureState;
+import org.synanton.extraction.v1.PayloadDescriptor;
 import org.synanton.extraction.v1.StructuredPayload;
 import org.synanton.extraction.v1.SubmitExtractionRequest;
 
@@ -118,6 +120,48 @@ class ExtractionStageGrpcTest {
                 eq(HOT_BUCKET), eq(TENANT + "/" + contentRefId), any(InputStream.class),
                 sizeCaptor.capture(), eq("application/pdf"));
         assertThat(sizeCaptor.getValue()).isEqualTo((long) bytes.length);
+    }
+
+    @Test
+    void shouldCarryFeatureStatesAndPayloadDescriptorFromThePlane() {
+        DocumentPayload payload = DocumentPayload.newBuilder()
+                .setMediaType("application/pdf")
+                .setFlattenedText("Scanned page")
+                .build();
+        mockService.syncResult = ExtractionResult.newBuilder()
+                .setOperationId("op-feature")
+                .setStatus(ExtractionStatus.STATUS_PARTIAL)
+                .setFlattenedText(payload.getFlattenedText())
+                .setPayload(StructuredPayload.newBuilder()
+                        .setInlineContent(payload.toByteString())
+                        .setPayloadDescriptor(PayloadDescriptor.newBuilder()
+                                .setSchemaId("synanton.extraction.document")
+                                .setSchemaVersion("1.0")
+                                .setProcessorId("pdf-adapter")
+                                .setProcessorVersion("opendataloader-2.1.1")
+                                .build())
+                        .build())
+                .putFeatureStates("text", FeatureState.FEATURE_APPLIED)
+                .putFeatureStates("ocr", FeatureState.FEATURE_UNSUPPORTED)
+                .build();
+
+        ObjectStorePort objectStore = mock(ObjectStorePort.class);
+        ExtractionStage stage = buildStage(objectStore, "sync", ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA);
+        byte[] bytes = "irrelevant, plane response is mocked".getBytes();
+        AcquiredDocument doc = new AcquiredDocument(
+                new ContentRef("file", "file:///tmp/scan.pdf", "application/pdf", bytes.length, Instant.now()),
+                bytes, "sha", "application/pdf", "file:///tmp/scan.pdf", UUID.randomUUID());
+
+        ParsedDocument parsed = stage.apply(doc, new StageContext(TENANT, "job-feature", null));
+
+        // The anti-omission input (#294) and the §12 provenance descriptor.
+        assertThat(parsed.featureStates())
+                .containsEntry("text", "FEATURE_APPLIED")
+                .containsEntry("ocr", "FEATURE_UNSUPPORTED");
+        assertThat(parsed.payloadDescriptor())
+                .containsEntry("processor_id", "pdf-adapter")
+                .containsEntry("processor_version", "opendataloader-2.1.1")
+                .containsEntry("schema_id", "synanton.extraction.document");
     }
 
     @Test

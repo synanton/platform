@@ -171,7 +171,8 @@ public final class FixtureIngestionService {
 
             UUID contentRefId;
             try {
-                contentRefId = publisher.publish(bytes, versionId);
+                PublishedContent published = publisher.publish(bytes, versionId);
+                contentRefId = published.contentRefId();
             } catch (Exception publicationFailure) {
                 if (publicationFailure instanceof CancellationException cancellation) {
                     throw cancellation;
@@ -802,9 +803,18 @@ public final class FixtureIngestionService {
         }
     }
 
+    /** What the publish callback learned about the payload (#294). */
+    public record PublishedContent(UUID contentRefId,
+                                   java.util.Map<String, String> featureStates,
+                                   java.util.Map<String, String> payloadDescriptor) {
+        public PublishedContent(UUID contentRefId) {
+            this(contentRefId, java.util.Map.of(), java.util.Map.of());
+        }
+    }
+
     @FunctionalInterface
     public interface ContentPublisher {
-        UUID publish(byte[] bytes, UUID sourceVersionId) throws Exception;
+        PublishedContent publish(byte[] bytes, UUID sourceVersionId) throws Exception;
     }
 
     private static final class ContentPublicationException extends RuntimeException {

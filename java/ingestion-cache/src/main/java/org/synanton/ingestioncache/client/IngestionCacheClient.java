@@ -1093,12 +1093,13 @@ public class IngestionCacheClient {
         ResultSet result = session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.operations " +
             "(tenant_id, operation_id, operation_type, status, requested_by_principal_id, created_at, started_at, " +
-            "completed_at, progress_completed, progress_total, outcome, error_id, request_id, idempotency_key) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS",
+            "completed_at, progress_completed, progress_total, outcome, error_id, request_id, idempotency_key, " +
+            "details_json) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS",
             operation.tenantId(), operation.operationId(), operation.type(), operation.status(),
             operation.requestedByPrincipalId(), operation.createdAt(), operation.startedAt(), operation.completedAt(),
             operation.progressCompleted(), operation.progressTotal(), operation.outcome(), operation.errorId(),
-            operation.requestId(), operation.idempotencyKey()
+            operation.requestId(), operation.idempotencyKey(), operation.detailsJson()
         ));
         return result.wasApplied();
     }
@@ -1107,12 +1108,13 @@ public class IngestionCacheClient {
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.operations " +
             "(tenant_id, operation_id, operation_type, status, requested_by_principal_id, created_at, started_at, " +
-            "completed_at, progress_completed, progress_total, outcome, error_id, request_id, idempotency_key) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "completed_at, progress_completed, progress_total, outcome, error_id, request_id, idempotency_key, " +
+            "details_json) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             operation.tenantId(), operation.operationId(), operation.type(), operation.status(),
             operation.requestedByPrincipalId(), operation.createdAt(), operation.startedAt(), operation.completedAt(),
             operation.progressCompleted(), operation.progressTotal(), operation.outcome(), operation.errorId(),
-            operation.requestId(), operation.idempotencyKey()
+            operation.requestId(), operation.idempotencyKey(), operation.detailsJson()
         ));
     }
 
@@ -1126,7 +1128,8 @@ public class IngestionCacheClient {
             row.getString("status"), row.getString("requested_by_principal_id"), row.getInstant("created_at"),
             row.getInstant("started_at"), row.getInstant("completed_at"), row.getInt("progress_completed"),
             row.getInt("progress_total"), row.getString("outcome"), row.getUuid("error_id"),
-            row.getString("request_id"), row.getString("idempotency_key")
+            row.getString("request_id"), row.getString("idempotency_key"),
+            row.getString("details_json")
         ));
     }
 

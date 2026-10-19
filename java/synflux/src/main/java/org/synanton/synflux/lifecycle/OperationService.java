@@ -129,6 +129,21 @@ public class OperationService {
     }
 
     public OperationRow completeFromRun(OperationRow operation, IngestionRunRow run) {
+        return completeFromRun(operation, run, null);
+    }
+
+    /**
+     * @param extractionDetails what the extraction plane reported for this
+     *                          run ({@code feature_states}, {@code payload_descriptor})
+     *                          — or null. A requested feature reported
+     *                          {@code FEATURE_UNSUPPORTED} forces
+     *                          {@code outcome: PARTIAL}: a capability the
+     *                          caller asked for was not applied, and reporting
+     *                          success by omission violates the extraction
+     *                          contract (#294).
+     */
+    public OperationRow completeFromRun(OperationRow operation, IngestionRunRow run,
+                                        java.util.Map<String, Object> extractionDetails) {
         String status;
         String outcome = null;
         UUID errorId = parseErrorId(run.errorRef());
@@ -138,7 +153,9 @@ public class OperationService {
             status = "CANCELLED";
             errorId = null;
         } else if ("COMPLETED".equals(run.status())) {
-            if (run.result() != null && (run.result().failed() > 0 || run.result().quarantined() > 0)) {
+            boolean unsupportedFeature = featureUnsupported(extractionDetails);
+            if (unsupportedFeature
+                    || (run.result() != null && (run.result().failed() > 0 || run.result().quarantined() > 0))) {
                 status = "SUCCEEDED";
                 outcome = "PARTIAL";
             } else {
@@ -159,7 +176,8 @@ public class OperationService {
             operation.startedAt() == null ? operation.createdAt() : operation.startedAt(), clock.instant(),
             run.result() == null ? 0 : run.result().entryCount(),
             Math.max(operation.progressTotal(), run.result() == null ? 0 : run.result().entryCount()),
-            outcome, errorId, operation.requestId(), operation.idempotencyKey()
+            outcome, errorId, operation.requestId(), operation.idempotencyKey(),
+            detailsJson(extractionDetails)
         );
         cache.upsertOperation(completed);
         return completed;
@@ -182,6 +200,31 @@ public class OperationService {
 
     public OperationRow read(String tenantId, UUID operationId) {
         return cache.readOperation(tenantId, operationId).orElse(null);
+    }
+
+    /** True when any requested feature was explicitly unsupported (#294). */
+    @SuppressWarnings("unchecked")
+    static boolean featureUnsupported(java.util.Map<String, Object> extractionDetails) {
+        if (extractionDetails == null) {
+            return false;
+        }
+        Object states = extractionDetails.get("feature_states");
+        if (!(states instanceof java.util.Map<?, ?> map)) {
+            return false;
+        }
+        return ((java.util.Map<String, Object>) map).values().stream()
+                .anyMatch("FEATURE_UNSUPPORTED"::equals);
+    }
+
+    private static String detailsJson(java.util.Map<String, Object> extractionDetails) {
+        if (extractionDetails == null || extractionDetails.isEmpty()) {
+            return null;
+        }
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(extractionDetails);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException failure) {
+            throw new IllegalStateException("Could not serialize operation details", failure);
+        }
     }
 
     private static UUID parseErrorId(String errorRef) {
