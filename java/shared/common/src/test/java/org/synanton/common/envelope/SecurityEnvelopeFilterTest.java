@@ -117,6 +117,22 @@ class SecurityEnvelopeFilterTest {
         assertThat(bound.get()).isEqualTo("tenant-a");
     }
 
+    // The cited contract's second 403: unsigned X-User-ID must agree with the
+    // validated principal.
+    @Test
+    void userHeaderMismatchIsForbidden() throws Exception {
+        MockHttpServletRequest request = request("POST", "/graph/query", "tok");
+        request.addHeader("X-User-ID", "mallory");
+        assertThat(run(filter(accepting()), request).getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    void matchingUserHeaderPasses() throws Exception {
+        MockHttpServletRequest request = request("POST", "/graph/query", "tok");
+        request.addHeader("X-User-ID", "alice");
+        assertThat(run(filter(accepting()), request).getStatus()).isEqualTo(200);
+    }
+
     // 7 — valid envelope + no header → 200 (absence is not a mismatch)
     @Test
     void absentTenantHeaderPasses() throws Exception {
