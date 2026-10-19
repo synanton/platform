@@ -228,10 +228,16 @@ declare -A IMAGES=(
   [alpine]="docker.io/library/alpine:3"
   [curlimages-curl]="docker.io/curlimages/curl:8.10.1"
   # MinIO withdrew its community images on 2025-10-23; Chainguard's free
-  # rebuilds are the maintained drop-in (pinned by digest — the tag rebuilds
-  # daily; recorded 2026-10-19, amd64 manifest). To move a pin:
+  # rebuilds are the maintained drop-in.
+  #
+  # PIN: sha256 digests recorded 2026-10-19, amd64 manifest — correct for
+  # M70q and the x86 cluster (native). On Apple Silicon this pulls the amd64
+  # manifest under emulation (slow but functional); on an arm64-only cluster
+  # use the multi-arch digest instead (or add a per-arch pin).
+  # Update deliberately:
   #   docker pull chainguard/minio:latest
   #   docker inspect --format '{{index .RepoDigests 0}}' chainguard/minio:latest
+  #   docker buildx imagetools inspect chainguard/minio:latest   # multi-arch
   [minio]="chainguard/minio@sha256:709099319add48dfb44aa596a7070d3ddd8dd04d7ae881765719aec29df9e510"
   [minio-mc]="chainguard/minio-client@sha256:3d0109d854f045c0158637d6ad0d44fd8a3aef9f0b62082096eb1854c2df8b31"
   # Kafka is the OPTIONAL eventing profile (outbox-only is the default) —
