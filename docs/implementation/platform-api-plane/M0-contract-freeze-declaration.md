@@ -98,6 +98,14 @@ predicate is `SecurityEnvelopeFilter` + `HttpEnvelopeVerifier` in
 3. **Single-reviewer sign-off.** A, S, and DX are held by one person; this row
    is a self-review. Stated so the record is honest.
 
+**Cross-check surface verified complete (2026-10-19).** `pkg/middleware`'s
+`http.go` reads exactly: `Authorization` (the token), tenant hints (default
+`X-Tenant-ID`, extensible via `WithTenantHeaders`), `?tenant_id=`, and
+`X-User-ID`. No other headers are compared against the validated context. The
+Java predicate implements all four for the default configuration — the
+citation check's finding was the complete gap, not one instance of a larger
+class.
+
 **Outcome:** Closed — M0 gate rows 1–6 closed; F2's predicate implemented
 (its gate remains "hardening, not gating M0"; #322 closes it on merge).
 
