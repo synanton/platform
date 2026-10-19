@@ -349,6 +349,10 @@ RECOVERY_SHA=$(sha256sum "$RUN_FIXTURE_HOST_DIR/$SOURCE_RECOVERY/recovery-doc.md
 # the workflow fails at extraction). --build picks up the host-built jars
 # via the slice override.
 if [ "$WORKER_PROFILE" = "compose" ]; then
+    # The Chainguard MinIO image runs as uid 65532: its data dir must be
+    # writable by it (the old root-running image left it root-owned).
+    mkdir -p deployments/docker/data-cg/minio
+    chmod 0777 deployments/docker/data-cg/minio
     # The override contract: the boot jars are built on the HOST (warm Gradle
     # cache; buildkit cannot reach the Maven repos on this network) and the
     # *.prebuilt.Dockerfiles only package them. Build them here so the run
