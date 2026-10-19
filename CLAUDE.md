@@ -60,6 +60,10 @@ slice-* fixture roots) — \`git commit --no-verify\` is the deliberate escape.
 - Unit tests: `{ClassName}Test.java`, no Spring context, Mockito for isolation
 - Integration tests: Spring context, `integration/` package, black-box via API calls
 - Assertions: whole-object comparison (`isEqualTo`, `containsExactly`), not field-by-field
+- Test inputs must be shapes production code actually receives. A test that
+  builds a synthetic shape the real path never produces passes while the
+  production path has a hole (seen with filters, guards, and fixture residue) —
+  ask "would this input reach this code in a real request?" in review.
 - Test naming: descriptive `method_condition_expected` (e.g. `toolsCall_emptyScopeSet_denied`, `allowlistMatchesExpectedSetExactly`)
 - Use `Instant.now(clock)` not `Instant.now()`; `clock` must be a `Clock.fixed(...)` bean
 - Static imports for Mockito: `import static org.mockito.Mockito.*`
