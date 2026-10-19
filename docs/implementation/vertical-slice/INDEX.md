@@ -64,3 +64,12 @@ Track convention: per-plane dir + INDEX.md (see implementation INDEX).
   K8s review, Go operators — those are §14 steps 4–9, sequenced after.
 - New retrieval semantics — the slice uses the search plane as-is.
 - Production hardening of any plane — PoC-grade integration only.
+
+## Trustworthiness
+
+#253 closed on its acceptance criteria. The five-question trust bar and the
+ten-item gap register are in this directory:
+
+- [trust-bar.md](trust-bar.md) — what "done" vs "trustworthy" means
+- [gap-register.md](gap-register.md) — every known gap with trigger and resolution
+- [diagnostic-runbook.md](diagnostic-runbook.md) — twelve disguised failures, ordered
