@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra-headless
+  namespace: synanton
+spec:
+  clusterIP: None
+  selector: {app: cassandra}
+  ports:
+    - {name: cql, port: 9042}
+    - {name: gossip, port: 7000}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra
+  namespace: synanton
+spec:
+  selector: {app: cassandra}
+  ports:
+    - {name: cql, port: 9042}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra
+  namespace: synanton
+spec:
+  serviceName: cassandra-headless
+  replicas: 3
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels: {app: cassandra}
+  template:
+    metadata:
+      labels: {app: cassandra}
+    spec:
+      imagePullSecrets: [{name: local-registry-cred}]
+      affinity:
+        # REQUIRED: RF=3 needs three distinct nodes. `preferred` would let the
+        # scheduler co-locate replicas under pressure and silently reduce the
+        # effective replication factor.
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels: {app: cassandra}
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - {key: synanton.io/role, operator: In, values: [cassandra-seed, compute]}
+      containers:
+        - name: cassandra
+          image: local-registry:5000/synanton/cassandra:4.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: CASSANDRA_CLUSTER_NAME, value: synanton}
+            - {name: CASSANDRA_SEEDS, value: cassandra-0.cassandra-headless.synanton.svc.cluster.local}
+            - {name: CASSANDRA_DC, value: datacenter1}
+            - {name: CASSANDRA_RACK, value: rack1}
+            - {name: MAX_HEAP_SIZE, value: "6G"}
+            - {name: HEAP_NEWSIZE, value: "800M"}
+          ports:
+            - {name: cql, containerPort: 9042}
+            - {name: gossip, containerPort: 7000}
+          resources:
+            requests: {cpu: "2", memory: 8Gi}
+            limits:   {cpu: "4", memory: 12Gi}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/cassandra}
+          readinessProbe:
+            exec:
+              command: ["cqlsh", "-e", "SELECT now() FROM system.local"]
+            initialDelaySeconds: 45
+            periodSeconds: 15
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: local-ssd
+        resources: {requests: {storage: 50Gi}}

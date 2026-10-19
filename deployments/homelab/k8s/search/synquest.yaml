@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: synquest
+  namespace: synanton
+spec:
+  selector: {app: synquest}
+  ports:
+    - {name: http, port: 8083}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: synquest
+  namespace: synanton
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: synquest}
+  template:
+    metadata:
+      labels: {app: synquest}
+    spec:
+      imagePullSecrets: [{name: local-registry-cred}]
+      nodeSelector: {synanton.io/role: cassandra-seed}
+      containers:
+        - name: synquest
+          image: local-registry:5000/synanton/synquest:PLACEHOLDER_TAG
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: SERVER_PORT, value: "8083"}
+            - {name: CASSANDRA_HOST, value: "cassandra"}
+            - {name: CASSANDRA_PORT, value: "9042"}
+            - {name: CASSANDRA_LOCAL_DC, value: "datacenter1"}
+            - {name: SYNQUEST_INDEX_PATH, value: "/var/lib/synquest"}
+            # Initial cluster run: lexical-only (BM25). The dense leg needs
+            # TEI (gpu-runtime deployments) and full vector coverage.
+            - {name: SYNQUEST_EMBEDDING_REQUIRED, value: "false"}
+            - {name: MINIO_ENDPOINT, value: "http://minio:9000"}
+            - {name: MINIO_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-cred, key: user}}}
+            - {name: MINIO_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-cred, key: password}}}
+            - {name: SYNANTON_JWT_SECRET, valueFrom: {secretKeyRef: {name: synanton-jwt, key: secret}}}
+          ports:
+            - {name: http, containerPort: 8083}
+          resources:
+            requests: {cpu: "1", memory: 3Gi}
+            limits:   {cpu: "4", memory: 8Gi}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          volumeMounts:
+            - {name: index, mountPath: /var/lib/synquest}
+      volumes:
+        - name: index
+          persistentVolumeClaim: {claimName: synquest-index}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: synquest-index
+  namespace: synanton
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-ssd
+  resources: {requests: {storage: 20Gi}}
+  volumeName: synquest-index-node1

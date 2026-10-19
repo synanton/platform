@@ -182,13 +182,17 @@ start_worker() {  # start_worker [fault-point]
             WORKER_PID=$!
             ;;
         k8s)
+            # Order matters: the fault env persists in the deployment spec, so
+            # k8s would crash-loop on every pod restart. The sequence is
+            # stop (scale 0) → set/clear the env → scale up — see
+            # stop_worker below and homelab scripts/fault-inject.sh.
             if [ -n "${1:-}" ]; then
                 kubectl -n "$K8S_NAMESPACE" set env deploy/synflux "SYNANTON_FAULT_INJECT=$1"
             else
                 kubectl -n "$K8S_NAMESPACE" set env deploy/synflux "SYNANTON_FAULT_INJECT-"
             fi
-            kubectl -n "$K8S_NAMESPACE" rollout restart deploy/synflux
-            kubectl -n "$K8S_NAMESPACE" rollout status deploy/synflux --timeout=180s
+            kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas="${SYNFLUX_REPLICAS:-2}"
+            kubectl -n "$K8S_NAMESPACE" rollout status deploy/synflux --timeout=300s
             ;;
         *) die "unknown WORKER_PROFILE $WORKER_PROFILE — compose, process or k8s" ;;
     esac
@@ -225,8 +229,10 @@ stop_worker() {
             pkill -f 'SynfluxApplication' 2>/dev/null || true
             sleep 2
             ;;
-        k8s) kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=0
-             kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=1 ;;
+        k8s) # Scale to ZERO only — the caller clears the fault env and scales
+             # back up (scale-0 → clear → scale-up). Scaling straight back up
+             # here would restart pods with the fault still in the spec.
+             kubectl -n "$K8S_NAMESPACE" scale deploy/synflux --replicas=0 ;;
     esac
 }
 

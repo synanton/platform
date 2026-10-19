@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: synanton
+spec:
+  selector: {app: minio}
+  ports:
+    - {name: api, port: 9000}
+    - {name: console, port: 9001}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: synanton
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: minio}
+  template:
+    metadata:
+      labels: {app: minio}
+    spec:
+      imagePullSecrets: [{name: local-registry-cred}]
+      nodeSelector: {synanton.io/role: cassandra-seed}
+      containers:
+        - name: minio
+          image: local-registry:5000/synanton/minio:latest
+          imagePullPolicy: IfNotPresent
+          args: ["server", "/data", "--console-address", ":9001"]
+          env:
+            - {name: MINIO_ROOT_USER, valueFrom: {secretKeyRef: {name: minio-cred, key: user}}}
+            - {name: MINIO_ROOT_PASSWORD, valueFrom: {secretKeyRef: {name: minio-cred, key: password}}}
+          ports:
+            - {name: api, containerPort: 9000}
+            - {name: console, containerPort: 9001}
+          resources:
+            requests: {cpu: "250m", memory: 512Mi}
+            limits:   {cpu: "1", memory: 2Gi}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+          readinessProbe:
+            httpGet: {path: /minio/health/live, port: api}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: minio-data}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: synanton
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-ssd
+  resources: {requests: {storage: 50Gi}}
+---
+# Creates the object-store bucket the extraction handoff writes to.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-init
+  namespace: synanton
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      imagePullSecrets: [{name: local-registry-cred}]
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: local-registry:5000/synanton/minio-mc:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: MINIO_ENDPOINT, value: minio:9000}
+            - {name: MINIO_USER, valueFrom: {secretKeyRef: {name: minio-cred, key: user}}}
+            - {name: MINIO_PASSWORD, valueFrom: {secretKeyRef: {name: minio-cred, key: password}}}
+          command:
+            - sh
+            - -c
+            - |
+              until mc alias set local "http://${MINIO_ENDPOINT}" "${MINIO_USER}" "${MINIO_PASSWORD}"; do sleep 2; done
+              mc mb --ignore-existing local/synanton-hot
+              echo "bucket ready"

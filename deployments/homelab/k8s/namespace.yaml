@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: synanton
+  labels:
+    app.kubernetes.io/part-of: synanton
+---
+# Image pull secret: created by scripts/create-registry-secret.sh (never
+# committed). Every workload references it via imagePullSecrets.

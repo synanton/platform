@@ -142,25 +142,66 @@ manual_hint() {
 }
 
 # ── 1. Built images (platform + content_extractor source) ───────────────────
+# PREBUILT=1 (default here): build the boot jars on the HOST (warm Gradle
+# cache; buildkit cannot reach the Maven repos on this network — TLS resets
+# observed 2026-10-18) and package them with the *.prebuilt.Dockerfile
+# variants from a tiny staging context. PREBUILT=0 uses the multi-stage
+# Dockerfiles (works where buildkit has Maven egress).
+PREBUILT="${PREBUILT:-1}"
+
+prebuilt_stage() {  # prebuilt_stage <name> <host-jar-glob>
+    local name="$1" jar_glob="$2" stage
+    stage="$(mktemp -d)"
+    mkdir -p "$stage/java/$name/build/libs"
+    cp $jar_glob "$stage/java/$name/build/libs/"
+    echo "$stage"
+}
+
 build_and_push() {
     local name="$1" context="$2" dockerfile="$3"
     local dest="${REGISTRY}/synanton/${name}:${TAG}"
-    log "building ${name}:${TAG} from $(basename "$(dirname "$dockerfile")")"
-    docker build -f "$dockerfile" -t "$dest" "$context" \
-        || { note "MANUAL STEP REQUIRED for ${name} — build failed; fix the source or build by hand:"
-             printf '      docker build -f %s -t %s %s\n      docker push %s\n' "$dockerfile" "$dest" "$context" "$dest"
-             FAILED_IMAGES+=("$dest")
-             return 1; }
+    if [ "$PREBUILT" = "1" ]; then
+        dockerfile="$PLATFORM_ROOT/deployments/docker/${name}.prebuilt.Dockerfile"
+        [ -f "$dockerfile" ] || { note "no prebuilt Dockerfile for ${name}"; build_full "$name" "$context" "$dockerfile"; return $?; }
+        log "packaging host-built ${name}:${TAG}"
+        # The gateway jar comes from the sibling repo.
+        local jar_glob
+        case "$name" in
+            extraction-gateway) jar_glob="$CONTENT_EXTRACTOR_ROOT/java/extraction-gateway/build/libs/extraction-gateway*.jar" ;;
+            *)                  jar_glob="$PLATFORM_ROOT/java/$name/build/libs/$name*.jar" ;;
+        esac
+        local stage; stage="$(prebuilt_stage "$name" "$jar_glob")"
+        docker build -f "$dockerfile" -t "$dest" "$stage" \
+            || { note "build failed for ${name} — are the host jars built? (run the gradle bootJar first)"; FAILED_IMAGES+=("$dest"); rm -rf "$stage"; return 1; }
+        rm -rf "$stage"
+    else
+        log "building ${name}:${TAG} from the multi-stage Dockerfile"
+        docker build -f "$dockerfile" -t "$dest" "$context" \
+            || { note "MANUAL STEP REQUIRED for ${name} — build failed; fix the source or build by hand:"
+                 printf '      docker build -f %s -t %s %s\n      docker push %s\n' "$dockerfile" "$dest" "$context" "$dest"
+                 FAILED_IMAGES+=("$dest")
+                 return 1; }
+    fi
     docker push "$dest" \
         || { note "push failed — is this machine logged in?  docker login ${REGISTRY}"
              manual_hint "$dest" "$dest"; return 1; }
     echo "  → ${dest}"
 }
 
+# Host jars for the prebuilt path (no-op if PREBUILT=0).
+build_host_jars() {
+    [ "$PREBUILT" = "1" ] || return 0
+    log "building boot jars on the host"
+    "$PLATFORM_ROOT/gradlew" -q -p "$PLATFORM_ROOT" \
+        :java:synflux:bootJar :java:synquest:bootJar -x test
+    "$CONTENT_EXTRACTOR_ROOT/gradlew" -q -p "$CONTENT_EXTRACTOR_ROOT" \
+        :java:extraction-gateway:bootJar -x test
+}
+
 log "built images (tag ${TAG})"
 build_and_push synflux              "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synflux.Dockerfile"  || true
 build_and_push synquest             "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synquest.Dockerfile" || true
-build_and_push extraction-gateway   "$CONTENT_EXTRACTOR_ROOT"  "$CONTENT_EXTRACTOR_ROOT/deployments/docker/extraction-gateway.Dockerfile" || true
+build_and_push extraction-gateway   "$CONTENT_EXTRACTOR_ROOT"  "$CONTENT_EXTRACTOR_ROOT/deployment/docker/extraction-gateway.Dockerfile" || true
 
 # ── 2. Mirrored third-party images (pinned; record digests at freeze) ───────
 declare -A IMAGES=(
