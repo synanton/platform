@@ -38,6 +38,23 @@ public class AppConfig {
         return new JwtIdentityProvider(jwtVerifier);
     }
 
+    /**
+     * Verified caller identity for the endpoints that act on a tenant —
+     * /auth/api-keys takes the key's tenant from the caller's SubjectAssertion
+     * (phase3/06-security.md §4.2). Login, token exchange, and capabilities
+     * stay anonymous.
+     */
+    @Bean
+    public org.springframework.boot.web.servlet.FilterRegistrationBean<
+            org.synanton.common.tenant.TenantContextFilter> tenantContextFilter(JwtVerifier jwtVerifier) {
+        var filter = new org.synanton.common.tenant.TenantContextFilter(
+                jwtVerifier, "",
+                "/actuator", "/auth/login", "/auth/token", "/capabilities");
+        var registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+        registration.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
+
     @Bean
     public ApiKeyIdentityProvider apiKeyIdentityProvider(JdbcTemplate jdbc, SecurityProperties props) {
         long ttl = (props.apiKey() != null && props.apiKey().cache() != null)

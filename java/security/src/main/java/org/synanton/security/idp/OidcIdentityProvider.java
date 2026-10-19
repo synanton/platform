@@ -52,8 +52,11 @@ public class OidcIdentityProvider implements IdentityProviderPort {
             }
             String subject = claims.getSubject();
             String tenantId = claims.getStringClaim("tenant_id");
-            if (tenantId == null) {
-                tenantId = "demo";
+            if (tenantId == null || tenantId.isBlank()) {
+                // Fail closed: a tenant-scoped platform token must carry the
+                // claim. The previous "demo" fallback silently minted demo
+                // identities for malformed tokens (live hole).
+                throw new AuthException("OIDC token is missing the tenant_id claim");
             }
             List<String> roles = claims.getStringListClaim("roles");
             String[] scopes = roles == null ? new String[0] : roles.toArray(String[]::new);

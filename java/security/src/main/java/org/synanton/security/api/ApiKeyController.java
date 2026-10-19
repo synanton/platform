@@ -29,10 +29,20 @@ public class ApiKeyController {
 
     @PostMapping
     public ResponseEntity<ApiKeyResponse> generate(@RequestBody GenerateRequest req) {
+        // The key's tenant is the CALLER's tenant from the verified identity
+        // (phase3/06-security.md §4.2: "Caller's tenantId from SubjectAssertion
+        // is used as the key's tenant_id"). The previous hardcoded "demo"
+        // bound every generated key to the demo tenant — fail closed instead.
+        org.synanton.common.tenant.TenantContext context =
+                org.synanton.common.tenant.TenantContext.get();
+        if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException(
+                    "api-key issuance requires a verified caller identity");
+        }
         String rawKey = generateKey();
         String keyHash = BCrypt.withDefaults().hashToString(12, rawKey.toCharArray());
         String lookupHash = ApiKeyIdentityProvider.sha256Hex(rawKey);
-        String tenantId = "demo";
+        String tenantId = context.tenantId();
         String subjectId = "user:admin";
 
         String[] scopes = req.scopes() != null ? req.scopes().toArray(new String[0]) : new String[0];
