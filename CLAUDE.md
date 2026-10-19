@@ -14,6 +14,13 @@
 - Pre-change safety: run `./gradlew compileJava` before applying changes; stop if it fails
 - After changing `gradle/libs.versions.toml` (or any dependency), run with `--refresh-dependencies` — Gradle's configuration cache can otherwise serve a stale classpath and fail compilation with "cannot find symbol" for a dependency that resolves in `dependencies`. Add `--no-configuration-cache` when a compile/test discrepancy appears.
 
+## Git Hooks
+
+Runtime-data guard is checked in: run once per clone
+\`git config core.hooksPath .githooks\`. It rejects staged artifacts that
+belong to containers, not source (.sst/.wal, .minio.sys/, data-cg/,
+slice-* fixture roots) — \`git commit --no-verify\` is the deliberate escape.
+
 ## Running Services
 
 ```bash

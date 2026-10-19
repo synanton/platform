@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Reject staged runtime-data artifacts. The class was caught manually four
+# times before this hook existed (Cassandra SSTables under deployment/docker/
+# data, acceptance fixtures under demo-data/documents/slice-*, MinIO
+# .minio.sys under data-cg/) — each fix was a per-path .gitignore entry, and
+# the next container image brought a new path name.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+# Deliberate escape hatch: git commit --no-verify
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=AM)
+[ -n "$staged" ] || exit 0
+
+# Narrow on purpose: shapes this repo's containers actually produce. The
+# generic `/data/` is omitted — syntology ships a tracked data/ fixture.
+pattern='(\.sst$|\.wal$|\.minio\.sys/|(^|/)data-cg/|(^|/)data-bench/|(^|/)data/[a-z0-9-]+/cassandra/|(^|/)slice-(main|recovery|run)-[0-9]+/)'
+
+if grep -qE "$pattern" <<<"$staged"; then
+    echo "error: staged files look like runtime data (not source):" >&2
+    grep -E "$pattern" <<<"$staged" >&2
+    echo >&2
+    echo "If intentional, use: git commit --no-verify" >&2
+    exit 1
+fi
