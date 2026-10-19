@@ -110,7 +110,18 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
                     ? result.getFlattenedText()
                     : documentPayload.getFlattenedText();
             Map<String, String> metadata = new HashMap<>(documentPayload.getMetadataMap());
-            return new ParsedDocument(doc, flatText, metadata, documentPayload);
+            Map<String, String> featureStates = new java.util.LinkedHashMap<>();
+            result.getFeatureStatesMap().forEach((name, state) -> featureStates.put(name, state.name()));
+            Map<String, String> payloadDescriptor = new java.util.LinkedHashMap<>();
+            if (result.getPayload().hasPayloadDescriptor()) {
+                var descriptor = result.getPayload().getPayloadDescriptor();
+                payloadDescriptor.put("schema_id", descriptor.getSchemaId());
+                payloadDescriptor.put("schema_version", descriptor.getSchemaVersion());
+                payloadDescriptor.put("processor_id", descriptor.getProcessorId());
+                payloadDescriptor.put("processor_version", descriptor.getProcessorVersion());
+            }
+            return new ParsedDocument(doc, flatText, metadata, documentPayload,
+                    featureStates, payloadDescriptor);
         } catch (Exception e) {
             log.warn("Failed to parse extraction payload for ref={}: {}", doc.contentRefId(), e.getMessage());
             return null;

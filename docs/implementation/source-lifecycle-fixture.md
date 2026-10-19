@@ -128,6 +128,9 @@ runs on M70q (compose/process) and the k8s cluster unchanged.
   before the Ingestion Plane commit may orphan the artifact). `INGEST` is
   `IRREVERSIBLE`: once the SourceVersion/outbox transaction commits, recovery
   finalizes the workflow from the terminal run and never re-runs the ingest step.
+  The chunks/embeddings derived from that published content are
+  `INVALIDATABLE`: a chunker-version upgrade invalidates them by recalculation
+  rather than deleting or re-running the step (#294, §48).
 - Dead-letter requeue retains the original event identity (Eventing §33–§34): it
   is redelivery of an event that never published, not §38–§39 replay. A
   deliberately re-emitted source fact under a new event ID is governed by the

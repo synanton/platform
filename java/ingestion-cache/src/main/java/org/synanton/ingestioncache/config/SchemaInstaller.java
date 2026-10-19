@@ -28,6 +28,7 @@ public class SchemaInstaller {
         "cql/V12__knowledge_processing_runs.cql",
         "cql/V13__chunk_source_version_sets.cql",
         "cql/V14__chunk_source_version_junction.cql",
+        "cql/V15__operation_details.cql",
     };
 
     public static void install(CqlSession session) {

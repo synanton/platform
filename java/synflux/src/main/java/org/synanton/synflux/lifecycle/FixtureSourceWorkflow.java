@@ -342,6 +342,8 @@ public class FixtureSourceWorkflow {
             "content_cache_reference", acquired.contentCacheReference()));
         requireLease(leaseLost);
         boolean deferRetryable = activeWorkflow.retryCount() < MAX_RETRIES;
+        java.util.concurrent.atomic.AtomicReference<FixtureIngestionService.PublishedContent> publishedRef =
+            new java.util.concurrent.atomic.AtomicReference<>();
         IngestionRunRow run = lifecycle.ingest(
             context, runId, operationId, source.connectorId(), sourceId, resourceId,
             ref, acquired.bytes(), acquired.contentCacheReference(), activeWorkflow.workflowId().toString(),
@@ -353,6 +355,7 @@ public class FixtureSourceWorkflow {
                 }
                 var published = publishThroughPipeline(
                     acquired, stageContext.withSourceVersionId(sourceVersionId), operationId, leaseLost);
+                publishedRef.set(published);
                 FaultInjection.crashAt("after-manifest");
                 return published;
             }
@@ -363,7 +366,8 @@ public class FixtureSourceWorkflow {
         completeStep(ingestStep, Map.of("run_status", run.status()));
         workflowStepObserver.afterStepCompleted("INGEST");
         finishWorkflowFromRun(activeWorkflow, run);
-        return new Submission(run, operations.completeFromRun(operation, run));
+        return new Submission(run, operations.completeFromRun(operation, run,
+                extractionDetails(publishedRef.get())));
     }
 
     private ContentRef loadOrDiscover(
@@ -755,7 +759,7 @@ public class FixtureSourceWorkflow {
         return cancelled;
     }
 
-    private UUID publishThroughPipeline(
+    private FixtureIngestionService.PublishedContent publishThroughPipeline(
             AcquiredDocument acquired, StageContext context, UUID operationId, AtomicBoolean leaseLost)
             throws Exception {
         checkGuards(context.tenant(), operationId, leaseLost);
@@ -773,7 +777,25 @@ public class FixtureSourceWorkflow {
             ? embeddingStage.apply(enriched, context) : enriched;
         checkGuards(context.tenant(), operationId, leaseLost);
         persistStage.apply(embedded, context);
-        return acquired.contentRefId();
+        ParsedDocument parsedForMetadata = embedded.parsed();
+        return new FixtureIngestionService.PublishedContent(
+                acquired.contentRefId(), parsedForMetadata.featureStates(), parsedForMetadata.payloadDescriptor());
+    }
+
+    /** Open-typed Operation details (#294): what the extraction plane reported. */
+    private static java.util.Map<String, Object> extractionDetails(
+            FixtureIngestionService.PublishedContent published) {
+        if (published == null) {
+            return null;
+        }
+        java.util.Map<String, Object> details = new java.util.LinkedHashMap<>();
+        if (!published.featureStates().isEmpty()) {
+            details.put("feature_states", published.featureStates());
+        }
+        if (!published.payloadDescriptor().isEmpty()) {
+            details.put("payload_descriptor", published.payloadDescriptor());
+        }
+        return details.isEmpty() ? null : details;
     }
 
     private void checkGuards(String tenantId, UUID operationId, AtomicBoolean leaseLost) {
