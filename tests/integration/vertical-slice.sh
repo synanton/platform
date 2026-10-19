@@ -164,11 +164,19 @@ cql_count() {  # cql_count <cql-count-query> -> row count digits
 k8s_settle() {
     local replicas="${1:-${SYNFLUX_REPLICAS:-2}}" current_rs stale
     kubectl -n "$K8S_NAMESPACE" rollout status deploy/synflux --timeout=300s
+    # The CURRENT ReplicaSet is the one with desired replicas > 0 — NOT the
+    # newest by creation: clearing the fault env rolls back to an OLDER RS
+    # template, so "newest" would delete the healthy pods (observed: a
+    # self-inflicted churn that failed the health check).
     current_rs=$(kubectl -n "$K8S_NAMESPACE" get rs -l app=synflux \
-        --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1:].metadata.name}')
-    stale=$(kubectl -n "$K8S_NAMESPACE" get pods -l app=synflux \
-        -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.ownerReferences[0].name}{"\n"}{end}' \
-        | awk -v rs="$current_rs" '$2 != rs {print $1}')
+        -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.replicas}{"\n"}{end}' \
+        | awk '$2 > 0 {print $1}' | head -1)
+    stale=""
+    if [ -n "$current_rs" ]; then
+        stale=$(kubectl -n "$K8S_NAMESPACE" get pods -l app=synflux \
+            -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.ownerReferences[0].name}{"\n"}{end}' \
+            | awk -v rs="$current_rs" '$2 != rs {print $1}')
+    fi
     if [ -n "$stale" ]; then
         echo "$stale" | xargs -r kubectl -n "$K8S_NAMESPACE" delete pod --wait=false >/dev/null
     fi
