@@ -1,4 +1,4 @@
-package org.synanton.security.envelope;
+package org.synanton.common.envelope;
 
 /**
  * Verifies a downstream security envelope cryptographically before any

@@ -1,4 +1,4 @@
-package org.synanton.security.envelope;
+package org.synanton.common.envelope;
 
 /**
  * Thrown when envelope verification fails. Carries a structured

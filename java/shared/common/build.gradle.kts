@@ -22,6 +22,7 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
     testImplementation(libs.spring.boot.starter.web)
+    testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.boot.starter.validation)
     testImplementation(libs.spring.boot.starter.actuator)
     testImplementation(libs.grpc.api)

@@ -1,4 +1,4 @@
-package org.synanton.security.envelope;
+package org.synanton.common.envelope;
 
 /**
  * Wave 1 placeholder. Rejects every envelope with VERIFIER_UNAVAILABLE.
