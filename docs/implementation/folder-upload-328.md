@@ -82,7 +82,11 @@ automated sources**, with no special security model. The normative pieces:
    Operation progress are the same signal — a failed upload leaves an Operation
    in `FAILED`, not a dangling session. Presigned-URL passthrough is the standard
    follow-up if a single upload exceeds body limits; it is not the initial
-   design.
+   design. **Each part must carry its media type** (`application/pdf`,
+   `application/epub+zip`): the legacy path discarded it (`PushedContentAdapter`
+   hardcoded `application/octet-stream`) and the extractor rejected the result
+   (`ERROR_UNSUPPORTED_MEDIA_TYPE`, platform #331). Do not repeat that on
+   `/v1/...`.
 3. **Per-file progress — client-declared manifest.** The client declares the
    upload manifest (file count, total bytes) before bytes are sent.
    `Operation.progress.total` = declared file count from the start, incremented
