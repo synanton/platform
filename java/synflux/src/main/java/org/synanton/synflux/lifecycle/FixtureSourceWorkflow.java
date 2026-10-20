@@ -3,6 +3,7 @@ package org.synanton.synflux.lifecycle;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.synanton.contentcache.ContentIntegrityException;
+import org.synanton.contentcache.ContentReference;
 import org.synanton.contentcache.ContentStoreException;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.IngestionRunRow;
@@ -195,6 +196,115 @@ public class FixtureSourceWorkflow {
         OperationRow running = operations.markRunning(operation, 1);
         lifecycle.scheduleRun(context, runId, operation.operationId(), sourceId);
         return process(context, source, sourceId, resourceId, runId, running, workflow);
+    }
+
+    /**
+     * Accepts caller-pushed bytes for an upload source. The bytes are already durable
+     * in the Content Cache (the endpoint writes before calling this), so the DISCOVER
+     * and ACQUIRE checkpoints are recorded from the supplied reference; the normal
+     * pipeline then extracts/chunks/persists from the durable artifact.
+     */
+    public Submission submitUploaded(
+            VerifiedIngestionContext context,
+            String connectorId,
+            String sourceId,
+            String resourceId,
+            byte[] bytes,
+            String mediaType,
+            ContentReference contentReference,
+            String requestId,
+            String idempotencyKey) {
+        SourceRow source = requireActiveUploadSource(context, sourceId);
+        if (!source.connectorId().equals(connectorId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "connector_id does not match the configured source");
+        }
+        requireNormalizedResourceId(resourceId);
+
+        OperationRow operation = operations.accept(context, requestId, idempotencyKey);
+        UUID runId = runId(operation.operationId());
+        WorkflowStateRow workflow = ensureWorkflow(context, sourceId, resourceId, operation, runId);
+        IngestionRunRow previousRun = cache.readIngestionRun(context.tenantId(), runId).orElse(null);
+        if (previousRun != null && previousRun.completedAt() != null) {
+            finishWorkflowFromRun(workflow, previousRun);
+            return new Submission(previousRun, operations.completeFromRun(operation, previousRun));
+        }
+        if (!activeOperations.add(operation.operationId())) {
+            IngestionRunRow currentRun = previousRun == null
+                ? lifecycle.scheduleRun(context, runId, operation.operationId(), sourceId)
+                : previousRun;
+            return new Submission(currentRun, operation);
+        }
+
+        OperationRow running = operations.markRunning(operation, 1);
+        if ("CANCELLED".equals(running.status())
+                || operations.cancellationRequested(context.tenantId(), operation.operationId())) {
+            activeOperations.remove(operation.operationId());
+            IngestionRunRow cancelled = lifecycle.recordEmptyRun(
+                context, runId, operation.operationId(), sourceId,
+                FixtureIngestionService.EmptyRunDisposition.CANCELLED);
+            finishWorkflowFromRun(workflow, cancelled);
+            return new Submission(cancelled, operations.completeFromRun(running, cancelled));
+        }
+
+        String digestHex = sha256HexOf(contentReference.digest());
+        UUID contentRefId = AcquireStage.contentRefId(context.tenantId(), digestHex);
+        ContentRef ref = new ContentRef(
+            source.connectorId(), uploadedUri(source.connectorId(), sourceId, resourceId),
+            mediaType, bytes.length, null);
+
+        markStepCompleted(workflow, "DISCOVER",
+            Map.of("source_id", sourceId, "resource_id", resourceId), RefCheckpoint.from(ref));
+        markStepCompleted(workflow, "ACQUIRE",
+            Map.of("source_uri", ref.uri(), "source_size", ref.sizeBytes()),
+            new AcquisitionCheckpoint(contentRefId, digestHex, contentReference.encode()));
+        WorkflowStateRow refreshed = cache.readWorkflowState(context.tenantId(), workflow.workflowId())
+            .orElse(workflow);
+
+        IngestionRunRow scheduled = lifecycle.scheduleRun(context, runId, operation.operationId(), sourceId);
+        try {
+            executor.execute(() -> {
+                try {
+                    process(context, source, sourceId, resourceId, runId, running, refreshed);
+                } finally {
+                    activeOperations.remove(operation.operationId());
+                }
+            });
+        } catch (RuntimeException rejected) {
+            activeOperations.remove(operation.operationId());
+            IngestionRunRow failed = lifecycle.recordEmptyRun(
+                context, runId, operation.operationId(), sourceId,
+                FixtureIngestionService.EmptyRunDisposition.FAILED_BEFORE_DISCOVERY, rejected);
+            finishWorkflow(refreshed, "FAILED", "SCHEDULE", "SCHEDULER_REJECTED", safeMessage(rejected));
+            return new Submission(failed, operations.completeFromRun(running, failed));
+        }
+        return new Submission(scheduled, running);
+    }
+
+    private void markStepCompleted(WorkflowStateRow workflow, String stepId, Object input, Object output) {
+        WorkflowStepRow step = getOrStartStep(workflow, stepId, input);
+        completeStep(step, output);
+    }
+
+    private static String sha256HexOf(String digest) {
+        if (digest == null || !digest.startsWith("sha256:")) {
+            throw new IllegalStateException("Uploaded content reference has an unsupported digest");
+        }
+        return digest.substring("sha256:".length());
+    }
+
+    private static String uploadedUri(String connectorId, String sourceId, String resourceId) {
+        return connectorId + "://" + sourceId + "/" + resourceId;
+    }
+
+    private static void requireNormalizedResourceId(String resourceId) {
+        if (resourceId == null || resourceId.isBlank() || resourceId.startsWith("/")
+                || resourceId.contains("\\")
+                || java.util.Arrays.stream(resourceId.split("/", -1))
+                    .anyMatch(part -> part.isBlank() || part.equals(".") || part.equals(".."))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "resource_id must be a normalized connector-relative path");
+        }
     }
 
     /** Requeues all non-terminal source workflows after process start and on retry ticks. */
@@ -707,6 +817,18 @@ public class FixtureSourceWorkflow {
         }
         if (!"file".equals(source.connectorType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fixture supports filesystem sources only");
+        }
+        return source;
+    }
+
+    private SourceRow requireActiveUploadSource(VerifiedIngestionContext context, String sourceId) {
+        SourceRow source = cache.readSource(context.tenantId(), sourceId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "source not found"));
+        if (!"ACTIVE".equals(source.status())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "source is deleted");
+        }
+        if (!"upload".equals(source.connectorType())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "source is not an upload source");
         }
         return source;
     }

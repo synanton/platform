@@ -138,6 +138,23 @@ class SourceControllerTenantTest {
         verify(cache, never()).readSource(any(), any());
     }
 
+    @Test
+    void sourceCreateAllowsUploadConnectorWithoutFilesystemRoot() throws Exception {
+        when(cache.createSourceIfAbsent(any(SourceRow.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        mvc.perform(post("/v1/sources")
+                .header("Authorization", "Bearer " + token("tenant-a"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"source_id\":\"uploads\",\"connector_id\":\"filesystem\","
+                    + "\"connector_type\":\"upload\",\"capability_flags\":[]}"))
+            .andExpect(status().isCreated());
+
+        ArgumentCaptor<SourceRow> source = ArgumentCaptor.forClass(SourceRow.class);
+        verify(cache).createSourceIfAbsent(source.capture());
+        assertThat(source.getValue().connectorType()).isEqualTo("upload");
+        assertThat(source.getValue().sourceEndpoint()).isEmpty();
+    }
+
     private static String token(String tenantId) throws Exception {
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
             .subject("fixture-user")

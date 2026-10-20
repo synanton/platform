@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.synanton.common.jwt.SubjectAssertion;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.contentcache.ContentIntegrityException;
+import org.synanton.contentcache.ContentMetadata;
 import org.synanton.contentcache.ContentStoreException;
 import org.synanton.contentcache.ContentReference;
 import org.synanton.contentcache.FileSystemContentStore;
@@ -633,6 +634,79 @@ class FixtureIngestionLifecycleTest {
         assertThat(cache.listSourceOutbox(context.tenantId(), "filesystem", sourceId, "manuals/workflow.md"))
             .extracting(event -> event.eventType())
             .containsExactly("SourcePublished");
+    }
+
+    @Test
+    void uploadSourcePublishesCallerPushedBytesThroughTheSharedWorkflow(@TempDir Path fixtureRoot) throws Exception {
+        String tenantId = "tenant-upload-" + UUID.randomUUID();
+        String sourceId = "upload-source-" + UUID.randomUUID();
+        String resourceId = "books/guide.md";
+        byte[] bytes = "uploaded guide text".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String mediaType = "text/markdown";
+
+        cache.createSourceIfAbsent(new SourceRow(
+            tenantId, sourceId, "filesystem", "upload", "", Set.of(), "ACTIVE",
+            Instant.parse("2026-10-17T11:59:00Z"), null));
+
+        FileSystemContentStore contentStore = new FileSystemContentStore(fixtureRoot.resolve("content-cache"));
+        ContentPullPort pullPort = new ContentPullPort(List.of(new FilesystemAdapter()));
+        ExtractionStage extraction = mock(ExtractionStage.class);
+        PersistStage persist = new PersistStage(cache);
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-chunk"; }
+            @Override
+            public ChunkedDocument apply(ParsedDocument parsed, StageContext context) {
+                return new ChunkedDocument(parsed, List.of());
+            }
+        };
+        PipelineStage<ChunkedDocument, ChunkedDocument> identityStage = new PipelineStage<>() {
+            @Override
+            public String name() { return "test-identity"; }
+            @Override
+            public ChunkedDocument apply(ChunkedDocument document, StageContext context) {
+                return document;
+            }
+        };
+        when(extraction.apply(any(), any())).thenAnswer(invocation -> {
+            var acquired = invocation.<org.synanton.synflux.domain.AcquiredDocument>getArgument(0);
+            return new ParsedDocument(acquired, new String(acquired.bytes(), java.nio.charset.StandardCharsets.UTF_8),
+                Map.of(), null);
+        });
+
+        OperationService operationService = new OperationService(cache,
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        FixtureSourceWorkflow workflow = new FixtureSourceWorkflow(
+            cache, pullPort, new AcquireStage(pullPort, contentStore), extraction, chunk,
+            identityStage, identityStage, identityStage, persist, testProperties(), lifecycle,
+            operationService, Runnable::run, new FilesystemFixturePolicy(fixtureRoot),
+            Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+        VerifiedIngestionContext context = principal(tenantId);
+
+        // The upload endpoint writes first; the workflow receives the durable reference.
+        ContentReference reference = contentStore.put(
+            tenantId, bytes, ContentMetadata.of(mediaType, "upload:alice")).reference();
+        FixtureSourceWorkflow.Submission first = workflow.submitUploaded(
+            context, "filesystem", sourceId, resourceId, bytes, mediaType, reference,
+            "request-upload", "upload-key");
+
+        IngestionRunRow completed = cache.readIngestionRun(tenantId, first.run().runId()).orElseThrow();
+        assertThat(completed.status())
+            .as("workflow failure details: %s", completed.errorRef() == null ? "none"
+                : cache.readIngestionError(tenantId, UUID.fromString(completed.errorRef())).orElseThrow())
+            .isEqualTo("COMPLETED");
+        assertThat(completed.result().changed()).isEqualTo(1);
+        List<SourceVersionRow> versions = cache.listSourceVersions(tenantId, "filesystem", sourceId, resourceId);
+        assertThat(versions).hasSize(1);
+        assertThat(versions.getFirst().contentCacheReference()).isEqualTo(reference.encode());
+        assertThat("sha256:" + versions.getFirst().contentDigest()).isEqualTo(reference.digest());
+        assertThat(cache.readManifest(tenantId, versions.getFirst().contentRefId())).isPresent();
+
+        FixtureSourceWorkflow.Submission retry = workflow.submitUploaded(
+            context, "filesystem", sourceId, resourceId, bytes, mediaType, reference,
+            "request-upload-retry", "upload-key");
+        assertThat(retry.run().runId()).isEqualTo(first.run().runId());
+        assertThat(cache.listSourceVersions(tenantId, "filesystem", sourceId, resourceId)).hasSize(1);
     }
 
     @Test

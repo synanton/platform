@@ -10,6 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.synanton.common.jwt.JwtVerifier;
 import org.synanton.common.tenant.TenantContextFilter;
+import org.synanton.contentcache.ContentMetadata;
+import org.synanton.contentcache.ContentReference;
+import org.synanton.contentcache.ContentStore;
+import org.synanton.contentcache.PutResult;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.IngestionRunRow;
 import org.synanton.ingestioncache.domain.OperationRow;
@@ -17,6 +21,7 @@ import org.synanton.ingestioncache.domain.SyncResultRow;
 import org.synanton.synflux.lifecycle.FixtureSourceWorkflow;
 import org.synanton.synflux.lifecycle.VerifiedIngestionContext;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -33,6 +38,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,14 +49,18 @@ class IngestionRunControllerTenantTest {
 
     private FixtureSourceWorkflow workflow;
     private IngestionCacheClient cache;
+    private ContentStore contentStore;
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
         workflow = mock(FixtureSourceWorkflow.class);
         cache = mock(IngestionCacheClient.class);
+        contentStore = mock(ContentStore.class);
         TenantContextFilter filter = new TenantContextFilter(new JwtVerifier(SECRET), "health-probe", "/actuator");
-        mvc = MockMvcBuilders.standaloneSetup(new IngestionRunController(workflow, cache)).addFilters(filter).build();
+        mvc = MockMvcBuilders.standaloneSetup(new IngestionRunController(workflow, cache, contentStore))
+            .addFilters(filter)
+            .build();
     }
 
     @Test
@@ -110,6 +120,61 @@ class IngestionRunControllerTenantTest {
             .andExpect(jsonPath("$.source_id").value("source-a"))
             .andExpect(jsonPath("$.result.changed").value(1))
             .andExpect(jsonPath("$.sourceId").doesNotExist());
+    }
+
+    @Test
+    void uploadSubmissionWritesDurableReferenceAndPassesMediaType() throws Exception {
+        UUID runId = UUID.randomUUID();
+        UUID operationId = UUID.randomUUID();
+        Instant now = Instant.parse("2026-10-17T12:00:00Z");
+        IngestionRunRow run = new IngestionRunRow("tenant-a", runId, operationId, "src", "ACQUIRING",
+            now, null, null, null);
+        OperationRow operation = new OperationRow("tenant-a", operationId, "INGESTION", "RUNNING", "alice",
+            now, now, null, 0, 1, null, null, "request-upload", null);
+        ContentReference reference = new ContentReference("tenant-a", "artifact-1", "sha256:abcdef", 1, 1);
+        when(contentStore.put(anyString(), any(byte[].class), any(ContentMetadata.class)))
+            .thenReturn(new PutResult(reference, false));
+        when(workflow.submitUploaded(any(VerifiedIngestionContext.class), eq("filesystem"), eq("src"),
+            eq("books/a.pdf"), any(byte[].class), eq("application/pdf"), eq(reference), anyString(),
+            eq("key-upload")))
+            .thenReturn(new FixtureSourceWorkflow.Submission(run, operation));
+
+        MockMultipartFile file = new MockMultipartFile("file", "a.pdf", "application/pdf",
+            "pdf-bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        mvc.perform(multipart("/v1/ingestion-runs")
+                .file(file)
+                .param("connector_id", "filesystem")
+                .param("source_id", "src")
+                .param("resource_id", "books/a.pdf")
+                .header("Authorization", "Bearer " + token("tenant-a"))
+                .header("Idempotency-Key", "key-upload"))
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.run_id").value(runId.toString()))
+            .andExpect(jsonPath("$.operation_id").value(operationId.toString()));
+
+        verify(contentStore).put(eq("tenant-a"), any(byte[].class), any(ContentMetadata.class));
+        verify(workflow).submitUploaded(any(VerifiedIngestionContext.class), eq("filesystem"), eq("src"),
+            eq("books/a.pdf"), any(byte[].class), eq("application/pdf"), eq(reference), anyString(),
+            eq("key-upload"));
+    }
+
+    @Test
+    void uploadSubmissionRejectsOctetStreamWithoutWritingOrSubmitting() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "a.pdf", "application/octet-stream",
+            "pdf-bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        mvc.perform(multipart("/v1/ingestion-runs")
+                .file(file)
+                .param("connector_id", "filesystem")
+                .param("source_id", "src")
+                .param("resource_id", "books/a.pdf")
+                .header("Authorization", "Bearer " + token("tenant-a")))
+            .andExpect(status().isBadRequest());
+
+        verify(contentStore, never()).put(anyString(), any(byte[].class), any(ContentMetadata.class));
+        verify(workflow, never()).submitUploaded(any(), anyString(), anyString(), anyString(),
+            any(byte[].class), anyString(), any(ContentReference.class), anyString(), any());
     }
 
     private static String token(String tenantId) throws Exception {

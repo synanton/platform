@@ -50,19 +50,22 @@ public class SourceController {
         requireText(request.sourceId(), "source_id");
         requireText(request.connectorId(), "connector_id");
         requireText(request.connectorType(), "connector_type");
-        requireText(request.sourceEndpoint(), "source_endpoint");
-        if (!"file".equals(request.connectorType())) {
+        String connectorType = request.connectorType();
+        if (!"file".equals(connectorType) && !"upload".equals(connectorType)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "This fixture supports filesystem sources only");
+                "connector_type must be 'file' or 'upload'");
         }
-        try {
-            filesystemPolicy.validateRoot(request.sourceEndpoint());
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        String endpoint = request.sourceEndpoint() == null ? "" : request.sourceEndpoint();
+        if ("file".equals(connectorType)) {
+            try {
+                filesystemPolicy.validateRoot(endpoint);
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+            }
         }
         SourceRow source = new SourceRow(
-            context.tenantId(), request.sourceId(), request.connectorId(), request.connectorType(),
-            request.sourceEndpoint(), request.capabilityFlags(), "ACTIVE", clock.instant(), null
+            context.tenantId(), request.sourceId(), request.connectorId(), connectorType,
+            endpoint, request.capabilityFlags(), "ACTIVE", clock.instant(), null
         );
         try {
             SourceRow created = cache.createSourceIfAbsent(source);
@@ -99,14 +102,16 @@ public class SourceController {
         }
         if (request.sourceEndpoint() != null) {
             requireText(request.sourceEndpoint(), "source_endpoint");
-            try {
-                filesystemPolicy.validateRoot(request.sourceEndpoint());
-            } catch (IllegalArgumentException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-            }
-            if (!request.sourceEndpoint().equals(source.sourceEndpoint())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "a different filesystem origin requires a new source_id");
+            if ("file".equals(source.connectorType())) {
+                try {
+                    filesystemPolicy.validateRoot(request.sourceEndpoint());
+                } catch (IllegalArgumentException e) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+                }
+                if (!request.sourceEndpoint().equals(source.sourceEndpoint())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "a different filesystem origin requires a new source_id");
+                }
             }
         }
         String endpoint = request.sourceEndpoint() == null ? source.sourceEndpoint() : request.sourceEndpoint();

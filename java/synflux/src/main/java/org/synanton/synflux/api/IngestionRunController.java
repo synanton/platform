@@ -5,15 +5,21 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.synanton.common.context.RequestContext;
 import org.synanton.common.context.RequestContextHolder;
+import org.synanton.contentcache.ContentMetadata;
+import org.synanton.contentcache.ContentReference;
+import org.synanton.contentcache.ContentStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.IngestionRunRow;
 import org.synanton.synflux.lifecycle.FixtureSourceWorkflow;
 import org.synanton.synflux.security.TrustedRequestContext;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @RestController
@@ -22,13 +28,15 @@ public class IngestionRunController {
 
     private final FixtureSourceWorkflow workflow;
     private final IngestionCacheClient cache;
+    private final ContentStore contentStore;
 
-    public IngestionRunController(FixtureSourceWorkflow workflow, IngestionCacheClient cache) {
+    public IngestionRunController(FixtureSourceWorkflow workflow, IngestionCacheClient cache, ContentStore contentStore) {
         this.workflow = workflow;
         this.cache = cache;
+        this.contentStore = contentStore;
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RunSubmission> submit(
             @RequestBody SubmitIngestionRequest request,
             @RequestHeader(name = "Idempotency-Key", required = false) String idempotencyKey) {
@@ -41,6 +49,61 @@ public class IngestionRunController {
             context, request.sourceId(), request.resourceId(), requestId, idempotencyKey
         );
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(RunSubmission.from(submission.run()));
+    }
+
+    /**
+     * Caller-pushed bytes: write the artifact first (durable, content-addressed), then
+     * submit the run. Identity is parameterized (connector/source/resource) so the
+     * browser upload and the filesystem crawler share one endpoint.
+     */
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<RunSubmission> submitUpload(
+            @RequestParam("connector_id") String connectorId,
+            @RequestParam("source_id") String sourceId,
+            @RequestParam("resource_id") String resourceId,
+            @RequestPart("file") MultipartFile file,
+            @RequestHeader(name = "Idempotency-Key", required = false) String idempotencyKey) {
+        var context = TrustedRequestContext.requireIngestionContext();
+        requireText(connectorId, "connector_id");
+        requireText(sourceId, "source_id");
+        requireText(resourceId, "resource_id");
+        if (idempotencyKey != null && idempotencyKey.length() > 256) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Idempotency-Key exceeds 256 characters");
+        }
+
+        String mediaType = file.getContentType();
+        if (mediaType == null || mediaType.isBlank()
+                || MediaType.APPLICATION_OCTET_STREAM_VALUE.equalsIgnoreCase(mediaType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "file part must declare its media type (Content-Type), not application/octet-stream");
+        }
+
+        byte[] bytes;
+        try {
+            bytes = file.getBytes();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cannot read the uploaded file", e);
+        }
+        if (bytes.length == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "uploaded file is empty");
+        }
+
+        // Sequence: durable bytes -> opaque reference -> run/operation.
+        ContentReference reference = contentStore.put(
+            context.tenantId(), bytes, ContentMetadata.of(mediaType, "upload:" + context.principalId())
+        ).reference();
+
+        FixtureSourceWorkflow.Submission submission = workflow.submitUploaded(
+            context, connectorId, sourceId, resourceId, bytes, mediaType,
+            reference, requestId(), idempotencyKey
+        );
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(RunSubmission.from(submission.run()));
+    }
+
+    private static void requireText(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, field + " is required");
+        }
     }
 
     @GetMapping("/{runId}")
