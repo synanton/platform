@@ -87,6 +87,14 @@ automated sources**, with no special security model. The normative pieces:
    hardcoded `application/octet-stream`) and the extractor rejected the result
    (`ERROR_UNSUPPORTED_MEDIA_TYPE`, platform #331). Do not repeat that on
    `/v1/...`.
+
+   **Identity is parameterized, not assumed.** The multipart form carries
+   `connector_id`, `source_id`, and `resource_id` as caller-supplied parameters;
+   the endpoint does not assume a specific connector. The UI folder upload uses
+   `connector_id=upload`; the filesystem crawler uses `connector_id=filesystem`
+   with its configured root-id. Same shape, caller-chosen values. Each file part
+   carries its media type either as the part's `Content-Type` or a `media_type`
+   form field.
 3. **Per-file progress — client-declared manifest.** The client declares the
    upload manifest (file count, total bytes) before bytes are sent.
    `Operation.progress.total` = declared file count from the start, incremented
