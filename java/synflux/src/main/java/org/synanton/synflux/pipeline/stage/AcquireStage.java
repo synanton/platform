@@ -44,7 +44,7 @@ public class AcquireStage implements PipelineStage<ContentRef, AcquiredDocument>
             throw new RuntimeException("Failed to read content: " + ref.uri(), e);
         }
         String sha256 = sha256Hex(bytes);
-        UUID contentRefId = uuidv5(NAMESPACE, ctx.tenant() + ":" + sha256);
+        UUID contentRefId = contentRefId(ctx.tenant(), sha256);
         var putResult = contentStore.put(ctx.tenant(), bytes,
             ContentMetadata.of(ref.mimeType(), "synflux:" + ctx.jobId()));
         ContentReference cacheReference = putResult.reference();
@@ -82,6 +82,11 @@ public class AcquireStage implements PipelineStage<ContentRef, AcquiredDocument>
         return new AcquiredDocument(
             ref, cachedBytes, digest, ref.mimeType(), ref.uri(), contentRefId, encodedReference
         );
+    }
+
+    /** Content-ref identity for a tenant + raw SHA-256 hex digest (shared with the upload path). */
+    public static UUID contentRefId(String tenant, String sha256) {
+        return uuidv5(NAMESPACE, tenant + ":" + sha256);
     }
 
     private static String sha256Hex(byte[] data) {

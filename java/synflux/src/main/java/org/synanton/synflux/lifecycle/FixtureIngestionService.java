@@ -473,9 +473,15 @@ public final class FixtureIngestionService {
 
     private void ensureIdentity(
             VerifiedIngestionContext context, String connectorId, String sourceId, String resourceId, Instant now) {
-        SourceRow source = cache.createSourceIfAbsent(new SourceRow(
-            context.tenantId(), sourceId, connectorId, "file", "", Set.of(), "ACTIVE", now, null
-        ));
+        // Read the configured source first: upload sources are created with
+        // connector_type=upload and must not be re-created as the filesystem
+        // fixture here (the IF NOT EXISTS compare would reject the type change).
+        SourceRow source = cache.readSource(context.tenantId(), sourceId)
+            .orElseGet(() -> cache.createSourceIfAbsent(new SourceRow(
+                context.tenantId(), sourceId, connectorId, "file", "", Set.of(), "ACTIVE", now, null)));
+        if (!source.connectorId().equals(connectorId)) {
+            throw new SourceIdentityConflictException("source_id is already bound to a different connector identity");
+        }
         if (!"ACTIVE".equals(source.status())) {
             throw new SourceIdentityConflictException("A deleted source cannot accept new ingestion");
         }
@@ -798,8 +804,10 @@ public final class FixtureIngestionService {
     }
 
     private static void validateFixtureConnector(String connectorId) {
-        if (!"file".equals(connectorId)) {
-            throw new IllegalArgumentException("FixtureIngestionService supports only the filesystem connector");
+        // "file" is the server-side fixture; "filesystem"/"upload" are caller-pushed
+        // (Lucentrix crawler and browser upload) and carry the same SourceIdentity.
+        if (!Set.of("file", "filesystem", "upload", "manual-upload").contains(connectorId)) {
+            throw new IllegalArgumentException("Unsupported connector: " + connectorId);
         }
     }
 
