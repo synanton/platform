@@ -213,6 +213,19 @@ The CPU/control plane and production GPU workloads are separated by a versioned 
 
 ---
 
+## Security
+
+The shared security model across `synanton/platform`, `synanton/ui`, and `synanton/security-provider` is [docs/security/security-model.md](docs/security/security-model.md). Platform is the runtime enforcement point for tenant scope.
+
+- **Request-time scope derives only from a validated claim.** Every tenant-scoped request validates signature/`iss`/`aud`/`exp`, extracts the tenant claim, and establishes request context from that claim alone. Tenant identity from a header, body, or path is rejected explicitly. [ADR 0007] — **Design fixed**; enforcement #339 **in progress**.
+- **Fail closed.** Missing or invalid tenant context returns 401 or zero rows. No default tenant, no full-table scan.
+- **Data-layer enforcement (defense in depth).** RLS on every tenant-scoped table; `SET LOCAL` per transaction (never session-scoped); a tenant-scoped repository whose only constructor requires a validated `TenantContext`; tenant-prefixed cache keys; permanent cross-tenant isolation and deny tests. [#339] — **In progress**.
+- **Anti-oracle error semantics.** 403 when the tenant is in the caller's own token; uniform 404 when naming a tenant that might not be theirs.
+- **Service accounts are a separate authorization axis.** Not modeled as tenant membership; scoped, auditable, and time-bound. [#339] — **Design fixed**.
+- **Deployment topology** (shared vs dedicated) is a separate decision. [#339]
+
+Platform does not own identity verification or issuance (security-provider #340), the identity model (#341, Identity 1.29), or client-side token isolation (UI ADR 0006).
+
 ## Research areas
 
 ### 1. Structured content and semantic chunking
