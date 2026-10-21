@@ -20,6 +20,7 @@ DEMO_AUTH_USER=<demo-user>
 DEMO_AUTH_PASSWORD=<demo-password>
 DEMO_AUTH_TENANT=demo
 SYNANTON_JWT_SECRET=<cluster JWT secret>
+VITE_REAL_API=true
 VITE_DEMO_AUTH_USER=<demo-user>
 VITE_DEMO_AUTH_TENANT=demo
 VITE_SYNQUEST_URL=http://192.168.10.30:30083
@@ -34,6 +35,9 @@ cd ui
 pnpm install
 pnpm --filter @synanton/web dev --host 0.0.0.0
 ```
+
+Restart the dev server after changing `.env`; Vite reads these values at startup.
+Without `VITE_REAL_API=true`, the UI intentionally runs the mock shell.
 
 Open the printed URL.
 
