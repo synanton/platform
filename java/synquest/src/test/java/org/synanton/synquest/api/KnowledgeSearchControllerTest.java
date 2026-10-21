@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -106,24 +107,30 @@ class KnowledgeSearchControllerTest {
     }
 
     @Test
-    void tenantInRequestBodyIsIgnoredTenantComesOnlyFromVerifiedContext() throws Exception {
-        var candidate = candidate("tenant-b");
-        when(backend.isReady("tenant-a")).thenReturn(true);
-        when(backend.strategy()).thenReturn("bm25");
-        when(searchService.stats("tenant-a"))
-                .thenReturn(new org.synanton.synquest.api.dto.IndexStats("tenant-a", 1, 7L, "GREEN"));
-        when(backend.candidates(eq("tenant-a"), eq("supply-chain"), eq(20)))
-                .thenReturn(List.of(candidate));
-
-        // The body names tenant-b; the verified context (tenant-a) wins.
+    void tenantIdInRequestBodyIsRejectedPerAdr0007() throws Exception {
         mvc.perform(post("/v1/search")
                         .header("Authorization", "Bearer " + token("tenant-a"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenant\":\"tenant-b\",\"query\":\"supply-chain\"}"))
-                .andExpect(status().isOk());
+                        .content("{\"tenant_id\":\"tenant-b\",\"query\":\"supply-chain\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("TENANT_IN_REQUEST_BODY"));
 
-        verify(backend).candidates(eq("tenant-a"), eq("supply-chain"), eq(20));
-        verify(backend, never()).candidates(eq("tenant-b"), eq("supply-chain"), eq(20));
+        verify(backend, never()).candidates(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void tenantHeaderIsRejectedPerAdr0007() throws Exception {
+        mvc.perform(post("/v1/search")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .header("X-Tenant-ID", "tenant-b")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"supply-chain\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("TENANT_HEADER_NOT_SUPPORTED"));
+
+        verify(backend, never()).candidates(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
     }
 
     @Test

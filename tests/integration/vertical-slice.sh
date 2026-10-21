@@ -17,8 +17,8 @@
 #   4. Search → correct hit through the public API: object_id, provenance_ref
 #      resolves, metadata.strategy == "bm25", source_version_ids contains the
 #      version; configuration_generation increases on rebuild
-#   5. Cross-tenant denial → tenant B sees zero results, body tenant ignored,
-#      provenance 404
+#   5. Cross-tenant denial → tenant B sees zero results, body tenant rejected
+#      (400 TENANT_IN_REQUEST_BODY, #347), provenance 404
 #
 # Plus: exactly one SourcePublished event after recovery (the event rides
 # inline on the single version row, deduped by IF NOT EXISTS — a duplicate
@@ -655,8 +655,9 @@ out=$(http POST "$SYNQUEST_URL/v1/search" "$TOK_B" "{\"query\":\"$TOKEN_MARK\"}"
 assert_eq "tenant B sees zero results" "$(json "len(d['results'])" <<<"$(body_of "$out")")" "0"
 
 out=$(http POST "$SYNQUEST_URL/v1/search" "$TOK_B" \
-    "{\"tenant\":\"$TENANT_A\",\"query\":\"$TOKEN_MARK\"}")
-assert_eq "body tenant ignored (still zero results)" "$(json "len(d['results'])" <<<"$(body_of "$out")")" "0"
+    "{\"tenant_id\":\"$TENANT_A\",\"query\":\"$TOKEN_MARK\"}")
+assert_eq "body tenant rejected (400)" "$(status_of "$out")" "400"
+assert_eq "body tenant code" "$(json "d.get('code')" <<<"$(body_of "$out")")" "TENANT_IN_REQUEST_BODY"
 
 out=$(http GET "$SYNQUEST_URL/v1/knowledge/$OBJECT_ID/provenance" "$TOK_B")
 assert_eq "provenance 404 for the wrong tenant — visibility enforced" "$(status_of "$out")" "404"

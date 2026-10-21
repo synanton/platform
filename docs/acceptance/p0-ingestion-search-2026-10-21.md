@@ -231,16 +231,15 @@ a tenant's projection is absent must not be "fixed" into an empty 200. After the
 empty projection it returns `200` with zero results. The isolation evidence is
 the empty tenant-B projection plus the `404` provenance.
 
-The body tenant was **ignored**, not rejected. `{"tenant_id":"demo"}` with the
-tenant-B token still returned tenant-B's (empty) results. ADR 0007 expects
-`400 TENANT_IN_REQUEST_BODY`; the platform does not enforce that yet. This is a
-D5 adapter conformance gap and a reason the tenant-B result must not be read as
-proof of the body-tenant rule. The UI client already rejects a body tenant
-client-side; the platform-side rule is still narrow. Tracked in #347.
+The body tenant was **ignored** at the time of this run, not rejected.
+`{"tenant_id":"demo"}` with the tenant-B token still returned tenant-B's
+(empty) results. ADR 0007 expects `400 TENANT_IN_REQUEST_BODY`.
 
-The `X-Tenant-ID` header rejection is **not** implemented in synquest
-(the header is ignored); that is the D5 adapter requirement, not part of P0,
-and is included in #347.
+**Update (2026-10-21, #347):** the platform now rejects both `tenant_id` in the
+body (`400 TENANT_IN_REQUEST_BODY`) and `X-Tenant-ID` (`400
+TENANT_HEADER_NOT_SUPPORTED`). The tenant-B isolation evidence remains the empty
+projection plus the `404` provenance; the body-tenant request now fails closed
+before search.
 
 ## 4. Idempotency finding — platform 500 on duplicate SHA key
 
