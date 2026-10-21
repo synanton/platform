@@ -34,6 +34,10 @@ spec:
             - {name: CASSANDRA_PORT, value: "9042"}
             - {name: CASSANDRA_LOCAL_DC, value: "datacenter1"}
             - {name: SYNQUEST_INDEX_PATH, value: "/var/lib/synquest"}
+            # Load the persisted demo projection on startup; without this the
+            # in-memory searcher is empty after a pod restart and /v1/search
+            # returns 503 until a manual rebuild.
+            - {name: SYNQUEST_SEED_DEMO_TENANT, value: "demo"}
             # Initial cluster run: lexical-only (BM25). The dense leg needs
             # TEI (gpu-runtime deployments) and full vector coverage.
             - {name: SYNQUEST_EMBEDDING_REQUIRED, value: "false"}
