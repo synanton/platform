@@ -17,14 +17,18 @@ deviation/open item, not assumed from P0.
 | lucentrix | `0e9cb02` on `feat/19-sink-v1-ingestion-runs` (PR #21) |
 | ui | `e3f1dcd` |
 | synflux image | `local-registry:5000/synanton/synflux:slice-20261021` (thin rebuild from current source) |
-| synquest image | `local-registry:5000/synanton/synquest:slice-20261019` |
-| extraction-gateway image | `local-registry:5000/synanton/extraction-gateway:slice-20261019` |
+| synquest image | `local-registry:5000/synanton/synquest:slice-20261020` (aligned after C0; P0 captured with `slice-20261019`) |
+| extraction-gateway image | `local-registry:5000/synanton/extraction-gateway:slice-20261020` (aligned after C0; P0 captured with `slice-20261019`) |
 | endpoints | synflux `http://192.168.10.32:30090`, synquest `http://192.168.10.32:30083` |
 | tenant | `demo` (P0); `slice-a`/`slice-b` (platform five-check) |
 
 The sink migration is PR synanton/lucentrix#21 (`0e9cb02`); the P0 run used
 the same working tree and is reproducible from that branch. The platform
-five-check ran against the current synflux image.
+five-check ran against the current synflux image. The gateway and synquest
+images were aligned from `slice-20261019` to `slice-20261020` during the C0
+investigation; the P0 search/provenance were re-checked on the aligned image
+after a projection rebuild (45 chunks; `configuration_generation=20`), with the
+same top hit and provenance.
 
 ## 1. Platform five-check (D1') — **FAIL at Criterion 1**
 
@@ -138,7 +142,9 @@ Exact operation payload:
 ### Search (exact top hit and metadata)
 
 `POST /v1/search {"query":"linear algebra and calculus"}` → `200`, 20 results,
-`strategy=bm25`, `configuration_generation=16`.
+`strategy=bm25`, `configuration_generation=16` on the P0 revision
+(`slice-20261019`; 20 after the aligned-image rebuild, with the same top hit and
+provenance).
 
 ```json
 {
@@ -239,42 +245,36 @@ never `500`.
 
 ## 5. C0 — extraction conformance (separate)
 
-- **PDF P0:** the extraction *stage* ran and produced meaningful chunk text and
-  page ranges. The operation metadata reports `pdf-adapter` with
-  `text`/`tables`/`layout` applied. **Whether the extraction-gateway was actually
-  called is not yet proven:** the gateway's PostgreSQL store has zero
-  operations, and a `pdf-adapter` descriptor can also come from the in-process
-  fallback. The evidence is consistent with three readings:
-  - **R1** — the gateway was bypassed and the in-process parser produced the
-    page data;
-  - **R2** — the gateway was called, but it does not persist operations to
-    PostgreSQL;
-  - **R3** — the gateway was called but the deployed image predates the
-    persistence code (image skew: synflux `slice-20261021` vs
-    extraction-gateway `slice-20261019`).
-- **Markdown fixture:** the extraction path reports `text-adapter` with
-  `tables`/`embeddedImages` unsupported → `PARTIAL` (the D1' failure).
-- **Durable record:** the extraction gateway's Postgres store is **empty**:
-  `extraction_operations=0`, `extraction_results=0`,
-  `extraction_idempotency=0`, despite
-  `EXTRACTION_DB_URL=jdbc:postgresql://postgres:5432/synanton`.
+- **PDF P0 — gateway called (log-confirmed).** The gateway log at 05:41:19
+  shows `DocumentProcessor` for the 2-page PDF
+  (`Processing 2 pages with 1 threads`), matching the P0 operation. The
+  extraction-gateway is on the PDF path.
+- **Markdown fixture — in-process.** There is no gateway log for the fixture at
+  05:44. Its `text-adapter` result (tables/embeddedImages unsupported →
+  `PARTIAL`) is the in-process fallback. That acceptance mismatch is #345, not
+  a gateway call.
+- **Durable record absent on both images (R2).** `extraction_operations=0`,
+  `extraction_results=0`, `extraction_idempotency=0` after the P0 and after a
+  new `gw-check` upload using the aligned `slice-20261020` gateway (6-page PDF;
+  gateway logs 05:53:13–14; run `401d0285-00e3-3de4-bb41-8e20cf76b639`,
+  operation `8f82932c-8099-4d46-a715-75f0c8320fb7`). The newer image also writes
+  nothing, so this is **not** stale-image skew. Tracked in #346.
 
-**C0 verdict: not final.** The extraction stage is on the PDF path; whether the
-gateway is the component that produced the chunks is unresolved. A gateway log
-tail during one new upload plus an image-skew check must settle R1/R2/R3 before
-any ticket claims "gateway bypassed" or "gateway does not persist." This is
-recorded separately from P0, as required.
+**C0 verdict:** the extraction-gateway is on the PDF path (log-confirmed); the
+Markdown fixture is in-process; the durable extraction operation record is
+absent on both images (R2) and is tracked in #346. This is recorded separately
+from P0, as required.
 
 ## Findings and next reviewable state
 
 1. **Platform five-check red** at Criterion 1 (Markdown `PARTIAL` vs expected
-   `FULL`); criteria 2–5 not executed. Resolve the acceptance expectation and
-   rerun the five checks in the current revision.
-2. **Extraction gateway invocation/persistence unresolved.** Postgres counts are
-   zero and the processor descriptor is consistent with either the gateway or
-   the in-process fallback. Investigate R1/R2/R3 before ticketing; do not claim
-   "no silent bypass" yet.
+   `FULL`); criteria 2–5 not executed. The fixture is in-process; the acceptance
+   expectation and the `cd` bug are tracked in #345.
+2. **Extraction gateway processes but does not persist (R2).** The gateway is on
+   the PDF path (log-confirmed), but writes no `extraction_operations`/results on
+   either `slice-20261019` or the aligned `slice-20261020`. Tracked in #346.
 3. **Duplicate `Idempotency-Key` → 500.** Platform fix; sink already avoids it.
+   Tracked in #344.
 4. **`#338` page ranges** remain a public-contract gap; canonical rows carry
    them; UI renders absence until the contract changes.
 5. **D2 vector leg** is absent (BM25 only); not a P0 requirement, but the
