@@ -13,7 +13,6 @@ import org.synanton.gpu.v1.GPUExecutionServiceGrpc;
 import org.synanton.gpu.v1.GetModelsRequest;
 import org.synanton.gpu.v1.ModelInfo;
 import org.synanton.gpu.v1.Operation;
-import org.synanton.gpu.v1.Provider;
 import org.synanton.llm.CompletionRequest;
 import org.synanton.llm.CompletionResponse;
 import org.synanton.llm.EmbedRequest;
@@ -159,12 +158,12 @@ public class GpuPlaneEmbedClient implements TenantAwareLlmClient, AutoCloseable 
 
     /**
      * Reads the gateway's EMBED model catalog. Used by synquest's startup capability
-     * assertion to confirm the configured model id and embedding dimension.
+     * assertion to confirm the configured model id and embedding dimension. The provider
+     * is left unspecified so the check works for both local and external catalogs.
      */
     public List<ModelInfo> models(String tenantId) {
         GetModelsRequest request = GetModelsRequest.newBuilder()
                 .setOperation(Operation.EMBED)
-                .setProvider(Provider.LOCAL)
                 .setTenantId(tenantId == null ? "" : tenantId)
                 .build();
         try {
