@@ -1,22 +1,28 @@
 ---
 title: "Phase 2 - LLM Online"
-status: "current"
-last_reviewed: "2026-07-21"
+status: "planned"
+last_reviewed: "2026-10-21"
 ---
 
 # Phase 2 - LLM Online
 
 **Purpose:** Implementation plans for Phase 2 - adds LLM enrichment, embeddings, natural-language synthesis, authentication, and the first real implementations of `security`, `topology`, and `syntology`.
 **Audience:** Engineers, leads
-**Last Updated:** 2026-07-21
+**Last Updated:** 2026-10-21
+
+> **Planning status:** This is a module-phase plan for LLM enrichment,
+> embeddings, synthesis, and related auth/UI work. It does not claim that a
+> Phase 2 user-facing delivery has been accepted. The local Docker LLM profile
+> in the [README](../../../README.md#quick-start) is a development/evaluation
+> path; current plane status is recorded in [Architecture 1.0 §15](../../architecture/synanton-platform-architecture-1.0.md#15-current-implementation-status).
 
 ## Theme
 
 > Add LLM enrichment (two-pass), dense embeddings, and a natural-language answer synthesis step. Add JWT-based authentication. Stand up real `security` and `topology` services. Integrate `syntology` entity type resolution with the ingestion pipeline.
 
-## User-Facing Capability Unlocked
+## Target User-Facing Capability (not yet accepted)
 
-`POST /search` now returns a natural-language answer alongside ranked hits. Users log in with real credentials. Ingested documents have typed entities resolved against the ontology. Operators can browse the corpus and verify enrichment output in the UI.
+Target: `POST /search` returns a natural-language answer alongside ranked hits; users log in with real credentials; ingested documents have typed entities resolved against the ontology; and operators can browse enrichment output in the UI. These are module-plan targets, not an accepted Phase 2 delivery claim.
 
 ## Module Plans
 

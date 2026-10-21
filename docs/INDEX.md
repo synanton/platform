@@ -1,51 +1,53 @@
 ---
 title: "Synanton Documentation"
 status: "current"
-last_reviewed: "2026-08-26"
+last_reviewed: "2026-10-21"
 ---
 
 # Synanton Documentation
 
-**Purpose:** Top-level navigation for all Synanton platform documentation. Start here to find the right document for your role.
-**Current design version:** [`1.22`](./VERSION) - [`architecture/synanton-design-1.22.md`](./architecture/synanton-design-1.22.md)
+**Purpose:** Top-level navigation for platform contracts, implementation evidence, operations, and historical design records.
+**Architecture overview:** [Platform Architecture 1.0](./architecture/synanton-platform-architecture-1.0.md), integrating approved Designs 1.22–1.34. Plane designs remain authoritative within their own domains.
+
+The project uses these status labels: **Proposed**, **Approved (design)**, **Contract frozen**, **In progress**, **Implemented**, **Validated (with evidence/date)**, and **Superseded**. Approval is an architecture decision, not an implementation or production-readiness claim.
 
 ## Quick Links
 
 | Document | Description |
 |----------|-------------|
-| [`architecture/synanton-design-1.25.md`](./architecture/synanton-design-1.25.md) | **Approved (architecture)** - annotations, derived knowledge, recalculation, analytics & reporting plane (v1.25, consolidates 1.24) |
-| [`architecture/synanton-design-1.23.md`](./architecture/synanton-design-1.23.md) | **In progress** - classification-aware semantic search (v1.23) |
-| [`architecture/synanton-design-1.22.md`](./architecture/synanton-design-1.22.md) | **Current baseline** - semantic chunking + pointers to extraction (1.21), GPU (1.20), baseline (1.19) |
-| [`demos/`](./demos/) | End-to-end demo scenarios |
-| [`demo/flat-vs-semantic-chunks-research-plan.md`](./demo/flat-vs-semantic-chunks-research-plan.md) | Flat vs semantic chunking RAG benchmark plan |
-| [`architecture/synanton-design-1.21.md`](./architecture/synanton-design-1.21.md) | Structured Content Extraction Plane (Part IX) |
-| [`architecture/synanton-design-1.20.md`](./architecture/synanton-design-1.20.md) | GPU Execution Plane (Part VIII) |
-| [`implementation/synanton-phases-plan.md`](./implementation/synanton-phases-plan.md) | Master implementation phases plan |
-| [`proposals/v1.24-1.25/`](architecture/proposals/v1.24-1.25/) | Annotations/analytics proposal (folded into 1.25) |
-| [`proposals/v1.22/`](architecture/proposals/v1.22/) | Semantic chunking proposal (folded into 1.22) |
-| [`proposals/v1.21/`](architecture/proposals/v1.21/) | Extraction-plane proposal (folded into 1.21) |
-| [`proposals/v1.20/`](architecture/proposals/v1.20/) | GPU isolation proposal (folded into 1.20) |
-| [`operations/`](./operations/) | Runbooks, DR playbooks, capacity planning |
-| [`api/`](./api/) | REST, gRPC, and CLI reference |
-| [`user-guides/`](./user-guides/) | Getting started, tenant admin, developer guides |
+| [`architecture/INDEX.md`](./architecture/INDEX.md) | Canonical design hierarchy, ADRs, and per-plane status |
+| [`architecture/synanton-platform-architecture-1.0.md`](./architecture/synanton-platform-architecture-1.0.md) | Approved architecture capstone; §15 records design vs implementation status |
+| [`acceptance/`](./acceptance/) | Dated acceptance records and evidence (including superseded run snapshots) |
+| [`demo/README.md`](./demo/README.md) | Current Phase 1 BM25 demo scope and limitations |
+| [`demo/demo-script.md`](./demo/demo-script.md) | UI upload → BM25 search → provenance walkthrough |
+| [`security/security-model.md`](./security/security-model.md) | Shared security contract and dated enforcement scope |
+| [`implementation/`](./implementation/) | Implementation plans and evidence; check each plan's current status header |
+| [`api/INDEX.md`](./api/INDEX.md) | REST, gRPC, and CLI reference |
+| [`operations/INDEX.md`](./operations/INDEX.md) | Operations guides and runbooks |
+| [`research/INDEX.md`](./research/INDEX.md) | Research plans and benchmark records |
+| [`demos/INDEX.md`](./demos/INDEX.md) | Historical and component-level demo scenarios |
+| [`DOCUMENTATION-INVENTORY.md`](./DOCUMENTATION-INVENTORY.md) | Disposition of the platform's current-state documentation set |
 
 ## Directory Overview
 
 | Directory | Purpose | Audience | Stability |
 |-----------|---------|---------|-----------|
-| [`architecture/`](./architecture/) | Long-lived design decisions, ADRs, current design | Architects, module owners | **Stable** |
-| [`implementation/`](./implementation/) | Phase plans, module execution guides, demos | Engineers, leads | **Volatile** |
+| [`architecture/`](./architecture/) | Approved designs, ADRs, and superseded history | Architects, module owners | **Stable; status changes dated** |
+| [`implementation/`](./implementation/) | Plans and execution evidence | Engineers, leads | **Volatile; plans own their status** |
 | [`operations/`](./operations/) | Runbooks, DR, capacity, alerts | SREs, on-call | **Semi-stable** |
 | [`demos/`](./demos/) | End-to-end demo scenarios with fixtures and acceptance checks | Engineers, reviewers | **Semi-stable** |
 | [`demo/`](./demo/) | Research plans and benchmark designs (quality, cost) | Search / ML engineers | **Volatile** |
-| [`proposals/`](./proposals/) | Versioned change proposals + approval records | Architects, approvers | **Ephemeral** |
+| [`architecture/proposals/`](./architecture/proposals/) | Proposals and review resolutions; accepted decisions link to canonical design/ADR | Architects, approvers | **Historical after disposition** |
 | [`api/`](./api/) | REST/OpenAPI, gRPC/SPI, CLI reference | API consumers, connector authors | **Stable** |
 | [`user-guides/`](./user-guides/) | Task-oriented guides | Tenants, admins, developers | **Stable** |
 | [`contrib/`](./contrib/) | Contribution guidelines, dev setup, testing discipline | Contributors | **Semi-stable** |
-| [`archive/`](architecture/archive/) | Historical documents (read-only) | Forensics | **Frozen** |
+| [`architecture/archive/`](./architecture/archive/) | Superseded design history (read-only) | Forensics, implementers | **Frozen** |
 
-## How "Current" Is Managed
+## Sources of truth
 
-The `VERSION` file at the root of `docs/` contains the current design version number (e.g., `1.22`).
-The `architecture/INDEX.md` explicitly marks which design file is authoritative.
-No symlinks are used - all files are real paths, compatible with Git on all platforms.
+- Architecture approval and design hierarchy: [`architecture/INDEX.md`](./architecture/INDEX.md) and the linked ADRs.
+- Current platform demo acceptance: the dated record in [`acceptance/`](./acceptance/); older records remain snapshots and carry later corrections where applicable.
+- Component implementation: the owning repository's code/tests and linked implementation plan. A design approval does not imply implementation.
+- Cross-plane implementation status: [Platform README](../README.md) and capstone §15, with dated updates.
+
+`VERSION` identifies the baseline design series, not the latest architecture capstone or implementation level. Historical documents are retained when they explain decisions; superseded items identify their canonical replacement.

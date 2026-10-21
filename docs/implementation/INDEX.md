@@ -1,20 +1,22 @@
 ---
 title: "Implementation"
 status: "current"
-last_reviewed: "2026-08-26"
+last_reviewed: "2026-10-21"
 ---
 
 # Implementation
 
-**Purpose:** Tactical, time-bound execution plans for each platform phase, module-level deep-dives, and demo guides.
+**Purpose:** Current plane-specific execution plans, module-level references, and demo guides. The July 2026 module-phase folders are planning history, not the current delivery-milestone status source.
 **Audience:** Engineers, leads
-**Last Updated:** 2026-08-26
+**Last Updated:** 2026-10-21
 
 ## Quick Links
 
 | Document | Description |
 |----------|-------------|
-| [`synanton-phases-plan.md`](./synanton-phases-plan.md) | **Master phases plan** - roadmap overview and phase matrix |
+| [Current accepted Phase 1 demo](../../README.md#quick-start) | BM25 UI upload → search status, constraints, and dated acceptance evidence |
+| [P0 acceptance record](../acceptance/p0-ingestion-search-2026-10-21.md) | Detailed run evidence; the five-check result and vector scope are explicit |
+| [`synanton-phases-plan.md`](./synanton-phases-plan.md) | **Historical (July 2026)** - module-phase roadmap; its Phase 1/2 labels are not current delivery milestones |
 | [`content-extraction-plane/INDEX.md`](./content-extraction-plane/INDEX.md) | Structured Content Extraction Plane (v1.21) |
 | [`semantic-chunking/INDEX.md`](./semantic-chunking/INDEX.md) | Semantic Content Structuring / Chunking (v1.22) |
 | [`classification-aware-search/INDEX.md`](./classification-aware-search/INDEX.md) | Classification-Aware Semantic Search (v1.23) |
@@ -32,14 +34,20 @@ last_reviewed: "2026-08-26"
 | [`ydb-poc-implementation-plan.md`](./ydb-poc-implementation-plan.md) | YDB PoC implementation plan + ticket tracker (merged PoC record; throwaway-scoped, 010 resolved) |
 | [`ydb-poc/README.md`](./ydb-poc/README.md) | YDB PoC artifact index — ports, contracts, specs, decision records |
 | [`../demos/INDEX.md`](../demos/INDEX.md) | End-to-end demo scenarios (v1.23 classification demo, etc.) |
-| [`../demo/INDEX.md`](../demo/INDEX.md) | Research plans and benchmark designs |
+| [`../research/INDEX.md`](../research/INDEX.md) | Research plans and benchmark designs |
 
 ## Sub-directories
 
+The `phase1/` and `phase2/` plans preserve the earlier module-by-module
+sequencing. Their phase numbers are not interchangeable with the accepted
+user-facing Phase 1 BM25 demo in the README. `phase3/`–`phase5/` are directional
+module plans; use each plan's own status and the architecture implementation
+table rather than inferring delivery acceptance from a directory name.
+
 | Directory | Purpose |
 |-----------|---------|
-| `phase1/` | Phase 1 - Foundation |
-| `phase2/` | Phase 2 - LLM Online |
+| `phase1/` | Historical module plan - Foundation |
+| `phase2/` | Module plan - LLM enrichment and online capabilities (no current delivery acceptance implied) |
 | `phase3/` | Phase 3 - Multi-tenant, Auth, Router |
 | `phase4/` | Phase 4 - Production Hardening |
 | `phase5/` | Phase 5 - Scale + Vision + DR |

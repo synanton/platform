@@ -1,21 +1,21 @@
 ---
 title: "Architecture"
 status: "current"
-last_reviewed: "2026-09-12"
+last_reviewed: "2026-10-21"
 ---
 
 # Architecture
 
 **Purpose:** Long-lived design decisions, Architecture Decision Records (ADRs), and the current authoritative design document for the Synanton platform.
 **Audience:** Architects, module owners, security engineers
-**Last Updated:** 2026-09-12
+**Last Updated:** 2026-10-21
 
 > **Synanton Platform Architecture 1.0 (capstone):** [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) — the cumulative document showing how Designs 1.22–1.34 fit together. Read this first for the platform-wide picture; each plane document below remains authoritative for its own domain.
 > **Current approved design (base):** [`synanton-design-1.22.md`](./synanton-design-1.22.md) (platform baseline)
-> **v1.23 (in progress):** [`synanton-design-1.23.md`](./synanton-design-1.23.md) — classification-aware semantic search; **normative for security platform-wide**
+> **v1.23 (approved design):** [`synanton-design-1.23.md`](./synanton-design-1.23.md) — classification-aware semantic search; **normative for security platform-wide**; enforcement remains in progress (#339)
 > **v1.25 (approved, architecture-only; consolidates 1.24):** [`synanton-design-1.25.md`](./synanton-design-1.25.md) — annotations, derived knowledge, recalculation, analytics & reporting
-> **v1.26–v1.33 (approved, architecture-only; not yet implemented):** Content Cache ([1.26](./synanton-design-1.26.md)), Eventing and Workflow ([1.27](./synanton-design-1.27.md) — the common asynchronous fabric 1.28–1.31 depend on), Ingestion ([1.28](./synanton-design-1.28.md)), Identity/Tenant/Policy ([1.29](./synanton-design-1.29.md)), AI/Model Runtime ([1.30](./synanton-design-1.30.md)), Search and Retrieval ([1.31](./synanton-design-1.31.md)), Platform API ([1.32](./synanton-design-1.32.md)), Kubernetes Operator Readiness ([1.33](./synanton-design-1.33.md))
-> **v1.34 (approved, architecture-only; not yet implemented):** [`synanton-design-1.34.md`](./synanton-design-1.34.md) — Temporal Versioned Knowledge and Retrieval; cross-plane temporal semantics owned by Ingestion (1.28) for source history, Knowledge (1.25) for derived knowledge, and Search (1.31) for temporal retrieval
+> **v1.26–v1.33 (approved designs; implementation varies):** Content Cache ([1.26](./synanton-design-1.26.md), reference service/adapters in progress), Eventing and Workflow ([1.27](./synanton-design-1.27.md), contract freeze pending #247), Ingestion ([1.28](./synanton-design-1.28.md)), Identity/Tenant/Policy ([1.29](./synanton-design-1.29.md)), AI/Model Runtime ([1.30](./synanton-design-1.30.md)), Search and Retrieval ([1.31](./synanton-design-1.31.md)), Platform API ([1.32](./synanton-design-1.32.md), contracts frozen 2026-10-17 #246; generation-A in progress), Kubernetes Operator Readiness ([1.33](./synanton-design-1.33.md))
+> **v1.34 (approved design; implementation not started):** [`synanton-design-1.34.md`](./synanton-design-1.34.md) — Temporal Versioned Knowledge and Retrieval; cross-plane temporal semantics owned by Ingestion (1.28) for source history, Knowledge (1.25) for derived knowledge, and Search (1.31) for temporal retrieval
 > Extraction plane (Part IX): [`synanton-design-1.21.md`](./archive/synanton-design-1.21.md)
 > GPU Execution Plane detail: [`synanton-design-1.20.md`](./archive/synanton-design-1.20.md)
 > 1.19 is the merged baseline for unchanged core sections - **not** the live pointer.
@@ -35,7 +35,7 @@ last_reviewed: "2026-09-12"
 | [`synanton-design-1.27.md`](./synanton-design-1.27.md) | **Approved (architecture)** - events, commands, workflows, retries, recovery; the common execution fabric 1.28–1.31 depend on (v1.27) |
 | [`synanton-design-1.26.md`](./synanton-design-1.26.md) | **Approved (architecture)** - content artifact storage/retrieval/lifecycle contract (v1.26) |
 | [`synanton-design-1.25.md`](./synanton-design-1.25.md) | **Approved (architecture)** - annotations, derived knowledge, recalculation, analytics & reporting plane (v1.25, consolidates 1.24) |
-| [`synanton-design-1.23.md`](./synanton-design-1.23.md) | **In progress** - classification-aware semantic search (v1.23) |
+| [`synanton-design-1.23.md`](./synanton-design-1.23.md) | **Approved (design)** - normative security and representation baseline; platform-wide data-layer enforcement is in progress (#339) |
 | [`synanton-design-1.22.md`](./synanton-design-1.22.md) | **Current baseline** - semantic chunking + pointers to 1.21 extraction / 1.20 GPU / 1.19 baseline |
 | [`archive/synanton-design-1.21.md`](./archive/synanton-design-1.21.md) | Structured Content Extraction Plane (Part IX) |
 | [`archive/synanton-design-1.20.md`](./archive/synanton-design-1.20.md) | GPU Execution Plane (Part VIII) |
@@ -57,22 +57,22 @@ last_reviewed: "2026-09-12"
 | 1.0 | [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) | **Approved (architecture) — capstone**; integrates 1.22–1.34; see [ADR-011](./decisions/adr-011-platform-architecture-1.0.md) |
 | 1.34 | [`synanton-design-1.34.md`](./synanton-design-1.34.md) | Approved (architecture) - implementation not started; cross-plane temporal semantics (version series, correction model, temporal search eligibility); see [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md) |
 | 1.33 | [`synanton-design-1.33.md`](./synanton-design-1.33.md) | Approved (architecture) - Kubernetes operator readiness/lifecycle contract only, no operator implementation; see [ADR-010](./decisions/adr-010-kubernetes-operator-readiness.md) |
-| 1.32 | [`synanton-design-1.32.md`](./synanton-design-1.32.md) | Approved (architecture) - implementation not started; see [ADR-009](./decisions/adr-009-platform-api-contract.md) |
+| 1.32 | [`synanton-design-1.32.md`](./synanton-design-1.32.md) | Approved (architecture); contracts frozen 2026-10-17 (#246); generation-A implementation in progress; see [ADR-009](./decisions/adr-009-platform-api-contract.md) |
 | 1.31 | [`synanton-design-1.31.md`](./synanton-design-1.31.md) | Approved (architecture) - implementation not started; see [ADR-008](./decisions/adr-008-search-retrieval-plane.md) |
 | 1.30 | [`synanton-design-1.30.md`](./synanton-design-1.30.md) | Approved (architecture) - implementation not started; see [ADR-007](./decisions/adr-007-ai-model-runtime-plane.md) |
 | 1.29 | [`synanton-design-1.29.md`](./synanton-design-1.29.md) | Approved (architecture) - implementation not started; see [ADR-006](./decisions/adr-006-identity-tenant-policy-plane.md) |
 | 1.28 | [`synanton-design-1.28.md`](./synanton-design-1.28.md) | Approved (architecture) - implementation not started; see [ADR-005](./decisions/adr-005-ingestion-plane.md) |
-| 1.27 | [`synanton-design-1.27.md`](./synanton-design-1.27.md) | Approved (architecture) - implementation not started; common eventing/workflow fabric for 1.28-1.31; see [ADR-004](./decisions/adr-004-eventing-workflow-plane.md) |
-| 1.26 | [`synanton-design-1.26.md`](./synanton-design-1.26.md) | Approved (architecture) - implementation in progress (Go reference service + Java adapters); see [ADR-003](./decisions/adr-003-content-cache-plane.md) |
+| 1.27 | [`synanton-design-1.27.md`](./synanton-design-1.27.md) | Approved (architecture); contract freeze pending (#247); common eventing/workflow fabric for 1.28–1.31; see [ADR-004](./decisions/adr-004-eventing-workflow-plane.md) |
+| 1.26 | [`synanton-design-1.26.md`](./synanton-design-1.26.md) | Approved (architecture); Go reference service and Java adapters implemented to varying degrees, end-to-end adoption/validation remains in progress; see [ADR-003](./decisions/adr-003-content-cache-plane.md) |
 | 1.25 | [`synanton-design-1.25.md`](./synanton-design-1.25.md) | Approved (architecture) - implementation phased (AAP-1/AAP-2 landed; annotations, recalculation, analytics/reporting; consolidates 1.24) |
-| 1.23 | [`synanton-design-1.23.md`](./synanton-design-1.23.md) | In progress (classification-aware search) |
+| 1.23 | [`synanton-design-1.23.md`](./synanton-design-1.23.md) | Approved (design); normative security baseline; implementation/enforcement in progress |
 | 1.22 | [`synanton-design-1.22.md`](./synanton-design-1.22.md) | **CURRENT baseline** |
 | 1.21 | [`archive/synanton-design-1.21.md`](archive/synanton-design-1.21.md) | Extraction plane (Part IX; folded, archived) |
 | 1.20 | [`archive/synanton-design-1.20.md`](archive/synanton-design-1.20.md) | GPU plane (folded, archived; still the Part VIII text) |
 | 1.19 | [`archive/synanton-design-1.19.md`](archive/synanton-design-1.19.md) | Superseded as current; baseline for core modules |
-| 1.18 | [`../archive/architecture/synanton-design-1.18.md`](archive/architecture/synanton-design-1.18.md) | Superseded |
-| 1.17 | [`../archive/architecture/synanton-design-1.17.md`](archive/architecture/synanton-design-1.17.md) | Superseded |
-| ≤1.16 | [`../archive/architecture/`](archive/architecture/) | Archived |
+| 1.18 | — | Superseded; no longer present in the current documentation tree |
+| 1.17 | — | Superseded; no longer present in the current documentation tree |
+| ≤1.16 | — | Superseded; no longer present in the current documentation tree |
 
 ## How to Contribute
 

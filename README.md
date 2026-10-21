@@ -6,8 +6,8 @@ Synanton is an AI-native enterprise knowledge platform exploring how enterprise 
 
 The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
 
-> **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) — a capstone document integrating Designs 1.22–1.34, all now **Approved (architecture)**.  
-> **Current focus:** implementation is still concentrated on the 1.22 baseline, the 1.23 security model, and 1.25 annotations/recalculation (partial — AAP-1/AAP-2 landed), plus the 1.26 Content Cache reference implementation (Go service with HTTP/gRPC/S3 tiers, jobs, and conformance suite; Java port, Postgres and gRPC adapters). **Design 1.32 (Platform API) has entered implementation:** its contract set is frozen (identity context, search model, error model, Operation model, auth spec — #246 closed 2026-10-17) and the generation-A slice (login/logout, search, MCP adapter) is in progress. Designs 1.27–1.31 and 1.33–1.34 remain approved architecture with implementation not yet started; **1.27 is the next contract freeze** (#247).
+> **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) integrates Designs 1.22–1.34, all **Approved (design)**. Approval records architectural decisions; it does not imply implementation or production readiness. The per-design status and evidence are in [§15](docs/architecture/synanton-platform-architecture-1.0.md#15-current-implementation-status).
+> **Current implementation focus (2026-10-21):** implementation is partial across 1.22/1.23/1.25/1.26; 1.32 contracts were frozen 2026-10-17 (#246) and generation-A is in progress; 1.27 contract freeze is pending (#247), which gates 1.28–1.31. See the [architecture status table](docs/architecture/INDEX.md#design-version-history) and [documentation inventory](docs/DOCUMENTATION-INVENTORY.md).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
@@ -215,11 +215,11 @@ The CPU/control plane and production GPU workloads are separated by a versioned 
 
 ## Security
 
-The shared security model across `synanton/platform`, `synanton/ui`, and `synanton/security-provider` is [docs/security/security-model.md](docs/security/security-model.md). Platform is the runtime enforcement point for tenant scope.
+The shared contract across `synanton/platform`, `synanton/ui`, and `synanton/security-provider` is [docs/security/security-model.md](docs/security/security-model.md). Design 1.23 requires Platform to enforce tenant scope. The proven Phase 1 demo path rejects caller-supplied tenant headers/body fields; broader data-layer enforcement is still tracked by [#339](https://github.com/synanton/platform/issues/339).
 
-- **Request-time scope derives only from a validated claim.** Every tenant-scoped request validates signature/`iss`/`aud`/`exp`, extracts the tenant claim, and establishes request context from that claim alone. Tenant identity from a header, body, or path is rejected explicitly. [ADR 0007] — **Design fixed**; enforcement #339 **in progress**.
-- **Fail closed.** Missing or invalid tenant context returns 401 or zero rows. No default tenant, no full-table scan.
-- **Data-layer enforcement (defense in depth).** RLS on every tenant-scoped table; `SET LOCAL` per transaction (never session-scoped); a tenant-scoped repository whose only constructor requires a validated `TenantContext`; tenant-prefixed cache keys; permanent cross-tenant isolation and deny tests. [#339] — **In progress**.
+- **Demo-path evidence (2026-10-21):** the Phase 1 ingestion/search request path rejects `X-Tenant-ID` and body `tenant_id` with 400 (#347, ADR 0007); scope in that demo is taken from its validated token. This is not evidence of platform-wide tenant enforcement.
+- **Platform-wide enforcement — In progress (#339):** RLS on tenant-scoped tables; transaction-scoped `SET LOCAL`; tenant-scoped repositories; tenant-prefixed cache keys; permanent cross-tenant and no-context deny tests. Do not describe these controls as complete until the tracked acceptance evidence exists.
+- **Target invariants:** fail closed (no default tenant or full-table scan); anti-oracle 403/404 semantics; service accounts are a separate authorization axis. See the shared model for the approved contract and current implementation scope.
 - **Anti-oracle error semantics.** 403 when the tenant is in the caller's own token; uniform 404 when naming a tenant that might not be theirs.
 - **Service accounts are a separate authorization axis.** Not modeled as tenant membership; scoped, auditable, and time-bound. [#339] — **Design fixed**.
 - **Deployment topology** (shared vs dedicated) is a separate decision. [#339]
@@ -428,7 +428,7 @@ The architecture is designed so GPU infrastructure can scale independently from 
 | `synflux-router` | Kafka-based ingestion distribution | ✅ |
 | `control-plane` | Administration and model-serving directory | ✅ |
 | `synanton-mcp` | MCP protocol bridge | ✅ |
-| `platform-api` | Generation-A external API surface (`/v1/` routes, Operation model, envelope trust interfaces) | 🔲 Planned (ADR-015) |
+| `platform-api` | Generation-A external API surface (`/v1/` routes, Operation model, envelope trust interfaces) | 🔶 In progress (contracts frozen 2026-10-17; #246) |
 | `annotations` | Annotation registry, provenance and recalculation foundation | 🔶 In progress |
 | `content-cache-api` | Content Cache port (ContentStore, v1 references), in-memory and filesystem fakes | ✅ |
 | `content-cache-postgres` | JDBC ContentStore adapter with testcontainers contract tests | ✅ |
@@ -441,7 +441,9 @@ The architecture is designed so GPU infrastructure can scale independently from 
 | `extraction-client` | Platform client and fallback policies | ✅ |
 | `synreview` | Human review of low-confidence knowledge | 🔲 Planned |
 
-Supporting components live in sibling repositories, including the GPU execution plane, structured content extractor and Lucentrix ingestion CLI.
+Status key: **Implemented** means code/contracts exist in this repository; it does not mean all planned capabilities, production deployment, or end-to-end validation are complete. **In progress** and **planned** identify implementation state, not architecture approval. Phase-specific end-to-end validation is recorded separately above and in `docs/acceptance/`.
+
+Supporting components live in sibling repositories, including the GPU execution plane, structured content extractor and Lucentrix ingestion CLI. Their documentation status is tracked in the [component documentation workstreams](docs/DOCUMENTATION-INVENTORY.md#component-workstreams).
 
 ---
 
@@ -497,9 +499,42 @@ A useful experiment should answer a concrete question and produce evidence that 
 
 ## Quick start
 
-### Ingest → extract → index (PoC)
+### Accepted demo milestone: Phase 1 BM25 upload → search (2026-10-21)
 
-The ingest → extract → index path is wired end to end. **Full Docker image builds were not verified in every environment** - run the script locally to confirm.
+**Proven and accepted:** BM25 ingestion and UI search with provenance on the
+homelab cluster. Path: **UI upload / Lucentrix → `POST /v1/ingestion-runs` →
+extraction-gateway → synflux (content cache + Cassandra) → synquest (BM25) → UI
+search and provenance.** The slice uses the MinIO hot bucket for extraction
+handoff; the full stack's synvault/content-cache remains the canonical artifact
+store.
+
+This is the accepted user-facing demo milestone. It is separate from the
+historical module-phase numbering in
+[`docs/implementation/synanton-phases-plan.md`](docs/implementation/synanton-phases-plan.md)
+and from the local Docker profiles below.
+
+Operational constraints:
+
+- **Sync extraction ceiling:** `EXTRACTION_MAX_SYNC_OBJECT_BYTES` (default
+  10 MiB). Larger files require the asynchronous extraction path/configuration.
+- **Cassandra chunk batching:** chunk writes are bounded at 10 chunks per batch
+  (#365).
+- **Tenant security:** the tenant comes only from the verified token;
+  `X-Tenant-ID` and body `tenant_id` are rejected with 400 (#347, ADR 0007).
+- **Out of scope:** vector leg (gpu-runtime #23, decision 2026-10-31), demo
+  auth placeholder (#340), public page ranges (#338).
+
+Evidence: [`docs/demo/demo-script.md`](docs/demo/demo-script.md) and
+[`docs/acceptance/p0-ingestion-search-2026-10-21.md`](docs/acceptance/p0-ingestion-search-2026-10-21.md).
+The separate platform five-check passed criteria 1–5 after #357 (2026-10-21);
+the BM25 demo acceptance does not assert vector retrieval or platform-wide
+tenant enforcement.
+
+### Local Docker ingestion PoC
+
+This local ingest → extract → index path is wired end to end. **Full Docker
+image builds were not verified in every environment** - run the script locally
+to confirm. It is a local PoC, distinct from the accepted cluster demo above.
 
 **What it does**
 
@@ -568,7 +603,10 @@ relix:
       password: ${NEO4J_PASSWORD:}
 ```
 
-### Ingestion demo (Phase 1 - no GPU required)
+### Local ingestion demo (Docker; no GPU required)
+
+This local compose profile is a developer demo, not the accepted homelab Phase 1
+acceptance record above.
 
 ```bash
 # Prerequisites: Docker, Java 21, Gradle
@@ -585,7 +623,7 @@ docker compose -f deployments/docker/compose.yaml up -d --build \
 curl http://localhost:8091/manifest/demo | python3 -m json.tool
 ```
 
-### Ingestion demo with LLM enrichment (Phase 2 - requires 2× 8 GB GPU)
+### Local LLM enrichment profile (Docker; requires 2× 8 GB GPU)
 
 > **Note:** This demo runs vLLM locally in Docker for development and evaluation only. Production GPU inference uses the separate `synanton/gpu-execution-plane` repository connected via `synanton.gpu.v1` over mTLS.
 
@@ -715,9 +753,9 @@ Start here:
 - [Platform API Plane (v1.32) — implementation plan, contracts frozen, generation-A in progress](docs/implementation/platform-api-plane/INDEX.md)
 - [Cross-plane Architecture Review Resolution (1.26–1.33)](docs/architecture/proposals/synanton-architecture-review-resolution.md)
 
-Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are approved architecture — see the table above for links to each, and their companion ADRs under [`docs/architecture/decisions/`](docs/architecture/decisions/). Except for 1.26 (reference implementation in progress — see its row above), none of them has implementation started yet; **1.27 and 1.32 are next** (see their implementation plans linked above) since the capstone's implementation sequence (§14) gates every other new plane on those two contracts being frozen first.
+Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are **Approved (design)**. Implementation differs by plane: 1.26 has a reference service and Java adapters at differing stages; 1.27's contract freeze is pending (#247); 1.32's contract set is frozen (#246) and generation-A implementation is in progress; 1.28–1.31 are not started; 1.33 has no operator implementation; 1.34 is not started. The companion ADRs and implementation plans are linked from [`docs/architecture/INDEX.md`](docs/architecture/INDEX.md).
 
-The broader project documentation is maintained separately and explains the architecture, concepts, use cases, operations, integrations and design history.
+The documentation map and document dispositions are in [`docs/INDEX.md`](docs/INDEX.md) and [`docs/DOCUMENTATION-INVENTORY.md`](docs/DOCUMENTATION-INVENTORY.md).
 
 For the research program and longer-term direction, see the [Synanton Roadmap](https://github.com/synanton/.github/blob/main/ROADMAP.md).
 
@@ -767,7 +805,7 @@ The project is not presented as a finished enterprise product. The repository is
 
 ---
 
-## Current status & recent findings (2026-10-17)
+## Status snapshot — Platform API findings (2026-10-17)
 
 The Platform API contract freeze completed this pass (#246). Five artifacts are frozen: identity context (W1), search model (W3), error model (W2), Operation model (PAPI-3), and the OAuth auth spec (W4). Six ADRs were accepted during the pass — 014 (RAG authority), 015 (Gen-A module home), 016 (MCP downstream auth), 017 (validation tooling), 018 (OAuth AS facade), 019 (downstream trust predicate) — plus ADR-020 (Operation partial outcome).
 
