@@ -1,6 +1,6 @@
 # Synanton security model
 
-**Status:** Canonical shared model — 2026-10-20
+**Status:** Canonical shared security contract; implementation status updated 2026-10-21
 **Applies to:** `synanton/platform`, `synanton/ui`, `synanton/security-provider`
 **Owners:** Platform (enforcement, contracts), Identity 1.29 (set-shaped identity), security-provider (verification/issuance), UI (client state)
 
@@ -13,12 +13,12 @@ Browser (untrusted)
 Platform APIs (validate claim, derive scope)
     │
     ├── Identity 1.29          — authoritative for authorizedTenantIds
-    └── security-provider      — verifies identity; issues tenant-bound tokens
+    └── security-provider      — verifies identity; tenant-bound token issuance is planned (#340)
 
 Platform APIs → data layer     — RLS + tenant-scoped repository
 ```
 
-The client is untrusted. The platform validates the tenant claim and derives scope from it; it never trusts tenant identity from a request header, body, or path. The data layer enforces the scope even if the application layer is bypassed.
+The client is untrusted. The target contract is that the platform validates a tenant claim and derives scope from it; it never trusts tenant identity from a request header, body, or path. Data-layer enforcement is also required so scope survives application-layer bypasses. The current demo evidence below is narrower than these platform-wide requirements.
 
 ## Invariants
 
@@ -59,14 +59,20 @@ The anti-oracle row is the one most often missed: "tenant doesn't exist" and "te
 
 ## Status vocabulary
 
-- **Implemented** — in code and tested.
-- **Design fixed** — contract recorded in an ADR; implementation may follow.
-- **In progress** — tracked issue, active work.
-- **Deferred** — tracked issue, waiting on a named trigger.
+- **Proposed** — under review; not approved.
+- **Approved (design)** — architecture decision accepted; not a claim of implementation.
+- **Contract frozen** — named contract artifacts are baselined; implementation may still be pending.
+- **In progress** — implementation or validation is active under a linked tracker.
+- **Implemented** — code exists; scope and tests are stated.
+- **Validated** — evidence proves a named path/criteria, with date; not a broader guarantee.
+- **Superseded** — useful history retained, with a link to the canonical replacement.
 
-## Current status (2026-10-20)
+## Current implementation status (2026-10-21)
 
-- **Tenant-bound token issuance:** Design fixed (ADR 0007); ownership decided Path A (#340); Phase 1 not started.
-- **Identity 1.29 set-shaped resolution:** Design fixed (#341, additive `authorized_tenant_ids`); implementation not started.
-- **Platform data-layer enforcement:** Design fixed (#339); implementation not started.
-- **UI client-side invariants:** Implemented (ADRs 0005/0006/0007; contract acceptance against the conformance double).
+- **Phase 1 BM25 demo path:** validated and accepted 2026-10-21. Its request boundary rejects `X-Tenant-ID` and body `tenant_id` with 400 (#347, ADR 0007). This is demo-path evidence, not a platform-wide tenant-isolation acceptance.
+- **Tenant-bound token issuance:** approved direction Path A; implementation not started (#340; security-provider #3). The current security-provider produces internal HS256 security-context tokens, not browser tenant-bound access tokens/JWKS.
+- **Identity 1.29 set-shaped resolution:** approved contract work is tracked by #341; implementation status is owned by that workstream and must not be inferred from demo evidence.
+- **Platform data-layer enforcement:** in progress (#339): RLS, transaction-scoped `SET LOCAL`, scoped repositories, cache keying, and permanent isolation/deny tests remain required.
+- **UI client-side invariants:** implemented and accepted against the conformance double (UI ADRs 0005/0006/0007); this does not establish production issuer or platform data-layer controls.
+
+The authoritative evidence and remaining gaps are linked from [platform #368](https://github.com/synanton/platform/issues/368), [#339](https://github.com/synanton/platform/issues/339), [#340](https://github.com/synanton/platform/issues/340), [#341](https://github.com/synanton/platform/issues/341), and [security-provider #3](https://github.com/synanton/security-provider/issues/3).
