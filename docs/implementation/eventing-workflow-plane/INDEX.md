@@ -1,7 +1,7 @@
 ---
 title: "Eventing and Workflow Plane - Implementation Plan"
-status: "not started"
-last_reviewed: "2026-09-15"
+status: "contract frozen; implementation not started"
+last_reviewed: "2026-10-21"
 ---
 
 # Eventing and Workflow Plane - Implementation Plan
@@ -10,7 +10,12 @@ last_reviewed: "2026-09-15"
 **Architecture reference:** `docs/architecture/synanton-design-1.27.md`; [ADR-004](../../architecture/decisions/adr-004-eventing-workflow-plane.md); capstone positioning in `docs/architecture/synanton-platform-architecture-1.0.md` §6, §14, §15.
 **Target repository:** `synanton/platform` (this repo) - no cross-repo split; unlike the extraction plane, there is no separate deployable service implied by the design.
 **Audience:** Architects, module owners, platform engineers
-**Last Updated:** 2026-09-15
+**Last Updated:** 2026-10-21
+
+**Status reviewed 2026-10-21:** Design 1.27 is approved and its delivery
+contract was frozen on 2026-10-17 (#247). The freeze closes the contract gate;
+implementation of the eventing/workflow plane itself has not started. This plan
+describes implementation against the frozen contract, not remaining freeze work.
 
 ---
 
