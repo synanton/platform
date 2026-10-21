@@ -37,10 +37,10 @@ component PRs/dispositions are recorded.
 
 | Repository | Workstream | Local disposition in this checkout |
 |---|---|---|
-| GPU Runtime | [gpu-runtime#25](https://github.com/synanton/gpu-runtime/issues/25) | Targeted README status/navigation corrections and inventory drafted in this checkout; historical deployment/design evidence retained. Not yet reviewed/merged. |
-| Security Provider | [security-provider#5](https://github.com/synanton/security-provider/issues/5) | Status/scope corrections, phase-plan updates, and inventory drafted; security decision history retained. Not yet reviewed/merged. |
-| Content Cache / Content Service | [content-service#25](https://github.com/synanton/content-service/issues/25) | Maturity distinction and canonical artifact-store vs ingestion-cache correction drafted with inventory. Not yet reviewed/merged. |
-| Content Extractor | [content_extractor#17](https://github.com/synanton/content_extractor/issues/17) | Format/integration status, superseded proposal notices, and inventory drafted. Not yet reviewed/merged. |
+| GPU Runtime | [gpu-runtime#25](https://github.com/synanton/gpu-runtime/issues/25) | [PR #26](https://github.com/synanton/gpu-runtime/pull/26) open; scopes GPU-5 validation to selected 2026-09-25 phase-5 requests and records the later scale-to-zero integration status separately. External review pending. |
+| Security Provider | [security-provider#5](https://github.com/synanton/security-provider/issues/5) | [PR #6](https://github.com/synanton/security-provider/pull/6) open; distinguishes internal context from planned tenant-bound issuer and preserves open B0/G0/production gates across README, plan, threat model, and platform status. External review pending. |
+| Content Cache / Content Service | [content-service#25](https://github.com/synanton/content-service/issues/25) | [PR #26](https://github.com/synanton/content-service/pull/26) open; dates the 2026-10-14 Core conformance evidence and separates it from this PR's checks, Extended conformance, SLO/load, and end-to-end adoption. External review pending. |
+| Content Extractor | [content_extractor#17](https://github.com/synanton/content_extractor/issues/17) | [PR #18](https://github.com/synanton/content_extractor/pull/18) open; format/integration status and superseded proposal notices are documented. External review pending. |
 
 ## Validation performed
 
