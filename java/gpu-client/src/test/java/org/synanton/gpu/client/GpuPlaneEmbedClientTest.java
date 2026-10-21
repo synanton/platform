@@ -57,9 +57,17 @@ class GpuPlaneEmbedClientTest {
 
     /** Fake gateway: the handler gets (attempt number starting at 1, request) and answers the observer. */
     private GpuPlaneEmbedClient client(BiConsumer<Integer, StreamObserver<ExecutionResponse>> handler) throws Exception {
+        return client(64, handler);
+    }
+
+    private GpuPlaneEmbedClient client(
+            int maxBatch,
+            BiConsumer<Integer, StreamObserver<ExecutionResponse>> handler) throws Exception {
         server = NettyServerBuilder.forPort(0).addService(service(handler)).build().start();
         channel = ManagedChannelBuilder.forAddress("localhost", server.getPort()).usePlaintext().build();
-        return new GpuPlaneEmbedClient(props(server.getPort()), MAPPER, channel);
+        GpuPlaneClientProperties p = props(server.getPort());
+        p.setMaxBatchSize(maxBatch);
+        return new GpuPlaneEmbedClient(p, MAPPER, channel);
     }
 
     private GPUExecutionServiceGrpc.GPUExecutionServiceImplBase service(
@@ -70,7 +78,27 @@ class GpuPlaneEmbedClientTest {
                 seen.add(request);
                 handler.accept(calls.incrementAndGet(), observer);
             }
+
+            @Override
+            public void getModels(GetModelsRequest request, StreamObserver<GetModelsResponse> observer) {
+                observer.onNext(GetModelsResponse.newBuilder()
+                        .addModels(ModelInfo.newBuilder()
+                                .setModelId("bge-small-384d")
+                                .setOperation(Operation.EMBED)
+                                .setEmbeddingDim(384)
+                                .build())
+                        .build());
+                observer.onCompleted();
+            }
         };
+    }
+
+    private static int inputCount(ExecutionRequest request) {
+        try {
+            return MAPPER.readTree(request.getPayload().toByteArray()).get("input").size();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static GpuPlaneClientProperties props(int port) {
@@ -132,6 +160,31 @@ class GpuPlaneEmbedClientTest {
         var payload = MAPPER.readTree(sent.getPayload().toByteArray());
         assertThat(payload.get("model").asText()).isEqualTo("synanton-free-embedding");
         assertThat(payload.get("input")).hasSize(2);
+    }
+
+    @Test
+    void modelsReadsTheGatewayCatalog() throws Exception {
+        GpuPlaneEmbedClient c = client((n, o) -> success(o, 2));
+
+        var models = c.models("rb-fixed-g");
+
+        assertThat(models).hasSize(1);
+        assertThat(models.get(0).getModelId()).isEqualTo("bge-small-384d");
+        assertThat(models.get(0).getEmbeddingDim()).isEqualTo(384);
+    }
+
+    @Test
+    void splitsBatchesAtTheConfiguredBoundary() throws Exception {
+        GpuPlaneEmbedClient c = client(2, (n, o) -> success(o, inputCount(seen.get(seen.size() - 1))));
+
+        EmbedResponse r = c.embed(
+                new EmbedRequest("bge-small-384d", List.of("a", "b", "c", "d", "e")),
+                "rb-fixed-g");
+
+        assertThat(r.embeddings()).hasSize(5);
+        assertThat(calls.get()).isEqualTo(3);
+        assertThat(seen.stream().map(GpuPlaneEmbedClientTest::inputCount).toList())
+                .containsExactly(2, 2, 1);
     }
 
     @Test
