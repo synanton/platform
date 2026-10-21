@@ -134,6 +134,7 @@ public class FixtureSourceWorkflow {
         OperationRow operation = operations.accept(context, requestId, idempotencyKey);
         UUID runId = runId(operation.operationId());
         WorkflowStateRow workflow = ensureWorkflow(context, sourceId, resourceId, operation, runId);
+        verifyRequestIdentity(workflow, sourceId, resourceId);
         IngestionRunRow previousRun = cache.readIngestionRun(context.tenantId(), runId).orElse(null);
         if (previousRun != null && previousRun.completedAt() != null) {
             finishWorkflowFromRun(workflow, previousRun);
@@ -188,6 +189,7 @@ public class FixtureSourceWorkflow {
         OperationRow operation = operations.accept(context, requestId, idempotencyKey);
         UUID runId = runId(operation.operationId());
         WorkflowStateRow workflow = ensureWorkflow(context, sourceId, resourceId, operation, runId);
+        verifyRequestIdentity(workflow, sourceId, resourceId);
         IngestionRunRow previousRun = cache.readIngestionRun(context.tenantId(), runId).orElse(null);
         if (previousRun != null && previousRun.completedAt() != null) {
             finishWorkflowFromRun(workflow, previousRun);
@@ -224,6 +226,7 @@ public class FixtureSourceWorkflow {
         OperationRow operation = operations.accept(context, requestId, idempotencyKey);
         UUID runId = runId(operation.operationId());
         WorkflowStateRow workflow = ensureWorkflow(context, sourceId, resourceId, operation, runId);
+        verifyRequestIdentity(workflow, sourceId, resourceId);
         IngestionRunRow previousRun = cache.readIngestionRun(context.tenantId(), runId).orElse(null);
         if (previousRun != null && previousRun.completedAt() != null) {
             finishWorkflowFromRun(workflow, previousRun);
@@ -279,6 +282,17 @@ public class FixtureSourceWorkflow {
             return new Submission(failed, operations.completeFromRun(running, failed));
         }
         return new Submission(scheduled, running);
+    }
+
+    /**
+     * A duplicate Idempotency-Key must replay the same request identity. A different
+     * source/resource is a conflict (409), never a 500 from replaying the old workflow.
+     */
+    static void verifyRequestIdentity(WorkflowStateRow workflow, String sourceId, String resourceId) {
+        if (!workflow.sourceId().equals(sourceId) || !workflow.resourceId().equals(resourceId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Idempotency-Key was used with a different source/resource");
+        }
     }
 
     private void markStepCompleted(WorkflowStateRow workflow, String stepId, Object input, Object output) {
@@ -727,7 +741,12 @@ public class FixtureSourceWorkflow {
             null, null, operation.requestId() == null || operation.requestId().isBlank()
                 ? operation.operationId().toString() : operation.requestId(), null, null, 0, null
         );
-        return cache.createWorkflowStateIfAbsent(initial);
+        try {
+            return cache.createWorkflowStateIfAbsent(initial);
+        } catch (org.synanton.ingestioncache.domain.WorkflowIdentityConflictException conflict) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Idempotency-Key was used with a different source/resource", conflict);
+        }
     }
 
     private void resumeWorkflow(WorkflowStateRow workflow) {
