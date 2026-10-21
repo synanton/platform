@@ -3,9 +3,11 @@
 Parent: Architecture 1.0 §14 step 3 (after 1.32 + 1.27 freezes — entry gate,
 not work items here). Acceptance: §16 "First end-to-end vertical slice is
 reproducible" (open).
+
+**Scope distinction (reviewed 2026-10-21):** [issue #253](https://github.com/synanton/platform/issues/253)'s five demonstrator acceptance criteria are closed. That closeout is not the same as [Architecture 1.0 §16](../../architecture/synanton-platform-architecture-1.0.md#16-acceptance-criteria-for-platform-10)'s broader vertical-slice criterion, which remains open and targets the contracted Content Cache + Eventing/Workflow path. Track #253's trust follow-ups below separately from the capstone acceptance gate.
 Track convention: per-plane dir + INDEX.md (see implementation INDEX).
 
-## State going in (recon 2026-10-12)
+## Historical state snapshot (recon 2026-10-12)
 
 | Plane | State | Evidence |
 |---|---|---|
@@ -73,3 +75,6 @@ ten-item gap register are in this directory:
 - [trust-bar.md](trust-bar.md) — what "done" vs "trustworthy" means
 - [gap-register.md](gap-register.md) — every known gap with trigger and resolution
 - [diagnostic-runbook.md](diagnostic-runbook.md) — twelve disguised failures, ordered
+
+These trust artifacts describe remaining trustworthiness follow-ups for the
+#253 demonstrator. They do not mark Architecture 1.0 §16 as complete.

@@ -27,7 +27,7 @@ frozen — this packet unblocks the whole downstream sequence.
 - [ ] Versioning principle (§§10–11) states the post-freeze change rule
   explicitly (major = incompatible + new design rev; minor/additive =
   backward compatible).
-- [ ] 1.27 freeze packet exists or is scheduled alongside (the gate is joint).
+- [x] 1.27 freeze packet exists and was executed 2026-10-17 (#247).
 
 ## 3. Freeze commit contents
 

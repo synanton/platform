@@ -4,8 +4,8 @@
 > **Version:** 1.0
 > **Document ID:** `synanton-platform-architecture-1.0`
 > **Date:** 2026-09-07
-> **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26, not started for 1.27–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
-> **Status revision 2026-10-21:** All Designs 1.22–1.34 remain **Approved (design)**; that is not an implementation or production-readiness claim. Design 1.32 contracts were frozen 2026-10-17 (#246) and generation-A implementation is in progress. Design 1.27 contract freeze is pending (#247). Design 1.26 has a Go reference service and Java adapters at differing implementation stages; cross-plane adoption remains in progress. Security design 1.23 is approved; platform-wide enforcement remains tracked by #339. See §15 and the dated implementation evidence linked there.
+> **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26 and 1.32, not started for 1.27–1.31 and 1.33–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
+> **Status revision 2026-10-21:** All Designs 1.22–1.34 remain **Approved (design)**; that is not an implementation or production-readiness claim. Design 1.32 contracts were frozen 2026-10-17 (#246) and generation-A implementation is in progress. Design 1.27's contract was frozen 2026-10-17 (#247); implementation has not started. Design 1.26 has a Go reference service and Java adapters at differing implementation stages; cross-plane adoption remains in progress. Security design 1.23 is approved; platform-wide enforcement remains tracked by #339. See §15 and the dated implementation evidence linked there.
 > **Basis:** [SNTP-14 / GitHub Issue #39](https://github.com/synanton/platform/issues/39); promoted from [`docs/architecture/proposals/synanton-platform-1.0-proposal.md`](./proposals/synanton-platform-1.0-proposal.md); extended by SNTP-15 with Design 1.34 (Temporal Versioned Knowledge and Retrieval)
 > **Audience:** Architects, module owners, security engineers, SREs, platform engineers, technical decision makers
 > **Related docs:** [ADR-011](./decisions/adr-011-platform-architecture-1.0.md), [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md), [Architecture Review Resolution](./proposals/synanton-architecture-review-resolution.md), and every design document listed in §3
@@ -391,7 +391,7 @@ Optional capabilities advertised by any plane (e.g. Content Cache 1.26 storage-b
 The architecture recommends this order:
 
 1. **Finalize 1.32** and freeze common API/resource/error/Operation contracts. — *Done 2026-10-17 (#246).*
-2. **Freeze 1.27** as the common asynchronous contract. — *Pending (#247); the gating item for 1.28–1.31.*
+2. **Freeze 1.27** as the common asynchronous contract. — *Done 2026-10-17 (#247); implementation not started.*
 3. Implement the first vertical slice:
    `Ingestion → Content Cache → Eventing → Knowledge → Search`.
 4. Add Identity/security enforcement across the slice.
@@ -413,7 +413,7 @@ This table records implementation state, not target architecture. Its rows are m
 | 1.23 | Approved — normative security | Partial; demo-path request spoofing rejection is implemented and demonstrated; platform-wide data-layer enforcement remains in progress (#339) |
 | 1.25 (incl. 1.24) | Approved | Partial — AAP-1 (annotation foundation) and AAP-2 (Resolutor/Equalix recalculation) landed; AAP-3–AAP-8 not started (see [ADR-002](./decisions/adr-002-annotations-analytics-plane.md)) |
 | 1.26 | Approved | Go reference service and Java adapters implemented to varying degrees; cross-plane adoption and end-to-end validation remain in progress ([component workstream](https://github.com/synanton/content-service/issues/25)) |
-| 1.27 | Approved | Contract freeze pending (#247); implementation not started |
+| 1.27 | Approved | Contract frozen 2026-10-17 (#247); implementation not started |
 | 1.28 | Approved | Not started |
 | 1.29 | Approved | Not started |
 | 1.30 | Approved | Not started |
@@ -424,7 +424,7 @@ This table records implementation state, not target architecture. Its rows are m
 
 Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence in §14. In particular, no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen, per the ordering rationale in §6.
 
-> **Revision 2026-10-21:** the 1.32 contract set is frozen (five artifacts, #246 closed) and generation-A implementation — login/logout, search API, MCP adapter — is in progress. The §14 sequencing rule was relaxed for this slice by BBAG-A amendment A1, which split *M0-entry* (spec drafting and implementation may start) from *M0-freeze* (contracts frozen); see the [plane's implementation plan](../implementation/platform-api-plane/INDEX.md). 1.27 remains unfrozen and is the next gate for 1.28–1.31. Phase 1's separate BM25 ingestion-to-UI-search demo was accepted 2026-10-21; this validates that demonstrated slice only, not every approved design or production readiness ([acceptance evidence](../acceptance/p0-ingestion-search-2026-10-21.md)).
+> **Revision 2026-10-21:** the 1.32 contract set is frozen (five artifacts, #246 closed) and generation-A implementation — login/logout, search API, MCP adapter — is in progress. The §14 sequencing rule was relaxed for this slice by BBAG-A amendment A1, which split *M0-entry* (spec drafting and implementation may start) from *M0-freeze* (contracts frozen); see the [plane's implementation plan](../implementation/platform-api-plane/INDEX.md). The 1.27 contract was frozen 2026-10-17 (#247); its implementation has not started, and 1.28–1.31 remain unstarted. Phase 1's separate BM25 ingestion-to-UI-search demo was accepted 2026-10-21; this validates that demonstrated slice only, not every approved design or production readiness ([acceptance evidence](../acceptance/p0-ingestion-search-2026-10-21.md)).
 
 ## 16. Acceptance Criteria for Platform 1.0
 
