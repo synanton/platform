@@ -1,2 +1,4 @@
 fastapi>=0.115,<1
 uvicorn[standard]>=0.34,<1
+sentence-transformers>=3.0,<4
+torch>=2.2
