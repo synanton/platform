@@ -7,7 +7,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.synanton.gpu.client.GpuPlaneClientProperties;
 import org.synanton.gpu.client.GpuPlaneEmbedClient;
-import org.synanton.llm.LlmClient;
+import org.synanton.gpu.client.GpuPlaneJwtProvider;
+
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Opt-in {@code gpu-plane} profile. Query embeddings go to the GPU plane over gRPC
@@ -27,8 +30,14 @@ public class GpuPlaneEmbeddingConfig {
     }
 
     @Bean(destroyMethod = "close")
-    public GpuPlaneEmbedClient llmClient(GpuPlaneClientProperties props, ObjectMapper objectMapper) {
-        return new GpuPlaneEmbedClient(props, objectMapper);
+    public GpuPlaneEmbedClient llmClient(
+            GpuPlaneClientProperties props,
+            ObjectMapper objectMapper,
+            Optional<GpuPlaneJwtProvider> jwtProvider) {
+        Supplier<String> tokenSupplier = jwtProvider
+                .map(provider -> (Supplier<String>) provider::token)
+                .orElse(null);
+        return new GpuPlaneEmbedClient(props, objectMapper, tokenSupplier);
     }
 
     /** Cross-encoder reranking via the GPU plane (RERANK op), fail closed. Retrieval benchmark B2, T10. */

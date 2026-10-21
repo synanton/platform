@@ -35,6 +35,12 @@ gpu-plane:
   max-requests-per-minute: ${GPU_PLANE_MAX_RPM:15}
   # The gateway contract has no batch-size field yet; this is the client-side cap.
   max-batch-size: ${GPU_MAX_BATCH_SIZE:64}
+  # Set true wherever the gateway enforces execution-JWT auth. With no signer/token,
+  # startup fails instead of silently issuing UNSIGNED requests.
+  jwt-required: ${GPU_JWT_REQUIRED:false}
+  # Set false for the BM25-only demo window when the gateway is parked; startup proceeds
+  # and vector queries fail closed on use. Set true when the gateway is up.
+  capability-check: ${GPU_CAPABILITY_CHECK:true}
   tls:
     enabled: ${GPU_TLS_ENABLED:true}
     ca-path: ${GPU_TLS_CA_PATH:}

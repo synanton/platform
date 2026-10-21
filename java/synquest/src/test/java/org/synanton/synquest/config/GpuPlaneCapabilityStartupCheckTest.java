@@ -11,6 +11,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class GpuPlaneCapabilityStartupCheckTest {
@@ -59,6 +60,19 @@ class GpuPlaneCapabilityStartupCheckTest {
         assertThatThrownBy(check::verify)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("does not advertise");
+    }
+
+    @Test
+    void skipsWhenTheCapabilityCheckIsDisabled() {
+        GpuPlaneEmbedClient client = mock(GpuPlaneEmbedClient.class);
+        GpuPlaneClientProperties gpu = gpuProperties();
+        gpu.setCapabilityCheck(false);
+
+        GpuPlaneCapabilityStartupCheck check =
+                new GpuPlaneCapabilityStartupCheck(client, gpu, properties("bge-small-384d", 384));
+
+        assertThatCode(check::verify).doesNotThrowAnyException();
+        verifyNoInteractions(client);
     }
 
     @Test

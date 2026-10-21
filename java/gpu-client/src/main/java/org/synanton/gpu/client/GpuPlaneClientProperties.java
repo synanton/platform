@@ -26,6 +26,17 @@ public class GpuPlaneClientProperties {
      * contract carries one.
      */
     private int maxBatchSize = 64;
+    /**
+     * Fail startup when no execution-JWT provider/token is configured. Set true for any
+     * deployment behind a gateway that enforces execution-JWT auth; dev/loopback can leave
+     * it false and accept UNSIGNED requests.
+     */
+    private boolean jwtRequired;
+    /**
+     * Run the gateway capability assertion at startup. Set false for the BM25-only demo
+     * window when the gateway is parked; vector queries then fail closed on use.
+     */
+    private boolean capabilityCheck = true;
     private Tls tls = new Tls();
     private Retry retry = new Retry();
 
@@ -74,6 +85,10 @@ public class GpuPlaneClientProperties {
     public void setMaxRequestsPerMinute(int maxRequestsPerMinute) { this.maxRequestsPerMinute = maxRequestsPerMinute; }
     public int getMaxBatchSize() { return maxBatchSize; }
     public void setMaxBatchSize(int maxBatchSize) { this.maxBatchSize = maxBatchSize; }
+    public boolean isJwtRequired() { return jwtRequired; }
+    public void setJwtRequired(boolean jwtRequired) { this.jwtRequired = jwtRequired; }
+    public boolean isCapabilityCheck() { return capabilityCheck; }
+    public void setCapabilityCheck(boolean capabilityCheck) { this.capabilityCheck = capabilityCheck; }
     public String getDefaultTenant() { return defaultTenant; }
     public void setDefaultTenant(String defaultTenant) { this.defaultTenant = defaultTenant; }
     public Tls getTls() { return tls; }

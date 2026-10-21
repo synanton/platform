@@ -46,6 +46,11 @@ public class GpuPlaneCapabilityStartupCheck implements ApplicationListener<Appli
     }
 
     void verify() {
+        if (!gpuProperties.isCapabilityCheck()) {
+            log.info("GPU embedding capability check skipped (gpu-plane.capability-check=false); "
+                    + "vector queries fail closed until the gateway is available");
+            return;
+        }
         String expectedModel = properties.embedding().model();
         int expectedDim = properties.embedding().dim();
         List<ModelInfo> models = client.models(gpuProperties.getDefaultTenant());
