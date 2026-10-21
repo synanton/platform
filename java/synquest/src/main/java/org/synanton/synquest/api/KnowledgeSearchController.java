@@ -7,10 +7,14 @@ import org.synanton.synquest.service.KnowledgeSearchBackend;
 import org.synanton.synquest.service.SearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
@@ -43,7 +47,17 @@ public class KnowledgeSearchController {
     }
 
     @PostMapping("/v1/search")
-    public ResponseEntity<SearchPage> search(@RequestBody SearchQueryRequest request) {
+    public ResponseEntity<?> search(
+            @RequestBody SearchQueryRequest request,
+            @RequestHeader(name = "X-Tenant-ID", required = false) String tenantHeader) {
+        if (tenantHeader != null && !tenantHeader.isBlank()) {
+            return tenantError("TENANT_HEADER_NOT_SUPPORTED",
+                    "X-Tenant-ID is not supported; the tenant comes from the verified identity context");
+        }
+        if (request.hasTenant()) {
+            return tenantError("TENANT_IN_REQUEST_BODY",
+                    "tenant_id is not accepted in the request body; the tenant comes from the verified identity context");
+        }
         TenantContext tenant = verifiedTenant();
         if (!backend.isReady(tenant.tenantId())) {
             return ResponseEntity.status(503).build();
@@ -103,6 +117,12 @@ public class KnowledgeSearchController {
         }
     }
 
+    private static ResponseEntity<ProblemDetail> tenantError(String code, String detail) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
+        problem.setProperty("code", code);
+        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
+    }
+
     private static TenantContext verifiedTenant() {
         TenantContext context = TenantContext.get();
         if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
@@ -140,11 +160,19 @@ public class KnowledgeSearchController {
             @JsonProperty("metadata") SearchPageMetadata metadata) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record SearchQueryRequest(@JsonProperty("query") String query) {
+    public record SearchQueryRequest(
+            @JsonProperty("query") String query,
+            @JsonProperty("tenant_id") String tenantId,
+            @JsonProperty("tenant") String tenant) {
         public SearchQueryRequest {
             if (query == null || query.isBlank()) {
                 throw new IllegalArgumentException("query is required");
             }
+        }
+
+        boolean hasTenant() {
+            return (tenantId != null && !tenantId.isBlank())
+                    || (tenant != null && !tenant.isBlank());
         }
     }
 }
