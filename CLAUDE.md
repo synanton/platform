@@ -137,6 +137,42 @@ produces. That question found all four.
   between them short — rows went stale three times (2f, row 3, 4b) because
   the docs flip trailed the merge.
 
+## Review discipline — solo project
+
+This repository is maintained by a single author. GitHub prevents authors from
+formally approving their own pull requests. This is a resourcing constraint,
+not a defect to route around.
+
+**Resolution:** self-review is accepted as documented risk. Record it in each
+PR body so the review record reflects what happened.
+
+For every PR, the author states:
+
+- Whether the change is docs-only, code, or both.
+- What was verified (tests run, links checked, diffs read).
+- The line: *"Reviewed by author; single-reviewer control accepted as
+  resourcing constraint (see CLAUDE.md §Review discipline — solo project)."*
+
+**This does not weaken the substantive review standard.** The controls that
+catch defects in a solo project are:
+
+- Named test per fix, failing before and passing after.
+- Verify against branch state — never assert a figure, line number, or status
+  from memory or a summary.
+- Same-window correction for artifacts a consumer reads next; deferred for
+  everything else.
+- The gap register: every known gap has a trigger, an owner, and a resolution
+  criterion.
+
+A second reviewer would add a social control on top of those. Without one, the
+four controls above are the control. If the project gains a second maintainer,
+revisit this section; the resolution is tied to the one-person constraint, not
+to a preference.
+
+**Existing record:** [Platform PR #373](https://github.com/synanton/platform/pull/373)
+records this accepted risk for the documentation-alignment follow-up. Future
+PRs should reference this section rather than re-describing it.
+
 ## Key Paths
 
 | Path | Purpose |
