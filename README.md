@@ -4,12 +4,42 @@
 
 Synanton is an AI-native enterprise knowledge platform exploring how enterprise knowledge can be **ingested, structured, secured, derived, searched, reasoned over and recalculated** as a coherent system rather than as a collection of disconnected AI components.
 
+> **Phase 1 status (2026-10-21): Proven and accepted.** BM25 ingestion and search
+> are demonstrated end to end on the homelab cluster. Vector retrieval is not
+> part of this milestone; see the Phase 1 section below.
+
 The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
 
 > **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) — a capstone document integrating Designs 1.22–1.34, all now **Approved (architecture)**.  
 > **Current focus:** implementation is still concentrated on the 1.22 baseline, the 1.23 security model, and 1.25 annotations/recalculation (partial — AAP-1/AAP-2 landed), plus the 1.26 Content Cache reference implementation (Go service with HTTP/gRPC/S3 tiers, jobs, and conformance suite; Java port, Postgres and gRPC adapters). **Design 1.32 (Platform API) has entered implementation:** its contract set is frozen (identity context, search model, error model, Operation model, auth spec — #246 closed 2026-10-17) and the generation-A slice (login/logout, search, MCP adapter) is in progress. Designs 1.27–1.31 and 1.33–1.34 remain approved architecture with implementation not yet started; **1.27 is the next contract freeze** (#247).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
+---
+
+## Phase 1 demo status (2026-10-21)
+
+**Proven and accepted: BM25 ingestion + search.**
+
+Path: **UI upload / Lucentrix → `POST /v1/ingestion-runs` → extraction-gateway →
+synflux (content cache + Cassandra) → synquest (BM25) → UI search and
+provenance.** The slice uses the MinIO hot bucket for extraction handoff; the
+full stack's synvault/content-cache remains the canonical artifact store.
+
+Operational constraints:
+
+- **Sync extraction ceiling:** `EXTRACTION_MAX_SYNC_OBJECT_BYTES` (default
+  10 MiB). Larger files require the asynchronous extraction path/configuration.
+- **Cassandra chunk batching:** chunk writes are bounded at 10 chunks per batch
+  (#365).
+- **Tenant security:** the tenant comes only from the verified token;
+  `X-Tenant-ID` and body `tenant_id` are rejected with 400 (#347, ADR 0007).
+- **Out of scope:** vector leg (gpu-runtime #23, decision 2026-10-31), demo
+  auth placeholder (#340), public page ranges (#338).
+
+Evidence: [`docs/demo/demo-script.md`](docs/demo/demo-script.md),
+[`docs/acceptance/p0-ingestion-search-2026-10-21.md`](docs/acceptance/p0-ingestion-search-2026-10-21.md),
+and the five-check (#345).
 
 ---
 
