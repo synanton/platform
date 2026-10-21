@@ -1,6 +1,11 @@
 # P0 acceptance — ingestion → search → provenance (2026-10-21)
 
-**Result:** **P0 passes; the platform five-check is red in the current revision.**
+**Current result (updated 2026-10-21):** the P0 BM25 ingestion-to-search path is
+**accepted**; the separate platform five-check passed all five criteria after
+#357. Vector retrieval is outside this acceptance. The detailed run below is a
+historical pre-#357 snapshot and is retained to explain the earlier fixture and
+working-directory failures.
+
 This record follows the review's sequence: confirm the platform acceptance first,
 then prove one real book through the supported `/v1` contract, record exact
 payloads, and keep extraction conformance and `#338` separate.
@@ -30,7 +35,16 @@ investigation; the P0 search/provenance were re-checked on the aligned image
 after a projection rebuild (45 chunks; `configuration_generation=20`), with the
 same top hit and provenance.
 
-## 1. Platform five-check (D1') — **FAIL at Criterion 1**
+## 1. Platform five-check (D1') — pre-#357 snapshot: **FAIL at Criterion 1**
+
+**Correction (2026-10-21, #357):** the script now uses per-fixture expected
+outcomes (Markdown → `PARTIAL`) and resolves paths from the repository root.
+The cluster rerun passed criteria 1–5, including `PARTIAL` and recovery of the
+same outcome. The gateway's durable extraction row remains `COMPLETED`; the
+platform derives ingestion-run `PARTIAL` from requested features vs extracted
+outcome. See [#345](https://github.com/synanton/platform/issues/345) for the
+fix and validation report. The failure transcript immediately below records
+the earlier run only; it is not the current five-check result.
 
 Command: `platform/deployments/homelab/scripts/run-slice.sh` (k8s profile).
 
