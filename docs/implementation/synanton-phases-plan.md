@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Date:** 2026-07-19
-**Status:** Draft for review
+**Status:** Historical module-phase planning snapshot; superseded as current delivery roadmap (2026-10-21)
 **Audience:** Architects, module owners, engineering leads, roadmap planners
 
 This is the master roadmap that stitches every module's phase-by-phase plan into one coherent picture. It answers three questions at a glance:
@@ -13,6 +13,16 @@ This is the master roadmap that stitches every module's phase-by-phase plan into
 
 **Not in scope for this doc:** implementation details - those live in the individual plan files linked below. This doc is orientation, not execution.
 
+> **Status and terminology (2026-10-21):** This plan was drafted in July 2026
+> and its Phase 1–5 labels group module implementation work. They are not the
+> current user-facing demo milestones. In particular, this plan's Phase 1
+> fixture-oriented query-path / no-general-UI description predates the accepted
+> 2026-10-21 BM25 UI-upload → search demo. The module-by-module material below is
+> retained as planning history; current delivery evidence is in the [README
+> Quick Start](../../README.md#quick-start) and [P0 acceptance
+> record](../acceptance/p0-ingestion-search-2026-10-21.md), while current
+> cross-plane implementation status is in [Architecture 1.0 §15](../architecture/synanton-platform-architecture-1.0.md#15-current-implementation-status).
+
 ---
 
 ## 1. Guiding Principles
@@ -20,8 +30,8 @@ This is the master roadmap that stitches every module's phase-by-phase plan into
 - **Additive phases.** No phase removes capability. Later phases layer on top of earlier ones. A running Phase-N system continues to work while Phase-N+1 is under construction.
 - **Every module has a plan every phase.** If a module is not being touched, its Phase-N status is `NO-CHANGE` and this doc records that explicitly. If it doesn't exist yet, its status is `STUB` (with a note about what fake it depends on) or `DEFERRED` (with a note about when it starts).
 - **Stub-first.** Any module that will be needed later gets a stub deliberately, on schedule. Stubs return `501 Not Implemented` behind their public interface OR are covered by a fake elsewhere (e.g. `MockTenantFilter` filling in for `security`). This keeps callers honest - they must depend on the interface, not on the presence of behaviour.
-- **Design-doc alignment.** Every phase honours [synanton-design-1.18.md](../architecture/platform/synanton-design-1.18.md). Where a phase deliberately deviates from the design (e.g. Phase 1 synquest is Java + Lucene rather than Rust), the module's plan file states the deviation and when it converges.
-- **Dedicated plan files for real work.** When a module gets `NEW` or `EXT` status in a phase, that phase gets its own plan file (e.g. `01-synquest-Phase1.md`). When it's `STUB` or `NO-CHANGE`, the entry in this master doc is the plan.
+- **Design-doc alignment (original planning basis).** This plan was based on the then-current v1.18 design, which is not in the current documentation tree. The current architecture authority is [Platform Architecture 1.0](../architecture/synanton-platform-architecture-1.0.md); the phase-specific references below remain historical planning context.
+- **Dedicated plan files for real work.** In this historical plan, modules marked `NEW` or `EXT` had a phase-specific plan file; modules marked `STUB` or `NO-CHANGE` were described here. Current module and plane status is maintained by the owning plans and Architecture 1.0 §15.
 
 ---
 
@@ -54,7 +64,7 @@ The infrastructure containers Synanton runs against - Cassandra, PostgreSQL, Min
 
 ---
 
-## 3. Phase Overview (Themes)
+## 3. Historical Phase Overview (July 2026 module-plan themes)
 
 | Phase | Theme | User-facing capability unlocked |
 |-------|-------|---------------------------------|
@@ -64,7 +74,7 @@ The infrastructure containers Synanton runs against - Cassandra, PostgreSQL, Min
 | **4** | Production hardening | ACL enforcement, cross-region routing, sanitisation, rerank, rate limits |
 | **5** | Scale + vision + DR | Tier movement, vision captions, Rust hot loop, DR runbooks, GDPR cascade |
 
-Each phase's target duration and staffing is out of scope for this doc; capacity planning lives in [synanton-design-1.18.md Appendix A](../architecture/platform/synanton-design-1.18.md).
+Each phase's target duration and staffing is out of scope for this historical plan; use current [operations documentation](../operations/INDEX.md) for operational capacity guidance.
 
 ---
 
@@ -117,30 +127,30 @@ Compact status per module per phase. Legend below.
 | Module | Status | What ships in Phase 1 | Plan |
 |--------|--------|-----------------------|------|
 | `shared/common` | NEW | `TenantContext`, `ProblemDetail`, `MockTenantFilter`, `SubjectAssertion` (stub). Foundation library every service depends on. | This doc (thin - see prereqs in ingestion & query-path plans) |
-| `ingestion-cache` | NEW | Cassandra keyspace + `manifest`, `chunks_payload`, `jobs` tables; `IngestionCacheClient` DAO. | [ingestion-pipeline-Phase1.md §4.3](./ingestion-pipeline-Phase1.md) |
+| `ingestion-cache` | NEW | Cassandra keyspace + `manifest`, `chunks_payload`, `jobs` tables; `IngestionCacheClient` DAO. | [phase1/01-ingestion-pipeline.md §4.3](./phase1/01-ingestion-pipeline.md) |
 | `synanton-llm-client` | STUB | Module does not exist yet - no LLM in Phase 1. Placeholder ADR in the module inventory acknowledges the future dependency. Callers that will need it (planner, gateway) do not depend on it in Phase 1. | This doc |
-| `synvault` | NEW | `ContentAdapter` SPI, `FilesystemAdapter` (crawls local dir), `MinioObjectStoreAdapter` (S3 facade), `GET /manifest/{tenant}`, `GET /content/{tenant}/{ref}`. | [ingestion-pipeline-Phase1.md §4.1](./ingestion-pipeline-Phase1.md) |
-| `synflux` | NEW | Acquire → Parse → Chunk → NoOp-Enrich → NoOp-Embed → Persist pipeline. CLI + REST `POST /ingest/run`. | [ingestion-pipeline-Phase1.md §4.2](./ingestion-pipeline-Phase1.md) |
+| `synvault` | NEW | `ContentAdapter` SPI, `FilesystemAdapter` (crawls local dir), `MinioObjectStoreAdapter` (S3 facade), `GET /manifest/{tenant}`, `GET /content/{tenant}/{ref}`. | [phase1/01-ingestion-pipeline.md §4.1](./phase1/01-ingestion-pipeline.md) |
+| `synflux` | NEW | Acquire → Parse → Chunk → NoOp-Enrich → NoOp-Embed → Persist pipeline. CLI + REST `POST /ingest/run`. | [phase1/01-ingestion-pipeline.md §4.2](./phase1/01-ingestion-pipeline.md) |
 | `synflux-router` | STUB | Module folder empty (`.gitkeep`). Synflux core runs the crawl inline; no work distribution yet. Callers rely on `synflux.POST /ingest/run` directly. | This doc |
-| `synquest` | NEW | Java + Lucene 9.11 (HNSW + BM25 + RRF), `POST /search`, boot-time index build from `embedding_content_cache`. Wait - Phase 1 has no embeddings yet. See note below. | [01-synquest-Phase1.md](./01-synquest-Phase1.md) |
-| `relix` | NEW | JGraphT in-memory graph loaded from `analysis_cache` Pass 2. `POST /graph/query` with three shapes. See note below on data availability. | [02-relix-Phase1.md](./02-relix-Phase1.md) |
-| `planner` | NEW | Heuristic 7-rule classifier, 4 plan templates, entity-label trie cached from relix. `POST /plan`. | [03-planner-Phase1.md](./03-planner-Phase1.md) |
-| `gateway` | NEW | Plan DAG executor, parallel step dispatch, `content_ref_intersection_first_then_rrf` fusion. `POST /query`. | [04-gateway-Phase1.md](./04-gateway-Phase1.md) |
-| `synapt` | NEW | Thin REST `POST /search`, Jakarta Validation seams pre-placed for v1.18 sanitiser, `MockTenantFilter` tenant defaulting. | [05-synapt-Phase1.md](./05-synapt-Phase1.md) |
+| `synquest` | NEW | Java + Lucene 9.11 (HNSW + BM25 + RRF), `POST /search`, boot-time index build from `embedding_content_cache`. Wait - Phase 1 has no embeddings yet. See note below. | [phase1/01-synquest.md](./phase1/01-synquest.md) |
+| `relix` | NEW | JGraphT in-memory graph loaded from `analysis_cache` Pass 2. `POST /graph/query` with three shapes. See note below on data availability. | [phase1/02-relix.md](./phase1/02-relix.md) |
+| `planner` | NEW | Heuristic 7-rule classifier, 4 plan templates, entity-label trie cached from relix. `POST /plan`. | [phase1/03-planner.md](./phase1/03-planner.md) |
+| `gateway` | NEW | Plan DAG executor, parallel step dispatch, `content_ref_intersection_first_then_rrf` fusion. `POST /query`. | [phase1/04-gateway.md](./phase1/04-gateway.md) |
+| `synapt` | NEW | Thin REST `POST /search`, Jakarta Validation seams pre-placed for v1.18 sanitiser, `MockTenantFilter` tenant defaulting. | [phase1/05-synapt.md](./phase1/05-synapt.md) |
 | `security` | STUB | Module folder empty (`.gitkeep`). Tenant resolution done by `MockTenantFilter` in `shared/common`. `SubjectAssertion` stub returns a fixed identity. No JWT, no IdP. | This doc |
 | `topology` | STUB | Module folder empty (`.gitkeep`). Tenant `"demo"` is hard-coded across services. No ACL grants. No `topology_events` topic. | This doc |
 | `control-plane` | STUB | Module folder empty (`.gitkeep`). No admin API, no forecast, no anomaly. Operators use direct `docker compose` and DB SQL. | This doc |
 | `synreview` | STUB | Module folder empty (`.gitkeep`). No HITL. Low-confidence Pass-2 entities from relix are silently accepted (i.e. the corpus is trusted). | This doc |
-| `syntology` | STANDALONE | Runs from its own single-JAR standalone-demo plan track. Not yet integrated with the ingestion pipeline; entity types produced by Pass-2 are ad-hoc strings, not resolved against a syntology ontology version. | [standalone-syntology-demo.md](./standalone-syntology-demo.md) |
+| `syntology` | STANDALONE | Runs from its own single-JAR standalone-demo plan track. Not yet integrated with the ingestion pipeline; entity types produced by Pass-2 are ad-hoc strings, not resolved against a syntology ontology version. | [demo/standalone-syntology-demo.md](./demo/standalone-syntology-demo.md) |
 | `synanton-mcp` | STUB | Module folder empty (`.gitkeep`). No MCP surface yet. External MCP clients cannot talk to Synanton in Phase 1. | This doc |
-| `syntology-admin` (UI) | STANDALONE | Ships in the syntology single JAR at `:8080/`. No general Synanton UI yet; searching from Phase 1 is via curl or Postman. | [standalone-syntology-demo.md](./standalone-syntology-demo.md) |
+| `syntology-admin` (UI) | STANDALONE | Ships in the syntology single JAR at `:8080/`. No general Synanton UI yet; searching from Phase 1 is via curl or Postman. | [demo/standalone-syntology-demo.md](./demo/standalone-syntology-demo.md) |
 
 **Note on Phase 1 sequencing gap.** Two of the query-path plans (`01-synquest`, `02-relix`) formally depend on ingestion Phase 2 output (`embedding_content_cache`, `analysis_cache`). In pure phase-order execution, they cannot run against real data until Phase 2 ships. Two acceptable resolutions:
 
 1. **Run Phase 1 query-path against fixtures.** Both plans' Testcontainers component tests seed synthetic manifest+chunks+embeddings+analysis rows - Phase 1 acceptance is on those fixtures, not on live ingestion output.
 2. **Interleave Phase 1 and Phase 2.** Ingestion Phase 2 can start in parallel with the query-path Phase 1 work, since they touch disjoint modules. The combined-DoD "full stack demo" fires when both are done.
 
-The master doc treats "Phase 1" as the intersection of ingestion Phase 1 + query-path Phase 1 + query-path fixtures. The "full stack demo" (real crawl → real search) is realistically Phase 2's DoD.
+**Historical sequencing note (July 2026; superseded for current delivery status):** this draft treated "Phase 1" as the intersection of ingestion Phase 1 + query-path Phase 1 + query-path fixtures, and placed the real-crawl → real-search full-stack demo in Phase 2. The accepted 2026-10-21 BM25 UI-upload → search demo is recorded separately in the current acceptance evidence linked above; do not use this old target statement to describe current capability.
 
 ---
 
@@ -157,10 +167,10 @@ The master doc treats "Phase 1" as the intersection of ingestion Phase 1 + query
 | Module | Status | What ships in Phase 2 | Plan |
 |--------|--------|-----------------------|------|
 | `shared/common` | EXT | Add `LlmMetricsCollector` interface, `TraceIdFilter` for request propagation. | This doc |
-| `ingestion-cache` | EXT | `V2__enrichment_and_embeddings.cql` migration → `analysis_cache`, `embedding_content_cache`, `image_caption_cache` (created but unused). Manifest gets `embedding_quality`, `enrichment_model_id` columns. | [ingestion-pipeline-Phase2.md §5](./ingestion-pipeline-Phase2.md) |
-| `synanton-llm-client` | NEW | First real implementation. `LlmClient` interface, `OpenAiCompatTranslator`, `HttpLlmClient`, retry + JSON schema validation. | [ingestion-pipeline-Phase2.md §6.1](./ingestion-pipeline-Phase2.md) |
+| `ingestion-cache` | EXT | `V2__enrichment_and_embeddings.cql` migration → `analysis_cache`, `embedding_content_cache`, `image_caption_cache` (created but unused). Manifest gets `embedding_quality`, `enrichment_model_id` columns. | [phase2/01-ingestion-pipeline.md §5](./phase2/01-ingestion-pipeline.md) |
+| `synanton-llm-client` | NEW | First real implementation. `LlmClient` interface, `OpenAiCompatTranslator`, `HttpLlmClient`, retry + JSON schema validation. | [phase2/01-ingestion-pipeline.md §6.1](./phase2/01-ingestion-pipeline.md) |
 | `synvault` | NO-CHANGE | Continues to serve Phase 1 endpoints. Adding enrichment/embedding surfaces would be tempting but is deferred to Phase 4 alongside the query-path Ph2 changes. | This doc |
-| `synflux` | EXT | `EnrichStage` (Pass 1 per-chunk + Pass 2 per-doc) and `EmbedStage` (batch-32) replace Phase 1's no-ops. New counters, new job states. | [ingestion-pipeline-Phase2.md §6.2](./ingestion-pipeline-Phase2.md) |
+| `synflux` | EXT | `EnrichStage` (Pass 1 per-chunk + Pass 2 per-doc) and `EmbedStage` (batch-32) replace Phase 1's no-ops. New counters, new job states. | [phase2/01-ingestion-pipeline.md §6.2](./phase2/01-ingestion-pipeline.md) |
 | `synflux-router` | STUB | Still no router - synflux core runs the pipeline in-process. Callers rely on `synflux.POST /ingest/run`. | This doc |
 | `synquest` | NO-CHANGE | Index build now consumes real Phase 2 embeddings instead of test fixtures - but the code path is unchanged. | This doc |
 | `relix` | NO-CHANGE | Loader now consumes real Pass 2 output instead of test fixtures - but the code path is unchanged. | This doc |
@@ -175,7 +185,7 @@ The master doc treats "Phase 1" as the intersection of ingestion Phase 1 + query
 | `synanton-mcp` | STUB | Still no MCP surface. | This doc |
 | `syntology-admin` (UI) | EXT | Adds a "corpus browser" view listing manifest + Pass 2 entities per doc; still primarily the ontology admin. General Synanton search UI is deferred. | Phase 2 plan file to be authored |
 
-**Phase 2 DoD (composite).** [ingestion-pipeline-Phase2.md §13](./ingestion-pipeline-Phase2.md) + a `POST /search` that returns a `QueryResponse.answer` string ≥ 20 words, non-empty, coherent with the hits.
+**Historical Phase 2 DoD (composite).** [phase2/01-ingestion-pipeline.md §13](./phase2/01-ingestion-pipeline.md) + a `POST /search` that returns a `QueryResponse.answer` string ≥ 20 words, non-empty, coherent with the hits.
 
 ---
 
@@ -245,7 +255,7 @@ The master doc treats "Phase 1" as the intersection of ingestion Phase 1 + query
 | `synanton-mcp` | EXT | Full tool surface per §27b, MCP session revalidation. | Phase 4 plan file to be authored |
 | `syntology-admin` (UI) | EXT | Full CSP compliance (Trusted Types, no inline styles), `<SafeHtml />` wrapper for any rich-text field, first-party synanton chat UI kicks off here (§46a). | Phase 4 plan file to be authored |
 
-**Phase 4 DoD (composite).** Every alert in [synanton-design-1.18.md §45 Alerts table](../architecture/platform/synanton-design-1.18.md) has a wired rule; CSP is `enforce` mode (not `report_only`); a fuzz test against `POST /search` finds no XSS bypass; ACL grants propagate < 300 ms p99.
+**Historical Phase 4 DoD (composite).** The original target was every alert in the July 2026 design's §45 alert table, CSP in `enforce` mode, no fuzz-tested XSS bypass, and ACL propagation < 300 ms p99. Treat these as historical plan criteria, not current acceptance; current implementation and acceptance status is owned by the linked plane plans and Architecture 1.0 §15.
 
 ---
 
@@ -286,7 +296,7 @@ The master doc treats "Phase 1" as the intersection of ingestion Phase 1 + query
 
 ## 10. Beyond Phase 5
 
-Phase 5 is where the architecture in [synanton-design-1.18.md](../architecture/platform/synanton-design-1.18.md) is fully realised. Anything beyond falls into three buckets:
+The July 2026 plan assumed Phase 5 would realize its then-current v1.18 architecture. That source has been superseded by [Platform Architecture 1.0](../architecture/synanton-platform-architecture-1.0.md), whose §15 is the current cross-plane implementation status. Anything beyond the old Phase 5 plan falls into three historical buckets:
 
 - **v1.19+ proposals.** New capabilities not in the current design (e.g. streaming graphs, agent frameworks, structured LLM tool-use). Each requires its own proposal document → design integration → phase plan.
 - **Operational maturity.** Ongoing observability polish, cost tuning, capacity planning refresh. Not phased.

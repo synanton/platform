@@ -4,44 +4,12 @@
 
 Synanton is an AI-native enterprise knowledge platform exploring how enterprise knowledge can be **ingested, structured, secured, derived, searched, reasoned over and recalculated** as a coherent system rather than as a collection of disconnected AI components.
 
-> **Phase 1 status (2026-10-21): Proven and accepted.** BM25 ingestion and search
-> are demonstrated end to end on the homelab cluster. Vector retrieval is not
-> part of this milestone; see the Phase 1 section below.
-
 The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
 
 > **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) integrates Designs 1.22–1.34, all **Approved (design)**. Approval records architectural decisions; it does not imply implementation or production readiness. The per-design status and evidence are in [§15](docs/architecture/synanton-platform-architecture-1.0.md#15-current-implementation-status).
-> **Current focus (2026-10-21):** the Phase 1 BM25 ingestion-to-UI-search demo is validated and accepted. Separately, implementation is partial across 1.22/1.23/1.25/1.26; 1.32 contracts were frozen 2026-10-17 (#246) and generation-A is in progress; 1.27 contract freeze is pending (#247), which gates 1.28–1.31. See the [architecture status table](docs/architecture/INDEX.md#design-version-history) and [documentation inventory](docs/DOCUMENTATION-INVENTORY.md).
+> **Current implementation focus (2026-10-21):** implementation is partial across 1.22/1.23/1.25/1.26; 1.32 contracts were frozen 2026-10-17 (#246) and generation-A is in progress; 1.27 contract freeze is pending (#247), which gates 1.28–1.31. See the [architecture status table](docs/architecture/INDEX.md#design-version-history) and [documentation inventory](docs/DOCUMENTATION-INVENTORY.md).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-
----
-
-## Phase 1 demo status (2026-10-21)
-
-**Proven and accepted: BM25 ingestion + search.**
-
-Path: **UI upload / Lucentrix → `POST /v1/ingestion-runs` → extraction-gateway →
-synflux (content cache + Cassandra) → synquest (BM25) → UI search and
-provenance.** The slice uses the MinIO hot bucket for extraction handoff; the
-full stack's synvault/content-cache remains the canonical artifact store.
-
-Operational constraints:
-
-- **Sync extraction ceiling:** `EXTRACTION_MAX_SYNC_OBJECT_BYTES` (default
-  10 MiB). Larger files require the asynchronous extraction path/configuration.
-- **Cassandra chunk batching:** chunk writes are bounded at 10 chunks per batch
-  (#365).
-- **Tenant security:** the tenant comes only from the verified token;
-  `X-Tenant-ID` and body `tenant_id` are rejected with 400 (#347, ADR 0007).
-- **Out of scope:** vector leg (gpu-runtime #23, decision 2026-10-31), demo
-  auth placeholder (#340), public page ranges (#338).
-
-Evidence: [`docs/demo/demo-script.md`](docs/demo/demo-script.md) and
-[`docs/acceptance/p0-ingestion-search-2026-10-21.md`](docs/acceptance/p0-ingestion-search-2026-10-21.md).
-The separate platform five-check passed criteria 1–5 after #357 (2026-10-21);
-the BM25 demo acceptance does not assert vector retrieval or platform-wide
-tenant enforcement.
 
 ---
 
@@ -531,9 +499,42 @@ A useful experiment should answer a concrete question and produce evidence that 
 
 ## Quick start
 
-### Ingest → extract → index (PoC)
+### Accepted demo milestone: Phase 1 BM25 upload → search (2026-10-21)
 
-The ingest → extract → index path is wired end to end. **Full Docker image builds were not verified in every environment** - run the script locally to confirm.
+**Proven and accepted:** BM25 ingestion and UI search with provenance on the
+homelab cluster. Path: **UI upload / Lucentrix → `POST /v1/ingestion-runs` →
+extraction-gateway → synflux (content cache + Cassandra) → synquest (BM25) → UI
+search and provenance.** The slice uses the MinIO hot bucket for extraction
+handoff; the full stack's synvault/content-cache remains the canonical artifact
+store.
+
+This is the accepted user-facing demo milestone. It is separate from the
+historical module-phase numbering in
+[`docs/implementation/synanton-phases-plan.md`](docs/implementation/synanton-phases-plan.md)
+and from the local Docker profiles below.
+
+Operational constraints:
+
+- **Sync extraction ceiling:** `EXTRACTION_MAX_SYNC_OBJECT_BYTES` (default
+  10 MiB). Larger files require the asynchronous extraction path/configuration.
+- **Cassandra chunk batching:** chunk writes are bounded at 10 chunks per batch
+  (#365).
+- **Tenant security:** the tenant comes only from the verified token;
+  `X-Tenant-ID` and body `tenant_id` are rejected with 400 (#347, ADR 0007).
+- **Out of scope:** vector leg (gpu-runtime #23, decision 2026-10-31), demo
+  auth placeholder (#340), public page ranges (#338).
+
+Evidence: [`docs/demo/demo-script.md`](docs/demo/demo-script.md) and
+[`docs/acceptance/p0-ingestion-search-2026-10-21.md`](docs/acceptance/p0-ingestion-search-2026-10-21.md).
+The separate platform five-check passed criteria 1–5 after #357 (2026-10-21);
+the BM25 demo acceptance does not assert vector retrieval or platform-wide
+tenant enforcement.
+
+### Local Docker ingestion PoC
+
+This local ingest → extract → index path is wired end to end. **Full Docker
+image builds were not verified in every environment** - run the script locally
+to confirm. It is a local PoC, distinct from the accepted cluster demo above.
 
 **What it does**
 
@@ -602,7 +603,10 @@ relix:
       password: ${NEO4J_PASSWORD:}
 ```
 
-### Ingestion demo (Phase 1 - no GPU required)
+### Local ingestion demo (Docker; no GPU required)
+
+This local compose profile is a developer demo, not the accepted homelab Phase 1
+acceptance record above.
 
 ```bash
 # Prerequisites: Docker, Java 21, Gradle
@@ -619,7 +623,7 @@ docker compose -f deployments/docker/compose.yaml up -d --build \
 curl http://localhost:8091/manifest/demo | python3 -m json.tool
 ```
 
-### Ingestion demo with LLM enrichment (Phase 2 - requires 2× 8 GB GPU)
+### Local LLM enrichment profile (Docker; requires 2× 8 GB GPU)
 
 > **Note:** This demo runs vLLM locally in Docker for development and evaluation only. Production GPU inference uses the separate `synanton/gpu-execution-plane` repository connected via `synanton.gpu.v1` over mTLS.
 
