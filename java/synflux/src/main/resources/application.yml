@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: synflux
+  servlet:
+    multipart:
+      # The ingest business limit is 100 MB (synflux.ingest.max-file-size-bytes).
+      # Spring's multipart default is 1 MB, which rejected every real book upload
+      # with MaxUploadSizeExceededException/413; keep these aligned.
+      max-file-size: ${SYNFLUX_MULTIPART_MAX_FILE_SIZE:100MB}
+      max-request-size: ${SYNFLUX_MULTIPART_MAX_REQUEST_SIZE:110MB}
 
 management:
   endpoints:
