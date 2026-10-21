@@ -33,6 +33,10 @@ synquest:
     # Snippet length cap in chars (0 = full chunk text). Rerank evaluation
     # needs full text; UI previews want short. Default preserves behavior.
     snippet-chars: 200
+  seed:
+    # Optional demo projection initialisation after a restart. Set to the demo
+    # tenant (demo) so the existing index is loaded without a manual rebuild.
+    demo-tenant: ${SYNQUEST_SEED_DEMO_TENANT:}
   embedding:
     model: ${EMBED_MODEL:bge-base-en-v1.5}
     # Dense index dimension (<= 1024, the Lucene 9.11 KNN cap). Changing it needs a /reindex.

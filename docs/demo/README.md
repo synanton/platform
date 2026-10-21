@@ -33,6 +33,9 @@ extraction → canonical chunks → synquest BM25 → UI search and provenance.
 - The UI sends no tenant header or body field; the tenant comes from the signed
   token.
 - Keep the cluster images pinned and recorded in the walkthrough.
+- The synquest deployment sets `SYNQUEST_SEED_DEMO_TENANT=demo`, so a pod
+  restart reloads the persisted projection instead of serving 503 until a
+  manual rebuild.
 - The vector feature must remain off (`SEARCH_DENSE_ENABLED=false` when it
   exists) for the demo window.
 
