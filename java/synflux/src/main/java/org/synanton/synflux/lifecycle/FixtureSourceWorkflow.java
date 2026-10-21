@@ -741,7 +741,12 @@ public class FixtureSourceWorkflow {
             null, null, operation.requestId() == null || operation.requestId().isBlank()
                 ? operation.operationId().toString() : operation.requestId(), null, null, 0, null
         );
-        return cache.createWorkflowStateIfAbsent(initial);
+        try {
+            return cache.createWorkflowStateIfAbsent(initial);
+        } catch (org.synanton.ingestioncache.domain.WorkflowIdentityConflictException conflict) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Idempotency-Key was used with a different source/resource", conflict);
+        }
     }
 
     private void resumeWorkflow(WorkflowStateRow workflow) {

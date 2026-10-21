@@ -465,7 +465,8 @@ public class IngestionCacheClient {
                 || !existing.runId().equals(workflow.runId())
                 || !existing.sourceId().equals(workflow.sourceId())
                 || !existing.resourceId().equals(workflow.resourceId())) {
-            throw new IllegalStateException("workflow_id is already bound to another operation or resource");
+            throw new org.synanton.ingestioncache.domain.WorkflowIdentityConflictException(
+                "workflow_id is already bound to another operation or resource");
         }
         return existing;
     }
