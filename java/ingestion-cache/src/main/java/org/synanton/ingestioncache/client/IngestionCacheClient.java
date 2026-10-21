@@ -188,35 +188,44 @@ public class IngestionCacheClient {
      * the (source version, chunk, run) mapping in the junction table for reverse
      * lookup. All idempotent: reprocessing overwrites identical rows.
      */
+    /** Upper bound on chunks per Cassandra batch; a whole large PDF in one batch is rejected. */
+    private static final int CHUNK_BATCH_SIZE = 10;
+
     public void recordKnowledgeChunks(
             String tenantId, UUID contentRefId, UUID sourceVersionId, UUID processingRunId,
             List<ChunkRow> chunks) {
         registerTenant(tenantId, Instant.now());
-        var batch = BatchStatement.newInstance(DefaultBatchType.LOGGED);
-        for (ChunkRow c : chunks) {
-            batch = batch.add(SimpleStatement.newInstance(
-                "INSERT INTO ingestion_cache.chunks_payload " +
-                "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
-                "page_start, page_end, section_path, chunk_type, heading, " +
-                "source_elements, token_count, structured_content, is_partial_section, classification, " +
-                "section_id, parent_section_id, heading_level, processing_run_id) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
-                c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
-                c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
-                c.structuredContentJson(), c.isPartialSection(),
-                new java.util.HashSet<>(c.classification()),
-                c.sectionId(), c.parentSectionId(), c.headingLevel(),
-                c.processingRunId()
-            ));
-            batch = batch.add(SimpleStatement.newInstance(
-                "INSERT INTO ingestion_cache.chunk_source_versions " +
-                "(tenant_id, source_version_id, content_ref_id, chunk_ordinal, chunk_sha256, processing_run_id) " +
-                "VALUES (?,?,?,?,?,?)",
-                tenantId, sourceVersionId, contentRefId, c.chunkOrdinal(), c.chunkSha256(), processingRunId
-            ));
+        // Large documents (hundreds of chunks) exceed Cassandra's batch size limit in one
+        // batch. Split by chunks; each chunk contributes two statements. The run is marked
+        // FAILED on a partial write and reprocessed deterministically on recovery.
+        for (int start = 0; start < chunks.size(); start += CHUNK_BATCH_SIZE) {
+            int end = Math.min(start + CHUNK_BATCH_SIZE, chunks.size());
+            var batch = BatchStatement.newInstance(DefaultBatchType.LOGGED);
+            for (ChunkRow c : chunks.subList(start, end)) {
+                batch = batch.add(SimpleStatement.newInstance(
+                    "INSERT INTO ingestion_cache.chunks_payload " +
+                    "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
+                    "page_start, page_end, section_path, chunk_type, heading, " +
+                    "source_elements, token_count, structured_content, is_partial_section, classification, " +
+                    "section_id, parent_section_id, heading_level, processing_run_id) " +
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
+                    c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
+                    c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
+                    c.structuredContentJson(), c.isPartialSection(),
+                    new java.util.HashSet<>(c.classification()),
+                    c.sectionId(), c.parentSectionId(), c.headingLevel(),
+                    c.processingRunId()
+                ));
+                batch = batch.add(SimpleStatement.newInstance(
+                    "INSERT INTO ingestion_cache.chunk_source_versions " +
+                    "(tenant_id, source_version_id, content_ref_id, chunk_ordinal, chunk_sha256, processing_run_id) " +
+                    "VALUES (?,?,?,?,?,?)",
+                    tenantId, sourceVersionId, contentRefId, c.chunkOrdinal(), c.chunkSha256(), processingRunId
+                ));
+            }
+            session.execute(batch);
         }
-        session.execute(batch);
         // The attribution append runs AFTER the batch: a collection delta inside a
         // logged batch shares the batch timestamp with the row INSERT and can be
         // lost. A separate statement has a strictly later timestamp.
