@@ -1,0 +1,9 @@
+# Per-fixture expected ingestion outcome for vertical-slice.sh.
+# Format: <resource_id> <expected_outcome>
+#
+# Markdown is PARTIAL: the text adapter extracts text but reports
+# tables/embeddedImages UNSUPPORTED, so the ingestion intent is not fully met.
+# The extraction gateway's own row stays COMPLETED (item-level); the platform
+# derives PARTIAL from intent vs outcome (#345/#346).
+fixture-doc.md PARTIAL
+recovery-doc.md PARTIAL

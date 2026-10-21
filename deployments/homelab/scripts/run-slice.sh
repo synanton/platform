@@ -13,6 +13,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"       # platform repo root
+# The acceptance script uses repo-relative paths (compose file, gradlew);
+# invoking it from deployments/homelab broke the default COMPOSE_FILE (#345).
+cd "$ROOT"
 NAMESPACE="${NAMESPACE:-synanton}"
 FIXTURE_NFS_MOUNT="${FIXTURE_NFS_MOUNT:-/mnt/wd6000}"
 FIXTURE_NFS_SUBDIR="${FIXTURE_NFS_SUBDIR:-synanton-slice}"

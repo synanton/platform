@@ -6,12 +6,14 @@
 #   WORKER_PROFILE=k8s tests/integration/vertical-slice.sh
 #
 # Criteria (in order):
-#   1. Ingest a known source → immutable version (operation SUCCEEDED, outcome FULL)
+#   1. Ingest a known source → immutable version (operation SUCCEEDED, outcome
+#      matches the per-fixture manifest: Markdown is PARTIAL because the text
+#      adapter reports tables/embeddedImages UNSUPPORTED)
 #   2. Content artifact retrievable → provenance_ref resolves to the version
 #      and the Content Cache reference; digest matches the fixture bytes
 #   3. Restart recovery → worker crashed after-manifest (SYNANTON_FAULT_INJECT,
 #      the documented hook), restart clean, operation SUCCEEDED, exactly one
-#      SourceVersion — no duplicates
+#      SourceVersion — no duplicates (outcome follows the fixture manifest)
 #   4. Search → correct hit through the public API: object_id, provenance_ref
 #      resolves, metadata.strategy == "bm25", source_version_ids contains the
 #      version; configuration_generation increases on rebuild
@@ -26,11 +28,11 @@
 # Worker-profile status: compose exercised on M70q; the k8s profile is
 # UNTESTED — the first cluster run exercises it.
 #
-# Not asserted here, deliberately: outcome PARTIAL / quarantined resources —
-# the Content Cache integrity exceptions that produce QUARANTINED runs are
-# internal-corruption class with no honest data-driven generator in the slice;
-# the derivation is unit-proven and the generator is #294's scope. The script
-# grows the assertion when a generator lands — it does not fake one.
+# Per-fixture outcomes live in fixture-expectations.tsv. Markdown is PARTIAL
+# because the text adapter reports tables/embeddedImages UNSUPPORTED; the
+# gateway's extraction row stays COMPLETED (item-level), while the platform
+# derives PARTIAL from ingestion intent vs outcome (#345/#346). Quarantined
+# resources remain out of scope: the generator is #294's.
 #
 # The script is environment-parameterized, not duplicated:
 #   WORKER_PROFILE  compose (default) | process | k8s
@@ -46,6 +48,11 @@ set -euo pipefail
 # Dev secret hygiene: source .env at the repo root when present, so the
 # secret never needs to appear in shell history or CI logs.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve every relative path from the repo root, not the caller's cwd
+# (run-slice.sh invoked this from deployments/homelab, which broke the
+# default COMPOSE_FILE resolution — #345).
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
 # An explicitly provided secret wins (the cluster run passes the homelab
 # .env's value); otherwise fall back to the repo .env used by compose.
 if [ -z "${SYNANTON_JWT_SECRET:-}" ] && [ -f "$SCRIPT_DIR/../../.env" ]; then
@@ -60,7 +67,7 @@ TENANT_B="${TENANT_B:-slice-b}"
 WORKER_PROFILE="${WORKER_PROFILE:-compose}"
 K8S_NAMESPACE="${K8S_NAMESPACE:-synanton}"
 CASSANDRA_POD="${CASSANDRA_POD:-cassandra-0}"
-COMPOSE_FILE="${COMPOSE_FILE:-deployments/docker/compose.yaml}"
+COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/deployments/docker/compose.yaml}"
 # The worker helpers `cd deployments/docker` before invoking compose — a
 # relative COMPOSE_FILE would double-count the cd. Resolve absolute, once.
 COMPOSE_FILE="$(cd "$(dirname "$COMPOSE_FILE")" && pwd)/$(basename "$COMPOSE_FILE")"
@@ -76,6 +83,19 @@ assert_eq() { [ "$2" = "$3" ] && pass "$1" || die "$1 (expected '$3', got '$2')"
 assert_not_empty() { [ -n "$2" ] && pass "$1" || die "$1 (empty)"; }
 
 json() { python3 -c "import json,sys; d=json.load(sys.stdin); print($1)"; }
+
+fixture_expectations() {
+    printf '%s/fixture-expectations.tsv' "$SCRIPT_DIR"
+}
+
+expected_outcome() {  # expected_outcome <resource_id>
+    local resource="$1" manifest expected
+    manifest="$(fixture_expectations)"
+    [ -f "$manifest" ] || die "missing per-fixture outcome manifest: $manifest"
+    expected=$(awk -v r="$resource" '$1 == r { print $2; exit }' "$manifest")
+    [ -n "$expected" ] || die "no expected outcome for resource '$resource' in $manifest"
+    printf '%s' "$expected"
+}
 
 mint_token() {  # mint_token <tenant>
 python3 - "$1" "$SYNANTON_JWT_SECRET" <<'PYEOF'
@@ -408,7 +428,8 @@ assert_not_empty "run submitted — run_id $RUN_ID" "$RUN_ID"
 
 op=$(wait_operation "$OP_ID")
 assert_eq "operation SUCCEEDED" "$(json "d['status']" <<<"$op")" "SUCCEEDED"
-assert_eq "outcome FULL" "$(json "d['outcome']" <<<"$op")" "FULL"
+EXPECTED_MAIN_OUTCOME=$(expected_outcome "fixture-doc.md")
+assert_eq "outcome $EXPECTED_MAIN_OUTCOME" "$(json "d['outcome']" <<<"$op")" "$EXPECTED_MAIN_OUTCOME"
 
 versions=$(body_of "$(http GET "$SYNFLUX_URL/v1/sources/$SOURCE_MAIN/versions" "$TOK_A")")
 assert_eq "exactly one version" "$(json "len(d)" <<<"$versions")" "1"
@@ -503,7 +524,8 @@ wait_health synflux "$SYNFLUX_URL"
 
 op=$(wait_operation "$RECOVERY_OP")
 assert_eq "recovered operation SUCCEEDED" "$(json "d['status']" <<<"$op")" "SUCCEEDED"
-assert_eq "recovered outcome FULL" "$(json "d['outcome']" <<<"$op")" "FULL"
+EXPECTED_RECOVERY_OUTCOME=$(expected_outcome "recovery-doc.md")
+assert_eq "recovered outcome $EXPECTED_RECOVERY_OUTCOME" "$(json "d['outcome']" <<<"$op")" "$EXPECTED_RECOVERY_OUTCOME"
 rversions=$(body_of "$(http GET "$SYNFLUX_URL/v1/sources/$SOURCE_RECOVERY/versions" "$TOK_A")")
 assert_eq "exactly one SourceVersion after recovery — no duplicates" \
     "$(json "len(d)" <<<"$rversions")" "1"
