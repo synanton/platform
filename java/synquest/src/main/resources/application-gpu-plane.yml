@@ -1,14 +1,17 @@
 # Opt-in profile: query embeddings via the GPU plane (gRPC synanton.gpu.v1 over mTLS).
 # Activate with SPRING_PROFILES_ACTIVE=gpu-plane. Retrieval benchmark plan §6 Phase B1-G.
 #
-# EMBED_MODEL must be a LOGICAL model ID from the GPU Gateway catalog (GPU-7:
-# synanton-free-embedding; GPU-5: synanton-bge-base-embedding), and must equal
-# synflux's EMBED_MODEL_ID so the index only ever holds vectors from one model.
+# GPU_MODEL_ID must be a LOGICAL model ID from the GPU Gateway catalog (GPU-7:
+# synanton-free-embedding; GPU-5: synanton-bge-base-embedding; demo vector path:
+# bge-small-384d), and must equal synflux's EMBED_MODEL_ID so the index only ever
+# holds vectors from one model.
 synquest:
   embedding:
-    model: ${EMBED_MODEL:synanton-free-embedding}
+    model: ${GPU_MODEL_ID:${EMBED_MODEL:synanton-free-embedding}}
     # GPU-7 free models are 2048-dim (nemotron) or 1024 (lfm); G0 chose 1024 for every arm:
     # nemotron needs truncation (2048 -> 1024), lfm is native 1024 (truncation is a no-op).
+    # Demo bge-small-384d: set EMBED_DIM=384 and EMBED_TRUNCATE_DIM=0 (native 384);
+    # EmbeddingShape hard-fails if truncate-dim is non-zero and differs from dim.
     dim: ${EMBED_DIM:1024}
     truncate-dim: ${EMBED_TRUNCATE_DIM:1024}
     # Re-running benchmark queries must not re-pay free-tier requests (G4); cleared on restart.
@@ -25,11 +28,13 @@ synquest:
     default-candidates: ${RERANK_CANDIDATES:50}
 
 gpu-plane:
-  endpoint: ${GPU_PLANE_ENDPOINT:gpu-gateway:9090}
+  endpoint: ${GPU_GATEWAY_URL:${GPU_PLANE_ENDPOINT:gpu-gateway:9090}}
   model-version: ${GPU_PLANE_MODEL_VERSION:latest}
   timeout-ms: ${GPU_PLANE_TIMEOUT_MS:60000}
   # Client-side pacing under the OpenRouter free-tier per-minute limit (~20/min); 0 = unlimited.
   max-requests-per-minute: ${GPU_PLANE_MAX_RPM:15}
+  # The gateway contract has no batch-size field yet; this is the client-side cap.
+  max-batch-size: ${GPU_MAX_BATCH_SIZE:64}
   tls:
     enabled: ${GPU_TLS_ENABLED:true}
     ca-path: ${GPU_TLS_CA_PATH:}

@@ -27,7 +27,7 @@ public class GpuPlaneEmbeddingConfig {
     }
 
     @Bean(destroyMethod = "close")
-    public LlmClient llmClient(GpuPlaneClientProperties props, ObjectMapper objectMapper) {
+    public GpuPlaneEmbedClient llmClient(GpuPlaneClientProperties props, ObjectMapper objectMapper) {
         return new GpuPlaneEmbedClient(props, objectMapper);
     }
 

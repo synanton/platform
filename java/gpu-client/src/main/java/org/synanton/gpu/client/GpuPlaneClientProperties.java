@@ -20,6 +20,12 @@ public class GpuPlaneClientProperties {
      * closed with circuit_open.
      */
     private int maxRequestsPerMinute;
+    /**
+     * Client-side EMBED batch cap. The gateway contract exposes embedding_dim and
+     * max_input_tokens but no batch-size field, so this stays a config value until the
+     * contract carries one.
+     */
+    private int maxBatchSize = 64;
     private Tls tls = new Tls();
     private Retry retry = new Retry();
 
@@ -66,6 +72,8 @@ public class GpuPlaneClientProperties {
     public void setTimeoutMs(int timeoutMs) { this.timeoutMs = timeoutMs; }
     public int getMaxRequestsPerMinute() { return maxRequestsPerMinute; }
     public void setMaxRequestsPerMinute(int maxRequestsPerMinute) { this.maxRequestsPerMinute = maxRequestsPerMinute; }
+    public int getMaxBatchSize() { return maxBatchSize; }
+    public void setMaxBatchSize(int maxBatchSize) { this.maxBatchSize = maxBatchSize; }
     public String getDefaultTenant() { return defaultTenant; }
     public void setDefaultTenant(String defaultTenant) { this.defaultTenant = defaultTenant; }
     public Tls getTls() { return tls; }

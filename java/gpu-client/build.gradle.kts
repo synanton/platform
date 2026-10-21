@@ -19,6 +19,7 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.grpc.inprocess)
     testRuntimeOnly(libs.logback.classic)
 }
 
