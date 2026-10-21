@@ -196,6 +196,22 @@ canonical data carries the page ranges; the public `/v1` contract does not
 expose them. If `#338` resolves by extending the contract, the UI can render
 page 2 for this hit; until then it renders absence (B-pre).
 
+### Chunk-count reproducibility
+
+- The P0 PDF (`refresher-algebra-calculus.pdf`, SHA-256 `41fefaab…`) has **8**
+  canonical chunks (ordinals 0–7; pages 1–2).
+- The synquest tenant-`demo` projection reports **45** chunks after the aligned
+  rebuild (`synflux slice-20261021`, `synquest slice-20261020`,
+  `configuration_generation=20`). That is the **tenant-wide** projection, not
+  the P0 PDF's chunk count; it includes the other ingested content (e.g. the
+  6-page `gw-check` upload).
+- The earlier local-stack run recorded **24** chunks for **lesson-1.pdf** (a
+  different PDF and stack), not the P0 PDF. It is historical and is **not** a
+  regression baseline.
+- The current per-PDF count (8) and tenant projection count (45) are
+  authoritative for the pinned revision/images; 24 vs 45 is not a
+  same-document comparison.
+
 ## 3. Tenant-B negative — **PASS**
 
 Tenant-B token (`tenant_id=tenant-b`), same query, body says
@@ -220,10 +236,11 @@ tenant-B token still returned tenant-B's (empty) results. ADR 0007 expects
 `400 TENANT_IN_REQUEST_BODY`; the platform does not enforce that yet. This is a
 D5 adapter conformance gap and a reason the tenant-B result must not be read as
 proof of the body-tenant rule. The UI client already rejects a body tenant
-client-side; the platform-side rule is still narrow.
+client-side; the platform-side rule is still narrow. Tracked in #347.
 
 The `X-Tenant-ID` header rejection is **not** implemented in synquest
-(the header is ignored); that is the D5 adapter requirement, not part of P0.
+(the header is ignored); that is the D5 adapter requirement, not part of P0,
+and is included in #347.
 
 ## 4. Idempotency finding — platform 500 on duplicate SHA key
 
@@ -274,12 +291,20 @@ from P0, as required.
    the PDF path (log-confirmed), but writes no `extraction_operations`/results on
    either `slice-20261019` or the aligned `slice-20261020`. Tracked in #346.
 3. **Duplicate `Idempotency-Key` → 500.** Platform fix; sink already avoids it.
+   Investigated: the SHA key maps to a successful operation in
+   `ingestion_cache.operation_idempotency`; the replay across a different source
+   produces the 500. This is the platform ingestion path, independent of #346.
    Tracked in #344.
-4. **`#338` page ranges** remain a public-contract gap; canonical rows carry
-   them; UI renders absence until the contract changes.
-5. **D2 vector leg** is absent (BM25 only); not a P0 requirement, but the
+4. **Body tenant ignored, not rejected** (#347). ADR 0007 expects
+   `400 TENANT_IN_REQUEST_BODY`; the platform returned 200 with the claim's
+   tenant. The UI does not send it; other clients need the platform-side rule.
+5. **`#338` page ranges** remain a public-contract gap; canonical rows carry
+   them; UI renders absence until the contract changes. The extractor path
+   already supplies them, so this is a response-shape change, not an
+   integration gap.
+6. **D2 vector leg** is absent (BM25 only); not a P0 requirement, but the
    demo's dual-index claim is not yet true.
-6. **D5/D6** (login/CORS/tenant-header rejection, real UI transport) are not
+7. **D5/D6** (login/CORS/tenant-header rejection, real UI transport) are not
    implemented. `#340`/`#341`/`#339` remain.
 
 **P0 is the gate that is now proven.** The platform five-check is the next
