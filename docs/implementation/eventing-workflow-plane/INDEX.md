@@ -114,7 +114,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 | Module | Change |
 |---|---|
 | `java/topology` | `TopologyOutboxDispatcher`'s dead Kafka stub is replaced with a real `eventing-contract`-conformant publisher (EWP-2). |
-| `java/ingestion-cache` | `OutboxPublisher` is generalized off its hardcoded `["demo","demo2"]` tenant list and upgraded to the new envelope/outbox schema (EWP-2). |
+| `java/ingestion-cache` | Adapt legacy manifest/source outbox records to the common envelope and publication contract (EWP-2). `OutboxPublisher` already discovers tenants from `tenant_registry`; EWP-2 does not reimplement tenant discovery. |
 | `java/syntology` | `EventPublisher`/`FileEventLogger` replaced with the conformant publisher once the envelope contract lands (EWP-1/EWP-2). |
 | `java/annotations` | Resolutor/Equalix (AAP-2, already landed) get a durable, retryable execution path via the new workflow engine instead of in-process invocation (EWP-5). |
 | `settings.gradle.kts` | Include the two new modules. |
@@ -185,8 +185,11 @@ model: { id: embedding, version: "4" }
 
 1. Every in-scope contract section has a recorded classification and code/schema citation.
 2. Every CONTRACT-CORRECTION has an ADR amendment draft or a documented deferral; every IMPLEMENTATION-GAP has an EWP phase or deferred trigger/owner.
-3. The fate of the three existing mechanisms and EWP-1 scope are recorded in [`EWP-0-reconciliation.md`](./EWP-0-reconciliation.md).
-4. No EWP-1 implementation ticket is opened before EWP-0 closes; no new ad-hoc event/outbox shape is introduced in the meantime.
+3. Each finding has a stable delta ID; EWP-1 scope cites only IMPLEMENTATION-GAP deltas assigned to EWP-1.
+4. The fate of the three existing mechanisms and EWP-1 scope are recorded in [`EWP-0-reconciliation.md`](./EWP-0-reconciliation.md).
+5. EWP-2 records the same-aggregate batch-failure ordering test as an acceptance criterion: after the first event fails, its follower is withheld until acknowledgement or explicit disposition.
+6. Stale implementation-plan claims are corrected in their source documents, including the former hard-coded tenant allowlist claim.
+7. No EWP-1 implementation ticket is opened before EWP-0 closes; no new ad-hoc event/outbox shape is introduced in the meantime.
 
 ---
 
