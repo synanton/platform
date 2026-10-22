@@ -74,6 +74,36 @@ class TranslationToolTest(unittest.TestCase):
         for category in EXPECTED_CATEGORIES:
             self.assertIn(f"`{category}`", target)
 
+    def test_repository_glossary_is_accepted_when_present(self) -> None:
+        project_glossary = REPOSITORY_ROOT / "docs-ru/GLOSSARY.md"
+        if not project_glossary.is_file():
+            self.skipTest("canonical glossary is added in the separate glossary PR")
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(TOOL),
+                "prepare",
+                "--root",
+                str(REPOSITORY_ROOT),
+                "--source",
+                "docs/api/error-model.md",
+                "--target",
+                "docs-ru/api/error-model.md",
+                "--glossary",
+                "docs-ru/GLOSSARY.md",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(0, result.returncode, result.stdout)
+        packet = json.loads(result.stdout)
+        terms = {entry["english"] for entry in packet["glossary"]}
+        self.assertIn("VALIDATION_ERROR", terms)
+        self.assertIn("INTERNAL_ERROR", terms)
+
     def test_prepare_packet_is_deterministic_and_reads_glossary(self) -> None:
         first = self.run_tool("prepare")
         second = self.run_tool("prepare")

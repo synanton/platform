@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'tools/docs-ru/**'
+      - 'docs-ru/**'
       - 'docs/technical-translation/en-ru/**'
       - '.github/workflows/docs-ru-translation-tool.yml'
   pull_request:
     paths:
       - 'tools/docs-ru/**'
+      - 'docs-ru/**'
       - 'docs/technical-translation/en-ru/**'
       - '.github/workflows/docs-ru-translation-tool.yml'
 
