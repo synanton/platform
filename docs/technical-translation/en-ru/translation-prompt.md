@@ -7,7 +7,7 @@ Goal: create or maintain a Russian edition that is semantically equivalent to th
 
 ## Before editing
 - Inspect the repository's documentation layout, current localization conventions, and any existing Russian files.
-- Identify the exact English source and target path. If no convention exists, mirror `docs/<path>.md` as `docs/ru/<path>.md`; do not move or overwrite English sources.
+- Identify the exact English source and target path. For Synanton, mirror `docs/<path>.md` as `docs-ru/<path>.md`; do not move or overwrite English sources.
 - Read the full source and linked design documents needed to understand terms, authority boundaries, and invariants.
 - Search for existing glossary decisions and translated counterparts.
 - If you cannot access a source or linked design, disclose that limitation instead of inferring its content.

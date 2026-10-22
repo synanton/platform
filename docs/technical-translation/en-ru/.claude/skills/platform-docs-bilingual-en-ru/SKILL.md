@@ -12,7 +12,7 @@ Use this skill when asked to translate English platform docs into Russian, revie
 ## Required context pass
 
 1. Inspect the repository's existing documentation layout and localization conventions.
-2. Identify the English source and intended Russian target. Default to `docs/<path>.md` → `docs/ru/<path>.md` only when the repository has no established convention.
+2. Identify the English source and intended Russian target. For Synanton, use `docs/<path>.md` → `docs-ru/<path>.md`.
 3. Read the complete source and the linked platform documents necessary to understand its terms, authority boundaries, and invariants.
 4. Search for existing translations and glossary decisions before introducing new terminology.
 5. If GitHub or a referenced file cannot be accessed, say so and avoid claiming to have checked it.
@@ -27,7 +27,7 @@ Use this skill when asked to translate English platform docs into Russian, revie
 - Preserve modal force and logical scope. `must`, `should`, `may`, `can`, `must not`, and `should not` have distinct meanings.
 - Preserve distinctions between identity, authentication, authorization, classification, policy, and trust; and between canonical authority and derived data.
 - Do not resolve inconsistencies between source documents on your own. Report the conflict and cite both locations.
-- Use the project glossary and canonical design usage before general terminology references.
+- Read `docs-ru/GLOSSARY.md` for each task and use it with canonical design usage before general terminology references.
 - Use the Russian Kleppmann edition only as a secondary reference for relevant distributed-systems terminology and exposition; never imitate or reproduce its prose.
 - Do not invent status, guarantees, requirements, explanations, or examples.
 - Avoid calques, bureaucratic phrasing, gratuitous anglicisms, and synonym variation that obscures a repeated concept.

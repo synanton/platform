@@ -1,0 +1,32 @@
+name: Docs-ru Translation Tool
+
+on:
+  push:
+    paths:
+      - 'tools/docs-ru/**'
+      - 'docs/technical-translation/en-ru/**'
+      - '.github/workflows/docs-ru-translation-tool.yml'
+  pull_request:
+    paths:
+      - 'tools/docs-ru/**'
+      - 'docs/technical-translation/en-ru/**'
+      - '.github/workflows/docs-ru-translation-tool.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  translation-tool-tests:
+    name: Translation tool acceptance tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run translation tool tests
+        run: python -m unittest discover -s tools/docs-ru/tests -v

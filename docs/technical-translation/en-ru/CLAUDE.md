@@ -12,7 +12,7 @@ Before editing:
 1. Inspect `docs/`, its README/index files, document templates, links, naming conventions, and any existing localization structure.
 2. Read the relevant source document completely, plus the documents it cites for architecture, security, identity, authorization, classification, and other authority boundaries.
 3. Search for existing Russian text and project-specific terminology before creating or changing translations.
-4. Follow an existing repository convention if one exists. If none exists, use a mirrored `docs/ru/` tree with the same relative paths as `docs/`, and keep English sources in their current locations.
+4. Follow an existing repository convention if one exists. For Synanton, use the `docs-ru/` mirror selected in issue #378, with paths corresponding to `docs/`; keep English sources in their current locations.
 5. Do not assume the public repository is fully represented by a partial search result. State when a source, link, or referenced design could not be inspected.
 
 ## Non-negotiable priorities
@@ -29,7 +29,7 @@ Apply in this order:
 
 - Treat each English/Russian pair as two editions of one document.
 - Keep section order, headings, lists, tables, callouts, examples, diagrams, and normative statements aligned unless localization genuinely requires a structural change.
-- Keep a stable mapping between source and translation. Default mapping: `docs/<path>.md` ↔ `docs/ru/<path>.md`; adapt only to an established repository convention.
+- Keep a stable mapping between source and translation: `docs/<path>.md` ↔ `docs-ru/<path>.md` for Synanton.
 - Do not translate English source files in place unless explicitly asked.
 - Do not create a Russian file without confirming its intended source path and checking for an existing translation.
 - Preserve document identifiers, design numbers, ADR IDs, filenames, stable anchors, API names, protocol names, configuration keys, and code identifiers.
@@ -82,10 +82,11 @@ Do not introduce all-caps Russian normative keywords if the source has no formal
 Resolve terminology in this order:
 1. Explicit definitions and glossary in the relevant platform document.
 2. Existing Synanton glossary and consistent usage in related canonical designs.
-3. Existing Russian platform translations, if their use is validated.
-4. ` .claude/skills/platform-docs-bilingual-en-ru/glossary.md` (baseline glossary).
-5. Established Russian software-engineering usage.
-6. The Russian Kleppmann edition as a secondary reference for applicable distributed-systems terms.
+3. `docs-ru/GLOSSARY.md` (canonical project glossary).
+4. Existing Russian platform translations, if their use is validated.
+5. `.claude/skills/platform-docs-bilingual-en-ru/glossary.md` (starter glossary only when no project glossary exists).
+6. Established Russian software-engineering usage.
+7. The Russian Kleppmann edition as a secondary reference for applicable distributed-systems terms.
 
 When a term choice affects architecture or policy, record it in the glossary with context and rationale rather than changing it ad hoc.
 

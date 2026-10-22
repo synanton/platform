@@ -1,0 +1,207 @@
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+TOOL = REPOSITORY_ROOT / "tools/docs-ru/translation_tool.py"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+SOURCE = REPOSITORY_ROOT / "docs/api/error-model.md"
+EXPECTED_CATEGORIES = (
+    "VALIDATION_ERROR",
+    "AUTHENTICATION_REQUIRED",
+    "AUTHORIZATION_DENIED",
+    "RESOURCE_NOT_FOUND",
+    "RESOURCE_CONFLICT",
+    "PRECONDITION_FAILED",
+    "RATE_LIMITED",
+    "DEPENDENCY_UNAVAILABLE",
+    "OPERATION_FAILED",
+    "INTERNAL_ERROR",
+)
+
+
+class TranslationToolTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        (self.root / "docs/api").mkdir(parents=True)
+        (self.root / "docs-ru/api").mkdir(parents=True)
+        (self.root / "tools/docs-ru/tests/fixtures").mkdir(parents=True)
+        shutil.copyfile(SOURCE, self.root / "docs/api/error-model.md")
+        shutil.copyfile(FIXTURES / "error-model.ru.md", self.root / "docs-ru/api/error-model.md")
+        shutil.copyfile(FIXTURES / "glossary.md", self.root / "docs-ru/GLOSSARY.md")
+        shutil.copyfile(FIXTURES / "glossary.md", self.root / "tools/docs-ru/tests/fixtures/glossary.md")
+
+    def tearDown(self) -> None:
+        self.temp.cleanup()
+
+    def run_tool(self, command: str, target: str = "docs-ru/api/error-model.md") -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                str(TOOL),
+                command,
+                "--root",
+                str(self.root),
+                "--source",
+                "docs/api/error-model.md",
+                "--target",
+                target,
+                "--glossary",
+                "docs-ru/GLOSSARY.md",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_error_model_translation_preserves_all_ten_categories(self) -> None:
+        result = self.run_tool("validate")
+        repeated_result = self.run_tool("validate")
+        report = json.loads(result.stdout)
+
+        self.assertEqual(0, result.returncode, result.stdout)
+        self.assertEqual(result.stdout, repeated_result.stdout)
+        self.assertTrue(report["valid"])
+        target = (self.root / "docs-ru/api/error-model.md").read_text(encoding="utf-8")
+        for category in EXPECTED_CATEGORIES:
+            self.assertIn(f"`{category}`", target)
+
+    def test_prepare_packet_is_deterministic_and_reads_glossary(self) -> None:
+        first = self.run_tool("prepare")
+        second = self.run_tool("prepare")
+
+        self.assertEqual(0, first.returncode, first.stdout)
+        self.assertEqual(first.stdout, second.stdout)
+        packet = json.loads(first.stdout)
+        terms = {entry["english"] for entry in packet["glossary"]}
+        self.assertIn("VALIDATION_ERROR", terms)
+        self.assertEqual("docs-ru/api/error-model.md", packet["target_path"])
+        self.assertEqual("0.1.0", packet["tool_version"])
+
+        glossary = self.root / "docs-ru/GLOSSARY.md"
+        glossary.write_text(
+            glossary.read_text(encoding="utf-8").replace(
+                "| `Operation` | `Operation` | yes |", "| `Operation` | Операция | yes |"
+            ),
+            encoding="utf-8",
+        )
+        changed = self.run_tool("prepare")
+        self.assertNotEqual(first.stdout, changed.stdout)
+
+    def test_identifier_paraphrase_is_rejected_using_glossary_flag(self) -> None:
+        target = self.root / "docs-ru/api/error-model.md"
+        target.write_text(target.read_text(encoding="utf-8").replace("VALIDATION_ERROR", "INPUT_ERROR"), encoding="utf-8")
+
+        result = self.run_tool("validate")
+        report = json.loads(result.stdout)
+
+        self.assertEqual(1, result.returncode)
+        self.assertFalse(report["valid"])
+        identifiers = next(check for check in report["checks"] if check["name"] == "untranslated_identifiers")
+        self.assertIn("VALIDATION_ERROR", {mismatch["term"] for mismatch in identifiers["mismatches"]})
+
+    def test_glossary_can_mark_a_term_translatable(self) -> None:
+        glossary = self.root / "docs-ru/GLOSSARY.md"
+        glossary.write_text(
+            glossary.read_text(encoding="utf-8").replace(
+                "| `VALIDATION_ERROR` | `VALIDATION_ERROR` | yes |",
+                "| `VALIDATION_ERROR` | Ошибка валидации | no |",
+            ),
+            encoding="utf-8",
+        )
+        target = self.root / "docs-ru/api/error-model.md"
+        target.write_text(target.read_text(encoding="utf-8").replace("VALIDATION_ERROR", "Ошибка валидации"), encoding="utf-8")
+
+        result = self.run_tool("validate")
+        report = json.loads(result.stdout)
+
+        self.assertEqual(0, result.returncode, result.stdout)
+        self.assertTrue(report["valid"])
+
+    def test_fenced_code_is_preserved_verbatim(self) -> None:
+        source = self.root / "docs/api/error-model.md"
+        target = self.root / "docs-ru/api/error-model.md"
+        source.write_text("# 55. Shape\n\n```json\n{\"code\": \"VALIDATION_ERROR\"}\n```\n", encoding="utf-8")
+        target.write_text("# 55. Структура\n\n```json\n{\"code\": \"INPUT_ERROR\"}\n```\n", encoding="utf-8")
+
+        result = self.run_tool("validate")
+        report = json.loads(result.stdout)
+        code_check = next(check for check in report["checks"] if check["name"] == "fenced_code_verbatim")
+
+        self.assertFalse(code_check["passed"])
+
+    def test_section_numbers_references_and_field_names_are_preserved(self) -> None:
+        source = self.root / "docs/api/error-model.md"
+        target = self.root / "docs-ru/api/error-model.md"
+        source.write_text(
+            "# 55. Operation\n\nSee §55 and §§56–57.\n\n**Status:** Approved\n**Basis:** Test\n\n## Decision\n\n## Context\n",
+            encoding="utf-8",
+        )
+        target.write_text(
+            "# 54. Операция\n\nСм. §54 и §§56–57.\n\n**Статус:** Одобрено\n**Основание:** Тест\n\n## Решение\n\n## Контекст\n",
+            encoding="utf-8",
+        )
+
+        report = json.loads(self.run_tool("validate").stdout)
+        checks = {check["name"]: check["passed"] for check in report["checks"]}
+
+        self.assertFalse(checks["numbered_section_headings"])
+        self.assertFalse(checks["section_references_and_link_anchors"])
+        self.assertFalse(checks["field:**Status:**"])
+        self.assertFalse(checks["field:**Basis:**"])
+        self.assertFalse(checks["field:## Decision"])
+        self.assertFalse(checks["field:## Context"])
+
+    def test_target_must_be_under_docs_ru(self) -> None:
+        result = self.run_tool("prepare", target="translations/error-model.ru.md")
+        report = json.loads(result.stdout)
+
+        self.assertEqual(2, result.returncode)
+        self.assertIn("inside docs-ru/", report["error"])
+
+    def test_glossary_must_be_the_docs_ru_canonical_glossary(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(TOOL),
+                "prepare",
+                "--root",
+                str(self.root),
+                "--source",
+                "docs/api/error-model.md",
+                "--target",
+                "docs-ru/api/error-model.md",
+                "--glossary",
+                "tools/docs-ru/tests/fixtures/glossary.md",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        report = json.loads(result.stdout)
+
+        self.assertEqual(2, result.returncode)
+        self.assertIn("docs-ru/GLOSSARY.md", report["error"])
+
+    def test_internal_link_anchor_must_be_preserved(self) -> None:
+        source = self.root / "docs/api/error-model.md"
+        target = self.root / "docs-ru/api/error-model.md"
+        source.write_text("# 55. Operation\n\n[Resource](#operation-resource)\n", encoding="utf-8")
+        target.write_text("# 55. Операция\n\n[Ресурс](#operatsiya-resource)\n", encoding="utf-8")
+
+        report = json.loads(self.run_tool("validate").stdout)
+        anchor_check = next(check for check in report["checks"] if check["name"] == "section_references_and_link_anchors")
+
+        self.assertFalse(anchor_check["passed"])
+
+
+if __name__ == "__main__":
+    unittest.main()
