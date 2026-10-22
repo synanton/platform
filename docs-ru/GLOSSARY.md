@@ -47,6 +47,13 @@ This glossary is the canonical terminology source for the Russian design mirror.
 | `DEPENDENCY_UNAVAILABLE` | `DEPENDENCY_UNAVAILABLE` | yes |
 | `OPERATION_FAILED` | `OPERATION_FAILED` | yes |
 | `INTERNAL_ERROR` | `INTERNAL_ERROR` | yes |
+| `TRANSIENT` | `TRANSIENT` | yes |
+| `PERMANENT` | `PERMANENT` | yes |
+| `SECURITY` | `SECURITY` | yes |
+| `INVALID` | `INVALID` | yes |
+| `DEPENDENCY` | `DEPENDENCY` | yes |
+| `TIMEOUT` | `TIMEOUT` | yes |
+| `RESOURCE` | `RESOURCE` | yes |
 | `workflow_states` | `workflow_states` | yes |
 | `workflow_steps` | `workflow_steps` | yes |
 | `workflow_leases` | `workflow_leases` | yes |
