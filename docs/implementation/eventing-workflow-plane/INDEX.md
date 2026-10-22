@@ -1,7 +1,7 @@
 ---
 title: "Eventing and Workflow Plane - Implementation Plan"
-status: "contract frozen; implementation not started"
-last_reviewed: "2026-10-21"
+status: "EWP-0 in progress; contract frozen; implementation not started"
+last_reviewed: "2026-10-22"
 ---
 
 # Eventing and Workflow Plane - Implementation Plan
@@ -10,12 +10,34 @@ last_reviewed: "2026-10-21"
 **Architecture reference:** `docs/architecture/synanton-design-1.27.md`; [ADR-004](../../architecture/decisions/adr-004-eventing-workflow-plane.md); capstone positioning in `docs/architecture/synanton-platform-architecture-1.0.md` §6, §14, §15.
 **Target repository:** `synanton/platform` (this repo) - no cross-repo split; unlike the extraction plane, there is no separate deployable service implied by the design.
 **Audience:** Architects, module owners, platform engineers
-**Last Updated:** 2026-10-21
+**Last Updated:** 2026-10-22
 
-**Status reviewed 2026-10-21:** Design 1.27 is approved and its delivery
+**Status reviewed 2026-10-22:** Design 1.27 is approved and its delivery
 contract was frozen on 2026-10-17 (#247). The freeze closes the contract gate;
-implementation of the eventing/workflow plane itself has not started. This plan
-describes implementation against the frozen contract, not remaining freeze work.
+implementation of the eventing/workflow plane itself has not started. [EWP-0
+reconciliation](./EWP-0-reconciliation.md) is in progress under [#375](https://github.com/synanton/platform/issues/375); it audits the frozen contract against code and derives EWP-1 scope. This plan describes implementation against the frozen contract, not remaining freeze work.
+
+## Progress delivery — decision (2026-10-22)
+
+There is no dedicated progress-events API in the current delivery. Browser-native
+upload progress covers byte transfer; processing status comes from polling each
+file's public `Operation.progress`; a multi-file aggregate is a client-side view
+over N Operations. The current UI uploads files sequentially and polls each
+Operation (`ui/apps/web/src/routes/IngestionPage.tsx:77–142`); it does not add a
+server progress resource or event subscription.
+
+Revisit a streaming progress view when any of these triggers occur:
+
+- #328's deferred batch manifest is implemented and aggregate/per-file
+  processing progress is required at scale (PR #334 currently handles one
+  file per request with `Operation.progress` 0/1);
+- polling misses a measured latency or request-volume target; or
+- EWP-0 establishes that the implemented Eventing plane supports an appropriate
+  subscription capability.
+
+If revisited, prefer SSE as a view over Operation state rather than a new
+resource. If Eventing supports subscription, implement it as a consumer of that
+plane, not as a parallel progress-event mechanism.
 
 ---
 
@@ -52,24 +74,24 @@ Derived from the capstone doc's Communication invariants (17-23) and Design 1.27
 
 ## Known Debt This Plan Must Absorb
 
-Three ad-hoc, non-conformant event/outbox mechanisms already exist in `platform`. EWP-0 exists specifically so Phase 1's envelope design accounts for all three instead of becoming a fourth shape.
+Three ad-hoc, non-conformant event/outbox mechanisms already exist in `platform`. EWP-0 reconciles them against the frozen contract so EWP implementation does not add a fourth shape.
 
 | Module | Current state | File |
 |---|---|---|
 | `topology` | Outbox dispatcher polls a table but its Kafka publish is a dead `// TODO Phase 4` stub - rows are marked `dispatched=TRUE` after logging, nothing is ever actually published. | `java/topology/.../infra/outbox/TopologyOutboxDispatcher.java` |
-| `ingestion-cache` | Real `KafkaProducer`, polls `manifest_transitions_outbox` every 2s, genuinely at-least-once - but hardcoded to `List.of("demo", "demo2")` as the only tenants it will ever poll. No correlation/causation IDs, no schema version, no consumer-side inbox/dedup found. | `java/ingestion-cache/.../outbox/OutboxPublisher.java` |
+| `ingestion-cache` | Real `KafkaProducer`; tenant discovery uses the bounded `tenant_registry` partitions introduced in V11, not a hard-coded tenant allowlist. It polls the legacy `manifest_transitions_outbox` plus SourceVersion/tombstone publication intent; no generic consumer inbox/dedup found. | `java/ingestion-cache/.../outbox/OutboxPublisher.java`; `IngestionCacheClient.listTenantIds()` |
 | `syntology` | `EventPublisher` port is `void publish(String eventType, String payload)` - no envelope at all - backed by `FileEventLogger`, essentially a stub. | `java/syntology/.../domain/port/out/EventPublisher.java` + `FileEventLogger` |
 
 ---
 
 ## Phased Delivery
 
-Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publication → Reliable Consumption → Workflow Foundation → Platform Integration → Production Hardening), with a pre-flight phase (EWP-0) added by this plan to absorb the debt above before it hardens further.
+Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publication → Reliable Consumption → Workflow Foundation → Platform Integration → Production Hardening), with EWP-0 added as a contract-to-implementation reconciliation gate. EWP-0 is not another contract-design phase; it closes by classifying deltas and deriving EWP-1 scope.
 
 | Phase | Name | Status |
 |-------|------|--------|
-| EWP-0 | Pre-flight: inventory and reconciliation decision | Not started |
-| EWP-1 | Event Contract | Not started |
+| EWP-0 | Contract-to-implementation reconciliation and scope decision | In progress — #375 |
+| EWP-1 | Implement frozen Event/Command contract | Not started |
 | EWP-2 | Reliable Publication | Not started |
 | EWP-3 | Reliable Consumption | Not started |
 | EWP-4 | Workflow Foundation | Not started |
@@ -148,26 +170,29 @@ model: { id: embedding, version: "4" }
 
 ## Phase EWP-0 - Pre-flight
 
-**Goal:** decide how the three existing ad-hoc mechanisms fold into EWP-1's envelope before that envelope is designed, so it isn't retrofitted a fourth time.
+**Goal:** compare the frozen 1.27 contract with current code/schema, classify every delta, decide the fate of the three existing ad-hoc mechanisms, and derive EWP-1's implementation scope. The contract is already frozen; EWP-0 does not redesign it.
 
 ### Deliverables
 
 | # | Deliverable |
 |---|---|
-| 1 | Written inventory of `TopologyOutboxDispatcher`, `ingestion-cache`'s `OutboxPublisher`, and `syntology`'s `EventPublisher`/`FileEventLogger` - current schema, current gaps, call sites. |
-| 2 | Decision record: migrate each in place onto the new envelope/outbox schema (EWP-2) vs. replace outright - written down, not left implicit. |
-| 3 | List every current caller of `ingestion-cache.OutboxPublisher` and `syntology.EventPublisher` that must be touched when the schema changes. |
+| 1 | Contract-to-code matrix in [`EWP-0-reconciliation.md`](./EWP-0-reconciliation.md): each in-scope section has a code/schema citation and a MATCH / INTERPRETATION / CONTRACT-CORRECTION / IMPLEMENTATION-GAP / DEFERRED classification. |
+| 2 | Decision record for `TopologyOutboxDispatcher`, `ingestion-cache.OutboxPublisher`, and `syntology.EventPublisher`/`FileEventLogger`: retain, adapt, or replace, with rationale and call sites. |
+| 3 | Deltas are assigned to EWP-1–EWP-6 or explicitly deferred with a trigger/owner; contract corrections get an ADR draft or a deferral decision. |
+| 4 | EWP-1 implementation scope is derived from the matrix; it implements the frozen contract and does not re-freeze it. |
 
 ### Definition of Done
 
-1. A short decision doc (or ADR addendum) names the fate of each of the three mechanisms before EWP-1's envelope PR is opened.
-2. No new ad-hoc event/outbox mechanism is introduced elsewhere in the codebase between now and EWP-2 landing (grep check in CI or PR review).
+1. Every in-scope contract section has a recorded classification and code/schema citation.
+2. Every CONTRACT-CORRECTION has an ADR amendment draft or a documented deferral; every IMPLEMENTATION-GAP has an EWP phase or deferred trigger/owner.
+3. The fate of the three existing mechanisms and EWP-1 scope are recorded in [`EWP-0-reconciliation.md`](./EWP-0-reconciliation.md).
+4. No EWP-1 implementation ticket is opened before EWP-0 closes; no new ad-hoc event/outbox shape is introduced in the meantime.
 
 ---
 
-## Phase EWP-1 - Event Contract
+## Phase EWP-1 - Contract implementation (Design §104 Phase 1)
 
-**Goal:** one envelope shape, one ID/versioning scheme, enforced tenant scope - the hard serialization point every later phase and every other plane builds against.
+**Goal:** implement the already-frozen envelope/command shapes, IDs/versioning, and tenant scope as typed contract artifacts. This is implementation of the frozen Event Contract, not another design freeze or an opportunity to silently revise it.
 
 ### Deliverables
 
@@ -199,17 +224,19 @@ model: { id: embedding, version: "4" }
 |---|---|
 | 1 | Outbox table/record per the §28 shape above, shared schema (or shared library over per-service tables - decide once, document, apply everywhere). |
 | 2 | `EventPublisher` implementation: claims outbox rows, publishes, marks `published_at`, increments `attempt_count`/`last_error` on failure. |
-| 3 | Migrate `ingestion-cache.OutboxPublisher` off `List.of("demo","demo2")` onto real dynamic tenant enumeration and the new schema. |
+| 3 | Preserve the existing dynamic tenant-registry enumeration; adapt the legacy manifest/source outbox records to the frozen envelope/publisher contract without reintroducing a tenant allowlist. |
 | 4 | Replace `TopologyOutboxDispatcher`'s dead Kafka stub with the real publisher. |
 | 5 | Replace `syntology`'s `EventPublisher`/`FileEventLogger` with the conformant publisher. |
 | 6 | Publication retry policy using the §32 error classes; publication-lag monitoring metric. |
+| 7 | Preserve per-aggregate ordering on a failed publication within a selected poll batch; a later event for the same aggregate must wait until the earlier event is acknowledged or explicitly dispositioned. |
 
 ### Definition of Done
 
 1. An event written to the outbox by any of the three migrated modules is published exactly the same way (same code path, same envelope shape) - no per-module publish logic remains.
 2. Killing the publisher process mid-batch and restarting it results in every unpublished row eventually published, none duplicated beyond what at-least-once already allows.
-3. `ingestion-cache` publishes events for tenants other than `demo`/`demo2` in a test.
+3. A publisher test confirms dynamic tenant-registry enumeration remains in place while publishing through the conformant path.
 4. A publication failure increments `attempt_count` and records `last_error`; it does not silently mark the row published (regression test against `TopologyOutboxDispatcher`'s prior behavior).
+5. A same-aggregate two-event test proves a failed first publication does not let the second event overtake it in the same poll batch.
 
 ---
 
@@ -225,6 +252,7 @@ model: { id: embedding, version: "4" }
 | 2 | Deduplication: a consumer checks the inbox before processing and skips already-`processed` `event_id`s for its `consumer_id`. |
 | 3 | Acknowledgement + retry policy using the §32 error classes (only `TRANSIENT`/`TIMEOUT`/`RESOURCE`-class failures retry automatically). |
 | 4 | Dead-letter path for events that exhaust retries, with enough context (`event_id`, `consumer_id`, `last_error`) to diagnose without replaying blindly. |
+| 5 | Source lifecycle consumers use source-business-key companion records where §39 requires them; the local effect and relevant dedup record commit atomically, with an outbox for cross-store effects. |
 
 ### Definition of Done
 
