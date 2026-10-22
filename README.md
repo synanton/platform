@@ -7,7 +7,7 @@ Synanton is an AI-native enterprise knowledge platform exploring how enterprise 
 The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
 
 > **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) integrates Designs 1.22–1.34, all **Approved (design)**. Approval records architectural decisions; it does not imply implementation or production readiness. The per-design status and evidence are in [§15](docs/architecture/synanton-platform-architecture-1.0.md#15-current-implementation-status).
-> **Current implementation focus (2026-10-21):** implementation is partial across 1.22/1.23/1.25/1.26; 1.32 contracts were frozen 2026-10-17 (#246) and generation-A is in progress. The 1.27 contract was frozen 2026-10-17 (#247), but implementation has not started; 1.28–1.31 also remain unstarted. See the [architecture status table](docs/architecture/INDEX.md#design-version-history) and [documentation inventory](docs/DOCUMENTATION-INVENTORY.md).
+> **Current implementation focus (2026-10-22):** implementation is partial across 1.22/1.23/1.25/1.26; 1.32 contracts were frozen 2026-10-17 (#246) and generation-A is in progress. The 1.27 contract was frozen 2026-10-17 (#247); EWP-0 reconciliation is complete under [#375](https://github.com/synanton/platform/issues/375), while EWP-1 implementation has not started; 1.28–1.31 also remain unstarted. See the [architecture status table](docs/architecture/INDEX.md#design-version-history) and [documentation inventory](docs/DOCUMENTATION-INVENTORY.md).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
@@ -749,7 +749,7 @@ Start here:
 - [Semantic Chunking](docs/implementation/semantic-chunking/INDEX.md)
 - [Structured Content Extraction](docs/implementation/content-extraction-plane/INDEX.md)
 - [GPU Execution Plane](docs/implementation/gpu-execution-plane/INDEX.md)
-- [Eventing and Workflow Plane (v1.27) — contract frozen, implementation not started](docs/implementation/eventing-workflow-plane/INDEX.md)
+- [Eventing and Workflow Plane (v1.27) — contract frozen, EWP-0 complete, implementation not started](docs/implementation/eventing-workflow-plane/INDEX.md)
 - [Platform API Plane (v1.32) — implementation plan, contracts frozen, generation-A in progress](docs/implementation/platform-api-plane/INDEX.md)
 - [Vertical slice — trust bar, gap register, and diagnostic runbook](docs/implementation/vertical-slice/INDEX.md) — distinguishes #253 demo acceptance from the broader open Architecture 1.0 §16 criterion
 - [Cross-plane Architecture Review Resolution (1.26–1.33)](docs/architecture/proposals/synanton-architecture-review-resolution.md)
