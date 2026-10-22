@@ -1,6 +1,6 @@
 # EWP-0 — Design 1.27 contract ↔ implementation reconciliation
 
-**Status:** Draft for review · **Date:** 2026-10-22 · **Tracker:** [platform #375](https://github.com/synanton/platform/issues/375)
+**Status:** Complete · **Date:** 2026-10-22 · **Tracker:** [platform #375](https://github.com/synanton/platform/issues/375)
 **Frozen contract:** [`docs/api/eventing-contract.md`](../../api/eventing-contract.md), frozen 2026-10-17 by [#247](https://github.com/synanton/platform/issues/247)
 **Scope:** Current event/outbox/workflow code in `java/ingestion-cache`, `java/synflux`, `java/topology`, and `java/syntology`; schema migrations V11–V15; EWP implementation plan.
 
@@ -109,4 +109,4 @@ No frozen-contract amendment is indicated by this audit. Observed differences cl
 - **Ingestion Cache:** adapt the legacy manifest transition and source lifecycle publishers to the frozen publisher/envelope contract; retain SourceVersion/tombstone co-location of source publication intent for local atomicity, and preserve per-entity order when a publish in a selected batch fails.
 - **Syntology:** replace `FileEventLogger` as a delivery mechanism with durable EWP publication; file logging may remain diagnostic only.
 
-EWP-0 closes when all of these are recorded and accepted in [#375](https://github.com/synanton/platform/issues/375): (1) every in-scope matrix row has evidence and exactly one permitted classification; (2) every D-ID has a phase assignment or a deferred owner/trigger; (3) any contract correction has an ADR amendment draft or explicit deferral (this audit finds none); (4) the EWP-1 scope above is accepted and derives only from EWP-1 implementation-gap deltas; (5) the D-07 EWP-2 ordering acceptance criterion is recorded; and (6) stale plan claims, including tenant discovery, are corrected at their source. Until issue #375 closes, EWP-1 implementation tickets remain gated.
+EWP-0 closes when all of these are recorded and accepted in [#375](https://github.com/synanton/platform/issues/375): (1) every in-scope matrix row has evidence and exactly one permitted classification; (2) every D-ID has a phase assignment or a deferred owner/trigger; (3) any contract correction has an ADR amendment draft or explicit deferral (this audit finds none); (4) the EWP-1 scope above is accepted and derives only from EWP-1 implementation-gap deltas; (5) the D-07 EWP-2 ordering acceptance criterion is recorded; and (6) stale plan claims, including tenant discovery, are corrected at their source. Issue #375 closes this EWP-0 gate; EWP-1 implementation tickets remain gated until then.

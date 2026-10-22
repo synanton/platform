@@ -1,6 +1,6 @@
 ---
 title: "Eventing and Workflow Plane - Implementation Plan"
-status: "EWP-0 in progress; contract frozen; implementation not started"
+status: "EWP-0 closed; contract frozen; EWP-1 implementation not started"
 last_reviewed: "2026-10-22"
 ---
 
@@ -15,7 +15,10 @@ last_reviewed: "2026-10-22"
 **Status reviewed 2026-10-22:** Design 1.27 is approved and its delivery
 contract was frozen on 2026-10-17 (#247). The freeze closes the contract gate;
 implementation of the eventing/workflow plane itself has not started. [EWP-0
-reconciliation](./EWP-0-reconciliation.md) is in progress under [#375](https://github.com/synanton/platform/issues/375); it audits the frozen contract against code and derives EWP-1 scope. This plan describes implementation against the frozen contract, not remaining freeze work.
+reconciliation](./EWP-0-reconciliation.md) records the completed audit and
+EWP-1 scope decision; issue [#375](https://github.com/synanton/platform/issues/375)
+records closure. This plan describes implementation against the frozen
+contract, not remaining freeze work.
 
 ## Progress delivery — decision (2026-10-22)
 
@@ -90,7 +93,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 
 | Phase | Name | Status |
 |-------|------|--------|
-| EWP-0 | Contract-to-implementation reconciliation and scope decision | In progress — #375 |
+| EWP-0 | Contract-to-implementation reconciliation and scope decision | Complete — #375 |
 | EWP-1 | Implement frozen Event/Command contract | Not started |
 | EWP-2 | Reliable Publication | Not started |
 | EWP-3 | Reliable Consumption | Not started |
