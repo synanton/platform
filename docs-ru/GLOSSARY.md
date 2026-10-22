@@ -57,10 +57,15 @@ This glossary is the canonical terminology source for the Russian design mirror.
 | `chunk_source_versions` | `chunk_source_versions` | yes |
 | `tenant_registry` | `tenant_registry` | yes |
 | Proposed | Предложено | no |
+| Approved | Утверждено | no |
 | Approved (design) | Утверждено (дизайн) | no |
+| Approved (architecture) | Утверждено (архитектура) | no |
+| Approved (contract/readiness review only) | Утверждено (только проверка контракта и готовности) | no |
 | Contract frozen | Контракт зафиксирован | no |
 | In progress | В работе | no |
 | Implemented | Реализовано | no |
+| Not started | Не начато | no |
+| Partial | Частично | no |
 | Validated (evidence/date) | Подтверждено (доказательство/дата) | no |
 | Superseded | Заменено более новой версией | no |
 | MUST | ДОЛЖЕН | no |
