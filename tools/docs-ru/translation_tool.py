@@ -24,6 +24,8 @@ SECTION_HEADING = re.compile(
 SECTION_REFERENCE = re.compile(r"§{1,2}\s*\d+(?:\.\d+)*(?:\s*[-–—]\s*\d+(?:\.\d+)*)?")
 LINK_ANCHOR = re.compile(r"\]\([^)]*#([^\s)]+)\)")
 FENCE_OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+TOP_LEVEL_SECTION = re.compile(r"^ {0,3}#\s+(\d+)\.\s+")
+SECTION_RANGE = re.compile(r"^(\d+)-(\d+)$")
 
 
 @dataclass(frozen=True)
@@ -100,11 +102,79 @@ def ensure_canonical_glossary(root: Path, glossary: Path) -> None:
         raise ValueError("glossary path must be docs-ru/GLOSSARY.md")
 
 
+def parse_section_range(value: str | None) -> tuple[int, int] | None:
+    if value is None:
+        return None
+    match = SECTION_RANGE.fullmatch(value)
+    if not match:
+        raise ValueError("section range must use START-END notation, for example 55-62")
+    start, end = int(match.group(1)), int(match.group(2))
+    if start < 1 or end < start:
+        raise ValueError("section range must be positive and ascending")
+    return start, end
+
+
+def extract_section_range(text: str, section_range: tuple[int, int]) -> str:
+    """Extract complete top-level numbered sections, excluding adjacent sections."""
+    start, end = section_range
+    lines = text.splitlines(keepends=True)
+    start_index: int | None = None
+    end_index: int | None = None
+    end_found = False
+    fence_char = ""
+    fence_size = 0
+
+    for index, line in enumerate(lines):
+        without_newline = line.rstrip("\r\n")
+        if fence_char:
+            closing = re.match(r"^ {0,3}(`+|~+)[ \t]*$", without_newline)
+            if closing and closing.group(1)[0] == fence_char and len(closing.group(1)) >= fence_size:
+                fence_char = ""
+                fence_size = 0
+            continue
+
+        opening = FENCE_OPEN.match(without_newline)
+        if opening:
+            marker = opening.group(1)
+            fence_char = marker[0]
+            fence_size = len(marker)
+            continue
+
+        heading = TOP_LEVEL_SECTION.match(without_newline)
+        if not heading:
+            continue
+        number = int(heading.group(1))
+        if start_index is None:
+            if number == start:
+                start_index = index
+                end_found = number == end
+            continue
+        if number == end:
+            end_found = True
+        elif number > end:
+            end_index = index
+            break
+
+    if start_index is None:
+        raise ValueError(f"section {start} was not found as a top-level numbered heading")
+    if not end_found:
+        raise ValueError(f"section {end} was not found after section {start}")
+    if end_index is None:
+        end_index = len(lines)
+    return "".join(lines[start_index:end_index])
+
+
 def _relative(root: Path, path: Path) -> str:
     return path.relative_to(root.resolve()).as_posix()
 
 
-def prepare_packet(root: Path, source_value: str, target_value: str, glossary_value: str) -> dict:
+def prepare_packet(
+    root: Path,
+    source_value: str,
+    target_value: str,
+    glossary_value: str,
+    section_range: tuple[int, int] | None = None,
+) -> dict:
     source = resolve_repo_path(root, source_value)
     target = resolve_repo_path(root, target_value, must_exist=False)
     glossary_path = resolve_repo_path(root, glossary_value)
@@ -112,8 +182,10 @@ def prepare_packet(root: Path, source_value: str, target_value: str, glossary_va
     ensure_canonical_glossary(root, glossary_path)
 
     source_text = source.read_text(encoding="utf-8")
+    if section_range is not None:
+        source_text = extract_section_range(source_text, section_range)
     entries = parse_glossary(glossary_path.read_text(encoding="utf-8"))
-    return {
+    packet = {
         "constraints": [
             "Translate prose only; preserve identifiers marked do-not-translate in the glossary.",
             "Preserve every fenced code block verbatim.",
@@ -126,6 +198,9 @@ def prepare_packet(root: Path, source_value: str, target_value: str, glossary_va
         "target_path": _relative(root, target),
         "tool_version": TOOL_VERSION,
     }
+    if section_range is not None:
+        packet["section_range"] = f"{section_range[0]}-{section_range[1]}"
+    return packet
 
 
 def _fenced_blocks(text: str) -> tuple[list[str], bool]:
@@ -216,6 +291,7 @@ def _add_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--source", required=True, help="English source path relative to repository root")
     parser.add_argument("--target", required=True, help="Russian target path; must be under docs-ru/")
     parser.add_argument("--glossary", required=True, help="three-column glossary path relative to repository root")
+    parser.add_argument("--sections", help="optional inclusive range of top-level numbered sections, e.g. 55-62")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -229,12 +305,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = Path(args.root).resolve()
     try:
+        section_range = parse_section_range(args.sections)
         if args.command == "prepare":
-            _emit(prepare_packet(root, args.source, args.target, args.glossary))
+            _emit(prepare_packet(root, args.source, args.target, args.glossary, section_range))
             return 0
 
         source_path = resolve_repo_path(root, args.source)
         source = source_path.read_text(encoding="utf-8")
+        if section_range is not None:
+            source = extract_section_range(source, section_range)
         target_path = resolve_repo_path(root, args.target)
         ensure_docs_ru_target(root, target_path)
         target = target_path.read_text(encoding="utf-8")
@@ -250,6 +329,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "valid": result["valid"],
             }
         )
+        if section_range is not None:
+            result["section_range"] = f"{section_range[0]}-{section_range[1]}"
         _emit(result)
         return 0 if result["valid"] else 1
     except (OSError, UnicodeError, ValueError) as error:

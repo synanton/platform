@@ -21,6 +21,8 @@ This kit configures Claude to maintain English/Russian editions of Synanton Plat
 
 `tools/docs-ru/translation_tool.py prepare` builds a stable translation packet from the English source and `docs-ru/GLOSSARY.md`. `validate` checks a Russian mirror for preserved glossary identifiers, section references, code fences, field names, and a target path under `docs-ru/`. Translation prose is authored separately; the packet and validation report are deterministic for identical inputs.
 
+Use `--sections START-END` for a bounded pilot such as Design 1.32 §§55–62; extraction includes those complete numbered sections and excludes adjacent sections.
+
 ```bash
 python3 tools/docs-ru/translation_tool.py prepare \
   --source docs/api/error-model.md \
