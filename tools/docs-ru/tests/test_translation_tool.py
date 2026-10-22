@@ -27,6 +27,15 @@ EXPECTED_CATEGORIES = (
     "OPERATION_FAILED",
     "INTERNAL_ERROR",
 )
+WAVE2_RETRY_CATEGORIES = (
+    "TRANSIENT",
+    "PERMANENT",
+    "SECURITY",
+    "INVALID",
+    "DEPENDENCY",
+    "TIMEOUT",
+    "RESOURCE",
+)
 
 
 class TranslationToolTest(unittest.TestCase):
@@ -113,9 +122,11 @@ class TranslationToolTest(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stdout)
         packet = json.loads(result.stdout)
-        terms = {entry["english"] for entry in packet["glossary"]}
+        terms = {entry["english"]: entry["do_not_translate"] for entry in packet["glossary"]}
         self.assertIn("VALIDATION_ERROR", terms)
         self.assertIn("INTERNAL_ERROR", terms)
+        for category in WAVE2_RETRY_CATEGORIES:
+            self.assertTrue(terms.get(category), f"{category} must be marked do-not-translate for Wave 2")
 
     def test_prepare_packet_is_deterministic_and_reads_glossary(self) -> None:
         first = self.run_tool("prepare")
