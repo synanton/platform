@@ -87,6 +87,7 @@ This glossary is the canonical terminology source for the Russian design mirror.
 | `Single` | `Single` | yes |
 | `Dual` | `Dual` | yes |
 | `Masked-only` | `Masked-only` | yes |
+| `Masked‑only` | `Masked‑only` | yes |
 | `MASK` | `MASK` | yes |
 | `DROP` | `DROP` | yes |
 | `QUARANTINE` | `QUARANTINE` | yes |

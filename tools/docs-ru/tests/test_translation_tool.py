@@ -70,6 +70,7 @@ WAVE2_SECURITY_IDENTIFIERS = (
     "Single",
     "Dual",
     "Masked-only",
+    "Masked‑only",
     "MASK",
     "DROP",
     "QUARANTINE",
