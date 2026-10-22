@@ -266,6 +266,32 @@ class TranslationToolTest(unittest.TestCase):
         self.assertEqual(0, validated.returncode, validated.stdout)
         self.assertTrue(json.loads(validated.stdout)["valid"])
 
+    def test_public_operation_model_fixture_keeps_full_and_partial_distinct(self) -> None:
+        operation_model = (REPOSITORY_ROOT / "docs/api/operation-model.md").read_text(encoding="utf-8")
+        start = operation_model.index("2. **`PARTIAL` (extraction) has no public state.")
+        end = operation_model.index("\n\n3. **`CANCEL_REQUESTED`", start)
+        source_excerpt = operation_model[start:end]
+        source_path = self.root / "docs/api/error-model.md"
+        source_path.write_text(source_excerpt, encoding="utf-8")
+
+        target_path = self.root / "docs-ru/pilots/operation-outcome-test.md"
+        target_path.parent.mkdir(parents=True)
+        target_path.write_text(
+            (FIXTURES / "operation-outcome-public-model.ru.md").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        result = self.run_tool("validate", target="docs-ru/pilots/operation-outcome-test.md")
+        report = json.loads(result.stdout)
+        translated = target_path.read_text(encoding="utf-8")
+        partial_line = next(line for line in translated.splitlines() if "outcome: PARTIAL" in line)
+        full_line = next(line for line in translated.splitlines() if "outcome: FULL" in line)
+
+        self.assertEqual(0, result.returncode, result.stdout)
+        self.assertTrue(report["valid"])
+        self.assertIn("частич", partial_line.casefold())
+        self.assertIn("полным успехом", full_line.casefold())
+        self.assertIn("`PARTIAL` (извлечение) не является публичным состоянием", translated)
+
     def test_section_range_rejects_invalid_input(self) -> None:
         result = self.run_tool("prepare", source="docs/architecture/synanton-design-1.32.md", sections="62-55")
 
