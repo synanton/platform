@@ -36,6 +36,65 @@ WAVE2_RETRY_CATEGORIES = (
     "TIMEOUT",
     "RESOURCE",
 )
+WAVE2_SECURITY_IDENTIFIERS = (
+    "acl_grants",
+    "resource_acl",
+    "class_grants",
+    "classification[]",
+    "store_original",
+    "fail_closed",
+    "AclInjector",
+    "ClassificationDetector",
+    "ReindexAfterPolicyChangeWorkflow",
+    "content_original",
+    "content_masked",
+    "embedding_original",
+    "embedding_masked",
+    "acl_mask",
+    "representation=original",
+    "representation=masked",
+    "HIGH_SECURITY",
+    "STANDARD",
+    "RESTRICTED",
+    "PERSONAL",
+    "FINANCIAL",
+    "PUBLIC",
+    "USER",
+    "GROUP",
+    "ROLE",
+    "QUARANTINED",
+    "PENDING_REVIEW",
+    "SINGLE",
+    "DUAL",
+    "MASKED‑ONLY",
+    "Single",
+    "Dual",
+    "Masked-only",
+    "MASK",
+    "DROP",
+    "QUARANTINE",
+    "REDACTED:CLASS",
+    "SSN",
+    "PII",
+    "security_officer",
+)
+WAVE2_SECURITY_CONCEPTS = (
+    "authentication",
+    "authorization",
+    "classification",
+    "masking",
+    "fail-closed",
+    "fail‑closed",
+    "representation",
+    "least privilege",
+    "resource ACL",
+    "redaction",
+    "quarantine",
+    "tenant scope",
+    "unlabelled content",
+    "security context",
+    "classification-aware search",
+)
 
 
 class TranslationToolTest(unittest.TestCase):
@@ -127,6 +186,13 @@ class TranslationToolTest(unittest.TestCase):
         self.assertIn("INTERNAL_ERROR", terms)
         for category in WAVE2_RETRY_CATEGORIES:
             self.assertTrue(terms.get(category), f"{category} must be marked do-not-translate for Wave 2")
+        for identifier in WAVE2_SECURITY_IDENTIFIERS:
+            self.assertTrue(terms.get(identifier), f"{identifier} must be marked do-not-translate for Wave 2")
+        entries = {entry["english"]: entry for entry in packet["glossary"]}
+        for concept in WAVE2_SECURITY_CONCEPTS:
+            self.assertIn(concept, entries)
+            self.assertFalse(entries[concept]["do_not_translate"])
+            self.assertTrue(entries[concept]["russian"])
 
     def test_prepare_packet_is_deterministic_and_reads_glossary(self) -> None:
         first = self.run_tool("prepare")
