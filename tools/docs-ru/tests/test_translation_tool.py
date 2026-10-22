@@ -13,6 +13,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 TOOL = REPOSITORY_ROOT / "tools/docs-ru/translation_tool.py"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 SOURCE = REPOSITORY_ROOT / "docs/api/error-model.md"
+DESIGN_132 = REPOSITORY_ROOT / "docs/architecture/synanton-design-1.32.md"
 EXPECTED_CATEGORIES = (
     "VALIDATION_ERROR",
     "AUTHENTICATION_REQUIRED",
@@ -32,9 +33,11 @@ class TranslationToolTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         (self.root / "docs/api").mkdir(parents=True)
+        (self.root / "docs/architecture").mkdir(parents=True)
         (self.root / "docs-ru/api").mkdir(parents=True)
         (self.root / "tools/docs-ru/tests/fixtures").mkdir(parents=True)
         shutil.copyfile(SOURCE, self.root / "docs/api/error-model.md")
+        shutil.copyfile(DESIGN_132, self.root / "docs/architecture/synanton-design-1.32.md")
         shutil.copyfile(FIXTURES / "error-model.ru.md", self.root / "docs-ru/api/error-model.md")
         shutil.copyfile(FIXTURES / "glossary.md", self.root / "docs-ru/GLOSSARY.md")
         shutil.copyfile(FIXTURES / "glossary.md", self.root / "tools/docs-ru/tests/fixtures/glossary.md")
@@ -42,21 +45,30 @@ class TranslationToolTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp.cleanup()
 
-    def run_tool(self, command: str, target: str = "docs-ru/api/error-model.md") -> subprocess.CompletedProcess[str]:
+    def run_tool(
+        self,
+        command: str,
+        target: str = "docs-ru/api/error-model.md",
+        source: str = "docs/api/error-model.md",
+        sections: str | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        args = [
+            sys.executable,
+            str(TOOL),
+            command,
+            "--root",
+            str(self.root),
+            "--source",
+            source,
+            "--target",
+            target,
+            "--glossary",
+            "docs-ru/GLOSSARY.md",
+        ]
+        if sections is not None:
+            args.extend(["--sections", sections])
         return subprocess.run(
-            [
-                sys.executable,
-                str(TOOL),
-                command,
-                "--root",
-                str(self.root),
-                "--source",
-                "docs/api/error-model.md",
-                "--target",
-                target,
-                "--glossary",
-                "docs-ru/GLOSSARY.md",
-            ],
+            args,
             check=False,
             capture_output=True,
             text=True,
@@ -231,6 +243,32 @@ class TranslationToolTest(unittest.TestCase):
         anchor_check = next(check for check in report["checks"] if check["name"] == "section_references_and_link_anchors")
 
         self.assertFalse(anchor_check["passed"])
+
+    def test_numbered_section_range_prepares_and_validates_exact_pilot_sections(self) -> None:
+        source = "docs/architecture/synanton-design-1.32.md"
+        target = "docs-ru/pilots/synanton-design-1.32-sections-55-62.md"
+        (self.root / "docs-ru/pilots").mkdir()
+
+        prepared = self.run_tool("prepare", target=target, source=source, sections="55-62")
+        self.assertEqual(0, prepared.returncode, prepared.stdout)
+        packet = json.loads(prepared.stdout)
+        self.assertEqual("55-62", packet["section_range"])
+        self.assertTrue(packet["source"].startswith("# 55. Operation Resource"))
+        self.assertIn("# 62. Error Categories", packet["source"])
+        self.assertNotIn("# 54. ", packet["source"])
+        self.assertNotIn("# 63. ", packet["source"])
+
+        target_path = self.root / target
+        target_path.write_text(packet["source"], encoding="utf-8")
+        validated = self.run_tool("validate", target=target, source=source, sections="55-62")
+        self.assertEqual(0, validated.returncode, validated.stdout)
+        self.assertTrue(json.loads(validated.stdout)["valid"])
+
+    def test_section_range_rejects_invalid_input(self) -> None:
+        result = self.run_tool("prepare", source="docs/architecture/synanton-design-1.32.md", sections="62-55")
+
+        self.assertEqual(2, result.returncode)
+        self.assertIn("positive and ascending", json.loads(result.stdout)["error"])
 
 
 if __name__ == "__main__":
