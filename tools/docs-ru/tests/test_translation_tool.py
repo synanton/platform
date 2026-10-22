@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -257,6 +258,7 @@ class TranslationToolTest(unittest.TestCase):
         self.assertIn("# 62. Error Categories", packet["source"])
         self.assertNotIn("# 54. ", packet["source"])
         self.assertNotIn("# 63. ", packet["source"])
+        self.assertEqual([str(number) for number in range(55, 63)], re.findall(r"(?m)^# (\d+)\.", packet["source"]))
 
         target_path = self.root / target
         target_path.write_text(packet["source"], encoding="utf-8")
