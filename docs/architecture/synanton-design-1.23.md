@@ -53,9 +53,7 @@ This proposal closes those gaps by introducing a **classification‑aware search
 
 Add `class_grants` table:
 
-sql
-
-```
+```sql
 CREATE TABLE class_grants (            -- topology, new
   grant_id   UUID PRIMARY KEY,
   org_id     UUID NOT NULL,
@@ -75,9 +73,7 @@ Effective visibility = `resource_acl ∧ class_grants`. Least privilege holds by
 
 Extend the v1.22 chunk schema:
 
-json
-
-```
+```json
 {
   "chunk_id": "…",
   "section_path": ["3. GPU Execution Plane", "3.1 GPU Gateway"],
@@ -88,11 +84,7 @@ json
 }
 ```
 
-
-
 **Configuration:**
-
-yaml
 
 ```
 topology:
@@ -113,7 +105,7 @@ topology:
 
 A new `ClassificationDetector` stage runs **after** parsing and **before** the Cassandra commit (preserving the §6 cache‑before‑bus invariant). It operates over the structured `elements` from v1.21 extraction.
 
-| Detector      | Pattern                                       | Action       |
+| Detector      | Pattern                                       | Class        |
 | ------------- | --------------------------------------------- | ------------ |
 | SSN           | `\b\d{3}-\d{2}-\d{4}\b` + Luhn‑check          | `RESTRICTED` |
 | Phone (US)    | `\b\d{3}-\d{3}-\d{4}\b`                       | `PERSONAL`   |
@@ -124,9 +116,7 @@ Detectors are **deterministic**, **auditable**, and **GPU‑free**. Misses are c
 
 **Policy per class:**
 
-yaml
-
-```
+```yaml
 synflux:
   classification:
     enabled: true
@@ -144,8 +134,6 @@ synflux:
     fail_mode: quarantine        # on detector error, quarantine the document
     quarantine_state: QUARANTINED
 ```
-
-
 
 Detector output (matched spans and classes) feeds the masking‑outcome decision in §3.2a, which determines whether a chunk ends up with one representation or two.
 
@@ -195,27 +183,19 @@ This subsumes the earlier, hard‑coded "original span never written to any stor
 
 **Span masking example (Dual outcome):**
 
-diff
-
-```
+```diff
 - "Salary: €180,000"
 + "Salary: [REDACTED:FINANCIAL]"
 ```
-
-
 
 Both forms are available downstream; which one a given store and caller sees is governed by §3.3.
 
 **Span masking example (Masked‑only outcome, `store_original: false`):**
 
-diff
-
-```
+```diff
 - "SSN: 000-00-0000"
 + "SSN: [REDACTED:SSN]"
 ```
-
-
 
 `"000-00-0000"` is never computed for storage — not even for a caller holding `RESTRICTED` class grants. There is no "original" artefact to gate.
 
@@ -270,9 +250,7 @@ This reaches:
 
 **Configuration:**
 
-yaml
-
-```
+```yaml
 synquest:
   classification:
     filter:
@@ -336,9 +314,7 @@ Entities and edges carry both `classification` and `representation`. For a Dual 
 
 `acl_mask` gains a class set and a representation marker:
 
-json
-
-```
+```json
 {
   "acl_mask": {
     "org_id": "acme",
