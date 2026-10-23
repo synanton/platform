@@ -46,7 +46,7 @@ class LuceneKnowledgeSearchBackendTest {
                 new SynquestProperties.Index(indexRoot.toString(), false, 30), null, null, null);
         var indexBuilder = new LuceneIndexBuilder(cache, props);
         searchService = new SearchService(indexBuilder, mock(QueryEmbedder.class), props);
-        backend = new LuceneKnowledgeSearchBackend(indexBuilder, searchService, cache);
+        backend = new LuceneKnowledgeSearchBackend(indexBuilder, searchService, cache, props);
     }
 
     private static ManifestRow manifest(String tenantId, UUID contentRefId, String resource) {

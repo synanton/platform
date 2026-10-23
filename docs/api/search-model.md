@@ -126,6 +126,13 @@ reader can tell frozen text from projection decisions:
   frozen shape: a projection of the chunk schema's provenance set (set
   attribution, #292), not new design surface. `provenance_ref` remains the
   normative resolution path.
+- `source_identities` on the provenance resource is an additive extension:
+  live `SourceIdentity` references for the chunk. Tombstoned source versions
+  are excluded from both search hits and provenance; a chunk with no live
+  source version is omitted.
+- Tombstone filtering uses one immutable snapshot per query, applied before
+  the final result cut. The implementation retrieves a bounded over-fetch
+  window first; the margin is configuration, not a public field.
 - `provenance_ref` resolves via `GET /v1/knowledge/{object_id}/provenance`
   while the producing run is COMPLETED (manifest visibility); otherwise 404 —
   a provenance reference never resolves to invisible knowledge.

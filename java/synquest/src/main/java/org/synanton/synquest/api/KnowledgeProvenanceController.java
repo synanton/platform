@@ -3,6 +3,9 @@ package org.synanton.synquest.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.domain.SourceIdentityRow;
+import org.synanton.ingestioncache.domain.SourceRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +13,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -56,18 +64,54 @@ public class KnowledgeProvenanceController {
         if (chunk.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        Set<UUID> tombstoned = cacheClient.readTombstonedVersionIds(tenant.tenantId());
+        Set<UUID> deletedVersions = tombstoned == null ? Set.of() : tombstoned;
         List<UUID> sourceVersionIds = chunk.get().sourceVersionIds() == null
                 ? List.of()
-                : chunk.get().sourceVersionIds().stream().sorted().toList();
+                : chunk.get().sourceVersionIds().stream()
+                    .filter(versionId -> !deletedVersions.contains(versionId))
+                    .sorted()
+                    .toList();
+        if (sourceVersionIds.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        List<LiveSourceIdentity> identities = liveIdentities(
+                tenant.tenantId(), sourceVersionIds, manifest.get().sourceUri());
         return ResponseEntity.ok(new KnowledgeProvenanceResource(
                 objectId,
                 parsed.contentRefId(),
                 sourceVersionIds,
+                identities,
                 manifest.get().contentCacheReference(),
                 manifest.get().sourceUri(),
                 manifest.get().sourceSha256(),
                 chunk.get().chunkSha256(),
                 chunk.get().processingRunId()));
+    }
+
+    private List<LiveSourceIdentity> liveIdentities(
+            String tenantId, List<UUID> sourceVersionIds, String fallbackSourceUri) {
+        Set<UUID> live = Set.copyOf(sourceVersionIds);
+        List<LiveSourceIdentity> identities = new ArrayList<>();
+        for (SourceRow source : cacheClient.listSources(tenantId)) {
+            for (SourceIdentityRow identity : cacheClient.listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                for (SourceVersionRow version : cacheClient.listSourceVersions(
+                        tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId())) {
+                    if (!live.contains(version.versionId())) {
+                        continue;
+                    }
+                    String sourceUri = "upload".equals(source.connectorType())
+                        ? identity.connectorId() + "://" + identity.sourceId() + "/" + identity.resourceId()
+                        : fallbackSourceUri;
+                    identities.add(new LiveSourceIdentity(
+                        version.versionId(), identity.connectorId(), identity.sourceId(),
+                        identity.resourceId(), sourceUri));
+                }
+            }
+        }
+        identities.sort(Comparator.comparing(LiveSourceIdentity::sourceVersionId));
+        return identities;
     }
 
     private static TenantContext verifiedTenant() {
@@ -105,9 +149,17 @@ public class KnowledgeProvenanceController {
             @JsonProperty("object_id") String objectId,
             @JsonProperty("content_ref_id") UUID contentRefId,
             @JsonProperty("source_version_ids") List<UUID> sourceVersionIds,
+            @JsonProperty("source_identities") List<LiveSourceIdentity> sourceIdentities,
             @JsonProperty("content_cache_reference") String contentCacheReference,
             @JsonProperty("source_uri") String sourceUri,
             @JsonProperty("source_sha256") String sourceSha256,
             @JsonProperty("chunk_sha256") String chunkSha256,
             @JsonProperty("processing_run_id") UUID processingRunId) {}
+
+    public record LiveSourceIdentity(
+            @JsonProperty("source_version_id") UUID sourceVersionId,
+            @JsonProperty("connector_id") String connectorId,
+            @JsonProperty("source_id") String sourceId,
+            @JsonProperty("resource_id") String resourceId,
+            @JsonProperty("source_uri") String sourceUri) {}
 }

@@ -915,6 +915,19 @@ public class IngestionCacheClient {
         );
     }
 
+    /** Version IDs covered by the latest tombstone of any source identity in the tenant. */
+    public Set<UUID> readTombstonedVersionIds(String tenantId) {
+        Set<UUID> deleted = new HashSet<>();
+        for (SourceRow source : listSources(tenantId)) {
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                readLatestSourceTombstone(tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId())
+                    .ifPresent(tombstone -> deleted.addAll(readVersionManifest(tenantId, tombstone.versionsManifestRef())));
+            }
+        }
+        return Set.copyOf(deleted);
+    }
+
     public boolean insertSourceTombstoneIfAbsent(SourceTombstoneRow tombstone, SourceOutboxRow event) {
         if (!tombstone.tenantId().equals(event.tenantId())
                 || !tombstone.connectorId().equals(event.connectorId())

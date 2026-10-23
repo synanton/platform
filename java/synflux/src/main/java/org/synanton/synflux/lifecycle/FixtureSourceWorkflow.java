@@ -865,6 +865,16 @@ public class FixtureSourceWorkflow {
             VerifiedIngestionContext context, String sourceId, String resourceId,
             String requestId, String idempotencyKey) {
         SourceRow source = requireActiveSource(context, sourceId);
+        var latestTombstone = cache.readLatestSourceTombstone(
+            context.tenantId(), source.connectorId(), sourceId, resourceId);
+        if (latestTombstone.isPresent()) {
+            boolean hasLiveVersion = cache.listSourceVersions(
+                    context.tenantId(), source.connectorId(), sourceId, resourceId).stream()
+                .anyMatch(version -> !latestTombstone.get().appliesTo(version));
+            if (!hasLiveVersion) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "resource is already deleted");
+            }
+        }
         OperationRow operation = operations.accept(
             context, "DELETE /v1/sources/" + sourceId + "/resources", requestId, idempotencyKey);
         UUID runId = runId(operation.operationId());

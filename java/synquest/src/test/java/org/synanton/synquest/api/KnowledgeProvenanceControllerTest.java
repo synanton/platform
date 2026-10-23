@@ -12,6 +12,9 @@ import org.synanton.common.tenant.TenantContextFilter;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.ingestioncache.domain.SourceIdentityRow;
+import org.synanton.ingestioncache.domain.SourceRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -101,6 +104,56 @@ class KnowledgeProvenanceControllerTest {
                 .andExpect(jsonPath("$.source_sha256").value("aa".repeat(32)))
                 .andExpect(jsonPath("$.chunk_sha256").value("bb".repeat(32)))
                 .andExpect(jsonPath("$.processing_run_id").value(processingRunId.toString()));
+    }
+
+    @Test
+    void duplicateProvenanceExposesTheLiveSiblingAndHidesTheDeletedVersion() throws Exception {
+        UUID deletedVersion = UUID.nameUUIDFromBytes("version:deleted".getBytes());
+        UUID liveVersion = UUID.nameUUIDFromBytes("version:live".getBytes());
+        visibleManifest();
+        when(cacheClient.readChunks(eq("tenant-a"), eq(contentRefId))).thenReturn(List.of(new ChunkRow(
+                "tenant-a", contentRefId, 0, "shared chunk", "bb".repeat(32), 2, 2,
+                "APPENDIX A: DATA SOURCE DESCRIPTIONS", "SECTION", "APPENDIX A",
+                "[]", 10, "", false, List.of("PUBLIC"), "", "", 0,
+                Set.of(deletedVersion, liveVersion), processingRunId)));
+        when(cacheClient.readTombstonedVersionIds("tenant-a")).thenReturn(Set.of(deletedVersion));
+        SourceRow source = new SourceRow("tenant-a", "uploads", "manual-upload", "upload",
+                "upload://uploads", Set.of(), "ACTIVE", Instant.now(), null);
+        when(cacheClient.listSources("tenant-a")).thenReturn(List.of(source));
+        when(cacheClient.listSourceIdentities("tenant-a", "uploads", "manual-upload")).thenReturn(List.of(
+                new SourceIdentityRow("tenant-a", "manual-upload", "uploads", "a.pdf"),
+                new SourceIdentityRow("tenant-a", "manual-upload", "uploads", "b.pdf")));
+        when(cacheClient.listSourceVersions("tenant-a", "manual-upload", "uploads", "a.pdf")).thenReturn(List.of(
+                version("tenant-a", "uploads", "a.pdf", deletedVersion)));
+        when(cacheClient.listSourceVersions("tenant-a", "manual-upload", "uploads", "b.pdf")).thenReturn(List.of(
+                version("tenant-a", "uploads", "b.pdf", liveVersion)));
+
+        mvc.perform(get("/v1/knowledge/" + contentRefId + ":0/provenance")
+                        .header("Authorization", "Bearer " + token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.source_version_ids[0]").value(liveVersion.toString()))
+                .andExpect(jsonPath("$.source_version_ids.length()").value(1))
+                .andExpect(jsonPath("$.source_identities[0].source_version_id").value(liveVersion.toString()))
+                .andExpect(jsonPath("$.source_identities[0].resource_id").value("b.pdf"))
+                .andExpect(jsonPath("$.source_identities[0].source_uri")
+                        .value("manual-upload://uploads/b.pdf"))
+                .andExpect(jsonPath("$.chunk_sha256").value("bb".repeat(32)));
+    }
+
+    @Test
+    void provenanceForOnlyTombstonedVersionsYields404() throws Exception {
+        visibleManifest();
+        chunkAt(0);
+        when(cacheClient.readTombstonedVersionIds("tenant-a")).thenReturn(Set.of(sourceVersionId));
+
+        mvc.perform(get("/v1/knowledge/" + contentRefId + ":0/provenance")
+                        .header("Authorization", "Bearer " + token()))
+                .andExpect(status().isNotFound());
+    }
+
+    private static SourceVersionRow version(String tenant, String source, String resource, UUID versionId) {
+        return new SourceVersionRow(tenant, "manual-upload", source, resource, versionId,
+                "sha256:abc", "rev", Instant.now(), UUID.randomUUID(), null, "content-ref");
     }
 
     @Test
