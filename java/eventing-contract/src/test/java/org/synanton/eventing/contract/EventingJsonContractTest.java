@@ -1,5 +1,6 @@
 package org.synanton.eventing.contract;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EventingJsonContractTest {
 
@@ -80,6 +82,30 @@ class EventingJsonContractTest {
         assertThat(restored).isEqualTo(event());
     }
 
+    @Test
+    void eventDeserializerRejectsMissingOrMismatchedTenantRepresentations() throws IOException {
+        ObjectNode canonical = (ObjectNode) mapper.valueToTree(event());
+        ObjectNode missingFlatTenant = canonical.deepCopy();
+        missingFlatTenant.remove("tenant_id");
+        ObjectNode missingNestedTenant = canonical.deepCopy();
+        missingNestedTenant.remove("tenant");
+        ObjectNode mismatchedTenant = canonical.deepCopy();
+        mismatchedTenant.withObject("tenant").put("id", "tenant-b");
+
+        assertThatThrownBy(() -> readEvent(missingFlatTenant))
+                .isInstanceOf(JsonProcessingException.class);
+        assertThatThrownBy(() -> readEvent(missingNestedTenant))
+                .isInstanceOf(JsonProcessingException.class);
+        assertThatThrownBy(() -> readEvent(mismatchedTenant))
+                .isInstanceOf(JsonProcessingException.class);
+    }
+
+    @Test
+    void uuidSerializationUsesLowercaseHyphenatedStrings() throws JsonProcessingException {
+        assertThat(mapper.writeValueAsString(EVENT_ID))
+                .isEqualTo("\"11111111-1111-4111-8111-111111111111\"");
+    }
+
     private static Event<ContentPublished> event() {
         return new Event<>(
                 EVENT_ID,
@@ -129,6 +155,10 @@ class EventingJsonContractTest {
             }
             return new String(input.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).trim();
         }
+    }
+
+    private Event<ContentPublished> readEvent(ObjectNode json) throws IOException {
+        return mapper.readValue(mapper.writeValueAsBytes(json), new TypeReference<>() {});
     }
 
     record ContentPublished(

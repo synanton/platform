@@ -6,10 +6,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EventingContractInvariantTest {
@@ -58,6 +61,7 @@ class EventingContractInvariantTest {
     @Test
     void commandRejectsMissingFieldsInvalidVersionsAndNegativeExpectedVersion() {
         Command<String> command = command(Optional.of(0L));
+        assertThatCode(() -> command(Optional.of(0L))).doesNotThrowAnyException();
         assertThatThrownBy(() -> new Command<>(
                 null,
                 command.commandType(),
@@ -107,6 +111,25 @@ class EventingContractInvariantTest {
         assertThatThrownBy(() -> new SecurityMetadata(
                 ActorKind.SERVICE, "content-cache", "UNCLASSIFIED", 1, List.of(" ")))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new SecurityMetadata(
+                ActorKind.SERVICE,
+                "content-cache",
+                "UNCLASSIFIED",
+                1,
+                List.of("customer-data", "customer-data")))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        List<String> mutableTags = new ArrayList<>(List.of("retention-30d", "customer-data"));
+        SecurityMetadata sorted = new SecurityMetadata(
+                ActorKind.SERVICE,
+                "content-cache",
+                "UNCLASSIFIED",
+                1,
+                mutableTags);
+        mutableTags.clear();
+        assertThat(sorted.dataHandlingTags()).containsExactly("customer-data", "retention-30d");
+        assertThatThrownBy(() -> sorted.dataHandlingTags().add("new-tag"))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -127,6 +150,15 @@ class EventingContractInvariantTest {
         assertThatThrownBy(() -> new EventTypeDeclaration(
                 "ContentPublished", ReplayClass.REPLAY_SAFE, Optional.of("operator approval")))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new EventTypeDeclaration(
+                "ContentPublished", ReplayClass.REPLAY_WITH_POLICY, Optional.of(" ")))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> eventWithReplay(ReplayClass.REPLAY_WITH_POLICY, Optional.empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> eventWithReplay(ReplayClass.REPLAY_WITH_POLICY, Optional.of(" ")))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> eventWithReplay(ReplayClass.REPLAY_SAFE, Optional.of("operator approval")))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     private static Event<String> event(UUID id, String type, int version, String tenantId) {
@@ -142,6 +174,23 @@ class EventingContractInvariantTest {
                 Optional.empty(),
                 ReplayClass.REPLAY_SAFE,
                 Optional.empty(),
+                security(),
+                "payload");
+    }
+
+    private static Event<String> eventWithReplay(ReplayClass replayClass, Optional<String> replayCondition) {
+        return new Event<>(
+                EVENT_ID,
+                "ContentPublished",
+                1,
+                Instant.parse("2026-10-23T12:00:00Z"),
+                new Producer("content-cache", "1.26"),
+                "tenant-a",
+                Optional.empty(),
+                CORRELATION_ID,
+                Optional.empty(),
+                replayClass,
+                replayCondition,
                 security(),
                 "payload");
     }

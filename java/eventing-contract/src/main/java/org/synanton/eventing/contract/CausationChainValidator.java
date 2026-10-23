@@ -63,6 +63,8 @@ public final class CausationChainValidator {
             });
         }
 
+        rejectCycles(byId);
+
         Set<UUID> visited = new HashSet<>();
         ArrayDeque<UUID> pending = new ArrayDeque<>();
         pending.add(root.messageId());
@@ -75,6 +77,21 @@ public final class CausationChainValidator {
         }
         if (visited.size() != byId.size()) {
             throw new IllegalArgumentException("every message must descend from the root");
+        }
+    }
+
+    private static void rejectCycles(Map<UUID, TenantScopedMessage> messagesById) {
+        Set<UUID> fullyExplored = new HashSet<>();
+        for (UUID start : messagesById.keySet()) {
+            Set<UUID> currentPath = new HashSet<>();
+            UUID current = start;
+            while (current != null && !fullyExplored.contains(current)) {
+                if (!currentPath.add(current)) {
+                    throw new IllegalArgumentException("causation graph must not contain cycles");
+                }
+                current = messagesById.get(current).causationId().orElse(null);
+            }
+            fullyExplored.addAll(currentPath);
         }
     }
 }

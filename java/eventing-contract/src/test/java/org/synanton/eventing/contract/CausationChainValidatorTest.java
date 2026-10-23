@@ -26,7 +26,7 @@ class CausationChainValidatorTest {
     }
 
     @Test
-    void rejectsMissingParentDuplicateIdsCrossTenantLinksAndDisconnectedCycles() {
+    void rejectsMissingParentsDuplicateIdsAndCrossTenantLinks() {
         Event<String> root = event(ROOT_ID, Optional.empty(), "tenant-a");
         Event<String> child = event(CHILD_ID, Optional.of(ROOT_ID), "tenant-a");
         Event<String> orphan = event(CHILD_ID, Optional.of(UUID.randomUUID()), "tenant-a");
@@ -38,10 +38,30 @@ class CausationChainValidatorTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> CausationChainValidator.validateCompleteChain(List.of(root, crossTenant)))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
 
-        Event<String> cycleA = event(ROOT_ID, Optional.of(CHILD_ID), "tenant-a");
-        Event<String> cycleB = event(CHILD_ID, Optional.of(ROOT_ID), "tenant-a");
-        assertThatThrownBy(() -> CausationChainValidator.validateCompleteChain(List.of(cycleA, cycleB)))
+    @Test
+    void rejectsDetachedCycleEvenWhenTheChainHasOneRoot() {
+        UUID detachedAId = UUID.fromString("dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+        UUID detachedBId = UUID.fromString("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee");
+        Event<String> root = event(ROOT_ID, Optional.empty(), "tenant-a");
+        Event<String> cycleA = event(detachedAId, Optional.of(detachedBId), "tenant-a");
+        Event<String> cycleB = event(detachedBId, Optional.of(detachedAId), "tenant-a");
+
+        assertThatThrownBy(() -> CausationChainValidator.validateCompleteChain(List.of(root, cycleA, cycleB)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rejectsDisconnectedRootedComponent() {
+        UUID detachedId = UUID.fromString("dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+        UUID detachedChildId = UUID.fromString("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee");
+        Event<String> root = event(ROOT_ID, Optional.empty(), "tenant-a");
+        Event<String> detachedRoot = event(detachedId, Optional.empty(), "tenant-a");
+        Event<String> detachedChild = event(detachedChildId, Optional.of(detachedId), "tenant-a");
+
+        assertThatThrownBy(() -> CausationChainValidator.validateCompleteChain(
+                List.of(root, detachedRoot, detachedChild)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

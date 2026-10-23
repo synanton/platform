@@ -47,7 +47,7 @@ public record Event<T>(
         @JsonProperty("security") SecurityMetadata security,
         @JsonProperty("payload") T payload) implements TenantScopedMessage {
 
-    /** Convenience constructor creates both frozen tenant representations from one tenant ID. */
+    /** Producer-facing constructor derives both frozen tenant representations from one tenant ID. */
     public Event(
             UUID eventId,
             String eventType,

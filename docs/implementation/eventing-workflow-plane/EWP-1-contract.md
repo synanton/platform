@@ -16,7 +16,7 @@ This document records the Java contract profile implemented by `java/eventing-co
 | `SecurityMetadata` | `actor_type`, `actor_id`, `classification`, `policy_version`, `data_handling_tags` | — |
 | `CommandTarget` | `type`, `id` | — |
 
-Event tenant scope is emitted in both frozen forms, nested `tenant.id` and top-level `tenant_id`. Construction and deserialization reject a mismatch; both are derived from the same scope at normal construction. Commands use the frozen top-level `tenant_id` form. The `TenantScope` helper checks a message against an already-verified caller tenant; the special `system` value still requires platform-operator authorization at the processing boundary.
+Event tenant scope is emitted in both frozen forms, nested `tenant.id` and top-level `tenant_id`. Producer-facing construction uses the convenience `Event` constructor, which derives both from one `tenantId`; the public canonical constructor remains available for deserialization and rejects a mismatch. Commands use the frozen top-level `tenant_id` form. The `TenantScope` helper checks a message against an already-verified caller tenant; the special `system` value still requires platform-operator authorization at the processing boundary.
 
 `SecurityMetadata` carries a producer claim, not an authorization grant. It contains the actor kind and identifier, classification, policy version, and sorted data-handling tags. It deliberately carries no roles/scopes: consumers must perform authorization independently. Tenant scope has one authoritative top-level field and is not duplicated inside security metadata.
 
@@ -57,3 +57,5 @@ The draft outline's `REPLAYABLE` / `NON_REPLAYABLE` / `CONDITIONAL` names are in
 Included: typed contract records, UUID identity format, correlation/causation validation, schema-version policy, tenant checks, security claims, replay declarations, canonical JSON mapping, and golden/round-trip/invariant tests.
 
 Explicitly excluded: publishers, brokers/transports, outbox/inbox, consumers, retry/backoff, dead letters, persistence, workflow state/engine, and platform integrations. Those remain EWP-2 through EWP-6. BBAG-A Generation A is synchronous and has no runtime dependency on this module; this contract provides no search/authentication implementation.
+
+Contract verification is self-contained: `./gradlew :java:eventing-contract:build` and `./gradlew compileJava` do not require YDB, Cassandra, an LLM endpoint, or the UI package registry. The repository-wide `buildAll` also runs service-backed and UI suites; local reproducibility of those suites depends on their services and package-registry access.
