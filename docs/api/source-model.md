@@ -500,7 +500,11 @@ configured Source remains active.
 Connector-reported `DELETED` observations use the same resource-level lifecycle.
 Non-authoritative observations do not create tombstones.
 The request is tracked by the ordinary `IngestionRun`/Operation pair and its
-manifest records the resource disposition for retry and audit.
+manifest records the resource disposition for retry and audit. The first
+effective delete returns `202` after the tombstone is durable; search and
+provenance exclude the identity immediately. Repeating the delete for an
+already-tombstoned resource returns `404` without creating another tombstone,
+run, or operation.
 
 If a client needs both configuration and content removed, it deletes each
 resource explicitly (or accepts authoritative per-resource connector deletions)

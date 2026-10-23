@@ -33,6 +33,9 @@ synquest:
     # Snippet length cap in chars (0 = full chunk text). Rerank evaluation
     # needs full text; UI previews want short. Default preserves behavior.
     snippet-chars: 200
+    # Query-time tombstone filtering: retrieve limit + margin before the
+    # final cut; hard-capped in the backend. Tune with hybrid fusion.
+    tombstone-overfetch-margin: ${SYNQUEST_TOMBSTONE_OVERFETCH_MARGIN:100}
   seed:
     # Optional demo projection initialisation after a restart. Set to the demo
     # tenant (demo) so the existing index is loaded without a manual rebuild.

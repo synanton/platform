@@ -5,6 +5,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.synquest.api.dto.SearchRequest;
 import org.synanton.synquest.api.dto.SearchResponse;
+import org.synanton.synquest.config.SynquestProperties;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,15 +25,20 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
 
     public static final String STRATEGY = "bm25";
 
+    private static final int MAX_RETRIEVAL_WINDOW = 1000;
+
     private final LuceneIndexBuilder indexBuilder;
     private final SearchService searchService;
     private final IngestionCacheClient cacheClient;
+    private final int tombstoneOverfetchMargin;
 
     public LuceneKnowledgeSearchBackend(
-            LuceneIndexBuilder indexBuilder, SearchService searchService, IngestionCacheClient cacheClient) {
+            LuceneIndexBuilder indexBuilder, SearchService searchService, IngestionCacheClient cacheClient,
+            SynquestProperties properties) {
         this.indexBuilder = indexBuilder;
         this.searchService = searchService;
         this.cacheClient = cacheClient;
+        this.tombstoneOverfetchMargin = Math.max(0, properties.search().tombstoneOverfetchMargin());
     }
 
     @Override
@@ -65,30 +71,54 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
 
     @Override
     public List<KnowledgeCandidate> candidates(String tenantId, String query, int limit) throws Exception {
-        // Lexical-only candidate generation: BM25 over the tenant's projection, no
-        // dense leg and no embedding dependency — the CPU slice's retrieval path.
-        SearchRequest lexicalOnly = new SearchRequest(tenantId, query, limit, 0, limit, null);
-        SearchResponse response = searchService.search(lexicalOnly);
+        // One immutable snapshot per query. The initial fetch and any guard refetch use it;
+        // a document deleted after this point may still appear in this query's result.
+        Set<UUID> tombstoned = cacheClient.readTombstonedVersionIds(tenantId);
+        if (tombstoned == null) {
+            tombstoned = Set.of();
+        }
 
-        Map<UUID, Map<Integer, Set<UUID>>> versionsByChunk = new HashMap<>();
-        for (var hit : response.hits()) {
-            var rows = cacheClient.readChunks(tenantId, hit.contentRefId());
+        int fetch = Math.min(limit + tombstoneOverfetchMargin, MAX_RETRIEVAL_WINDOW);
+        while (true) {
+            SearchResponse response = searchService.search(new SearchRequest(tenantId, query, fetch, 0, fetch, null));
+            List<KnowledgeCandidate> live = liveCandidates(tenantId, response.hits(), tombstoned, limit);
+            if (live.size() >= limit || response.hits().size() < fetch || fetch >= MAX_RETRIEVAL_WINDOW) {
+                return live;
+            }
+            fetch = Math.min(fetch + tombstoneOverfetchMargin, MAX_RETRIEVAL_WINDOW);
+        }
+    }
+
+    private List<KnowledgeCandidate> liveCandidates(
+            String tenantId, List<org.synanton.synquest.api.dto.Hit> hits, Set<UUID> tombstoned, int limit) {
+        Map<UUID, List<ChunkRow>> chunksByRef = new HashMap<>();
+        List<KnowledgeCandidate> candidates = new java.util.ArrayList<>();
+        for (var hit : hits) {
+            List<ChunkRow> rows = chunksByRef.computeIfAbsent(
+                hit.contentRefId(), ref -> cacheClient.readChunks(tenantId, ref));
+            Set<UUID> liveVersions = new java.util.HashSet<>();
             for (ChunkRow row : rows) {
-                versionsByChunk.computeIfAbsent(hit.contentRefId(), k -> new HashMap<>())
-                        .computeIfAbsent(row.chunkOrdinal(), k -> new java.util.HashSet<>())
-                        .addAll(row.sourceVersionIds());
+                if (row.chunkOrdinal() != hit.chunkOrdinal() || row.sourceVersionIds() == null) {
+                    continue;
+                }
+                for (UUID versionId : row.sourceVersionIds()) {
+                    if (!tombstoned.contains(versionId)) {
+                        liveVersions.add(versionId);
+                    }
+                }
+            }
+            if (liveVersions.isEmpty()) {
+                continue;
+            }
+            String title = hit.heading() == null || hit.heading().isBlank()
+                ? hit.sourceUri() : hit.heading();
+            candidates.add(new KnowledgeCandidate(
+                hit.chunkId(), hit.contentRefId(), hit.chunkOrdinal(), hit.score(),
+                title, hit.snippet(), hit.sourceUri(), Set.copyOf(liveVersions)));
+            if (candidates.size() >= limit) {
+                break;
             }
         }
-        return response.hits().stream()
-                .map(hit -> {
-                    Set<UUID> versions = versionsByChunk.getOrDefault(hit.contentRefId(), Map.of())
-                            .getOrDefault(hit.chunkOrdinal(), Set.of());
-                    String title = hit.heading() == null || hit.heading().isBlank()
-                            ? hit.sourceUri() : hit.heading();
-                    return new KnowledgeCandidate(
-                            hit.chunkId(), hit.contentRefId(), hit.chunkOrdinal(), hit.score(),
-                            title, hit.snippet(), hit.sourceUri(), Set.copyOf(versions));
-                })
-                .toList();
+        return candidates;
     }
 }
