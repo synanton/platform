@@ -1,6 +1,6 @@
 # EWP-1 — Java Event/Command Contract
 
-**Status:** Draft implementation profile · **Scope gate:** EWP-0 closed by [#375](https://github.com/synanton/platform/issues/375) · **Frozen source:** [Eventing 1.27 contract](../../api/eventing-contract.md), frozen by [#247](https://github.com/synanton/platform/issues/247)
+**Status:** Implemented in [PR #393](https://github.com/synanton/platform/pull/393), baseline commit [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be) · **Scope gate:** EWP-0 closed by [#375](https://github.com/synanton/platform/issues/375) · **Frozen source:** [Eventing 1.27 contract](../../api/eventing-contract.md), frozen by [#247](https://github.com/synanton/platform/issues/247)
 
 This document records the Java contract profile implemented by `java/eventing-contract`. It implements the frozen Event/Command boundary; it does not revise Design 1.27 or define publication/workflow execution.
 
@@ -32,8 +32,10 @@ The optional `expected_version` command field is an additive optimistic-concurre
 ## Schema and JSON compatibility
 
 - Event and command versions are independent positive integers serialized as `event_version` and `command_version`.
-- Within one version, changes are additive and optional. Removing/renaming a field or changing its meaning requires a new version; a new version preserves the old version's meaning and golden fixture.
+- **EWP-1 versioning policy clarification:** every event/command schema-shape change, including an additive optional field or enum value, increments that type's `event_version`/`command_version` and adds a new golden fixture. Never rewrite a released version's fixture. A new version preserves the old version's meaning; removals, renames, and semantic changes also require a new version.
+- This is a deliberate, stricter Java contract-profile rule than Design 1.27 §12, which permits compatible optional additions within a version. It supersedes the initial “additive-only within a version” wording in merged EWP-1 baseline `7523fae`; future EWP-2/EWP-4 implementations must use this clarified rule.
 - Property names are explicit snake_case (except the frozen nested `tenant.id`), timestamps use ISO-8601 UTC strings, and UUIDs use strings. `EventingJson` is the canonical mapper; it registers Java time/Optional support, omits absent Optional fields, and ignores unknown additive fields on input.
+- Unknown-field tolerance is defensive parsing behavior, not permission to change a released version's shape. Consumers still check whether they support the message version before interpreting it.
 - `event.v1.json` and `command.v1.json` are canonical compact JSON fixtures. Serialization and typed-payload round-trip tests fail on shape drift. A deliberate version change must add a new versioned fixture rather than silently rewrite v1.
 - `MessageEnvelope` is not a serialized wrapper: event and command correlation fields remain flat as in the frozen projection. No trace ID is added in EWP-1.
 
