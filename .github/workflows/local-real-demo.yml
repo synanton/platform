@@ -1,0 +1,83 @@
+name: Local Real Demo v1
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/local-real-demo.yml'
+      - 'deployments/docker/**'
+      - 'demo-data/documents/mental-health-report-2010.pdf'
+      - 'docs/acceptance/**'
+      - 'java/**'
+      - 'scripts/run-local-real-demo.sh'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/local-real-demo.yml'
+      - 'deployments/docker/**'
+      - 'demo-data/documents/mental-health-report-2010.pdf'
+      - 'docs/acceptance/**'
+      - 'java/**'
+      - 'scripts/run-local-real-demo.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-real-demo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-pdf-v1:
+    name: Real PDF through /v1, search, provenance, idempotency
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CONTENT_EXTRACTOR_ROOT: ${{ github.workspace }}/content_extractor
+      # Record the PR head, not actions/checkout's synthetic merge ref.
+      PLATFORM_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      # Pin the sibling checkout: the demo's reproducibility must not follow
+      # another repository's head. Update deliberately with the evidence doc.
+      LOCAL_REAL_DEMO_EXPECTED_EXTRACTOR_COMMIT: 53a81ce5e408cb3e0f691d8d0434a6695c76482b
+
+    steps:
+      - name: Checkout platform
+        uses: actions/checkout@v4
+
+      - name: Checkout extraction gateway
+        uses: actions/checkout@v4
+        with:
+          repository: synanton/content_extractor
+          ref: 53a81ce5e408cb3e0f691d8d0434a6695c76482b
+          path: content_extractor
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrappers executable
+        run: chmod +x gradlew content_extractor/gradlew
+
+      - name: Run Local Real Demo v1 acceptance
+        id: demo
+        run: ./scripts/run-local-real-demo.sh up
+
+      - name: Upload acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-real-demo-evidence
+          path: deployments/docker/data-local-real-demo/evidence.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Stop profile and preserve local data semantics
+        if: always() && steps.demo.outcome != 'skipped'
+        run: ./scripts/run-local-real-demo.sh down
+        continue-on-error: true

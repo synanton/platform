@@ -513,14 +513,28 @@ historical module-phase numbering in
 [`docs/implementation/synanton-phases-plan.md`](docs/implementation/synanton-phases-plan.md)
 and from the local Docker profiles below.
 
-**Next P0: Local Real Demo v1 (#399).** The accepted real-PDF run above used the
-homelab cluster. Compose currently has named `phase2`, `phase3`, and
-`observability` profiles; `compose.slice.yaml` is an override for the vertical-
-slice harness, not a dedicated real-demo profile. That harness uses generated
-Markdown fixtures, while `run-ingestion-demo.sh` and `run-extract-index-poc.sh`
-still use the legacy `/ingest/run` endpoint. #399 tracks a one-command local
-Compose path that ingests a real PDF through `/v1` and verifies live provenance.
-EWP-2 publisher implementation stays gated on that milestone being On Track.
+**Local Real Demo v1 (#399)** provides the one-command local acceptance path for
+the accepted milestone above. It uses an isolated `local-real-demo` Compose
+profile rather than the generated-Markdown vertical-slice harness, and it does
+not use the legacy `/ingest/run` endpoint:
+
+```bash
+./scripts/run-local-real-demo.sh up   # build, start, run acceptance, leave up
+./scripts/run-local-real-demo.sh test # re-run acceptance
+./scripts/run-local-real-demo.sh down # remove containers; preserve data
+./scripts/run-local-real-demo.sh reset # explicit removal of isolated data
+```
+
+The script uploads the pinned 15-page
+`demo-data/documents/mental-health-report-2010.pdf` through `/v1/sources` and
+multipart `/v1/ingestion-runs`, then verifies search, live provenance, canonical
+page/section metadata, and same-key idempotent replay. It writes evidence to
+`deployments/docker/data-local-real-demo/evidence.json`; the recorded local run
+is in [`docs/acceptance/local-real-demo-v1-2026-10-23.md`](docs/acceptance/local-real-demo-v1-2026-10-23.md).
+The profile defaults to host ports 18090/18083 and requires the sibling
+`content_extractor` checkout
+(override with `CONTENT_EXTRACTOR_ROOT`). EWP-2 publisher implementation remains
+gated on #399 being accepted and On Track.
 
 Operational constraints:
 

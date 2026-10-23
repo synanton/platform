@@ -1,0 +1,69 @@
+# Isolated overlay for Local Real Demo v1 (#399). Use with compose.yaml and
+# --profile local-real-demo. Explicitly name the small service set to start;
+# this profile does not start the unrelated UI, planner, or GPU services.
+#
+# The three platform images are packaged from host-built boot jars (the
+# *.prebuilt.Dockerfile path) so the demo does not depend on buildkit's Maven
+# egress. run-local-real-demo.sh builds and tags them before `compose up`.
+services:
+  postgres:
+    profiles: [local-real-demo]
+    image: postgres@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+
+  cassandra:
+    profiles: [local-real-demo]
+    image: cassandra@sha256:29c6091a2c4e568104e407152f7a449a06a9b6564cbdee6da1b421dcb6681328
+    # Base compose publishes 9042 for host-side bench legs; the demo keeps
+    # Cassandra internal so it cannot collide with an existing stack.
+    ports: !reset []
+
+  minio:
+    profiles: [local-real-demo]
+    image: chainguard/minio@sha256:709099319add48dfb44aa596a7070d3ddd8dd04d7ae881765719aec29df9e510
+
+  minio-init:
+    profiles: [local-real-demo]
+    image: chainguard/minio-client@sha256:3d0109d854f045c0158637d6ad0d44fd8a3aef9f0b62082096eb1854c2df8b31
+
+  extraction-gateway:
+    profiles: [local-real-demo]
+    image: ${LOCAL_REAL_DEMO_IMAGE_PREFIX:-synanton-local-real-demo}/extraction-gateway:${LOCAL_REAL_DEMO_IMAGE_TAG:-local}
+    # 9091/8092 are published for an existing stack on developer hosts; the
+    # demo reaches the gateway over the Compose network.
+    ports: !reset []
+
+  synflux:
+    profiles: [local-real-demo]
+    image: ${LOCAL_REAL_DEMO_IMAGE_PREFIX:-synanton-local-real-demo}/synflux:${LOCAL_REAL_DEMO_IMAGE_TAG:-local}
+    environment:
+      SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "false"
+      KAFKA_BOOTSTRAP_SERVERS: ""
+    # The base actuator healthcheck is unauthenticated-deny in this stack;
+    # use the service's own /health endpoint instead.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8090/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports: !override
+      - "${LOCAL_REAL_DEMO_SYNFLUX_PORT:-18090}:8090"
+
+  synquest:
+    profiles: [local-real-demo]
+    image: ${LOCAL_REAL_DEMO_IMAGE_PREFIX:-synanton-local-real-demo}/synquest:${LOCAL_REAL_DEMO_IMAGE_TAG:-local}
+    environment:
+      SYNQUEST_EMBEDDING_REQUIRED: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/health | grep -q '\"status\":\"ready\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports: !override
+      - "${LOCAL_REAL_DEMO_SYNQUEST_PORT:-18083}:8083"
+
+networks:
+  # The base compose file names this network synanton-demo for the main
+  # stack. The demo gets its own network so service aliases and teardown
+  # cannot disturb an existing local stack.
+  default:
+    name: synanton-local-real-demo-network
