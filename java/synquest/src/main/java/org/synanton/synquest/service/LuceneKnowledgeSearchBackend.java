@@ -1,5 +1,7 @@
 package org.synanton.synquest.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
  */
 @Component
 public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
+
+    private static final Logger log = LoggerFactory.getLogger(LuceneKnowledgeSearchBackend.class);
 
     public static final String STRATEGY = "bm25";
 
@@ -85,7 +89,10 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
             if (live.size() >= limit || response.hits().size() < fetch || fetch >= MAX_RETRIEVAL_WINDOW) {
                 return live;
             }
-            fetch = Math.min(fetch + tombstoneOverfetchMargin, MAX_RETRIEVAL_WINDOW);
+            int nextFetch = Math.min(fetch + tombstoneOverfetchMargin, MAX_RETRIEVAL_WINDOW);
+            log.info("Tombstone filtering refetch for tenant '{}': window {} -> {} for query '{}'",
+                tenantId, fetch, nextFetch, query);
+            fetch = nextFetch;
         }
     }
 
