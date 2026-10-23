@@ -1,6 +1,6 @@
 ---
 title: "Eventing and Workflow Plane - Implementation Plan"
-status: "EWP-0 and EWP-1 complete; EWP-2 tracked in #394; later phases not started"
+status: "EWP-0 and EWP-1 complete; EWP-2 first slice in progress; later phases not started"
 last_reviewed: "2026-10-23"
 ---
 
@@ -24,9 +24,12 @@ type/version admission and fixture enforcement are at
 The current [`EWP-1-contract.md`](./EWP-1-contract.md) profile revision is PR #397
 merge commit [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05b806a6c9e9705e90609074715e8f5); it is a documentation pin separate
 from the code commits. The profile is the stable reference for EWP-2 and EWP-4.
-Reliable publication is tracked in
-[#394](https://github.com/synanton/platform/issues/394); workflow execution and
-integration remain later phases.
+Reliable publication is tracked in [#394](https://github.com/synanton/platform/issues/394).
+[Local Real Demo v1 #399](https://github.com/synanton/platform/issues/399) is On Track
+(merged PR #401; green post-merge CI), so EWP-2 is unblocked. The first slice adds
+`java/eventing-publisher` — a publication port and write-time validation, without a
+transport, outbox, or consumer — and is in progress. The full EWP-2 deliverables below
+remain; workflow execution and integration remain later phases.
 
 ## Progress delivery — decision (2026-10-22)
 
@@ -103,7 +106,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 |-------|------|--------|
 | EWP-0 | Contract-to-implementation reconciliation and scope decision | Complete — #375 |
 | EWP-1 | Implement frozen Event/Command contract | Complete — PRs #393 and #396 (`a288f7b`) |
-| EWP-2 | Reliable Publication | Not started — #394 open |
+| EWP-2 | Reliable Publication | In progress — publisher port/validation slice; outbox/transport not started — #394 |
 | EWP-3 | Reliable Consumption | Not started |
 | EWP-4 | Workflow Foundation | Not started |
 | EWP-5 | Platform Integration | Not started |
@@ -118,6 +121,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 | Module | Type | Purpose |
 |---|---|---|
 | `java/eventing-contract` | library | EWP-1 Event/Command types, type/version registries, and canonical JSON profile; base records #393, admission validation #396 (`a288f7b`). Publication, transport, outbox/inbox, and workflow APIs remain separately gated phases. Mirrors how `java/extraction-contract` carries a contract with no service dependencies. |
+| `java/eventing-publisher` | library | EWP-2 publication port and write-time tenant/schema validation. No transport, outbox, consumer, or broker; the first slice only. |
 | `java/workflow-engine` | library/service | Workflow definition, durable state, timeout, cancellation, recovery (EWP-4). PostgreSQL-backed only, per §99 - no broker dependency. |
 
 ### Modified modules
@@ -232,10 +236,19 @@ model: { id: embedding, version: "4" }
 
 ## Phase EWP-2 - Reliable Publication
 
-**Status:** Not started; tracked by [#394](https://github.com/synanton/platform/issues/394).
+**Status:** In progress — first slice (publisher port and write-time validation). Tracked by [#394](https://github.com/synanton/platform/issues/394). The Local Real Demo gate ([#399](https://github.com/synanton/platform/issues/399)) is On Track; full reliable publication remains not started.
 Consumes code commits [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be) (base records) and [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112) (registries), plus profile revision [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05b806a6c9e9705e90609074715e8f5) of [`EWP-1-contract.md`](./EWP-1-contract.md). Security metadata is a claim, not authorization data. Register and validate `(event_type, event_version)` before outbox publication. `CausationChainValidator` validates complete chains only; an individual message may have an external parent, so EWP-2 must not treat a partial chain as invalid or complete-chain validation as a per-message publication check.
 
 **Goal:** outbox pattern, retryable and monitorable, replacing all three ad-hoc mechanisms identified in EWP-0 - not adding a fourth.
+
+### First slice (in progress)
+
+`java/eventing-publisher` adds the `EventPublisher` port and `AbstractEventPublisher`,
+which enforce verified tenant scope and `EventTypeRegistry` admission before delivery.
+Unit tests cover stable event/correlation/causation identity across retries, cross-tenant
+rejection, and unregistered event-version rejection at publish time. This slice has no
+outbox, broker, transport, consumer, retry policy, or end-to-end delivery; those remain
+the deliverables below.
 
 ### Deliverables
 
