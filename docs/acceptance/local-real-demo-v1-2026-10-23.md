@@ -3,6 +3,8 @@
 **Result:** the isolated `local-real-demo` Compose profile ingests the pinned
 real PDF through the public `/v1` API, and the search, provenance,
 canonical-page/section, and idempotency checks pass from a clean local state.
+Merged as `066cb8f2fbcf9acb9a68df764ce4e8cfca298776`; the post-merge workflow
+on `main` is green.
 
 This record covers [#399](https://github.com/synanton/platform/issues/399). It
 is local Compose acceptance, distinct from the homelab run recorded in
@@ -25,6 +27,9 @@ is local Compose acceptance, distinct from the homelab run recorded in
 | content_extractor | `53a81ce5e408cb3e0f691d8d0434a6695c76482b` |
 | images | `synanton-local-real-demo/{synflux,synquest,extraction-gateway}:local` |
 | embedding/Kafka | disabled for this profile; search leg is BM25 |
+| merge commit | `066cb8f2fbcf9acb9a68df764ce4e8cfca298776` |
+| PR CI | [run 39948838559](https://github.com/synanton/platform/actions/runs/39948838559), green (3m57s) |
+| post-merge CI | [run 39949794713](https://github.com/synanton/platform/actions/runs/39949794713), green (5m0s) |
 
 The script preflights the fixture digest and the pinned extraction-gateway
 checkout, builds host boot jars, packages the three platform images from the
@@ -35,8 +40,16 @@ and the script's health gates.
 
 The exact platform commit under test is recorded in each generated
 `evidence.json` and in the CI artifact. In CI this is the PR head SHA (not
-`actions/checkout`'s synthetic merge ref); after merge, the PR records the
-merge commit and the post-merge workflow run.
+`actions/checkout`'s synthetic merge ref). The post-merge artifact at
+`066cb8f2fbcf9acb9a68df764ce4e8cfca298776` recorded:
+
+- operation `5117fbdb-c16f-4927-a550-84b229b1fe5f` (`FULL`), run
+  `d29a310c-9a7e-379c-b7fe-afd06604de1b`
+- source version `5cc04cac-f85d-530e-a967-f9e7b75cf546`
+- hit `c799bd65-394c-56ce-a7ac-a871fd5587df:5`, page `2` (`page_start=2`,
+  `page_end=2`), section `APPENDIX A: DATA SOURCE DESCRIPTIONS`
+- latency 4.6 s upload→operation, 5.9 s upload→searchable, 146 ms search p50
+  (10 calls) on the hosted runner
 
 ### Demo vs harness and API path
 
@@ -142,7 +155,10 @@ project volume, and default data root removed) and run from a fresh clone of
 `b1519a9` with only `CONTENT_EXTRACTOR_ROOT` and the expected extractor commit
 set. It passed every assertion and re-ran the same-key replay. The CI job
 repeats this path from a fresh GitHub checkout, pins the extractor commit, and
-uploads `evidence.json`; the PR records the run URL and merge commit.
+uploads `evidence.json`. It passed on the final PR head
+([run 39948838559](https://github.com/synanton/platform/actions/runs/39948838559))
+and again on the merge commit in `main`
+([run 39949794713](https://github.com/synanton/platform/actions/runs/39949794713)).
 
 The workflow is separate and path-filtered, so it does not gate unrelated PRs.
 Its cleanup step runs with `if: always()`, including after a failed run, so
