@@ -15,10 +15,10 @@ class EventTypeRegistryTest {
     @Test
     void validatesMessageReplayClassificationAgainstItsTypeDeclaration() {
         EventTypeDeclaration declaration = new EventTypeDeclaration(
-                "SourcePublished", ReplayClass.REPLAY_WITH_POLICY, Optional.of("source-version-retained"));
+                "SourcePublished", 1, ReplayClass.REPLAY_WITH_POLICY, Optional.of("source-version-retained"));
         EventTypeRegistry registry = new EventTypeRegistry(List.of(declaration));
         Event<String> event = event(
-                "SourcePublished", ReplayClass.REPLAY_WITH_POLICY, Optional.of("source-version-retained"));
+                "SourcePublished", 1, ReplayClass.REPLAY_WITH_POLICY, Optional.of("source-version-retained"));
 
         assertThatCode(() -> registry.validate(event)).doesNotThrowAnyException();
     }
@@ -29,10 +29,12 @@ class EventTypeRegistryTest {
             Optional<String> condition = replayClass == ReplayClass.REPLAY_WITH_POLICY
                     ? Optional.of("operator approval")
                     : Optional.empty();
-            EventTypeDeclaration declaration = new EventTypeDeclaration("Event-" + replayClass, replayClass, condition);
+            EventTypeDeclaration declaration = new EventTypeDeclaration(
+                    "Event-" + replayClass, 1, replayClass, condition);
             EventTypeRegistry registry = new EventTypeRegistry(List.of(declaration));
 
-            assertThatCode(() -> registry.validate(event(declaration.eventType(), replayClass, condition)))
+            assertThatCode(() -> registry.validate(event(
+                    declaration.eventType(), declaration.eventVersion(), replayClass, condition)))
                     .doesNotThrowAnyException();
         }
     }
@@ -40,25 +42,48 @@ class EventTypeRegistryTest {
     @Test
     void rejectsUndeclaredDuplicateOrMismatchedEventTypeDeclarations() {
         EventTypeDeclaration declaration = new EventTypeDeclaration(
-                "SourcePublished", ReplayClass.REPLAY_SAFE, Optional.empty());
+                "SourcePublished", 1, ReplayClass.REPLAY_SAFE, Optional.empty());
         EventTypeRegistry registry = new EventTypeRegistry(List.of(declaration));
 
         assertThatThrownBy(() -> registry.validate(
-                event("SourceDeleted", ReplayClass.REPLAY_SAFE, Optional.empty())))
+                event("SourceDeleted", 1, ReplayClass.REPLAY_SAFE, Optional.empty())))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> registry.validate(
-                event("SourcePublished", ReplayClass.NOT_REPLAYABLE, Optional.empty())))
+                event("SourcePublished", 1, ReplayClass.NOT_REPLAYABLE, Optional.empty())))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> registry.validate(
+                event("SourcePublished", 2, ReplayClass.REPLAY_SAFE, Optional.empty())))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new EventTypeRegistry(List.of(declaration, declaration)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    void registersEachSchemaVersionButKeepsReplayPolicyAtEventTypeLevel() {
+        EventTypeDeclaration versionOne = new EventTypeDeclaration(
+                "SourcePublished", 1, ReplayClass.REPLAY_SAFE, Optional.empty());
+        EventTypeDeclaration versionTwo = new EventTypeDeclaration(
+                "SourcePublished", 2, ReplayClass.REPLAY_SAFE, Optional.empty());
+        EventTypeRegistry registry = new EventTypeRegistry(List.of(versionOne, versionTwo));
+
+        assertThatCode(() -> registry.validate(
+                event("SourcePublished", 1, ReplayClass.REPLAY_SAFE, Optional.empty())))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> registry.validate(
+                event("SourcePublished", 2, ReplayClass.REPLAY_SAFE, Optional.empty())))
+                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> new EventTypeRegistry(List.of(
+                versionOne,
+                new EventTypeDeclaration("SourcePublished", 2, ReplayClass.NOT_REPLAYABLE, Optional.empty()))))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private static Event<String> event(
-            String eventType, ReplayClass replayClass, Optional<String> replayCondition) {
+            String eventType, int eventVersion, ReplayClass replayClass, Optional<String> replayCondition) {
         return new Event<>(
                 UUID.fromString("11111111-1111-4111-8111-111111111111"),
                 eventType,
-                1,
+                eventVersion,
                 Instant.parse("2026-10-23T12:00:00Z"),
                 new Producer("content-cache", "1.26"),
                 "tenant-a",

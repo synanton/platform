@@ -76,10 +76,37 @@ class EventingJsonContractTest {
         ObjectNode json = (ObjectNode) mapper.valueToTree(event());
         json.put("future_optional_metadata", "added-by-a-newer-producer");
 
-        Event<ContentPublished> restored = mapper.readValue(
-                mapper.writeValueAsBytes(json), new TypeReference<>() {});
+        EventTypeRegistry registry = new EventTypeRegistry(List.of(
+                new EventTypeDeclaration("ContentPublished", 1, ReplayClass.REPLAY_SAFE, Optional.empty())));
+        Event<ContentPublished> restored = EventingJson.readEvent(
+                mapper.writeValueAsBytes(json), new TypeReference<>() {}, registry);
 
         assertThat(restored).isEqualTo(event());
+    }
+
+    @Test
+    void eventReaderRejectsAnUnregisteredSchemaVersionBeforeReturningTheMessage() throws IOException {
+        ObjectNode json = (ObjectNode) mapper.valueToTree(event());
+        json.put("event_version", 2);
+        json.put("future_optional_metadata", "new-schema");
+        EventTypeRegistry registry = new EventTypeRegistry(List.of(
+                new EventTypeDeclaration("ContentPublished", 1, ReplayClass.REPLAY_SAFE, Optional.empty())));
+
+        assertThatThrownBy(() -> EventingJson.readEvent(
+                mapper.writeValueAsBytes(json), new TypeReference<Event<ContentPublished>>() {}, registry))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void commandReaderRejectsAnUnregisteredSchemaVersionBeforeReturningTheMessage() throws IOException {
+        ObjectNode json = (ObjectNode) mapper.valueToTree(command());
+        json.put("command_version", 2);
+        CommandTypeRegistry registry = new CommandTypeRegistry(
+                List.of(new CommandTypeDeclaration("GenerateEmbedding", 1)));
+
+        assertThatThrownBy(() -> EventingJson.readCommand(
+                mapper.writeValueAsBytes(json), new TypeReference<Command<GenerateEmbedding>>() {}, registry))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

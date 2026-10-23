@@ -139,19 +139,19 @@ class EventingContractInvariantTest {
         assertEveryComponentRejectsNull(new TenantReference("tenant-a"));
         assertEveryComponentRejectsNull(new CommandTarget("document", "document-42"));
         assertEveryComponentRejectsNull(new EventTypeDeclaration(
-                "ContentPublished", ReplayClass.REPLAY_SAFE, Optional.empty()));
+                "ContentPublished", 1, ReplayClass.REPLAY_SAFE, Optional.empty()));
     }
 
     @Test
     void conditionalReplayRequiresAConditionAndOtherClassesRejectOne() {
         assertThatThrownBy(() -> new EventTypeDeclaration(
-                "ContentPublished", ReplayClass.REPLAY_WITH_POLICY, Optional.empty()))
+                "ContentPublished", 1, ReplayClass.REPLAY_WITH_POLICY, Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new EventTypeDeclaration(
-                "ContentPublished", ReplayClass.REPLAY_SAFE, Optional.of("operator approval")))
+                "ContentPublished", 1, ReplayClass.REPLAY_SAFE, Optional.of("operator approval")))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new EventTypeDeclaration(
-                "ContentPublished", ReplayClass.REPLAY_WITH_POLICY, Optional.of(" ")))
+                "ContentPublished", 1, ReplayClass.REPLAY_WITH_POLICY, Optional.of(" ")))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> eventWithReplay(ReplayClass.REPLAY_WITH_POLICY, Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
