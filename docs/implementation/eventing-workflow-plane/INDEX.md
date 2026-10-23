@@ -21,8 +21,10 @@ and [PR #396](https://github.com/synanton/platform/pull/396). The base records
 are at [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be);
 type/version admission and fixture enforcement are at
 [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112).
-[`EWP-1-contract.md`](./EWP-1-contract.md) is the stable profile for EWP-2 and
-EWP-4. Reliable publication is tracked in
+The current [`EWP-1-contract.md`](./EWP-1-contract.md) profile revision is PR #397
+merge commit [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05b806a6c9e9705e90609074715e8f5); it is a documentation pin separate
+from the code commits. The profile is the stable reference for EWP-2 and EWP-4.
+Reliable publication is tracked in
 [#394](https://github.com/synanton/platform/issues/394); workflow execution and
 integration remain later phases.
 
@@ -204,7 +206,7 @@ model: { id: embedding, version: "4" }
 
 ## Phase EWP-1 - Contract implementation (Design §104 Phase 1)
 
-**Status:** Complete — base records in [PR #393](https://github.com/synanton/platform/pull/393); type/version admission and fixture enforcement in [PR #396](https://github.com/synanton/platform/pull/396), merge commit [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112). See stable profile [`EWP-1-contract.md`](./EWP-1-contract.md).
+**Status:** Complete — base records in [PR #393](https://github.com/synanton/platform/pull/393); type/version admission and fixture enforcement in [PR #396](https://github.com/synanton/platform/pull/396), merge commit [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112). Current profile revision: [PR #397](https://github.com/synanton/platform/pull/397), [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05b806a6c9e9705e90609074715e8f5).
 
 **Goal:** implement the already-frozen envelope/command shapes, IDs/versioning, and tenant scope as typed contract artifacts. This is implementation of the frozen Event Contract, not another design freeze or an opportunity to silently revise it.
 
@@ -231,7 +233,7 @@ model: { id: embedding, version: "4" }
 ## Phase EWP-2 - Reliable Publication
 
 **Status:** Not started; tracked by [#394](https://github.com/synanton/platform/issues/394).
-Consumes EWP-1 base records [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be), type/version admission and fixture enforcement [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112), and [`EWP-1-contract.md`](./EWP-1-contract.md). Security metadata is a claim, not authorization data. Register and validate `(event_type, event_version)` before outbox publication. `CausationChainValidator` validates complete chains only; an individual message may have an external parent, so EWP-2 must not treat a partial chain as invalid or complete-chain validation as a per-message publication check.
+Consumes code commits [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be) (base records) and [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112) (registries), plus profile revision [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05b806a6c9e9705e90609074715e8f5) of [`EWP-1-contract.md`](./EWP-1-contract.md). Security metadata is a claim, not authorization data. Register and validate `(event_type, event_version)` before outbox publication. `CausationChainValidator` validates complete chains only; an individual message may have an external parent, so EWP-2 must not treat a partial chain as invalid or complete-chain validation as a per-message publication check.
 
 **Goal:** outbox pattern, retryable and monitorable, replacing all three ad-hoc mechanisms identified in EWP-0 - not adding a fourth.
 
@@ -294,7 +296,7 @@ This validates the architecture end to end using only EWP-1 through EWP-3 (the w
 
 ## Phase EWP-4 - Workflow Foundation
 
-**Status:** Not started. Consumes EWP-1 base records [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be), registered-version checks [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112), and [`EWP-1-contract.md`](./EWP-1-contract.md): validate command `(command_type, command_version)` and event type/version pairs before workflow admission; security metadata remains a claim, and `CausationChainValidator` applies only to complete chains, not isolated/partial workflow messages.
+**Status:** Not started. Consumes EWP-1 code commits [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be) (base records) and [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112) (registered-version checks), plus profile revision [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05b806a6c9e9705e90609074715e8f5) of [`EWP-1-contract.md`](./EWP-1-contract.md): validate command `(command_type, command_version)` and event type/version pairs before workflow admission; security metadata remains a claim, and `CausationChainValidator` applies only to complete chains, not isolated/partial workflow messages.
 
 **Goal:** durable, recoverable multi-step coordination - the primitive Design 1.25's Equalix and the recalculation path need.
 
