@@ -164,7 +164,7 @@ class FixtureIngestionLifecycleTest {
     }
 
     @Test
-    void identicalContentUnderDistinctSourceIdentity_isNotMerged() {
+    void identicalContentUnderDistinctSourceIdentity_survivesDeletingOneResource() {
         VerifiedIngestionContext context = principal("tenant-distinct-resources");
         Instant modified = Instant.parse("2026-10-11T10:00:00Z");
         byte[] bytes = "same bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -180,6 +180,18 @@ class FixtureIngestionLifecycleTest {
         assertThat(first.contentRefId()).isEqualTo(second.contentRefId());
         assertThat(first.versionId()).isNotEqualTo(second.versionId());
         assertThat(first.resourceId()).isNotEqualTo(second.resourceId());
+
+        lifecycle.recordDeletion(context, UUID.randomUUID(), UUID.randomUUID(), "file",
+            "fixture-corpus", "a/guide.md", FixtureIngestionService.DeletionSignal.DELETED);
+
+        assertThat(cache.readLatestSourceTombstone(context.tenantId(), "file", "fixture-corpus", "a/guide.md"))
+            .isPresent();
+        assertThat(cache.readLatestSourceTombstone(context.tenantId(), "file", "fixture-corpus", "b/guide.md"))
+            .isEmpty();
+        assertThat(versions(context, "fixture-corpus", "a/guide.md")).hasSize(1);
+        assertThat(versions(context, "fixture-corpus", "b/guide.md")).hasSize(1);
+        assertThat(versions(context, "fixture-corpus", "b/guide.md").getFirst().contentRefId())
+            .isEqualTo(sharedContentRefId);
     }
 
     @Test

@@ -828,6 +828,15 @@ public class FixtureSourceWorkflow {
             .getBytes(StandardCharsets.UTF_8));
     }
 
+    private SourceRow requireActiveSource(VerifiedIngestionContext context, String sourceId) {
+        SourceRow source = cache.readSource(context.tenantId(), sourceId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "source not found"));
+        if (!"ACTIVE".equals(source.status())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "source is deleted");
+        }
+        return source;
+    }
+
     private SourceRow requireActiveFilesystemSource(VerifiedIngestionContext context, String sourceId) {
         SourceRow source = cache.readSource(context.tenantId(), sourceId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "source not found"));
@@ -855,7 +864,7 @@ public class FixtureSourceWorkflow {
     public Submission deleteResource(
             VerifiedIngestionContext context, String sourceId, String resourceId,
             String requestId, String idempotencyKey) {
-        SourceRow source = requireActiveFilesystemSource(context, sourceId);
+        SourceRow source = requireActiveSource(context, sourceId);
         OperationRow operation = operations.accept(
             context, "DELETE /v1/sources/" + sourceId + "/resources", requestId, idempotencyKey);
         UUID runId = runId(operation.operationId());
