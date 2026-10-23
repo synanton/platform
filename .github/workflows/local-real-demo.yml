@@ -5,20 +5,28 @@ on:
     branches: [main, master]
     paths:
       - '.github/workflows/local-real-demo.yml'
+      - 'build.gradle.kts'
       - 'deployments/docker/**'
       - 'demo-data/documents/mental-health-report-2010.pdf'
       - 'docs/acceptance/**'
+      - 'gradle/**'
+      - 'gradlew'
       - 'java/**'
       - 'scripts/run-local-real-demo.sh'
+      - 'settings.gradle.kts'
   pull_request:
     branches: [main, master]
     paths:
       - '.github/workflows/local-real-demo.yml'
+      - 'build.gradle.kts'
       - 'deployments/docker/**'
       - 'demo-data/documents/mental-health-report-2010.pdf'
       - 'docs/acceptance/**'
+      - 'gradle/**'
+      - 'gradlew'
       - 'java/**'
       - 'scripts/run-local-real-demo.sh'
+      - 'settings.gradle.kts'
   workflow_dispatch:
 
 permissions:
@@ -39,6 +47,9 @@ jobs:
       PLATFORM_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       # Pin the sibling checkout: the demo's reproducibility must not follow
       # another repository's head. Update deliberately with the evidence doc.
+      # The default GITHUB_TOKEN needs Contents: Read on
+      # synanton/content_extractor. If that repository becomes private, pass a
+      # fine-grained token with that scope as the checkout step's `token:`.
       LOCAL_REAL_DEMO_EXPECTED_EXTRACTOR_COMMIT: 53a81ce5e408cb3e0f691d8d0434a6695c76482b
 
     steps:
@@ -79,5 +90,26 @@ jobs:
 
       - name: Stop profile and preserve local data semantics
         if: always() && steps.demo.outcome != 'skipped'
+        id: teardown
         run: ./scripts/run-local-real-demo.sh down
         continue-on-error: true
+
+      - name: Verify profile teardown
+        if: always() && steps.demo.outcome != 'skipped'
+        run: |
+          set -eu
+          remaining_containers="$(docker ps -a             --filter label=com.docker.compose.project=synanton-local-real-demo             --format '{{.Names}}')"
+          if [ -n "$remaining_containers" ]; then
+            echo "Containers remain after teardown:" >&2
+            printf '%s\n' "$remaining_containers" >&2
+            exit 1
+          fi
+          if docker network ls --format '{{.Name}}'               | grep -qx 'synanton-local-real-demo-network'; then
+            echo "Demo network remains after teardown" >&2
+            exit 1
+          fi
+          if [ "${{ steps.teardown.outcome }}" != "success" ]; then
+            echo "Teardown command failed; see the previous step" >&2
+            exit 1
+          fi
+          echo "Teardown verified: no demo containers or network remain"
