@@ -4,7 +4,7 @@
 > **Version:** 1.27
 > **Document ID:** `synanton-design-1.27`
 > **Date:** 2026-09-05
-> **Status:** Approved (architecture) — EWP-1 baseline `7523fae`; type/version validation follow-up #396; EWP-2 publication tracked in #394
+> **Status:** Approved (architecture) — EWP-1 complete through #393/#396; EWP-2 publication tracked in #394
 > **Normative security baseline:** Design 1.23 (see §2.1)
 > **Audience:** Architects, platform engineers, developers, SRE, security engineers, runtime engineers, and system integrators
 > **Related Designs:**

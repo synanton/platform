@@ -1,6 +1,6 @@
 # EWP-1 — Java Event/Command Contract
 
-**Status:** Base records implemented in [PR #393](https://github.com/synanton/platform/pull/393), baseline commit [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be); type/version admission follow-up in [PR #396](https://github.com/synanton/platform/pull/396) · **Scope gate:** EWP-0 closed by [#375](https://github.com/synanton/platform/issues/375) · **Frozen source:** [Eventing 1.27 contract](../../api/eventing-contract.md), frozen by [#247](https://github.com/synanton/platform/issues/247)
+**Status:** Implemented across [PR #393](https://github.com/synanton/platform/pull/393) (base records, [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be)) and [PR #396](https://github.com/synanton/platform/pull/396) (registries and admission checks, [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112)) · **Scope gate:** EWP-0 closed by [#375](https://github.com/synanton/platform/issues/375) · **Frozen source:** [Eventing 1.27 contract](../../api/eventing-contract.md), frozen by [#247](https://github.com/synanton/platform/issues/247)
 
 This document records the Java contract profile implemented by `java/eventing-contract`. It implements the frozen Event/Command boundary; it does not revise Design 1.27 or define publication/workflow execution.
 
