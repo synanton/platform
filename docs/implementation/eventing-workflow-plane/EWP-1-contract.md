@@ -1,6 +1,6 @@
 # EWP-1 — Java Event/Command Contract
 
-**Status:** Implemented in [PR #393](https://github.com/synanton/platform/pull/393), baseline commit [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be) · **Scope gate:** EWP-0 closed by [#375](https://github.com/synanton/platform/issues/375) · **Frozen source:** [Eventing 1.27 contract](../../api/eventing-contract.md), frozen by [#247](https://github.com/synanton/platform/issues/247)
+**Status:** Base records implemented in [PR #393](https://github.com/synanton/platform/pull/393), baseline commit [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be); type/version admission follow-up in [PR #396](https://github.com/synanton/platform/pull/396) · **Scope gate:** EWP-0 closed by [#375](https://github.com/synanton/platform/issues/375) · **Frozen source:** [Eventing 1.27 contract](../../api/eventing-contract.md), frozen by [#247](https://github.com/synanton/platform/issues/247)
 
 This document records the Java contract profile implemented by `java/eventing-contract`. It implements the frozen Event/Command boundary; it does not revise Design 1.27 or define publication/workflow execution.
 
@@ -34,8 +34,10 @@ The optional `expected_version` command field is an additive optimistic-concurre
 - Event and command versions are independent positive integers serialized as `event_version` and `command_version`.
 - **EWP-1 versioning policy clarification:** every event/command schema-shape change, including an additive optional field or enum value, increments that type's `event_version`/`command_version` and adds a new golden fixture. Never rewrite a released version's fixture. A new version preserves the old version's meaning; removals, renames, and semantic changes also require a new version.
 - This is a deliberate, stricter Java contract-profile rule than Design 1.27 §12, which permits compatible optional additions within a version. It supersedes the initial “additive-only within a version” wording in merged EWP-1 baseline `7523fae`; future EWP-2/EWP-4 implementations must use this clarified rule.
-- Property names are explicit snake_case (except the frozen nested `tenant.id`), timestamps use ISO-8601 UTC strings, and UUIDs use strings. `EventingJson` is the canonical mapper; it registers Java time/Optional support, omits absent Optional fields, and ignores unknown additive fields on input.
-- Unknown-field tolerance is defensive parsing behavior, not permission to change a released version's shape. Consumers still check whether they support the message version before interpreting it.
+- `EventTypeDeclaration` registers each supported `(event_type, event_version)` pair; a schema-version bump requires a new entry. A producer/consumer registry lists only versions it supports, and unregistered versions are rejected. `ReplayClass` is event-type-wide and must remain the same across that type's versions. Changing replay semantics requires a new event type, not a schema-version-only change.
+- `CommandTypeDeclaration` registers each `(command_type, command_version)` pair.
+- `EventingJson.readEvent` and `readCommand` are the validated ingress paths: each deserializes the message and checks its type/version registry before returning it. Unknown or mismatched versions are rejected even when the JSON mapper can parse their fields. A registered schema-version bump is accepted only with its matching version-specific declaration. Direct `ObjectMapper.readValue` is parsing only and must not be treated as message admission.
+- Property names are explicit snake_case (except the frozen nested `tenant.id`), timestamps use ISO-8601 UTC strings, and UUIDs use strings. `EventingJson` registers Java time/Optional support and omits absent Optional fields. Its mapper ignores unknown additive fields for defensive parsing; that tolerance is not permission to bypass the type/version registry or change a released version's shape.
 - `event.v1.json` and `command.v1.json` are canonical compact JSON fixtures. Serialization and typed-payload round-trip tests fail on shape drift. A deliberate version change must add a new versioned fixture rather than silently rewrite v1.
 - `MessageEnvelope` is not a serialized wrapper: event and command correlation fields remain flat as in the frozen projection. No trace ID is added in EWP-1.
 
@@ -43,7 +45,9 @@ The optional `expected_version` command field is an additive optimistic-concurre
 
 The enum exactly follows Design 1.27 §39: `REPLAY_SAFE`, `REPLAY_WITH_POLICY`, and `NOT_REPLAYABLE`. These classifications apply to event types, not commands. Commands express intent and must not be historically replayed as facts; command delivery retry uses the same command ID.
 
-Each event type has one `EventTypeDeclaration`. `EventTypeRegistry` rejects undeclared types and event instances whose classification differs from that declaration. `REPLAY_WITH_POLICY` requires a non-blank `replay_condition` that states the gate; the other classifications must not carry one. A consumer must not infer replay safety from an event name. Delivery redelivery and policy-approved event replay remain distinct operations.
+Each `(event_type, event_version)` pair has one `EventTypeDeclaration`. A schema-version bump adds a declaration for the new pair. `ReplayClass` and its condition are invariants of the event type across versions; the registry rejects a changed replay policy. If replay semantics must change, define a new event type. `REPLAY_WITH_POLICY` requires a non-blank `replay_condition` that states the gate; the other classifications must not carry one. A consumer must not infer replay safety from an event name. Delivery redelivery and policy-approved event replay remain distinct operations.
+
+Commands use the parallel `CommandTypeDeclaration`/`CommandTypeRegistry` `(command_type, command_version)` check; replay classes do not apply to commands.
 
 The draft outline's `REPLAYABLE` / `NON_REPLAYABLE` / `CONDITIONAL` names are intentionally not used: the frozen contract names above are authoritative. `CONDITIONAL` maps to `REPLAY_WITH_POLICY` only when its explicit gate is recorded.
 

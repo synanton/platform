@@ -3,14 +3,16 @@ package org.synanton.eventing.contract;
 import java.util.Objects;
 import java.util.Optional;
 
-/** The stable replay declaration for one event type, independent of individual event instances. */
+/** Replay declaration for one event type/schema-version pair; replay policy remains type-wide. */
 public record EventTypeDeclaration(
         String eventType,
+        int eventVersion,
         ReplayClass replayClass,
         Optional<String> replayCondition) {
 
     public EventTypeDeclaration {
         ContractValues.requireText(eventType, "eventType");
+        ContractValues.requirePositive(eventVersion, "eventVersion");
         Objects.requireNonNull(replayClass, "replayClass");
         Objects.requireNonNull(replayCondition, "replayCondition");
         replayCondition.ifPresent(value -> ContractValues.requireText(value, "replayCondition"));
