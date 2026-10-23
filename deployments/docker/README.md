@@ -11,6 +11,35 @@ file. The slice acceptance run uses `compose.slice.yaml` (host-packaged jars)
 and, for the no-broker run, `compose.outbox-only.yaml` — see
 `tests/integration/vertical-slice.sh`.
 
+## Local Real Demo v1 (#399)
+
+The real-PDF demo runs in its own Compose project and data directory. From the
+platform repository root, with the sibling `content_extractor` checkout
+available at `../content_extractor`, run:
+
+```bash
+./scripts/run-local-real-demo.sh up
+```
+
+The command builds and starts only the `local-real-demo` profile services,
+uploads the pinned `mental-health-report-2010.pdf` through `/v1/sources` and
+multipart `/v1/ingestion-runs`, then checks the search fact, live provenance,
+canonical page/section metadata, and same-key idempotent replay. It leaves the
+stack up and writes machine-readable evidence to
+`deployments/docker/data-local-real-demo/evidence.json`.
+
+```bash
+./scripts/run-local-real-demo.sh test   # re-run acceptance against the stack
+./scripts/run-local-real-demo.sh down   # remove containers; preserve data
+./scripts/run-local-real-demo.sh reset  # explicit removal of isolated data
+```
+
+The profile defaults to host ports 18090 (synflux) and 18083 (synquest), has an
+isolated Compose project and runtime-data directory, and does not use the
+legacy `/ingest/run` route. `CONTENT_EXTRACTOR_ROOT` can point to a checkout in
+another location. Setting a custom `LOCAL_REAL_DEMO_DATA_ROOT` is supported;
+`reset` intentionally refuses to delete custom paths.
+
 ## Image pulls
 
 Direct Docker Hub pulls can hang on some networks (observed on the M70q
