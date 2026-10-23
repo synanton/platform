@@ -7,7 +7,7 @@ Synanton is an AI-native enterprise knowledge platform exploring how enterprise 
 The platform is built as a modular set of services and libraries. The architecture is deliberately experimental: major capabilities are introduced as versioned designs, implemented incrementally and validated through runnable demos, contract tests, benchmarks and failure/security tests.
 
 > **Current architecture:** [Synanton Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) integrates Designs 1.22–1.34, all **Approved (design)**. Approval records architectural decisions; it does not imply implementation or production readiness. The per-design status and evidence are in [§15](docs/architecture/synanton-platform-architecture-1.0.md#15-current-implementation-status).
-> **Current implementation focus (2026-10-23):** implementation is partial across 1.22/1.23/1.25/1.26; 1.32 contracts were frozen 2026-10-17 (#246) and generation-A is in progress. The 1.27 contract was frozen 2026-10-17 (#247); EWP-0 and EWP-1 are complete (#375, #393, #396). EWP-2 publisher implementation is gated on [Local Real Demo v1 #399](https://github.com/synanton/platform/issues/399) reaching On Track; 1.28–1.31 also remain unstarted. See the [architecture status table](docs/architecture/INDEX.md#design-version-history) and [documentation inventory](docs/DOCUMENTATION-INVENTORY.md).
+> **Current implementation focus (2026-10-23):** implementation is partial across 1.22/1.23/1.25/1.26; 1.32 contracts were frozen 2026-10-17 (#246) and generation-A is in progress. The 1.27 contract was frozen 2026-10-17 (#247); EWP-0 and EWP-1 are complete (#375, #393, #396). [Local Real Demo v1 #399](https://github.com/synanton/platform/issues/399) is On Track, and EWP-2's first publisher port/validation slice is in progress; full reliable publication remains unstarted. 1.28–1.31 also remain unstarted. See the [architecture status table](docs/architecture/INDEX.md#design-version-history) and [documentation inventory](docs/DOCUMENTATION-INVENTORY.md).
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
@@ -461,7 +461,7 @@ Synanton intentionally evolves through versioned architecture documents.
 | 1.24 | Annotation foundation | Consolidated into 1.25 (no separate document was ever published) |
 | [1.25](docs/architecture/synanton-design-1.25.md) | Annotations, derived knowledge, recalculation, analytics and reporting | Approved (architecture); partial implementation — AAP-1/AAP-2 landed, AAP-3–AAP-8 not started |
 | [1.26](docs/architecture/synanton-design-1.26.md) | Content Cache Plane | Approved (architecture); implementation in progress (reference service + Java adapters) |
-| [1.27](docs/architecture/synanton-design-1.27.md) | Eventing and Workflow Plane — common execution fabric for 1.28–1.32 | Approved (architecture); EWP-1 implemented (#393, #396); EWP-2 publisher work gated on Local Real Demo v1 (#399) — see [implementation plan](docs/implementation/eventing-workflow-plane/INDEX.md) |
+| [1.27](docs/architecture/synanton-design-1.27.md) | Eventing and Workflow Plane — common execution fabric for 1.28–1.32 | Approved (architecture); EWP-1 implemented (#393, #396); EWP-2 first publisher port/validation slice in progress — see [implementation plan](docs/implementation/eventing-workflow-plane/INDEX.md) |
 | [1.28](docs/architecture/synanton-design-1.28.md) | Ingestion Plane | Approved (architecture); implementation not started |
 | [1.29](docs/architecture/synanton-design-1.29.md) | Identity, Tenant & Policy Plane | Approved (architecture); implementation not started |
 | [1.30](docs/architecture/synanton-design-1.30.md) | AI and Model Runtime Plane Contract | Approved (architecture); implementation not started |
@@ -471,7 +471,7 @@ Synanton intentionally evolves through versioned architecture documents.
 | [1.34](docs/architecture/synanton-design-1.34.md) | Temporal Versioned Knowledge and Retrieval | Approved (architecture); implementation not started |
 | **[1.0](docs/architecture/synanton-platform-architecture-1.0.md)** | **Platform Architecture 1.0 — capstone integrating 1.22–1.34** | **Approved (architecture)**; see its §15 for the authoritative per-design implementation status |
 
-The architecture documents are part of the project, not merely implementation notes. They record decisions, constraints, interfaces, failure models, security boundaries and evaluation criteria. Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence: each plane follows its frozen contracts. **Where that stands (2026-10-23):** the 1.32 contracts are frozen (#246) and generation-A implementation is in progress under BBAG-A amendment A1, which split *M0-entry* from *M0-freeze*. The 1.27 contract is frozen (#247); EWP-1 is implemented (#393, #396), while EWP-2 publication work is gated on Local Real Demo v1 #399 being On Track. Designs 1.28–1.31 remain not started.
+The architecture documents are part of the project, not merely implementation notes. They record decisions, constraints, interfaces, failure models, security boundaries and evaluation criteria. Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence: each plane follows its frozen contracts. **Where that stands (2026-10-23):** the 1.32 contracts are frozen (#246) and generation-A implementation is in progress under BBAG-A amendment A1, which split *M0-entry* from *M0-freeze*. The 1.27 contract is frozen (#247); EWP-1 is implemented (#393, #396). Local Real Demo v1 #399 is On Track, and EWP-2's first publisher port/validation slice is in progress; full reliable publication remains not started. Designs 1.28–1.31 remain not started.
 
 ---
 
@@ -533,8 +533,9 @@ page/section metadata, and same-key idempotent replay. It writes evidence to
 is in [`docs/acceptance/local-real-demo-v1-2026-10-23.md`](docs/acceptance/local-real-demo-v1-2026-10-23.md).
 The profile defaults to host ports 18090/18083 and requires the sibling
 `content_extractor` checkout
-(override with `CONTENT_EXTRACTOR_ROOT`). EWP-2 publisher implementation remains
-gated on #399 being accepted and On Track.
+(override with `CONTENT_EXTRACTOR_ROOT`). #399 is On Track; EWP-2's first
+publisher port/validation slice is in progress, while full reliable publication
+(outbox, transport, ordering, retry policy) remains unstarted.
 
 Operational constraints:
 
@@ -773,12 +774,12 @@ Start here:
 - [Semantic Chunking](docs/implementation/semantic-chunking/INDEX.md)
 - [Structured Content Extraction](docs/implementation/content-extraction-plane/INDEX.md)
 - [GPU Execution Plane](docs/implementation/gpu-execution-plane/INDEX.md)
-- [Eventing and Workflow Plane (v1.27) — EWP-1 complete, EWP-2 gated on Local Real Demo v1](docs/implementation/eventing-workflow-plane/INDEX.md)
+- [Eventing and Workflow Plane (v1.27) — EWP-1 complete, EWP-2 first slice in progress](docs/implementation/eventing-workflow-plane/INDEX.md)
 - [Platform API Plane (v1.32) — implementation plan, contracts frozen, generation-A in progress](docs/implementation/platform-api-plane/INDEX.md)
 - [Vertical slice — trust bar, gap register, and diagnostic runbook](docs/implementation/vertical-slice/INDEX.md) — distinguishes #253 demo acceptance from the broader open Architecture 1.0 §16 criterion
 - [Cross-plane Architecture Review Resolution (1.26–1.33)](docs/architecture/proposals/synanton-architecture-review-resolution.md)
 
-Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are **Approved (design)**. Implementation differs by plane: 1.26 has a reference service and Java adapters at differing stages; 1.27's EWP-1 contract is implemented (#393/#396), while EWP-2 publisher work is gated on Local Real Demo v1 (#399); 1.32's contract set is frozen (#246) and generation-A implementation is in progress; 1.28–1.31 are not started; 1.33 has no operator implementation; 1.34 is not started. The companion ADRs and implementation plans are linked from [`docs/architecture/INDEX.md`](docs/architecture/INDEX.md).
+Designs 1.26–1.34 (content cache, eventing/workflow, ingestion, identity, AI runtime, search, platform API, Kubernetes lifecycle, temporal versioning) are **Approved (design)**. Implementation differs by plane: 1.26 has a reference service and Java adapters at differing stages; 1.27's EWP-1 contract is implemented (#393/#396) and EWP-2's first publisher port/validation slice is in progress; 1.32's contract set is frozen (#246) and generation-A implementation is in progress; 1.28–1.31 are not started; 1.33 has no operator implementation; 1.34 is not started. The companion ADRs and implementation plans are linked from [`docs/architecture/INDEX.md`](docs/architecture/INDEX.md).
 
 The documentation map and document dispositions are in [`docs/INDEX.md`](docs/INDEX.md) and [`docs/DOCUMENTATION-INVENTORY.md`](docs/DOCUMENTATION-INVENTORY.md).
 
@@ -822,9 +823,9 @@ Storage engines, graph implementations, LLM providers, extraction implementation
 
 Synanton is an **active open-source research and engineering project**.
 
-Architecturally, the design series is now well ahead of implementation: Designs 1.22–1.34 are all **Approved (architecture)**, integrated by the [Synanton Platform Architecture 1.0 capstone document](docs/architecture/synanton-platform-architecture-1.0.md). Implementation, however, remains concentrated where it has always been furthest along — the 1.22 baseline, the 1.23 security model, and 1.25's annotation foundation and recalculation (AAP-1/AAP-2) — plus the 1.26 Content Cache reference implementation now in progress. The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. EWP-1's 1.27 contract is implemented (#393, #396); EWP-2 publisher implementation is gated on Local Real Demo v1 #399 being On Track. Designs 1.28–1.31, 1.33 Kubernetes lifecycle, and 1.34 temporal versioning have no implementation started; 1.32's contract set is frozen (#246) and its generation-A slice is in progress. The architecture sequence and remaining slice criterion are in capstone §14/§16; see [Eventing and Workflow Plane](docs/implementation/eventing-workflow-plane/INDEX.md) and [Platform API Plane](docs/implementation/platform-api-plane/INDEX.md).
+Architecturally, the design series is now well ahead of implementation: Designs 1.22–1.34 are all **Approved (architecture)**, integrated by the [Synanton Platform Architecture 1.0 capstone document](docs/architecture/synanton-platform-architecture-1.0.md). Implementation, however, remains concentrated where it has always been furthest along — the 1.22 baseline, the 1.23 security model, and 1.25's annotation foundation and recalculation (AAP-1/AAP-2) — plus the 1.26 Content Cache reference implementation now in progress. The core ingestion, retrieval, graph, ontology, security, MCP, GPU-contract, extraction-contract and semantic-chunking foundations are implemented to varying degrees. EWP-1's 1.27 contract is implemented (#393, #396); Local Real Demo v1 #399 is On Track and EWP-2's first publisher port/validation slice is in progress. Designs 1.28–1.31, 1.33 Kubernetes lifecycle, and 1.34 temporal versioning have no implementation started; 1.32's contract set is frozen (#246) and its generation-A slice is in progress. The architecture sequence and remaining slice criterion are in capstone §14/§16; see [Eventing and Workflow Plane](docs/implementation/eventing-workflow-plane/INDEX.md) and [Platform API Plane](docs/implementation/platform-api-plane/INDEX.md).
 
-**Contract gate status:** the 1.27 contract is frozen (#247) and EWP-1 is implemented (#393, #396). EWP-2 reliable publication is not started and remains gated on Local Real Demo v1 #399 being On Track. The 1.32 contract is frozen and its generation-A slice is in progress ([Platform API Plane](docs/implementation/platform-api-plane/INDEX.md)); the 1.28–1.31 planes remain unstarted. See Architecture 1.0 §14/§16 for sequencing and the broader vertical-slice criterion.
+**Contract gate status:** the 1.27 contract is frozen (#247) and EWP-1 is implemented (#393, #396). Local Real Demo v1 #399 is On Track; EWP-2's first publisher port/validation slice is in progress, while the full reliable-publication deliverables remain not started. The 1.32 contract is frozen and its generation-A slice is in progress ([Platform API Plane](docs/implementation/platform-api-plane/INDEX.md)); the 1.28–1.31 planes remain unstarted. See Architecture 1.0 §14/§16 for sequencing and the broader vertical-slice criterion.
 
 The project is not presented as a finished enterprise product. The repository is intentionally used to explore architecture, implementation techniques, operational boundaries and measurable trade-offs.
 

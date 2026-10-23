@@ -186,5 +186,7 @@ public or the token is granted access.
 - The profile requires a sibling `content_extractor` checkout and a local
   Docker daemon with enough memory for Cassandra plus the three platform
   services.
-- EWP-2 publisher work remains gated on #399 being accepted and marked On
-  Track; this record supplies the local acceptance evidence for that gate.
+- #399 is now On Track; EWP-2's first publisher port/validation slice is in
+  progress, while full reliable publication (outbox, transport, ordering,
+  retry policy) remains unstarted. This record supplied the local acceptance
+  evidence for that gate.

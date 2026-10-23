@@ -4,7 +4,7 @@
 > **Version:** 1.27
 > **Document ID:** `synanton-design-1.27`
 > **Date:** 2026-09-05
-> **Status:** Approved (architecture) — EWP-1 complete through #393/#396; EWP-2 #394 blocked on Local Real Demo v1 #399
+> **Status:** Approved (architecture) — EWP-1 complete through #393/#396; EWP-2 #394 first publisher slice in progress
 > **Normative security baseline:** Design 1.23 (see §2.1)
 > **Audience:** Architects, platform engineers, developers, SRE, security engineers, runtime engineers, and system integrators
 > **Related Designs:**

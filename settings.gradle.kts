@@ -49,6 +49,7 @@ include(
     "java:annotations",
     "java:content-cache-api",
     "java:eventing-contract",
+    "java:eventing-publisher",
     "java:content-cache-postgres",
     "java:content-cache-grpc",
     "java:storage-contract",
