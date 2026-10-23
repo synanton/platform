@@ -161,8 +161,11 @@ and again on the merge commit in `main`
 ([run 39949794713](https://github.com/synanton/platform/actions/runs/39949794713)).
 
 The workflow is separate and path-filtered, so it does not gate unrelated PRs.
-Its cleanup step runs with `if: always()`, including after a failed run, so
-hosted runners do not retain the stack.
+Its path filters include the demo profile/script/fixture/evidence record, `java/**`,
+and shared Gradle inputs (`build.gradle.kts`, `settings.gradle.kts`, `gradle/**`,
+`gradlew`). Its cleanup step runs with `if: always()`, including after a failed
+run, and a post-teardown guard fails the job if any demo container or the
+`synanton-local-real-demo-network` remains.
 
 ## Extractor pin procedure
 
@@ -174,9 +177,13 @@ The CI checkout and `LOCAL_REAL_DEMO_EXPECTED_EXTRACTOR_COMMIT` both pin
 3. Rerun the acceptance workflow and update this record with the new commit
    and observed evidence.
 
-A private extractor checkout needs a token with read access; the workflow uses
-the default `GITHUB_TOKEN`, which is sufficient only while the repository is
-public or the token is granted access.
+The checkout uses the default `GITHUB_TOKEN`, which needs **Contents: Read** on
+`synanton/content_extractor`; this is sufficient while that repository is public.
+If it becomes private, create a fine-grained token with Contents: Read on that
+repository, store it as a workflow secret, and pass it as `token:` on the
+extractor checkout step. Rotating the pin is one change: update the `ref:` and
+`LOCAL_REAL_DEMO_EXPECTED_EXTRACTOR_COMMIT`, rerun acceptance, and update this
+record. Do not update one pin without the other.
 
 ## Known boundaries
 
