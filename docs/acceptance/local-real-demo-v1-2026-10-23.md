@@ -34,8 +34,9 @@ start ordering is used: dependencies are enforced by Compose health conditions
 and the script's health gates.
 
 The exact platform commit under test is recorded in each generated
-`evidence.json` and in the CI artifact. This document is committed with the
-implementation; the PR records the CI run and the merge commit.
+`evidence.json` and in the CI artifact. In CI this is the PR head SHA (not
+`actions/checkout`'s synthetic merge ref); after merge, the PR records the
+merge commit and the post-merge workflow run.
 
 ### Demo vs harness and API path
 

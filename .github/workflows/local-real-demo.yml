@@ -35,6 +35,8 @@ jobs:
     timeout-minutes: 45
     env:
       CONTENT_EXTRACTOR_ROOT: ${{ github.workspace }}/content_extractor
+      # Record the PR head, not actions/checkout's synthetic merge ref.
+      PLATFORM_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       # Pin the sibling checkout: the demo's reproducibility must not follow
       # another repository's head. Update deliberately with the evidence doc.
       LOCAL_REAL_DEMO_EXPECTED_EXTRACTOR_COMMIT: 53a81ce5e408cb3e0f691d8d0434a6695c76482b
