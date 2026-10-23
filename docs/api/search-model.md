@@ -132,7 +132,13 @@ reader can tell frozen text from projection decisions:
   source version is omitted.
 - Tombstone filtering uses one immutable snapshot per query, applied before
   the final result cut. The implementation retrieves a bounded over-fetch
-  window first; the margin is configuration, not a public field.
+  window first; the margin is configuration, not a public field. A deletion
+  committed after the snapshot is taken may still appear in that query; that
+  is read-committed-at-start behavior and must not be "fixed" by re-reading
+  the snapshot during a refetch.
+- Per-leg symmetry for hybrid retrieval is not exercised until a dense leg
+  exists; when it lands, each leg must retrieve, filter against the same
+  snapshot, and truncate to the fusion depth before RRF.
 - `provenance_ref` resolves via `GET /v1/knowledge/{object_id}/provenance`
   while the producing run is COMPLETED (manifest visibility); otherwise 404 —
   a provenance reference never resolves to invisible knowledge.
