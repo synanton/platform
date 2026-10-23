@@ -51,31 +51,52 @@ implementation; the PR records the CI run and the merge commit.
 
 ## Acceptance evidence
 
-The run produced:
+The local clean-checkout run used commit
+`b1519a913ff8c58e3af3f747bd481bea6a609ba7` from a fresh clone with no demo
+containers or volumes present. The next commit only updates this record; CI
+records its own head SHA in the uploaded artifact.
 
 ```json
 {
   "command": "./scripts/run-local-real-demo.sh up",
+  "platform_commit": "b1519a913ff8c58e3af3f747bd481bea6a609ba7",
+  "extractor_commit": "53a81ce5e408cb3e0f691d8d0434a6695c76482b",
   "compose_project": "synanton-local-real-demo",
+  "profile": "local-real-demo",
+  "image_tag": "synanton-local-real-demo/{synflux,synquest,extraction-gateway}:local",
   "tenant": "local-real-demo",
   "source_id": "mental-health-report-2010",
-  "run_id": "daae67d7-c17e-3d0a-a11c-58162b11782e",
-  "operation_id": "8cf03072-6663-482e-ae6a-9d88757d92b2",
+  "run_id": "95222bcd-c3cb-382c-912f-a17212e84207",
+  "operation_id": "fb73464f-e612-46ff-bd5f-c885414e36cc",
+  "operation_outcome": "FULL",
   "source_version_id": "5cc04cac-f85d-530e-a967-f9e7b75cf546",
   "fixture_sha256": "d60e114c25f8bf7d69df2bdddead567b2958c8df326f30ccfb8800c3ebdb191f",
   "search_hit_object_id": "c799bd65-394c-56ce-a7ac-a871fd5587df:5",
+  "search_hit_source_uri": "manual-upload://mental-health-report-2010/mental-health-report-2010.pdf",
+  "search_hit_chunk_sha256": "3b720ffdbafc3a353c27f66ecbbb351d9c8917597eead6f9ff766fee935de9c2",
   "canonical_chunk_page_metadata": {
     "chunk_ordinal": 5,
     "page_start": 2,
     "page_end": 2,
     "section_path": "APPENDIX A: DATA SOURCE DESCRIPTIONS"
   },
+  "page_range_semantics": "inclusive (single page has start == end)",
+  "latency": {
+    "ingest_operation_ms": 2409,
+    "ingest_to_searchable_ms": 3404,
+    "search_p50_ms": 117,
+    "search_samples": 10
+  },
   "idempotency": "same operation_id; one source version after replay"
 }
 ```
 
+Latency is local, warm-cache, single-tenant BM25: 2.4 s from upload to
+operation completion, 3.4 s from upload to searchable, and 117 ms search p50
+over ten calls. These are not capacity claims.
+
 The complete machine-readable output is written at runtime to
-`deployments/docker/data-local-real-demo/evidence.json`.
+`deployments/docker/data-local-real-demo/evidence.json` and uploaded by CI.
 
 ## Assertions exercised
 
@@ -89,10 +110,13 @@ The complete machine-readable output is written at runtime to
    `overall response rate for fiscal year 2007 was 78 percent`.
 4. The hit's live `provenance_ref` resolves and names the ingested source
    version, the original document digest, and a Content Cache reference.
-5. The canonical chunk row carries a real page range (`2–2`) and a non-empty
+5. The canonical chunk row carries exactly the expected inclusive page range
+   (`page_start=2`, `page_end=2`, i.e. the single page 2) and the expected
    section path (`APPENDIX A: DATA SOURCE DESCRIPTIONS`). These fields are
    verified in canonical storage, not assumed from the public search shape
    (public page-range exposure remains [#338](https://github.com/synanton/platform/issues/338)).
+   A change to the rendering or semantics of a single-page range fails this
+   assertion instead of silently passing.
 6. Repeating the identical upload with the same `Idempotency-Key` returns the
    same operation, leaves exactly one source version, and returns the same
    canonical search hit.
@@ -109,6 +133,19 @@ The complete machine-readable output is written at runtime to
   main stack's `docker_content-cache`; the shared `synanton-demo` network is
   not used. `reset` refuses to delete a custom
   `LOCAL_REAL_DEMO_DATA_ROOT`.
+
+## Clean-checkout and CI repetition
+
+After the implementation commit, the demo was reset (containers, network,
+project volume, and default data root removed) and run from a fresh clone of
+`b1519a9` with only `CONTENT_EXTRACTOR_ROOT` and the expected extractor commit
+set. It passed every assertion and re-ran the same-key replay. The CI job
+repeats this path from a fresh GitHub checkout, pins the extractor commit, and
+uploads `evidence.json`; the PR records the run URL and merge commit.
+
+The workflow is separate and path-filtered, so it does not gate unrelated PRs.
+Its cleanup step runs with `if: always()`, including after a failed run, so
+hosted runners do not retain the stack.
 
 ## Extractor pin procedure
 
