@@ -1,7 +1,7 @@
 ---
 title: "Eventing and Workflow Plane - Implementation Plan"
-status: "EWP-0 closed; contract frozen; EWP-1 implementation not started"
-last_reviewed: "2026-10-22"
+status: "EWP-0 closed; EWP-1 implementation in progress; later phases not started"
+last_reviewed: "2026-10-23"
 ---
 
 # Eventing and Workflow Plane - Implementation Plan
@@ -10,15 +10,15 @@ last_reviewed: "2026-10-22"
 **Architecture reference:** `docs/architecture/synanton-design-1.27.md`; [ADR-004](../../architecture/decisions/adr-004-eventing-workflow-plane.md); capstone positioning in `docs/architecture/synanton-platform-architecture-1.0.md` §6, §14, §15.
 **Target repository:** `synanton/platform` (this repo) - no cross-repo split; unlike the extraction plane, there is no separate deployable service implied by the design.
 **Audience:** Architects, module owners, platform engineers
-**Last Updated:** 2026-10-22
+**Last Updated:** 2026-10-23
 
-**Status reviewed 2026-10-22:** Design 1.27 is approved and its delivery
+**Status reviewed 2026-10-23:** Design 1.27 is approved and its delivery
 contract was frozen on 2026-10-17 (#247). The freeze closes the contract gate;
-implementation of the eventing/workflow plane itself has not started. [EWP-0
-reconciliation](./EWP-0-reconciliation.md) records the completed audit and
-EWP-1 scope decision; issue [#375](https://github.com/synanton/platform/issues/375)
-records closure. This plan describes implementation against the frozen
-contract, not remaining freeze work.
+the [EWP-0 reconciliation](./EWP-0-reconciliation.md) and issue
+[#375](https://github.com/synanton/platform/issues/375) record its closure.
+EWP-1 is implementing the typed Event/Command contract against that frozen
+scope; see [`EWP-1-contract.md`](./EWP-1-contract.md). Publication, workflow
+execution, and integration remain later phases.
 
 ## Progress delivery — decision (2026-10-22)
 
@@ -94,7 +94,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 | Phase | Name | Status |
 |-------|------|--------|
 | EWP-0 | Contract-to-implementation reconciliation and scope decision | Complete — #375 |
-| EWP-1 | Implement frozen Event/Command contract | Not started |
+| EWP-1 | Implement frozen Event/Command contract | In progress |
 | EWP-2 | Reliable Publication | Not started |
 | EWP-3 | Reliable Consumption | Not started |
 | EWP-4 | Workflow Foundation | Not started |
@@ -109,7 +109,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 
 | Module | Type | Purpose |
 |---|---|---|
-| `java/eventing-contract` | library | Event/Command envelope types, outbox/inbox/workflow-state record shapes, `EventPublisher`/`EventConsumer`/`EventSubscription`/`EventStore` interfaces (§98). Mirrors how `java/extraction-contract` carries a contract with no service dependencies. |
+| `java/eventing-contract` | library | EWP-1 Event/Command types and canonical JSON profile only. Publication, transport, outbox/inbox, and workflow APIs remain separately gated phases. Mirrors how `java/extraction-contract` carries a contract with no service dependencies. |
 | `java/workflow-engine` | library/service | Workflow definition, durable state, timeout, cancellation, recovery (EWP-4). PostgreSQL-backed only, per §99 - no broker dependency. |
 
 ### Modified modules
@@ -198,6 +198,8 @@ model: { id: embedding, version: "4" }
 
 ## Phase EWP-1 - Contract implementation (Design §104 Phase 1)
 
+**Status:** In progress. The current implementation profile and decisions are recorded in [`EWP-1-contract.md`](./EWP-1-contract.md).
+
 **Goal:** implement the already-frozen envelope/command shapes, IDs/versioning, and tenant scope as typed contract artifacts. This is implementation of the frozen Event Contract, not another design freeze or an opportunity to silently revise it.
 
 ### Deliverables
@@ -208,15 +210,15 @@ model: { id: embedding, version: "4" }
 | 2 | Event ID and Command ID format (collision-resistant, sortable or not - decide and document). |
 | 3 | Correlation ID / causation ID propagation rules across service boundaries (how a consumer sets its own `causation_id` from the triggering event's `event_id`). |
 | 4 | Event/command schema versioning policy (`event_version`/`command_version` semantics: additive-only within a version, explicit bump on breaking change). |
-| 5 | Tenant-scope validation rule: every envelope carries `tenant.id`; consumers MUST reject or fail-closed on a missing/invalid tenant. |
+| 5 | Tenant-scope validation rule: Event preserves `tenant.id` and `tenant_id`; all messages fail closed on missing/invalid tenant or a cross-tenant boundary mismatch. |
 | 6 | Security context propagation: `security.classification` and `policy_version` survive serialization across the async boundary (ties to capstone Security invariant 5). |
 
 ### Definition of Done
 
-1. `Event` and `Command` records round-trip through JSON (or the chosen serialization) with every field in §13/§16 preserved.
+1. `Event` and `Command` records round-trip through canonical JSON with every field in §13/§16 preserved.
 2. A missing `tenant.id` fails closed at the contract layer, not downstream in each consumer independently.
 3. Two events with the same `causation_id` chain can be traced back to a single root `event_id` in a test fixture.
-4. `./gradlew build` green with the new module included in `settings.gradle.kts`.
+4. `./gradlew :java:eventing-contract:test` and `./gradlew buildAll` green with the new module included in `settings.gradle.kts`.
 
 ---
 

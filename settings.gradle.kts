@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 // v1.21 adds extraction-contract (synanton.extraction.v1 proto stubs, mirrored from
 // the content_extractor repository) for the Structured Content Extraction Plane.
 // v1.24/1.25 adds annotations (AAP-1: annotation definitions, dependency DAG, processing runs).
+// v1.27 EWP-1 adds eventing-contract (typed messages only; no publisher or workflow engine).
 include(
     "java:shared:common",
     "java:security",
@@ -47,6 +48,7 @@ include(
     "java:extraction-client",
     "java:annotations",
     "java:content-cache-api",
+    "java:eventing-contract",
     "java:content-cache-postgres",
     "java:content-cache-grpc",
     "java:storage-contract",
