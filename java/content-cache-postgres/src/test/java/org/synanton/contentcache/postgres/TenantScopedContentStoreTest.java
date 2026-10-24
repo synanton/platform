@@ -63,7 +63,10 @@ class TenantScopedContentStoreTest extends PostgresTestBase {
     }
 
     @Test
-    void rawRepositoryCannotBeConstructedOutsideTheFacade() {
+    void packagePrivateRepositoryIsAnAdvisoryPinNotThePrimaryGuard() {
+        // Primary guard: the package-private modifier makes external use a
+        // compile error. This reflection pin is advisory; FacadeBoundaryTest
+        // checks the source-level shape.
         assertThat(Modifier.isPublic(JdbcContentStore.class.getModifiers()))
                 .as("JdbcContentStore must stay package-private; use TenantScopedContentStore")
                 .isFalse();
@@ -92,7 +95,9 @@ class TenantScopedContentStoreTest extends PostgresTestBase {
     }
 
     @Test
-    void sameBytesInDifferentScopesAreDistinctArtifacts() {
+    void identicalBytesAcrossScopesAreStoredSeparately_intentionalDuplication() {
+        // Do not "optimize" this into one shared artifact: cross-tenant
+        // content addressing would make existence and timing probing possible.
         PutResult a = tenantA.put(bytes("shared"), ContentMetadata.of("text/plain", "owner-1"));
         PutResult b = tenantB.put(bytes("shared"), ContentMetadata.of("text/plain", "owner-1"));
         assertThat(a.reference().artifactId()).isNotEqualTo(b.reference().artifactId());
