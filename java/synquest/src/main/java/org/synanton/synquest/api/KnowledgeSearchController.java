@@ -3,6 +3,7 @@ package org.synanton.synquest.api;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.synanton.common.tenant.TenantContext;
+import org.synanton.storage.contract.TenantScope;
 import org.synanton.synquest.service.KnowledgeSearchBackend;
 import org.synanton.synquest.service.SearchService;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public class KnowledgeSearchController {
             return tenantError("TENANT_IN_REQUEST_BODY",
                     "tenant_id is not accepted in the request body; the tenant comes from the verified identity context");
         }
-        TenantContext tenant = verifiedTenant();
+        TenantScope tenant = verifiedScope();
         if (!backend.isReady(tenant.tenantId())) {
             return ResponseEntity.status(503).build();
         }
@@ -92,7 +93,7 @@ public class KnowledgeSearchController {
      */
     @PostMapping("/v1/search-projection/rebuild")
     public ResponseEntity<ProjectionRebuildResult> rebuild() {
-        TenantContext tenant = verifiedTenant();
+        TenantScope tenant = verifiedScope();
         try {
             int chunkCount = backend.project(tenant.tenantId());
             return ResponseEntity.ok(new ProjectionRebuildResult(
@@ -106,7 +107,7 @@ public class KnowledgeSearchController {
     /** Projection observability: readiness and the last build's chunk count. */
     @GetMapping("/v1/search-projection")
     public ResponseEntity<ProjectionStats> projection() {
-        TenantContext tenant = verifiedTenant();
+        TenantScope tenant = verifiedScope();
         try {
             var stats = searchService.stats(tenant.tenantId());
             return ResponseEntity.ok(new ProjectionStats(
@@ -123,12 +124,12 @@ public class KnowledgeSearchController {
         return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
     }
 
-    private static TenantContext verifiedTenant() {
+    private static TenantScope verifiedScope() {
         TenantContext context = TenantContext.get();
-        if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
+        if (context == null) {
             throw new IllegalStateException("Verified tenant context is required");
         }
-        return context;
+        return TenantScope.of(context.requireTenantId());
     }
 
     public record ProjectionStats(

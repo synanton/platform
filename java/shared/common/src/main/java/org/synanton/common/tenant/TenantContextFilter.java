@@ -68,26 +68,32 @@ public class TenantContextFilter extends org.springframework.web.filter.OncePerR
             return;
         }
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(401);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"status\":401,\"code\":\"ERR_AUTH_FAILED\",\"detail\":\"Missing Bearer token\"}");
+            reject(response, "AUTHENTICATION_REQUIRED", "Missing Bearer token");
             return;
         }
 
         try {
             SubjectAssertion assertion = jwtVerifier.verify(authHeader.substring(7));
+            if (assertion.tenantId() == null || assertion.tenantId().isBlank()) {
+                reject(response, "TENANT_CONTEXT_MISSING", "Verified token has no tenant claim");
+                return;
+            }
             TenantContext.set(assertion);
             String traceId = resolveTraceId(request);
             RequestContextHolder.set(new RequestContext(assertion.tenantId(), assertion.subject(), traceId));
             chain.doFilter(request, response);
         } catch (AuthException e) {
-            response.setStatus(401);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"status\":401,\"code\":\"ERR_AUTH_FAILED\",\"detail\":\"" + e.getMessage() + "\"}");
+            reject(response, "AUTHENTICATION_REQUIRED", e.getMessage());
         } finally {
             TenantContext.clear();
             RequestContextHolder.clear();
         }
+    }
+
+    private static void reject(HttpServletResponse response, String code, String detail) throws IOException {
+        response.setStatus(401);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"status\":401,\"code\":\"" + code + "\",\"detail\":\"" + detail + "\"}");
     }
 
     private String resolveTraceId(HttpServletRequest request) {

@@ -55,6 +55,19 @@ public final class TenantContext {
         return ctx != null && ctx.subject != null;
     }
 
+    /**
+     * Returns the verified tenant id for this request, or throws when the
+     * boundary did not establish one. API adapters convert this once to the
+     * immutable {@code TenantScope} contract; the thread-local holder is only
+     * the boundary transport and must not be read below the API layer.
+     */
+    public String requireTenantId() {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new MissingTenantContextException();
+        }
+        return tenantId;
+    }
+
     public String tenantId() { return tenantId; }
     public String subject() { return subject; }
     public int uid() { return uid; }
