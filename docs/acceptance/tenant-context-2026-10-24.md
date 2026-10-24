@@ -68,8 +68,11 @@ per-layer negative tests.
 
 ## Caveats
 
-- The local-real-demo image is still `e511491`; the new `TENANT_CONTEXT_MISSING`
-  boundary enforcement is unit-tested at `af8e343` and lands in the next image.
+- **Pre-image evidence.** The two-tenant run above is source-based against the
+  `e511491` local-real-demo image, not against an image containing the frozen
+  contract. `TENANT_CONTEXT_MISSING` was unit-tested at `af8e343` only. This is
+  the same evidence class as #16/#27: it must not be read as proof of the
+  shipped artifact. The post-rebuild run is recorded below.
 - The two-tenant run uses the real UI dev-auth handler and real platform
   endpoints, but it is not the production issuer (#340).
 - RLS, cache-key isolation, and per-layer negatives are #339 work; they are not
