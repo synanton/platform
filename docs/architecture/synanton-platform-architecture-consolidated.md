@@ -3,7 +3,7 @@
 > **Document ID:** `synanton-platform-architecture-consolidated`  
 > **Base:** [Synanton Platform Architecture 1.0](https://github.com/synanton/platform/blob/main/docs/architecture/synanton-platform-architecture-1.0.md)  
 > **Source series:** Designs 1.22–1.34  
-> **Editorial approach:** The overview uses short sentences, direct instructions, and explicit ownership statements. This is an editorial target inspired by ASD-STE100, not a claim of formal compliance. Embedded design specifications are included verbatim to preserve API names, schemas, identifiers, technical terms, and source-level requirements.  
+> **Editorial approach:** This is an editorial target inspired by ASD-STE100, not a claim of formal compliance. Embedded design specifications are included verbatim to preserve API names, schemas, identifiers, technical terms, and source-level requirements.  
 > **Authority:** The approved design documents define their own scope and status. This consolidation improves access; it does not silently reconcile conflicting contracts or upgrade implementation status.
 
 ## How to use this document
