@@ -93,9 +93,13 @@ The full anti-oracle matrix (403 vs uniform 404 for selection) is in the
 
 #339 must implement, per layer, against this contract:
 
-1. **Repository/RLS** — repository constructors require `TenantScope`; every
-   transaction sets `SET LOCAL app.tenant_id`; a raw query with no scope
-   returns zero rows, not all rows.
+1. **Repository/RLS** — the public content-cache entry point is
+   `TenantScopedContentStore`, with `TenantScope` as a required constructor
+   value; the old `JdbcContentStore` is package-private. Every transaction
+   sets `SET LOCAL app.tenant_id`; a raw query with no scope returns zero rows.
+   Facade coverage is the relational content cache only; the search projection
+   and provenance paths are separate and re-verified by the two-tenant
+   acceptance.
 2. **Cache keys** — tenant prefix in gateway/Redis and search-projection cache
    keys; a cache miss fails closed; A's entry is never served to B.
 3. **Search projection** — scope is in the snapshot read, shared by legs and

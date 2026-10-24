@@ -3,7 +3,11 @@
 JDBC `ContentStore` adapter against the canonical content-cache schema
 (same DDL as the Go reference service `migrations/*.up.sql`).
 
-- `JdbcContentStore` implements `org.synanton.contentcache.ContentStore`:
+- `TenantScopedContentStore` is the public entry point. Scope is a required
+  constructor value (`TenantScope`), never a ThreadLocal/request lookup; a
+  foreign `ContentReference` is not-found/absent. `JdbcContentStore` is
+  package-private so direct use outside this package is a compile error.
+- The underlying repository implements `org.synanton.contentcache.ContentStore`:
   put with `(tenant_id, digest)` dedup, tenant-scoped reads with digest
   verification, reference register/release, audited legal-hold changes,
   retention updates. All writes that span tables commit atomically.

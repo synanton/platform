@@ -27,13 +27,18 @@ import org.synanton.contentcache.PutResult;
  * <p>Semantics mirror the Go reference adapter: per-tenant dedup by
  * digest, indistinguishable cross-tenant not-found, digest verification
  * on read, owner-scoped reference release, audited legal-hold changes.
+ *
+ * <p>Package-private on purpose (#339): callers outside this package use
+ * {@link TenantScopedContentStore}, whose API requires a validated
+ * {@code TenantScope}. The compiler, not a naming convention, is the
+ * migration guard. This class remains the low-level RLS adapter.
  */
-public final class JdbcContentStore implements ContentStore {
+final class JdbcContentStore implements ContentStore {
 
     private final DataSource dataSource;
     private final int defaultRetentionDays;
 
-    public JdbcContentStore(DataSource dataSource, int defaultRetentionDays) {
+    JdbcContentStore(DataSource dataSource, int defaultRetentionDays) {
         this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
         if (defaultRetentionDays <= 0) {
             throw new IllegalArgumentException("defaultRetentionDays must be positive");
