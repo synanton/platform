@@ -90,7 +90,7 @@ class JdbcContentStoreTest extends PostgresTestBase {
         assertThatThrownBy(() -> store.setLegalHold(res.reference(), true, "admin-1", ""))
                 .isInstanceOf(ContentStoreException.class);
         store.setLegalHold(res.reference(), true, "admin-1", "litigation hold");
-        try (Connection con = dataSource.getConnection();
+        try (Connection con = adminConnection();
                 var ps = con.prepareStatement(
                         "SELECT legal_hold FROM retention_policies WHERE tenant_id = ? AND artifact_id = ?::uuid LIMIT 1")) {
             ps.setString(1, tenant);
@@ -100,7 +100,7 @@ class JdbcContentStoreTest extends PostgresTestBase {
                 assertThat(rs.getBoolean(1)).isTrue();
             }
         }
-        try (Connection con = dataSource.getConnection();
+        try (Connection con = adminConnection();
                 var ps = con.prepareStatement(
                         "SELECT COUNT(*) FROM audit_log WHERE tenant_id = ? AND action = 'legal_hold_place'")) {
             ps.setString(1, tenant);
@@ -118,7 +118,7 @@ class JdbcContentStoreTest extends PostgresTestBase {
         String digest = res.reference().digest();
         store.registerReference(tenant, digest, "owner-2");
         store.releaseReference(tenant, digest, "owner-2");
-        try (Connection con = dataSource.getConnection();
+        try (Connection con = adminConnection();
                 var ps = con.prepareStatement(
                         "SELECT released_at IS NOT NULL FROM reference_registry"
                                 + " WHERE tenant_id = ? AND digest = ? AND owner_id = ?")) {
@@ -145,5 +145,65 @@ class JdbcContentStoreTest extends PostgresTestBase {
                 .isInstanceOf(ContentStoreException.class);
         assertThatThrownBy(() -> store.put("", bytes("x"), ContentMetadata.of("text/plain", "o")))
                 .isInstanceOf(ContentStoreException.class);
+    }
+
+    @Test
+    void rawQueryWithoutTenantContextFailsClosed() throws Exception {
+        String tenant = tenant();
+        store.put(tenant, bytes("unscoped"), ContentMetadata.of("text/plain", "owner-1"));
+        try (Connection con = dataSource.getConnection()) {
+            assertThat(count(con, "SELECT count(*) FROM artifacts")).as("unscoped sees nothing").isZero();
+        }
+    }
+
+    @Test
+    void rawQueryUsesTransactionScopedTenantNotExplicitFilter() throws Exception {
+        String tenantA = tenant();
+        String tenantB = tenant();
+        store.put(tenantA, bytes("a"), ContentMetadata.of("text/plain", "owner-1"));
+        store.put(tenantB, bytes("b"), ContentMetadata.of("text/plain", "owner-1"));
+        try (Connection con = dataSource.getConnection()) {
+            con.setAutoCommit(false);
+            setTenant(con, tenantA);
+            assertThat(count(con, "SELECT count(*) FROM artifacts")).as("A sees own row").isEqualTo(1);
+            assertThat(count(con, "SELECT count(*) FROM artifacts WHERE tenant_id = '" + tenantB + "'"))
+                    .as("explicit cross-tenant filter is still scoped").isZero();
+            con.rollback();
+        }
+    }
+
+    @Test
+    void crossTenantRawWriteAffectsNothing() throws Exception {
+        String tenantA = tenant();
+        String tenantB = tenant();
+        store.put(tenantB, bytes("victim"), ContentMetadata.of("text/plain", "owner-1"));
+        try (Connection con = dataSource.getConnection()) {
+            con.setAutoCommit(false);
+            setTenant(con, tenantA);
+            int deleted;
+            try (var ps = con.prepareStatement("DELETE FROM artifacts WHERE tenant_id = '" + tenantB + "'")) {
+                deleted = ps.executeUpdate();
+            }
+            assertThat(deleted).as("A cannot delete B").isZero();
+            con.rollback();
+        }
+        try (Connection con = adminConnection()) {
+            assertThat(count(con, "SELECT count(*) FROM artifacts WHERE tenant_id = '" + tenantB + "'"))
+                    .as("B row survives").isEqualTo(1);
+        }
+    }
+
+    private static void setTenant(Connection con, String tenant) throws Exception {
+        try (var ps = con.prepareStatement("SELECT set_config('app.tenant_id', ?, true)")) {
+            ps.setString(1, tenant);
+            ps.execute();
+        }
+    }
+
+    private static int count(Connection con, String sql) throws Exception {
+        try (var ps = con.prepareStatement(sql); var rs = ps.executeQuery()) {
+            rs.next();
+            return rs.getInt(1);
+        }
     }
 }
