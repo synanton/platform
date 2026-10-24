@@ -69,3 +69,31 @@ CREATE INDEX IF NOT EXISTS idx_audit_tenant
 
 CREATE INDEX IF NOT EXISTS idx_audit_action
     ON audit_log (action, timestamp DESC);
+
+-- Tenant isolation (platform #339): every tenant-scoped table enforces RLS.
+-- current_setting(..., true) with missing_ok=true yields NULL when no scope is
+-- set, so an unscoped query matches no rows (fail-closed, never all rows).
+-- FORCE covers table owners as well; app-role tests exercise the policy path.
+ALTER TABLE artifacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE artifacts FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON artifacts;
+CREATE POLICY tenant_isolation ON artifacts
+    USING (tenant_id = current_setting('app.tenant_id', true));
+
+ALTER TABLE retention_policies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE retention_policies FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON retention_policies;
+CREATE POLICY tenant_isolation ON retention_policies
+    USING (tenant_id = current_setting('app.tenant_id', true));
+
+ALTER TABLE reference_registry ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reference_registry FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON reference_registry;
+CREATE POLICY tenant_isolation ON reference_registry
+    USING (tenant_id = current_setting('app.tenant_id', true));
+
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_log FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON audit_log;
+CREATE POLICY tenant_isolation ON audit_log
+    USING (tenant_id = current_setting('app.tenant_id', true));

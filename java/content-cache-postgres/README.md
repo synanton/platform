@@ -9,6 +9,11 @@ JDBC `ContentStore` adapter against the canonical content-cache schema
   retention updates. All writes that span tables commit atomically.
 - `ContentCacheSchema.ensureSchema` applies the canonical
   `schema.sql`; tests and operators call here, never inline copies.
+- Tenant isolation is enforced twice: every operation runs in a transaction
+  with `set_config('app.tenant_id', ?, true)`, and `artifacts`,
+  `retention_policies`, `reference_registry`, and `audit_log` use `FORCE ROW
+  LEVEL SECURITY`. A raw query without the transaction-local scope sees zero
+  rows, never all rows.
 - Tests follow the platform live-Postgres policy: one
   `postgres:16-alpine` container per JVM (`PostgresTestBase`),
   per-test tenant ids for isolation, least-privilege `app` role so
