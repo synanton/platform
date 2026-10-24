@@ -2,6 +2,7 @@ package org.synanton.synquest.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.synanton.common.tenant.TenantContext;
+import org.synanton.storage.contract.TenantScope;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.SourceIdentityRow;
 import org.synanton.ingestioncache.domain.SourceRow;
@@ -47,7 +48,7 @@ public class KnowledgeProvenanceController {
 
     @GetMapping("/v1/knowledge/{objectId}/provenance")
     public ResponseEntity<KnowledgeProvenanceResource> provenance(@PathVariable String objectId) {
-        TenantContext tenant = verifiedTenant();
+        TenantScope tenant = verifiedScope();
         ParsedObjectId parsed;
         try {
             parsed = ParsedObjectId.parse(objectId);
@@ -114,12 +115,12 @@ public class KnowledgeProvenanceController {
         return identities;
     }
 
-    private static TenantContext verifiedTenant() {
+    private static TenantScope verifiedScope() {
         TenantContext context = TenantContext.get();
-        if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
+        if (context == null) {
             throw new IllegalStateException("Verified tenant context is required");
         }
-        return context;
+        return TenantScope.of(context.requireTenantId());
     }
 
     /**

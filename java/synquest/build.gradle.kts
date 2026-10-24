@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":java:ingestion-cache"))
     implementation(project(":java:synanton-llm-client"))
     implementation(project(":java:gpu-client"))
+    implementation(project(":java:storage-contract"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.actuator)
