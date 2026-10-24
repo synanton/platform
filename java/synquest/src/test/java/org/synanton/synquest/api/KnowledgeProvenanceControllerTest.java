@@ -28,6 +28,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,9 +64,13 @@ class KnowledgeProvenanceControllerTest {
     }
 
     private static String token() throws Exception {
+        return token("tenant-a");
+    }
+
+    private static String token(String tenantId) throws Exception {
         var claims = new JWTClaimsSet.Builder()
                 .subject("alice")
-                .claim("tenant_id", "tenant-a")
+                .claim("tenant_id", tenantId)
                 .expirationTime(Date.from(Instant.now().plusSeconds(300)))
                 .build();
         var jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
@@ -138,6 +144,19 @@ class KnowledgeProvenanceControllerTest {
                 .andExpect(jsonPath("$.source_identities[0].source_uri")
                         .value("manual-upload://uploads/b.pdf"))
                 .andExpect(jsonPath("$.chunk_sha256").value("bb".repeat(32)));
+    }
+
+    @Test
+    void crossTenantProvenanceReadsOnlyTheCallersTenant() throws Exception {
+        when(cacheClient.readManifest(eq("tenant-b"), eq(contentRefId))).thenReturn(Optional.empty());
+
+        mvc.perform(get("/v1/knowledge/" + contentRefId + ":0/provenance")
+                        .header("Authorization", "Bearer " + token("tenant-b")))
+                .andExpect(status().isNotFound());
+
+        verify(cacheClient).readManifest("tenant-b", contentRefId);
+        verify(cacheClient, never()).readManifest("tenant-a", contentRefId);
+        verify(cacheClient, never()).readChunks("tenant-a", contentRefId);
     }
 
     @Test
