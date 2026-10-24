@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     api(project(":java:content-cache-api"))
+    implementation(project(":java:storage-contract"))
     api(libs.postgresql)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
