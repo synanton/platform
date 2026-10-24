@@ -88,6 +88,13 @@ the connector discovers resource IDs during synchronization.
 `status` is server-managed and is `ACTIVE` or `DELETED`; `tenant_id` is never
 accepted in the request body.
 
+**Content Cache dedup is per tenant.** The Content Cache uniqueness key is
+`(tenant_id, digest)`. Identical bytes acquired by two tenants are deliberately
+stored as two artifacts, not one shared artifact. This is an isolation choice:
+a shared cross-tenant artifact would make existence and timing probing
+possible. Do not "optimize" this into global dedup without an explicit
+isolation-contract change.
+
 **Identity ≠ content digest.** Content digest identifies *what the acquired
 bytes hash to* (SHA-256 over a precisely defined representation, 1.28 §11).
 Digest equality **must not** imply source-resource identity — two resources

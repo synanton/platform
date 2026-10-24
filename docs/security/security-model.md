@@ -28,7 +28,7 @@ The client is untrusted. The target contract is that the platform validates a te
 4. **Anti-oracle error semantics.** 401 for no/invalid token or missing claim; 403 when the claim is no longer authorized; **uniform 404** for selection outside the authorized set; 404 for cross-tenant object access; 400 for tenant in the body or a tenant header. [ADR 0007]
 5. **Structural enforcement, not convention.** Boundary lint, branded `TenantId` with a cast guard, RLS + scoped repository, and a PR checklist for semantic rules that cannot be compiled.
 6. **Defense in depth.** Token scope is the contract; the data layer is the guarantee; cache keying and tab isolation are additional barriers.
-7. **Service accounts are a separate authorization axis.** Operators and service principals are scoped, auditable, and time-bound; they are not tenant members. [#339]
+7. **Service accounts are a separate authorization axis.** Operators and service principals are scoped, auditable, and time-bound; they are not tenant members. Cross-tenant work is an explicit capability plus a listed tenant set, never a null tenant. [#339, design](service-account-capabilities.md)
 8. **Accepted risks have revisit triggers.** For example, the `sessionStorage` token XSS blast radius is bounded by the N=1 policy; migrate to in-memory + HttpOnly refresh before the policy relaxes to N>1. [ADR 0006]
 
 ## Error matrix (authoritative)
@@ -73,7 +73,7 @@ The anti-oracle row is the one most often missed: "tenant doesn't exist" and "te
 - **Tenant-bound token issuance:** approved direction Path A; implementation not started (#340; security-provider #3). The current security-provider produces internal HS256 security-context tokens, not browser tenant-bound access tokens/JWKS.
 - **Identity 1.29 set-shaped resolution:** approved contract work is tracked by #341; implementation status is owned by that workstream and must not be inferred from demo evidence.
 - **Tenant-context contract:** frozen 2026-10-23 in [tenant-context-contract.md](../api/tenant-context-contract.md) (#350): verified `tenant_id` claim is the only authority; missing claim is 401 `TENANT_CONTEXT_MISSING`; API adapters convert once to immutable `TenantScope`; downstream code receives it as a parameter and shares it on the per-query snapshot.
-- **Platform data-layer enforcement:** in progress (#339): RLS, transaction-scoped `SET LOCAL`, scoped repositories, cache keying, and permanent isolation/deny tests remain required. #339 consumes the frozen #350 contract.
+- **Platform data-layer enforcement:** in progress (#339): RLS, transaction-scoped `SET LOCAL`, scoped repositories, cache keying, and permanent isolation/deny tests remain required. #339 consumes the frozen #350 contract. Service-account capabilities are proposed in [service-account-capabilities.md](service-account-capabilities.md); no ambient system mode is permitted.
 - **UI client-side invariants:** implemented and accepted against the conformance double (UI ADRs 0005/0006/0007); this does not establish production issuer or platform data-layer controls.
 
 The authoritative evidence and remaining gaps are linked from [platform #368](https://github.com/synanton/platform/issues/368), [#339](https://github.com/synanton/platform/issues/339), [#340](https://github.com/synanton/platform/issues/340), [#341](https://github.com/synanton/platform/issues/341), and [security-provider #3](https://github.com/synanton/security-provider/issues/3).
