@@ -1,7 +1,8 @@
 # Tenant-context contract and two-tenant acceptance — 2026-10-24
 
 **Result: PASS for the #350 contract, demo-auth configuration, and two-tenant
-baseline that #339 will extend.**
+baseline that #339 will extend. The post-rebuild image acceptance below closes
+the pre-image evidence gap.**
 
 ## Artifacts
 
@@ -65,6 +66,55 @@ per-layer negative tests.
 | `KnowledgeSearchControllerTest` + `KnowledgeProvenanceControllerTest` | PASS |
 | UI `auth.test.ts` (6) | PASS, including `AuthProvider` seam and 503 |
 | UI typecheck | PASS |
+
+## Post-rebuild image acceptance — 2026-10-24
+
+The demo stack was reset (`run-local-real-demo.sh reset`) and rebuilt
+(`... up`) from `0ecf168` (contains the `b1a176c` code) before this run.
+
+| Item | Value |
+|---|---|
+| Platform image commit | `0ecf168cc283a71f2edec27915704373fe250f8d` |
+| Code commit | `b1a176c` (#418) |
+| synquest image | `sha256:a6d7ab6a111f1461f206bda5d3b0d3f1180f12473a3bb4bfe414a27e2a36c4b5` |
+| synflux image | `sha256:cc2782c33f4b277979e3f92e9e32dbb9fbab3ea3d80f77d4e49d3dbe06748296` |
+| Extractor | `53a81ce5e408cb3e0f691d8d0434a6695c76482b` |
+| Tenant A | `local-real-demo` |
+| Tenant B | `image-tenant-b` |
+| A hit | `c799bd65-394c-56ce-a7ac-a871fd5587df:5` |
+
+### Image-level assertions
+
+| Check | Observed |
+|---|---|
+| No token | `401 AUTHENTICATION_REQUIRED` |
+| Valid token, no tenant claim | `401 TENANT_CONTEXT_MISSING` |
+| Valid token, empty tenant claim | `401 TENANT_CONTEXT_MISSING` |
+| Tenant A search | `200`, 20 results, fact top |
+| Tenant A provenance | `200`, PDF source URI |
+| Tenant B rebuild | `200`, 0 chunks |
+| Tenant B search for A fact | `200`, 0 results |
+| Tenant B provenance for A object | `404` |
+| Unknown tenant (`image-tenant-unknown`) provenance for A object | `404` |
+| Unknown tenant search (no projection) | `503` — fail-closed readiness, not `500`, not a filtered `200` |
+| Tenant A unknown object provenance | `404` |
+
+The image proves the missing-claim path is not a `500` and has no implicit
+default tenant. The unknown-tenant provenance path is the available
+present-but-invalid-scope `404`; the uniform tenant-selection `404`
+(`POST /v1/auth/tenant`) belongs to #340 and is not implemented in this image.
+
+### Re-verification note for cache/search claims
+
+The pre-existing cache and search-projection tests predate the frozen
+`TenantScope` contract and inject synthetic tenant strings. They remain
+code-path evidence, not contract evidence. The post-rebuild run above is the
+contract-path evidence for this slice; the `TenantScope`-bound repository
+facade will add the required-parameter tests. The RLS setters are all
+transaction-local (`SET LOCAL` or `set_config(..., true)`), never session-level,
+so transaction-mode pooling cannot reuse another tenant's context. The
+content-cache suite now also pins the explicit empty-string scope to zero rows
+(12 tests).
 
 ## Caveats
 

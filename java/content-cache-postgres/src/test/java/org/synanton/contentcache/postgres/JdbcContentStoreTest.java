@@ -173,6 +173,19 @@ class JdbcContentStoreTest extends PostgresTestBase {
     }
 
     @Test
+    void rawQueryWithEmptyTenantContextFailsClosed() throws Exception {
+        String tenant = tenant();
+        store.put(tenant, bytes("empty-scope"), ContentMetadata.of("text/plain", "owner-1"));
+        try (Connection con = dataSource.getConnection()) {
+            con.setAutoCommit(false);
+            setTenant(con, "");
+            assertThat(count(con, "SELECT count(*) FROM artifacts"))
+                    .as("empty scope matches no rows").isZero();
+            con.rollback();
+        }
+    }
+
+    @Test
     void crossTenantRawWriteAffectsNothing() throws Exception {
         String tenantA = tenant();
         String tenantB = tenant();
