@@ -61,7 +61,11 @@ public interface KnowledgeSearchBackend {
         String title,
         String snippet,
         String sourceUri,
-        Set<UUID> sourceVersionIds
+        Set<UUID> sourceVersionIds,
+        Integer pageStart,
+        Integer pageEnd,
+        String section,
+        List<String> sectionPath
     ) {
         public String provenanceRef() {
             return "/v1/knowledge/" + objectId + "/provenance";
