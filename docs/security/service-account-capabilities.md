@@ -47,10 +47,11 @@ record CrossTenantRequest(
     Set<TenantScope> tenants,
     String operation,
     String reason,
+    String operationId,
     String traceId) {
     // construction validates the principal and a non-empty, bounded set;
     // capability is checked at execution so "capability absent" can return
-    // zero rows instead of throwing
+    // zero rows instead of throwing. operationId is the retry/idempotency key.
 }
 ```
 
@@ -99,6 +100,19 @@ There is deliberately no cross-tenant snapshot: reconcile does not need
 cross-tenant atomicity, and N short transactions keep pool/lock/vacuum
 behavior bounded. The audit line for tenant X is in tenant X's transaction, so
 a failed audit rolls back that tenant's read and returns no result.
+
+**Buffered read:** the read result is materialized (a count) before the audit
+write and commit. This path does not stream rows; streaming would allow the
+caller to observe data before the audit failure is known. If streaming is ever
+added, the abort guarantee must be revisited.
+
+**Partial success:** with N transactions, tenant A may commit while tenant B
+fails. The reconciler continues to collect per-tenant outcomes and throws
+`PartialReconcileException` carrying a `TenantOutcome` per tenant (success row
+count or failure). The caller retries only failed tenants. Reads are
+side-effect-free; audit rows are keyed by
+`(principal, capability, tenant, operation, operationId)`, so retrying the same
+`operationId` does not duplicate the successful tenant's audit line.
 
 A future bulk path may reuse one connection across tenants only if it still
 enters each tenant's transaction-local scope and keeps the same per-tenant
@@ -151,7 +165,8 @@ loop; it does not authorize a global read.
 | Wildcard/ALL/empty/oversized tenant set | rejected at `CrossTenantRequest` construction |
 | Audit write fails | operation aborts; no results returned, no mutation committed |
 | Tenant-bound service call with no `TenantScope` | rejected (401/`MissingTenantContextException`), never system mode |
-| Expired service principal | rejected (401), capabilities not evaluated |
+| Expired service principal | zero rows / empty report, not an error (same anti-oracle response as a missing capability); expiry audited as a denial |
+| One tenant fails in an N-transaction reconcile | `PartialReconcileException` with per-tenant `TenantOutcome`; successes remain committed; retry failed tenants with the same `operationId` |
 | Unknown capability string in a token | rejected at verification; never mapped to a permissive default |
 
 Zero rows is intentional **for reads**: it is indistinguishable from "no
@@ -180,6 +195,11 @@ matching rows.
 different. If its denial-audit write fails, the caller still receives zero
 rows, not an error; no data was exposed, and an error would be a side channel.
 Allowed operations remain abort-on-audit-failure.
+
+This is the only path where a security event can be silently dropped. The
+reconciler increments `audit.denial.write.failure` for every failed denial
+audit; alert on any non-zero rate. A retry of the same `operationId` is
+idempotent via the audit key.
 
 Every cross-tenant operation records, at minimum:
 
@@ -216,13 +236,16 @@ constant is a configuration error, not a grant.
 9. **Per-tenant RLS:** cross-tenant reads use the transaction-local setter per
    tenant; no `SET ROLE`/`BYPASSRLS`/session flag path exists.
 10. **Tenant-bound service:** `TenantScope` required; null/blank rejected.
-11. **Expired principal:** rejected before any read.
+11. **Expired principal:** zero rows, not an error; denial audited.
 12. **Config cannot grant:** an unknown capability string is rejected; a
     configuration-only change cannot add a capability.
 13. **No ambient bypass / no second path:** a source test proves service code
     does not construct the repository outside the facade.
 14. **Denial-audit failure:** denied request with a failing denial-audit write
-    still returns zero rows, not an error.
+    still returns zero rows, not an error; the failure counter increments.
+15. **Partial failure/retry:** one tenant's audit fails, `PartialReconcileException`
+    carries success/failure per tenant; retry with the same `operationId` does
+    not duplicate the successful tenant's audit line.
 
 ## Relationship to #339 layers
 
@@ -252,7 +275,9 @@ separate consistency decision.
    `TenantScopedContentStore`; cross-tenant reconcile uses
    `TenantScopedContentStore` directly per tenant. There is no second store
    entry point. `FacadeBoundaryTest` keeps `JdbcContentStore` package-private
-   and forbids main-source references outside the facade package.
+   and forbids main-source references outside the facade package. Token
+   issuance (#340) produces a `ServicePrincipal`; it does not grant
+   capabilities directly.
 2. **Store coverage (item 6).** Relational content cache only. Cross-tenant
    service access to search projection/provenance remains out of scope; the
    layer-by-layer acceptance names the stores each run proves.
@@ -260,8 +285,9 @@ separate consistency decision.
    its audit row commit together. No cross-tenant snapshot.
 4. **Audit.** Same transaction, fail-closed for allowed operations; per-tenant
    line with row count; denial-audit failure still returns zero rows.
-5. **Capability bound.** Enumerated set, maximum 100 per request; pagination for
-   larger jobs; no wildcard/ALL.
+5. **Capability bound.** Enumerated set, maximum 100 **per call**; a 500-tenant
+   job paginates into five calls and produces 500 per-tenant audit rows. No
+   wildcard/ALL.
 
 Additional review questions:
 
@@ -280,11 +306,15 @@ Implemented in `java/content-cache-postgres`:
   `ReconcileReport`, `CrossTenantContentReconciler`, `ServiceContentStore`.
 - `TenantScopedContentStore.countByDigestWithAudit` writes the audit row in the
   same transaction as the per-tenant read.
-- Content-cache suite: 28 tests. Nine service-capability tests cover:
+- Content-cache suite: 31 tests. Twelve service-capability tests cover:
   capability-present `{A}` (audit exactly A), capability-absent `{A}` (zero rows,
-  not error), multi-tenant `{A,B}`, read-path parity, wildcard/oversize
+  not error), multi-tenant `{A,B}`, per-tenant attribution, read-path parity
+  (same count; this read has no ordering/pagination), wildcard/oversize
   rejection, mutation denial with no partial write + audit, allowed-read audit
-  failure abort, denial-audit failure returns zero rows, expired principal.
+  failure with per-tenant outcome, denial-audit failure returns zero rows and
+  increments the counter, mutation-denial audit failure increments its counter,
+  expired principal returns zero rows, and partial failure/retry audit
+  idempotence.
 - Structural `FacadeBoundaryTest` and the existing RLS/facade tests remain.
 - Not implemented: HTTP/token issuance (#340), search/provenance cross-tenant
   access, replica topology.
