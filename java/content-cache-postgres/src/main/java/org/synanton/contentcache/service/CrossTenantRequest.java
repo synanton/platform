@@ -15,6 +15,7 @@ public record CrossTenantRequest(
         Set<TenantScope> tenants,
         String operation,
         String reason,
+        String operationId,
         String traceId) {
 
     public static final int MAX_CROSS_TENANT_SCOPE = 100;
@@ -40,6 +41,9 @@ public record CrossTenantRequest(
         }
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason must not be blank");
+        }
+        if (operationId == null || operationId.isBlank()) {
+            throw new IllegalArgumentException("operationId must not be blank");
         }
         if (traceId == null || traceId.isBlank()) {
             throw new IllegalArgumentException("traceId must not be blank");

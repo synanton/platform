@@ -19,6 +19,7 @@ import org.synanton.contentcache.ContentReference;
 import org.synanton.contentcache.PutResult;
 import org.synanton.contentcache.service.CrossTenantContentReconciler;
 import org.synanton.contentcache.service.CrossTenantRequest;
+import org.synanton.contentcache.service.PartialReconcileException;
 import org.synanton.contentcache.service.ReconcileReport;
 import org.synanton.contentcache.service.ServiceAuthorizationException;
 import org.synanton.contentcache.service.ServiceCapability;
@@ -66,9 +67,14 @@ class ServiceCapabilityTest extends PostgresTestBase {
 
     private static CrossTenantRequest request(
             ServicePrincipal principal, String traceId, TenantScope... scopes) {
+        return request(principal, "op-" + traceId, traceId, scopes);
+    }
+
+    private static CrossTenantRequest request(
+            ServicePrincipal principal, String operationId, String traceId, TenantScope... scopes) {
         return new CrossTenantRequest(
                 principal, new LinkedHashSet<>(java.util.List.of(scopes)),
-                "reconcile", "test-reason", traceId);
+                "reconcile", "test-reason", operationId, traceId);
     }
 
     private static String put(TenantScopedContentStore store, String bytes) {
@@ -176,7 +182,7 @@ class ServiceCapabilityTest extends PostgresTestBase {
         for (int i = 0; i < CrossTenantRequest.MAX_CROSS_TENANT_SCOPE + 1; i++) {
             tooMany.add(scope("bulk"));
         }
-        assertThatThrownBy(() -> new CrossTenantRequest(p, tooMany, "reconcile", "r", "t"))
+        assertThatThrownBy(() -> new CrossTenantRequest(p, tooMany, "reconcile", "r", "op", "t"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("exceeds");
     }
@@ -203,7 +209,71 @@ class ServiceCapabilityTest extends PostgresTestBase {
     }
 
     @Test
-    void auditFailureAbortsAllowedRead() throws Exception {
+    void tenantAttributionStaysPerScope() throws Exception {
+        TenantScope a = scope("a");
+        TenantScope b = scope("b");
+        String digestA = put(store(a), "a-only");
+        put(store(b), "b-only");
+
+        ReconcileReport report = reconciler.reconcile(
+                request(principal("svc", ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT),
+                        "trace-attribution", a, b),
+                digestA);
+
+        assertThat(report.count(a)).isEqualTo(1);
+        assertThat(report.count(b)).as("B must not inherit A's row").isZero();
+    }
+
+    @Test
+    void partialFailureCarriesPerTenantOutcomesAndRetryDeduplicatesAudit() throws Exception {
+        TenantScope a = scope("a");
+        TenantScope b = scope("b");
+        String digest = put(store(a), "shared");
+        put(store(b), "shared");
+        ServicePrincipal p = principal("partial-svc",
+                ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT);
+        CrossTenantRequest req = request(p, "op-partial", "trace-partial", a, b);
+        installAuditFailure("partial-svc", b.tenantId());
+        try {
+            assertThatThrownBy(() -> reconciler.reconcile(req, digest))
+                    .isInstanceOfSatisfying(PartialReconcileException.class, failure -> {
+                        assertThat(failure.outcomes().get(a).success()).isTrue();
+                        assertThat(failure.outcomes().get(b).success()).isFalse();
+                    });
+            assertThat(auditRows(a, "allowed")).isEqualTo(1);
+            assertThat(auditRows(b, "allowed")).isZero();
+        } finally {
+            removeAuditFailure();
+        }
+
+        ReconcileReport retried = reconciler.reconcile(req, digest);
+        assertThat(retried.count(a)).isEqualTo(1);
+        assertThat(retried.count(b)).isEqualTo(1);
+        assertThat(auditRows(a, "allowed")).as("retry must not duplicate A audit").isEqualTo(1);
+        assertThat(auditRows(b, "allowed")).isEqualTo(1);
+    }
+
+    @Test
+    void mutationDenialAuditFailureCountsTheLoss() throws Exception {
+        TenantScope a = scope("a");
+        TenantScopedContentStore storeA = store(a);
+        ContentReference ref = storeA.put(
+                "mutate".getBytes(StandardCharsets.UTF_8),
+                ContentMetadata.of("text/plain", "owner-1")).reference();
+        ServiceContentStore noCap = new ServiceContentStore(
+                storeA, principal("mutation-audit-fail"));
+        installAuditFailure("mutation-audit-fail");
+        try {
+            assertThatThrownBy(() -> noCap.setRetention(ref, 30))
+                    .isInstanceOf(ServiceAuthorizationException.class);
+            assertThat(noCap.denialAuditFailures()).isEqualTo(1);
+        } finally {
+            removeAuditFailure();
+        }
+    }
+
+    @Test
+    void auditFailureAbortsAllowedReadAndCarriesOutcome() throws Exception {
         TenantScope a = scope("a");
         String digest = put(store(a), "shared");
         installAuditFailure("audit-fail");
@@ -212,7 +282,8 @@ class ServiceCapabilityTest extends PostgresTestBase {
                     request(principal("audit-fail", ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT),
                             "trace-audit-fail", a),
                     digest))
-                    .isInstanceOf(RuntimeException.class);
+                    .isInstanceOfSatisfying(PartialReconcileException.class, failure ->
+                            assertThat(failure.outcomes().get(a).success()).isFalse());
             assertThat(auditRows(a, "allowed")).isZero();
         } finally {
             removeAuditFailure();
@@ -220,7 +291,7 @@ class ServiceCapabilityTest extends PostgresTestBase {
     }
 
     @Test
-    void denialAuditFailureStillReturnsZeroRows() throws Exception {
+    void denialAuditFailureStillReturnsZeroRowsAndCountsTheLoss() throws Exception {
         TenantScope a = scope("a");
         String digest = put(store(a), "shared");
         installAuditFailure("deny-audit-fail");
@@ -229,21 +300,22 @@ class ServiceCapabilityTest extends PostgresTestBase {
                     request(principal("deny-audit-fail"), "trace-deny-audit-fail", a),
                     digest);
             assertThat(report.count(a)).isZero();
+            assertThat(reconciler.denialAuditFailures()).isEqualTo(1);
         } finally {
             removeAuditFailure();
         }
     }
 
     @Test
-    void expiredPrincipalIsRejectedBeforeRead() {
+    void expiredPrincipalReturnsZeroRowsNotError() {
         TenantScope a = scope("a");
         ServicePrincipal expired = new ServicePrincipal(
                 "svc-expired",
                 Set.of(ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT),
                 Instant.now().minusSeconds(1),
                 "test");
-        assertThatThrownBy(() -> reconciler.reconcile(request(expired, "trace-expired", a), "sha256:x"))
-                .isInstanceOf(ServiceAuthorizationException.class);
+        ReconcileReport report = reconciler.reconcile(request(expired, "trace-expired", a), "sha256:x");
+        assertThat(report.count(a)).isZero();
     }
 
     private static int retentionDays(TenantScope scope, ContentReference ref) throws Exception {
@@ -261,9 +333,16 @@ class ServiceCapabilityTest extends PostgresTestBase {
     }
 
     private static void installAuditFailure(String actor) throws Exception {
+        installAuditFailure(actor, null);
+    }
+
+    private static void installAuditFailure(String actor, String tenantId) throws Exception {
+        String tenantPredicate = tenantId == null
+                ? ""
+                : " AND NEW.tenant_id = '" + tenantId + "'";
         try (Connection con = adminConnection(); var stmt = con.createStatement()) {
             stmt.execute("CREATE OR REPLACE FUNCTION test_fail_audit() RETURNS trigger AS $$"
-                    + " BEGIN IF NEW.actor = '" + actor + "' THEN"
+                    + " BEGIN IF NEW.actor = '" + actor + "'" + tenantPredicate + " THEN"
                     + " RAISE EXCEPTION 'audit down'; END IF; RETURN NEW; END;"
                     + " $$ LANGUAGE plpgsql");
             stmt.execute("CREATE TRIGGER test_fail_audit BEFORE INSERT ON audit_log"

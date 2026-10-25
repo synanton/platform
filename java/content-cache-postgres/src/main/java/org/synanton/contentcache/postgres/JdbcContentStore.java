@@ -270,6 +270,7 @@ final class JdbcContentStore implements ContentStore {
             String operation,
             String reason,
             String traceId,
+            String auditKey,
             int rowCount,
             String outcome) throws Exception {
         String afterState = "{\"capability\":\"" + jsonEscape(capability)
@@ -278,14 +279,16 @@ final class JdbcContentStore implements ContentStore {
                 + ",\"outcome\":\"" + jsonEscape(outcome)
                 + "\",\"trace_id\":\"" + jsonEscape(traceId) + "\"}";
         try (PreparedStatement ps = con.prepareStatement(
-                "INSERT INTO audit_log (actor, action, tenant_id, scope, reason, after_state)"
-                        + " VALUES (?, ?, ?, ?, ?, ?)")) {
+                "INSERT INTO audit_log (actor, action, tenant_id, scope, reason, after_state, audit_key)"
+                        + " VALUES (?, ?, ?, ?, ?, ?, ?)"
+                        + " ON CONFLICT DO NOTHING")) {
             ps.setString(1, principalId);
             ps.setString(2, capability);
             ps.setString(3, tenantId);
             ps.setString(4, operation);
             ps.setString(5, reason);
             ps.setString(6, afterState);
+            ps.setString(7, auditKey);
             ps.executeUpdate();
         }
     }

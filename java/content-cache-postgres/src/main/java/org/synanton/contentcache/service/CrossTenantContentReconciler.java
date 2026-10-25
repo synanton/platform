@@ -3,6 +3,7 @@ package org.synanton.contentcache.service;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.Objects;
 import javax.sql.DataSource;
 import org.synanton.contentcache.postgres.TenantScopedContentStore;
@@ -17,6 +18,7 @@ public final class CrossTenantContentReconciler {
 
     private final DataSource dataSource;
     private final int defaultRetentionDays;
+    private final LongAdder denialAuditFailures = new LongAdder();
 
     public CrossTenantContentReconciler(DataSource dataSource, int defaultRetentionDays) {
         this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
@@ -31,37 +33,71 @@ public final class CrossTenantContentReconciler {
         }
         ServicePrincipal principal = request.principal();
         if (principal.expired(Instant.now())) {
-            throw new ServiceAuthorizationException("service principal expired");
+            // Expiry is a denial, not a distinguishable error: zero rows keeps
+            // the same anti-oracle behavior as a missing capability.
+            return deny(request, "service principal expired");
         }
         if (!principal.has(ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT)) {
-            // Denied before any read. Denial audit failure is deliberately
-            // swallowed so the caller still gets zero rows, not an error.
-            for (TenantScope scope : request.tenants()) {
-                try {
-                    store(scope).auditDenial(
-                            principal.principalId(),
-                            ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.name(),
-                            request.operation(),
-                            request.reason(),
-                            request.traceId());
-                } catch (RuntimeException ignored) {
-                    // no data exposed; denial remains zero rows
-                }
-            }
-            return ReconcileReport.empty();
+            return deny(request, "missing cross-tenant capability");
         }
         Map<TenantScope, Integer> counts = new LinkedHashMap<>();
+        Map<TenantScope, TenantOutcome> outcomes = new LinkedHashMap<>();
+        RuntimeException firstFailure = null;
         for (TenantScope scope : request.tenants()) {
-            int count = store(scope).countByDigestWithAudit(
-                    digest,
-                    principal.principalId(),
-                    ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.name(),
-                    request.operation(),
-                    request.reason(),
-                    request.traceId());
-            counts.put(scope, count);
+            try {
+                int count = store(scope).countByDigestWithAudit(
+                        digest,
+                        principal.principalId(),
+                        ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.name(),
+                        request.operation(),
+                        request.reason(),
+                        request.traceId(),
+                        auditKey(request, scope));
+                counts.put(scope, count);
+                outcomes.put(scope, TenantOutcome.success(count));
+            } catch (RuntimeException failure) {
+                outcomes.put(scope, TenantOutcome.failure(failure.getMessage()));
+                if (firstFailure == null) {
+                    firstFailure = failure;
+                }
+            }
+        }
+        if (firstFailure != null) {
+            throw new PartialReconcileException(outcomes, firstFailure);
         }
         return new ReconcileReport(counts);
+    }
+
+    /** Denied before any read; denial-audit failure stays zero rows. */
+    private ReconcileReport deny(CrossTenantRequest request, String detail) {
+        ServicePrincipal principal = request.principal();
+        for (TenantScope scope : request.tenants()) {
+            try {
+                store(scope).auditDenial(
+                        principal.principalId(),
+                        ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.name(),
+                        request.operation(),
+                        request.reason() + ": " + detail,
+                        request.traceId(),
+                        auditKey(request, scope));
+            } catch (RuntimeException ignored) {
+                denialAuditFailures.increment();
+            }
+        }
+        return ReconcileReport.empty();
+    }
+
+    private static String auditKey(CrossTenantRequest request, TenantScope scope) {
+        return request.principal().principalId()
+                + "|" + ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.name()
+                + "|" + scope.tenantId()
+                + "|" + request.operation()
+                + "|" + request.operationId();
+    }
+
+    /** Counter for the otherwise-silent denial-audit failure path. */
+    public long denialAuditFailures() {
+        return denialAuditFailures.sum();
     }
 
     private TenantScopedContentStore store(TenantScope scope) {

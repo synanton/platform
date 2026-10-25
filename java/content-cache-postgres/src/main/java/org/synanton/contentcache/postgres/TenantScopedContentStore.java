@@ -63,12 +63,13 @@ public final class TenantScopedContentStore {
             String capability,
             String operation,
             String reason,
-            String traceId) {
+            String traceId,
+            String auditKey) {
         requireDigest(digest);
         return delegate.inTenantTransaction(scope.tenantId(), con -> {
             int count = delegate.countByDigest(con, scope.tenantId(), digest);
             delegate.writeAudit(con, scope.tenantId(), principalId, capability,
-                    operation, reason, traceId, count, "allowed");
+                    operation, reason, traceId, auditKey, count, "allowed");
             return count;
         });
     }
@@ -79,10 +80,11 @@ public final class TenantScopedContentStore {
             String capability,
             String operation,
             String reason,
-            String traceId) {
+            String traceId,
+            String auditKey) {
         delegate.inTenantTransaction(scope.tenantId(), con -> {
             delegate.writeAudit(con, scope.tenantId(), principalId, capability,
-                    operation, reason, traceId, 0, "denied");
+                    operation, reason, traceId, auditKey, 0, "denied");
             return null;
         });
     }

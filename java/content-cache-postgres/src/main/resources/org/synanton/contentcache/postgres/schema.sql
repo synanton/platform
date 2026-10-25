@@ -97,3 +97,11 @@ ALTER TABLE audit_log FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS tenant_isolation ON audit_log;
 CREATE POLICY tenant_isolation ON audit_log
     USING (tenant_id = current_setting('app.tenant_id', true));
+
+-- #339 service reconcile audit idempotence: a retry of the same operation
+-- reuses the key and does not append a duplicate line. Existing tenant/legal
+-- hold audit rows leave the key NULL.
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS audit_key TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_audit_log_audit_key
+    ON audit_log (audit_key)
+    WHERE audit_key IS NOT NULL;
