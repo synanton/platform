@@ -1,7 +1,8 @@
 # Tenant isolation acceptance — layer by layer
 
-**Status:** In progress. #339 is not closed until every row below has evidence;
-aggregate "tenant isolation passed" is not sufficient.
+**Status:** PASS for every layer in scope (2026-10-25). Aggregate "tenant
+isolation passed" is still not the claim: each row below has its own evidence.
+#340 token issuance and #421 remain separate.
 **Primary acceptance:** reads from the primary. Replica read path is validated
 separately by `ReplicaReadParityTest` when a replica is configured.
 
@@ -12,18 +13,29 @@ separately by `ReplicaReadParityTest` when a replica is configured.
 | Cross-tenant partial failure | N per-tenant transactions + `PartialReconcileException` | A commits while B fails; outcomes per tenant | retry same `operationId` does not duplicate A audit | PASS: `partialFailureCarriesPerTenantOutcomesAndRetryDeduplicatesAudit` |
 | Audit integrity | same-transaction audit; denial counter | allowed audit row with row count | audit failure aborts allowed read; denial failure zero rows + counter | PASS: allowed/denial/mutation audit failure tests |
 | Permissioned partial/full scope | max 100 per call, enumerated, no wildcard | `{A,B}` two calls still bounded | `*`/`ALL`/empty/101 rejected | PASS: wildcard/oversize test |
-| Search projection | snapshot-scoped tenant filter | A query returns A | B query → zero results | **PENDING**: re-run against frozen `TenantScope` on rebuilt image |
-| Provenance | tenant-scoped identity read | A provenance 200 | B provenance 404, never reads A | PASS at unit/controller level; **PENDING** rebuilt-image row |
+| Search projection | snapshot-scoped tenant filter | A query returns A (20 results, fact top `c799bd65…:5`) | B query → 0 results | PASS: rebuilt image `5f98c95`, synquest `sha256:3503f4e1…` |
+| Provenance | tenant-scoped identity read | A provenance 200, source URI `manual-upload://mental-health-report-2010/mental-health-report-2010.pdf` | B provenance 404; unknown tenant 404 | PASS: rebuilt image `5f98c95` |
 | Service principal negative | no cross-tenant capability | — | zero rows, not error | PASS: capability-absent test |
 | Service principal positive | enumerated capability | audit line per tenant | unlisted tenant zero | PASS: multi-tenant + attribution tests |
-| Replica read path | same app role + FORCE RLS + local setter | known tenant non-zero on replica | unknown tenant zero on replica (RLS active) | **PENDING**: env-gated `ReplicaReadParityTest` skipped; no replica provisioned |
+| Replica read path | same app role + FORCE RLS + local setter | A and B non-zero on replica; each sees only its own artifact; primary/replica parity | unknown tenant zero on replica (RLS active) | PASS: `ReplicaReadParityTest` against local streaming replica (primary :55432, replica :55433); A/B/unknown observed |
+| Cross-tenant audited reconcile on replica | same-transaction audit | — | — | N/A by design: read-only replica cannot accept the audit write; reconcile stays primary, replica covers the read layer |
 | HTTP/token issuance | #340 | token → `ServicePrincipal` | no capability grant in token path | NOT IN #339 |
+
+## Replica execution record
+
+- Local streaming primary (`:55432`) and replica (`:55433`), same `app` role
+  with FORCE RLS and transaction-local `app.tenant_id`.
+- `ReplicaReadParityTest` passed: A and B had known artifacts on the replica;
+  unknown tenant saw zero for the same digest; A could not see B's digest and
+  B could not see A's; primary/replica counts matched.
+- The audited cross-tenant reconciler was not run on the read-only replica; it
+  stays on the primary because the audit row must commit with the read. The
+  replica row proves the read-layer RLS and cross-tenant attribution.
 
 ## Open gaps
 
-- Search projection and image-level provenance need a final rebuilt-image run
-  after the service-capability code.
-- Replica parity test is parameterized but skipped until a replica URL/role is
-  provisioned; do not claim replica evidence before it runs.
+- #340 token issuance and the browser/UI path remain separate.
 - #421 (unknown-tenant search 503 vs provenance 404) is a separate client-visible
   follow-up and does not block the layer rows above.
+- The replica test is env-gated for repeatability; the actual local run above
+  had a replica provisioned, so it is not a skipped row.
