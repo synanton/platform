@@ -72,7 +72,9 @@ class KnowledgeSearchControllerTest {
         return new KnowledgeCandidate(contentRefId + ":0", contentRefId, 0, 0.42,
                 "Supply chain", "The supply-chain policy governs logistics.", "file:///doc.md",
                 Set.of(UUID.nameUUIDFromBytes(("version:" + tenantId).getBytes(
-                        java.nio.charset.StandardCharsets.UTF_8))));
+                        java.nio.charset.StandardCharsets.UTF_8))),
+                2, 2, "APPENDIX A: DATA SOURCE DESCRIPTIONS",
+                List.of("APPENDIX A: DATA SOURCE DESCRIPTIONS"));
     }
 
     @Test
@@ -98,7 +100,11 @@ class KnowledgeSearchControllerTest {
                             .contains("\"provenance_ref\":\"/v1/knowledge/" + candidate.objectId() + "/provenance\"")
                             .contains("\"strategy\":\"bm25\"")
                             .contains("\"configuration_generation\":7")
-                            .contains("\"source_version_ids\"");
+                            .contains("\"source_version_ids\"")
+                            .contains("\"page_start\":2")
+                            .contains("\"page_end\":2")
+                            .contains("\"section\":\"APPENDIX A: DATA SOURCE DESCRIPTIONS\"")
+                            .contains("\"section_path\":[\"APPENDIX A: DATA SOURCE DESCRIPTIONS\"]");
                     // Backend topology must not leak into the public contract.
                     org.assertj.core.api.Assertions.assertThat(json)
                             .doesNotContain("score_dense", "rank_dense", "structured_content", "ingest_usage");

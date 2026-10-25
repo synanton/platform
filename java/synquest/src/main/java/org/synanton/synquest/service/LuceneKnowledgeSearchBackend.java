@@ -9,6 +9,7 @@ import org.synanton.synquest.api.dto.SearchRequest;
 import org.synanton.synquest.api.dto.SearchResponse;
 import org.synanton.synquest.config.SynquestProperties;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +102,16 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
         }
     }
 
+    private static List<String> sectionPath(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return Arrays.stream(value.split("\\s*>\\s*"))
+                .map(String::trim)
+                .filter(part -> !part.isEmpty())
+                .toList();
+    }
+
     private List<KnowledgeCandidate> liveCandidates(
             String tenantId, List<org.synanton.synquest.api.dto.Hit> hits, Set<UUID> tombstoned, int limit) {
         Map<UUID, List<ChunkRow>> chunksByRef = new HashMap<>();
@@ -109,24 +120,30 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
             List<ChunkRow> rows = chunksByRef.computeIfAbsent(
                 hit.contentRefId(), ref -> cacheClient.readChunks(tenantId, ref));
             Set<UUID> liveVersions = new java.util.HashSet<>();
+            ChunkRow matched = null;
             for (ChunkRow row : rows) {
                 if (row.chunkOrdinal() != hit.chunkOrdinal() || row.sourceVersionIds() == null) {
                     continue;
                 }
+                matched = row;
                 for (UUID versionId : row.sourceVersionIds()) {
                     if (!tombstoned.contains(versionId)) {
                         liveVersions.add(versionId);
                     }
                 }
             }
-            if (liveVersions.isEmpty()) {
+            if (liveVersions.isEmpty() || matched == null) {
                 continue;
             }
             String title = hit.heading() == null || hit.heading().isBlank()
                 ? hit.sourceUri() : hit.heading();
             candidates.add(new KnowledgeCandidate(
                 hit.chunkId(), hit.contentRefId(), hit.chunkOrdinal(), hit.score(),
-                title, hit.snippet(), hit.sourceUri(), Set.copyOf(liveVersions)));
+                title, hit.snippet(), hit.sourceUri(), Set.copyOf(liveVersions),
+                matched.pageStart() > 0 ? matched.pageStart() : null,
+                matched.pageEnd() > 0 ? matched.pageEnd() : null,
+                matched.sectionPath() == null || matched.sectionPath().isBlank() ? null : matched.sectionPath(),
+                sectionPath(matched.sectionPath())));
             if (candidates.size() >= limit) {
                 break;
             }

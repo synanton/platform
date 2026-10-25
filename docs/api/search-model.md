@@ -62,6 +62,10 @@ Gen-A ships `{query}` only; every other field is a reserved additive property
 | `results[].title` | string | display title |
 | `results[].snippet` | string | matched excerpt |
 | `results[].provenance_ref` | URI | link to the provenance resource |
+| `results[].page_start` | integer/null | additive #338; first page, null for non-paginated formats |
+| `results[].page_end` | integer/null | additive #338; last page, null for non-paginated formats |
+| `results[].section` | string/null | **deprecated** joined alias; null when absent; removal #431 |
+| `results[].section_path` | array[string]/null | canonical ordered hierarchy; null when absent |
 | `metadata.strategy` | string | retrieval strategy (e.g. `hybrid`) |
 | `metadata.configuration_generation` | integer | index/config generation |
 | `next_page_token` | string | opaque continuation token (§45); **Gen-B** — absent in Gen-A (single page) |
@@ -145,3 +149,32 @@ reader can tell frozen text from projection decisions:
 - Tenant and principal are derived only from the verified Bearer JWT. A
   tenant in the request body or query is ignored, per the Security section —
   the API creates no parallel access-control system.
+
+## Page and section fields (additive, #338)
+
+`POST /v1/search` and `GET /v1/knowledge/{object_id}/provenance` carry the same
+additive page/section fields:
+
+| Field | Type | Nullability | Contract |
+|---|---|---|---|
+| `page_start` | integer | nullable | first page; null when the format has no pages (e.g. EPUB) or the chunk has no page |
+| `page_end` | integer | nullable | last page; same null rule |
+| `section_path` | array of strings | nullable | ordered heading hierarchy; null/empty when the chunk has no section |
+| `section` | string | nullable, **deprecated** | joined alias (`" > "`) for backward compatibility; derived from `section_path`; removal tracked in #431 |
+
+Rules:
+
+- Additive only: no renames or removals in the #338 change. The legacy
+  `POST /search` string `section_path` remains as-is; the public `/v1` field is
+  the array.
+- Both public resources derive the values from the same canonical chunk row;
+  they are asserted to match for the same `object_id`.
+- Do not invent page numbers for non-paginated formats. The negative fixture is
+  a chunk with `page_start`/`page_end`/`section`/`section_path` all null.
+- Golden fixtures: `java/synquest/src/test/resources/fixtures/search-hit-v1.json`
+  and `provenance-v1.json`; their SHA-256 values are pinned in
+  `PublicResponseFixtureTest`. New wire shapes add a new fixture, not a rewrite.
+
+The earlier #16/#339 page evidence came from canonical/legacy paths. The
+public-API re-run after #338 is the evidence that the UI-consumed contract
+carries these fields.

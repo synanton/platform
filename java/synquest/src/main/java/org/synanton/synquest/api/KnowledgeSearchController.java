@@ -81,7 +81,11 @@ public class KnowledgeSearchController {
                             candidate.title(),
                             candidate.snippet(),
                             candidate.provenanceRef(),
-                            List.copyOf(candidate.sourceVersionIds())))
+                            List.copyOf(candidate.sourceVersionIds()),
+                            candidate.pageStart(),
+                            candidate.pageEnd(),
+                            candidate.section(),
+                            candidate.sectionPath()))
                     .toList();
             return ResponseEntity.ok(new SearchPage(results, new SearchPageMetadata(
                     backend.strategy(), searchService.stats(tenant.tenantId()).indexGeneration())));
@@ -162,7 +166,11 @@ public class KnowledgeSearchController {
             @JsonProperty("title") String title,
             @JsonProperty("snippet") String snippet,
             @JsonProperty("provenance_ref") String provenanceRef,
-            @JsonProperty("source_version_ids") List<UUID> sourceVersionIds) {}
+            @JsonProperty("source_version_ids") List<UUID> sourceVersionIds,
+            @JsonProperty("page_start") Integer pageStart,
+            @JsonProperty("page_end") Integer pageEnd,
+            @JsonProperty("section") String section,
+            @JsonProperty("section_path") List<String> sectionPath) {}
 
     public record SearchPage(
             @JsonProperty("results") List<SearchHitResource> results,

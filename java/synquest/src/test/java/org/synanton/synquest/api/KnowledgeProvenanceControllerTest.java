@@ -88,8 +88,8 @@ class KnowledgeProvenanceControllerTest {
     private void chunkAt(int ordinal) {
         when(cacheClient.readChunks(eq("tenant-a"), eq(contentRefId))).thenReturn(List.of(new ChunkRow(
                 "tenant-a", contentRefId, ordinal, "The supply-chain policy governs logistics.",
-                "bb".repeat(32), -1, -1, "", "", "", "[]", 0, "", false, List.of("PUBLIC"),
-                "", "", 0, Set.of(sourceVersionId), processingRunId)));
+                "bb".repeat(32), 2, 2, "APPENDIX A: DATA SOURCE DESCRIPTIONS", "", "", "[]", 0, "", false,
+                List.of("PUBLIC"), "", "", 0, Set.of(sourceVersionId), processingRunId)));
     }
 
     @Test
@@ -109,7 +109,11 @@ class KnowledgeProvenanceControllerTest {
                 .andExpect(jsonPath("$.source_uri").value("file:///doc.md"))
                 .andExpect(jsonPath("$.source_sha256").value("aa".repeat(32)))
                 .andExpect(jsonPath("$.chunk_sha256").value("bb".repeat(32)))
-                .andExpect(jsonPath("$.processing_run_id").value(processingRunId.toString()));
+                .andExpect(jsonPath("$.processing_run_id").value(processingRunId.toString()))
+                .andExpect(jsonPath("$.page_start").value(2))
+                .andExpect(jsonPath("$.page_end").value(2))
+                .andExpect(jsonPath("$.section").value("APPENDIX A: DATA SOURCE DESCRIPTIONS"))
+                .andExpect(jsonPath("$.section_path[0]").value("APPENDIX A: DATA SOURCE DESCRIPTIONS"));
     }
 
     @Test
@@ -182,6 +186,23 @@ class KnowledgeProvenanceControllerTest {
         mvc.perform(get("/v1/knowledge/" + contentRefId + ":0/provenance")
                         .header("Authorization", "Bearer " + token()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void nonPaginatedChunkExposesNullPageFields() throws Exception {
+        visibleManifest();
+        when(cacheClient.readChunks(eq("tenant-a"), eq(contentRefId))).thenReturn(List.of(new ChunkRow(
+                "tenant-a", contentRefId, 0, "EPUB body", "bb".repeat(32), -1, -1, "", "",
+                "", "[]", 0, "", false, List.of("PUBLIC"), "", "", 0,
+                Set.of(sourceVersionId), processingRunId)));
+
+        mvc.perform(get("/v1/knowledge/" + contentRefId + ":0/provenance")
+                        .header("Authorization", "Bearer " + token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page_start").doesNotExist())
+                .andExpect(jsonPath("$.page_end").doesNotExist())
+                .andExpect(jsonPath("$.section").doesNotExist())
+                .andExpect(jsonPath("$.section_path").doesNotExist());
     }
 
     @Test

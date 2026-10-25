@@ -87,7 +87,12 @@ public class KnowledgeProvenanceController {
                 manifest.get().sourceUri(),
                 manifest.get().sourceSha256(),
                 chunk.get().chunkSha256(),
-                chunk.get().processingRunId()));
+                chunk.get().processingRunId(),
+                chunk.get().pageStart() > 0 ? chunk.get().pageStart() : null,
+                chunk.get().pageEnd() > 0 ? chunk.get().pageEnd() : null,
+                chunk.get().sectionPath() == null || chunk.get().sectionPath().isBlank()
+                        ? null : chunk.get().sectionPath(),
+                sectionPath(chunk.get().sectionPath())));
     }
 
     private List<LiveSourceIdentity> liveIdentities(
@@ -113,6 +118,16 @@ public class KnowledgeProvenanceController {
         }
         identities.sort(Comparator.comparing(LiveSourceIdentity::sourceVersionId));
         return identities;
+    }
+
+    private static java.util.List<String> sectionPath(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return java.util.Arrays.stream(value.split("\\s*>\\s*"))
+                .map(String::trim)
+                .filter(part -> !part.isEmpty())
+                .toList();
     }
 
     private static TenantScope verifiedScope() {
@@ -155,7 +170,11 @@ public class KnowledgeProvenanceController {
             @JsonProperty("source_uri") String sourceUri,
             @JsonProperty("source_sha256") String sourceSha256,
             @JsonProperty("chunk_sha256") String chunkSha256,
-            @JsonProperty("processing_run_id") UUID processingRunId) {}
+            @JsonProperty("processing_run_id") UUID processingRunId,
+            @JsonProperty("page_start") Integer pageStart,
+            @JsonProperty("page_end") Integer pageEnd,
+            @JsonProperty("section") String section,
+            @JsonProperty("section_path") List<String> sectionPath) {}
 
     public record LiveSourceIdentity(
             @JsonProperty("source_version_id") UUID sourceVersionId,
