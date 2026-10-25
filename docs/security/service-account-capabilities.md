@@ -29,6 +29,7 @@ enum PrincipalType { USER, SERVICE, WORKLOAD, CONNECTOR, AGENT, SYSTEM }
 enum ServiceCapability {
     CONTENT_RECONCILE_TENANT,
     CONTENT_RECONCILE_CROSS_TENANT,
+    CONTENT_MUTATE_TENANT,
     MIGRATION_READ_TENANT,
     SEARCH_REINDEX_TENANT
 }
@@ -45,9 +46,11 @@ record CrossTenantRequest(
     ServicePrincipal principal,
     Set<TenantScope> tenants,
     String operation,
-    String reason) {
-    // construction requires CONTENT_RECONCILE_CROSS_TENANT and a non-empty,
-    // bounded tenant set; no wildcard tenant
+    String reason,
+    String traceId) {
+    // construction validates the principal and a non-empty, bounded set;
+    // capability is checked at execution so "capability absent" can return
+    // zero rows instead of throwing
 }
 ```
 
@@ -59,10 +62,11 @@ record CrossTenantRequest(
 - No capability implies "all tenants." Cross-tenant is a distinct capability
   and requires `CrossTenantRequest` with listed tenants.
 - **No wildcard scope.** `ALL`, `*`, an empty set, and a set larger than
-  `MAX_CROSS_TENANT_SCOPE = 100` are rejected at construction. Larger jobs are
-  split into bounded batches. A future `CROSS_TENANT_ALL` capability, if ever
-  needed, requires a code change, a distinct audit event, and a separate review;
-  it is not expressible by the current `CrossTenantRequest`.
+  `MAX_CROSS_TENANT_SCOPE = 100` are rejected at construction. The cap is **per
+  request/set**, not on the principal's configured access: a 500-tenant job
+  paginates into five bounded calls. A future `CROSS_TENANT_ALL` capability, if
+  ever needed, requires a code change, a distinct audit event, and a separate
+  review; it is not expressible by the current `CrossTenantRequest`.
 - Tenant-bound service calls use the same `TenantScope` path as users:
   `TenantScopedContentStore.forTenant(dataSource, retention, scope)`.
 
@@ -80,9 +84,25 @@ Not acceptable, even as an optimization:
   scope;
 - a wildcard/ALL tenant set (see the bound above).
 
+### Transaction shape (binding)
+
+The implementation uses **N short transactions, one per tenant**, not one long
+transaction with N `SET LOCAL` calls. Each iteration:
+
+1. opens a transaction;
+2. sets `app.tenant_id` transaction-locally;
+3. executes the read;
+4. writes the per-tenant audit line in that same transaction;
+5. commits before moving to the next tenant.
+
+There is deliberately no cross-tenant snapshot: reconcile does not need
+cross-tenant atomicity, and N short transactions keep pool/lock/vacuum
+behavior bounded. The audit line for tenant X is in tenant X's transaction, so
+a failed audit rolls back that tenant's read and returns no result.
+
 A future bulk path may reuse one connection across tenants only if it still
-enters each tenant's transaction-local scope and emits the per-tenant audit
-line. That optimization is not required for the first reconciliation job.
+enters each tenant's transaction-local scope and keeps the same per-tenant
+audit transaction. That optimization is not required for the first job.
 
 ## Legitimate cross-tenant reconcile
 
@@ -145,10 +165,21 @@ This design does not define cross-tenant mutations at all.
 
 ## Audit
 
-Audit is a security control, not best-effort logging. **If the audit write
-fails, the cross-tenant operation aborts before returning data or committing a
-mutation.** A database hiccup must not silently disable the only record of
-cross-tenant access.
+Audit is a security control, not best-effort logging. **For an allowed
+operation, the audit write happens in the same transaction as the read, before
+commit. If it fails, the operation aborts and no result is returned.** A
+database hiccup must not silently disable the only record of cross-tenant
+access.
+
+**Granularity:** one audit line per tenant touched, carrying that tenant's row
+count. This matches the N-transactions shape and is the useful unit for
+forensics. `row_count=0` is recorded when the tenant was in scope but had no
+matching rows.
+
+**Denial audit failure:** a request already denied for lack of capability is
+different. If its denial-audit write fails, the caller still receives zero
+rows, not an error; no data was exposed, and an error would be a side channel.
+Allowed operations remain abort-on-audit-failure.
 
 Every cross-tenant operation records, at minimum:
 
@@ -171,22 +202,27 @@ constant is a configuration error, not a grant.
 2. **Capability absent, enumerated set:** capability absent with tenant set
    `{A}` → reads return zero rows for A, **not an error**. This is distinct
    from test 1 and prevents the capability from becoming ambient.
-3. **No capability, cross-tenant:** service principal without
-   `CONTENT_RECONCILE_CROSS_TENANT` → zero rows/empty report, not error.
-4. **Capability, unlisted tenant:** zero rows for the unlisted tenant.
-5. **Mutation denial:** write/delete without the required capability → explicit
+3. **Multi-tenant positive:** capability present with set `{A, B}` → both
+   tenants return rows, proving the loop iterates; one audit line per tenant.
+4. **Read-path parity:** the cross-tenant loop's per-tenant read returns the
+   same count/data as a single-tenant read through the facade, so the
+   cross-tenant path does not drift onto a different read route.
+5. **Capability, unlisted tenant:** zero rows for the unlisted tenant.
+6. **Mutation denial:** write/delete without the required capability → explicit
    error, no partial write, audit line.
-6. **Wildcard/oversize:** `ALL`, `*`, empty, and >100 tenant sets rejected.
-7. **Audit failure:** audit write failure aborts the read/mutation; no result
-   leaks and no commit occurs.
-8. **Per-tenant RLS:** cross-tenant reads use the transaction-local setter per
+7. **Wildcard/oversize:** `ALL`, `*`, empty, and >100 tenant sets rejected.
+8. **Audit failure:** audit write failure aborts an allowed read/mutation; no
+   result leaks and no commit occurs.
+9. **Per-tenant RLS:** cross-tenant reads use the transaction-local setter per
    tenant; no `SET ROLE`/`BYPASSRLS`/session flag path exists.
-9. **Tenant-bound service:** `TenantScope` required; null/blank rejected.
-10. **Expired principal:** rejected before any read.
-11. **Config cannot grant:** an unknown capability string is rejected; a
+10. **Tenant-bound service:** `TenantScope` required; null/blank rejected.
+11. **Expired principal:** rejected before any read.
+12. **Config cannot grant:** an unknown capability string is rejected; a
     configuration-only change cannot add a capability.
-12. **No ambient bypass:** code search/test proves no `null` tenant branch
-    reaches RLS as a system mode.
+13. **No ambient bypass / no second path:** a source test proves service code
+    does not construct the repository outside the facade.
+14. **Denial-audit failure:** denied request with a failing denial-audit write
+    still returns zero rows, not an error.
 
 ## Relationship to #339 layers
 
@@ -209,18 +245,23 @@ application role and the same transaction-local `set_config('app.tenant_id',
 Acceptance reads from the primary; replica read-your-writes behavior is a
 separate consistency decision.
 
-## Open decisions (must be resolved in the implementation PR)
+## Resolved in the implementation (2026-10-25)
 
-1. **Facade entry point (item 5).** Intended direction: service principals use
-   the same `TenantScopedContentStore` and the facade consults the capability
-   set; there is no second store entry point. The exact API (a capability
-   parameter vs a service-scoped facade) is decided in the implementation PR.
-   Whichever shape wins, the #422 compile-time facade guard must cover it.
-2. **Store coverage (item 6).** This design covers the relational content cache
-   only. Cross-tenant service access to the search projection or provenance is
-   **out of scope** until a separate design covers those stores. A reconcile
-   job must not invent a cross-tenant search/provenance path in the meantime.
-   The layer-by-layer acceptance will name which stores each run proves.
+1. **Facade entry point (item 5).** Service mutations use
+   `ServiceContentStore`, a thin wrapper over the same
+   `TenantScopedContentStore`; cross-tenant reconcile uses
+   `TenantScopedContentStore` directly per tenant. There is no second store
+   entry point. `FacadeBoundaryTest` keeps `JdbcContentStore` package-private
+   and forbids main-source references outside the facade package.
+2. **Store coverage (item 6).** Relational content cache only. Cross-tenant
+   service access to search projection/provenance remains out of scope; the
+   layer-by-layer acceptance names the stores each run proves.
+3. **Transaction shape.** N short transactions, one per tenant; each read and
+   its audit row commit together. No cross-tenant snapshot.
+4. **Audit.** Same transaction, fail-closed for allowed operations; per-tenant
+   line with row count; denial-audit failure still returns zero rows.
+5. **Capability bound.** Enumerated set, maximum 100 per request; pagination for
+   larger jobs; no wildcard/ALL.
 
 Additional review questions:
 
@@ -230,3 +271,20 @@ Additional review questions:
   dedicated job; both must use the explicit-set + audit path.
 - Where the service principal is issued (#340) and how the compiled capability
   allowlist is distributed.
+
+## Implementation status — 2026-10-25
+
+Implemented in `java/content-cache-postgres`:
+
+- `ServiceCapability`, `ServicePrincipal`, `CrossTenantRequest`,
+  `ReconcileReport`, `CrossTenantContentReconciler`, `ServiceContentStore`.
+- `TenantScopedContentStore.countByDigestWithAudit` writes the audit row in the
+  same transaction as the per-tenant read.
+- Content-cache suite: 28 tests. Nine service-capability tests cover:
+  capability-present `{A}` (audit exactly A), capability-absent `{A}` (zero rows,
+  not error), multi-tenant `{A,B}`, read-path parity, wildcard/oversize
+  rejection, mutation denial with no partial write + audit, allowed-read audit
+  failure abort, denial-audit failure returns zero rows, expired principal.
+- Structural `FacadeBoundaryTest` and the existing RLS/facade tests remain.
+- Not implemented: HTTP/token issuance (#340), search/provenance cross-tenant
+  access, replica topology.

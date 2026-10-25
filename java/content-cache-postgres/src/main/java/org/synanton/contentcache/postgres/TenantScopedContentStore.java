@@ -47,6 +47,46 @@ public final class TenantScopedContentStore {
         return scope;
     }
 
+    public int countByDigest(String digest) {
+        requireDigest(digest);
+        return delegate.inTenantTransaction(scope.tenantId(), con ->
+                delegate.countByDigest(con, scope.tenantId(), digest));
+    }
+
+    /**
+     * Reads the tenant's count for a digest and writes the cross-tenant audit
+     * row in the same transaction. Audit failure rolls back the read.
+     */
+    public int countByDigestWithAudit(
+            String digest,
+            String principalId,
+            String capability,
+            String operation,
+            String reason,
+            String traceId) {
+        requireDigest(digest);
+        return delegate.inTenantTransaction(scope.tenantId(), con -> {
+            int count = delegate.countByDigest(con, scope.tenantId(), digest);
+            delegate.writeAudit(con, scope.tenantId(), principalId, capability,
+                    operation, reason, traceId, count, "allowed");
+            return count;
+        });
+    }
+
+    /** Denial audit; the caller decides whether audit failure aborts. */
+    public void auditDenial(
+            String principalId,
+            String capability,
+            String operation,
+            String reason,
+            String traceId) {
+        delegate.inTenantTransaction(scope.tenantId(), con -> {
+            delegate.writeAudit(con, scope.tenantId(), principalId, capability,
+                    operation, reason, traceId, 0, "denied");
+            return null;
+        });
+    }
+
     public PutResult put(byte[] payload, ContentMetadata metadata) {
         return delegate.put(scope.tenantId(), payload, metadata);
     }
@@ -85,6 +125,13 @@ public final class TenantScopedContentStore {
     public void setRetention(ContentReference reference, int retentionDays) {
         requireOwned(reference);
         delegate.setRetention(reference, retentionDays);
+    }
+
+    private static void requireDigest(String digest) {
+        Objects.requireNonNull(digest, "digest");
+        if (digest.isBlank()) {
+            throw new IllegalArgumentException("digest must not be blank");
+        }
     }
 
     private void requireOwned(ContentReference reference) {

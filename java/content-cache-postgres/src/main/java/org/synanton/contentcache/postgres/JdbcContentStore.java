@@ -250,6 +250,53 @@ final class JdbcContentStore implements ContentStore {
         });
     }
 
+    int countByDigest(Connection con, String tenantId, String digest) throws Exception {
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT count(*) FROM artifacts WHERE tenant_id = ? AND digest = ?")) {
+            ps.setString(1, tenantId);
+            ps.setString(2, digest);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    void writeAudit(
+            Connection con,
+            String tenantId,
+            String principalId,
+            String capability,
+            String operation,
+            String reason,
+            String traceId,
+            int rowCount,
+            String outcome) throws Exception {
+        String afterState = "{\"capability\":\"" + jsonEscape(capability)
+                + "\",\"operation\":\"" + jsonEscape(operation)
+                + "\",\"row_count\":" + rowCount
+                + ",\"outcome\":\"" + jsonEscape(outcome)
+                + "\",\"trace_id\":\"" + jsonEscape(traceId) + "\"}";
+        try (PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO audit_log (actor, action, tenant_id, scope, reason, after_state)"
+                        + " VALUES (?, ?, ?, ?, ?, ?)")) {
+            ps.setString(1, principalId);
+            ps.setString(2, capability);
+            ps.setString(3, tenantId);
+            ps.setString(4, operation);
+            ps.setString(5, reason);
+            ps.setString(6, afterState);
+            ps.executeUpdate();
+        }
+    }
+
+    private static String jsonEscape(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
     private String findArtifactId(Connection con, String tenantId, String digest) throws Exception {
         try (PreparedStatement ps = con.prepareStatement(
                 "SELECT artifact_id::text FROM artifacts WHERE tenant_id = ? AND digest = ?")) {
@@ -292,7 +339,7 @@ final class JdbcContentStore implements ContentStore {
     }
 
     @FunctionalInterface
-    private interface TenantWork<T> {
+    interface TenantWork<T> {
         T run(Connection con) throws Exception;
     }
 
@@ -302,7 +349,7 @@ final class JdbcContentStore implements ContentStore {
      * defense in depth; RLS is the fail-closed guarantee for code that bypasses
      * this repository.
      */
-    private <T> T inTenantTransaction(String tenantId, TenantWork<T> work) {
+    <T> T inTenantTransaction(String tenantId, TenantWork<T> work) {
         requireTenant(tenantId);
         try (Connection con = dataSource.getConnection()) {
             boolean autoCommit = con.getAutoCommit();
