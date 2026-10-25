@@ -58,8 +58,31 @@ record CrossTenantRequest(
 - `expiresAt` and `issuer` are mandatory; service capabilities are time-bound.
 - No capability implies "all tenants." Cross-tenant is a distinct capability
   and requires `CrossTenantRequest` with listed tenants.
+- **No wildcard scope.** `ALL`, `*`, an empty set, and a set larger than
+  `MAX_CROSS_TENANT_SCOPE = 100` are rejected at construction. Larger jobs are
+  split into bounded batches. A future `CROSS_TENANT_ALL` capability, if ever
+  needed, requires a code change, a distinct audit event, and a separate review;
+  it is not expressible by the current `CrossTenantRequest`.
 - Tenant-bound service calls use the same `TenantScope` path as users:
   `TenantScopedContentStore.forTenant(dataSource, retention, scope)`.
+
+## Cross-tenant execution under RLS (binding)
+
+A cross-tenant read is a **bounded loop over the validated tenant set**, with a
+per-tenant `TenantScope` and a transaction-local RLS context for each
+iteration. RLS remains enabled for every read.
+
+Not acceptable, even as an optimization:
+
+- `SET ROLE` or a `BYPASSRLS` role;
+- a session-level flag or a connection that skips `set_config`/`SET LOCAL`;
+- a single query that selects across tenants without entering each tenant's
+  scope;
+- a wildcard/ALL tenant set (see the bound above).
+
+A future bulk path may reuse one connection across tenants only if it still
+enters each tenant's transaction-local scope and emits the per-tenant audit
+line. That optimization is not required for the first reconciliation job.
 
 ## Legitimate cross-tenant reconcile
 
@@ -74,7 +97,12 @@ interface CrossTenantReconciler {
 
 final class ContentReconciler implements CrossTenantReconciler {
     public ReconcileReport reconcile(CrossTenantRequest request) {
-        ServiceAuthorization.require(request.principal(), CONTENT_RECONCILE_CROSS_TENANT);
+        if (!ServiceAuthorization.allows(
+                request.principal(), CONTENT_RECONCILE_CROSS_TENANT)) {
+            audit.denied(request.principal(), CONTENT_RECONCILE_CROSS_TENANT,
+                         request.operation(), request.reason());
+            return ReconcileReport.empty();   // zero rows, not an auth error
+        }
         for (TenantScope scope : request.tenants()) {
             TenantScopedContentStore store =
                 TenantScopedContentStore.forTenant(dataSource, retentionDays, scope);
@@ -89,10 +117,8 @@ final class ContentReconciler implements CrossTenantReconciler {
 ```
 
 The loop is deliberately per tenant. It does not open a global query, set a
-null scope, or bypass RLS. A future bulk path may reuse one connection across
-tenants only if it still calls the transaction-local setter per tenant and is
-covered by the same audit test; that optimization is not required for the
-first reconciliation job.
+null scope, or bypass RLS. The cross-tenant capability authorizes the bounded
+loop; it does not authorize a global read.
 
 ## Failure semantics
 
@@ -100,41 +126,67 @@ first reconciliation job.
 |---|---|
 | Service principal without `CONTENT_RECONCILE_CROSS_TENANT` attempts cross-tenant read | zero rows / empty report, not an auth error; denial audited |
 | Cross-tenant request with a tenant outside its explicit set | zero rows for that tenant, not an error that reveals existence |
+| Service principal without the required mutation capability attempts a write/delete | explicit `ServiceAuthorizationException`; no partial write; audited |
+| Cross-tenant mutation (write/delete) requested | rejected explicitly; this design defines no cross-tenant write capability |
+| Wildcard/ALL/empty/oversized tenant set | rejected at `CrossTenantRequest` construction |
+| Audit write fails | operation aborts; no results returned, no mutation committed |
 | Tenant-bound service call with no `TenantScope` | rejected (401/`MissingTenantContextException`), never system mode |
 | Expired service principal | rejected (401), capabilities not evaluated |
 | Unknown capability string in a token | rejected at verification; never mapped to a permissive default |
 
-Zero rows is intentional: it is indistinguishable from "no data" and avoids a
-tenant-existence oracle. An explicit error is permitted only where the caller
-already knows the tenant (the 403 case in the security model).
+Zero rows is intentional **for reads**: it is indistinguishable from "no
+data" and avoids a tenant-existence oracle. An explicit error is permitted only
+where the caller already knows the tenant (the 403 case in the security model).
+
+**Mutations are different.** A silent zero-row no-op on a write or delete is a
+data-integrity bug, not a denial. Missing mutation authorization is an explicit
+error before any write; the transaction is rolled back with no partial effect.
+This design does not define cross-tenant mutations at all.
 
 ## Audit
+
+Audit is a security control, not best-effort logging. **If the audit write
+fails, the cross-tenant operation aborts before returning data or committing a
+mutation.** A database hiccup must not silently disable the only record of
+cross-tenant access.
 
 Every cross-tenant operation records, at minimum:
 
 - principal id and issuer;
 - capability;
-- operation;
-- the explicit tenant set (one line per tenant is acceptable);
-- reason;
-- outcome and timestamp.
+- operation and reason;
+- the requested tenant set and the per-tenant iteration;
+- per-tenant row count (including zero);
+- outcome (allowed/denied/error) and timestamp;
+- trace id.
 
-The audit is written even when the read returns zero rows. A capability grant
-without a code-defined enum constant is a configuration error, not a grant.
+Denied attempts are audited too. A capability grant without a code-defined enum
+constant is a configuration error, not a grant.
 
 ## Tests required before implementation is accepted
 
-1. **No capability, cross-tenant:** service principal without
+1. **Capability present, enumerated set:** capability present with tenant set
+   `{A}` → reads succeed for A, return zero rows for B, and the audit line
+   records exactly `{A}`, not `{A, B}`.
+2. **Capability absent, enumerated set:** capability absent with tenant set
+   `{A}` → reads return zero rows for A, **not an error**. This is distinct
+   from test 1 and prevents the capability from becoming ambient.
+3. **No capability, cross-tenant:** service principal without
    `CONTENT_RECONCILE_CROSS_TENANT` → zero rows/empty report, not error.
-2. **Capability, listed tenants:** positive reconcile → one audit line per
-   tenant, results only from the listed tenants.
-3. **Capability, unlisted tenant:** zero rows for the unlisted tenant.
-4. **Tenant-bound service:** `TenantScope` required; null/blank rejected.
-5. **Expired principal:** rejected before any read.
-6. **Config cannot grant:** an unknown capability string is rejected; a
-   configuration-only change cannot add a capability.
-7. **No ambient bypass:** code search/test proves no `null` tenant branch
-   reaches RLS as a system mode.
+4. **Capability, unlisted tenant:** zero rows for the unlisted tenant.
+5. **Mutation denial:** write/delete without the required capability → explicit
+   error, no partial write, audit line.
+6. **Wildcard/oversize:** `ALL`, `*`, empty, and >100 tenant sets rejected.
+7. **Audit failure:** audit write failure aborts the read/mutation; no result
+   leaks and no commit occurs.
+8. **Per-tenant RLS:** cross-tenant reads use the transaction-local setter per
+   tenant; no `SET ROLE`/`BYPASSRLS`/session flag path exists.
+9. **Tenant-bound service:** `TenantScope` required; null/blank rejected.
+10. **Expired principal:** rejected before any read.
+11. **Config cannot grant:** an unknown capability string is rejected; a
+    configuration-only change cannot add a capability.
+12. **No ambient bypass:** code search/test proves no `null` tenant branch
+    reaches RLS as a system mode.
 
 ## Relationship to #339 layers
 
@@ -157,7 +209,20 @@ application role and the same transaction-local `set_config('app.tenant_id',
 Acceptance reads from the primary; replica read-your-writes behavior is a
 separate consistency decision.
 
-## Open questions for review
+## Open decisions (must be resolved in the implementation PR)
+
+1. **Facade entry point (item 5).** Intended direction: service principals use
+   the same `TenantScopedContentStore` and the facade consults the capability
+   set; there is no second store entry point. The exact API (a capability
+   parameter vs a service-scoped facade) is decided in the implementation PR.
+   Whichever shape wins, the #422 compile-time facade guard must cover it.
+2. **Store coverage (item 6).** This design covers the relational content cache
+   only. Cross-tenant service access to the search projection or provenance is
+   **out of scope** until a separate design covers those stores. A reconcile
+   job must not invent a cross-tenant search/provenance path in the meantime.
+   The layer-by-layer acceptance will name which stores each run proves.
+
+Additional review questions:
 
 - Capability names and the first positive cross-tenant operation (Lucentrix
   reconcile vs #29 classification).
