@@ -29,6 +29,7 @@ enum PrincipalType { USER, SERVICE, WORKLOAD, CONNECTOR, AGENT, SYSTEM }
 enum ServiceCapability {
     CONTENT_RECONCILE_TENANT,
     CONTENT_RECONCILE_CROSS_TENANT,
+    CONTENT_MUTATE_TENANT,
     MIGRATION_READ_TENANT,
     SEARCH_REINDEX_TENANT
 }
@@ -244,18 +245,23 @@ application role and the same transaction-local `set_config('app.tenant_id',
 Acceptance reads from the primary; replica read-your-writes behavior is a
 separate consistency decision.
 
-## Open decisions (must be resolved in the implementation PR)
+## Resolved in the implementation (2026-10-25)
 
-1. **Facade entry point (item 5).** Intended direction: service principals use
-   the same `TenantScopedContentStore` and the facade consults the capability
-   set; there is no second store entry point. The exact API (a capability
-   parameter vs a service-scoped facade) is decided in the implementation PR.
-   Whichever shape wins, the #422 compile-time facade guard must cover it.
-2. **Store coverage (item 6).** This design covers the relational content cache
-   only. Cross-tenant service access to the search projection or provenance is
-   **out of scope** until a separate design covers those stores. A reconcile
-   job must not invent a cross-tenant search/provenance path in the meantime.
-   The layer-by-layer acceptance will name which stores each run proves.
+1. **Facade entry point (item 5).** Service mutations use
+   `ServiceContentStore`, a thin wrapper over the same
+   `TenantScopedContentStore`; cross-tenant reconcile uses
+   `TenantScopedContentStore` directly per tenant. There is no second store
+   entry point. `FacadeBoundaryTest` keeps `JdbcContentStore` package-private
+   and forbids main-source references outside the facade package.
+2. **Store coverage (item 6).** Relational content cache only. Cross-tenant
+   service access to search projection/provenance remains out of scope; the
+   layer-by-layer acceptance names the stores each run proves.
+3. **Transaction shape.** N short transactions, one per tenant; each read and
+   its audit row commit together. No cross-tenant snapshot.
+4. **Audit.** Same transaction, fail-closed for allowed operations; per-tenant
+   line with row count; denial-audit failure still returns zero rows.
+5. **Capability bound.** Enumerated set, maximum 100 per request; pagination for
+   larger jobs; no wildcard/ALL.
 
 Additional review questions:
 
@@ -265,3 +271,20 @@ Additional review questions:
   dedicated job; both must use the explicit-set + audit path.
 - Where the service principal is issued (#340) and how the compiled capability
   allowlist is distributed.
+
+## Implementation status — 2026-10-25
+
+Implemented in `java/content-cache-postgres`:
+
+- `ServiceCapability`, `ServicePrincipal`, `CrossTenantRequest`,
+  `ReconcileReport`, `CrossTenantContentReconciler`, `ServiceContentStore`.
+- `TenantScopedContentStore.countByDigestWithAudit` writes the audit row in the
+  same transaction as the per-tenant read.
+- Content-cache suite: 28 tests. Nine service-capability tests cover:
+  capability-present `{A}` (audit exactly A), capability-absent `{A}` (zero rows,
+  not error), multi-tenant `{A,B}`, read-path parity, wildcard/oversize
+  rejection, mutation denial with no partial write + audit, allowed-read audit
+  failure abort, denial-audit failure returns zero rows, expired principal.
+- Structural `FacadeBoundaryTest` and the existing RLS/facade tests remain.
+- Not implemented: HTTP/token issuance (#340), search/provenance cross-tenant
+  access, replica topology.
