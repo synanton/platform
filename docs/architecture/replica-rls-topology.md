@@ -54,6 +54,10 @@ that would require the separate audit-sink split above. The replica test covers
 the read layer and cross-tenant attribution; the audited reconcile path is
 validated on the primary.
 
+**Continuous coverage:** the current evidence is a one-time local acceptance.
+`ReplicaReadParityTest` is env-gated and skips in CI, so there is no regression
+protection until a streaming replica is provisioned in CI/nightly (#428).
+
 ## Risks pinned
 
 | Risk | Control |

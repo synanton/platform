@@ -78,6 +78,7 @@ class KnowledgeSearchControllerTest {
     @Test
     void searchBindsTenantFromVerifiedJwtAndReturnsFrozenShape() throws Exception {
         var candidate = candidate("tenant-a");
+        when(backend.hasCanonicalData("tenant-a")).thenReturn(true);
         when(backend.isReady("tenant-a")).thenReturn(true);
         when(backend.strategy()).thenReturn("bm25");
         when(searchService.stats("tenant-a"))
@@ -114,6 +115,35 @@ class KnowledgeSearchControllerTest {
                         .content("{\"tenant_id\":\"tenant-b\",\"query\":\"supply-chain\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("TENANT_IN_REQUEST_BODY"));
+
+        verify(backend, never()).candidates(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void unknownTenantIs404NotA503RetrySignal() throws Exception {
+        when(backend.hasCanonicalData("tenant-a")).thenReturn(false);
+        mvc.perform(post("/v1/search")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"supply-chain\"}"))
+                .andExpect(status().isNotFound());
+
+        verify(backend, never()).candidates(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void knownTenantWithBuildingProjectionIs503WithRetryAfter() throws Exception {
+        when(backend.hasCanonicalData("tenant-a")).thenReturn(true);
+        when(backend.isReady("tenant-a")).thenReturn(false);
+        mvc.perform(post("/v1/search")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"supply-chain\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .header().string("Retry-After", "5"));
 
         verify(backend, never()).candidates(org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());

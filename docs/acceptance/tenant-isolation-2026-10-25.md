@@ -29,7 +29,7 @@ replica.
 | Provenance | tenant-scoped identity read | A provenance 200, source URI `manual-upload://mental-health-report-2010/mental-health-report-2010.pdf` | B provenance 404; unknown tenant 404 | PASS: rebuilt image `5f98c95` |
 | Service principal negative | no cross-tenant capability | — | zero rows, not error | PASS: capability-absent test |
 | Service principal positive | enumerated capability | audit line per tenant | unlisted tenant zero | PASS: multi-tenant + attribution tests |
-| Replica read path | same app role + FORCE RLS + local setter | A and B non-zero on replica; each sees only its own artifact; primary/replica parity | unknown tenant zero on replica (RLS active) | PASS: `ReplicaReadParityTest` against local streaming replica (primary :55432, replica :55433); A/B/unknown observed |
+| Replica read path | same app role + FORCE RLS + local setter | A and B non-zero on replica; each sees only its own artifact; primary/replica parity | unknown tenant zero on replica (RLS active) | PASS: `ReplicaReadParityTest` against local streaming replica (primary :55432, replica :55433); A/B/unknown observed. One-time acceptance, not continuous; CI provisioning tracked in #428 |
 | Cross-tenant audited reconcile on replica | same-transaction audit | — | — | N/A by design: read-only replica cannot accept the audit write; reconcile stays primary, replica covers the read layer |
 | HTTP/token issuance | #340 | token → `ServicePrincipal` | no capability grant in token path | NOT IN #339 |
 
@@ -43,6 +43,13 @@ replica.
 - The audited cross-tenant reconciler was not run on the read-only replica; it
   stays on the primary because the audit row must commit with the read. The
   replica row proves the read-layer RLS and cross-tenant attribution.
+
+## Replica validation policy
+
+The replica row is a **one-time local acceptance** (2026-10-25), not continuous
+CI coverage. Re-run it when the replica role, pool configuration, FORCE RLS, or
+topology changes. CI provisioning is tracked in #428; until that lands, a green
+build does not prove replica RLS.
 
 ## Open gaps
 

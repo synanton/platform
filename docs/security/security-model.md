@@ -42,6 +42,8 @@ The client is untrusted. The target contract is that the platform validates a te
 | Cross-tenant object access | 404 | (normal not-found) |
 | `tenant_id` in request body | 400 | `TENANT_IN_REQUEST_BODY` |
 | `X-Tenant-ID` header | 400 | `TENANT_HEADER_NOT_SUPPORTED` |
+| Search, unknown/absent tenant | 404 | (normal not-found) |
+| Search, known tenant, projection building | 503 + `Retry-After` | (retryable readiness) |
 
 The anti-oracle row is the one most often missed: "tenant doesn't exist" and "tenant exists but you are not a member" must be identical to an unauthorized caller.
 
