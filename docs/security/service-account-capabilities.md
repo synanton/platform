@@ -111,8 +111,19 @@ fails. The reconciler continues to collect per-tenant outcomes and throws
 `PartialReconcileException` carrying a `TenantOutcome` per tenant (success row
 count or failure). The caller retries only failed tenants. Reads are
 side-effect-free; audit rows are keyed by
-`(principal, capability, tenant, operation, operationId)`, so retrying the same
-`operationId` does not duplicate the successful tenant's audit line.
+`sha256(principal, capability, tenant, operation, operationId)` where
+`operationId` is caller-supplied and stable across retries. No timestamp,
+request id, or random value is in the key, so retrying the same
+`operationId` does not duplicate the successful tenant's audit line. The test
+retries a real partial call and asserts one audit row, not merely the SQL
+clause.
+
+**Actionable failure:** `PartialReconcileException.outcomes()` maps each tenant
+to `TenantOutcome` (success row count or failure). A capability denial is not a
+partial failure: it returns an empty report, not an exception. An oversize set
+is rejected at construction, not partially skipped. The intended retry pattern
+is to retry the failed tenants (or the whole set); both are safe because the
+audit key is stable and the read is side-effect-free.
 
 A future bulk path may reuse one connection across tenants only if it still
 enters each tenant's transaction-local scope and keeps the same per-tenant
@@ -197,9 +208,10 @@ rows, not an error; no data was exposed, and an error would be a side channel.
 Allowed operations remain abort-on-audit-failure.
 
 This is the only path where a security event can be silently dropped. The
-reconciler increments `audit.denial.write.failure` for every failed denial
-audit; alert on any non-zero rate. A retry of the same `operationId` is
-idempotent via the audit key.
+reconciler and mutation gate increment the Micrometer counter
+`audit.denial.write.failure` for every failed denial audit; alert on any
+non-zero rate. The same value is exposed as a `LongAdder` for non-Spring
+callers. A retry of the same `operationId` is idempotent via the audit key.
 
 Every cross-tenant operation records, at minimum:
 

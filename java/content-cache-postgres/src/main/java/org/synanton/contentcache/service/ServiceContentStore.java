@@ -1,7 +1,6 @@
 package org.synanton.contentcache.service;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.LongAdder;
 import org.synanton.contentcache.ContentReference;
 import org.synanton.contentcache.postgres.TenantScopedContentStore;
 
@@ -14,11 +13,17 @@ public final class ServiceContentStore {
 
     private final TenantScopedContentStore delegate;
     private final ServicePrincipal principal;
-    private final LongAdder denialAuditFailures = new LongAdder();
+    private final ServiceAuditMetrics metrics;
 
     public ServiceContentStore(TenantScopedContentStore delegate, ServicePrincipal principal) {
+        this(delegate, principal, new ServiceAuditMetrics());
+    }
+
+    public ServiceContentStore(
+            TenantScopedContentStore delegate, ServicePrincipal principal, ServiceAuditMetrics metrics) {
         this.delegate = Objects.requireNonNull(delegate, "delegate");
         this.principal = Objects.requireNonNull(principal, "principal");
+        this.metrics = Objects.requireNonNull(metrics, "metrics");
     }
 
     public void setRetention(ContentReference reference, int retentionDays) {
@@ -38,7 +43,7 @@ public final class ServiceContentStore {
 
     /** Counter for the otherwise-silent mutation-denial audit failure. */
     public long denialAuditFailures() {
-        return denialAuditFailures.sum();
+        return metrics.denialWriteFailures();
     }
 
     private void requireMutation() {
@@ -53,7 +58,7 @@ public final class ServiceContentStore {
                         null);
             } catch (RuntimeException ignored) {
                 // Denial remains explicit; the loss is counted for alerting.
-                denialAuditFailures.increment();
+                metrics.denialWriteFailed();
             }
             throw new ServiceAuthorizationException(
                     "service principal lacks " + ServiceCapability.CONTENT_MUTATE_TENANT);

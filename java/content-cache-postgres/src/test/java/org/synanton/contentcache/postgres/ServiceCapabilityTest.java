@@ -3,6 +3,7 @@ package org.synanton.contentcache.postgres;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.time.Instant;
@@ -21,6 +22,7 @@ import org.synanton.contentcache.service.CrossTenantContentReconciler;
 import org.synanton.contentcache.service.CrossTenantRequest;
 import org.synanton.contentcache.service.PartialReconcileException;
 import org.synanton.contentcache.service.ReconcileReport;
+import org.synanton.contentcache.service.ServiceAuditMetrics;
 import org.synanton.contentcache.service.ServiceAuthorizationException;
 import org.synanton.contentcache.service.ServiceCapability;
 import org.synanton.contentcache.service.ServiceContentStore;
@@ -260,13 +262,17 @@ class ServiceCapabilityTest extends PostgresTestBase {
         ContentReference ref = storeA.put(
                 "mutate".getBytes(StandardCharsets.UTF_8),
                 ContentMetadata.of("text/plain", "owner-1")).reference();
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
         ServiceContentStore noCap = new ServiceContentStore(
-                storeA, principal("mutation-audit-fail"));
+                storeA, principal("mutation-audit-fail"),
+                new ServiceAuditMetrics(registry));
         installAuditFailure("mutation-audit-fail");
         try {
             assertThatThrownBy(() -> noCap.setRetention(ref, 30))
                     .isInstanceOf(ServiceAuthorizationException.class);
             assertThat(noCap.denialAuditFailures()).isEqualTo(1);
+            assertThat(registry.get(ServiceAuditMetrics.DENIAL_WRITE_FAILURE).counter().count())
+                    .isEqualTo(1.0);
         } finally {
             removeAuditFailure();
         }
@@ -294,13 +300,18 @@ class ServiceCapabilityTest extends PostgresTestBase {
     void denialAuditFailureStillReturnsZeroRowsAndCountsTheLoss() throws Exception {
         TenantScope a = scope("a");
         String digest = put(store(a), "shared");
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        CrossTenantContentReconciler metricReconciler = new CrossTenantContentReconciler(
+                dataSource, 90, new ServiceAuditMetrics(registry));
         installAuditFailure("deny-audit-fail");
         try {
-            ReconcileReport report = reconciler.reconcile(
+            ReconcileReport report = metricReconciler.reconcile(
                     request(principal("deny-audit-fail"), "trace-deny-audit-fail", a),
                     digest);
             assertThat(report.count(a)).isZero();
-            assertThat(reconciler.denialAuditFailures()).isEqualTo(1);
+            assertThat(metricReconciler.denialAuditFailures()).isEqualTo(1);
+            assertThat(registry.get(ServiceAuditMetrics.DENIAL_WRITE_FAILURE).counter().count())
+                    .isEqualTo(1.0);
         } finally {
             removeAuditFailure();
         }
