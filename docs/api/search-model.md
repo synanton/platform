@@ -177,4 +177,8 @@ Rules:
 
 The earlier #16/#339 page evidence came from canonical/legacy paths. The
 public-API re-run after #338 is the evidence that the UI-consumed contract
-carries these fields.
+carries these fields. Observed on image `0b68e34`: `/v1/search` and
+`/v1/knowledge/{object_id}/provenance` both returned `page_start=2`,
+`page_end=2`, `section="APPENDIX A: DATA SOURCE DESCRIPTIONS"`, and
+`section_path=["APPENDIX A: DATA SOURCE DESCRIPTIONS"]` for
+`c799bd65-394c-56ce-a7ac-a871fd5587df:5`.
