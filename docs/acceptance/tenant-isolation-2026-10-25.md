@@ -4,7 +4,19 @@
 isolation passed" is still not the claim: each row below has its own evidence.
 #340 token issuance and #421 remain separate.
 **Primary acceptance:** reads from the primary. Replica read path is validated
-separately by `ReplicaReadParityTest` when a replica is configured.
+separately by `ReplicaReadParityTest` against a locally provisioned streaming
+replica.
+
+## Evidence metadata
+
+| Item | Value |
+|---|---|
+| Image/code commit | `5f98c95` (search/provenance image; synquest `sha256:3503f4e1…`) |
+| Acceptance tests | `2920242` (content-cache + replica parity) |
+| Core corpus hash | `b3c4fedb457d9dc746ce723180dad76858e805e79387ebc504128a8f0d59f08e` |
+| CI | #427 Build `40212537413`, Real PDF `40212537375` |
+| Replica | local streaming primary `:55432`, replica `:55433`, same `app` role |
+
 
 | Layer | Control | Positive | Negative | Evidence / status |
 |---|---|---|---|---|
