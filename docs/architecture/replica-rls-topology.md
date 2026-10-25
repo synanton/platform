@@ -41,14 +41,18 @@ configured. With `REPLICA_PARITY_PRIMARY_URL` and
 
 1. writes a known artifact/tenant on the primary;
 2. waits for the replica to expose it;
-3. asserts the known tenant count is **non-zero on the replica** (the setter and
-   role work; a missing setter would return zero);
+3. asserts known tenant A and B counts are **non-zero on the replica** (the
+   setter and role work; a missing setter would return zero);
 4. asserts an unknown tenant sees **zero rows** for the same digest (RLS is
    active; a bypass role would see the row);
-5. asserts primary and replica single-tenant counts match.
+5. asserts A cannot see B's artifact and B cannot see A's on the replica
+   (read-layer cross-tenant attribution);
+6. asserts primary and replica counts match for both tenants.
 
-Cross-tenant reconcile with audit is not run against the read-only replica; that
-would require the separate audit-sink split above.
+The audited cross-tenant reconciler is not run against the read-only replica;
+that would require the separate audit-sink split above. The replica test covers
+the read layer and cross-tenant attribution; the audited reconcile path is
+validated on the primary.
 
 ## Risks pinned
 

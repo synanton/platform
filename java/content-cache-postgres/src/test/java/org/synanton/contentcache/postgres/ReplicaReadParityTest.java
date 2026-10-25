@@ -35,27 +35,51 @@ class ReplicaReadParityTest {
         DataSource replica = dataSource(replicaUrl, env("REPLICA_PARITY_REPLICA_USER", "app"),
                 env("REPLICA_PARITY_REPLICA_PASSWORD", "app"));
 
-        TenantScope tenant = TenantScope.of("replica-parity-" + UUID.randomUUID());
+        TenantScope tenantA = TenantScope.of("replica-parity-a-" + UUID.randomUUID());
+        TenantScope tenantB = TenantScope.of("replica-parity-b-" + UUID.randomUUID());
         TenantScope unknown = TenantScope.of("replica-unknown-" + UUID.randomUUID());
-        TenantScopedContentStore primaryStore =
-                TenantScopedContentStore.forTenant(primary, 90, tenant);
-        String digest = primaryStore.put(
-                "replica-parity".getBytes(StandardCharsets.UTF_8),
+        TenantScopedContentStore primaryA =
+                TenantScopedContentStore.forTenant(primary, 90, tenantA);
+        TenantScopedContentStore primaryB =
+                TenantScopedContentStore.forTenant(primary, 90, tenantB);
+        String digestA = primaryA.put(
+                "replica-parity-a".getBytes(StandardCharsets.UTF_8),
+                ContentMetadata.of("text/plain", "owner-1")).reference().digest();
+        String digestB = primaryB.put(
+                "replica-parity-b".getBytes(StandardCharsets.UTF_8),
                 ContentMetadata.of("text/plain", "owner-1")).reference().digest();
 
-        TenantScopedContentStore replicaStore =
-                TenantScopedContentStore.forTenant(replica, 90, tenant);
-        int replicaCount = waitForReplica(replicaStore, digest, Duration.ofSeconds(30));
+        TenantScopedContentStore replicaA =
+                TenantScopedContentStore.forTenant(replica, 90, tenantA);
+        TenantScopedContentStore replicaB =
+                TenantScopedContentStore.forTenant(replica, 90, tenantB);
+        int replicaCountA = waitForReplica(replicaA, digestA, Duration.ofSeconds(30));
+        int replicaCountB = waitForReplica(replicaB, digestB, Duration.ofSeconds(30));
 
-        assertThat(replicaCount)
-                .as("known tenant is non-zero on the replica; a missing setter would be zero")
+        assertThat(replicaCountA)
+                .as("known tenant A is non-zero on the replica; a missing setter would be zero")
                 .isEqualTo(1);
-        assertThat(TenantScopedContentStore.forTenant(replica, 90, unknown).countByDigest(digest))
+        assertThat(replicaCountB)
+                .as("known tenant B is non-zero on the replica")
+                .isEqualTo(1);
+        assertThat(TenantScopedContentStore.forTenant(replica, 90, unknown).countByDigest(digestA))
                 .as("unknown tenant sees zero on the replica; a bypass role would see the row")
                 .isZero();
-        assertThat(primaryStore.countByDigest(digest))
-                .as("primary/replica single-tenant read parity")
-                .isEqualTo(replicaCount);
+
+        // Read-layer cross-tenant set: each requested tenant reads only its own
+        // artifact. The audited reconciler stays on the primary because a
+        // read-only replica cannot accept the same-transaction audit write.
+        assertThat(replicaA.countByDigest(digestA)).isEqualTo(1);
+        assertThat(replicaA.countByDigest(digestB)).as("A must not see B's artifact").isZero();
+        assertThat(replicaB.countByDigest(digestB)).isEqualTo(1);
+        assertThat(replicaB.countByDigest(digestA)).as("B must not see A's artifact").isZero();
+
+        assertThat(primaryA.countByDigest(digestA))
+                .as("primary/replica A read parity")
+                .isEqualTo(replicaCountA);
+        assertThat(primaryB.countByDigest(digestB))
+                .as("primary/replica B read parity")
+                .isEqualTo(replicaCountB);
     }
 
     private static int waitForReplica(TenantScopedContentStore store, String digest, Duration timeout)

@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     api(project(":java:content-cache-api"))
+    api(libs.micrometer.core)
     implementation(project(":java:storage-contract"))
     api(libs.postgresql)
     testImplementation(platform(libs.junit.bom))

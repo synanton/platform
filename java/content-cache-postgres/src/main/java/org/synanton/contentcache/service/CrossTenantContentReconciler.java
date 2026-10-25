@@ -1,9 +1,11 @@
 package org.synanton.contentcache.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.HexFormat;
 import java.util.Map;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.Objects;
 import javax.sql.DataSource;
 import org.synanton.contentcache.postgres.TenantScopedContentStore;
@@ -18,11 +20,17 @@ public final class CrossTenantContentReconciler {
 
     private final DataSource dataSource;
     private final int defaultRetentionDays;
-    private final LongAdder denialAuditFailures = new LongAdder();
+    private final ServiceAuditMetrics metrics;
 
     public CrossTenantContentReconciler(DataSource dataSource, int defaultRetentionDays) {
+        this(dataSource, defaultRetentionDays, new ServiceAuditMetrics());
+    }
+
+    public CrossTenantContentReconciler(
+            DataSource dataSource, int defaultRetentionDays, ServiceAuditMetrics metrics) {
         this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
         this.defaultRetentionDays = defaultRetentionDays;
+        this.metrics = Objects.requireNonNull(metrics, "metrics");
     }
 
     public ReconcileReport reconcile(CrossTenantRequest request, String digest) {
@@ -81,23 +89,30 @@ public final class CrossTenantContentReconciler {
                         request.traceId(),
                         auditKey(request, scope));
             } catch (RuntimeException ignored) {
-                denialAuditFailures.increment();
+                metrics.denialWriteFailed();
             }
         }
         return ReconcileReport.empty();
     }
 
     private static String auditKey(CrossTenantRequest request, TenantScope scope) {
-        return request.principal().principalId()
-                + "|" + ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.name()
-                + "|" + scope.tenantId()
-                + "|" + request.operation()
-                + "|" + request.operationId();
+        String raw = request.principal().principalId()
+                + "\u001f" + ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.name()
+                + "\u001f" + scope.tenantId()
+                + "\u001f" + request.operation()
+                + "\u001f" + request.operationId();
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(raw.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (Exception e) {
+            throw new IllegalStateException("cannot build audit key", e);
+        }
     }
 
     /** Counter for the otherwise-silent denial-audit failure path. */
     public long denialAuditFailures() {
-        return denialAuditFailures.sum();
+        return metrics.denialWriteFailures();
     }
 
     private TenantScopedContentStore store(TenantScope scope) {
