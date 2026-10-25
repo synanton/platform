@@ -1,6 +1,7 @@
 # Service-account capability design
 
-**Status:** Proposed 2026-10-24 for #339 review. No implementation yet.
+**Status:** Implemented for the content-cache service path 2026-10-25;
+token issuance/keys/revocation remains #340.
 **Scope:** platform authorization and data access for `PrincipalType.SERVICE`;
 issuance is #340, identity resolution is #341.
 **Related:** [security model](security-model.md), [tenant-context contract](../api/tenant-context-contract.md), #339, #340, #341.
@@ -56,6 +57,19 @@ record CrossTenantRequest(
 ```
 
 - `ServicePrincipal` is explicit. It is not inferred from a missing user.
+- **Claim mapping is total and closed.** `ServiceCapability.fromClaim` maps each
+  emitted claim to a compiled enum constant; `ServicePrincipal.fromClaims` fails
+  at issuance for a blank/unknown claim. A typo never becomes a silent
+  empty-capability read denial.
+  | Claim | Capability |
+  |---|---|
+  | `content.reconcile` | `CONTENT_RECONCILE_TENANT` |
+  | `content.reconcile.cross_tenant` | `CONTENT_RECONCILE_CROSS_TENANT` |
+  | `content.mutate` | `CONTENT_MUTATE_TENANT` |
+  | `migration.read` | `MIGRATION_READ_TENANT` |
+  | `search.reindex` | `SEARCH_REINDEX_TENANT` |
+- The token issuer (#340) must produce this same `ServicePrincipal`; a parallel
+  principal type would bypass the facade guard.
 - Capabilities are code-defined enum constants. A token/config may select a
   subset from the compiled enum; it cannot invent a capability or grant one by
   configuration alone.
@@ -249,7 +263,8 @@ constant is a configuration error, not a grant.
    tenant; no `SET ROLE`/`BYPASSRLS`/session flag path exists.
 10. **Tenant-bound service:** `TenantScope` required; null/blank rejected.
 11. **Expired principal:** zero rows, not an error; denial audited.
-12. **Config cannot grant:** an unknown capability string is rejected; a
+12. **Config cannot grant:** an unknown capability claim is rejected at
+    issuance (`ServicePrincipal.fromClaims`), not mapped to an empty set; a
     configuration-only change cannot add a capability.
 13. **No ambient bypass / no second path:** a source test proves service code
     does not construct the repository outside the facade.
@@ -318,7 +333,8 @@ Implemented in `java/content-cache-postgres`:
   `ReconcileReport`, `CrossTenantContentReconciler`, `ServiceContentStore`.
 - `TenantScopedContentStore.countByDigestWithAudit` writes the audit row in the
   same transaction as the per-tenant read.
-- Content-cache suite: 31 tests. Twelve service-capability tests cover:
+- Content-cache suite: 32 tests. Thirteen service-capability tests cover
+  (including closed claim mapping/fail-at-issuance):
   capability-present `{A}` (audit exactly A), capability-absent `{A}` (zero rows,
   not error), multi-tenant `{A,B}`, per-tenant attribution, read-path parity
   (same count; this read has no ordering/pagination), wildcard/oversize

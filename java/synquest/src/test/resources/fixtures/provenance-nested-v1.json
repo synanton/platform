@@ -1,0 +1,23 @@
+{
+  "object_id": "44444444-4444-4444-4444-444444444444:3",
+  "content_ref_id": "44444444-4444-4444-4444-444444444444",
+  "source_version_ids": ["55555555-5555-5555-5555-555555555555"],
+  "source_identities": [
+    {
+      "source_version_id": "55555555-5555-5555-5555-555555555555",
+      "connector_id": "manual-upload",
+      "source_id": "source-nested",
+      "resource_id": "nested.pdf",
+      "source_uri": "manual-upload://source-nested/nested.pdf"
+    }
+  ],
+  "content_cache_reference": "content-cache://tenant-a/44444444-4444-4444-4444-444444444444",
+  "source_uri": "manual-upload://source-nested/nested.pdf",
+  "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "chunk_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "processing_run_id": "66666666-6666-6666-6666-666666666666",
+  "page_start": 5,
+  "page_end": 7,
+  "section": "Architecture > GPU Execution Plane > Table 1",
+  "section_path": ["Architecture", "GPU Execution Plane", "Table 1"]
+}

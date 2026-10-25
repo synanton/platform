@@ -1,0 +1,12 @@
+{
+  "object_id": "44444444-4444-4444-4444-444444444444:3",
+  "score": 0.73,
+  "title": "Table 1",
+  "snippet": "Table 1 spans pages five through seven.",
+  "provenance_ref": "/v1/knowledge/44444444-4444-4444-4444-444444444444:3/provenance",
+  "source_version_ids": ["55555555-5555-5555-5555-555555555555"],
+  "page_start": 5,
+  "page_end": 7,
+  "section": "Architecture > GPU Execution Plane > Table 1",
+  "section_path": ["Architecture", "GPU Execution Plane", "Table 1"]
+}
