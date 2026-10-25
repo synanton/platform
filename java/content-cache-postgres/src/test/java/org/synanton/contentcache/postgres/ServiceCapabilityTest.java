@@ -190,6 +190,28 @@ class ServiceCapabilityTest extends PostgresTestBase {
     }
 
     @Test
+    void claimMappingIsClosedAndFailsAtIssuance() {
+        ServicePrincipal mapped = ServicePrincipal.fromClaims(
+                "svc-claims",
+                Set.of("content.reconcile", "content.mutate"),
+                Instant.now().plusSeconds(300),
+                "issuer");
+        assertThat(mapped.capabilities()).containsExactlyInAnyOrder(
+                ServiceCapability.CONTENT_RECONCILE_TENANT,
+                ServiceCapability.CONTENT_MUTATE_TENANT);
+        assertThat(ServicePrincipal.fromClaims(
+                "svc-empty", Set.of(), Instant.now().plusSeconds(300), "issuer").capabilities())
+                .isEmpty();
+
+        assertThatThrownBy(() -> ServicePrincipal.fromClaims(
+                "svc-bad", Set.of("content.reconcile.typo"),
+                Instant.now().plusSeconds(300), "issuer"))
+                .as("unknown claim must fail at issuance, not become zero rows")
+                .isInstanceOf(ServiceAuthorizationException.class)
+                .hasMessageContaining("unknown capability claim");
+    }
+
+    @Test
     void mutationWithoutCapabilityFailsBeforeAnyWrite() throws Exception {
         TenantScope a = scope("a");
         TenantScopedContentStore storeA = store(a);

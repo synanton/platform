@@ -160,7 +160,7 @@ additive page/section fields:
 | `page_start` | integer | nullable | first page; null when the format has no pages (e.g. EPUB) or the chunk has no page |
 | `page_end` | integer | nullable | last page; same null rule |
 | `section_path` | array of strings | nullable | ordered heading hierarchy; null/empty when the chunk has no section |
-| `section` | string | nullable, **deprecated** | joined alias (`" > "`) for backward compatibility; derived from `section_path`; removal tracked in #431 |
+| `section` | string | nullable, **deprecated** | exact `String.join(" > ", section_path)` alias for backward compatibility; removal tracked in #431 |
 
 Rules:
 
@@ -172,8 +172,15 @@ Rules:
 - Do not invent page numbers for non-paginated formats. The negative fixture is
   a chunk with `page_start`/`page_end`/`section`/`section_path` all null.
 - Golden fixtures: `java/synquest/src/test/resources/fixtures/search-hit-v1.json`
-  and `provenance-v1.json`; their SHA-256 values are pinned in
-  `PublicResponseFixtureTest`. New wire shapes add a new fixture, not a rewrite.
+  and `provenance-v1.json` (single-page, single-level), plus
+  `search-hit-nested-v1.json` / `provenance-nested-v1.json` (multi-level path,
+  pages 5–7). Their SHA-256 values are pinned in `PublicResponseFixtureTest`.
+  New wire shapes add a new fixture, not a rewrite.
+- The joined alias uses `" > "` exactly; the nested fixture pins both
+  `section_path` order and `section = String.join(" > ", section_path)` so the
+  two cannot drift. `page_end >= page_start` is asserted.
+- Deprecation guard: `PublicResponseFixtureTest.deprecatedSectionAliasIsGuardedUntilRemoval`
+  fails if `section` is removed before #431; remove the guard with the field.
 
 The earlier #16/#339 page evidence came from canonical/legacy paths. The
 public-API re-run after #338 is the evidence that the UI-consumed contract
