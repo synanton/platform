@@ -85,6 +85,8 @@ This prevents two context objects (one for search, one for RLS) from drifting.
 | `tenant_id` in search body | `400 TENANT_IN_REQUEST_BODY` |
 | Tenant-scoped call with empty scope | `MissingTenantContextException`, no query |
 | Cross-tenant object lookup | `404` (not a filtered `200`) |
+| Search, unknown/absent tenant (no visible canonical data) | `404`, not `503` |
+| Search, known tenant, projection building | `503` + `Retry-After` |
 
 The full anti-oracle matrix (403 vs uniform 404 for selection) is in the
 [security model](../security/security-model.md).

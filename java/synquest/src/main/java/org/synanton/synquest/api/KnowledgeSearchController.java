@@ -8,6 +8,7 @@ import org.synanton.synquest.service.KnowledgeSearchBackend;
 import org.synanton.synquest.service.SearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -60,8 +61,15 @@ public class KnowledgeSearchController {
                     "tenant_id is not accepted in the request body; the tenant comes from the verified identity context");
         }
         TenantScope tenant = verifiedScope();
+        if (!backend.hasCanonicalData(tenant.tenantId())) {
+            // Unknown/absent tenant: permanent, not a retry signal.
+            return ResponseEntity.notFound().build();
+        }
         if (!backend.isReady(tenant.tenantId())) {
-            return ResponseEntity.status(503).build();
+            // Known tenant with canonical data, projection still building.
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .header(HttpHeaders.RETRY_AFTER, "5")
+                    .build();
         }
         try {
             List<SearchHitResource> results = backend

@@ -23,6 +23,13 @@ public interface KnowledgeSearchBackend {
     boolean isReady(String tenantId);
 
     /**
+     * True when the tenant has at least one visible canonical manifest. Used
+     * to distinguish an unknown/absent tenant (404) from a known tenant whose
+     * projection is still building (503).
+     */
+    boolean hasCanonicalData(String tenantId);
+
+    /**
      * Observable projection generation (the retrieval backend's commit
      * generation) — changes when the projection is rebuilt, letting clients
      * detect that results may have changed under the same query.

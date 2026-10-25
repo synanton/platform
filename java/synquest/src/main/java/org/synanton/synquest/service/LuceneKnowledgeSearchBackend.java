@@ -56,6 +56,11 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
     }
 
     @Override
+    public boolean hasCanonicalData(String tenantId) {
+        return !cacheClient.listManifest(tenantId, 1).isEmpty();
+    }
+
+    @Override
     public long generation(String tenantId) {
         try {
             return searchService.stats(tenantId).indexGeneration();
