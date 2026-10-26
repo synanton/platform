@@ -62,6 +62,9 @@ By **2026-11-01**:
   not transferable**;
 - if neither is valid → run the official BM25 baseline only, defer dense
   explicitly with a new owner/date; do not silently extend the date.
+- Dense verification work starts **after grading completes on 2026-11-06** or is
+  assigned to someone other than @aminin; the 11-01 checkpoint is a decision
+  record, not a work start.
 
 ## Judgment pool v1
 

@@ -45,6 +45,8 @@ Set `judged: true` when a human assigns a grade. Do not infer grades from
 ## What this enables / does not enable
 
 - Enables annotation to start now and makes the prompt/coverage explicit.
+- `rb009` is a negative query and is excluded from the nDCG/MRR/Recall
+  aggregate; it is reported separately.
 - Does **not** enable the official BM25 baseline: no four-level labels exist.
 - Does **not** make RRF numbers transferable: no dense pool yet.
 
