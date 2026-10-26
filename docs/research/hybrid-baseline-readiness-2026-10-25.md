@@ -56,8 +56,10 @@ combined. Same corpus, same judgments, compare each step to the previous.
 
 `docs/research/judgment-pool-v1.md` and
 `demo-data/eval/retrieval-benchmark/judgments-pool-v1.jsonl` contain 734
-BM25-top20 + random candidates with `grade: null`. The pool is biased against
-the dense leg (no dense top-k); annotate it now, expand after #440.
+BM25-top20 + random candidates with `grade: null`. The blind grading sheet/key
+and protocol are `grading-sheet-v1.jsonl` / `judgments-key-v1.jsonl` and
+`docs/research/grading-protocol-v1.md`. The pool is biased against the dense
+leg (no dense top-k); annotate it now, expand after #440.
 
 ## Provisional BM25 table
 
