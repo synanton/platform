@@ -64,7 +64,11 @@ class ServiceCapabilityTest extends PostgresTestBase {
     }
 
     private static ServicePrincipal principal(String id, ServiceCapability... capabilities) {
-        return new ServicePrincipal(id, Set.of(capabilities), Instant.now().plusSeconds(300), "test");
+        java.util.Set<String> claims = java.util.Arrays.stream(capabilities)
+                .map(ServiceCapability::claimName)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        return ServicePrincipal.fromClaims(
+                id, claims, Instant.now().plusSeconds(300), "test");
     }
 
     private static CrossTenantRequest request(
@@ -342,9 +346,9 @@ class ServiceCapabilityTest extends PostgresTestBase {
     @Test
     void expiredPrincipalReturnsZeroRowsNotError() {
         TenantScope a = scope("a");
-        ServicePrincipal expired = new ServicePrincipal(
+        ServicePrincipal expired = ServicePrincipal.fromClaims(
                 "svc-expired",
-                Set.of(ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT),
+                Set.of(ServiceCapability.CONTENT_RECONCILE_CROSS_TENANT.claimName()),
                 Instant.now().minusSeconds(1),
                 "test");
         ReconcileReport report = reconciler.reconcile(request(expired, "trace-expired", a), "sha256:x");

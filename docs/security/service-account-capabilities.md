@@ -56,7 +56,10 @@ record CrossTenantRequest(
 }
 ```
 
-- `ServicePrincipal` is explicit. It is not inferred from a missing user.
+- `ServicePrincipal` is explicit. It is not inferred from a missing user. Its
+  constructor is private; `fromClaims` is the only producer, guarded by a
+  source test that restricts production callers to the security issuance
+  package. Deserialization cannot create a capability-bearing principal.
 - **Claim mapping is total and closed.** `ServiceCapability.fromClaim` maps each
   emitted claim to a compiled enum constant; `ServicePrincipal.fromClaims` fails
   at issuance for a blank/unknown claim. A typo never becomes a silent

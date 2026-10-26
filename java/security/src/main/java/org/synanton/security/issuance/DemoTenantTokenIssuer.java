@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import org.synanton.storage.contract.service.ServiceCapability;
 import org.synanton.storage.contract.service.ServicePrincipal;
@@ -30,6 +31,7 @@ public final class DemoTenantTokenIssuer {
     private final String audience;
     private final long ttlSeconds;
     private final IssuanceAudit audit;
+    private final LongAdder rejectedIssuances = new LongAdder();
 
     public DemoTenantTokenIssuer(
             String secret, String issuer, String audience, long ttlSeconds, IssuanceAudit audit) {
@@ -58,8 +60,14 @@ public final class DemoTenantTokenIssuer {
         }
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plusSeconds(ttlSeconds);
-        ServicePrincipal principal = ServicePrincipal.fromClaims(
-                principalId, capabilityClaims, expiresAt, issuer);
+        ServicePrincipal principal;
+        try {
+            principal = ServicePrincipal.fromClaims(
+                    principalId, capabilityClaims, expiresAt, issuer);
+        } catch (RuntimeException rejected) {
+            rejectedIssuances.increment();
+            throw rejected;
+        }
         String jti = UUID.randomUUID().toString();
         try {
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
@@ -95,6 +103,11 @@ public final class DemoTenantTokenIssuer {
         } catch (JOSEException e) {
             throw new IllegalStateException("demo token signing failed", e);
         }
+    }
+
+    /** Rejected issuance attempts (unknown/blank claims); not a token count. */
+    public long rejectedIssuances() {
+        return rejectedIssuances.sum();
     }
 
     public record IssuedToken(

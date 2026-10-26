@@ -13,7 +13,7 @@ or an undefined judgment set.
 | BM25 leg | ✅ local real demo + #410/#413/#414 |
 | Tombstone filtering with one snapshot | ✅ #410/#413/#414 |
 | Dense-leg RRF symmetry gap | ❌ recorded in #414, not addressed |
-| Dense leg verified **locally** | ❌ local-real-demo has `SYNQUEST_EMBEDDING_REQUIRED=false` and `VLLM_EMBED_BASE_URL=http://host.docker.internal:30801/v1`, but nothing listens on 30801 (probe 2026-10-25: connection refused). Historical GPU-5 results are not local evidence. |
+| Dense leg verified **locally** | ❌ local-real-demo has `SYNQUEST_EMBEDDING_REQUIRED=false` and `VLLM_EMBED_BASE_URL=http://host.docker.internal:30801/v1`, but nothing listens on 30801 (probe 2026-10-25: connection refused). Historical GPU-5 results are not local evidence. Owner/date: #440 (@aminin, 2026-11-01). |
 | Query set | ✅ `demo-data/eval/retrieval-benchmark/queries-v2.jsonl` (25) and `queries-f1-dense.json` (10 human-confirmed) |
 | Graded judgments (highly relevant/relevant/marginal/irrelevant) | ❌ existing gold is binary (gold chunk/document lists and objective markers); no four-level grades |
 
