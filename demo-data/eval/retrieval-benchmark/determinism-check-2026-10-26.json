@@ -1,0 +1,13 @@
+{
+  "chunks_a": 317,
+  "chunks_b": 317,
+  "digest_a": "a993e6a1b13ec3ffc8a35ddaa2e53e6fa3c25d74c03d500e52d1b4b3d0b0096f",
+  "digest_b": "a993e6a1b13ec3ffc8a35ddaa2e53e6fa3c25d74c03d500e52d1b4b3d0b0096f",
+  "digest_match": true,
+  "documents": 15,
+  "note": "Independent fresh ingests into two tenants; compared by source filename, ordinal, and normalized text hash because tenant is part of content_ref.",
+  "per_file_identical_chunk_ids_and_text_hashes": true,
+  "recorded_at": "2026-10-26",
+  "tenant_a": "rb-fixed-g5-det-a",
+  "tenant_b": "rb-fixed-g5-det-b"
+}

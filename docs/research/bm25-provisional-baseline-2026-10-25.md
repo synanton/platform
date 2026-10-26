@@ -62,3 +62,5 @@ before the adaptive-fusion ablation, where differences are smaller.
 3. Verify the dense leg locally (runtime/model pin, storage/filter semantics,
    ingestion-path index population); this also closes #414.
 4. Official BM25 under graded judgments, then RRF (k=60) and the ablation.
+
+The benchmark caught an intentional chunking change that invalidated a same-evening snapshot; the recovery is #467.
