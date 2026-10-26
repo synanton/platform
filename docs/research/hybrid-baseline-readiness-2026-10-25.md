@@ -52,6 +52,13 @@ Ablation after the baseline, one change at a time: fixed RRF → weighted RRF �
 query-adaptive weights → result-set-adaptive weights → exact-match features →
 combined. Same corpus, same judgments, compare each step to the previous.
 
+## Provisional BM25 table
+
+`docs/research/bm25-provisional-baseline-2026-10-25.md` records a provisional
+BM25-only table from the existing 25-query T01 run, with bootstrap CIs and
+judgment-source disclosure. It is explicitly not the official baseline and not
+the RRF reference; the gaps below still block that.
+
 ## Next steps
 
 1. Verify the vector leg locally (embedding runtime + vector storage, valid
