@@ -280,3 +280,12 @@ a product change, not retrieval improvement. Agent grades are (query, chunk);
 - `pass1_completed`: 2026-10-26T15:00:00Z.
 - `pass2_planned`: >=2026-10-27T15:00:00Z (>=24h gap); status pending.
 - No kappa until pass 2.
+
+
+## pdf013/pdf015 decision (2026-10-26)
+
+Both are **retargeted and kept**, not excluded. `pdf013` gold moves to
+`69bd…#82` (quarterly basis present; old #16 was a table of contents).
+`pdf015` gold moves to `69bd…#65` (certificate names present; old #22 was a
+table of contents). `pdf015`'s gold is outside the BM25/random candidate pool,
+so B4 records a retrieval miss, not a missing answer. B3/B4 stay at 25 queries.

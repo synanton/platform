@@ -41,11 +41,13 @@ def main() -> None:
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--tenant", default="rb-fixed-g5")
     parser.add_argument("--corpus-digest", required=True)
+    parser.add_argument("--gold-overrides")
     args = parser.parse_args()
 
     hits = json.loads(Path(args.hits).read_text())["queries"]
     queries = {q["query_id"]: q for q in map(json.loads, Path(args.queries).read_text().splitlines())}
     by_doc = load_chunks(Path(args.chunks), args.tenant)
+    overrides = json.loads(Path(args.gold_overrides).read_text()) if args.gold_overrides else {}
     all_chunks = sorted(f"{doc}#{ordinal}" for doc, chunks in by_doc.items() for ordinal, _ in chunks)
     doc_text = {doc: {ordinal: text for ordinal, text in chunks} for doc, chunks in by_doc.items()}
 
@@ -61,7 +63,10 @@ def main() -> None:
         markers = query.get("gold_markers") or []
         gold = set()
         gold_source = "carried_v1"
-        if markers:
+        if qid in overrides:
+            gold = set(overrides[qid]["gold_chunk_ids"])
+            gold_source = "manual_override_v2"
+        elif markers:
             gold_source = "marker_recomputed_v2"
             for doc, chunks in by_doc.items():
                 for ordinal, text in chunks:
@@ -106,7 +111,8 @@ def main() -> None:
             "max": max(div_values),
             "per_query": diversity,
         },
-        "gold": "PDF gold re-derived from markers on current chunks; RB gold carried from v1",
+        "gold": "PDF gold re-derived from markers on current chunks; manual overrides for pdf013/pdf015; RB gold carried from v1",
+        "gold_overrides": args.gold_overrides,
     }
     Path(args.manifest).write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"wrote {len(rows)} rows; {len(counts)} queries; mean docs/query {manifest['document_diversity']['mean']}")

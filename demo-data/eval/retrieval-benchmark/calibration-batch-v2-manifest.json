@@ -34,6 +34,27 @@
     "faf3d562-6e46-5315-8150-06cf9591b3f2"
   ],
   "documents": 15,
+  "gold_overrides": {
+    "pdf013": {
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#82"
+      ],
+      "markers": [
+        "on a calendar quarter basis"
+      ],
+      "reason": "Old gold #16 is a table of contents. Current chunk 82 contains the quarterly basis and the Short Term Rolling Forecast context; manual retarget."
+    },
+    "pdf015": {
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#65"
+      ],
+      "markers": [
+        "Certificate of Analysis",
+        "Certificate of Compliance"
+      ],
+      "reason": "Old gold #22 is a table of contents. Current chunk 65 lists the certificates; the old 'in English' phrase is absent, so the marker is narrowed. Manual retarget."
+    }
+  },
   "kappa_status": "pending",
   "pass1": {
     "completed_at": "2026-10-26T15:00:00Z",
@@ -53,8 +74,32 @@
       "task_session": "ses_e8730e6c3ffeYOAPFrh5LYkx67"
     }
   },
+  "pass2_isolation": {
+    "input": "metadata-free packet only",
+    "key_access": false,
+    "mechanism": "fresh-context agent instance",
+    "planned": true,
+    "session_id": "to be recorded",
+    "timestamp": "to be recorded"
+  },
   "pass2_planned": ">=2026-10-27T15:00:00Z",
   "pass2_status": "pending; >=24h gap",
+  "pdf013_pdf015_decisions": {
+    "pdf013": {
+      "decision": "retarget_and_keep",
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#82"
+      ],
+      "reason": "quarterly basis present; old #16 was TOC"
+    },
+    "pdf015": {
+      "decision": "retarget_and_keep",
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#65"
+      ],
+      "reason": "certificate names present; old #22 was TOC; gold is outside the candidate pool, so B4 records a retrieval miss, not exclusion"
+    }
+  },
   "per_query_counts": {
     "pdf001": 2,
     "pdf002": 2,

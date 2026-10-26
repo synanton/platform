@@ -21,7 +21,7 @@
 {"candidate_id": "v2p00020", "chunk_id": "faf3d562-6e46-5315-8150-06cf9591b3f2#10", "gold_binary": false, "query_id": "pdf005", "rank": 2, "source": "bm25_top20"}
 {"candidate_id": "v2p00021", "chunk_id": "faf3d562-6e46-5315-8150-06cf9591b3f2#9", "gold_binary": true, "query_id": "pdf003", "rank": 1, "source": "bm25_top20"}
 {"candidate_id": "v2p00022", "chunk_id": "3f4e1876-5ff4-5a96-882f-91a6ac0f0bbb#0", "gold_binary": false, "query_id": "rb001", "rank": 1, "source": "bm25_top20"}
-{"candidate_id": "v2p00023", "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#82", "gold_binary": false, "query_id": "pdf013", "rank": 1, "source": "bm25_top20"}
+{"candidate_id": "v2p00023", "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#82", "gold_binary": true, "query_id": "pdf013", "rank": 1, "source": "bm25_top20"}
 {"candidate_id": "v2p00024", "chunk_id": "87ef150c-930c-586f-9ac3-82217a1c044a#1", "gold_binary": false, "query_id": "rb005", "rank": 7, "source": "bm25_top20"}
 {"candidate_id": "v2p00025", "chunk_id": "add27478-5661-5588-8d3a-773d2f135d84#0", "gold_binary": true, "query_id": "rb006", "rank": 1, "source": "bm25_top20"}
 {"candidate_id": "v2p00026", "chunk_id": "add27478-5661-5588-8d3a-773d2f135d84#0", "gold_binary": false, "query_id": "pdf007", "rank": 6, "source": "bm25_top20"}

@@ -34,22 +34,22 @@
       "rb008": 11,
       "rb009": 12,
       "rb010": 6
-    },
-    "v1_mean": 9.36,
-    "v2_mean": 7.32
+    }
   },
-  "gold": "PDF gold re-derived from markers on current chunks; RB gold carried from v1",
+  "gold": "PDF gold re-derived from markers on current chunks; manual overrides for pdf013/pdf015; RB gold carried from v1",
   "gold_mismatch_audit": {
-    "mismatch_count": 2,
-    "note": "PDF gold recomputed from markers on current chunks. Two queries (pdf013, pdf015) have no marker-matching chunk; manual gold inspection required before B4. pdf011 required backslash-space normalization.",
+    "mismatch_count": 0,
+    "note": "Manual overrides are recorded; no query excluded from B3/B4.",
+    "overrides": "gold-overrides-v2.json",
+    "pdf013": "retargeted to 69bd\u2026#82; quarterly basis present; old #16 was TOC",
+    "pdf015": "retargeted to 69bd\u2026#65; certificate names present; old #22 was TOC; gold chunk is outside the BM25/random candidate pool, so B4 records a retrieval miss, not a missing answer.",
     "pdf_queries_checked": 15,
-    "pdf_queries_with_gold": 13,
-    "pdf_queries_without_gold": [
-      "pdf013",
-      "pdf015"
-    ],
-    "result": "pass_with_watch"
+    "pdf_queries_manual_retarget": 2,
+    "pdf_queries_with_marker_gold": 13,
+    "pdf_queries_without_gold": [],
+    "result": "pass_with_manual_overrides"
   },
+  "gold_overrides": "demo-data/eval/retrieval-benchmark/gold-overrides-v2.json",
   "per_query_counts": {
     "pdf001": 30,
     "pdf002": 30,
