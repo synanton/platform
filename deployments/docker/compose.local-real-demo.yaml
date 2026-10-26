@@ -61,6 +61,22 @@ services:
     ports: !override
       - "${LOCAL_REAL_DEMO_SYNQUEST_PORT:-18083}:8083"
 
+  security:
+    profiles: [local-real-demo]
+    image: ${LOCAL_REAL_DEMO_IMAGE_PREFIX:-synanton-local-real-demo}/security:${LOCAL_REAL_DEMO_IMAGE_TAG:-local}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-local-real-demo-secret-at-least-32-bytes}
+      SECURITY_HTPASSWD_PATH: /etc/synanton/users
+      SECURITY_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-synanton}
+      SECURITY_DB_USER: ${POSTGRES_USER:-synanton}
+      SECURITY_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      SECURITY_DEMO_ISSUANCE_ENABLED: "true"
+    ports: !override
+      - "${LOCAL_REAL_DEMO_SECURITY_PORT:-18081}:8081"
+
 networks:
   # The base compose file names this network synanton-demo for the main
   # stack. The demo gets its own network so service aliases and teardown

@@ -51,7 +51,7 @@ public class AppConfig {
             org.synanton.common.tenant.TenantContextFilter> tenantContextFilter(JwtVerifier jwtVerifier) {
         var filter = new org.synanton.common.tenant.TenantContextFilter(
                 jwtVerifier, "",
-                "/actuator", "/auth/login", "/auth/token", "/capabilities");
+                "/actuator", "/auth/login", "/auth/token", "/capabilities", "/v1/auth/tenant");
         var registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
         registration.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
         return registration;
