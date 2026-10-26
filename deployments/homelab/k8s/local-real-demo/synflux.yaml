@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: synflux
+  namespace: synanton
+spec:
+  type: ClusterIP
+  selector:
+    app: synflux
+  ports:
+    - name: http
+      port: 8090
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: synflux
+  namespace: synanton
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: synflux
+  template:
+    metadata:
+      labels:
+        app: synflux
+    spec:
+      imagePullSecrets:
+        - name: local-registry-cred
+      containers:
+        - name: synflux
+          image: local-registry:5000/synanton/synflux@sha256:714c479f8f49d24d2af61faf8ad9161b78ebdd908af395d7cd521c7f3b4f154b
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: tenant-demo-config
+          env:
+            - name: SERVER_PORT
+              value: "8090"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: ""
+            - name: SYNFLUX_CONTENT_CACHE_BACKEND
+              value: filesystem
+            - name: SYNFLUX_CONTENT_CACHE_ROOT
+              value: /content-cache
+            - name: EXTRACTION_CLIENT_ENABLED
+              value: "true"
+            - name: EXTRACTION_ENDPOINT
+              value: extraction-gateway:9091
+            - name: MINIO_ENDPOINT
+              value: http://minio:9000
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-cred
+                  key: user
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-cred
+                  key: password
+            - name: SYNANTON_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: synanton-jwt
+                  key: secret
+          ports:
+            - name: http
+              containerPort: 8090
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "3"
+              memory: 4Gi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          volumeMounts:
+            - name: content-cache
+              mountPath: /content-cache
+      volumes:
+        - name: content-cache
+          persistentVolumeClaim:
+            claimName: synflux-content-cache
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: synflux-content-cache
+  namespace: synanton
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
