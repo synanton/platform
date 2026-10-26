@@ -21,6 +21,7 @@ EXPECTED_EXTRACTOR_COMMIT="${LOCAL_REAL_DEMO_EXPECTED_EXTRACTOR_COMMIT:-}"
 SYNANTON_JWT_SECRET="${SYNANTON_JWT_SECRET:-local-real-demo-secret-at-least-32-bytes}"
 SYNFLUX_PORT="${LOCAL_REAL_DEMO_SYNFLUX_PORT:-18090}"
 SYNQUEST_PORT="${LOCAL_REAL_DEMO_SYNQUEST_PORT:-18083}"
+SECURITY_PORT="${LOCAL_REAL_DEMO_SECURITY_PORT:-18081}"
 TENANT="${LOCAL_REAL_DEMO_TENANT:-local-real-demo}"
 SOURCE_ID="mental-health-report-2010"
 # Must be one of the ingestion service's supported caller-pushed connectors
@@ -214,25 +215,29 @@ build_images() {
     local stage
     printf 'Building host boot jars and demo images...\n'
     "$REPO_ROOT/gradlew" -q -p "$REPO_ROOT" \
-        :java:synflux:bootJar :java:synquest:bootJar -x test
+        :java:synflux:bootJar :java:synquest:bootJar :java:security:bootJar -x test
     "$CONTENT_EXTRACTOR_ROOT/gradlew" -q -p "$CONTENT_EXTRACTOR_ROOT" \
         :java:extraction-gateway:bootJar -x test
     stage="$(mktemp -d)"
     mkdir -p "$stage/java/synflux/build/libs" \
         "$stage/java/synquest/build/libs" \
+        "$stage/java/security/build/libs" \
         "$stage/java/extraction-gateway/build/libs"
     cp "$REPO_ROOT"/java/synflux/build/libs/synflux*.jar "$stage/java/synflux/build/libs/"
     cp "$REPO_ROOT"/java/synquest/build/libs/synquest*.jar "$stage/java/synquest/build/libs/"
+    cp "$REPO_ROOT"/java/security/build/libs/security*.jar "$stage/java/security/build/libs/"
     cp "$CONTENT_EXTRACTOR_ROOT"/java/extraction-gateway/build/libs/extraction-gateway*.jar \
         "$stage/java/extraction-gateway/build/libs/"
     docker build -q -f "$COMPOSE_DIR/synflux.prebuilt.Dockerfile" \
         -t "$IMAGE_PREFIX/synflux:$IMAGE_TAG" "$stage" >/dev/null
     docker build -q -f "$COMPOSE_DIR/synquest.prebuilt.Dockerfile" \
         -t "$IMAGE_PREFIX/synquest:$IMAGE_TAG" "$stage" >/dev/null
+    docker build -q -f "$COMPOSE_DIR/security.prebuilt.Dockerfile" \
+        -t "$IMAGE_PREFIX/security:$IMAGE_TAG" "$stage" >/dev/null
     docker build -q -f "$COMPOSE_DIR/extraction-gateway.prebuilt.Dockerfile" \
         -t "$IMAGE_PREFIX/extraction-gateway:$IMAGE_TAG" "$stage" >/dev/null
     rm -rf "$stage"
-    pass "demo images built ($IMAGE_PREFIX/{synflux,synquest,extraction-gateway}:$IMAGE_TAG)"
+    pass "demo images built ($IMAGE_PREFIX/{synflux,synquest,security,extraction-gateway}:$IMAGE_TAG)"
 }
 
 preflight() {
@@ -267,7 +272,7 @@ run_acceptance() {
 
     preflight
     token="$(mint_token)"
-    for service in postgres cassandra minio extraction-gateway synflux synquest; do
+    for service in postgres cassandra minio extraction-gateway security synflux synquest; do
         wait_service_health "$service"
     done
     wait_health synflux "$SYNFLUX_URL" "$token"
@@ -534,7 +539,7 @@ case "$action" in
         # connections when a pinned database image changes underneath them.
         # Named volumes and host data roots still preserve all ingested state.
         compose up -d --no-build --force-recreate postgres cassandra minio minio-init \
-            extraction-gateway synflux synquest
+            extraction-gateway security synflux synquest
         MODE=up
         run_acceptance
         ;;

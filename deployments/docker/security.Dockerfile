@@ -5,6 +5,7 @@ WORKDIR /workspace
 COPY gradle/ gradle/
 COPY gradlew settings.gradle.kts gradle.properties* ./
 COPY java/shared/common/ java/shared/common/
+COPY java/storage-contract/ java/storage-contract/
 COPY java/security/ java/security/
 
 RUN --mount=type=cache,target=/root/.gradle \

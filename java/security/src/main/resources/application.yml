@@ -32,6 +32,8 @@ security:
     cache:
       ttl-seconds: 60
       max-size: 10000
+  demo-issuance:
+    enabled: ${SECURITY_DEMO_ISSUANCE_ENABLED:false}
   oidc:
     enabled: ${SECURITY_OIDC_ENABLED:false}
     issuer-uri: ${SECURITY_OIDC_ISSUER:http://keycloak.security.svc/realms/synanton}
