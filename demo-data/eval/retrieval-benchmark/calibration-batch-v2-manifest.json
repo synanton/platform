@@ -28,7 +28,14 @@
       "3": 16
     },
     "grade2_count": 3,
-    "grader_id": "opencode-agent-v2-fresh-1"
+    "grader_id": "opencode-agent-v2-fresh-1",
+    "grader_isolation": {
+      "input": "metadata-free packet only",
+      "key_access": false,
+      "mechanism": "separate agent instance",
+      "shared_memory_with_setup": false,
+      "task_session": "ses_e8730e6c3ffeYOAPFrh5LYkx67"
+    }
   },
   "pass2_planned": ">=2026-10-27T15:00:00Z",
   "pass2_status": "pending; >=24h gap",
