@@ -1,5 +1,21 @@
 {
   "batch_version": "v2",
+  "distribution_comparison": {
+    "grade2_populated": true,
+    "note": "Different batch composition and corpus; descriptive comparison only, not a paired test.",
+    "old_chunking_pass1": {
+      "0": 32,
+      "1": 5,
+      "2": 0,
+      "3": 3
+    },
+    "v2_hierarchical_pass1": {
+      "0": 10,
+      "1": 11,
+      "2": 3,
+      "3": 16
+    }
+  },
   "document_ids": [
     "24bc9ae7-1ab3-505d-8212-02bd6f6c6e23",
     "3f4e1876-5ff4-5a96-882f-91a6ac0f0bbb",
