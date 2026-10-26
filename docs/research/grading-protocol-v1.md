@@ -71,14 +71,24 @@ When in doubt between 2 and 3, ask: "Can this chunk answer alone?"
   company phone/address chunk is **0**; a chunk about media contacts is **1**,
   never **3**, because it does not answer the person-specific query.
 
-## 3. Inter-rater sample and kappa decision rule
+## 3. Calibration batch and kappa decision rule
 
-- Double-grade **15%** of the pool (~110 candidates), stratified by query and
-  including at least 3 candidates per query where available.
-- Use a second grader where possible; otherwise the same grader at least 7 days
-  later without access to the first grades.
-- Report exact agreement % and Cohen's kappa (unweighted and quadratic-weighted
-  for the 0–3 scale).
+**Calibration batch first (2026-10-27 → 10-29):** @aminin grades the first
+30–50 candidates. Those are immediately double-graded. Kappa is computed
+**before bulk grading**. The 15% full-pool sample remains, but the gate that can
+stop the work fires on the small batch, cheaply.
+
+- Double-grade the calibration batch, then **15%** of the full pool (~110),
+  stratified by query and at least 3 per query where available.
+- If a second grader is confirmed by 2026-10-30, report **inter-rater**
+  quadratic-weighted kappa; disagreements are adjudicated by discussion between
+  the two graders, resolution recorded.
+- If no second grader is confirmed, the delayed-self pass is **intra-rater**
+  reliability, not inter-rater. Use a **0.75+** threshold, label it intra-rater,
+  and record that it is weaker. Do not report it as inter-rater kappa 0.60.
+- If neither a second grader nor a third-party adjudicator is available,
+  @aminin adjudicates and the protocol/acceptance must state the adjudication is
+  biased toward the primary grade.
 - A 0.03 nDCG difference without this error estimate is not attributable to
   retrieval.
 
@@ -87,23 +97,36 @@ also reported):
 
 | Weighted kappa | Action |
 |---|---|
-| ≥ 0.60 | Accept the labels. |
-| 0.40–0.59 | Adjudicate **every** disagreement; record both grades and the adjudicated grade; recompute kappa. |
-| < 0.40 | Stop; revise rubric/examples and re-double-grade a fresh sample before continuing. |
+| ≥ 0.60 (inter-rater) / ≥ 0.75 (intra-rater) | Accept the labels. |
+| 0.40–0.59 inter-rater | Adjudicate **every** disagreement; if adjudication reveals systematic ambiguity rather than item-level disagreement, treat as < 0.40 and revise the rubric. |
+| < 0.40 | Stop; revise rubric/examples and re-double-grade a fresh calibration batch before any bulk grading. |
 
-Adjudicator: @aminin. Second grader: to be named by 2026-10-30. If none is named,
-use a delayed same-grader pass (≥7 days) and state that the estimate is weaker;
-do not overwrite disagreements—record them.
+Adjudication order: (1) second grader confirmed and both discuss; (2) a
+third-party adjudicator for the sample; (3) @aminin with the primary-grade bias
+recorded explicitly. Never overwrite a disagreement; record both grades and the
+resolution.
 
 ## Execution schedule
 
 - Primary grader: **@aminin**.
-- Start: **2026-10-27**. Target: **2026-11-06**.
-- 734 rows at 20–40/hour ≈ 18–37 hours, plus ~110-row double-grade ≈ 3–6 hours.
-  Plan ~2.5–3 hours/day.
-- The 2026-11-01 dense-runtime decision is a 2-hour checkpoint; no full benchmark
-  run that day. Grading is **not** blocked by UI switch or dense runtime; start
-  it in parallel.
+- **Calibration:** 2026-10-27 → 10-29 (30–50 candidates, double-graded).
+- **Second-grader decision:** by 2026-10-30; name recorded here.
+- **Bulk grading:** 2026-10-30 → 2026-11-06, only after the kappa gate.
+- 734 rows at 20–40/hour ≈ 18–37 hours, plus double-grades; ~2.5–3 hours/day.
+- **2026-11-01 dense checkpoint:** 2-hour decision record only. Dense
+  verification work starts **after grading completes on 2026-11-06**, or is
+  assigned to someone other than @aminin; it does not compete with grading.
+- Grading is not blocked by the UI switch or dense runtime.
+
+## Negative-query metric handling
+
+`rb009` is a negative query with no positive judgments. Annotate it as
+`negative` and **exclude it from the nDCG@10/MRR@10/Recall@10 aggregate**.
+Report its handling separately: all candidates are 0 unless a chunk explicitly
+answers the impossible request. Including it in the aggregate makes every method
+score 0 on it and drags the comparison uniformly; that is noise, not a
+discriminator. No other query is currently negative; any future negative query
+must be tagged and excluded the same way.
 
 ## 4. Unjudged = irrelevant (stated approximation)
 

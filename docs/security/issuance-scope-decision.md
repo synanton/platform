@@ -74,7 +74,9 @@ closed and tested; the issuer must use it rather than re-deriving capabilities.
   dual-path transition window.
 - Local-real-demo sets `security.demo-issuance.enabled=true` explicitly and
   documents it; absent flag fails closed (looks like a bug, is correct).
-- Test: the Vite dev-auth path is gone/unreachable, not merely unused.
+- Test: calling the old `/v1/auth/login` path cannot mint (401 if the security
+  route owns it, 404 if Vite no longer handles it); assert no token is returned,
+  not merely that the middleware module was removed.
 
 ## Definition of done for #340
 
