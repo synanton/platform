@@ -47,9 +47,22 @@
     "pdf_queries_manual_retarget": 2,
     "pdf_queries_with_marker_gold": 13,
     "pdf_queries_without_gold": [],
+    "pool_additions": [
+      {
+        "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#82",
+        "grade": 3,
+        "query_id": "pdf013"
+      },
+      {
+        "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#65",
+        "grade": 3,
+        "query_id": "pdf015"
+      }
+    ],
     "result": "pass_with_manual_overrides"
   },
   "gold_overrides": "demo-data/eval/retrieval-benchmark/gold-overrides-v2.json",
+  "gold_overrides_sha256": "2024be41fcd21e1bd79bb19c090d2bbb75ace160994302a349a2ed3669f5cdd9",
   "per_query_counts": {
     "pdf001": 30,
     "pdf002": 30,
@@ -65,7 +78,7 @@
     "pdf012": 30,
     "pdf013": 30,
     "pdf014": 30,
-    "pdf015": 30,
+    "pdf015": 31,
     "rb001": 30,
     "rb002": 30,
     "rb003": 30,
@@ -77,7 +90,8 @@
     "rb009": 30,
     "rb010": 14
   },
-  "pool_rows": 734,
+  "pool_note": "735 rows after two manual override targets; #82 was already BM25-retrieved for pdf013, #65 was added for pdf015 so RRF can get credit if it retrieves the answer.",
+  "pool_rows": 735,
   "pool_rule": "BM25 top-20 + 10 deterministic random chunks per query",
   "pool_version": "v2",
   "rng": "Python random.Random (Mersenne Twister)",

@@ -133,5 +133,8 @@
   "rows": 40,
   "script": "tools/retrieval-eval/build_calibration_v2.py",
   "seed": 20261026,
+  "selection_pool_commit": "ab3699f",
+  "selection_pool_note": "The 40-row batch was selected before the two manual pool additions; #65/pdf015 is outside the calibration batch but available to B4/B6.",
+  "selection_pool_rows": 734,
   "selection_rule": "one per query preferring unseen document; 15 extra preferring unseen documents; max 2 per query"
 }
