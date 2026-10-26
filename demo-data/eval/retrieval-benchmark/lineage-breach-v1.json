@@ -1,0 +1,35 @@
+{
+  "recorded_at": "2026-10-26T14:20:00Z",
+  "source": "orchestrator setup session",
+  "cause": "locating chunk text for the blind packet",
+  "key_rows_opened": [
+    {
+      "candidate_id": "p000039",
+      "query_id": "pdf001",
+      "chunk_id": "87ef150c-930c-586f-9ac3-82217a1c044a#0",
+      "visible": ["candidate_id", "query_id", "chunk_id", "source=random", "rank=null", "gold_binary=false"]
+    },
+    {
+      "candidate_id": "p000041",
+      "query_id": "pdf001",
+      "chunk_id": "faf3d562-6e46-5315-8150-06cf9591b3f2#5",
+      "visible": ["candidate_id", "query_id", "chunk_id", "source=bm25_top20", "rank=7", "gold_binary=false"]
+    },
+    {
+      "candidate_id": "p000005",
+      "query_id": "pdf002",
+      "chunk_id": "d941fbce-0aa4-59fc-b329-5bd770715d2d#3",
+      "visible": ["candidate_id", "query_id", "chunk_id"]
+    }
+  ],
+  "other_exposure": "The queries-v2.rb-fixed-g5.jsonl gold answers for the 25-query frame were displayed in the orchestrator setup session. The grader did not see them.",
+  "key_grade_column": false,
+  "fresh_context_mechanism": {
+    "type": "separate agent instance",
+    "task_session": "ses_e876f070dffey2do8Y6MO3FFe2",
+    "input": "/tmp/opencode/b2-blind-packet.jsonl and /tmp/opencode/b2-rubric.md only",
+    "restrictions": "explicitly forbidden from reading key, gold, queries, pool, or grading sheet",
+    "shared_memory_with_setup": false
+  },
+  "contamination_decision": "The three pass-1 grades are retained and flagged; the grader was isolated from the key and the setup session, so the lineage event did not touch the grading task."
+}

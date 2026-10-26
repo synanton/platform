@@ -97,7 +97,8 @@ remains, but the gate that can stop the work fires on this small batch.
   retrieval.
 
 **Pre-committed decision rule** (quadratic-weighted kappa primary; exact agreement
-also reported):
+also reported). **The gate uses the point estimate, not the CI lower bound.** The
+bootstrap CI is disclosed but is not a pass/fail input.
 
 | Weighted kappa | Action |
 |---|---|
@@ -194,3 +195,39 @@ cache the principal.
   metadata-free packet; pass 2 must be a delayed fresh-context run.
 - B2 pass 1: 40 rows; distribution 0=32, 1=5, 2=0, 3=3. Kappa is **not**
   computed until pass 2.
+
+
+## Lineage breach record (2026-10-26)
+
+Recorded before pass 2 and before any kappa. During setup, the orchestrator opened
+the calibration key and the query file while locating chunk text.
+
+- Key rows opened: `p000039` (`pdf001`, `87ef150c-930c-586f-9ac3-82217a1c044a#0`),
+  `p000041` (`pdf001`, `faf3d562-6e46-5315-8150-06cf9591b3f2#5`), and `p000005`
+  (`pdf002`, `d941fbce-0aa4-59fc-b329-5bd770715d2d#3`).
+- What was visible: the key has `source`, `rank`, and `gold_binary`, not 0–3
+  grades. `p000039` showed `source=random`, `rank=null`, `gold_binary=false`;
+  `p000041` showed `source=bm25_top20`, `rank=7`, `gold_binary=false`;
+  `p000005` showed only candidate/query/chunk IDs.
+- Broader exposure: `queries-v2.rb-fixed-g5.jsonl` gold answers for the 25-query
+  frame were displayed in the orchestrator setup session.
+- Grader mechanism: **separate agent instance** (task session
+  `ses_e876f070dffey2do8Y6MO3FFe2`), packet-only input, explicit prohibition on
+  reading the key/gold/queries/pool, and no shared memory with the setup session.
+- Decision: the three pass-1 grades are retained and marked
+  `lineage_breach: true`. The grader was isolated, so the exposure did not touch
+  the grading task. Kappa reports the full set and the set excluding those three
+  rows; the full set is primary, the exclusion is a sensitivity check.
+- This record is in `demo-data/eval/retrieval-benchmark/lineage-breach-v1.json`.
+
+## Calibration execution timestamps and imbalance
+
+- `pass1_completed`: 2026-10-26T14:20:00Z (40 rows; 0=32, 1=5, 2=0, 3=3).
+- `pass2_planned`: no earlier than 2026-10-27T14:20:00Z (≥12h; next calendar
+  day), which fits before the 2026-10-29 gate.
+- If pass 2 cannot happen before 2026-10-29, the kappa gate and B3 move; do not
+  silently hold the date.
+- Zero grade-2 is recorded, not treated as an error. The 4×4 confusion matrix is
+  reported; the middle boundary is untested if pass 2 also has zero 2s. The
+  majority-0 class imbalance will widen the bootstrap CI; the gate remains the
+  weighted point estimate.

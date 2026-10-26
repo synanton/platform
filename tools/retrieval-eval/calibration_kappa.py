@@ -26,6 +26,11 @@ def load(path: str) -> dict[str, int]:
     return out
 
 
+def breach_ids(path: str) -> set[str]:
+    rows = [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
+    return {row["candidate_id"] for row in rows if row.get("lineage_breach") is True}
+
+
 def _observed(pairs: list[tuple[int, int]]) -> list[list[int]]:
     observed = [[0] * 4 for _ in LABELS]
     for a, b in pairs:
@@ -69,8 +74,8 @@ def _bootstrap_ci(pairs: list[tuple[int, int]]) -> list[float]:
     return [round(values[49], 6), round(values[1949], 6)]
 
 
-def kappas(a: dict[str, int], b: dict[str, int]) -> dict:
-    ids = sorted(set(a) & set(b))
+def kappas(a: dict[str, int], b: dict[str, int], exclude: set[str] | None = None) -> dict:
+    ids = sorted((set(a) & set(b)) - (exclude or set()))
     if not ids:
         raise SystemExit("no overlapping candidate_id values")
     pairs = [(a[cid], b[cid]) for cid in ids]
@@ -96,4 +101,15 @@ def kappas(a: dict[str, int], b: dict[str, int]) -> dict:
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         raise SystemExit("usage: calibration_kappa.py pass1.jsonl pass2.jsonl")
-    print(json.dumps(kappas(load(sys.argv[1]), load(sys.argv[2])), indent=2))
+    a = load(sys.argv[1])
+    b = load(sys.argv[2])
+    breach = breach_ids(sys.argv[1]) | breach_ids(sys.argv[2])
+    full = kappas(a, b)
+    without = kappas(a, b, exclude=breach)
+    full["lineage_breach"] = {
+        "candidate_ids": sorted(breach),
+        "n_without": without["n"],
+        "kappa_quadratic_weighted_without": without["kappa_quadratic_weighted"],
+        "exact_agreement_without": without["exact_agreement"],
+    }
+    print(json.dumps(full, indent=2))
