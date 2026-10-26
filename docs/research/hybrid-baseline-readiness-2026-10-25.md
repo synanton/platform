@@ -13,7 +13,7 @@ or an undefined judgment set.
 | BM25 leg | ✅ local real demo + #410/#413/#414 |
 | Tombstone filtering with one snapshot | ✅ #410/#413/#414 |
 | Dense-leg RRF symmetry gap | ❌ recorded in #414, not addressed |
-| Dense leg verified **locally** | ❌ local-real-demo has `SYNQUEST_EMBEDDING_REQUIRED=false` and `VLLM_EMBED_BASE_URL=http://host.docker.internal:30801/v1`, but nothing listens on 30801 (probe 2026-10-25: connection refused). Historical GPU-5 results are not local evidence. Owner/date: #440 (@aminin, 2026-11-01). |
+| Dense leg verified **locally** | ❌ local-real-demo has `SYNQUEST_EMBEDDING_REQUIRED=false` and `VLLM_EMBED_BASE_URL=http://host.docker.internal:30801/v1`; NodePort times out, but `kubectl port-forward svc/tei-embedding-small 30801:8000` works. Actual runtime is **TEI 1.9.4, not vLLM**; model `synanton-bge-small-embedding` (dir hash `796371f6…`, image `b8deab53…`). Owner/date: #440 (@aminin; recorded 2026-10-26, work starts 2026-11-07). |
 | Query set | ✅ `demo-data/eval/retrieval-benchmark/queries-v2.jsonl` (25) and `queries-f1-dense.json` (10 human-confirmed) |
 | Graded judgments (highly relevant/relevant/marginal/irrelevant) | ❌ existing gold is binary; candidate pool `judgments-pool-v1.jsonl` is built but ungraded. Pool is BM25+random only (dense bias documented). |
 
@@ -56,15 +56,15 @@ combined. Same corpus, same judgments, compare each step to the previous.
 
 By **2026-11-01**:
 
-- if vLLM is valid/reachable → use it, pin the model by hash, populate from the
+- if TEI 1.9.4 is valid/reachable → use it, pin the model by hash, populate from the
   `c799bd65…:5` ingestion path, apply the per-leg tombstone filter (#414);
 - else if a pinned CPU model is ready → use it and label results **directional,
   not transferable**;
 - if neither is valid → run the official BM25 baseline only, defer dense
   explicitly with a new owner/date; do not silently extend the date.
 - Dense verification work starts **after grading completes on 2026-11-06** or is
-  assigned to someone other than @aminin; the 11-01 checkpoint is a decision
-  record, not a work start.
+  assigned to someone other than @aminin. B1 was recorded 2026-10-26; 11-01 is
+  no action. TEI 1.9.4 requires an open port-forward for the full run.
 
 ## Judgment pool v1
 
