@@ -251,9 +251,11 @@ Audit:
   text for that ordinal is not established. It is not a clean coarse-label
   false negative.
 
-**Decision:** B2 pass 1 is provisional. Pass 2, kappa, B3, and B4 are suspended
-until either the benchmark-aligned chunk text is recovered (old Cassandra
-snapshot/export) or the pool is regenerated from the current aligned corpus and
-re-graded. Do not compare B4 to 997f62d across different chunkings. The agent
-grades at (query, chunk); `gold_binary` is chunk-level from `gold_chunk_ids`;
-the comparison is chunk-to-chunk, not document-level.
+**Decision: path (b), rebuild.** The 81→317 change is intentional: the benchmark
+ran at 2026-09-25T18:57Z; commit `28c20b1` added hierarchical section chunking at
+2026-09-25T19:20Z. Current 317 chunks are the intended product behavior, not a
+regression. Rebuild the pool/calibration batch from the current chunks and
+re-grade. Do not recover the old 81-chunk text. `997f62d` measured superseded
+chunking and is not comparable to B4; its difference from a current baseline is
+a product change, not retrieval improvement. Agent grades are (query, chunk);
+`gold_binary` is chunk-level; B4 is chunk-to-chunk.

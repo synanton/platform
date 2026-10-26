@@ -1,5 +1,7 @@
 # BM25 provisional baseline — 2026-10-25
 
+> **Superseded corpus (2026-10-26).** The 81-chunk `rb-fixed-g5` corpus predates the intentional hierarchical chunking commit `28c20b1` (2026-09-25T19:20Z; benchmark run 18:57Z). Current `main` produces 317 chunks for the same documents. This table measures superseded corpus behavior and is **not comparable** to B4 on current chunking. Do not use it as the RRF reference; it is retained as historical evidence only.
+
 **Status:** Provisional. Not the official baseline, not the RRF reference.
 **Source run:** `demo-data/eval/retrieval-benchmark/results/T01-q25` (2026-09-25),
 BM25-only, fixed chunking, tenant `rb-fixed-g5`, 25 queries.

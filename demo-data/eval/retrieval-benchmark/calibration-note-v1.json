@@ -1,5 +1,5 @@
 {
-  "b2_status": "BLOCKED: pass 1 text is not benchmark-aligned; pass 2/kappa suspended until benchmark-aligned chunks are recovered or pool regenerated and re-graded.",
+  "b2_status": "BLOCKED: pass 1 is provisional; rebuild the pool on current hierarchical chunks, re-draw 40 calibration rows, re-grade pass 1/pass 2.",
   "flagged_grade3_anomaly": "p000041 is grade 3 despite key gold_binary=false; see lineage-breach-v1.json.",
   "gold_alignment_audit": {
     "benchmark_chunks": 81,
@@ -59,6 +59,8 @@
   "interpretation": "Exact-lookup is the largest bucket but not a majority of queries (12/25) and not a dominant row majority; conceptual/paraphrase/mixed are present. Zero grade-2 is therefore an open question for B3, not dismissed as a query-mix artifact. Monitor the same breakdown in B3 and report nDCG as effectively binary if grade-2 stays near zero.",
   "pass1_completed": "2026-10-26T14:20:00Z",
   "pass2_planned": ">=2026-10-27T14:20:00Z",
+  "path_decision": "B",
+  "path_decision_reason": "Hierarchical chunking commit 28c20b1 landed 23 minutes after the benchmark run; 317 chunks are current intended behavior. 81 chunks are pre-hierarchy. Rebuild the pool on current chunks; 997f62d is superseded and not comparable.",
   "query_type_by_query": {
     "pdf001": "exact",
     "pdf002": "exact",

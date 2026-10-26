@@ -3,15 +3,24 @@
   "chunk_alignment_audit": {
     "benchmark_chunks": 81,
     "candidate_rows_containing_marker": 0,
-    "conclusion": "Systematic chunking/ordinal drift between the benchmark corpus and the current re-ingest. The old chunk IDs do not identify the same text now. B2 pass 1 is provisional and cannot support kappa or B4 until the benchmark-aligned text is recovered or the pool is regenerated and re-graded.",
+    "conclusion": "The benchmark ran before the intentional hierarchical chunking commit. Current 317 chunks are the product behavior; old 81-chunk gold IDs are stale. Rebuild the pool and re-grade. 997f62d measures superseded behavior.",
     "current_reingest_chunks": 317,
     "outsourcing_chunks_benchmark": 43,
     "outsourcing_chunks_current": 213,
+    "path_decision": "PATH B: intentional hierarchical chunking change",
     "pdf_gold_chunk_lacks_marker_but_other_chunk_has_it": 12,
     "pdf_queries_checked": 15,
     "recorded_at": "2026-10-26",
     "sample_eligible_zero_rows": 12,
-    "sample_zero_rows_with_same_pattern": 7
+    "sample_zero_rows_with_same_pattern": 7,
+    "timeline": {
+      "benchmark_chunks": 81,
+      "benchmark_run": "2026-09-25T18:57:15Z",
+      "current_chunks": 317,
+      "decision": "317 is current intended product behavior; 81 is pre-hierarchy. Rebuild pool from current chunks; do not recover old text. 997f62d is superseded and not comparable.",
+      "hierarchical_commit": "28c20b1",
+      "hierarchical_commit_time": "2026-09-25T19:20:48Z"
+    }
   },
   "contamination_decision": "The three pass-1 grades are retained and flagged; the grader was isolated from the key and the setup session, so the lineage event did not touch the grading task.",
   "flagged_grade3_anomaly": {
