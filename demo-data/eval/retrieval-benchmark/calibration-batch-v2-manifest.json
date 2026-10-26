@@ -18,6 +18,20 @@
     "faf3d562-6e46-5315-8150-06cf9591b3f2"
   ],
   "documents": 15,
+  "kappa_status": "pending",
+  "pass1": {
+    "completed_at": "2026-10-26T15:00:00Z",
+    "distribution": {
+      "0": 10,
+      "1": 11,
+      "2": 3,
+      "3": 16
+    },
+    "grade2_count": 3,
+    "grader_id": "opencode-agent-v2-fresh-1"
+  },
+  "pass2_planned": ">=2026-10-27T15:00:00Z",
+  "pass2_status": "pending; >=24h gap",
   "per_query_counts": {
     "pdf001": 2,
     "pdf002": 2,

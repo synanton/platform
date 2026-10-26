@@ -271,3 +271,12 @@ a product change, not retrieval improvement. Agent grades are (query, chunk);
 - Gold audit: 13/15 PDF queries have marker-matching gold; `pdf013` and
   `pdf015` have none (`pass_with_watch`; manual gold inspection before B4).
 - Pass-1 grades are archived under `provisional/` as pipeline evidence only.
+
+
+## B2 v2 pass 1 (2026-10-26)
+
+- 40 rows, 25 queries, 15/15 documents represented.
+- Distribution: 0=10, 1=11, 2=3, 3=16. The middle boundary is now populated.
+- `pass1_completed`: 2026-10-26T15:00:00Z.
+- `pass2_planned`: >=2026-10-27T15:00:00Z (>=24h gap); status pending.
+- No kappa until pass 2.
