@@ -52,6 +52,17 @@ Ablation after the baseline, one change at a time: fixed RRF → weighted RRF �
 query-adaptive weights → result-set-adaptive weights → exact-match features →
 combined. Same corpus, same judgments, compare each step to the previous.
 
+## Dense decision rule (pre-committed)
+
+By **2026-11-01**:
+
+- if vLLM is valid/reachable → use it, pin the model by hash, populate from the
+  `c799bd65…:5` ingestion path, apply the per-leg tombstone filter (#414);
+- else if a pinned CPU model is ready → use it and label results **directional,
+  not transferable**;
+- if neither is valid → run the official BM25 baseline only, defer dense
+  explicitly with a new owner/date; do not silently extend the date.
+
 ## Judgment pool v1
 
 `docs/research/judgment-pool-v1.md` and
