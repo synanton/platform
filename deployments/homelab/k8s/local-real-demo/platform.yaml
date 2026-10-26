@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform
+  namespace: synanton
+spec:
+  type: ClusterIP
+  selector:
+    app: platform
+  ports:
+    - name: http
+      port: 8086
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform
+  namespace: synanton
+  annotations:
+    synanton.io/module: gateway
+    synanton.io/source-commit: 8abe4a4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform
+  template:
+    metadata:
+      labels:
+        app: platform
+    spec:
+      imagePullSecrets:
+        - name: local-registry-cred
+      containers:
+        - name: platform
+          image: local-registry:5000/synanton/platform@sha256:bd0058e4f0500e143d4435a9b6e69eaf684d47e92c6dff7cc752916c805c0ec9
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_PORT
+              value: "8086"
+            - name: SYNQUEST_BASE_URL
+              value: http://synquest:8083
+            - name: PLANNER_BASE_URL
+              value: http://planner:8085
+            - name: RELIX_BASE_URL
+              value: http://relix:8084
+            - name: LLM_BASE_URL
+              value: http://vllm-llm:8000/v1
+            - name: GATEWAY_GPU_ENABLED
+              value: "false"
+          ports:
+            - name: http
+              containerPort: 8086
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20

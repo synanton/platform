@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tenant-demo-config
+  namespace: synanton
+data:
+  SECURITY_DEMO_ISSUANCE_ENABLED: "true"
+  SYNQUEST_EMBEDDING_REQUIRED: "false"
+  SYNQUEST_SEED_DEMO_TENANT: "demo"
+  SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "false"

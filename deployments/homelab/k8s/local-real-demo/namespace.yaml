@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: synanton
+  labels:
+    app.kubernetes.io/part-of: synanton
+    synanton.io/profile: local-real-demo
