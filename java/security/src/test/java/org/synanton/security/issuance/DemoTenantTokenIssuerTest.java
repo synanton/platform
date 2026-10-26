@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import java.nio.charset.StandardCharsets;
@@ -76,9 +79,20 @@ class DemoTenantTokenIssuerTest {
     void deserializationCannotConstructCapabilityBearingPrincipal() {
         String json = "{\"principalId\":\"svc\",\"capabilities\":[\"CONTENT_RECONCILE_TENANT\"],"
                 + "\"expiresAt\":\"2099-01-01T00:00:00Z\",\"issuer\":\"issuer\"}";
-        assertThatThrownBy(() -> new ObjectMapper().readValue(json, ServicePrincipal.class))
-                .as("no public/JSON creator; fromClaims is the only producer")
+        ObjectMapper applicationMapper =
+                org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json().build();
+        assertThatThrownBy(() -> applicationMapper.readValue(json, ServicePrincipal.class))
+                .as("application ObjectMapper cannot construct a capability-bearing principal")
                 .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    void fromClaimsIsTheOnlyStaticProducer() {
+        assertThat(Arrays.stream(ServicePrincipal.class.getDeclaredMethods())
+                .filter(method -> Modifier.isStatic(method.getModifiers()))
+                .filter(method -> ServicePrincipal.class.equals(method.getReturnType()))
+                .map(Method::getName))
+                .containsExactly("fromClaims");
     }
 
     @Test

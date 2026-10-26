@@ -45,9 +45,18 @@ closed and tested; the issuer must use it rather than re-deriving capabilities.
   migration.
 - Fail-closed tests: audit write failure → `IssuanceAuditException`, no token;
   unknown claim fails before audit; TTL > 900 rejected.
-- `ServicePrincipal` now has a private constructor; `fromClaims` is the only
-  producer and `ServicePrincipalBoundaryTest` restricts production callers to
-  the security issuance package. Deserialization is rejected.
+- **Guard form:** compile-time private constructor (primary) + source scan of
+  main code for `new ServicePrincipal`/`fromClaims` outside the issuance package
+  (CI guard) + reflection pin that no public constructor exists + a reflection
+  assertion that `fromClaims` is the only static producer. The source scan is
+  advisory to the compiler, but the private constructor is structural.
+- The application Jackson mapper rejects `ServicePrincipal` via an explicit
+  `@JsonDeserialize` failure; no JDBC/record-hydration path exists.
+- **Not serializable/cacheable:** `ServicePrincipal` is request-scoped and must
+  be reconstructed from the token/claims per use. Do not add it to session or
+  response caches; that would create a second principal source.
+- Unknown/blank claim rejections increment `rejectedIssuances`; no audit row is
+  fabricated for a token that was never issued.
 - Unknown/blank claim rejections increment `rejectedIssuances` (no token, no
   audit row; intentional because issuance did not occur). This is the only
   unaudited path and is counted.
@@ -55,6 +64,8 @@ closed and tested; the issuer must use it rather than re-deriving capabilities.
   when `security.demo-issuance.enabled=true`** (default absent/false). It is
   not open by default and must stay demo-flag-gated.
 - Not yet: UI switch from Vite dev auth, refresh/rotation/denylist (#436).
+  The switch must **remove** the Vite dev-auth minting path, not keep it as a
+  fallback; otherwise the gated endpoint is not the only issuance path.
 
 ## Definition of done for #340
 
