@@ -1,6 +1,8 @@
 # Judgment pool v1 — candidate set, not grades
 
 **Status:** Candidate pool built 2026-10-25. No graded labels yet.
+**Protocol:** [grading-protocol-v1.md](./grading-protocol-v1.md) — blind sheet and
+key are `grading-sheet-v1.jsonl` / `judgments-key-v1.jsonl`.
 **Builder:** `tools/retrieval-eval/build_judgment_pool.py`
 **Output:** `demo-data/eval/retrieval-benchmark/judgments-pool-v1.jsonl` (734 rows,
 25 queries).
