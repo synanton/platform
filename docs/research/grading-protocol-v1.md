@@ -83,9 +83,10 @@ stop the work fires on the small batch, cheaply.
 - If a second grader is confirmed by 2026-10-30, report **inter-rater**
   quadratic-weighted kappa; disagreements are adjudicated by discussion between
   the two graders, resolution recorded.
-- If no second grader is confirmed, the delayed-self pass is **intra-rater**
-  reliability, not inter-rater. Use a **0.75+** threshold, label it intra-rater,
-  and record that it is weaker. Do not report it as inter-rater kappa 0.60.
+- **Decision (2026-10-26): no second grader is confirmed; use delayed-self.**
+  This is **intra-rater** reliability, not inter-rater. Label it intra-rater,
+  use the **0.75+** threshold, and record that it is weaker. Do not report it as
+  inter-rater kappa 0.60. @aminin adjudicates; record the primary-grade bias.
 - If neither a second grader nor a third-party adjudicator is available,
   @aminin adjudicates and the protocol/acceptance must state the adjudication is
   biased toward the primary grade.
@@ -103,14 +104,16 @@ also reported):
 
 Adjudication order: (1) second grader confirmed and both discuss; (2) a
 third-party adjudicator for the sample; (3) @aminin with the primary-grade bias
-recorded explicitly. Never overwrite a disagreement; record both grades and the
-resolution.
+recorded explicitly. **Current decision:** no second grader; delayed-self
+intra-rater, @aminin adjudicates, bias recorded. Never overwrite a disagreement;
+record both grades and the resolution.
 
 ## Execution schedule
 
 - Primary grader: **@aminin**.
 - **Calibration:** 2026-10-27 → 10-29 (30–50 candidates, double-graded).
-- **Second-grader decision:** by 2026-10-30; name recorded here.
+- **Second-grader decision:** resolved 2026-10-26 — delayed-self **intra-rater**
+  (no second grader), threshold 0.75+.
 - **Bulk grading:** 2026-10-30 → 2026-11-06, only after the kappa gate.
 - 734 rows at 20–40/hour ≈ 18–37 hours, plus double-grades; ~2.5–3 hours/day.
 - **2026-11-01 dense checkpoint:** 2-hour decision record only. Dense
