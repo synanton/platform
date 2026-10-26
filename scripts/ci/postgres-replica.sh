@@ -24,6 +24,18 @@ wait_ready() {
   die "$name did not become ready"
 }
 
+wait_database() {
+  local name=$1
+  for _ in $(seq 1 60); do
+    if docker exec "$name" psql -U postgres -d synanton -c "SELECT 1" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  docker logs "$name" >&2 || true
+  die "$name did not create database synanton"
+}
+
 up() {
   down
   docker network create "$NETWORK" >/dev/null
@@ -36,6 +48,7 @@ up() {
     -c wal_level=replica -c max_wal_senders=10 -c max_replication_slots=10 \
     -c hot_standby=on >/dev/null
   wait_ready "$PRIMARY"
+  wait_database "$PRIMARY"
   docker exec "$PRIMARY" psql -U postgres -d synanton -v ON_ERROR_STOP=1 \
     -c "CREATE ROLE replicator REPLICATION LOGIN PASSWORD 'replicator';" >/dev/null
   docker exec "$PRIMARY" bash -c 'printf "\nhost replication all all trust\n" >> "$PGDATA/pg_hba.conf"'
@@ -61,6 +74,7 @@ up() {
       exec postgres
     ' >/dev/null
   wait_ready "$REPLICA"
+  wait_database "$REPLICA"
 
   for _ in $(seq 1 60); do
     recovery=$(docker exec "$REPLICA" psql -U postgres -d synanton -tAc "SELECT pg_is_in_recovery();" 2>/dev/null | tr -d '[:space:]')
