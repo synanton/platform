@@ -4,11 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.synanton.eventing.contract.Event;
 import org.synanton.eventing.contract.EventingJson;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /** Test double with the same idempotency and retention behavior as the JDBC outbox. */
@@ -17,7 +19,7 @@ public final class InMemoryEventOutbox implements EventOutbox {
     private final Map<UUID, StoredEntry> rows = new LinkedHashMap<>();
 
     @Override
-    public synchronized OutboxEntry append(Event<?> event) {
+    public synchronized OutboxEntry append(Connection connection, Event<?> event) {
         Objects.requireNonNull(event, "event");
         StoredEntry existing = rows.get(event.eventId());
         if (existing != null) {
@@ -48,6 +50,18 @@ public final class InMemoryEventOutbox implements EventOutbox {
             }
         }
         return List.copyOf(pending);
+    }
+
+    @Override
+    public synchronized Optional<OutboxEntry> find(UUID eventId) {
+        StoredEntry stored = rows.get(Objects.requireNonNull(eventId, "eventId"));
+        return stored == null ? Optional.empty() : Optional.of(stored.entry());
+    }
+
+    @Override
+    public synchronized boolean isDispatched(UUID eventId) {
+        StoredEntry stored = rows.get(Objects.requireNonNull(eventId, "eventId"));
+        return stored != null && stored.dispatched();
     }
 
     @Override

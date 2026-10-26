@@ -10,13 +10,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
-/** PostgreSQL outbox. Callers should invoke append in the same transaction as the state change. */
+/** PostgreSQL outbox. Append uses the caller's connection and never commits or closes it. */
 public final class JdbcEventOutbox implements EventOutbox {
 
     private static final String INSERT = """
@@ -27,13 +27,13 @@ public final class JdbcEventOutbox implements EventOutbox {
             """;
 
     private static final String SELECT_BY_ID = """
-            SELECT event_id, tenant_id, event_type, payload::text, attempts
+            SELECT event_id, tenant_id, event_type, payload::text, attempts, dispatched_at
             FROM event_outbox
             WHERE event_id = ?
             """;
 
     private static final String SELECT_PENDING = """
-            SELECT event_id, tenant_id, event_type, payload::text, attempts
+            SELECT event_id, tenant_id, event_type, payload::text, attempts, dispatched_at
             FROM event_outbox
             WHERE dispatched_at IS NULL
             ORDER BY created_at, event_id
@@ -59,9 +59,10 @@ public final class JdbcEventOutbox implements EventOutbox {
     }
 
     @Override
-    public OutboxEntry append(Event<?> event) {
+    public OutboxEntry append(Connection connection, Event<?> event) {
+        Objects.requireNonNull(connection, "connection");
         Objects.requireNonNull(event, "event");
-        try (Connection connection = dataSource.getConnection()) {
+        try {
             try (PreparedStatement insert = connection.prepareStatement(INSERT)) {
                 insert.setObject(1, event.eventId());
                 insert.setString(2, event.tenantId());
@@ -101,6 +102,34 @@ public final class JdbcEventOutbox implements EventOutbox {
             }
         } catch (SQLException exception) {
             throw new IllegalStateException("outbox pending query failed", exception);
+        }
+    }
+
+    @Override
+    public Optional<OutboxEntry> find(UUID eventId) {
+        Objects.requireNonNull(eventId, "eventId");
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement select = connection.prepareStatement(SELECT_BY_ID)) {
+            select.setObject(1, eventId);
+            try (ResultSet result = select.executeQuery()) {
+                return result.next() ? Optional.of(read(result)) : Optional.empty();
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("outbox find failed", exception);
+        }
+    }
+
+    @Override
+    public boolean isDispatched(UUID eventId) {
+        Objects.requireNonNull(eventId, "eventId");
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement select = connection.prepareStatement(SELECT_BY_ID)) {
+            select.setObject(1, eventId);
+            try (ResultSet result = select.executeQuery()) {
+                return result.next() && result.getTimestamp("dispatched_at") != null;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("outbox dispatched query failed", exception);
         }
     }
 

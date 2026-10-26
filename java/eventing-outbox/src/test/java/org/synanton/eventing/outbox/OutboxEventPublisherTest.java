@@ -9,6 +9,7 @@ import org.synanton.eventing.contract.Producer;
 import org.synanton.eventing.contract.ReplayClass;
 import org.synanton.eventing.contract.SecurityMetadata;
 
+import java.sql.Connection;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,31 +24,58 @@ class OutboxEventPublisherTest {
 
     private static final UUID EVENT_ID = UUID.fromString("11111111-1111-4111-8111-111111111111");
     private static final UUID CORRELATION_ID = UUID.fromString("22222222-2222-4222-8222-222222222222");
+    private static final OutboxTransaction DIRECT = work -> work.execute(null);
 
     private final EventTypeRegistry eventTypes = new EventTypeRegistry(List.of(
             new EventTypeDeclaration("ContentPublished", 1, ReplayClass.REPLAY_SAFE, Optional.empty())));
 
     @Test
-    void publish_persistsBeforeDispatchAndMarksTheRow() {
+    void publish_persistsTheEventIdBeforeDispatchAndMarksTheRow() {
         InMemoryEventOutbox outbox = new InMemoryEventOutbox();
         RecordingDispatcher dispatcher = new RecordingDispatcher(0);
-        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher);
+        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher, DIRECT);
 
         publisher.publish("tenant-a", event());
 
         assertThat(dispatcher.eventIds).containsExactly(EVENT_ID);
+        assertThat(outbox.find(EVENT_ID)).hasValueSatisfying(entry -> {
+            assertThat(entry.eventId()).isEqualTo(EVENT_ID);
+            assertThat(entry.payloadJson()).contains("\"event_id\":\"11111111-1111-4111-8111-111111111111\"");
+        });
+        assertThat(outbox.isDispatched(EVENT_ID)).isTrue();
         assertThat(outbox.pending(10)).isEmpty();
     }
 
     @Test
-    void dispatchFailure_retainsRowAndRetryReEmitsTheSameEventId() {
+    void dispatch_runsOnlyAfterTheTransactionReturns() {
+        InMemoryEventOutbox outbox = new InMemoryEventOutbox();
+        AtomicInteger committed = new AtomicInteger();
+        OutboxTransaction transaction = work -> {
+            OutboxEntry entry = work.execute(null);
+            committed.incrementAndGet();
+            return entry;
+        };
+        OutboxDispatcher dispatcher = entry -> assertThat(committed).hasValue(1);
+        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher, transaction);
+
+        publisher.publish("tenant-a", event());
+
+        assertThat(committed).hasValue(1);
+        assertThat(outbox.isDispatched(EVENT_ID)).isTrue();
+    }
+
+    @Test
+    void dispatchFailure_retainsUndispatchedRowAndRetryReEmitsTheSameEventId() {
         InMemoryEventOutbox outbox = new InMemoryEventOutbox();
         RecordingDispatcher dispatcher = new RecordingDispatcher(1);
-        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher);
+        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher, DIRECT);
 
         assertThatThrownBy(() -> publisher.publish("tenant-a", event()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("broker unavailable");
+
+        assertThat(outbox.find(EVENT_ID)).isPresent();
+        assertThat(outbox.isDispatched(EVENT_ID)).isFalse();
         assertThat(outbox.pending(10))
                 .extracting(OutboxEntry::eventId)
                 .containsExactly(EVENT_ID);
@@ -55,17 +83,21 @@ class OutboxEventPublisherTest {
         publisher.publish("tenant-a", event());
 
         assertThat(dispatcher.eventIds).containsExactly(EVENT_ID, EVENT_ID);
+        assertThat(outbox.isDispatched(EVENT_ID)).isTrue();
         assertThat(outbox.pending(10)).isEmpty();
     }
 
     @Test
     void outboxWriteFailure_doesNotDispatch() {
         RecordingDispatcher dispatcher = new RecordingDispatcher(0);
-        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, new FailingOutbox(), dispatcher);
+        FailingOutbox outbox = new FailingOutbox();
+        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher, DIRECT);
 
         assertThatThrownBy(() -> publisher.publish("tenant-a", event()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("outbox unavailable");
+
+        assertThat(outbox.find(EVENT_ID)).isEmpty();
         assertThat(dispatcher.eventIds).isEmpty();
     }
 
@@ -109,13 +141,23 @@ class OutboxEventPublisherTest {
     private static final class FailingOutbox implements EventOutbox {
 
         @Override
-        public OutboxEntry append(Event<?> event) {
+        public OutboxEntry append(Connection connection, Event<?> event) {
             throw new IllegalStateException("outbox unavailable");
         }
 
         @Override
         public List<OutboxEntry> pending(int limit) {
             return List.of();
+        }
+
+        @Override
+        public Optional<OutboxEntry> find(UUID eventId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean isDispatched(UUID eventId) {
+            return false;
         }
 
         @Override
