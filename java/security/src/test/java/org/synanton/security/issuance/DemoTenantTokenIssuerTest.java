@@ -3,6 +3,7 @@ package org.synanton.security.issuance;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.synanton.storage.contract.service.ServiceAuthorizationException;
 import org.synanton.storage.contract.service.ServiceCapability;
+import org.synanton.storage.contract.service.ServicePrincipal;
 
 class DemoTenantTokenIssuerTest {
 
@@ -55,6 +57,7 @@ class DemoTenantTokenIssuerTest {
                 .isInstanceOf(ServiceAuthorizationException.class)
                 .hasMessageContaining("unknown capability claim");
         assertThat(events).isEmpty();
+        assertThat(issuer.rejectedIssuances()).isEqualTo(1);
     }
 
     @Test
@@ -67,6 +70,15 @@ class DemoTenantTokenIssuerTest {
                 Set.of("content.reconcile")))
                 .isInstanceOf(IssuanceAuditException.class)
                 .hasMessageContaining("token not issued");
+    }
+
+    @Test
+    void deserializationCannotConstructCapabilityBearingPrincipal() {
+        String json = "{\"principalId\":\"svc\",\"capabilities\":[\"CONTENT_RECONCILE_TENANT\"],"
+                + "\"expiresAt\":\"2099-01-01T00:00:00Z\",\"issuer\":\"issuer\"}";
+        assertThatThrownBy(() -> new ObjectMapper().readValue(json, ServicePrincipal.class))
+                .as("no public/JSON creator; fromClaims is the only producer")
+                .isInstanceOf(Exception.class);
     }
 
     @Test

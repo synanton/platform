@@ -38,14 +38,23 @@ closed and tested; the issuer must use it rather than re-deriving capabilities.
 ## Implemented 2026-10-25
 
 - `DemoTenantTokenIssuer` (security module): HS256, 15-minute max TTL,
+  rejection counter for unknown/blank claims,
   tenant-bound claims, `ServicePrincipal.fromClaims` mapping, issuance audit
   before token return.
 - `IssuanceAudit` port + `JdbcIssuanceAudit` + `security.issuance_audit`
   migration.
 - Fail-closed tests: audit write failure → `IssuanceAuditException`, no token;
   unknown claim fails before audit; TTL > 900 rejected.
-- Not yet: HTTP `POST /v1/auth/tenant` exposure, UI switch from Vite dev auth,
-  refresh/rotation/denylist (#436).
+- `ServicePrincipal` now has a private constructor; `fromClaims` is the only
+  producer and `ServicePrincipalBoundaryTest` restricts production callers to
+  the security issuance package. Deserialization is rejected.
+- Unknown/blank claim rejections increment `rejectedIssuances` (no token, no
+  audit row; intentional because issuance did not occur). This is the only
+  unaudited path and is counted.
+- `POST /v1/auth/tenant` is implemented but **conditionally registered only
+  when `security.demo-issuance.enabled=true`** (default absent/false). It is
+  not open by default and must stay demo-flag-gated.
+- Not yet: UI switch from Vite dev auth, refresh/rotation/denylist (#436).
 
 ## Definition of done for #340
 
