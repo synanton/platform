@@ -5,6 +5,7 @@ import org.synanton.eventing.contract.EventTypeRegistry;
 import org.synanton.eventing.publisher.AbstractEventPublisher;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /** Commits the outbox row first, then dispatches. A dispatch failure leaves the row for retry. */
 public final class OutboxEventPublisher extends AbstractEventPublisher {
@@ -27,12 +28,14 @@ public final class OutboxEventPublisher extends AbstractEventPublisher {
     @Override
     protected void deliver(Event<?> event) {
         OutboxEntry entry = transaction.execute(connection -> outbox.append(connection, event));
-        dispatchAfterCommit(entry);
+        dispatchAfterCommit(entry.eventId());
     }
 
-    /** Call only after the business transaction that wrote {@code entry} has committed. */
-    public void dispatchAfterCommit(OutboxEntry entry) {
-        Objects.requireNonNull(entry, "entry");
+    /** Call only after the transaction that wrote the row has committed; reads the durable row. */
+    public void dispatchAfterCommit(UUID eventId) {
+        Objects.requireNonNull(eventId, "eventId");
+        OutboxEntry entry = outbox.find(eventId)
+                .orElseThrow(() -> new IllegalStateException("outbox row missing after commit"));
         try {
             dispatcher.dispatch(entry);
             outbox.markDispatched(entry.eventId());
