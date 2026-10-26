@@ -1,5 +1,17 @@
 {
+  "b2_status": "BLOCKED: pass 1 text is not benchmark-aligned; pass 2/kappa suspended until benchmark-aligned chunks are recovered or pool regenerated and re-graded.",
   "flagged_grade3_anomaly": "p000041 is grade 3 despite key gold_binary=false; see lineage-breach-v1.json.",
+  "gold_alignment_audit": {
+    "benchmark_chunks": 81,
+    "current_reingest_chunks": 317,
+    "eligible_zero_rows_checked": 12,
+    "eligible_zero_rows_same_pattern": 7,
+    "outsourcing_benchmark_chunks": 43,
+    "outsourcing_current_chunks": 213,
+    "pdf_gold_mismatches": 12,
+    "pdf_queries_checked": 15,
+    "verdict": "systematic chunk-text drift; pass 1 provisional"
+  },
   "grade_distribution_by_type": {
     "conceptual": {
       "0": 1,
@@ -92,5 +104,6 @@
     "paraphrase": 7,
     "quoted": 1
   },
+  "rrf_headroom_caveat": "B4 is measured on a query set weighted toward exact/date/quoted (14/25) with only 1 conceptual query. RRF evaluation on this set understates semantic-retrieval benefit. D5 expansion for B6 should weight toward conceptual/paraphrase queries, not just add more queries.",
   "zero_grade2": true
 }

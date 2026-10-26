@@ -231,3 +231,28 @@ the calibration key and the query file while locating chunk text.
   reported; the middle boundary is untested if pass 2 also has zero 2s. The
   majority-0 class imbalance will widen the bootstrap CI; the gate remains the
   weighted point estimate.
+
+
+## B2 blocked: benchmark chunk-text alignment (2026-10-26)
+
+The calibration sheet was built from the 2026-09-25 `rb-fixed-g5` benchmark
+(81 chunks). The current re-ingest has 317 chunks for the same 15 documents
+(outsourcing: 43 vs 213). Chunk IDs are `content_ref#ordinal`; when the chunker
+changes, the same ID points at different text.
+
+Audit:
+- 12 of 15 PDF queries have a gold chunk that does **not** contain the query's
+  answer marker while another chunk in the same document does.
+- Of the 12 grade-0 calibration rows whose document is a gold document, 7 show
+  that same "gold lacks marker / other chunk has it" pattern; none of the 12
+  candidate chunks contains the marker.
+- Example: `p000041` is grade 3 on current `faf3…#5` text, but the benchmark
+  text for that ordinal is not established. It is not a clean coarse-label
+  false negative.
+
+**Decision:** B2 pass 1 is provisional. Pass 2, kappa, B3, and B4 are suspended
+until either the benchmark-aligned chunk text is recovered (old Cassandra
+snapshot/export) or the pool is regenerated from the current aligned corpus and
+re-graded. Do not compare B4 to 997f62d across different chunkings. The agent
+grades at (query, chunk); `gold_binary` is chunk-level from `gold_chunk_ids`;
+the comparison is chunk-to-chunk, not document-level.
