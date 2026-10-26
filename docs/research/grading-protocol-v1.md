@@ -259,3 +259,15 @@ re-grade. Do not recover the old 81-chunk text. `997f62d` measured superseded
 chunking and is not comparable to B4; its difference from a current baseline is
 a product change, not retrieval improvement. Agent grades are (query, chunk);
 `gold_binary` is chunk-level; B4 is chunk-to-chunk.
+
+
+## v2 rebuild artifacts (2026-10-26)
+
+- `judgments-pool-v2.jsonl`: 734 candidates, same top-20 + 10-random rule,
+  corpus digest `a993e6a1…`, mean document diversity 7.32 (v1: 9.36), min 1
+  (pdf015), max 14.
+- `calibration-sheet-v2.jsonl` / `calibration-key-v2.jsonl`: 40 rows, all 25
+  queries, all 15 documents represented; selection seed 20261026.
+- Gold audit: 13/15 PDF queries have marker-matching gold; `pdf013` and
+  `pdf015` have none (`pass_with_watch`; manual gold inspection before B4).
+- Pass-1 grades are archived under `provisional/` as pipeline evidence only.

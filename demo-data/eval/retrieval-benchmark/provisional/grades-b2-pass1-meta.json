@@ -1,0 +1,14 @@
+{
+  "status": "provisional_pipeline_evidence",
+  "not_calibration_evidence": true,
+  "superseded_by": "#467 path B (hierarchical chunking rebuild)",
+  "validated": [
+    "blind sheet + metadata-free packet",
+    "fresh-context grader mechanism",
+    "4-level schema and lineage flags"
+  ],
+  "not_validated": [
+    "grades against current benchmark-aligned chunks",
+    "kappa or B4 relevance"
+  ]
+}
