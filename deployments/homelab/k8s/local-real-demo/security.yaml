@@ -58,11 +58,8 @@ spec:
               containerPort: 8081
           resources:
             requests:
-              cpu: 250m
-              memory: 512Mi
-            limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: 100m
+              memory: 256Mi
           readinessProbe:
             httpGet:
               path: /actuator/health
