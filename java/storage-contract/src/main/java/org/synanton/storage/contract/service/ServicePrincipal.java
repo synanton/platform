@@ -1,5 +1,11 @@
 package org.synanton.storage.contract.service;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
@@ -11,6 +17,7 @@ import java.util.stream.Collectors;
  * {@code ServicePrincipalBoundaryTest} to the security issuance package.
  * Deserialization cannot construct a principal with capabilities.
  */
+@JsonDeserialize(using = ServicePrincipal.RejectDeserialization.class)
 public final class ServicePrincipal {
 
     private final String principalId;
@@ -74,6 +81,16 @@ public final class ServicePrincipal {
 
     public boolean expired(Instant now) {
         return !expiresAt.isAfter(now);
+    }
+
+    /** Explicitly rejects JSON/framework hydration; use fromClaims. */
+    public static final class RejectDeserialization extends JsonDeserializer<ServicePrincipal> {
+        @Override
+        public ServicePrincipal deserialize(JsonParser parser, DeserializationContext context)
+                throws IOException {
+            throw JsonMappingException.from(parser,
+                    "ServicePrincipal must be created through fromClaims");
+        }
     }
 
     @Override

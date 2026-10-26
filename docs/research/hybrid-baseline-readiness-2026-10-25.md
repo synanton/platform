@@ -15,7 +15,7 @@ or an undefined judgment set.
 | Dense-leg RRF symmetry gap | ❌ recorded in #414, not addressed |
 | Dense leg verified **locally** | ❌ local-real-demo has `SYNQUEST_EMBEDDING_REQUIRED=false` and `VLLM_EMBED_BASE_URL=http://host.docker.internal:30801/v1`, but nothing listens on 30801 (probe 2026-10-25: connection refused). Historical GPU-5 results are not local evidence. Owner/date: #440 (@aminin, 2026-11-01). |
 | Query set | ✅ `demo-data/eval/retrieval-benchmark/queries-v2.jsonl` (25) and `queries-f1-dense.json` (10 human-confirmed) |
-| Graded judgments (highly relevant/relevant/marginal/irrelevant) | ❌ existing gold is binary (gold chunk/document lists and objective markers); no four-level grades |
+| Graded judgments (highly relevant/relevant/marginal/irrelevant) | ❌ existing gold is binary; candidate pool `judgments-pool-v1.jsonl` is built but ungraded. Pool is BM25+random only (dense bias documented). |
 
 ## Decision
 
@@ -51,6 +51,13 @@ or an undefined judgment set.
 Ablation after the baseline, one change at a time: fixed RRF → weighted RRF →
 query-adaptive weights → result-set-adaptive weights → exact-match features →
 combined. Same corpus, same judgments, compare each step to the previous.
+
+## Judgment pool v1
+
+`docs/research/judgment-pool-v1.md` and
+`demo-data/eval/retrieval-benchmark/judgments-pool-v1.jsonl` contain 734
+BM25-top20 + random candidates with `grade: null`. The pool is biased against
+the dense leg (no dense top-k); annotate it now, expand after #440.
 
 ## Provisional BM25 table
 
