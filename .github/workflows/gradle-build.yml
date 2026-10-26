@@ -66,3 +66,44 @@ jobs:
           -x :java:content-cache-postgres:test
           -x :java:synvault-postgres:test
           -x :java:synquest-postgres:test
+
+  replica-parity:
+    name: Replica Read Parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Start primary and streaming replica
+        run: ./scripts/ci/postgres-replica.sh up
+
+      - name: Run ReplicaReadParityTest
+        env:
+          REPLICA_PARITY_PRIMARY_URL: jdbc:postgresql://localhost:55432/synanton
+          REPLICA_PARITY_REPLICA_URL: jdbc:postgresql://localhost:55433/synanton
+          REPLICA_PARITY_PRIMARY_USER: app
+          REPLICA_PARITY_PRIMARY_PASSWORD: app
+          REPLICA_PARITY_REPLICA_USER: app
+          REPLICA_PARITY_REPLICA_PASSWORD: app
+        run: >-
+          ./gradlew :java:content-cache-postgres:test
+          --tests org.synanton.contentcache.postgres.ReplicaReadParityTest
+          --no-build-cache
+
+      - name: Stop replica pair
+        if: always()
+        run: ./scripts/ci/postgres-replica.sh down

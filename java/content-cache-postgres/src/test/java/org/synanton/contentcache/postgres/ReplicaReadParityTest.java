@@ -7,17 +7,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import javax.sql.DataSource;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.synanton.contentcache.ContentMetadata;
 import org.synanton.storage.contract.TenantScope;
 
 /**
- * Env-gated replica parity (#339). Skipped visibly when no replica is
- * configured; the primary acceptance is separate. Known data must be non-zero
- * on the replica (setter/role work) and an unknown tenant must see zero rows
- * for the same digest (RLS is active, not bypassed).
+ * Replica parity (#339/#428). Requires a primary and streaming replica; fails
+ * rather than skips when either DSN is absent. Known data must be non-zero on
+ * the replica (setter/role work) and an unknown tenant must see zero rows for
+ * the same digest (RLS is active, not bypassed).
  */
 class ReplicaReadParityTest {
 
@@ -25,10 +24,11 @@ class ReplicaReadParityTest {
     void knownTenantIsVisibleAndUnknownTenantIsIsolatedOnReplica() throws Exception {
         String primaryUrl = System.getenv("REPLICA_PARITY_PRIMARY_URL");
         String replicaUrl = System.getenv("REPLICA_PARITY_REPLICA_URL");
-        Assumptions.assumeTrue(
-                primaryUrl != null && !primaryUrl.isBlank()
-                        && replicaUrl != null && !replicaUrl.isBlank(),
-                "replica parity skipped: set REPLICA_PARITY_PRIMARY_URL and REPLICA_PARITY_REPLICA_URL");
+        if (primaryUrl == null || primaryUrl.isBlank()
+                || replicaUrl == null || replicaUrl.isBlank()) {
+            throw new AssertionError(
+                    "replica parity requires REPLICA_PARITY_PRIMARY_URL and REPLICA_PARITY_REPLICA_URL");
+        }
 
         DataSource primary = dataSource(primaryUrl, env("REPLICA_PARITY_PRIMARY_USER", "app"),
                 env("REPLICA_PARITY_PRIMARY_PASSWORD", "app"));
