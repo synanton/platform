@@ -73,10 +73,13 @@ When in doubt between 2 and 3, ask: "Can this chunk answer alone?"
 
 ## 3. Calibration batch and kappa decision rule
 
-**Calibration batch first (2026-10-27 → 10-29):** @aminin grades the first
-30–50 candidates. Those are immediately double-graded. Kappa is computed
-**before bulk grading**. The 15% full-pool sample remains, but the gate that can
-stop the work fires on the small batch, cheaply.
+**Calibration batch first (2026-10-27 → 10-29):** the 40-row stratified batch
+is `calibration-sheet-v1.jsonl` (key `calibration-key-v1.jsonl`). @aminin grades
+it blind, then double-grades at distance. Kappa is computed with
+`tools/retrieval-eval/calibration_kappa.py pass1.jsonl pass2.jsonl` **before
+bulk grading**. The tool labels intra-rater/inter-rater and reports exact
+agreement plus unweighted/quadratic-weighted kappa. The 15% full-pool sample
+remains, but the gate that can stop the work fires on this small batch.
 
 - Double-grade the calibration batch, then **15%** of the full pool (~110),
   stratified by query and at least 3 per query where available.
