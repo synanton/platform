@@ -3,23 +3,21 @@
     "gold_chunk_ids": [
       "69bd3d12-3841-54a1-b104-1ff1104420e9#82"
     ],
-    "grade": 3,
     "markers": [
       "on a calendar quarter basis"
     ],
-    "pool_addition": true,
+    "pool_status": "pre_graded_calibration_pass1_grade_2",
     "reason": "Old gold #16 is a table of contents. Current chunk 82 contains the quarterly basis and the Short Term Rolling Forecast context; manual retarget."
   },
   "pdf015": {
     "gold_chunk_ids": [
       "69bd3d12-3841-54a1-b104-1ff1104420e9#65"
     ],
-    "grade": 3,
     "markers": [
       "Certificate of Analysis",
       "Certificate of Compliance"
     ],
-    "pool_addition": true,
+    "pool_status": "pending_fresh_B3_grade",
     "reason": "Old gold #22 is a table of contents. Current chunk 65 lists the certificates; the old 'in English' phrase is absent, so the marker is narrowed. Manual retarget."
   }
 }

@@ -1,4 +1,12 @@
 {
+  "b3_scope": {
+    "calibration_rows": 40,
+    "includes_pdf015_65": true,
+    "new_b3_gradings": 695,
+    "note": "B3 grades all 695 non-calibration rows, including pdf015/#65; pdf013/#82 keeps its pass-1 grade 2.",
+    "override_rows_pre_graded": 0,
+    "pool_rows": 735
+  },
   "batch_version": "v2",
   "distribution_comparison": {
     "grade2_populated": true,
