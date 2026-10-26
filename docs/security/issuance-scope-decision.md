@@ -64,8 +64,17 @@ closed and tested; the issuer must use it rather than re-deriving capabilities.
   when `security.demo-issuance.enabled=true`** (default absent/false). It is
   not open by default and must stay demo-flag-gated.
 - Not yet: UI switch from Vite dev auth, refresh/rotation/denylist (#436).
-  The switch must **remove** the Vite dev-auth minting path, not keep it as a
-  fallback; otherwise the gated endpoint is not the only issuance path.
+
+### UI switch execution (pinned)
+
+- **Remove** the Vite dev-auth middleware/module; do not disable/fallback it.
+  The UI must call `POST /v1/auth/tenant` and receive the same
+  `ServicePrincipal`-backed token.
+- Existing dev sessions/tokens are invalid at the switch; force re-auth. No
+  dual-path transition window.
+- Local-real-demo sets `security.demo-issuance.enabled=true` explicitly and
+  documents it; absent flag fails closed (looks like a bug, is correct).
+- Test: the Vite dev-auth path is gone/unreachable, not merely unused.
 
 ## Definition of done for #340
 
