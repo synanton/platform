@@ -50,6 +50,7 @@ include(
     "java:content-cache-api",
     "java:eventing-contract",
     "java:eventing-publisher",
+    "java:eventing-outbox",
     "java:content-cache-postgres",
     "java:content-cache-grpc",
     "java:storage-contract",
