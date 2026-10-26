@@ -1,4 +1,4 @@
-package org.synanton.contentcache.service;
+package org.synanton.storage.contract.service;
 
 import java.time.Instant;
 import java.util.Objects;

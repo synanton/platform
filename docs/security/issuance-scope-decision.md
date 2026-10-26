@@ -2,6 +2,8 @@
 
 **Decision date:** 2026-10-25. **Decision:** #340 is **demo issuance only**;
 production identity is split to #436.
+**Implementation status:** demo issuer + fail-closed audit implemented; HTTP/UI
+switch and durable production keys remain out of scope.
 
 ## Why
 
@@ -17,7 +19,7 @@ already accepts.
 | Concern | Demo decision |
 |---|---|
 | Token | Tenant-bound access token, target 15-minute TTL; HS256/dev key or equivalent demo provider |
-| Revocation | TTL only; no denylist, no rotation, no refresh-token flow |
+| Revocation | TTL only; no denylist, no rotation, no refresh-token flow. **Coupling:** token-carried claims mean revocation cannot be immediate without a per-request lookup path; that is a different token design and belongs to #436. |
 | Claims | `iss`, `aud`, `sub`, `exp`, `nbf`, `jti`, `scope`, `tenant_id`, `token_type=tenant_access` |
 | Capabilities | Claims select only from the compiled `ServiceCapability` set via `ServicePrincipal.fromClaims`; blank/unknown claim fails at issuance |
 | Principal | Same `ServicePrincipal` type the facade accepts; no parallel principal |
@@ -32,6 +34,18 @@ production CORS/CSRF/CSP, real IdP integration. Those are #436.
 Issuance audit is the security-load-bearing piece in this slice. A minted token
 with no record is not acceptable even in the demo. The claim mapping is already
 closed and tested; the issuer must use it rather than re-deriving capabilities.
+
+## Implemented 2026-10-25
+
+- `DemoTenantTokenIssuer` (security module): HS256, 15-minute max TTL,
+  tenant-bound claims, `ServicePrincipal.fromClaims` mapping, issuance audit
+  before token return.
+- `IssuanceAudit` port + `JdbcIssuanceAudit` + `security.issuance_audit`
+  migration.
+- Fail-closed tests: audit write failure → `IssuanceAuditException`, no token;
+  unknown claim fails before audit; TTL > 900 rejected.
+- Not yet: HTTP `POST /v1/auth/tenant` exposure, UI switch from Vite dev auth,
+  refresh/rotation/denylist (#436).
 
 ## Definition of done for #340
 

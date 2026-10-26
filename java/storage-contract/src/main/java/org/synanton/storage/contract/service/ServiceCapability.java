@@ -1,4 +1,4 @@
-package org.synanton.contentcache.service;
+package org.synanton.storage.contract.service;
 
 /** Compiled service capabilities. A config file or token cannot add an entry. */
 public enum ServiceCapability {

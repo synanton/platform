@@ -1,4 +1,7 @@
 package org.synanton.contentcache.service;
+import org.synanton.storage.contract.service.ServiceAuthorizationException;
+import org.synanton.storage.contract.service.ServiceCapability;
+import org.synanton.storage.contract.service.ServicePrincipal;
 
 import java.util.Objects;
 import org.synanton.contentcache.ContentReference;

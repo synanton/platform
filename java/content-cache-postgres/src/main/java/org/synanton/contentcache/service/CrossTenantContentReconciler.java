@@ -1,4 +1,6 @@
 package org.synanton.contentcache.service;
+import org.synanton.storage.contract.service.ServiceCapability;
+import org.synanton.storage.contract.service.ServicePrincipal;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

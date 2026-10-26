@@ -23,10 +23,10 @@ import org.synanton.contentcache.service.CrossTenantRequest;
 import org.synanton.contentcache.service.PartialReconcileException;
 import org.synanton.contentcache.service.ReconcileReport;
 import org.synanton.contentcache.service.ServiceAuditMetrics;
-import org.synanton.contentcache.service.ServiceAuthorizationException;
-import org.synanton.contentcache.service.ServiceCapability;
+import org.synanton.storage.contract.service.ServiceAuthorizationException;
+import org.synanton.storage.contract.service.ServiceCapability;
 import org.synanton.contentcache.service.ServiceContentStore;
-import org.synanton.contentcache.service.ServicePrincipal;
+import org.synanton.storage.contract.service.ServicePrincipal;
 import org.synanton.storage.contract.TenantScope;
 
 /** #339 service-capability implementation contract. */
