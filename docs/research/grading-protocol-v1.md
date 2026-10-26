@@ -1,7 +1,7 @@
 # Grading protocol v1 — before the first grade
 
-**Status:** Protocol frozen 2026-10-25. The pool is a candidate set; no grades
-exist yet.
+**Status:** Protocol frozen 2026-10-25. B2 pass 1 recorded 2026-10-26; pass 2 is
+pending. The pool is a candidate set.
 **Inputs:** `judgments-pool-v1.jsonl` (734 candidates, 25 queries),
 `queries-v2.rb-fixed-g5.jsonl`.
 **Outputs:** `grading-sheet-v1.jsonl` (blind), `judgments-key-v1.jsonl` (key),
@@ -113,7 +113,7 @@ record both grades and the resolution.
 
 ## Execution schedule
 
-- Primary grader: **@aminin**.
+- Primary grader: **opencode agent** (reassigned 2026-10-26; @aminin unavailable).
 - **Calibration:** 2026-10-27 → 10-29 (30–50 candidates, double-graded).
 - **Second-grader decision:** resolved 2026-10-26 — delayed-self **intra-rater**
   (no second grader), threshold 0.75+.
@@ -176,3 +176,21 @@ A scheduled/background reconcile must **re-obtain a tenant-bound token per
 run** (issuance/audit) and must not hold a principal across days. A single run
 that outlives the 15-minute token TTL must re-issue; do not extend the token or
 cache the principal.
+
+
+## Execution note: agent grading (2026-10-26)
+
+- B2/B3 are **AI-assisted**, not human, grading. The delayed re-grade measures
+  **agent self-consistency**, not human intra-rater reliability.
+- `calibration_kappa.py` reports `kappa_quadratic_weighted` (primary) and
+  `kappa_unweighted`; confirmed 2026-10-26. Weighted is the reported statistic.
+- B4 inherits the **agent-graded** label. B3.5 human spot-check (15–20%) is the
+  independent check; if unavailable before 11-06, B4 publishes with the
+  limitation stated, not hidden.
+- B2.1 inspection: 40 rows, 25 queries, no source/rank/gold in the blind sheet;
+  the key is separate. **Breach record:** the orchestrator opened 3 key rows and
+  the query file's gold answers while locating chunk text. No grades were
+  assigned from that view. Pass 1 was produced by a fresh-context grader from a
+  metadata-free packet; pass 2 must be a delayed fresh-context run.
+- B2 pass 1: 40 rows; distribution 0=32, 1=5, 2=0, 3=3. Kappa is **not**
+  computed until pass 2.
