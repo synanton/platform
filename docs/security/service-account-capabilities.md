@@ -1,7 +1,7 @@
 # Service-account capability design
 
-**Status:** Implemented for the content-cache service path 2026-10-25;
-token issuance/keys/revocation remains #340.
+**Status:** Implemented for the content-cache service path and demo
+issuance mapping 2026-10-25; production keys/revocation remain #436.
 **Scope:** platform authorization and data access for `PrincipalType.SERVICE`;
 issuance is #340, identity resolution is #341.
 **Related:** [security model](security-model.md), [tenant-context contract](../api/tenant-context-contract.md), #339, #340, #341.

@@ -13,6 +13,8 @@ import org.synanton.security.idp.JwtIdentityProvider;
 import org.synanton.security.idp.OidcIdentityProvider;
 import org.synanton.security.service.AuthService;
 import org.synanton.security.service.SupportAdminService;
+import org.synanton.security.issuance.DemoTenantTokenIssuer;
+import org.synanton.security.issuance.JdbcIssuanceAudit;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -107,5 +109,18 @@ public class AppConfig {
     public AuthService authService(HtpasswdBackend backend, SecurityProperties props,
                                    IdentityProviderDispatcher dispatcher) {
         return new AuthService(backend, props, dispatcher);
+    }
+
+    @org.springframework.context.annotation.Bean
+    public JdbcIssuanceAudit issuanceAudit(JdbcTemplate jdbc) {
+        return new JdbcIssuanceAudit(jdbc);
+    }
+
+    @org.springframework.context.annotation.Bean
+    public DemoTenantTokenIssuer demoTenantTokenIssuer(
+            SecurityProperties props, JdbcIssuanceAudit issuanceAudit) {
+        long ttl = Math.min(DemoTenantTokenIssuer.MAX_TTL_SECONDS, props.jwt().expiresInSeconds());
+        return new DemoTenantTokenIssuer(
+                props.jwt().secret(), "synanton-security", "synanton", ttl, issuanceAudit);
     }
 }

@@ -10,6 +10,7 @@ tasks.named<Jar>("jar") {
 
 dependencies {
     implementation(project(":java:shared:common"))
+    implementation(project(":java:storage-contract"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.jdbc)

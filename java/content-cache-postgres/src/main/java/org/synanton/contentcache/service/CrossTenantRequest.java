@@ -1,4 +1,5 @@
 package org.synanton.contentcache.service;
+import org.synanton.storage.contract.service.ServicePrincipal;
 
 import java.util.Objects;
 import java.util.Set;

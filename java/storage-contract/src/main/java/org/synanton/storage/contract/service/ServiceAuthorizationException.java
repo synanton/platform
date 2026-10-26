@@ -1,4 +1,4 @@
-package org.synanton.contentcache.service;
+package org.synanton.storage.contract.service;
 
 /** Explicit denial for a service mutation or an expired/invalid principal. */
 public class ServiceAuthorizationException extends RuntimeException {
