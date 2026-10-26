@@ -223,8 +223,9 @@ the calibration key and the query file while locating chunk text.
 ## Calibration execution timestamps and imbalance
 
 - `pass1_completed`: 2026-10-26T14:20:00Z (40 rows; 0=32, 1=5, 2=0, 3=3).
-- `pass2_planned`: no earlier than 2026-10-27T14:20:00Z (≥12h; next calendar
-  day), which fits before the 2026-10-29 gate.
+- `pass2_planned_original`: no earlier than 2026-10-27T14:20:00Z (≥12h; next
+  calendar day). **Suspended** by the chunk-alignment blocker below; do not run
+  it on the current packet.
 - If pass 2 cannot happen before 2026-10-29, the kappa gate and B3 move; do not
   silently hold the date.
 - Zero grade-2 is recorded, not treated as an error. The 4×4 confusion matrix is
