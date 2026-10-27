@@ -14,7 +14,7 @@ Build a real, shallow graph for the demo. Regex and glossary extraction are real
 |---|---|---|
 | identifier | `ERR_[A-Z0-9_-]+`, `SEC-[A-Z0-9-]+`, `IATF\s+\d+`, `ISO\s+\d+(:\d+)?`, `VLAN\d+`, IPv4, port numbers | Preserve exact case for display; normalize to upper-case for the key. |
 | date | `\b(19\|20)\d{2}\b`, `Month DD, YYYY`, `DD Month YYYY`, `FY\d{4}` | Normalize to ISO-8601 when unambiguous. |
-| version | `v?\d+(\.\d+){1,3}`, `slice-\d{4,}`, `TEI\s+\d+(\.\d+)+` | Keep the original token; version key is the normalized string. |
+| version | `v\d+(\.\d+){1,3}`, `slice-\d{4,}`, `TEI\s+\d+(\.\d+)+`, explicit `version` context | Do **not** match raw section numbers like `6.6`; keep the original token; version key is the normalized string. |
 | quoted phrase | double quotes, backticks, curly quotes, guillemets | Strip delimiters; require >= 2 tokens. |
 | glossary term | exact case-insensitive match against the glossary headings/aliases | Longest match wins; store the canonical glossary term as alias. |
 
