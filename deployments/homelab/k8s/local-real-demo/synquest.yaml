@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: synquest
   namespace: synanton
+  annotations:
+    synanton.io/source-commit: 2094371
 spec:
   type: ClusterIP
   selector:
@@ -17,6 +19,8 @@ kind: Deployment
 metadata:
   name: synquest
   namespace: synanton
+  annotations:
+    synanton.io/source-commit: 2094371
 spec:
   replicas: 1
   selector:
@@ -31,7 +35,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: synquest
-          image: local-registry:5000/synanton/synquest@sha256:fe1f792ff79f4b2edbb2ee749d793db2d395cd7a3b86dbf2d517e33bff7fa16a
+          image: local-registry:5000/synanton/synquest@sha256:ffd40f16319a9d4d4704946ba98208f744fa29e13dd218976b41529a5f92f21b
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -64,6 +68,16 @@ spec:
                 secretKeyRef:
                   name: synanton-jwt
                   key: secret
+            - name: ONTOLOGY_V2_PATH
+              value: /app/data/ontology-v2.jsonl
+            - name: ONTOLOGY_V2_SHA256
+              value: 00c7e8fb6e1385ffe97710c26523a720dbe57cd922653bf1d099e7dec051a389
+            - name: SYNQUEST_DEMO_DENSE_CACHE
+              value: /app/data/dense-embeddings-v2.json
+            - name: SYNQUEST_DEMO_QUERIES
+              value: /app/data/queries-v2.rb-fixed-g5.jsonl
+            - name: SYNQUEST_DEMO_GRAPH
+              value: /app/data/graph-v2.json
           ports:
             - name: http
               containerPort: 8083
