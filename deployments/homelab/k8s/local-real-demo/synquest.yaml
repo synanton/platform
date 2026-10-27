@@ -4,7 +4,7 @@ metadata:
   name: synquest
   namespace: synanton
   annotations:
-    synanton.io/source-commit: 2094371
+    synanton.io/source-commit: "2094371"
 spec:
   type: ClusterIP
   selector:
@@ -20,7 +20,7 @@ metadata:
   name: synquest
   namespace: synanton
   annotations:
-    synanton.io/source-commit: 2094371
+    synanton.io/source-commit: "2094371"
 spec:
   replicas: 1
   selector:
@@ -100,6 +100,8 @@ spec:
           volumeMounts:
             - name: index
               mountPath: /var/lib/synquest
+      securityContext:
+        fsGroup: 101
       volumes:
         - name: index
           persistentVolumeClaim:
