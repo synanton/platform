@@ -85,5 +85,56 @@
       "query_id": "pdf011",
       "why": "Dense misses; BM25 #2 but RRF #4 \u2014 second single-leg-failure rehearsal"
     }
-  ]
+  ],
+  "graph_availability": {
+    "pdf005": {
+      "gold": "4e54d1ae\u2026#26",
+      "useful_entities": [],
+      "neighbors": 0
+    },
+    "pdf004": {
+      "gold": "4e54d1ae\u2026#13",
+      "useful_entities": [],
+      "neighbors": 0
+    },
+    "rb003": {
+      "gold": "0110d461\u2026#0",
+      "useful_entities": [
+        "iatf 16949",
+        "2015",
+        "2016",
+        "2024",
+        "2026"
+      ],
+      "neighbors": 12
+    },
+    "rb010": {
+      "gold": "0110d461\u2026#0, 03219438\u2026#0, 2d5ae12a\u2026#0",
+      "neighbors": "12/21/19"
+    },
+    "result": "2/4 retrieval picks have non-empty graph neighborhoods; graph panel as planned would be empty for pdf005/pdf004"
+  },
+  "graph_demo_set": [
+    {
+      "query_id": "rb003",
+      "neighbors": 12,
+      "why": "gold #3, useful entities, rank gap"
+    },
+    {
+      "query_id": "rb010",
+      "neighbors": "12/21/19",
+      "why": "gold #1, single-leg miss, graph-rich"
+    },
+    {
+      "query_id": "rb008",
+      "neighbors": 21,
+      "why": "gold #1, Dense miss, RRF #5; graph-rich failure-mode"
+    },
+    {
+      "query_id": "pdf012",
+      "neighbors": 8,
+      "why": "gold #1, Dense miss, RRF #7; graph-rich failure-mode"
+    }
+  ],
+  "graph_demo_note": "Separate graph-visualization subset; pdf005/pdf004 remain retrieval-attribution examples. Graph is visualization-only and does not contribute to ranking."
 }
