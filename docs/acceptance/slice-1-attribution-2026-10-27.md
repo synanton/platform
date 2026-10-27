@@ -36,3 +36,17 @@
 - `run-query.sh` verifies six unique retrieval+graph queries with fresh demo tokens.
 
 B2–B6 remain paused; no kappa is claimed.
+
+## Query sanitization policy
+
+The platform's Jackson `SanitizingStringDeserializer` HTML-escapes incoming strings (`'` → `&#39;`). The demo service:
+
+- unescapes the query for cache lookup and query-type classification;
+- sends the **post-sanitizer, as-received** form to BM25, matching `/v1/search`;
+- reads the dense cache against the unescaped question.
+
+The BM25 index is built from the unescaped corpus text. `report's` was verified through both the runner and `/v1/demo/search`. `AT&T` and `VLAN < 100` are not yet exercised through the endpoint because it only serves cached query embeddings; add them to the demo cache before claiming that edge is covered.
+
+## Remaining local gate
+
+Browser smoke (load, four queries, em-dash, query-type badge, forced-token-expiry retry, refresh) was not performed in this CLI environment. API 401→fresh-token→200 was verified with real security issuance; UI retry is unit-tested and logs `401 → minted fresh token → retry`.

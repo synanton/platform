@@ -49,3 +49,12 @@ Drop entities with df > 50 from the graph. `Content Engine`, `Process Engine`,
 - Extraction runs over the demo corpus offline and is deterministic.
 - Entity chips and graph edges are computed from real chunk text, not fixtures.
 - The 20-query hygiene set includes exact, conceptual, and mixed queries.
+
+
+## Ontology stopwords (pre-#472 blocker)
+
+Top-20 by df is dominated by generic glossary terms: `component`, `contract`,
+`user`, `must`, `should`, `security`, `requirement`, `full`, `standard`,
+`single`, `accepted`, `operation`, `classification`, `failure`, `public`.
+Do not expose these as ontology entities. Add a denylist before the panel;
+keep df bands `1 / 3–15 / 16–50 / >50`.
