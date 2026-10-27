@@ -62,5 +62,8 @@
       "reason": "BM25 #2, Dense #1, RRF #1; legs agree on gold, not a hybrid-gap demo"
     }
   ],
-  "note": "v1 top-3 disagreement was noise; this is gold-rank disagreement on v2."
+  "note": "v1 top-3 disagreement was noise; this is gold-rank disagreement on v2.",
+  "rrf_strict_wins": 0,
+  "rrf_vs_best_leg": "RRF matches the best leg on pdf005/pdf004/rb010 and is worse on rb003; fixed 1.0/1.0 weights do not beat the best single leg on gold.",
+  "narration": "Show leg disagreement, per-leg attribution, and how RRF combines them. Do not claim RRF improves gold rank or beats the best leg in Slice 1."
 }
