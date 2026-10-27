@@ -72,3 +72,10 @@ Slice 1 demo uses **option A: cached queries only**. Fixed four queries are reli
 ## Hard entities (pre-Phase 0)
 
 `hard-entities-df3-15-v2.txt` lists 31 hard entities. All are structurally valid; 26 are year-only dates, so the graph will be date/section-dominated, not a rich entity network. This clears the numeric gate but lowers the narrative claim: graph = local visualization on 3 retrieval queries, not knowledge-graph intelligence.
+
+
+## Graph density is an extraction-precision artifact
+
+26 of the 31 hard df 3–15 entities are date-ish; the hard list has 21 date entities (19 year-only + 2 full dates), 7 section refs, 2 identifiers (`vlan001`, `iatf 16949`), and 1 case name (`lucy v. zehmer`). `rb010`/`rb008` neighbors are years plus 2 IATF identifier neighbors; `rb003` is year-only; **zero section-ref neighbors**.
+
+Do not tighten year extraction in Phase 0A: it would move year entities to df 1 and collapse graph density. Graph is an optional **temporal/identifier co-occurrence visualization**, not a rich knowledge graph or a Slice 1 headline. Phase 0A records this; #471 is the extraction-tuning path.

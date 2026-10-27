@@ -29,3 +29,8 @@ Graph is a view on retrieval, not a standalone story. `pdf012` is dropped from t
 The demo endpoint is **cached-query only** for Slice 1 (option A). Impromptu queries are run through `scripts/demo/run-query.sh`; live-TEI fallback is a follow-up (option C). Graph is not part of this smoke.
 
 Record observations in `docs/acceptance/slice-1-attribution-2026-10-27.md`.
+
+
+## Graph narrative (optional)
+
+If graph is shown, label it **temporal/identifier co-occurrence**, not a knowledge graph. `rb010`/`rb008` have 2 IATF identifier neighbors plus years; `rb003` is year-only. Do not claim section bridges; zero section-ref neighbors were observed. Ontology + retrieval attribution remain the demo headline.
