@@ -88,12 +88,12 @@ def main() -> None:
     query = " ".join(sys.argv[1:]).strip()
     if not query:
         raise SystemExit("usage: run-query.sh <query>")
+    print(f"Targets: security={SECURITY} search={API or SYNQUEST}")
     issued = mint_token()
     TOKEN = issued["token"]
     AUTH_EXPIRES = int(issued["expires_at"])
     print(f"Auth: tenant={issued['tenant_id']} expires_at={AUTH_EXPIRES} "
           f"ttl_seconds={max(0, AUTH_EXPIRES - int(time.time()))}")
-    print(f"Targets: security={SECURITY} search={API or SYNQUEST}")
     gold = json.loads((BENCH / "demo-v2-gold-ranks.json").read_text())["gold"]
     gold_ids = set()
     for ids in gold.values():
