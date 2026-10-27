@@ -6,7 +6,7 @@ the local demo-v2 synquest. Unknown queries fall back to TEI only for the query
 embedding. Gold flags come from demo-v2-gold-ranks.json.
 """
 from __future__ import annotations
-import json, os, re, sys, time, urllib.request
+import json, os, re, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -85,9 +85,19 @@ def dense_top(query: str, cache: dict) -> tuple[list[str], str]:
 
 def main() -> None:
     global TOKEN, AUTH_EXPIRES
+    if len(sys.argv) >= 3 and sys.argv[1] == "--neighbors":
+        chunk_id = sys.argv[2]
+        print(f"Targets: security={SECURITY} graph={API or SYNQUEST}")
+        issued = mint_token()
+        request = urllib.request.Request(
+            (API or SYNQUEST) + "/v1/demo/graph/neighbors/" + urllib.parse.quote(chunk_id, safe=""),
+            headers={"Authorization": "Bearer " + issued["token"]})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            print(response.read().decode())
+        return
     query = " ".join(sys.argv[1:]).strip()
     if not query:
-        raise SystemExit("usage: run-query.sh <query>")
+        raise SystemExit("usage: run-query.sh <query> | --neighbors <chunk_id>")
     print(f"Targets: security={SECURITY} search={API or SYNQUEST}")
     issued = mint_token()
     TOKEN = issued["token"]

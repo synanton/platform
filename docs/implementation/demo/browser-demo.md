@@ -33,4 +33,4 @@ Record observations in `docs/acceptance/slice-1-attribution-2026-10-27.md`.
 
 ## Graph narrative (optional)
 
-If graph is shown, label it **temporal/identifier co-occurrence**, not a knowledge graph. `rb010`/`rb008` have 2 IATF identifier neighbors plus years; `rb003` is year-only. Do not claim section bridges; zero section-ref neighbors were observed. Ontology + retrieval attribution remain the demo headline.
+If graph is shown, label it **temporal/identifier co-occurrence**, not a knowledge graph. `rb010`/`rb008` have 2 IATF identifier neighbors plus years; `rb003` is year-only. Do not claim section bridges; zero section-ref neighbors were observed in the demo gold chunks. Section refs exist (df=3) only in legal casebook chunks. Ontology + retrieval attribution remain the headline. Use a 30-second view after the retrieval attribution, not a graph story.
