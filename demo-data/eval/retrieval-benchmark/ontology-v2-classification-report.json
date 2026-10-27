@@ -15,5 +15,12 @@
   "soft_subtypes": {
     "soft_glossary": 72,
     "soft_doctrinal": 3
+  },
+  "ontology_sha256": "00c7e8fb6e1385ffe97710c26523a720dbe57cd922653bf1d099e7dec051a389",
+  "determinism": {
+    "status": "frozen",
+    "extractor_commit": "e0ae114",
+    "extractor_tool_committed": false,
+    "note": "The 424-row raw list was summary-only; no re-runnable extractor was committed. The current resolution reproduces 378 raw / 273 classified deterministically. The 46-row gap is prior version/config output, not recovered or chased; future rebuilds must pin an extractor commit and verify reruns."
   }
 }

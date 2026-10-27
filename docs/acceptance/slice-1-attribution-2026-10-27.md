@@ -45,13 +45,13 @@ The platform's Jackson `SanitizingStringDeserializer` HTML-escapes incoming stri
 - sends the **post-sanitizer, as-received** form to BM25, matching `/v1/search`;
 - reads the dense cache against the unescaped question.
 
-The BM25 index is built from the unescaped corpus text. `report's` was verified through both the runner and `/v1/demo/search`. `AT&T` and `VLAN < 100` now have cache entries (`sanitizer-at`, `sanitizer-lt`), but endpoint verification is pending because the local synquest projection returned 503 after restart; until re-tested, route raw `&`, `<`, `>` queries through `run-query.sh`.
+The BM25 index is built from the unescaped corpus text. `report's` was verified through both the runner and `/v1/demo/search`. `AT&T` and `VLAN < 100` now have cache entries (`sanitizer-at`, `sanitizer-lt`) and were verified through `POST /v1/demo/search` with HTTP 200 after reindexing `demo-v2`. `AT&T` returned both legs; `VLAN < 100` returned the BM25 leg for its top result. The runbook fallback for raw `&`, `<`, `>` remains for uncached queries.
 
 Cache now holds 27 query embeddings: 25 in the original demo/eval set, plus 2 sanitizer test queries (`AT&T`, `VLAN < 100`). The 8/25 and 0/25 findings refer to the 25-query set; the sanitizer queries do not participate in RRF gold-rank analysis.
 
 ## Follow-up: local synquest 503
 
-The local synquest returned 503 after a restart on 2026-10-28; `run-query.sh` is blocked until its projection is ready. Re-verify `AT&T` and `VLAN < 100` through `POST /v1/demo/search` when it recovers, then update the sanitizer entry to "tested via endpoint."
+The local synquest returned 503 after a restart on 2026-10-28: `/health` was ready but the tenant searcher map was empty. `POST /reindex?tenant=demo-v2` rebuilt the projection; `/v1/demo/search` then returned 200. This is a restart/reindex coupling to watch at checkpoint 1.
 
 ## Remaining local gate
 
