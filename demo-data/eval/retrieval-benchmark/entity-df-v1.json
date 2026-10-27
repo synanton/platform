@@ -110,5 +110,11 @@
     }
   ],
   "note": "Regex/glossary prototype; graph-useful band is df 3-15.",
-  "caveat": "The broad version regex also matched section numbers (6.6, 16.6). Before Slice 2, require a v prefix or version/TEI/model context; do not treat raw section numbers as entities."
+  "caveat": "The broad version regex also matched section numbers (6.6, 16.6). Before Slice 2, require a v prefix or version/TEI/model context; do not treat raw section numbers as entities.",
+  "pdf015_graph_bridge": {
+    "gold_chunk": "69bd3d12-3841-54a1-b104-1ff1104420e9#65",
+    "graph_useful_entities_in_gold": 0,
+    "shared_with_bm25_top20": 0,
+    "verdict": "no bridge under current extractor; pdf015 is not a Slice 2 graph-hero query without a new entity type (e.g. certificates) or a licensed denser manual"
+  }
 }
