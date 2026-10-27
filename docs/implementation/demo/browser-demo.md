@@ -7,6 +7,16 @@
 2. Run `./scripts/demo/start-browser-demo.sh`.
 3. Open `http://127.0.0.1:5173/search`; sign in as `aminin`, tenant `demo-v2` is prefilled.
 
+## Narrative order (hard-entity taxonomy)
+
+1. `pdf005` — retrieval only (Dense strong; RRF follows).
+2. `pdf004` — retrieval only (legs agree at top).
+3. `rb003` — retrieval between-legs + graph panel (12 hard neighbors).
+4. `rb010` — **demo hero**: Dense miss, RRF recovers BM25 #1 + graph panel (12/14/16).
+5. `rb008` — sole failure-mode backup + graph panel; rehearse twice.
+
+Graph is a view on retrieval, not a standalone story. `pdf012` is dropped from the graph subset (soft-only).
+
 ## Six checks
 1. `Which medications are listed for substance use disorders?` → gold card shows `BM25 #7 · Dense #2 · RRF #2`; query badge `mixed`.
 2. `IATF 16949` → `BM25 #1 · Dense — · RRF #1`; query badge `exact`.

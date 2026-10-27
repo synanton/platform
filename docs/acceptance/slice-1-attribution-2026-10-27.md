@@ -67,3 +67,8 @@ Artifact: `scripts/demo/browser-smoke.py`. Operator kit: `scripts/demo/start-bro
 ## Demo endpoint scope
 
 Slice 1 demo uses **option A: cached queries only**. Fixed four queries are reliable; impromptu queries use the local runner. Live-TEI fallback (option C) is a follow-up and must not be claimed yet.
+
+
+## Hard entities (pre-Phase 0)
+
+`hard-entities-df3-15-v2.txt` lists 31 hard entities. All are structurally valid; 26 are year-only dates, so the graph will be date/section-dominated, not a rich entity network. This clears the numeric gate but lowers the narrative claim: graph = local visualization on 3 retrieval queries, not knowledge-graph intelligence.
