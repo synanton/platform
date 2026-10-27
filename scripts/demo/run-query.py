@@ -6,7 +6,7 @@ the local demo-v2 synquest. Unknown queries fall back to TEI only for the query
 embedding. Gold flags come from demo-v2-gold-ranks.json.
 """
 from __future__ import annotations
-import json, os, re, sys, time, urllib.parse, urllib.request
+import json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -92,8 +92,12 @@ def main() -> None:
         request = urllib.request.Request(
             (API or SYNQUEST) + "/v1/demo/graph/neighbors/" + urllib.parse.quote(chunk_id, safe=""),
             headers={"Authorization": "Bearer " + issued["token"]})
-        with urllib.request.urlopen(request, timeout=30) as response:
-            print(response.read().decode())
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                print(response.read().decode())
+        except urllib.error.HTTPError as failure:
+            print(f"graph endpoint HTTP {failure.code}: {failure.read()[:300].decode(errors='replace')}", file=sys.stderr)
+            raise SystemExit(1)
         return
     query = " ".join(sys.argv[1:]).strip()
     if not query:
