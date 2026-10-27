@@ -56,6 +56,7 @@ services:
       SYNQUEST_DEMO_DENSE_CACHE: /demo-data/eval/retrieval-benchmark/dense-embeddings-v2.json
       SYNQUEST_DEMO_QUERIES: /demo-data/eval/retrieval-benchmark/queries-v2.rb-fixed-g5.jsonl
       SYNQUEST_DEMO_GRAPH: /demo-data/eval/retrieval-benchmark/graph-v2.json
+      ONTOLOGY_V2_PATH: /demo-data/eval/retrieval-benchmark/ontology-v2.jsonl
     volumes:
       - ../../demo-data/eval/retrieval-benchmark:/demo-data/eval/retrieval-benchmark:ro
     healthcheck:
