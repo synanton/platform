@@ -54,4 +54,8 @@ Expected: `{"status":"done","tenant":"demo-v2"}` in ~10s, then search works. `st
 
 ## Graph API pre-check
 
-After reindex, run `./scripts/demo/run-query.sh --neighbors rb010`; expected counts are 12, 14, 16 for the three gold chunks. `rb003` is 12 and `rb008` is 14.
+After reindex, run `./scripts/demo/check-graph-neighbors.sh`; expected: `rb010` 12/14/16, empty gold chunk 0 neighbors, unknown chunk 404. `rb003` is 12 and `rb008` is 14.
+
+Graph panel content is query-specific: only the gold result of `rb003`, `rb010`, or `rb008` has a non-empty neighborhood. Click the gold result; other result cards intentionally show the empty state.
+
+Corpus graph coverage is **69/634 chunks (11%)**. This is a property of the hard-entity df 3–15 taxonomy, not a bug. Most result panels are empty by design.

@@ -3,6 +3,641 @@
   "corpus_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
   "filter": "hard && 3 <= df <= 15",
   "note": "Visualization-only chunk co-occurrence; not a retrieval leg.",
+  "known_chunks": [
+    "0110d461-0321-5085-874a-ec716a610909#0",
+    "02a358be-eb75-5f6c-9705-da1f653649b7#0",
+    "02a358be-eb75-5f6c-9705-da1f653649b7#1",
+    "02a358be-eb75-5f6c-9705-da1f653649b7#2",
+    "02a358be-eb75-5f6c-9705-da1f653649b7#3",
+    "02a358be-eb75-5f6c-9705-da1f653649b7#4",
+    "03219438-50b5-58c7-8aea-44378f987de8#0",
+    "03219438-50b5-58c7-8aea-44378f987de8#1",
+    "16bb330d-bdef-5eb4-9326-984875348c29#0",
+    "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#1",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#10",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#100",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#101",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#102",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#103",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#104",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#105",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#106",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#107",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#108",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#109",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#11",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#110",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#111",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#112",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#113",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#114",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#115",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#116",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#117",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#118",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#119",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#12",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#120",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#121",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#122",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#123",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#124",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#125",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#126",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#127",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#128",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#129",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#13",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#130",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#131",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#132",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#133",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#134",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#135",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#136",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#137",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#138",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#139",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#14",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#140",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#141",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#142",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#143",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#144",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#145",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#146",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#147",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#148",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#149",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#15",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#150",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#151",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#152",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#153",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#154",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#155",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#156",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#157",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#158",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#159",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#160",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#161",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#162",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#163",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#164",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#165",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#166",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#167",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#168",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#169",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#17",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#170",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#171",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#172",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#173",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#174",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#175",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#176",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#177",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#178",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#179",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#18",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#180",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#181",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#182",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#183",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#184",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#185",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#186",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#187",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#188",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#189",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#19",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#190",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#191",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#192",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#193",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#2",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#20",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#21",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#22",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#23",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#24",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#25",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#26",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#27",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#28",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#29",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#3",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#30",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#31",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#32",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#33",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#34",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#35",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#36",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#37",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#38",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#39",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#4",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#40",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#41",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#42",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#43",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#44",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#45",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#46",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#47",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#48",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#49",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#5",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#50",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#51",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#52",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#53",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#54",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#55",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#56",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#57",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#58",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#59",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#6",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#60",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#61",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#62",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#63",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#64",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#65",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#66",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#67",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#68",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#69",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#7",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#70",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#71",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#72",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#73",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#74",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#75",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#76",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#77",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#78",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#79",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#8",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#80",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#81",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#82",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#83",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#84",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#85",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#86",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#87",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#88",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#89",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#9",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#90",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#91",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#92",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#93",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#94",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#95",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#96",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#97",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#98",
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#99",
+    "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+    "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#1",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#0",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#1",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#10",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#11",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#12",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#13",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#14",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#15",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#16",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#17",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#18",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#19",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#2",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#20",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#21",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#22",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#23",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#24",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#25",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#26",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#27",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#28",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#29",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#3",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#30",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#31",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#33",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#34",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#35",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#36",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#37",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#38",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#39",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#4",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#40",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#41",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#42",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#43",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#44",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#45",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#46",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#47",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#5",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#6",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#7",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#8",
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#9",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#0",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#1",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#10",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#11",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#12",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#13",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#14",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#15",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#16",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#17",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#18",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#19",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#2",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#20",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#21",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#22",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#23",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#24",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#25",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#26",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#27",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#28",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#29",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#3",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#31",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#6",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#0",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#1",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#10",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#11",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#12",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#13",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#14",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#15",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#16",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#18",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#2",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#23",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#24",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#25",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#28",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#29",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#3",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#30",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#32",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#34",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#35",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#36",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#37",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#39",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#4",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#42",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#43",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#5",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#6",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#7",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#8",
+    "57e23383-c832-5d3b-ad45-3ae63540f319#9",
+    "717657de-2dcd-502d-8517-022063c1fa9a#0",
+    "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+    "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+    "93f806eb-d33e-52af-9639-90ffd1d289f8#1",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#0",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#1",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#10",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#13",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#14",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#17",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#18",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#19",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#2",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#20",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#21",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#22",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#23",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#24",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#25",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#26",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#27",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#28",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#29",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#3",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#30",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#31",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#32",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#33",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#34",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#35",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#36",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#37",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#38",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#39",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#4",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#40",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#41",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#42",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#43",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#44",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#45",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#46",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#47",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#48",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#49",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#5",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#50",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#51",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#52",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#53",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#6",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#7",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#8",
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#9",
+    "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+    "be15399f-3cce-511d-be22-83aad53ed80e#0",
+    "be15399f-3cce-511d-be22-83aad53ed80e#1",
+    "be15399f-3cce-511d-be22-83aad53ed80e#10",
+    "be15399f-3cce-511d-be22-83aad53ed80e#11",
+    "be15399f-3cce-511d-be22-83aad53ed80e#12",
+    "be15399f-3cce-511d-be22-83aad53ed80e#13",
+    "be15399f-3cce-511d-be22-83aad53ed80e#14",
+    "be15399f-3cce-511d-be22-83aad53ed80e#15",
+    "be15399f-3cce-511d-be22-83aad53ed80e#16",
+    "be15399f-3cce-511d-be22-83aad53ed80e#17",
+    "be15399f-3cce-511d-be22-83aad53ed80e#18",
+    "be15399f-3cce-511d-be22-83aad53ed80e#19",
+    "be15399f-3cce-511d-be22-83aad53ed80e#2",
+    "be15399f-3cce-511d-be22-83aad53ed80e#20",
+    "be15399f-3cce-511d-be22-83aad53ed80e#21",
+    "be15399f-3cce-511d-be22-83aad53ed80e#22",
+    "be15399f-3cce-511d-be22-83aad53ed80e#23",
+    "be15399f-3cce-511d-be22-83aad53ed80e#24",
+    "be15399f-3cce-511d-be22-83aad53ed80e#25",
+    "be15399f-3cce-511d-be22-83aad53ed80e#3",
+    "be15399f-3cce-511d-be22-83aad53ed80e#4",
+    "be15399f-3cce-511d-be22-83aad53ed80e#5",
+    "be15399f-3cce-511d-be22-83aad53ed80e#6",
+    "be15399f-3cce-511d-be22-83aad53ed80e#7",
+    "be15399f-3cce-511d-be22-83aad53ed80e#8",
+    "be15399f-3cce-511d-be22-83aad53ed80e#9",
+    "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+    "c7fed121-0599-55fb-b4db-4486e324f9fd#1",
+    "c90a891d-5f4b-5303-9667-e531511ec64a#0",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#1",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#10",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#100",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#101",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#102",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#103",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#104",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#105",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#106",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#107",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#108",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#109",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#11",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#110",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#111",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#112",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#113",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#114",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#115",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#116",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#117",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#118",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#119",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#12",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#120",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#121",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#122",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#124",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#125",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#126",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#128",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#129",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#13",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#130",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#131",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#132",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#133",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#134",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#135",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#136",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#137",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#138",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#139",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#14",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#140",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#141",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#142",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#143",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#144",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#145",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#146",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#147",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#148",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#149",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#15",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#150",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#151",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#152",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#153",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#154",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#155",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#156",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#157",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#158",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#159",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#16",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#160",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#161",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#162",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#163",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#164",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#165",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#166",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#167",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#168",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#169",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#17",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#170",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#171",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#172",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#173",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#174",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#175",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#176",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#177",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#178",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#179",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#18",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#180",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#181",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#182",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#183",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#184",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#185",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#186",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#187",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#188",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#189",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#19",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#190",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#191",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#192",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#193",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#194",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#195",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#196",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#197",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#198",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#199",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#2",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#20",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#200",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#201",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#202",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#203",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#204",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#205",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#206",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#207",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#208",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#209",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#21",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#210",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#211",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#212",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#22",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#23",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#24",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#25",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#26",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#27",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#28",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#29",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#3",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#30",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#31",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#33",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#34",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#35",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#36",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#37",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#38",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#39",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#4",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#40",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#41",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#42",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#43",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#44",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#45",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#46",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#47",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#48",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#49",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#5",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#50",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#51",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#52",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#53",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#54",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#55",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#56",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#57",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#58",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#59",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#6",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#60",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#61",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#62",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#63",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#64",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#65",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#66",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#67",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#68",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#69",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#7",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#70",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#71",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#72",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#73",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#74",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#75",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#76",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#77",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#78",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#79",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#8",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#80",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#81",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#82",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#83",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#84",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#85",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#86",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#87",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#88",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#89",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#9",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#90",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#91",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#92",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#93",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#94",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#95",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#96",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#97",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#98",
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#99",
+    "fbf2e6e1-d37c-573c-a2d9-194183d34b7f#0"
+  ],
   "chunks": {
     "0110d461-0321-5085-874a-ec716a610909#0": {
       "neighbor_count": 12,
@@ -152,6 +787,46 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2024",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2026",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2015",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        },
+        {
+          "canonical_form": "2016",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "year": 12
       }
@@ -180,6 +855,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#26",
+        "be15399f-3cce-511d-be22-83aad53ed80e#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "1929",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -368,6 +1055,54 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "be15399f-3cce-511d-be22-83aad53ed80e#15",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2003",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2022",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2026",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "IATF 16949",
+          "type": "identifier",
+          "entity_kind": "identifier",
+          "df": 3
+        },
+        {
+          "canonical_form": "2009",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "identifier": 2,
         "year": 14
@@ -419,6 +1154,20 @@
               "df": 5
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2025",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
         }
       ],
       "by_kind": {
@@ -653,6 +1402,62 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "16bb330d-bdef-5eb4-9326-984875348c29#0",
+        "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+        "be15399f-3cce-511d-be22-83aad53ed80e#15",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2003",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2024",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2022",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2025",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2015",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        },
+        {
+          "canonical_form": "IATF 16949",
+          "type": "identifier",
+          "entity_kind": "identifier",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "identifier": 2,
         "year": 16
@@ -695,6 +1500,19 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2007",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        }
+      ],
       "by_kind": {
         "year": 3
       }
@@ -725,6 +1543,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#69",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#29"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2011",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "year": 2
       }
@@ -753,6 +1583,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#4",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#29"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2011",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -818,6 +1660,21 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "b155d470-17bb-57e7-8c2c-66cb54862f12#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2024",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        }
+      ],
       "by_kind": {
         "year": 5
       }
@@ -848,6 +1705,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Restatement (Second) of Contracts",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 2
       }
@@ -876,6 +1745,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "02a358be-eb75-5f6c-9705-da1f653649b7#2",
+        "be15399f-3cce-511d-be22-83aad53ed80e#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "1929",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -930,6 +1811,26 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#24",
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#33",
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#34",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Restatement (Second) of Contracts",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        },
+        {
+          "canonical_form": "\u00a7 74",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 4
       }
@@ -958,6 +1859,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#34"
+      ],
+      "entities": [
+        {
+          "canonical_form": "\u00a7 74",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -990,6 +1903,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#33"
+      ],
+      "entities": [
+        {
+          "canonical_form": "\u00a7 74",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 2
       }
@@ -1020,6 +1945,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#42"
+      ],
+      "entities": [
+        {
+          "canonical_form": "section 2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 2
       }
@@ -1048,6 +1985,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#4",
+        "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#69"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2011",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -1124,6 +2073,22 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24",
+        "be15399f-3cce-511d-be22-83aad53ed80e#25"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2010",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        }
+      ],
       "by_kind": {
         "year": 6
       }
@@ -1196,6 +2161,22 @@
               "df": 7
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24",
+        "be15399f-3cce-511d-be22-83aad53ed80e#25"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2010",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
         }
       ],
       "by_kind": {
@@ -1272,6 +2253,22 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24",
+        "be15399f-3cce-511d-be22-83aad53ed80e#25"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2010",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        }
+      ],
       "by_kind": {
         "year": 6
       }
@@ -1344,6 +2341,22 @@
               "df": 7
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24",
+        "be15399f-3cce-511d-be22-83aad53ed80e#25"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2010",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
         }
       ],
       "by_kind": {
@@ -1491,6 +2504,39 @@
               "df": 6
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "be15399f-3cce-511d-be22-83aad53ed80e#14",
+        "be15399f-3cce-511d-be22-83aad53ed80e#15",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2003",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2008",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2007",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
         }
       ],
       "by_kind": {
@@ -1725,6 +2771,62 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "be15399f-3cce-511d-be22-83aad53ed80e#14",
+        "be15399f-3cce-511d-be22-83aad53ed80e#15",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24",
+        "be15399f-3cce-511d-be22-83aad53ed80e#25"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2003",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2010",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2008",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2007",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        },
+        {
+          "canonical_form": "1986",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        },
+        {
+          "canonical_form": "2000",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "year": 16
       }
@@ -1908,6 +3010,63 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "be15399f-3cce-511d-be22-83aad53ed80e#14",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18",
+        "be15399f-3cce-511d-be22-83aad53ed80e#20",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2008",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2004",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2007",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        },
+        {
+          "canonical_form": "1986",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        },
+        {
+          "canonical_form": "1995",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        },
+        {
+          "canonical_form": "2000",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        },
+        {
+          "canonical_form": "2009",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "year": 11
       }
@@ -2056,6 +3215,50 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+        "be15399f-3cce-511d-be22-83aad53ed80e#14",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18",
+        "be15399f-3cce-511d-be22-83aad53ed80e#19",
+        "be15399f-3cce-511d-be22-83aad53ed80e#20",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2008",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2004",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "1981",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        },
+        {
+          "canonical_form": "1986",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        },
+        {
+          "canonical_form": "2000",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "year": 10
       }
@@ -2139,6 +3342,23 @@
               "df": 8
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
         }
       ],
       "by_kind": {
@@ -2226,6 +3446,23 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
+        }
+      ],
       "by_kind": {
         "case_name": 7
       }
@@ -2265,6 +3502,19 @@
               "df": 4
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#36",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#4"
+      ],
+      "entities": [
+        {
+          "canonical_form": "1952",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
         }
       ],
       "by_kind": {
@@ -2374,6 +3624,31 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#24",
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
+        },
+        {
+          "canonical_form": "Restatement (Second) of Contracts",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "case_name": 7,
         "section_ref": 2
@@ -2458,6 +3733,23 @@
               "df": 8
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
         }
       ],
       "by_kind": {
@@ -2545,6 +3837,23 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
+        }
+      ],
       "by_kind": {
         "case_name": 7
       }
@@ -2628,6 +3937,23 @@
               "df": 8
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
         }
       ],
       "by_kind": {
@@ -2748,6 +4074,32 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#2",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#36",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#4"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
+        },
+        {
+          "canonical_form": "1952",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        }
+      ],
       "by_kind": {
         "case_name": 7,
         "year": 3
@@ -2856,6 +4208,31 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "be15399f-3cce-511d-be22-83aad53ed80e#19"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Lucy v. Zehmer",
+          "type": "case_name",
+          "entity_kind": "case_name",
+          "df": 8
+        },
+        {
+          "canonical_form": "1981",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "case_name": 7,
         "year": 2
@@ -2898,6 +4275,19 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2015",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        }
+      ],
       "by_kind": {
         "year": 3
       }
@@ -2937,6 +4327,19 @@
               "df": 4
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#2",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#4"
+      ],
+      "entities": [
+        {
+          "canonical_form": "1952",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
         }
       ],
       "by_kind": {
@@ -3013,6 +4416,28 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#1",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#42",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2022",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "section 2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 2,
         "year": 4
@@ -3053,6 +4478,19 @@
               "df": 4
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "57e23383-c832-5d3b-ad45-3ae63540f319#2",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#36"
+      ],
+      "entities": [
+        {
+          "canonical_form": "1952",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
         }
       ],
       "by_kind": {
@@ -3146,6 +4584,29 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2022",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2026",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        }
+      ],
       "by_kind": {
         "year": 7
       }
@@ -3198,6 +4659,20 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2026",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        }
+      ],
       "by_kind": {
         "year": 4
       }
@@ -3226,6 +4701,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#1",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#38"
+      ],
+      "entities": [
+        {
+          "canonical_form": "section 2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -3365,6 +4852,49 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+        "be15399f-3cce-511d-be22-83aad53ed80e#20"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2024",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2015",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 4
+        },
+        {
+          "canonical_form": "IATF 16949",
+          "type": "identifier",
+          "entity_kind": "identifier",
+          "df": 3
+        },
+        {
+          "canonical_form": "1995",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        },
+        {
+          "canonical_form": "2009",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "identifier": 2,
         "year": 9
@@ -3502,6 +5032,38 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "16bb330d-bdef-5eb4-9326-984875348c29#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2024",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2022",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2025",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        }
+      ],
       "by_kind": {
         "year": 10
       }
@@ -3541,6 +5103,19 @@
               "df": 4
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16"
+      ],
+      "entities": [
+        {
+          "canonical_form": "VLAN001",
+          "type": "identifier",
+          "entity_kind": "identifier",
+          "df": 4
         }
       ],
       "by_kind": {
@@ -3584,6 +5159,19 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16"
+      ],
+      "entities": [
+        {
+          "canonical_form": "VLAN001",
+          "type": "identifier",
+          "entity_kind": "identifier",
+          "df": 4
+        }
+      ],
       "by_kind": {
         "identifier": 3
       }
@@ -3625,6 +5213,19 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16"
+      ],
+      "entities": [
+        {
+          "canonical_form": "VLAN001",
+          "type": "identifier",
+          "entity_kind": "identifier",
+          "df": 4
+        }
+      ],
       "by_kind": {
         "identifier": 3
       }
@@ -3664,6 +5265,19 @@
               "df": 4
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12",
+        "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15"
+      ],
+      "entities": [
+        {
+          "canonical_form": "VLAN001",
+          "type": "identifier",
+          "entity_kind": "identifier",
+          "df": 4
         }
       ],
       "by_kind": {
@@ -3763,6 +5377,29 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "16bb330d-bdef-5eb4-9326-984875348c29#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "c7fed121-0599-55fb-b4db-4486e324f9fd#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2024",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        },
+        {
+          "canonical_form": "2025",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        }
+      ],
       "by_kind": {
         "year": 7
       }
@@ -3791,6 +5428,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "02a358be-eb75-5f6c-9705-da1f653649b7#2",
+        "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#26"
+      ],
+      "entities": [
+        {
+          "canonical_form": "1929",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -3854,6 +5503,21 @@
               "df": 6
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2008",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
         }
       ],
       "by_kind": {
@@ -3940,6 +5604,28 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2003",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "August 1, 2003",
+          "type": "date",
+          "entity_kind": "date",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -4080,6 +5766,43 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "be15399f-3cce-511d-be22-83aad53ed80e#15",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18",
+        "be15399f-3cce-511d-be22-83aad53ed80e#20"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2003",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2004",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "August 1, 2003",
+          "type": "date",
+          "entity_kind": "date",
+          "df": 3
+        },
+        {
+          "canonical_form": "July 15, 2004",
+          "type": "date",
+          "entity_kind": "date",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "date": 3,
         "year": 9
@@ -4218,6 +5941,43 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "be15399f-3cce-511d-be22-83aad53ed80e#15",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#20"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2003",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2004",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "August 1, 2003",
+          "type": "date",
+          "entity_kind": "date",
+          "df": 3
+        },
+        {
+          "canonical_form": "July 15, 2004",
+          "type": "date",
+          "entity_kind": "date",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "date": 3,
         "year": 9
@@ -4247,6 +6007,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#31"
+      ],
+      "entities": [
+        {
+          "canonical_form": "1981",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -4328,6 +6100,33 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+        "be15399f-3cce-511d-be22-83aad53ed80e#16",
+        "be15399f-3cce-511d-be22-83aad53ed80e#18"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2004",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "July 15, 2004",
+          "type": "date",
+          "entity_kind": "date",
+          "df": 3
+        },
+        {
+          "canonical_form": "1995",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -4455,6 +6254,32 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+        "be15399f-3cce-511d-be22-83aad53ed80e#14",
+        "be15399f-3cce-511d-be22-83aad53ed80e#25"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2010",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
+        },
+        {
+          "canonical_form": "2008",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 6
+        }
+      ],
       "by_kind": {
         "year": 10
       }
@@ -4527,6 +6352,22 @@
               "df": 7
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+        "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+        "be15399f-3cce-511d-be22-83aad53ed80e#24"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2010",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 7
         }
       ],
       "by_kind": {
@@ -4625,6 +6466,30 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "03219438-50b5-58c7-8aea-44378f987de8#0",
+        "16bb330d-bdef-5eb4-9326-984875348c29#0",
+        "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+        "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+        "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+        "b155d470-17bb-57e7-8c2c-66cb54862f12#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2025",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        },
+        {
+          "canonical_form": "2026",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 5
+        }
+      ],
       "by_kind": {
         "year": 8
       }
@@ -4655,6 +6520,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2016",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "year": 2
       }
@@ -4683,6 +6560,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#183"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Section 7.2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -4737,6 +6626,26 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#128",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#57",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#97"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Section 10.1",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        },
+        {
+          "canonical_form": "Section 6.2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 4
       }
@@ -4789,6 +6698,26 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#107",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#128",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#183"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Section 10.1",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        },
+        {
+          "canonical_form": "Section 7.2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 4
       }
@@ -4817,6 +6746,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Section 10.1",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -4849,6 +6790,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#151",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#189"
+      ],
+      "entities": [
+        {
+          "canonical_form": "SECTION 13.4",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 2
       }
@@ -4877,6 +6830,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#150",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#189"
+      ],
+      "entities": [
+        {
+          "canonical_form": "SECTION 13.4",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -4909,6 +6874,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#107",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Section 7.2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 2
       }
@@ -4937,6 +6914,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#150",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#151"
+      ],
+      "entities": [
+        {
+          "canonical_form": "SECTION 13.4",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
         }
       ],
       "by_kind": {
@@ -4969,6 +6958,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "0110d461-0321-5085-874a-ec716a610909#0",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0"
+      ],
+      "entities": [
+        {
+          "canonical_form": "2016",
+          "type": "date",
+          "entity_kind": "year",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "year": 2
       }
@@ -4999,6 +7000,18 @@
           ]
         }
       ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#97"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Section 6.2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
+        }
+      ],
       "by_kind": {
         "section_ref": 2
       }
@@ -5027,6 +7040,18 @@
               "df": 3
             }
           ]
+        }
+      ],
+      "neighbor_chunks": [
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+        "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#57"
+      ],
+      "entities": [
+        {
+          "canonical_form": "Section 6.2",
+          "type": "section_ref",
+          "entity_kind": "section_ref",
+          "df": 3
         }
       ],
       "by_kind": {

@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /** Demo-only graph fixture lookup. Graph is visualization-only, never a retrieval leg. */
 public final class DemoGraphService {
@@ -19,6 +20,7 @@ public final class DemoGraphService {
 
     private final Path graphPath;
     private volatile Map<String, NeighborContainer> chunks;
+    private volatile Set<String> knownChunks;
 
     public DemoGraphService(Path graphPath) {
         this.graphPath = Objects.requireNonNull(graphPath, "graphPath");
@@ -30,6 +32,8 @@ public final class DemoGraphService {
             synchronized (this) {
                 if (chunks == null) {
                     JsonNode root = JSON.readTree(Files.readString(graphPath));
+                    knownChunks = JSON.convertValue(root.path("known_chunks"),
+                            new TypeReference<Set<String>>() {});
                     chunks = JSON.convertValue(root.path("chunks"),
                             new TypeReference<Map<String, NeighborContainer>>() {});
                 }
@@ -37,20 +41,36 @@ public final class DemoGraphService {
             }
         }
         NeighborContainer node = data.get(chunkId);
-        if (node == null) return null;
-        return new GraphResponse(chunkId, node.neighborCount(), node.neighbors(), node.byKind());
+        if (node == null) {
+            if (knownChunks != null && knownChunks.contains(chunkId)) {
+                return new GraphResponse(chunkId, 0, List.of(), List.of(), List.of(), Map.of());
+            }
+            return null;
+        }
+        return new GraphResponse(chunkId, node.neighborCount(), node.entities(), node.neighborChunks(),
+                node.neighbors(), node.byKind());
     }
 
     private record NeighborContainer(
             @JsonProperty("neighbor_count") int neighborCount,
+            List<Entity> entities,
+            @JsonProperty("neighbor_chunks") List<String> neighborChunks,
             List<Neighbor> neighbors,
             @JsonProperty("by_kind") Map<String, Integer> byKind) {}
 
     public record GraphResponse(
             @JsonProperty("chunk_id") String chunkId,
             @JsonProperty("neighbor_count") int neighborCount,
+            List<Entity> entities,
+            @JsonProperty("neighbor_chunks") List<String> neighborChunks,
             List<Neighbor> neighbors,
             @JsonProperty("by_kind") Map<String, Integer> byKind) {}
+
+    public record Entity(
+            @JsonProperty("canonical_form") String canonicalForm,
+            String type,
+            @JsonProperty("entity_kind") String entityKind,
+            int df) {}
 
     public record Neighbor(
             @JsonProperty("chunk_id") String chunkId,

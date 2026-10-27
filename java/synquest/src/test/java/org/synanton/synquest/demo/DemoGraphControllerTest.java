@@ -32,7 +32,9 @@ class DemoGraphControllerTest {
     @BeforeEach
     void setUp() throws Exception {
         Path graph = temp.resolve("graph.json");
-        Files.writeString(graph, "{\"chunks\":{\"" + CHUNK + "\":{\"neighbor_count\":1,"
+        Files.writeString(graph, "{\"known_chunks\":[\"" + CHUNK + "\",\"empty-chunk\"],\"chunks\":{\"" + CHUNK + "\":{\"neighbor_count\":1,"
+                + "\"entities\":[{\"canonical_form\":\"2026\",\"type\":\"date\",\"entity_kind\":\"year\",\"df\":5}],"
+                + "\"neighbor_chunks\":[\"03219438-50b5-58c7-8aea-44378f987de8#0\"],"
                 + "\"neighbors\":[{\"chunk_id\":\"03219438-50b5-58c7-8aea-44378f987de8#0\","
                 + "\"via\":[{\"canonical_form\":\"2026\",\"type\":\"date\",\"entity_kind\":\"year\",\"df\":5}]}],"
                 + "\"by_kind\":{\"year\":1}}}}");
@@ -56,6 +58,16 @@ class DemoGraphControllerTest {
                 .andExpect(jsonPath("$.by_kind.year").value(1))
                 .andExpect(jsonPath("$.neighbors[0].chunk_id").value("03219438-50b5-58c7-8aea-44378f987de8#0"))
                 .andExpect(jsonPath("$.neighbors[0].via[0].entity_kind").value("year"));
+    }
+
+    @Test
+    void knownChunkWithoutGraphReturnsEmpty200() throws Exception {
+        mvc.perform(get("/v1/demo/graph/neighbors/{chunkId}", "empty-chunk")
+                        .header("Authorization", "Bearer " + token("demo-v2")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.neighbor_count").value(0))
+                .andExpect(jsonPath("$.entities").isEmpty())
+                .andExpect(jsonPath("$.neighbor_chunks").isEmpty());
     }
 
     @Test

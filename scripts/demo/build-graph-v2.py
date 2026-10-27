@@ -22,6 +22,9 @@ def main() -> None:
         for cid in e["chunk_ids"]:
             chunks[cid].add(e["entity_id"])
 
+    dense = json.loads((BENCH / "dense-embeddings-v2.json").read_text())
+    known_chunks = sorted({c["id"] for c in dense["chunks"]})
+
     seed_data = json.loads((BENCH / "graph-seed-v2.json").read_text())["seeds"]
     expected = {}
     for rows in seed_data.values():
@@ -49,7 +52,22 @@ def main() -> None:
         for n in neighbors:
             for kind in {v["entity_kind"] for v in n["via"]}:
                 by_kind[kind] += 1
-        graph[cid] = {"neighbor_count": len(neighbors), "neighbors": neighbors, "by_kind": dict(sorted(by_kind.items()))}
+        seed_entities = []
+        for eid in sorted(entity_ids):
+            e = by_entity[eid]
+            seed_entities.append({
+                "canonical_form": e["canonical_form"],
+                "type": e["type"],
+                "entity_kind": e["entity_kind"],
+                "df": e["df"],
+            })
+        graph[cid] = {
+            "neighbor_count": len(neighbors),
+            "neighbors": neighbors,
+            "neighbor_chunks": [n["chunk_id"] for n in neighbors],
+            "entities": sorted(seed_entities, key=lambda x: (-x["df"], x["entity_kind"], x["canonical_form"])),
+            "by_kind": dict(sorted(by_kind.items())),
+        }
 
     for cid, count in expected.items():
         if cid not in graph:
@@ -62,6 +80,7 @@ def main() -> None:
         "corpus_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
         "filter": "hard && 3 <= df <= 15",
         "note": "Visualization-only chunk co-occurrence; not a retrieval leg.",
+        "known_chunks": known_chunks,
         "chunks": graph,
     }
     path = BENCH / "graph-v2.json"

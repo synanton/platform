@@ -20,4 +20,4 @@ Response:
 }
 ```
 
-Unknown chunks return 404. The graph is visualization-only: hard entities, df 3–15; no soft entity becomes an edge. It does not participate in ranking.
+Known chunks with no graph-eligible entities return 200 with `neighbor_count: 0`, `entities: []`, `neighbor_chunks: []`, and `neighbors: []`. Unknown chunks return 404. The graph is visualization-only: hard entities, df 3–15; no soft entity becomes an edge. It does not participate in ranking. Coverage is 69/634 chunks (11%).
