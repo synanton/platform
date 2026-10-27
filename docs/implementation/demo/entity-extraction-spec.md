@@ -52,6 +52,15 @@ Build a real, shallow graph for the demo. Regex and glossary extraction are real
 - Section refs are hard but currently legal-casebook-only; they do not connect the three demo gold chunks. Do not claim section bridges.
 - Phase 0A artifact: `ontology-v2.jsonl` is the classified union (198 hard + 72 soft_glossary + 3 soft_doctrinal = 273); quoted phrases are excluded. See `ontology-v2-classification-report.json` for the raw-summary reconciliation.
 
+## Mapper/panel contract (Phase 1)
+
+The mapper consumes the committed ontology as input; it never re-runs extraction.
+- Assert `sha256(ontology-v2.jsonl) == 00c7e8fb6e1385ffe97710c26523a720dbe57cd922653bf1d099e7dec051a389`.
+- Assert rows == 273; `entity_class=hard` == 198; `soft_glossary` == 72; `soft_doctrinal` == 3.
+- Panel tests pin those constants and do not derive expected counts from the file.
+- API `df_band=graph_useful` must return 31 hard df 3–15 rows; `df_band=all` 273; `graph_useful&entity_class=soft_glossary` **0**.
+- Future ontology amendments change both SHA and count; update the assertion deliberately.
+
 ## DF cutoff
 Drop entities with df > 50 from the graph. `Content Engine`, `Process Engine`,
 `contract`, and `court` are expected stopwords at this corpus size.

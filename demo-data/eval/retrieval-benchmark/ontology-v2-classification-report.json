@@ -21,6 +21,7 @@
     "status": "frozen",
     "extractor_commit": "e0ae114",
     "extractor_tool_committed": false,
-    "note": "The 424-row raw list was summary-only; no re-runnable extractor was committed. The current resolution reproduces 378 raw / 273 classified deterministically. The 46-row gap is prior version/config output, not recovered or chased; future rebuilds must pin an extractor commit and verify reruns."
-  }
+    "note": "The 424-row raw list was summary-only; no re-runnable extractor was committed. The current resolution reproduces 378 raw / 273 classified deterministically. Future rebuilds must reproduce 378/273 or record a new count and reason."
+  },
+  "freeze": "Frozen at extractor commit e0ae114 / artifact commit 2b7b1ea. Future ontology rebuilds must reproduce 378 raw / 273 classified from this commit, or document the new count and reason. The 46 unreconciled raw rows are not pursued."
 }

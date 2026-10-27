@@ -17,6 +17,17 @@ check() {
 check security "$SECURITY/actuator/health"
 check synquest "$SYNQUEST/health"
 
+# A restarted synquest starts with an empty tenant searcher map: /health is
+# ready but /v1/demo/search returns 503 until the projection is loaded.
+# Reindex is idempotent; safe even when the searcher is already present.
+token=$(curl -fsS --max-time 5 -X POST "$SECURITY/v1/auth/tenant" \
+  -H 'Content-Type: application/json' \
+  -d "{\"principal_id\":\"demo-runner\",\"tenant_id\":\"$TENANT\",\"capabilities\":[]}" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+reindex=$(curl -fsS --max-time 180 -X POST "$SYNQUEST/reindex?tenant=$TENANT" \
+  -H "Authorization: Bearer $token")
+echo "Reindex: $reindex"
+
 if curl -fsS --max-time 1 http://127.0.0.1:5173 >/dev/null 2>&1; then
   echo "error: port 5173 already in use; stop the existing Vite server first" >&2
   exit 1

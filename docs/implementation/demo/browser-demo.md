@@ -3,8 +3,8 @@
 **Scope:** this demo endpoint serves four rehearsed queries. Any other query goes through `scripts/demo/run-query.sh`; live-TEI fallback is a follow-up.
 
 ## Start
-1. Start the local-real-demo stack (Cassandra, security, synquest, synflux, extractor) and rebuild the `demo-v2` projection if needed.
-2. Run `./scripts/demo/start-browser-demo.sh`.
+1. Start the local-real-demo stack (Cassandra, security, synquest, synflux, extractor).
+2. Run `./scripts/demo/start-browser-demo.sh`; it reindexes `demo-v2` before starting Vite.
 3. Open `http://127.0.0.1:5173/search`; sign in as `aminin`, tenant `demo-v2` is prefilled.
 
 ## Narrative order (hard-entity taxonomy)
@@ -34,3 +34,19 @@ Record observations in `docs/acceptance/slice-1-attribution-2026-10-27.md`.
 ## Graph narrative (optional)
 
 If graph is shown, label it **temporal/identifier co-occurrence**, not a knowledge graph. `rb010`/`rb008` have 2 IATF identifier neighbors plus years; `rb003` is year-only. Do not claim section bridges; zero section-ref neighbors were observed in the demo gold chunks. Section refs exist (df=3) only in legal casebook chunks. Ontology + retrieval attribution remain the headline. Use a 30-second view after the retrieval attribution, not a graph story.
+
+
+## Demo-day 503 recovery
+
+If search returns 503 after a synquest restart, the tenant searcher map is empty even though `/health` is ready. Mint a demo token and reindex:
+
+```bash
+TOKEN=$(curl -fsS -X POST "$SECURITY/v1/auth/tenant" \
+  -H 'Content-Type: application/json' \
+  -d '{"principal_id":"demo-runner","tenant_id":"demo-v2","capabilities":[]}' \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+curl -fsS -X POST "$SYNQUEST/reindex?tenant=demo-v2" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Expected: `{"status":"done","tenant":"demo-v2"}` in ~10s, then search works. `start-browser-demo.sh` performs the same step.
