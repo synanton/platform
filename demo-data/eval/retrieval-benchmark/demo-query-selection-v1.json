@@ -83,5 +83,11 @@
   "manual_check": {
     "pdf002": "v2 gold is faf3#8 (NCS-R answer), BM25 #1/Dense #1/RRF #1; stale #5 was an AHA-survey chunk, so the earlier fusion pick was invalidated.",
     "rb010": "BM25 #1, Dense miss, RRF #2; exact BM25 story holds."
+  },
+  "demo_v2_status": {
+    "corpus_chunks": 634,
+    "status": "v1 picks are answerable on v2 but leg ranks changed; re-select after dense-v2 run",
+    "examples": "pdf005 top1 on v2 BM25; pdf004 now competes with legal/FileNet chunks",
+    "dense_cache": "v1 cache invalid for v2; dense-v2 cache pending"
   }
 }
