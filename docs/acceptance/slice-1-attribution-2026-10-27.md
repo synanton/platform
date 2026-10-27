@@ -45,7 +45,7 @@ The platform's Jackson `SanitizingStringDeserializer` HTML-escapes incoming stri
 - sends the **post-sanitizer, as-received** form to BM25, matching `/v1/search`;
 - reads the dense cache against the unescaped question.
 
-The BM25 index is built from the unescaped corpus text. `report's` was verified through both the runner and `/v1/demo/search`. `AT&T` and `VLAN < 100` are not yet exercised through the endpoint because it only serves cached query embeddings; add them to the demo cache before claiming that edge is covered.
+The BM25 index is built from the unescaped corpus text. `report's` was verified through both the runner and `/v1/demo/search`. `AT&T` and `VLAN < 100` now have cache entries (`sanitizer-at`, `sanitizer-lt`), but endpoint verification is pending because the local synquest projection returned 503 after restart; until re-tested, route raw `&`, `<`, `>` queries through `run-query.sh`.
 
 ## Remaining local gate
 
