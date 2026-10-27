@@ -99,3 +99,8 @@ Run `pdf005`, `pdf004`, `rb003`, `rb010` through both `scripts/demo/run-query.sh
 ## UI badge strip
 
 Fixed left-to-right order: `BM25 #7 · Dense #2 · RRF #2`; missing leg `Dense —`. RRF value is `final_score` formatted for display, not server-rounded.
+
+
+## Environment selectors
+
+Local build: `SYNANTON_SECURITY_URL=http://localhost:18081`, `SYNANTON_API_URL=http://localhost:8080` (or current local profile). K8s checkpoint: same variables with the cluster NodePort/port-forward addresses. The runner must never silently default to localhost inside a cluster context. K8s is a separate deployment gate (#473), not Slice 1 acceptance.

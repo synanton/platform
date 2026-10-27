@@ -11,9 +11,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = ROOT / "demo-data/eval/retrieval-benchmark"
-SYNQUEST = os.environ.get("SYNQUEST_URL", "http://localhost:18083")
-SECURITY = os.environ.get("SECURITY_URL", "http://localhost:18081")
+SYNQUEST = os.environ.get("SYNANTON_SYNQUEST_URL", os.environ.get("SYNQUEST_URL", "http://localhost:18083"))
+SECURITY = os.environ.get("SYNANTON_SECURITY_URL", os.environ.get("SECURITY_URL", "http://localhost:18081"))
 TEI = os.environ.get("TEI_URL", "http://localhost:30801")
+API = os.environ.get("SYNANTON_API_URL", "")
 TENANT = os.environ.get("DEMO_TENANT", "demo-v2")
 K = 20
 TOKEN = ""
@@ -92,6 +93,7 @@ def main() -> None:
     AUTH_EXPIRES = int(issued["expires_at"])
     print(f"Auth: tenant={issued['tenant_id']} expires_at={AUTH_EXPIRES} "
           f"ttl_seconds={max(0, AUTH_EXPIRES - int(time.time()))}")
+    print(f"Targets: security={SECURITY} search={API or SYNQUEST}")
     gold = json.loads((BENCH / "demo-v2-gold-ranks.json").read_text())["gold"]
     gold_ids = set()
     for ids in gold.values():
