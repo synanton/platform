@@ -1,0 +1,94 @@
+{
+  "run_id": "T01-v2-q25",
+  "corpus_digest": "a993e6a1b13ec3ffc8a35ddaa2e53e6fa3c25d74c03d500e52d1b4b3d0b0096f",
+  "queries_tested": 25,
+  "fixed20_disagreements": 19,
+  "fixed20_threshold": 8,
+  "full25_disagreements": 24,
+  "disagreement_note": "Top-3 leg disagreement is 24/25, but v2 gold verification shows most PDF answers are top-1 in both legs. The 96% number is leg diversity, not correct-answer disagreement. Demo picks below use v2 gold.",
+  "k_sweep": {
+    "values": [
+      10,
+      20,
+      60
+    ],
+    "chosen": 20,
+    "result": "all five selected answers have identical ranks at k=10/20/60; k=20 chosen as neutral demo default, not k=60 by habit"
+  },
+  "selected": [
+    {
+      "query_id": "pdf005",
+      "question": "Which medications are listed for substance use disorders?",
+      "type": "mixed/table",
+      "why": "BM25 #8, Dense #2, RRF #3 (k=10/20/60). The fusion lift is real and gold-verified."
+    },
+    {
+      "query_id": "rb003",
+      "question": "In what year was Globex Manufacturing founded and where is it headquartered?",
+      "type": "mixed/dense-wins",
+      "why": "BM25 #3, Dense #1, RRF #2. Dense contributes a rank win."
+    },
+    {
+      "query_id": "pdf008",
+      "question": "What is the default IP address of VLAN001 on the SKS8300 switch?",
+      "type": "exact identifier/dense-wins",
+      "why": "BM25 #2, Dense #1, RRF #1. Exact identifier plus dense coverage."
+    },
+    {
+      "query_id": "rb010",
+      "question": "IATF 16949",
+      "type": "exact identifier/BM25-wins",
+      "why": "BM25 #1, Dense misses, RRF #2. Visibly BM25-only."
+    },
+    {
+      "query_id": "pdf004",
+      "question": "How does the report's glossary define a major depressive episode?",
+      "type": "conceptual/paraphrase",
+      "why": "BM25 #1, Dense #4, RRF #2. No true paraphrase query has Dense beating BM25 under v2 gold; this is the closest conceptual case."
+    }
+  ],
+  "leg_ranks": {
+    "pdf005": {
+      "bm25": 8,
+      "dense": 2,
+      "rrf_k20": 3
+    },
+    "rb003": {
+      "bm25": 3,
+      "dense": 1,
+      "rrf_k20": 2
+    },
+    "pdf008": {
+      "bm25": 2,
+      "dense": 1,
+      "rrf_k20": 1
+    },
+    "rb010": {
+      "bm25": 1,
+      "dense": null,
+      "rrf_k20": 2
+    },
+    "pdf004": {
+      "bm25": 1,
+      "dense": 4,
+      "rrf_k20": 2
+    }
+  },
+  "not_slice1": [
+    {
+      "query_id": "pdf015",
+      "reason": "Dense #20, 2-leg RRF #33; no graph-useful entity bridge; not a Slice 1 or Slice 2 hero yet"
+    }
+  ],
+  "manual_check": {
+    "pdf002": "v2 gold is faf3#8 (NCS-R answer), BM25 #1/Dense #1/RRF #1; stale #5 was an AHA-survey chunk, so the earlier fusion pick was invalidated.",
+    "rb010": "BM25 #1, Dense miss, RRF #2; exact BM25 story holds."
+  },
+  "demo_v2_status": {
+    "corpus_chunks": 634,
+    "status": "v1 picks are answerable on v2 but leg ranks changed; re-select after dense-v2 run",
+    "examples": "pdf005 top1 on v2 BM25; pdf004 now competes with legal/FileNet chunks",
+    "dense_cache": "v1 cache invalid for v2; dense-v2 cache pending"
+  },
+  "superseded_by": "demo-query-selection-v2.json"
+}

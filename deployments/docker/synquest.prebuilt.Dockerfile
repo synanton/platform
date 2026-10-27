@@ -9,5 +9,9 @@ RUN apk add --no-cache wget \
 USER synanton
 WORKDIR /app
 COPY java/synquest/build/libs/synquest*.jar app.jar
+COPY demo-data/eval/retrieval-benchmark/ontology-v2.jsonl /app/data/ontology-v2.jsonl
+COPY demo-data/eval/retrieval-benchmark/graph-v2.json /app/data/graph-v2.json
+COPY demo-data/eval/retrieval-benchmark/dense-embeddings-v2.json /app/data/dense-embeddings-v2.json
+COPY demo-data/eval/retrieval-benchmark/queries-v2.rb-fixed-g5.jsonl /app/data/queries-v2.rb-fixed-g5.jsonl
 EXPOSE 8083
 ENTRYPOINT ["java", "-jar", "app.jar"]

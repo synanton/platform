@@ -4,13 +4,14 @@ metadata:
   name: ui
   namespace: synanton
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: ui
   ports:
     - name: http
       port: 80
       targetPort: http
+      nodePort: 30080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -18,7 +19,7 @@ metadata:
   name: ui
   namespace: synanton
   annotations:
-    synanton.io/source-commit: 3b6bcb1
+    synanton.io/source-commit: 076d3a5
 spec:
   replicas: 1
   selector:
@@ -33,7 +34,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: ui
-          image: local-registry:5000/synanton/ui@sha256:604c007993328a714cba2c607deb1f129e1dafc9c2d4ab314997547b7ddb9656
+          image: local-registry:5000/synanton/ui@sha256:944d293a3fae6323bda928d170ce984b908bf2dad28d5df774b5b48a3f236513
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

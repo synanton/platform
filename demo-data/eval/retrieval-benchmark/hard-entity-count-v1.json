@@ -1,0 +1,138 @@
+{
+  "corpus": "demo-v2",
+  "chunks": 634,
+  "hard_entities": 198,
+  "soft_entities": 66,
+  "hard_df_bands": {
+    "1": 135,
+    "2": 30,
+    "3-15": 31,
+    "16-50": 2
+  },
+  "soft_df_bands": {
+    "16-50": 10,
+    "3-15": 30,
+    ">50": 3,
+    "2": 6,
+    "1": 17
+  },
+  "hard_df_3_15": 31,
+  "hard_top_20_df_3_15": [
+    {
+      "df": 8,
+      "type": "case_name",
+      "surface": "lucy v. zehmer"
+    },
+    {
+      "df": 7,
+      "type": "date",
+      "surface": "2010"
+    },
+    {
+      "df": 7,
+      "type": "date",
+      "surface": "2003"
+    },
+    {
+      "df": 6,
+      "type": "date",
+      "surface": "2024"
+    },
+    {
+      "df": 6,
+      "type": "date",
+      "surface": "2008"
+    },
+    {
+      "df": 5,
+      "type": "date",
+      "surface": "2026"
+    },
+    {
+      "df": 5,
+      "type": "date",
+      "surface": "2025"
+    },
+    {
+      "df": 5,
+      "type": "date",
+      "surface": "2022"
+    },
+    {
+      "df": 5,
+      "type": "date",
+      "surface": "2004"
+    },
+    {
+      "df": 4,
+      "type": "identifier",
+      "surface": "vlan001"
+    },
+    {
+      "df": 4,
+      "type": "date",
+      "surface": "2015"
+    },
+    {
+      "df": 4,
+      "type": "date",
+      "surface": "2007"
+    },
+    {
+      "df": 4,
+      "type": "date",
+      "surface": "1952"
+    },
+    {
+      "df": 3,
+      "type": "section_ref",
+      "surface": "\u00a7 74"
+    },
+    {
+      "df": 3,
+      "type": "section_ref",
+      "surface": "section 7.2"
+    },
+    {
+      "df": 3,
+      "type": "section_ref",
+      "surface": "section 6.2"
+    },
+    {
+      "df": 3,
+      "type": "section_ref",
+      "surface": "section 2"
+    },
+    {
+      "df": 3,
+      "type": "section_ref",
+      "surface": "section 13.4"
+    },
+    {
+      "df": 3,
+      "type": "section_ref",
+      "surface": "section 10.1"
+    },
+    {
+      "df": 3,
+      "type": "section_ref",
+      "surface": "restatement (second) of contracts"
+    }
+  ],
+  "decision": "proceed",
+  "hard_graph_availability": {
+    "rb003": 12,
+    "rb010": "12/14/16",
+    "rb008": 14,
+    "pdf012": 0,
+    "pdf005": 0,
+    "pdf004": 0,
+    "note": "hard entities only; soft glossary terms excluded from graph nodes"
+  },
+  "graph_demo_subset": [
+    "rb003",
+    "rb010",
+    "rb008"
+  ],
+  "phase0_decision": "Phase 0A only: 31 hard df 3\u201315 clears the 20 floor. Graph is thin but demoable on 3 queries; pdf012 is not hard-positive. No extraction tuning yet; #471 remains parked."
+}

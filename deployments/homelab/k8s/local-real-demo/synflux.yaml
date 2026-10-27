@@ -39,6 +39,12 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8090"
+            - name: CASSANDRA_HOST
+              value: cassandra
+            - name: CASSANDRA_PORT
+              value: "9042"
+            - name: CASSANDRA_LOCAL_DC
+              value: datacenter1
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: ""
             - name: SYNFLUX_CONTENT_CACHE_BACKEND
@@ -88,6 +94,8 @@ spec:
           volumeMounts:
             - name: content-cache
               mountPath: /content-cache
+      securityContext:
+        fsGroup: 101
       volumes:
         - name: content-cache
           persistentVolumeClaim:

@@ -1,0 +1,120 @@
+{
+  "corpus_chunks": 317,
+  "entities": 270,
+  "df_buckets": {
+    "3-15": 64,
+    "1": 155,
+    "2": 49,
+    "16-50": 2
+  },
+  "top_entities": [
+    {
+      "df": 29,
+      "type": "identifier",
+      "surface": "vlan002"
+    },
+    {
+      "df": 18,
+      "type": "version",
+      "surface": "6.6"
+    },
+    {
+      "df": 15,
+      "type": "version",
+      "surface": "16.6"
+    },
+    {
+      "df": 14,
+      "type": "version",
+      "surface": "3.8"
+    },
+    {
+      "df": 14,
+      "type": "version",
+      "surface": "1.6"
+    },
+    {
+      "df": 11,
+      "type": "version",
+      "surface": "10.4"
+    },
+    {
+      "df": 9,
+      "type": "version",
+      "surface": "18.5"
+    },
+    {
+      "df": 9,
+      "type": "glossary",
+      "surface": "standard"
+    },
+    {
+      "df": 9,
+      "type": "glossary",
+      "surface": "accepted"
+    },
+    {
+      "df": 8,
+      "type": "version",
+      "surface": "13.4"
+    },
+    {
+      "df": 7,
+      "type": "version",
+      "surface": "8.3"
+    },
+    {
+      "df": 7,
+      "type": "glossary",
+      "surface": "failure"
+    },
+    {
+      "df": 7,
+      "type": "glossary",
+      "surface": "component"
+    },
+    {
+      "df": 7,
+      "type": "glossary",
+      "surface": "authority"
+    },
+    {
+      "df": 6,
+      "type": "version",
+      "surface": "5.6"
+    },
+    {
+      "df": 6,
+      "type": "version",
+      "surface": "14.4"
+    },
+    {
+      "df": 6,
+      "type": "glossary",
+      "surface": "public"
+    },
+    {
+      "df": 6,
+      "type": "glossary",
+      "surface": "ownership"
+    },
+    {
+      "df": 6,
+      "type": "glossary",
+      "surface": "financial"
+    },
+    {
+      "df": 6,
+      "type": "date",
+      "surface": "2024"
+    }
+  ],
+  "note": "Regex/glossary prototype; graph-useful band is df 3-15.",
+  "caveat": "The broad version regex also matched section numbers (6.6, 16.6). Before Slice 2, require a v prefix or version/TEI/model context; do not treat raw section numbers as entities.",
+  "pdf015_graph_bridge": {
+    "gold_chunk": "69bd3d12-3841-54a1-b104-1ff1104420e9#65",
+    "graph_useful_entities_in_gold": 0,
+    "shared_with_bm25_top20": 0,
+    "verdict": "no bridge under current extractor; pdf015 is not a Slice 2 graph-hero query without a new entity type (e.g. certificates) or a licensed denser manual"
+  }
+}
