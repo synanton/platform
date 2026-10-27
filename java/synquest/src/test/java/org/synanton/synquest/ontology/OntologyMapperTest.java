@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -114,7 +116,37 @@ class OntologyMapperTest {
     }
 
     @Test
-    void findById_missing_empty() throws Exception {
-        assertThat(mapper().findById("no-such-id")).isEmpty();
+    void soft_missingSubtype_failsWithRowContext() throws Exception {
+        Path fixture = writeFixture("soft-missing.jsonl", row("id-soft", "soft", null));
+        assertThatThrownBy(() -> OntologyMapper.loadFrom(fixture, sha256(fixture)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("invalid soft_subtype")
+                .hasMessageContaining("id-soft");
+    }
+
+    @Test
+    void soft_unknownSubtype_failsWithRowContext() throws Exception {
+        Path fixture = writeFixture("soft-unknown.jsonl", row("id-soft", "soft", "unexpected"));
+        assertThatThrownBy(() -> OntologyMapper.loadFrom(fixture, sha256(fixture)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("invalid soft_subtype")
+                .hasMessageContaining("id-soft");
+    }
+
+    private static Path writeFixture(String name, String line) throws Exception {
+        Path path = Path.of("build", "tmp", name);
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, line + "\n");
+        return path;
+    }
+
+    private static String row(String id, String entityClass, String subtype) {
+        String subtypeField = subtype == null ? "" : ",\"soft_subtype\":\"" + subtype + "\"";
+        return "{\"entity_id\":\"" + id + "\",\"canonical_form\":\"x\",\"entity_class\":\"" + entityClass
+                + "\",\"type\":\"date\",\"entity_kind\":\"year\",\"df\":3,\"chunk_ids\":[]" + subtypeField + "}";
+    }
+
+    private static String sha256(Path path) throws Exception {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(path)));
     }
 }

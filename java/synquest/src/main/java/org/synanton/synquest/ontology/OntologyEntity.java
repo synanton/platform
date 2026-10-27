@@ -55,7 +55,19 @@ public record OntologyEntity(
         int df = node.path("df").asInt();
         String rawClass = node.path("entity_class").asText();
         String subtype = node.path("soft_subtype").asText(null);
-        String effectiveClass = CLASS_SOFT.equals(rawClass) && subtype != null ? subtype : rawClass;
+        String effectiveClass = rawClass;
+        if (CLASS_SOFT.equals(rawClass)) {
+            if (!CLASS_SOFT_GLOSSARY.equals(subtype) && !CLASS_SOFT_DOCTRINAL.equals(subtype)) {
+                throw new IllegalStateException(
+                        "Ontology row " + node.path("entity_id").asText()
+                                + " has invalid soft_subtype: " + subtype);
+            }
+            effectiveClass = subtype;
+        } else if (!CLASS_HARD.equals(rawClass)) {
+            throw new IllegalStateException(
+                    "Ontology row " + node.path("entity_id").asText()
+                            + " has unknown entity_class: " + rawClass);
+        }
         return new OntologyEntity(
                 node.path("entity_id").asText(),
                 node.path("canonical_form").asText(),
