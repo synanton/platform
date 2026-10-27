@@ -10,7 +10,7 @@ Constants before panel code: total 273, hard 198, soft_glossary 72, soft_doctrin
 
 1. Deploy the pinned platform/UI SHAs.
 2. Wait for `/health` ready.
-3. Reindex `demo-v2`.
+3. Reindex `demo-v2`; verify `/v1/demo/search` returns 200 before launching the UI.
 4. Run and record:
    ```bash
    SYNANTON_SYNQUEST_URL=http://<node>:<port> \
