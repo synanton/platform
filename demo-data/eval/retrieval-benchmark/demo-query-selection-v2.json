@@ -64,6 +64,26 @@
   ],
   "note": "v1 top-3 disagreement was noise; this is gold-rank disagreement on v2.",
   "rrf_strict_wins": 0,
-  "rrf_vs_best_leg": "RRF matches the best leg on pdf005/pdf004/rb010 and is worse on rb003; fixed 1.0/1.0 weights do not beat the best single leg on gold.",
-  "narration": "Show leg disagreement, per-leg attribution, and how RRF combines them. Do not claim RRF improves gold rank or beats the best leg in Slice 1."
+  "rrf_vs_best_leg": {
+    "strict_wins": 0,
+    "ties_or_equals_best": 3,
+    "between_legs_but_worse_than_best": 1,
+    "worse_than_best_single_leg": 4,
+    "detail": {
+      "equal": "pdf004, pdf005, rb010",
+      "between": "rb003 (BM25 #3, Dense #1, RRF #2)",
+      "worse": "pdf011 (#2/miss/#4), pdf012 (#1/miss/#7), pdf015 (miss/#17/#26), rb008 (#1/miss/#5)"
+    }
+  },
+  "narration": "Fixed-weight RRF has 0/25 strict wins. It ties the best leg on 3 candidates, sits between on rb003, and can lose when one leg misses. Show attribution and robustness, not a quality win.",
+  "backups": [
+    {
+      "query_id": "rb008",
+      "why": "Dense misses; BM25 #1 but RRF #5 \u2014 honest failure-mode rehearsal, not demo proof"
+    },
+    {
+      "query_id": "pdf011",
+      "why": "Dense misses; BM25 #2 but RRF #4 \u2014 second single-leg-failure rehearsal"
+    }
+  ]
 }
