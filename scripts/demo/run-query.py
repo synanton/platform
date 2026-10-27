@@ -122,7 +122,7 @@ def main() -> None:
     selection = json.loads((BENCH / "demo-query-selection-v2.json").read_text())
     graph = selection.get("graph_availability", {})
     matched = next((qid for qid, item in graph.items()
-                    if item.get("question") == query), None)
+                    if isinstance(item, dict) and item.get("question") == query), None)
     if matched:
         item = graph[matched]
         print(f"Graph availability ({matched}): useful entities={len(item.get('useful_entities', []))}, neighbors={item.get('neighbors', 0)}")
