@@ -54,8 +54,15 @@ Browser smoke (load, four queries, em-dash, query-type badge, forced-token-expir
 
 ## Browser smoke (headless Chromium via CDP)
 
-Passed: four retrieval queries with expected strips, `Dense —` on rb010, query-type badge, forced 401 → fresh token → success, browser refresh → search success.
-Script: `scripts/demo/browser-smoke.py`; operator script/checklist: `scripts/demo/start-browser-demo.sh` and `docs/implementation/demo/browser-demo.md`.
+Six checks, all observed green in headless Chromium:
+1. `pdf005` — `BM25 #7 · Dense #2 · RRF #2` on the gold card.
+2. `rb010` — `BM25 #1 · Dense — · RRF #1`; literal em-dash rendered.
+3. Query-type badge non-null: `mixed`, `exact`, `conceptual`, and `rb003` mixed.
+4. `pdf004` — `BM25 #1 · Dense #4 · RRF #1`.
+5. Forced expired token → one silent re-auth → retry success; console line `401 → minted fresh token → retry`.
+6. Browser refresh → search works without manual login.
+
+Artifact: `scripts/demo/browser-smoke.py`. Operator kit: `scripts/demo/start-browser-demo.sh`, `docs/implementation/demo/browser-demo.md`, `scripts/demo/expired-token.py`.
 
 ## Demo endpoint scope
 

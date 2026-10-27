@@ -168,12 +168,7 @@
       "query_id": "rb008",
       "neighbors": 21,
       "why": "gold #1, Dense miss, RRF #5; graph-rich failure-mode"
-    },
-    {
-      "query_id": "pdf012",
-      "neighbors": 8,
-      "why": "gold #1, Dense miss, RRF #7; graph-rich failure-mode"
     }
   ],
-  "graph_demo_note": "Separate graph-visualization subset; pdf005/pdf004 remain retrieval-attribution examples. Graph is visualization-only and does not contribute to ranking."
+  "graph_demo_note": "Hard-entity-only graph subset: rb003, rb010, rb008. pdf012 has 0 hard-entity neighbors (only soft glossary); pdf005/pdf004 still 0. Graph is visualization-only."
 }

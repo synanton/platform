@@ -1,5 +1,7 @@
 # Manual browser demo / smoke
 
+**Scope:** this demo endpoint serves four rehearsed queries. Any other query goes through `scripts/demo/run-query.sh`; live-TEI fallback is a follow-up.
+
 ## Start
 1. Start the local-real-demo stack (Cassandra, security, synquest, synflux, extractor) and rebuild the `demo-v2` projection if needed.
 2. Run `./scripts/demo/start-browser-demo.sh`.
