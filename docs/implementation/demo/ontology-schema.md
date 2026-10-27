@@ -78,7 +78,7 @@ Graph edges are derived from shared hard entities, not from soft co-occurrence. 
 | `df_band` | Range | Use |
 |---|---|---|
 | `1` | `df = 1` | Singleton; retained in ontology, not graph-useful. |
-| `2` | `df = 2` | Pair; retained in ontology, not graph-useful. |
+| `2` | `df = 2` | Pair; 38 total (30 hard, 8 soft_glossary, 0 soft_doctrinal); retained, not graph-useful. |
 | `3-15` | `3 <= df <= 15` | **graph_useful** for hard entities. |
 | `16-50` | `16 <= df <= 50` | Frequent; retained, not graph-useful. |
 | `>50` | `df > 50` | High-frequency; retained, not graph-useful. |
@@ -109,7 +109,7 @@ Supported filters:
 
 | Filter | Values | Meaning |
 |---|---|---|
-| `df_band` | `graph_useful`, `all` | `graph_useful` = hard + df 3–15; `all` = all 273. |
+| `df_band` | `graph_useful`, `pair`, `all` | `graph_useful` = hard + df 3–15; `pair` = df 2; `all` = all 273. |
 | `entity_class` | `hard`, `soft`, `soft_glossary`, `soft_doctrinal` | Class/subtype filter. |
 
 Pinned results:
@@ -120,6 +120,10 @@ Pinned results:
 | `df_band=graph_useful` | 31 |
 | `df_band=graph_useful&entity_class=hard` | 31 |
 | `df_band=graph_useful&entity_class=soft_glossary` | 0 |
+| `df_band=pair` | 38 |
+| `df_band=pair&entity_class=hard` | 30 |
+| `df_band=pair&entity_class=soft_glossary` | 8 |
+| `df_band=pair&entity_class=soft_doctrinal` | 0 |
 
 ## 8. Invariants
 

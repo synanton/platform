@@ -23,6 +23,10 @@ Constants before panel code: total 273, hard 198, soft_glossary 72, soft_doctrin
    - `?df_band=graph_useful` → 31
    - `?df_band=graph_useful&entity_class=hard` → 31
    - `?df_band=graph_useful&entity_class=soft_glossary` → 0
+- `?df_band=pair` → 38
+- `?df_band=pair&entity_class=hard` → 30
+- `?df_band=pair&entity_class=soft_glossary` → 8
+- `?df_band=pair&entity_class=soft_doctrinal` → 0
 6. Load the panel; verify render + df-band filter and record the deployed SHAs.
 
 ## Merge gate
