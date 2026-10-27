@@ -1,0 +1,258 @@
+{
+  "corpus": "demo-v2",
+  "gold": {
+    "rb001": [
+      "2d5ae12a-6f01-5c28-8544-e659fd184817#0"
+    ],
+    "rb002": [
+      "2d5ae12a-6f01-5c28-8544-e659fd184817#0"
+    ],
+    "rb003": [
+      "0110d461-0321-5085-874a-ec716a610909#0"
+    ],
+    "rb004": [
+      "2d5ae12a-6f01-5c28-8544-e659fd184817#0"
+    ],
+    "rb005": [
+      "0110d461-0321-5085-874a-ec716a610909#0"
+    ],
+    "rb006": [
+      "03219438-50b5-58c7-8aea-44378f987de8#0"
+    ],
+    "rb007": [
+      "fbf2e6e1-d37c-573c-a2d9-194183d34b7f#0"
+    ],
+    "rb008": [
+      "03219438-50b5-58c7-8aea-44378f987de8#0"
+    ],
+    "rb009": [],
+    "rb010": [
+      "0110d461-0321-5085-874a-ec716a610909#0",
+      "03219438-50b5-58c7-8aea-44378f987de8#0",
+      "2d5ae12a-6f01-5c28-8544-e659fd184817#0"
+    ],
+    "pdf001": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5"
+    ],
+    "pdf002": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8"
+    ],
+    "pdf003": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9"
+    ],
+    "pdf004": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#13"
+    ],
+    "pdf005": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#26"
+    ],
+    "pdf006": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32"
+    ],
+    "pdf007": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#14"
+    ],
+    "pdf008": [
+      "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11"
+    ],
+    "pdf009": [
+      "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#21"
+    ],
+    "pdf010": [
+      "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#32"
+    ],
+    "pdf011": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0"
+    ],
+    "pdf012": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#41"
+    ],
+    "pdf013": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#82"
+    ],
+    "pdf014": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#114"
+    ],
+    "pdf015": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#212",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#65"
+    ]
+  },
+  "ranks": [
+    {
+      "query_id": "pdf001",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf002",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf003",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf004",
+      "bm25": 1,
+      "dense": 4,
+      "rrf": 1,
+      "class": "rank_gap"
+    },
+    {
+      "query_id": "pdf005",
+      "bm25": 7,
+      "dense": 2,
+      "rrf": 2,
+      "class": "rank_gap"
+    },
+    {
+      "query_id": "pdf006",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf007",
+      "bm25": 2,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf008",
+      "bm25": 2,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf009",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf010",
+      "bm25": 1,
+      "dense": 2,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf011",
+      "bm25": 2,
+      "dense": null,
+      "rrf": 4,
+      "class": "one_miss"
+    },
+    {
+      "query_id": "pdf012",
+      "bm25": 1,
+      "dense": null,
+      "rrf": 7,
+      "class": "one_miss"
+    },
+    {
+      "query_id": "pdf013",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf014",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "pdf015",
+      "bm25": null,
+      "dense": 17,
+      "rrf": 26,
+      "class": "one_miss"
+    },
+    {
+      "query_id": "rb001",
+      "bm25": 1,
+      "dense": 2,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "rb002",
+      "bm25": 2,
+      "dense": 2,
+      "rrf": 2,
+      "class": "agree"
+    },
+    {
+      "query_id": "rb003",
+      "bm25": 3,
+      "dense": 1,
+      "rrf": 2,
+      "class": "rank_gap"
+    },
+    {
+      "query_id": "rb004",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "rb005",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "rb006",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "rb007",
+      "bm25": 1,
+      "dense": 1,
+      "rrf": 1,
+      "class": "agree"
+    },
+    {
+      "query_id": "rb008",
+      "bm25": 1,
+      "dense": null,
+      "rrf": 5,
+      "class": "one_miss"
+    },
+    {
+      "query_id": "rb009",
+      "bm25": null,
+      "dense": null,
+      "rrf": null,
+      "class": "no_gold"
+    },
+    {
+      "query_id": "rb010",
+      "bm25": 1,
+      "dense": null,
+      "rrf": 1,
+      "class": "one_miss"
+    }
+  ]
+}

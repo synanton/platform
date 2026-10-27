@@ -1,0 +1,66 @@
+{
+  "corpus": "demo-v2",
+  "corpus_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
+  "queries_tested": 25,
+  "gold_rank_candidates": 8,
+  "candidate_rule": "Gold rank differs by >=2 between BM25 and Dense, or one leg misses the gold.",
+  "k": 20,
+  "k_sweep": "k=10/20/60 produce identical gold ranks for the selected four; k=20 chosen.",
+  "selected": [
+    {
+      "query_id": "pdf005",
+      "question": "Which medications are listed for substance use disorders?",
+      "class": "rank_gap",
+      "bm25": 7,
+      "dense": 2,
+      "rrf": 2,
+      "why": "largest gold gap; RRF/dense lift the answer from BM25 #7 to #2"
+    },
+    {
+      "query_id": "pdf004",
+      "question": "How does the report's glossary define a major depressive episode?",
+      "class": "rank_gap",
+      "bm25": 1,
+      "dense": 4,
+      "rrf": 1,
+      "why": "BM25 holds #1 against Dense #4; shows leg divergence without losing the answer"
+    },
+    {
+      "query_id": "rb003",
+      "question": "In what year was Globex Manufacturing founded and where is it headquartered?",
+      "class": "rank_gap",
+      "bm25": 3,
+      "dense": 1,
+      "rrf": 2,
+      "why": "Dense wins #1 vs BM25 #3; RRF #2"
+    },
+    {
+      "query_id": "rb010",
+      "question": "IATF 16949",
+      "class": "one_miss",
+      "bm25": 1,
+      "dense": null,
+      "rrf": 1,
+      "why": "exact identifier; Dense misses entirely, RRF keeps #1"
+    }
+  ],
+  "excluded": [
+    {
+      "query_id": "pdf011",
+      "reason": "BM25 #2, Dense miss, RRF #4; RRF degrades"
+    },
+    {
+      "query_id": "pdf012",
+      "reason": "BM25 #1, Dense miss, RRF #7; RRF degrades"
+    },
+    {
+      "query_id": "pdf015",
+      "reason": "Dense #17, RRF #26; no graph bridge"
+    },
+    {
+      "query_id": "pdf008",
+      "reason": "BM25 #2, Dense #1, RRF #1; legs agree on gold, not a hybrid-gap demo"
+    }
+  ],
+  "note": "v1 top-3 disagreement was noise; this is gold-rank disagreement on v2."
+}

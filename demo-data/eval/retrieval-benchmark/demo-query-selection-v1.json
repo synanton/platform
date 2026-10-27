@@ -89,5 +89,6 @@
     "status": "v1 picks are answerable on v2 but leg ranks changed; re-select after dense-v2 run",
     "examples": "pdf005 top1 on v2 BM25; pdf004 now competes with legal/FileNet chunks",
     "dense_cache": "v1 cache invalid for v2; dense-v2 cache pending"
-  }
+  },
+  "superseded_by": "demo-query-selection-v2.json"
 }
