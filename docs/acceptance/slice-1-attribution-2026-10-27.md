@@ -50,3 +50,13 @@ The BM25 index is built from the unescaped corpus text. `report's` was verified 
 ## Remaining local gate
 
 Browser smoke (load, four queries, em-dash, query-type badge, forced-token-expiry retry, refresh) was not performed in this CLI environment. API 401→fresh-token→200 was verified with real security issuance; UI retry is unit-tested and logs `401 → minted fresh token → retry`.
+
+
+## Browser smoke (headless Chromium via CDP)
+
+Passed: four retrieval queries with expected strips, `Dense —` on rb010, query-type badge, forced 401 → fresh token → success, browser refresh → search success.
+Script: `scripts/demo/browser-smoke.py`; operator script/checklist: `scripts/demo/start-browser-demo.sh` and `docs/implementation/demo/browser-demo.md`.
+
+## Demo endpoint scope
+
+Slice 1 demo uses **option A: cached queries only**. Fixed four queries are reliable; impromptu queries use the local runner. Live-TEI fallback (option C) is a follow-up and must not be claimed yet.

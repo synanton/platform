@@ -41,6 +41,13 @@ Build a real, shallow graph for the demo. Regex and glossary extraction are real
 - Start weights: BM25 1.0, dense 1.0, graph 0.5; exact shifts +0.4 BM25/+0.3 graph/-0.4 dense; conceptual shifts +0.5 dense/+0.1 graph/-0.3 BM25. Clamp at 0.
 - Log per-leg rank, contribution, and final fused score. The UI renders these; no attribution, no demo.
 
+## Two-tier entity classification
+
+- `hard`: structurally recognizable identifiers, dates, versions, section refs, case names. Only hard entities may become graph nodes (and only at df 3–15).
+- `soft`: glossary terms and doctrinal phrases. They appear in the ontology panel under a collapsed Glossary section, never as graph edges.
+- Graph filter: `entity_class == hard && 3 <= df <= 15`.
+- This replaces denylist whack-a-mole. Re-run top-20 per class before #472.
+
 ## DF cutoff
 Drop entities with df > 50 from the graph. `Content Engine`, `Process Engine`,
 `contract`, and `court` are expected stopwords at this corpus size.
