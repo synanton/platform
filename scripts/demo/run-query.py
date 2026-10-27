@@ -6,35 +6,36 @@ the local demo-v2 synquest. Unknown queries fall back to TEI only for the query
 embedding. Gold flags come from demo-v2-gold-ranks.json.
 """
 from __future__ import annotations
-import base64, hashlib, hmac, json, math, os, re, sys, time, urllib.request
+import json, os, re, sys, time, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = ROOT / "demo-data/eval/retrieval-benchmark"
 SYNQUEST = os.environ.get("SYNQUEST_URL", "http://localhost:18083")
+SECURITY = os.environ.get("SECURITY_URL", "http://localhost:18081")
 TEI = os.environ.get("TEI_URL", "http://localhost:30801")
 TENANT = os.environ.get("DEMO_TENANT", "demo-v2")
-SECRET = os.environ.get("SYNANTON_JWT_SECRET", "local-real-demo-secret-at-least-32-bytes")
 K = 20
-
-
-def token() -> str:
-    def b64(value: bytes) -> str:
-        return base64.urlsafe_b64encode(value).rstrip(b"=").decode()
-    header = b64(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
-    claims = b64(json.dumps({"sub": "demo-runner", "tenant_id": TENANT,
-                             "exp": int(time.time()) + 3600}).encode())
-    sig = b64(hmac.new(SECRET.encode(), f"{header}.{claims}".encode(), hashlib.sha256).digest())
-    return f"{header}.{claims}.{sig}"
+TOKEN = ""
+AUTH_EXPIRES = 0
 
 
 def post_json(url: str, body: dict) -> dict:
+    headers = {"Content-Type": "application/json"}
+    if TOKEN:
+        headers["Authorization"] = f"Bearer {TOKEN}"
     req = urllib.request.Request(url, data=json.dumps(body).encode(),
-                                 headers={"Content-Type": "application/json",
-                                          "Authorization": f"Bearer {token()}"},
-                                 method="POST")
+                                 headers=headers, method="POST")
     with urllib.request.urlopen(req, timeout=30) as response:
         return json.loads(response.read())
+
+
+def mint_token() -> dict:
+    return post_json(SECURITY + "/v1/auth/tenant", {
+        "principal_id": "demo-runner",
+        "tenant_id": TENANT,
+        "capabilities": [],
+    })
 
 
 def query_type(text: str) -> str:
@@ -82,9 +83,15 @@ def dense_top(query: str, cache: dict) -> tuple[list[str], str]:
 
 
 def main() -> None:
+    global TOKEN, AUTH_EXPIRES
     query = " ".join(sys.argv[1:]).strip()
     if not query:
         raise SystemExit("usage: run-query.sh <query>")
+    issued = mint_token()
+    TOKEN = issued["token"]
+    AUTH_EXPIRES = int(issued["expires_at"])
+    print(f"Auth: tenant={issued['tenant_id']} expires_at={AUTH_EXPIRES} "
+          f"ttl_seconds={max(0, AUTH_EXPIRES - int(time.time()))}")
     gold = json.loads((BENCH / "demo-v2-gold-ranks.json").read_text())["gold"]
     gold_ids = set()
     for ids in gold.values():

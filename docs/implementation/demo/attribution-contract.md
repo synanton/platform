@@ -6,6 +6,8 @@
 
 **Auth:** requires the same `POST /v1/auth/tenant` token as `/v1/search`; results are scoped to the tenant in the token. Do not expose an unauthenticated demo endpoint on a NodePort.
 
+**Runner auth:** `run-query.sh` mints a fresh token per invocation via `POST /v1/auth/tenant`, logs `tenant_id` and TTL, and uses that token for the search call. The UI uses the existing `/v1/auth/tenant` path from the UI switch (#447); it must not call the demo endpoint without a token.
+
 **Shape:** flat. The UI binds three badges directly. Migrate to a contribution map only when a third leg exists.
 
 ## Response
@@ -71,12 +73,13 @@
 
 6. Dense-miss serialization: raw response text contains `"dense_rank":null` and `"dense_contribution":0.0`; a parsed-object assertion is insufficient because `NON_NULL`/`NON_DEFAULT` omits them.
 7. BM25-miss serialization: symmetric (`"bm25_rank":null`, `"bm25_contribution":0.0`).
-8. Dense-only tie: two chunks with `bm25_rank=null`, equal `final_score`, assert deterministic `chunk_id ASC` order.
+8. Dense-only tie: **unit test on the comparator**, not real data. Two synthetic records with `bm25_rank=null`, equal `final_score`, same synthetic dense rank; assert `chunk_id ASC` order. Two chunks cannot share a real dense rank, so do not search the corpus for this case.
 9. Single-leg presence: raw response `legs_present` has exactly one entry matching the returned leg.
+10. Auth failures on `/v1/demo/search`: no token → 401; tenant A token returns only A; unknown tenant → zero/404, not 500.
 
 ### Runner/backend parity
 
-Run `pdf005`, `pdf004`, `rb003`, `rb010` through both `scripts/demo/run-query.sh` and `POST /v1/demo/search`; assert identical fused order and identical per-leg ranks. The runner's comparator is the reference.
+Run `pdf005`, `pdf004`, `rb003`, `rb010` through both `scripts/demo/run-query.sh` and `POST /v1/demo/search`; assert identical fused order and identical per-leg ranks. The runner and parity test use the same fresh-token minting mechanism. Compare structured fields, not text/JSON bytes (the runner is text, the endpoint is JSON).
 
 ## Slice 1 done
 
