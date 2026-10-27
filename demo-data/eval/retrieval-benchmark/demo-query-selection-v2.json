@@ -90,12 +90,14 @@
     "pdf005": {
       "gold": "4e54d1ae\u2026#26",
       "useful_entities": [],
-      "neighbors": 0
+      "neighbors": 0,
+      "question": "Which medications are listed for substance use disorders?"
     },
     "pdf004": {
       "gold": "4e54d1ae\u2026#13",
       "useful_entities": [],
-      "neighbors": 0
+      "neighbors": 0,
+      "question": "How does the report's glossary define a major depressive episode?"
     },
     "rb003": {
       "gold": "0110d461\u2026#0",
@@ -106,13 +108,50 @@
         "2024",
         "2026"
       ],
-      "neighbors": 12
+      "neighbors": 12,
+      "question": "In what year was Globex Manufacturing founded and where is it headquartered?"
     },
     "rb010": {
       "gold": "0110d461\u2026#0, 03219438\u2026#0, 2d5ae12a\u2026#0",
-      "neighbors": "12/21/19"
+      "neighbors": "12/21/19",
+      "question": "IATF 16949",
+      "useful_entities": [
+        "iatf 16949",
+        "2003",
+        "2009",
+        "2015",
+        "2016",
+        "2022",
+        "2024",
+        "2025",
+        "2026",
+        "financial",
+        "principal"
+      ]
     },
-    "result": "2/4 retrieval picks have non-empty graph neighborhoods; graph panel as planned would be empty for pdf005/pdf004"
+    "result": "2/4 retrieval picks have non-empty graph neighborhoods; graph panel as planned would be empty for pdf005/pdf004",
+    "rb008": {
+      "question": "What is the on-time delivery performance threshold that triggers financial penalties under the Initech Ltd agreement?",
+      "gold": "03219438-50b5-58c7-8aea-44378f987de8#0",
+      "useful_entities": [
+        "2022",
+        "2009",
+        "financial",
+        "principal",
+        "iatf 16949",
+        "2003",
+        "2026"
+      ],
+      "neighbors": 21
+    },
+    "pdf012": {
+      "question": "What share of combined voting power triggers a change of control of the Supplier?",
+      "gold": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#41",
+      "useful_entities": [
+        "authority"
+      ],
+      "neighbors": 8
+    }
   },
   "graph_demo_set": [
     {
