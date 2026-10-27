@@ -45,10 +45,12 @@ Build a real, shallow graph for the demo. Regex and glossary extraction are real
 
 - `hard`: structurally recognizable identifiers, dates, versions, section refs, case names. Only hard entities may become graph nodes (and only at df 3–15).
 - `soft`: glossary terms and doctrinal phrases. They appear in the ontology panel under a collapsed Glossary section, never as graph edges.
+- `soft_subtype`: `soft_glossary` (FileNet/glossary terms) renders in the collapsed Glossary section; `soft_doctrinal` (consideration, expectation/reliance interest) renders italic in the same section.
 - Graph filter: `entity_class == hard && 3 <= df <= 15`.
 - This replaces denylist whack-a-mole. Re-run top-20 per class before #472.
 - `entity_kind` drives graph-panel visuals: `year` muted, full `date` muted, `section_ref` distinct, `identifier` distinct, `case_name` distinct. Years are not suppressed at extraction; Phase 0A must not tighten year patterns or graph density collapses.
 - Section refs are hard but currently legal-casebook-only; they do not connect the three demo gold chunks. Do not claim section bridges.
+- Phase 0A artifact: `ontology-v2.jsonl` is the classified union (198 hard + 72 soft_glossary + 3 soft_doctrinal = 273); quoted phrases are excluded. See `ontology-v2-classification-report.json` for the raw-summary reconciliation.
 
 ## DF cutoff
 Drop entities with df > 50 from the graph. `Content Engine`, `Process Engine`,

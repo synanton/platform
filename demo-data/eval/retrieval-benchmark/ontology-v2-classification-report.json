@@ -1,0 +1,19 @@
+{
+  "raw_artifact_summary": 424,
+  "reproduced_raw": 378,
+  "normalized": 378,
+  "classified": 273,
+  "hard": 198,
+  "soft_glossary": 72,
+  "soft_doctrinal": 3,
+  "excluded_quoted_phrases": 105,
+  "excluded_query_artifacts": 0,
+  "excluded_noise": 0,
+  "recovered_soft": 75,
+  "unreconciled_raw_summary_gap": 46,
+  "note": "entity-df-v2.json is summary-only; 424 raw rows were not committed. Reproduced raw includes hard, glossary, FileNet, doctrine, and quoted phrases; quotes are excluded from ontology.",
+  "soft_subtypes": {
+    "soft_glossary": 72,
+    "soft_doctrinal": 3
+  }
+}

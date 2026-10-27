@@ -47,6 +47,12 @@ The platform's Jackson `SanitizingStringDeserializer` HTML-escapes incoming stri
 
 The BM25 index is built from the unescaped corpus text. `report's` was verified through both the runner and `/v1/demo/search`. `AT&T` and `VLAN < 100` now have cache entries (`sanitizer-at`, `sanitizer-lt`), but endpoint verification is pending because the local synquest projection returned 503 after restart; until re-tested, route raw `&`, `<`, `>` queries through `run-query.sh`.
 
+Cache now holds 27 query embeddings: 25 in the original demo/eval set, plus 2 sanitizer test queries (`AT&T`, `VLAN < 100`). The 8/25 and 0/25 findings refer to the 25-query set; the sanitizer queries do not participate in RRF gold-rank analysis.
+
+## Follow-up: local synquest 503
+
+The local synquest returned 503 after a restart on 2026-10-28; `run-query.sh` is blocked until its projection is ready. Re-verify `AT&T` and `VLAN < 100` through `POST /v1/demo/search` when it recovers, then update the sanitizer entry to "tested via endpoint."
+
 ## Remaining local gate
 
 Browser smoke (load, four queries, em-dash, query-type badge, forced-token-expiry retry, refresh) was not performed in this CLI environment. API 401→fresh-token→200 was verified with real security issuance; UI retry is unit-tested and logs `401 → minted fresh token → retry`.
