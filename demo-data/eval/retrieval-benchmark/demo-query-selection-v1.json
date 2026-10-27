@@ -5,69 +5,83 @@
   "fixed20_disagreements": 19,
   "fixed20_threshold": 8,
   "full25_disagreements": 24,
+  "disagreement_note": "Top-3 leg disagreement is 24/25, but v2 gold verification shows most PDF answers are top-1 in both legs. The 96% number is leg diversity, not correct-answer disagreement. Demo picks below use v2 gold.",
+  "k_sweep": {
+    "values": [
+      10,
+      20,
+      60
+    ],
+    "chosen": 20,
+    "result": "all five selected answers have identical ranks at k=10/20/60; k=20 chosen as neutral demo default, not k=60 by habit"
+  },
   "selected": [
     {
-      "query_id": "pdf002",
-      "question": "How many English speakers did the National Comorbidity Survey Replication (NCS-R) survey?",
-      "type": "mixed/fusion",
-      "why": "Answer at BM25 #4, Dense #5; RRF promotes to #3. Best visible fusion lift."
-    },
-    {
-      "query_id": "pdf003",
-      "question": "How many persons does the National Survey on Drug Use and Health interview each year?",
-      "type": "mixed/fusion",
-      "why": "Answer at #5 in both legs; RRF dedupes to #4. Shows stable fusion."
+      "query_id": "pdf005",
+      "question": "Which medications are listed for substance use disorders?",
+      "type": "mixed/table",
+      "why": "BM25 #8, Dense #2, RRF #3 (k=10/20/60). The fusion lift is real and gold-verified."
     },
     {
       "query_id": "rb003",
       "question": "In what year was Globex Manufacturing founded and where is it headquartered?",
       "type": "mixed/dense-wins",
-      "why": "Dense #1 vs BM25 #3; RRF #2. Dense contributes a rank win."
+      "why": "BM25 #3, Dense #1, RRF #2. Dense contributes a rank win."
+    },
+    {
+      "query_id": "pdf008",
+      "question": "What is the default IP address of VLAN001 on the SKS8300 switch?",
+      "type": "exact identifier/dense-wins",
+      "why": "BM25 #2, Dense #1, RRF #1. Exact identifier plus dense coverage."
     },
     {
       "query_id": "rb010",
       "question": "IATF 16949",
-      "type": "exact identifier",
-      "why": "BM25 #1/#2; Dense misses. Exact query anchors BM25."
+      "type": "exact identifier/BM25-wins",
+      "why": "BM25 #1, Dense misses, RRF #2. Visibly BM25-only."
     },
     {
       "query_id": "pdf004",
       "question": "How does the report's glossary define a major depressive episode?",
-      "type": "paraphrase/conceptual",
-      "why": "BM25 misses; Dense #3; RRF #8. Shows dense coverage, even when fusion ranks lower."
-    }
-  ],
-  "not_slice1": [
-    {
-      "query_id": "pdf015",
-      "reason": "canonical RRF coverage case, but Dense #20 and 2-leg RRF #33; use in Slice 2 graph/B6, not Slice 1"
+      "type": "conceptual/paraphrase",
+      "why": "BM25 #1, Dense #4, RRF #2. No true paraphrase query has Dense beating BM25 under v2 gold; this is the closest conceptual case."
     }
   ],
   "leg_ranks": {
-    "pdf002": {
-      "bm25": 4,
-      "dense": 5,
-      "rrf": 3
-    },
-    "pdf003": {
-      "bm25": 5,
-      "dense": 5,
-      "rrf": 4
+    "pdf005": {
+      "bm25": 8,
+      "dense": 2,
+      "rrf_k20": 3
     },
     "rb003": {
       "bm25": 3,
       "dense": 1,
-      "rrf": 2
+      "rrf_k20": 2
+    },
+    "pdf008": {
+      "bm25": 2,
+      "dense": 1,
+      "rrf_k20": 1
     },
     "rb010": {
       "bm25": 1,
       "dense": null,
-      "rrf": 2
+      "rrf_k20": 2
     },
     "pdf004": {
-      "bm25": null,
-      "dense": 3,
-      "rrf": 8
+      "bm25": 1,
+      "dense": 4,
+      "rrf_k20": 2
     }
+  },
+  "not_slice1": [
+    {
+      "query_id": "pdf015",
+      "reason": "Dense #20, 2-leg RRF #33; no graph-useful entity bridge; not a Slice 1 or Slice 2 hero yet"
+    }
+  ],
+  "manual_check": {
+    "pdf002": "v2 gold is faf3#8 (NCS-R answer), BM25 #1/Dense #1/RRF #1; stale #5 was an AHA-survey chunk, so the earlier fusion pick was invalidated.",
+    "rb010": "BM25 #1, Dense miss, RRF #2; exact BM25 story holds."
   }
 }
