@@ -34,8 +34,10 @@
 - `final_rank` is 1-based.
 - `bm25_rank` / `dense_rank` are integers when present; **null**, never absent and never `-1`/`0`, when the leg missed.
 - Missing leg contribution is exactly `0.0`; the field is present.
-- `legs_present` is a convenience only, fixed order `["bm25", "dense"]`. Single-leg responses contain exactly the returned leg (`["bm25"]` or `["dense"]`). The UI must render from rank fields, not from this array.
-- `final_score` is a JSON number, not a string. The server does not format/round; the UI formats for display.
+- `legs_present` is a convenience only, fixed order `["bm25", "dense"]` filtered to present. Single-leg responses contain exactly the returned leg (`["bm25"]` or `["dense"]`). The UI must render from rank fields, not from this array.
+- Query-type fallback: exact → conceptual → **mixed**; if neither exact nor conceptual matches, return `mixed`, never null/undefined.
+- `final_score` is a JSON number, not a string. The server does not format/round; use a raw double or BigDecimal without scale reduction. The UI formats for display.
+- Empty result set: HTTP **200** with `{"results": []}`. Do not return 404 for a supported query with no hits.
 - No `gold` field. Gold remains a runner/evaluation annotation.
 - `k = 20`; contribution = `1 / (20 + rank)`.
 - `final_score = bm25_contribution + dense_contribution`.
@@ -63,11 +65,11 @@
 
 ## Contribution tests (backend)
 
-1. 2-leg happy path: `abs(bm25 + dense - final) < 1e-9`.
-2. Dense miss: `dense_contribution == 0.0` exactly and `bm25_contribution == final_score`.
+1. 2-leg happy path: `abs(bm25 + dense - final) <= 1e-12`.
+2. Dense miss: use `Double.compare(dense_contribution, 0.0) == 0`; `bm25_contribution == final_score` exactly.
 3. BM25 miss: symmetric to (2).
-4. Direct computation: `bm25 == 1/(20+rank)` and `dense == 1/(20+rank)`; catches swapped contributions.
-5. Independent final score: sum-of-contributions and `Σ 1/(20+rank)` agree within `1e-9`.
+4. Direct computation: `bm25 == 1/(20+rank)` and `dense == 1/(20+rank)` within `1e-12`; catches swapped contributions.
+5. Independent final score: sum-of-contributions and `Σ 1/(20+rank)` agree within `1e-12`. Document the epsilon: it tolerates Java arithmetic order but catches a wrong formula.
 
 ### Serializer and edge tests (raw JSON, not parsed object)
 
@@ -79,15 +81,20 @@
 
 ### Runner/backend parity
 
-Run `pdf005`, `pdf004`, `rb003`, `rb010` through both `scripts/demo/run-query.sh` and `POST /v1/demo/search`; assert identical fused order and identical per-leg ranks. The runner and parity test use the same fresh-token minting mechanism. Compare structured fields, not text/JSON bytes (the runner is text, the endpoint is JSON).
+Run `pdf005`, `pdf004`, `rb003`, `rb010` through both `scripts/demo/run-query.sh` and `POST /v1/demo/search`; assert identical chunk-id order, `bm25_rank`, `dense_rank` (int/null), and `legs_present`. Do **not** compare floats in parity; contribution sums are covered by the backend tests (spot-check ±1e-12 if desired). The runner and parity test mint fresh tokens per invocation/endpoint call; a slow CI run must not reuse a 900s token. Compare structured fields, not text/JSON bytes.
 
 ## Slice 1 done
 
 - Four retrieval queries return the flat shape; five contribution invariants pass.
 - Raw JSON has literal null ranks and `0.0` missing contributions.
 - UI attribution strip renders `rb010` as `BM25 #1 · Dense — · RRF #1`.
-- Query-type badge shows exact/mixed/conceptual.
-- Runner and backend fused orders are identical for the four queries.
+- Search retries once on 401 by minting a fresh token; only the retry failure surfaces.
+- Query-type badge shows exact/mixed/conceptual; `rb010` exact, `pdf004` conceptual, `pdf005` mixed.
+- Runner and backend fused orders/ranks are identical for the four queries.
+
+## Backend test count (minimum)
+
+5 contribution + 2 raw serializer + 1 Dense-only synthetic tie + 1 single-leg + 1 legs_present ordering + 1 empty-results + 3 auth + 1 query-type fallback = **15 tests**.
 
 ## UI badge strip
 
