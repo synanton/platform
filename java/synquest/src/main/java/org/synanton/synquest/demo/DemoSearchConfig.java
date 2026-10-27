@@ -12,6 +12,12 @@ import java.nio.file.Path;
 public class DemoSearchConfig {
 
     @Bean
+    DemoGraphService demoGraphService(
+            @Value("${synquest.demo.graph:demo-data/eval/retrieval-benchmark/graph-v2.json}") String graph) {
+        return new DemoGraphService(Path.of(graph));
+    }
+
+    @Bean
     DemoSearchService demoSearchService(
             KnowledgeSearchBackend backend,
             IngestionCacheClient cacheClient,

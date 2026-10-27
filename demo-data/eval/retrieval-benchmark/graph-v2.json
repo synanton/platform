@@ -1,0 +1,5037 @@
+{
+  "corpus": "demo-v2",
+  "corpus_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
+  "filter": "hard && 3 <= df <= 15",
+  "note": "Visualization-only chunk co-occurrence; not a retrieval leg.",
+  "chunks": {
+    "0110d461-0321-5085-874a-ec716a610909#0": {
+      "neighbor_count": 12,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+          "via": [
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0",
+          "via": [
+            {
+              "canonical_form": "2016",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32",
+          "via": [
+            {
+              "canonical_form": "2016",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 12
+      }
+    },
+    "02a358be-eb75-5f6c-9705-da1f653649b7#2": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#26",
+          "via": [
+            {
+              "canonical_form": "1929",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#0",
+          "via": [
+            {
+              "canonical_form": "1929",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "03219438-50b5-58c7-8aea-44378f987de8#0": {
+      "neighbor_count": 14,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "IATF 16949",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2009",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "IATF 16949",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 3
+            },
+            {
+              "canonical_form": "2009",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "identifier": 2,
+        "year": 14
+      }
+    },
+    "16bb330d-bdef-5eb4-9326-984875348c29#0": {
+      "neighbor_count": 4,
+      "neighbors": [
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 4
+      }
+    },
+    "2d5ae12a-6f01-5c28-8544-e659fd184817#0": {
+      "neighbor_count": 16,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "IATF 16949",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "16bb330d-bdef-5eb4-9326-984875348c29#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+          "via": [
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            },
+            {
+              "canonical_form": "IATF 16949",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "identifier": 2,
+        "year": 16
+      }
+    },
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 3
+      }
+    },
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#4": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#69",
+          "via": [
+            {
+              "canonical_form": "2011",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#29",
+          "via": [
+            {
+              "canonical_form": "2011",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#69": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#4",
+          "via": [
+            {
+              "canonical_form": "2011",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#29",
+          "via": [
+            {
+              "canonical_form": "2011",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0": {
+      "neighbor_count": 5,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 5
+      }
+    },
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#24": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+          "via": [
+            {
+              "canonical_form": "Restatement (Second) of Contracts",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Restatement (Second) of Contracts",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#26": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "02a358be-eb75-5f6c-9705-da1f653649b7#2",
+          "via": [
+            {
+              "canonical_form": "1929",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#0",
+          "via": [
+            {
+              "canonical_form": "1929",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32": {
+      "neighbor_count": 4,
+      "neighbors": [
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#24",
+          "via": [
+            {
+              "canonical_form": "Restatement (Second) of Contracts",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#33",
+          "via": [
+            {
+              "canonical_form": "\u00a7 74",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#34",
+          "via": [
+            {
+              "canonical_form": "\u00a7 74",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Restatement (Second) of Contracts",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 4
+      }
+    },
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#33": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+          "via": [
+            {
+              "canonical_form": "\u00a7 74",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#34",
+          "via": [
+            {
+              "canonical_form": "\u00a7 74",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#34": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+          "via": [
+            {
+              "canonical_form": "\u00a7 74",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#33",
+          "via": [
+            {
+              "canonical_form": "\u00a7 74",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#1": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "canonical_form": "section 2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#42",
+          "via": [
+            {
+              "canonical_form": "section 2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#29": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#4",
+          "via": [
+            {
+              "canonical_form": "2011",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#69",
+          "via": [
+            {
+              "canonical_form": "2011",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30": {
+      "neighbor_count": 6,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#25",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 6
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32": {
+      "neighbor_count": 6,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#25",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 6
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33": {
+      "neighbor_count": 6,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#25",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 6
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4": {
+      "neighbor_count": 6,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#25",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 6
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5": {
+      "neighbor_count": 11,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16",
+          "via": [
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#14",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 11
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7": {
+      "neighbor_count": 16,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16",
+          "via": [
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            },
+            {
+              "canonical_form": "1986",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2000",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "1986",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2000",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#14",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#25",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 16
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8": {
+      "neighbor_count": 11,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2009",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "2f12949b-a972-5ad0-a4d9-ef34ab08eb38#16",
+          "via": [
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2007",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            },
+            {
+              "canonical_form": "1986",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2000",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "1986",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2000",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "1995",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2009",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#14",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#20",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "1995",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 11
+      }
+    },
+    "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9": {
+      "neighbor_count": 10,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "1986",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2000",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "1986",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2000",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "1981",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#14",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#19",
+          "via": [
+            {
+              "canonical_form": "1981",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#20",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 10
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#17": {
+      "neighbor_count": 7,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#19": {
+      "neighbor_count": 7,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#2": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#36",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#4",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 3
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#20": {
+      "neighbor_count": 9,
+      "neighbors": [
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#24",
+          "via": [
+            {
+              "canonical_form": "Restatement (Second) of Contracts",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+          "via": [
+            {
+              "canonical_form": "Restatement (Second) of Contracts",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7,
+        "section_ref": 2
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#21": {
+      "neighbor_count": 7,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#22": {
+      "neighbor_count": 7,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#26": {
+      "neighbor_count": 7,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#27": {
+      "neighbor_count": 10,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#2",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#36",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#4",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7,
+        "year": 3
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#31": {
+      "neighbor_count": 9,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "1981",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#17",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#19",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#20",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#21",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#22",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#26",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "Lucy v. Zehmer",
+              "type": "case_name",
+              "entity_kind": "case_name",
+              "df": 8
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#19",
+          "via": [
+            {
+              "canonical_form": "1981",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "case_name": 7,
+        "year": 2
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#33": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 3
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#36": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#2",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#4",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 3
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#38": {
+      "neighbor_count": 6,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#1",
+          "via": [
+            {
+              "canonical_form": "section 2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#42",
+          "via": [
+            {
+              "canonical_form": "section 2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2,
+        "year": 4
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#4": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#2",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#27",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#36",
+          "via": [
+            {
+              "canonical_form": "1952",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 3
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#40": {
+      "neighbor_count": 7,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 7
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#41": {
+      "neighbor_count": 4,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 4
+      }
+    },
+    "57e23383-c832-5d3b-ad45-3ae63540f319#42": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#1",
+          "via": [
+            {
+              "canonical_form": "section 2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "canonical_form": "section 2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0": {
+      "neighbor_count": 9,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "IATF 16949",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 3
+            },
+            {
+              "canonical_form": "2009",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            },
+            {
+              "canonical_form": "IATF 16949",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "1995",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            },
+            {
+              "canonical_form": "2009",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+          "via": [
+            {
+              "canonical_form": "2015",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#20",
+          "via": [
+            {
+              "canonical_form": "1995",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "identifier": 2,
+        "year": 9
+      }
+    },
+    "93f806eb-d33e-52af-9639-90ffd1d289f8#0": {
+      "neighbor_count": 10,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "16bb330d-bdef-5eb4-9326-984875348c29#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "canonical_form": "2022",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 10
+      }
+    },
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "identifier": 3
+      }
+    },
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "identifier": 3
+      }
+    },
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "identifier": 3
+      }
+    },
+    "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#16": {
+      "neighbor_count": 3,
+      "neighbors": [
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#11",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#12",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        },
+        {
+          "chunk_id": "ac038aab-9b3b-5189-82e7-d1db2b0c2a7b#15",
+          "via": [
+            {
+              "canonical_form": "VLAN001",
+              "type": "identifier",
+              "entity_kind": "identifier",
+              "df": 4
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "identifier": 3
+      }
+    },
+    "b155d470-17bb-57e7-8c2c-66cb54862f12#0": {
+      "neighbor_count": 7,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "16bb330d-bdef-5eb4-9326-984875348c29#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2024",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            },
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 7
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#0": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "02a358be-eb75-5f6c-9705-da1f653649b7#2",
+          "via": [
+            {
+              "canonical_form": "1929",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#26",
+          "via": [
+            {
+              "canonical_form": "1929",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#14": {
+      "neighbor_count": 5,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 5
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#15": {
+      "neighbor_count": 6,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "August 1, 2003",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "August 1, 2003",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "date": 2,
+        "year": 6
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#16": {
+      "neighbor_count": 9,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "August 1, 2003",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "August 1, 2003",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            },
+            {
+              "canonical_form": "July 15, 2004",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#20",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "July 15, 2004",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "date": 3,
+        "year": 9
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#18": {
+      "neighbor_count": 9,
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "August 1, 2003",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2003",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "August 1, 2003",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            },
+            {
+              "canonical_form": "July 15, 2004",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#20",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "July 15, 2004",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "date": 3,
+        "year": 9
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#19": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "1981",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#31",
+          "via": [
+            {
+              "canonical_form": "1981",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#20": {
+      "neighbor_count": 5,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "1995",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "canonical_form": "1995",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "July 15, 2004",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "canonical_form": "2004",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            },
+            {
+              "canonical_form": "July 15, 2004",
+              "type": "date",
+              "entity_kind": "date",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "date": 2,
+        "year": 5
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#24": {
+      "neighbor_count": 10,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            },
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#9",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#14",
+          "via": [
+            {
+              "canonical_form": "2008",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 6
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#25",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 10
+      }
+    },
+    "be15399f-3cce-511d-be22-83aad53ed80e#25": {
+      "neighbor_count": 6,
+      "neighbors": [
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#30",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#32",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#33",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#4",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#24",
+          "via": [
+            {
+              "canonical_form": "2010",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 7
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 6
+      }
+    },
+    "c7fed121-0599-55fb-b4db-4486e324f9fd#0": {
+      "neighbor_count": 8,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "16bb330d-bdef-5eb4-9326-984875348c29#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "canonical_form": "2026",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "canonical_form": "2025",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 5
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 8
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2016",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32",
+          "via": [
+            {
+              "canonical_form": "2016",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#107": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+          "via": [
+            {
+              "canonical_form": "Section 7.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#183",
+          "via": [
+            {
+              "canonical_form": "Section 7.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123": {
+      "neighbor_count": 4,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+          "via": [
+            {
+              "canonical_form": "Section 10.1",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#128",
+          "via": [
+            {
+              "canonical_form": "Section 10.1",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#57",
+          "via": [
+            {
+              "canonical_form": "Section 6.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#97",
+          "via": [
+            {
+              "canonical_form": "Section 6.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 4
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127": {
+      "neighbor_count": 4,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#107",
+          "via": [
+            {
+              "canonical_form": "Section 7.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+          "via": [
+            {
+              "canonical_form": "Section 10.1",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#128",
+          "via": [
+            {
+              "canonical_form": "Section 10.1",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#183",
+          "via": [
+            {
+              "canonical_form": "Section 7.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 4
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#128": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+          "via": [
+            {
+              "canonical_form": "Section 10.1",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+          "via": [
+            {
+              "canonical_form": "Section 10.1",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#150": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#151",
+          "via": [
+            {
+              "canonical_form": "SECTION 13.4",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#189",
+          "via": [
+            {
+              "canonical_form": "SECTION 13.4",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#151": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#150",
+          "via": [
+            {
+              "canonical_form": "SECTION 13.4",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#189",
+          "via": [
+            {
+              "canonical_form": "SECTION 13.4",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#183": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#107",
+          "via": [
+            {
+              "canonical_form": "Section 7.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+          "via": [
+            {
+              "canonical_form": "Section 7.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#189": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#150",
+          "via": [
+            {
+              "canonical_form": "SECTION 13.4",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#151",
+          "via": [
+            {
+              "canonical_form": "SECTION 13.4",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "canonical_form": "2016",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0",
+          "via": [
+            {
+              "canonical_form": "2016",
+              "type": "date",
+              "entity_kind": "year",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "year": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#57": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+          "via": [
+            {
+              "canonical_form": "Section 6.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#97",
+          "via": [
+            {
+              "canonical_form": "Section 6.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    },
+    "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#97": {
+      "neighbor_count": 2,
+      "neighbors": [
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+          "via": [
+            {
+              "canonical_form": "Section 6.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#57",
+          "via": [
+            {
+              "canonical_form": "Section 6.2",
+              "type": "section_ref",
+              "entity_kind": "section_ref",
+              "df": 3
+            }
+          ]
+        }
+      ],
+      "by_kind": {
+        "section_ref": 2
+      }
+    }
+  }
+}

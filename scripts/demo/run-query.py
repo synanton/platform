@@ -86,18 +86,29 @@ def dense_top(query: str, cache: dict) -> tuple[list[str], str]:
 def main() -> None:
     global TOKEN, AUTH_EXPIRES
     if len(sys.argv) >= 3 and sys.argv[1] == "--neighbors":
-        chunk_id = sys.argv[2]
+        target = sys.argv[2]
         print(f"Targets: security={SECURITY} graph={API or SYNQUEST}")
         issued = mint_token()
-        request = urllib.request.Request(
-            (API or SYNQUEST) + "/v1/demo/graph/neighbors/" + urllib.parse.quote(chunk_id, safe=""),
-            headers={"Authorization": "Bearer " + issued["token"]})
-        try:
-            with urllib.request.urlopen(request, timeout=30) as response:
-                print(response.read().decode())
-        except urllib.error.HTTPError as failure:
-            print(f"graph endpoint HTTP {failure.code}: {failure.read()[:300].decode(errors='replace')}", file=sys.stderr)
-            raise SystemExit(1)
+
+        def fetch(chunk_id: str) -> None:
+            request = urllib.request.Request(
+                (API or SYNQUEST) + "/v1/demo/graph/neighbors/" + urllib.parse.quote(chunk_id, safe=""),
+                headers={"Authorization": "Bearer " + issued["token"]})
+            try:
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    body = json.loads(response.read())
+                    print(f"{chunk_id}: neighbors={body.get('neighbor_count')} by_kind={body.get('by_kind')}")
+            except urllib.error.HTTPError as failure:
+                print(f"{chunk_id}: graph endpoint HTTP {failure.code}: "
+                      f"{failure.read()[:300].decode(errors='replace')}", file=sys.stderr)
+                raise SystemExit(1)
+
+        seeds = json.loads((BENCH / "graph-seed-v2.json").read_text())["seeds"]
+        if target in seeds:
+            for row in seeds[target]:
+                fetch(row["gold"])
+        else:
+            fetch(target)
         return
     query = " ".join(sys.argv[1:]).strip()
     if not query:

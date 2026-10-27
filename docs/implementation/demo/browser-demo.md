@@ -50,3 +50,8 @@ curl -fsS -X POST "$SYNQUEST/reindex?tenant=demo-v2" \
 ```
 
 Expected: `{"status":"done","tenant":"demo-v2"}` in ~10s, then search works. `start-browser-demo.sh` performs the same step.
+
+
+## Graph API pre-check
+
+After reindex, run `./scripts/demo/run-query.sh --neighbors rb010`; expected counts are 12, 14, 16 for the three gold chunks. `rb003` is 12 and `rb008` is 14.
