@@ -1,0 +1,73 @@
+{
+  "run_id": "T01-v2-q25",
+  "corpus_digest": "a993e6a1b13ec3ffc8a35ddaa2e53e6fa3c25d74c03d500e52d1b4b3d0b0096f",
+  "queries_tested": 25,
+  "fixed20_disagreements": 19,
+  "fixed20_threshold": 8,
+  "full25_disagreements": 24,
+  "selected": [
+    {
+      "query_id": "pdf002",
+      "question": "How many English speakers did the National Comorbidity Survey Replication (NCS-R) survey?",
+      "type": "mixed/fusion",
+      "why": "Answer at BM25 #4, Dense #5; RRF promotes to #3. Best visible fusion lift."
+    },
+    {
+      "query_id": "pdf003",
+      "question": "How many persons does the National Survey on Drug Use and Health interview each year?",
+      "type": "mixed/fusion",
+      "why": "Answer at #5 in both legs; RRF dedupes to #4. Shows stable fusion."
+    },
+    {
+      "query_id": "rb003",
+      "question": "In what year was Globex Manufacturing founded and where is it headquartered?",
+      "type": "mixed/dense-wins",
+      "why": "Dense #1 vs BM25 #3; RRF #2. Dense contributes a rank win."
+    },
+    {
+      "query_id": "rb010",
+      "question": "IATF 16949",
+      "type": "exact identifier",
+      "why": "BM25 #1/#2; Dense misses. Exact query anchors BM25."
+    },
+    {
+      "query_id": "pdf004",
+      "question": "How does the report's glossary define a major depressive episode?",
+      "type": "paraphrase/conceptual",
+      "why": "BM25 misses; Dense #3; RRF #8. Shows dense coverage, even when fusion ranks lower."
+    }
+  ],
+  "not_slice1": [
+    {
+      "query_id": "pdf015",
+      "reason": "canonical RRF coverage case, but Dense #20 and 2-leg RRF #33; use in Slice 2 graph/B6, not Slice 1"
+    }
+  ],
+  "leg_ranks": {
+    "pdf002": {
+      "bm25": 4,
+      "dense": 5,
+      "rrf": 3
+    },
+    "pdf003": {
+      "bm25": 5,
+      "dense": 5,
+      "rrf": 4
+    },
+    "rb003": {
+      "bm25": 3,
+      "dense": 1,
+      "rrf": 2
+    },
+    "rb010": {
+      "bm25": 1,
+      "dense": null,
+      "rrf": 2
+    },
+    "pdf004": {
+      "bm25": null,
+      "dense": 3,
+      "rrf": 8
+    }
+  }
+}
