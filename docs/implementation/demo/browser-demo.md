@@ -4,7 +4,7 @@
 
 ## Start
 1. Start the local-real-demo stack (Cassandra, security, synquest, synflux, extractor).
-2. Run `./scripts/demo/start-browser-demo.sh`; it reindexes `demo-v2` before starting Vite.
+2. Run `./scripts/demo/start-browser-demo.sh`; it reindexes `demo-v2`, verifies `/v1/demo/search` returns 200, then starts Vite on `localhost:18083`/`localhost:18081`.
 3. Open `http://127.0.0.1:5173/search`; sign in as `aminin`, tenant `demo-v2` is prefilled.
 
 ## Narrative order (hard-entity taxonomy)

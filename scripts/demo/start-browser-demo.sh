@@ -28,6 +28,17 @@ reindex=$(curl -fsS --max-time 180 -X POST "$SYNQUEST/reindex?tenant=$TENANT" \
   -H "Authorization: Bearer $token")
 echo "Reindex: $reindex"
 
+search_status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 \
+  -X POST "$SYNQUEST/v1/demo/search" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $token" \
+  -d '{"query":"What was the overall response rate of the American Hospital Association Annual Survey for fiscal year 2007?"}')
+if [ "$search_status" != "200" ]; then
+  echo "ERROR: /v1/demo/search returned $search_status after reindex; not launching Vite" >&2
+  exit 1
+fi
+echo "Search check: 200"
+
 if curl -fsS --max-time 1 http://127.0.0.1:5173 >/dev/null 2>&1; then
   echo "error: port 5173 already in use; stop the existing Vite server first" >&2
   exit 1
@@ -40,6 +51,14 @@ VITE_SYNQUEST_URL=$SYNQUEST
 VITE_DEMO_AUTH_USER=aminin
 VITE_DEMO_AUTH_TENANT=$TENANT
 EOF
+# Vite reads process env before .env.local; force the local targets so a stale
+# K8s VITE_SYNQUEST_URL in the shell cannot silently redirect the proxy.
+export VITE_REAL_API=true
+export VITE_API_BASE=
+export VITE_SECURITY_URL="$SECURITY"
+export VITE_SYNQUEST_URL="$SYNQUEST"
+export VITE_DEMO_AUTH_USER=aminin
+export VITE_DEMO_AUTH_TENANT="$TENANT"
 trap 'rm -f "$ENV_FILE"' EXIT INT TERM
 
 cat <<EOF
