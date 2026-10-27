@@ -17,6 +17,11 @@ Build a real, shallow graph for the demo. Regex and glossary extraction are real
 | version | `v\d+(\.\d+){1,3}`, `slice-\d{4,}`, `TEI\s+\d+(\.\d+)+`, explicit `version` context | Do **not** match raw section numbers like `6.6`; keep the original token; version key is the normalized string. |
 | quoted phrase | double quotes, backticks, curly quotes, guillemets | Strip delimiters; require >= 2 tokens. |
 | glossary term | exact case-insensitive match against the glossary headings/aliases | Longest match wins; store the canonical glossary term as alias. |
+| FileNet class | `[A-Z][a-zA-Z]+(Engine|Manager|Store|Policy|Class|Object|Folder|Document|Queue|Definition|Subscription|Template)` | Keep class names; do not merge with prose phrases. |
+| FileNet product | `FileNet\s+P8`, `Content\s+Manager`, `Business\s+Process\s+Manager`, `ECM\s+Widgets`, `REST\s+API` | Product/architecture terms; apply df cutoff. |
+| legal citation | `[A-Z][a-z]+\s+v\.\s+[A-Z][a-z]+` | Case-name entity; cross-chapter bridge. |
+| legal section | `(Section|§)\s*\d+(\.\d+)*`, `Article\s+[IVX]+`, `Restatement\s+\((Second|Third)\)\s+of\s+Contracts` | Section/citation entity; exact-match material. |
+| legal doctrine | `consideration`, `promissory estoppel`, `expectation (interest|damages)`, `reliance (interest|damages)`, `good faith`, `third-party beneficiar(y|ies)` | Multi-word terms; keep `contract`/`court`/`damages` as stopwords. |
 
 ## Identity
 - Entity ID: `ent:<type>:<sha1(normalized_surface)[:16]>`.
@@ -35,6 +40,10 @@ Build a real, shallow graph for the demo. Regex and glossary extraction are real
 - `mixed`: both or neither; default to mixed.
 - Start weights: BM25 1.0, dense 1.0, graph 0.5; exact shifts +0.4 BM25/+0.3 graph/-0.4 dense; conceptual shifts +0.5 dense/+0.1 graph/-0.3 BM25. Clamp at 0.
 - Log per-leg rank, contribution, and final fused score. The UI renders these; no attribution, no demo.
+
+## DF cutoff
+Drop entities with df > 50 from the graph. `Content Engine`, `Process Engine`,
+`contract`, and `court` are expected stopwords at this corpus size.
 
 ## Acceptance
 - Extraction runs over the demo corpus offline and is deterministic.

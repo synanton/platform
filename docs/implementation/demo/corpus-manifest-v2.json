@@ -110,12 +110,13 @@
     {
       "id": "filenet-p8-architecture-ch1-2",
       "path": "/home/aminin/workspace/synanton/testing/Domain_Books/filenet-p8-architecture-ch1-2.pdf",
-      "sha256": "968287265b55532f58e3f7e2e98d5d61da2707c13a81b6f0e91918ba55a7ecf7",
+      "sha256": "e60a3371d1b43d04958a4c4996e62681d6b6c179574f0ef4dc88184dfe3bca85",
       "origin": "fileNet",
       "pages": "62 (PDF 23-84)",
       "source": "IBM Redbooks SG24-7667-01",
       "source_url": "https://www.redbooks.ibm.com/abstracts/sg247667.html",
-      "license": "IBM Redbooks; internal demo; PDF not committed"
+      "license": "IBM Redbooks; internal demo; PDF not committed",
+      "note": "mutool page subset; 821 KB"
     },
     {
       "id": "A1-Introduction",
@@ -151,5 +152,11 @@
     }
   ],
   "total_documents": 20,
-  "notes": "FileNet subset chapters 1-2 only; legal A1/B2/R1/R2; v1 unchanged; PDFs not committed."
+  "notes": "FileNet subset chapters 1-2 only; legal A1/B2/R1/R2; v1 unchanged; PDFs not committed.",
+  "chunks": 634,
+  "determinism_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
+  "determinism_check": "two fresh ingests demo-v2/demo-v2-b, 20 docs, 634 chunks each, identical IDs/text",
+  "fileNet_chunks": 194,
+  "legal_chunks": 123,
+  "v1_chunks": 317
 }

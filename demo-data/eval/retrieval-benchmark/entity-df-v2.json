@@ -1,0 +1,118 @@
+{
+  "corpus": "demo-v2",
+  "chunks": 634,
+  "entities": 424,
+  "df_buckets": {
+    "3-15": 64,
+    "2": 41,
+    ">50": 4,
+    "1": 303,
+    "16-50": 12
+  },
+  "graph_useful_3_15": 64,
+  "top_entities": [
+    {
+      "df": 141,
+      "type": "glossary",
+      "surface": "component"
+    },
+    {
+      "df": 91,
+      "type": "filenet",
+      "surface": "filenet p8"
+    },
+    {
+      "df": 80,
+      "type": "glossary",
+      "surface": "contract"
+    },
+    {
+      "df": 56,
+      "type": "legal_doctrine",
+      "surface": "consideration"
+    },
+    {
+      "df": 37,
+      "type": "glossary",
+      "surface": "user"
+    },
+    {
+      "df": 35,
+      "type": "glossary",
+      "surface": "must"
+    },
+    {
+      "df": 31,
+      "type": "glossary",
+      "surface": "should"
+    },
+    {
+      "df": 29,
+      "type": "legal_doctrine",
+      "surface": "expectation damages"
+    },
+    {
+      "df": 29,
+      "type": "identifier",
+      "surface": "vlan002"
+    },
+    {
+      "df": 28,
+      "type": "glossary",
+      "surface": "security"
+    },
+    {
+      "df": 24,
+      "type": "legal",
+      "surface": "\u00a7 71"
+    },
+    {
+      "df": 24,
+      "type": "glossary",
+      "surface": "requirement"
+    },
+    {
+      "df": 22,
+      "type": "glossary",
+      "surface": "full"
+    },
+    {
+      "df": 21,
+      "type": "glossary",
+      "surface": "standard"
+    },
+    {
+      "df": 19,
+      "type": "glossary",
+      "surface": "single"
+    },
+    {
+      "df": 18,
+      "type": "glossary",
+      "surface": "accepted"
+    },
+    {
+      "df": 15,
+      "type": "glossary",
+      "surface": "operation"
+    },
+    {
+      "df": 14,
+      "type": "glossary",
+      "surface": "classification"
+    },
+    {
+      "df": 13,
+      "type": "glossary",
+      "surface": "failure"
+    },
+    {
+      "df": 11,
+      "type": "glossary",
+      "surface": "public"
+    }
+  ],
+  "note": "df>50 dropped from graph; FileNet/legal patterns applied.",
+  "corpus_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
+  "verdict": "graph-useful band stayed 64; FileNet/legal mostly high-df or df=1. Do not add more books before fixing entity selection."
+}
