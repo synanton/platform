@@ -1,0 +1,111 @@
+{
+  "b2_status": "BLOCKED: pass 1 is provisional; rebuild the pool on current hierarchical chunks, re-draw 40 calibration rows, re-grade pass 1/pass 2.",
+  "flagged_grade3_anomaly": "p000041 is grade 3 despite key gold_binary=false; see lineage-breach-v1.json.",
+  "gold_alignment_audit": {
+    "benchmark_chunks": 81,
+    "current_reingest_chunks": 317,
+    "eligible_zero_rows_checked": 12,
+    "eligible_zero_rows_same_pattern": 7,
+    "outsourcing_benchmark_chunks": 43,
+    "outsourcing_current_chunks": 213,
+    "pdf_gold_mismatches": 12,
+    "pdf_queries_checked": 15,
+    "verdict": "systematic chunk-text drift; pass 1 provisional"
+  },
+  "grade_distribution_by_type": {
+    "conceptual": {
+      "0": 1,
+      "1": 0,
+      "2": 0,
+      "3": 1
+    },
+    "date": {
+      "0": 2,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "exact": {
+      "0": 15,
+      "1": 3,
+      "2": 0,
+      "3": 1
+    },
+    "mixed": {
+      "0": 7,
+      "1": 1,
+      "2": 0,
+      "3": 0
+    },
+    "negative": {
+      "0": 1,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "paraphrase": {
+      "0": 6,
+      "1": 1,
+      "2": 0,
+      "3": 0
+    },
+    "quoted": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 1
+    }
+  },
+  "interpretation": "Exact-lookup is the largest bucket but not a majority of queries (12/25) and not a dominant row majority; conceptual/paraphrase/mixed are present. Zero grade-2 is therefore an open question for B3, not dismissed as a query-mix artifact. Monitor the same breakdown in B3 and report nDCG as effectively binary if grade-2 stays near zero.",
+  "pass1_completed": "2026-10-26T14:20:00Z",
+  "pass2_planned": ">=2026-10-27T14:20:00Z",
+  "path_decision": "B",
+  "path_decision_reason": "Hierarchical chunking commit 28c20b1 landed 23 minutes after the benchmark run; 317 chunks are current intended behavior. 81 chunks are pre-hierarchy. Rebuild the pool on current chunks; 997f62d is superseded and not comparable.",
+  "query_type_by_query": {
+    "pdf001": "exact",
+    "pdf002": "exact",
+    "pdf003": "exact",
+    "pdf004": "conceptual",
+    "pdf005": "exact",
+    "pdf006": "date",
+    "pdf007": "mixed",
+    "pdf008": "exact",
+    "pdf009": "mixed",
+    "pdf010": "paraphrase",
+    "pdf011": "mixed",
+    "pdf012": "exact",
+    "pdf013": "paraphrase",
+    "pdf014": "paraphrase",
+    "pdf015": "exact",
+    "rb001": "exact",
+    "rb002": "exact",
+    "rb003": "mixed",
+    "rb004": "mixed",
+    "rb005": "exact",
+    "rb006": "exact",
+    "rb007": "paraphrase",
+    "rb008": "exact",
+    "rb009": "negative",
+    "rb010": "quoted"
+  },
+  "query_type_counts": {
+    "conceptual": 1,
+    "date": 1,
+    "exact": 12,
+    "mixed": 5,
+    "negative": 1,
+    "paraphrase": 4,
+    "quoted": 1
+  },
+  "row_type_counts": {
+    "conceptual": 2,
+    "date": 2,
+    "exact": 19,
+    "mixed": 8,
+    "negative": 1,
+    "paraphrase": 7,
+    "quoted": 1
+  },
+  "rrf_headroom_caveat": "B4 is measured on a query set weighted toward exact/date/quoted (14/25) with only 1 conceptual query. RRF evaluation on this set understates semantic-retrieval benefit. D5 expansion for B6 should weight toward conceptual/paraphrase queries, not just add more queries.",
+  "zero_grade2": true
+}

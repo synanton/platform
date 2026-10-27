@@ -1,0 +1,117 @@
+{
+  "bm25_run": "demo-data/eval/retrieval-benchmark/results/T01-v2-q25.hits.json",
+  "corpus_chunks": 317,
+  "corpus_digest": "a993e6a1b13ec3ffc8a35ddaa2e53e6fa3c25d74c03d500e52d1b4b3d0b0096f",
+  "corpus_documents": 15,
+  "document_diversity": {
+    "max": 14,
+    "mean": 7.32,
+    "metric": "distinct content_ref documents among the 30 candidates",
+    "min": 1,
+    "per_query": {
+      "pdf001": 11,
+      "pdf002": 4,
+      "pdf003": 4,
+      "pdf004": 5,
+      "pdf005": 3,
+      "pdf006": 4,
+      "pdf007": 4,
+      "pdf008": 4,
+      "pdf009": 4,
+      "pdf010": 4,
+      "pdf011": 4,
+      "pdf012": 3,
+      "pdf013": 5,
+      "pdf014": 4,
+      "pdf015": 1,
+      "rb001": 13,
+      "rb002": 14,
+      "rb003": 13,
+      "rb004": 14,
+      "rb005": 11,
+      "rb006": 12,
+      "rb007": 13,
+      "rb008": 11,
+      "rb009": 12,
+      "rb010": 6
+    }
+  },
+  "gold": "PDF gold re-derived from markers on current chunks; manual overrides for pdf013/pdf015; RB gold carried from v1",
+  "gold_mismatch_audit": {
+    "mismatch_count": 0,
+    "note": "Manual overrides are recorded; no query excluded from B3/B4.",
+    "overrides": "gold-overrides-v2.json",
+    "pdf013": "retargeted to 69bd\u2026#82; quarterly basis present; old #16 was TOC",
+    "pdf015": "retargeted to 69bd\u2026#65; certificate names present; old #22 was TOC; gold chunk is outside the BM25/random candidate pool, so B4 records a retrieval miss, not a missing answer.",
+    "pdf_queries_checked": 15,
+    "pdf_queries_manual_retarget": 2,
+    "pdf_queries_with_marker_gold": 13,
+    "pdf_queries_without_gold": [],
+    "pool_additions": [
+      {
+        "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#82",
+        "grade": 3,
+        "query_id": "pdf013"
+      },
+      {
+        "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#65",
+        "grade": 3,
+        "query_id": "pdf015"
+      }
+    ],
+    "result": "pass_with_manual_overrides"
+  },
+  "gold_overrides": "demo-data/eval/retrieval-benchmark/gold-overrides-v2.json",
+  "gold_overrides_sha256": "1ee87975d0708d0a561469b5c0b8851ab2f860755f15e6bd55b88e2702043c44",
+  "per_query_counts": {
+    "pdf001": 30,
+    "pdf002": 30,
+    "pdf003": 30,
+    "pdf004": 30,
+    "pdf005": 30,
+    "pdf006": 30,
+    "pdf007": 30,
+    "pdf008": 30,
+    "pdf009": 30,
+    "pdf010": 30,
+    "pdf011": 30,
+    "pdf012": 30,
+    "pdf013": 30,
+    "pdf014": 30,
+    "pdf015": 31,
+    "rb001": 30,
+    "rb002": 30,
+    "rb003": 30,
+    "rb004": 30,
+    "rb005": 30,
+    "rb006": 30,
+    "rb007": 30,
+    "rb008": 30,
+    "rb009": 30,
+    "rb010": 14
+  },
+  "pool_additions": [
+    {
+      "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#82",
+      "pre_graded_calibration_grade": 2,
+      "query_id": "pdf013",
+      "status": "retargeted_from_16"
+    },
+    {
+      "chunk_id": "69bd3d12-3841-54a1-b104-1ff1104420e9#65",
+      "grade": "pending_B3",
+      "query_id": "pdf015",
+      "status": "added_outside_bm25_top20"
+    }
+  ],
+  "pool_note": "735 rows after pdf015/#65 manual addition; pdf013/#82 was already present and is pre-graded by calibration pass 1 at grade 2. B3 grades #65 fresh; no fake grade 3.",
+  "pool_rows": 735,
+  "pool_rule": "BM25 top-20 + 10 deterministic random chunks per query",
+  "pool_version": "v2",
+  "rng": "Python random.Random (Mersenne Twister)",
+  "script": "tools/retrieval-eval/build_judgment_pool_v2.py",
+  "seed": 42,
+  "seed_derivation": "int(sha256(query_id).hexdigest()[:12], 16) ^ 42",
+  "status": "rebuilt_on_current_hierarchical_chunking",
+  "supersedes": "judgments-pool-v1.jsonl"
+}

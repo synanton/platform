@@ -1,7 +1,7 @@
 # Grading protocol v1 — before the first grade
 
-**Status:** Protocol frozen 2026-10-25. The pool is a candidate set; no grades
-exist yet.
+**Status:** Protocol frozen 2026-10-25. B2 pass 1 recorded 2026-10-26; pass 2 is
+pending. The pool is a candidate set.
 **Inputs:** `judgments-pool-v1.jsonl` (734 candidates, 25 queries),
 `queries-v2.rb-fixed-g5.jsonl`.
 **Outputs:** `grading-sheet-v1.jsonl` (blind), `judgments-key-v1.jsonl` (key),
@@ -97,7 +97,8 @@ remains, but the gate that can stop the work fires on this small batch.
   retrieval.
 
 **Pre-committed decision rule** (quadratic-weighted kappa primary; exact agreement
-also reported):
+also reported). **The gate uses the point estimate, not the CI lower bound.** The
+bootstrap CI is disclosed but is not a pass/fail input.
 
 | Weighted kappa | Action |
 |---|---|
@@ -113,7 +114,7 @@ record both grades and the resolution.
 
 ## Execution schedule
 
-- Primary grader: **@aminin**.
+- Primary grader: **opencode agent** (reassigned 2026-10-26; @aminin unavailable).
 - **Calibration:** 2026-10-27 → 10-29 (30–50 candidates, double-graded).
 - **Second-grader decision:** resolved 2026-10-26 — delayed-self **intra-rater**
   (no second grader), threshold 0.75+.
@@ -176,3 +177,115 @@ A scheduled/background reconcile must **re-obtain a tenant-bound token per
 run** (issuance/audit) and must not hold a principal across days. A single run
 that outlives the 15-minute token TTL must re-issue; do not extend the token or
 cache the principal.
+
+
+## Execution note: agent grading (2026-10-26)
+
+- B2/B3 are **AI-assisted**, not human, grading. The delayed re-grade measures
+  **agent self-consistency**, not human intra-rater reliability.
+- `calibration_kappa.py` reports `kappa_quadratic_weighted` (primary) and
+  `kappa_unweighted`; confirmed 2026-10-26. Weighted is the reported statistic.
+- B4 inherits the **agent-graded** label. B3.5 human spot-check (15–20%) is the
+  independent check; if unavailable before 11-06, B4 publishes with the
+  limitation stated, not hidden.
+- B2.1 inspection: 40 rows, 25 queries, no source/rank/gold in the blind sheet;
+  the key is separate. **Breach record:** the orchestrator opened 3 key rows and
+  the query file's gold answers while locating chunk text. No grades were
+  assigned from that view. Pass 1 was produced by a fresh-context grader from a
+  metadata-free packet; pass 2 must be a delayed fresh-context run.
+- B2 pass 1: 40 rows; distribution 0=32, 1=5, 2=0, 3=3. Kappa is **not**
+  computed until pass 2.
+
+
+## Lineage breach record (2026-10-26)
+
+Recorded before pass 2 and before any kappa. During setup, the orchestrator opened
+the calibration key and the query file while locating chunk text.
+
+- Key rows opened: `p000039` (`pdf001`, `87ef150c-930c-586f-9ac3-82217a1c044a#0`),
+  `p000041` (`pdf001`, `faf3d562-6e46-5315-8150-06cf9591b3f2#5`), and `p000005`
+  (`pdf002`, `d941fbce-0aa4-59fc-b329-5bd770715d2d#3`).
+- What was visible: the key has `source`, `rank`, and `gold_binary`, not 0–3
+  grades. `p000039` showed `source=random`, `rank=null`, `gold_binary=false`;
+  `p000041` showed `source=bm25_top20`, `rank=7`, `gold_binary=false`;
+  `p000005` showed only candidate/query/chunk IDs.
+- Broader exposure: `queries-v2.rb-fixed-g5.jsonl` gold answers for the 25-query
+  frame were displayed in the orchestrator setup session.
+- Grader mechanism: **separate agent instance** (task session
+  `ses_e876f070dffey2do8Y6MO3FFe2`), packet-only input, explicit prohibition on
+  reading the key/gold/queries/pool, and no shared memory with the setup session.
+- Decision: the three pass-1 grades are retained and marked
+  `lineage_breach: true`. The grader was isolated, so the exposure did not touch
+  the grading task. Kappa reports the full set and the set excluding those three
+  rows; the full set is primary, the exclusion is a sensitivity check.
+- This record is in `demo-data/eval/retrieval-benchmark/lineage-breach-v1.json`.
+
+## Calibration execution timestamps and imbalance
+
+- `pass1_completed`: 2026-10-26T14:20:00Z (40 rows; 0=32, 1=5, 2=0, 3=3).
+- `pass2_planned_original`: no earlier than 2026-10-27T14:20:00Z (≥12h; next
+  calendar day). **Suspended** by the chunk-alignment blocker below; do not run
+  it on the current packet.
+- If pass 2 cannot happen before 2026-10-29, the kappa gate and B3 move; do not
+  silently hold the date.
+- Zero grade-2 is recorded, not treated as an error. The 4×4 confusion matrix is
+  reported; the middle boundary is untested if pass 2 also has zero 2s. The
+  majority-0 class imbalance will widen the bootstrap CI; the gate remains the
+  weighted point estimate.
+
+
+## B2 blocked: benchmark chunk-text alignment (2026-10-26)
+
+The calibration sheet was built from the 2026-09-25 `rb-fixed-g5` benchmark
+(81 chunks). The current re-ingest has 317 chunks for the same 15 documents
+(outsourcing: 43 vs 213). Chunk IDs are `content_ref#ordinal`; when the chunker
+changes, the same ID points at different text.
+
+Audit:
+- 12 of 15 PDF queries have a gold chunk that does **not** contain the query's
+  answer marker while another chunk in the same document does.
+- Of the 12 grade-0 calibration rows whose document is a gold document, 7 show
+  that same "gold lacks marker / other chunk has it" pattern; none of the 12
+  candidate chunks contains the marker.
+- Example: `p000041` is grade 3 on current `faf3…#5` text, but the benchmark
+  text for that ordinal is not established. It is not a clean coarse-label
+  false negative.
+
+**Decision: path (b), rebuild.** The 81→317 change is intentional: the benchmark
+ran at 2026-09-25T18:57Z; commit `28c20b1` added hierarchical section chunking at
+2026-09-25T19:20Z. Current 317 chunks are the intended product behavior, not a
+regression. Rebuild the pool/calibration batch from the current chunks and
+re-grade. Do not recover the old 81-chunk text. `997f62d` measured superseded
+chunking and is not comparable to B4; its difference from a current baseline is
+a product change, not retrieval improvement. Agent grades are (query, chunk);
+`gold_binary` is chunk-level; B4 is chunk-to-chunk.
+
+
+## v2 rebuild artifacts (2026-10-26)
+
+- `judgments-pool-v2.jsonl`: 734 candidates, same top-20 + 10-random rule,
+  corpus digest `a993e6a1…`, mean document diversity 7.32 (v1: 9.36), min 1
+  (pdf015), max 14.
+- `calibration-sheet-v2.jsonl` / `calibration-key-v2.jsonl`: 40 rows, all 25
+  queries, all 15 documents represented; selection seed 20261026.
+- Gold audit: 13/15 PDF queries have marker-matching gold; `pdf013` and
+  `pdf015` have none (`pass_with_watch`; manual gold inspection before B4).
+- Pass-1 grades are archived under `provisional/` as pipeline evidence only.
+
+
+## B2 v2 pass 1 (2026-10-26)
+
+- 40 rows, 25 queries, 15/15 documents represented.
+- Distribution: 0=10, 1=11, 2=3, 3=16. The middle boundary is now populated.
+- `pass1_completed`: 2026-10-26T15:00:00Z.
+- `pass2_planned`: >=2026-10-27T15:00:00Z (>=24h gap); status pending.
+- No kappa until pass 2.
+
+
+## pdf013/pdf015 decision (2026-10-26)
+
+Both are **retargeted and kept**, not excluded. `pdf013` gold moves to
+`69bd…#82` (quarterly basis present; old #16 was a table of contents).
+`pdf015` gold moves to `69bd…#65` (certificate names present; old #22 was a
+table of contents). `pdf015`'s gold is outside the BM25/random candidate pool,
+so B4 records a retrieval miss, not a missing answer. B3/B4 stay at 25 queries.

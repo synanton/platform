@@ -1,0 +1,148 @@
+{
+  "b3_scope": {
+    "calibration_rows": 40,
+    "includes_pdf015_65": true,
+    "new_b3_gradings": 695,
+    "note": "B3 grades all 695 non-calibration rows, including pdf015/#65; pdf013/#82 keeps its pass-1 grade 2.",
+    "override_rows_pre_graded": 0,
+    "pool_rows": 735
+  },
+  "batch_version": "v2",
+  "distribution_comparison": {
+    "grade2_populated": true,
+    "note": "Different batch composition and corpus; descriptive comparison only, not a paired test.",
+    "old_chunking_pass1": {
+      "0": 32,
+      "1": 5,
+      "2": 0,
+      "3": 3
+    },
+    "v2_hierarchical_pass1": {
+      "0": 10,
+      "1": 11,
+      "2": 3,
+      "3": 16
+    }
+  },
+  "document_ids": [
+    "24bc9ae7-1ab3-505d-8212-02bd6f6c6e23",
+    "3f4e1876-5ff4-5a96-882f-91a6ac0f0bbb",
+    "5343a009-243b-5693-9f08-3e49c6120342",
+    "563d922a-3225-5ef3-9cfe-ef464d938a08",
+    "69bd3d12-3841-54a1-b104-1ff1104420e9",
+    "6a801c03-e74f-5fdd-bcb5-84c5ea4d815b",
+    "87ef150c-930c-586f-9ac3-82217a1c044a",
+    "9a8bf188-61cc-5091-b1ce-bfec36a2eaa3",
+    "abaa8a42-54b8-5627-94ce-8a849de0203a",
+    "add27478-5661-5588-8d3a-773d2f135d84",
+    "c9178f2a-8a0b-5f04-b8a4-a415f63583a0",
+    "d941fbce-0aa4-59fc-b329-5bd770715d2d",
+    "dd123b7a-b190-5592-bb4d-441248d3a266",
+    "f44a5c67-3d7d-52ac-94a9-15157eef90ba",
+    "faf3d562-6e46-5315-8150-06cf9591b3f2"
+  ],
+  "documents": 15,
+  "gold_overrides": {
+    "pdf013": {
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#82"
+      ],
+      "markers": [
+        "on a calendar quarter basis"
+      ],
+      "reason": "Old gold #16 is a table of contents. Current chunk 82 contains the quarterly basis and the Short Term Rolling Forecast context; manual retarget."
+    },
+    "pdf015": {
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#65"
+      ],
+      "markers": [
+        "Certificate of Analysis",
+        "Certificate of Compliance"
+      ],
+      "reason": "Old gold #22 is a table of contents. Current chunk 65 lists the certificates; the old 'in English' phrase is absent, so the marker is narrowed. Manual retarget."
+    }
+  },
+  "kappa_status": "pending",
+  "pass1": {
+    "completed_at": "2026-10-26T15:00:00Z",
+    "distribution": {
+      "0": 10,
+      "1": 11,
+      "2": 3,
+      "3": 16
+    },
+    "grade2_count": 3,
+    "grader_id": "opencode-agent-v2-fresh-1",
+    "grader_isolation": {
+      "input": "metadata-free packet only",
+      "key_access": false,
+      "mechanism": "separate agent instance",
+      "shared_memory_with_setup": false,
+      "task_session": "ses_e8730e6c3ffeYOAPFrh5LYkx67"
+    }
+  },
+  "pass2_isolation": {
+    "input": "metadata-free packet only",
+    "key_access": false,
+    "mechanism": "fresh-context agent instance",
+    "planned": true,
+    "session_id": "to be recorded",
+    "timestamp": "to be recorded"
+  },
+  "pass2_planned": ">=2026-10-27T15:00:00Z",
+  "pass2_status": "pending; >=24h gap",
+  "pdf013_pdf015_decisions": {
+    "pdf013": {
+      "decision": "retarget_and_keep",
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#82"
+      ],
+      "reason": "quarterly basis present; old #16 was TOC"
+    },
+    "pdf015": {
+      "decision": "retarget_and_keep",
+      "gold_chunk_ids": [
+        "69bd3d12-3841-54a1-b104-1ff1104420e9#65"
+      ],
+      "reason": "certificate names present; old #22 was TOC; gold is outside the candidate pool, so B4 records a retrieval miss, not exclusion"
+    }
+  },
+  "per_query_counts": {
+    "pdf001": 2,
+    "pdf002": 2,
+    "pdf003": 2,
+    "pdf004": 2,
+    "pdf005": 2,
+    "pdf006": 2,
+    "pdf007": 2,
+    "pdf008": 2,
+    "pdf009": 2,
+    "pdf010": 2,
+    "pdf011": 2,
+    "pdf012": 2,
+    "pdf013": 2,
+    "pdf014": 2,
+    "pdf015": 2,
+    "rb001": 1,
+    "rb002": 1,
+    "rb003": 1,
+    "rb004": 1,
+    "rb005": 1,
+    "rb006": 1,
+    "rb007": 1,
+    "rb008": 1,
+    "rb009": 1,
+    "rb010": 1
+  },
+  "pool": "demo-data/eval/retrieval-benchmark/judgments-pool-v2.jsonl",
+  "queries": 25,
+  "rng": "Python random.Random (Mersenne Twister)",
+  "rows": 40,
+  "script": "tools/retrieval-eval/build_calibration_v2.py",
+  "seed": 20261026,
+  "selection_pool_commit": "ab3699f",
+  "selection_pool_note": "The 40-row batch was selected before the two manual pool additions; #65/pdf015 is outside the calibration batch but available to B4/B6.",
+  "selection_pool_rows": 734,
+  "selection_rule": "one per query preferring unseen document; 15 extra preferring unseen documents; max 2 per query"
+}
