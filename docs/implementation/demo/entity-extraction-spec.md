@@ -4,7 +4,7 @@
 Build a real, shallow graph for the demo. Regex and glossary extraction are real; do not mock entity chips or graph edges.
 
 ## Inputs
-- Chunk text from the current 317-chunk demo corpus (digest `a993e6a1…`).
+- Chunk text from the current 634-chunk `demo-v2` corpus (digest `5cf5b955…`).
 - `docs-ru/GLOSSARY.md` and `docs/technical-translation/en-ru/.claude/skills/platform-docs-bilingual-en-ru/glossary.md`.
 - Query text at search time.
 
@@ -47,6 +47,8 @@ Build a real, shallow graph for the demo. Regex and glossary extraction are real
 - `soft`: glossary terms and doctrinal phrases. They appear in the ontology panel under a collapsed Glossary section, never as graph edges.
 - Graph filter: `entity_class == hard && 3 <= df <= 15`.
 - This replaces denylist whack-a-mole. Re-run top-20 per class before #472.
+- `entity_kind` drives graph-panel visuals: `year` muted, full `date` muted, `section_ref` distinct, `identifier` distinct, `case_name` distinct. Years are not suppressed at extraction; Phase 0A must not tighten year patterns or graph density collapses.
+- Section refs are hard but currently legal-casebook-only; they do not connect the three demo gold chunks. Do not claim section bridges.
 
 ## DF cutoff
 Drop entities with df > 50 from the graph. `Content Engine`, `Process Engine`,
@@ -63,5 +65,6 @@ Drop entities with df > 50 from the graph. `Content Engine`, `Process Engine`,
 Top-20 by df is dominated by generic glossary terms: `component`, `contract`,
 `user`, `must`, `should`, `security`, `requirement`, `full`, `standard`,
 `single`, `accepted`, `operation`, `classification`, `failure`, `public`.
-Do not expose these as ontology entities. Add a denylist before the panel;
-keep df bands `1 / 3–15 / 16–50 / >50`.
+Classify them as `soft`; keep them out of graph nodes and collapsed in the
+ontology panel. Prefer classification over a growing denylist. Keep df bands
+`1 / 3–15 / 16–50 / >50`.
