@@ -98,9 +98,15 @@ def main() -> None:
         contributions.setdefault(chunk, {})["bm25"] = {"rank": rank, "score": 1 / (K + rank)}
     for rank, chunk in enumerate(dense_ids, 1):
         contributions.setdefault(chunk, {})["dense"] = {"rank": rank, "score": 1 / (K + rank)}
-    fused = sorted(((sum(part["score"] for part in parts.values()), chunk, parts)
-                    for chunk, parts in contributions.items()),
-                   key=lambda item: (-item[0], item[1]))
+    fused = sorted(
+        ((sum(part["score"] for part in parts.values()), chunk, parts)
+         for chunk, parts in contributions.items()),
+        key=lambda item: (
+            -item[0],
+            item[2].get("bm25", {}).get("rank", 10**9),
+            item[1],
+        ),
+    )
 
     print(f"Query type: {query_type(query)}")
     print(f"BM25 source: live synquest ({len(bm25_ids)} results)")

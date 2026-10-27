@@ -132,7 +132,7 @@
       "query_id": "pdf008",
       "bm25": 2,
       "dense": 1,
-      "rrf": 1,
+      "rrf": 2,
       "class": "agree"
     },
     {
@@ -160,7 +160,7 @@
       "query_id": "pdf012",
       "bm25": 1,
       "dense": null,
-      "rrf": 7,
+      "rrf": 6,
       "class": "one_miss"
     },
     {
@@ -181,7 +181,7 @@
       "query_id": "pdf015",
       "bm25": null,
       "dense": 17,
-      "rrf": 26,
+      "rrf": 27,
       "class": "one_miss"
     },
     {
@@ -245,7 +245,7 @@
       "bm25": null,
       "dense": null,
       "rrf": null,
-      "class": "no_gold"
+      "class": "both_miss"
     },
     {
       "query_id": "rb010",
