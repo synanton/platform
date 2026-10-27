@@ -59,3 +59,32 @@ After reindex, run `./scripts/demo/check-graph-neighbors.sh`; expected: `rb010` 
 Graph panel content is query-specific: only the gold result of `rb003`, `rb010`, or `rb008` has a non-empty neighborhood. Click the gold result; other result cards intentionally show the empty state.
 
 Corpus graph coverage is **69/634 chunks (11%)**. This is a property of the hard-entity df 3–15 taxonomy, not a bug. Most result panels are empty by design.
+
+## Human UI quality checklist (pre-dry-run)
+
+Run this locally before the cluster dry run; headless smoke does not judge visual quality.
+
+Visual:
+- Attribution strip fits one line on the demo display.
+- `Dense —` uses an em dash, not a hyphen/box glyph.
+- Query-type badge is legible and not truncated.
+- Orange focus ring is visible on white.
+- Muted text `#737373` is readable at projection distance.
+- Long ontology canonical forms do not overflow horizontally.
+- Collapse chevron visibly changes on expand/collapse.
+
+Perception:
+- 273 rows feel scannable; filter to `pair` feels responsive.
+- `graph_useful + soft_glossary` empty state reads as intentional.
+- Loading never flashes 0 rows before 273.
+
+Flow:
+- `rb010` attribution is readable in under 5 seconds.
+- `/ontology` loads without a visual jump.
+- Filter to `pair`, expand `soft_glossary`, read the 8 terms.
+
+Presenter confidence:
+- Would show this to a stranger without apologizing.
+- Hard / soft_glossary / soft_doctrinal sections look intentional.
+
+Record one of: `LGTM`, `specific issues`, or `not demo-ready yet`. A "not demo-ready" result means defer the panel to checkpoint 2, not add features.
