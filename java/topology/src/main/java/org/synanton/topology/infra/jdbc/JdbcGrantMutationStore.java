@@ -15,8 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Repository
-public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, GrantMutationService.OutboxStore,
-        GrantMutationService.AuditStore {
+public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, GrantMutationService.AuditStore {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
@@ -88,28 +87,6 @@ public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, 
             return mapper.writeValueAsString(rows.getFirst());
         } catch (Exception e) {
             return "";
-        }
-    }
-
-    @Override
-    public UUID insert(Connection connection, String eventType, Map<String, Object> payload, Instant now) {
-        UUID outboxId = UUID.randomUUID();
-        try {
-            String json = mapper.writeValueAsString(payload);
-            try (PreparedStatement insert = connection.prepareStatement(
-                    """
-                    INSERT INTO topology.topology_outbox (event_id, event_type, payload, created_at, ack_state)
-                    VALUES (?, ?, CAST(? AS jsonb), ?, CAST('{}' AS jsonb))
-                    """)) {
-                insert.setObject(1, outboxId);
-                insert.setString(2, eventType);
-                insert.setString(3, json);
-                insert.setTimestamp(4, Timestamp.from(now));
-                insert.executeUpdate();
-            }
-            return outboxId;
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to insert outbox row", e);
         }
     }
 

@@ -2,11 +2,11 @@ package org.synanton.topology.domain;
 
 import org.synanton.common.grpc.validation.PgvFieldViolation;
 import org.synanton.common.grpc.validation.PgvRuleCatalogue;
+import org.synanton.topology.domain.event.GrantCreated;
 import org.synanton.topology.domain.model.OrganizationPolicy;
 import org.synanton.topology.domain.model.PropagationId;
-import org.synanton.topology.infra.jdbc.TransactionalJdbc;
+import org.synanton.topology.infra.events.TopologyEventPublisher;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.time.Clock;
 import java.time.Duration;
@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GrantMutationService {
 
@@ -50,10 +51,6 @@ public class GrantMutationService {
         String currentStateJson(String tenantId, String subjectId, String resourceId);
     }
 
-    public interface OutboxStore {
-        UUID insert(Connection connection, String eventType, Map<String, Object> payload, Instant now);
-    }
-
     public interface AuditStore {
         void insert(
                 Connection connection,
@@ -75,28 +72,25 @@ public class GrantMutationService {
 
     private final PgvRuleCatalogue catalogue;
     private final GrantStore grants;
-    private final OutboxStore outbox;
     private final AuditStore audit;
     private final PolicyLookup policies;
     private final Clock clock;
-    private final DataSource dataSource;
+    private final TopologyEventPublisher events;
 
     public GrantMutationService(
             PgvRuleCatalogue catalogue,
             GrantStore grants,
-            OutboxStore outbox,
             AuditStore audit,
             PolicyLookup policies,
             Clock clock,
-            DataSource dataSource
+            TopologyEventPublisher events
     ) {
         this.catalogue = catalogue;
         this.grants = grants;
-        this.outbox = outbox;
         this.audit = audit;
         this.policies = policies;
         this.clock = clock;
-        this.dataSource = dataSource;
+        this.events = events;
     }
 
     public PropagationId grant(GrantCommand command) {
@@ -107,38 +101,35 @@ public class GrantMutationService {
         OrganizationPolicy policy = policies.require(command.tenantId());
         Instant now = Instant.now(clock);
         String before = grants.currentStateJson(command.tenantId(), command.subjectId(), command.resourceId());
-        return TransactionalJdbc.inTransaction(dataSource, connection -> {
-            UUID grantId = grants.insertPending(connection, command, now);
-            Map<String, Object> after = Map.of(
-                    "grantId", grantId.toString(),
-                    "tenantId", command.tenantId(),
-                    "subjectId", command.subjectId(),
-                    "resourceId", command.resourceId(),
-                    "permission", command.permission(),
-                    "tier", policy.tier()
-            );
-            UUID outboxId = outbox.insert(connection, "GRANT_CREATED", Map.of(
-                    "event_type", "GRANT_CREATED",
-                    "grant_id", grantId.toString(),
-                    "tenant_id", command.tenantId(),
-                    "subject_id", command.subjectId(),
-                    "resource_id", command.resourceId(),
-                    "permission", command.permission()
-            ), now);
-            audit.insert(
-                    connection,
-                    command.actorSubjectId(),
-                    command.actorType(),
-                    command.actorRole(),
-                    command.tenantId(),
-                    "GRANT_CREATED",
-                    command.resourceId(),
-                    StateHasher.sha256(before == null ? "" : before),
-                    StateHasher.sha256(after),
-                    after
-            );
-            return new PropagationId(grantId, outboxId, PropagationId.PENDING, now);
-        });
+        AtomicReference<UUID> grantId = new AtomicReference<>();
+        UUID outboxId = events.publishGrantCreated(
+                command.tenantId(),
+                new GrantCreated(command.tenantId(), command.subjectId(), command.resourceId(), command.permission()),
+                connection -> {
+                    UUID id = grants.insertPending(connection, command, now);
+                    grantId.set(id);
+                    Map<String, Object> afterState = Map.of(
+                            "grantId", id.toString(),
+                            "tenantId", command.tenantId(),
+                            "subjectId", command.subjectId(),
+                            "resourceId", command.resourceId(),
+                            "permission", command.permission(),
+                            "tier", policy.tier()
+                    );
+                    audit.insert(
+                            connection,
+                            command.actorSubjectId(),
+                            command.actorType(),
+                            command.actorRole(),
+                            command.tenantId(),
+                            "GRANT_CREATED",
+                            command.resourceId(),
+                            StateHasher.sha256(before == null ? "" : before),
+                            StateHasher.sha256(afterState),
+                            afterState
+                    );
+                });
+        return new PropagationId(grantId.get(), outboxId, PropagationId.PENDING, now);
     }
 
     public static class InvalidGrantException extends RuntimeException {

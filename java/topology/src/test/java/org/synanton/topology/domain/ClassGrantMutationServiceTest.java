@@ -2,12 +2,13 @@ package org.synanton.topology.domain;
 
 import org.junit.jupiter.api.Test;
 import org.synanton.common.grpc.validation.PgvRuleCatalogue;
+import org.synanton.eventing.outbox.BusinessWork;
+import org.synanton.topology.domain.event.ClassGrantUpsert;
 import org.synanton.topology.domain.model.OrganizationPolicy;
 import org.synanton.topology.domain.model.PropagationId;
+import org.synanton.topology.infra.events.TopologyEventPublisher;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -18,29 +19,33 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ClassGrantMutationServiceTest {
 
     private static final Instant NOW = Instant.parse("2026-08-28T09:00:00Z");
+    private static final UUID OUTBOX_ID = UUID.fromString("dddddddd-dddd-dddd-dddd-ddddddddddd");
 
     @Test
     void shouldGrantClassAndWriteAuditHashes() {
         AtomicReference<String> after = new AtomicReference<>();
         AtomicReference<UUID> grantId = new AtomicReference<>();
-        ClassGrantMutationService service = service(after, grantId, mockDataSource());
+        ClassGrantMutationService service = service(after, grantId);
 
         PropagationId result = service.grant(command());
 
         assertThat(result.state()).isEqualTo(PropagationId.PENDING);
+        assertThat(result.outboxId()).isEqualTo(OUTBOX_ID);
         assertThat(grantId.get()).isNotNull();
         assertThat(after.get()).isNotBlank();
     }
 
     @Test
     void shouldRejectInvalidSensitivityClass() {
-        ClassGrantMutationService service = service(new AtomicReference<>(), new AtomicReference<>(), mockDataSource());
+        ClassGrantMutationService service = service(new AtomicReference<>(), new AtomicReference<>());
         ClassGrantMutationService.ClassGrantCommand invalid = new ClassGrantMutationService.ClassGrantCommand(
                 "demo", "hr", "GROUP", "SECRET", "SEARCH", "k1",
                 "admin", "USER_SUBJECT", "user");
@@ -56,12 +61,14 @@ class ClassGrantMutationServiceTest {
 
     private static ClassGrantMutationService service(
             AtomicReference<String> afterHash,
-            AtomicReference<UUID> grantId,
-            DataSource dataSource
+            AtomicReference<UUID> grantId
     ) {
-        OrganizationPolicy policy = new OrganizationPolicy(
-                "demo", "STANDARD", List.of("us-east-1"), "ALWAYS", "bge-reranker-large",
-                100, 20, 1000, 100, 8, 32000, Map.of());
+        TopologyEventPublisher events = mock(TopologyEventPublisher.class);
+        when(events.publishClassGrantUpsert(anyString(), any(ClassGrantUpsert.class), any(BusinessWork.class)))
+                .thenAnswer(invocation -> {
+                    invocation.<BusinessWork>getArgument(2).execute(null);
+                    return OUTBOX_ID;
+                });
         return new ClassGrantMutationService(
                 new PgvRuleCatalogue(),
                 new ClassGrantMutationService.ClassGrantStore() {
@@ -86,21 +93,12 @@ class ClassGrantMutationServiceTest {
                         return "";
                     }
                 },
-                (c, eventType, payload, now) -> UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                 (c, actor, type, role, tenant, action, resource, before, after, payload) -> afterHash.set(after),
-                tenantId -> policy,
+                tenantId -> new OrganizationPolicy(
+                        "demo", "STANDARD", List.of("us-east-1"), "ALWAYS", "bge-reranker-large",
+                        100, 20, 1000, 100, 8, 32000, Map.of()),
                 Clock.fixed(NOW, ZoneOffset.UTC),
-                dataSource
+                events
         );
-    }
-
-    private static DataSource mockDataSource() {
-        DataSource dataSource = mock(DataSource.class);
-        try {
-            when(dataSource.getConnection()).thenReturn(mock(Connection.class));
-        } catch (SQLException e) {
-            throw new AssertionError(e);
-        }
-        return dataSource;
     }
 }
