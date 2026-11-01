@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(project(":java:shared:common"))
+    implementation(project(":java:eventing-outbox"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.jdbc)

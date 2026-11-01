@@ -8,7 +8,6 @@ public record SyntologyProperties(
         Cache cache,
         Mcp mcp,
         Tenant tenant,
-        Events events,
         String ontologyDir,
         Auth auth,
         Schema schema
@@ -27,9 +26,6 @@ public record SyntologyProperties(
     }
 
     public record Tenant(String defaultId) {
-    }
-
-    public record Events(String logPath) {
     }
 
     public record Auth(boolean enabled, String jwtSecret) {

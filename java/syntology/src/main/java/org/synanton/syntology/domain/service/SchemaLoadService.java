@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.syntology.app.SyntologyProperties;
+import org.synanton.syntology.domain.event.VersionBumped;
+import org.synanton.syntology.domain.event.VersionBumpSource;
 import org.synanton.syntology.domain.model.OntologyVersion;
 import org.synanton.syntology.domain.model.schema.OntologySchemaIr;
-import org.synanton.syntology.domain.port.out.EventPublisher;
 import org.synanton.syntology.domain.port.out.MetadataRepository;
 import org.synanton.syntology.domain.port.out.OntologyAdapter;
 import org.synanton.syntology.infra.cache.EntityCache;
+import org.synanton.syntology.infra.events.SyntologyEventPublisher;
 import org.synanton.syntology.infra.jena.ShaclRuntimeMapper;
 import org.synanton.syntology.infra.jena.TboxRuntimeMapper;
 import org.synanton.syntology.infra.schema.IncludeResolver;
@@ -32,7 +34,7 @@ public class SchemaLoadService {
     private final OntologyAdapter ontologyAdapter;
     private final MetadataRepository metadataRepository;
     private final EntityCache entityCache;
-    private final EventPublisher eventPublisher;
+    private final SyntologyEventPublisher events;
     private final SyntologyProperties properties;
     private final ObjectMapper objectMapper;
 
@@ -43,7 +45,7 @@ public class SchemaLoadService {
             OntologyAdapter ontologyAdapter,
             MetadataRepository metadataRepository,
             EntityCache entityCache,
-            EventPublisher eventPublisher,
+            SyntologyEventPublisher events,
             SyntologyProperties properties,
             ObjectMapper objectMapper
     ) {
@@ -53,7 +55,7 @@ public class SchemaLoadService {
         this.ontologyAdapter = ontologyAdapter;
         this.metadataRepository = metadataRepository;
         this.entityCache = entityCache;
-        this.eventPublisher = eventPublisher;
+        this.events = events;
         this.properties = properties;
         this.objectMapper = objectMapper;
     }
@@ -115,7 +117,7 @@ public class SchemaLoadService {
         );
         metadataRepository.insert(ontologyVersion);
         entityCache.invalidateAll();
-        eventPublisher.publish("VERSION_BUMPED", "{\"version\":\"" + version + "\",\"source\":\"hcl\"}");
+        events.publishVersionBumped(tenant, new VersionBumped(ontologyVersion.versionId(), version, VersionBumpSource.HCL));
         return ontologyVersion;
     }
 
