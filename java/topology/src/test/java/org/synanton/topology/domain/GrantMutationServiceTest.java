@@ -3,7 +3,7 @@ package org.synanton.topology.domain;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.grpc.validation.PgvRuleCatalogue;
 import org.synanton.eventing.outbox.BusinessWork;
-import org.synanton.topology.domain.event.GrantCreated;
+import org.synanton.topology.domain.event.ResourceGrantCreated;
 import org.synanton.topology.domain.model.OrganizationPolicy;
 import org.synanton.topology.domain.model.PropagationId;
 import org.synanton.topology.infra.events.TopologyEventPublisher;
@@ -70,7 +70,7 @@ class GrantMutationServiceTest {
             AtomicReference<UUID> grantId
     ) {
         TopologyEventPublisher events = mock(TopologyEventPublisher.class);
-        when(events.publishGrantCreated(anyString(), any(GrantCreated.class), any(BusinessWork.class)))
+        when(events.publishResourceGrantCreated(anyString(), any(ResourceGrantCreated.class), any(BusinessWork.class)))
                 .thenAnswer(invocation -> {
                     invocation.<BusinessWork>getArgument(2).execute(null);
                     return OUTBOX_ID;

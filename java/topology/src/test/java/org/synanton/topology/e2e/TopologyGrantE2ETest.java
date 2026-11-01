@@ -18,7 +18,7 @@ import org.synanton.eventing.outbox.KafkaOutboxDispatcher;
 import org.synanton.eventing.outbox.OutboxEventPublisher;
 import org.synanton.eventing.outbox.OutboxReader;
 import org.synanton.topology.domain.GrantMutationService;
-import org.synanton.topology.domain.event.GrantCreated;
+import org.synanton.topology.domain.event.ResourceGrantCreated;
 import org.synanton.topology.domain.event.TenantCreated;
 import org.synanton.topology.domain.model.Tenant;
 import org.synanton.topology.infra.events.TopologyEventPublisher;
@@ -86,9 +86,9 @@ class TopologyGrantE2ETest {
         JdbcGrantMutationStore grantStore = new JdbcGrantMutationStore(new JdbcTemplate(dataSource()), new com.fasterxml.jackson.databind.ObjectMapper());
 
         GrantMutationService.GrantCommand command = command();
-        UUID eventId = events.publishGrantCreated(
+        UUID eventId = events.publishResourceGrantCreated(
                 command.tenantId(),
-                new GrantCreated(command.tenantId(), command.subjectId(), command.resourceId(), command.permission()),
+                new ResourceGrantCreated(command.tenantId(), command.subjectId(), command.resourceId(), command.permission()),
                 connection -> grantStore.insertPending(connection, command, Instant.now()));
 
         assertThat(outbox.isDispatched(eventId)).isTrue();
@@ -98,7 +98,7 @@ class TopologyGrantE2ETest {
 
         ConsumerRecord<String, String> consumed = consume(eventId);
         assertThat(consumed.value()).contains(eventId.toString());
-        assertThat(consumed.value()).contains("GrantCreated");
+        assertThat(consumed.value()).contains("ResourceGrantCreated");
     }
 
     @Test
@@ -130,9 +130,9 @@ class TopologyGrantE2ETest {
         GrantMutationService.GrantCommand command = command();
         UUID eventId;
         try {
-            eventId = failing.publishGrantCreated(
+            eventId = failing.publishResourceGrantCreated(
                     command.tenantId(),
-                    new GrantCreated(command.tenantId(), command.subjectId(), command.resourceId(), command.permission()),
+                    new ResourceGrantCreated(command.tenantId(), command.subjectId(), command.resourceId(), command.permission()),
                     connection -> grantStore.insertPending(connection, command, Instant.now()));
         } catch (IllegalStateException expected) {
             eventId = pendingEventId(command.tenantId());
@@ -151,7 +151,7 @@ class TopologyGrantE2ETest {
     private static TopologyEventPublisher publisher(JdbcEventOutbox outbox, org.synanton.eventing.outbox.OutboxDispatcher dispatcher) {
         EventTypeRegistry registry = new EventTypeRegistry(List.of(
                 new EventTypeDeclaration(TopologyEventPublisher.TENANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
-                new EventTypeDeclaration(TopologyEventPublisher.GRANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
+                new EventTypeDeclaration(TopologyEventPublisher.RESOURCE_GRANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(TopologyEventPublisher.CLASS_GRANT_UPSERT, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(TopologyEventPublisher.CLASS_GRANT_REVOKE, 1, ReplayClass.REPLAY_SAFE, Optional.empty())));
         OutboxEventPublisher publisher = new OutboxEventPublisher(

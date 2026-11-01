@@ -10,7 +10,7 @@ import org.synanton.eventing.outbox.BusinessWork;
 import org.synanton.eventing.outbox.OutboxEventPublisher;
 import org.synanton.topology.domain.event.ClassGrantRevoke;
 import org.synanton.topology.domain.event.ClassGrantUpsert;
-import org.synanton.topology.domain.event.GrantCreated;
+import org.synanton.topology.domain.event.ResourceGrantCreated;
 import org.synanton.topology.domain.event.TenantCreated;
 
 import java.time.Clock;
@@ -30,7 +30,7 @@ import java.util.UUID;
 public class TopologyEventPublisher {
 
     public static final String TENANT_CREATED = "TenantCreated";
-    public static final String GRANT_CREATED = "GrantCreated";
+    public static final String RESOURCE_GRANT_CREATED = "ResourceGrantCreated";
     public static final String CLASS_GRANT_UPSERT = "ClassGrantUpsert";
     public static final String CLASS_GRANT_REVOKE = "ClassGrantRevoke";
 
@@ -46,8 +46,8 @@ public class TopologyEventPublisher {
         return publish(tenantId, TENANT_CREATED, payload, businessWork);
     }
 
-    public UUID publishGrantCreated(String tenantId, GrantCreated payload, BusinessWork businessWork) {
-        return publish(tenantId, GRANT_CREATED, payload, businessWork);
+    public UUID publishResourceGrantCreated(String tenantId, ResourceGrantCreated payload, BusinessWork businessWork) {
+        return publish(tenantId, RESOURCE_GRANT_CREATED, payload, businessWork);
     }
 
     public UUID publishClassGrantUpsert(String tenantId, ClassGrantUpsert payload, BusinessWork businessWork) {

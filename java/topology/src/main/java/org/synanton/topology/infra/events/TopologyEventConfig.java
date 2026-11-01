@@ -32,7 +32,7 @@ public class TopologyEventConfig {
                 new EventTypeDeclaration(
                         TopologyEventPublisher.TENANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(
-                        TopologyEventPublisher.GRANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
+                        TopologyEventPublisher.RESOURCE_GRANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(
                         TopologyEventPublisher.CLASS_GRANT_UPSERT, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(

@@ -2,7 +2,7 @@ package org.synanton.topology.domain;
 
 import org.synanton.common.grpc.validation.PgvFieldViolation;
 import org.synanton.common.grpc.validation.PgvRuleCatalogue;
-import org.synanton.topology.domain.event.GrantCreated;
+import org.synanton.topology.domain.event.ResourceGrantCreated;
 import org.synanton.topology.domain.model.OrganizationPolicy;
 import org.synanton.topology.domain.model.PropagationId;
 import org.synanton.topology.infra.events.TopologyEventPublisher;
@@ -102,9 +102,9 @@ public class GrantMutationService {
         Instant now = Instant.now(clock);
         String before = grants.currentStateJson(command.tenantId(), command.subjectId(), command.resourceId());
         AtomicReference<UUID> grantId = new AtomicReference<>();
-        UUID outboxId = events.publishGrantCreated(
+        UUID outboxId = events.publishResourceGrantCreated(
                 command.tenantId(),
-                new GrantCreated(command.tenantId(), command.subjectId(), command.resourceId(), command.permission()),
+                new ResourceGrantCreated(command.tenantId(), command.subjectId(), command.resourceId(), command.permission()),
                 connection -> {
                     UUID id = grants.insertPending(connection, command, now);
                     grantId.set(id);
