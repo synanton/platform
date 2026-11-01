@@ -1,10 +1,10 @@
 package org.synanton.topology.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.synanton.common.error.NotFoundException;
+import org.synanton.topology.domain.event.ResourceGrantCreated;
+import org.synanton.topology.domain.event.ResourceGrantRevoked;
 import org.synanton.topology.domain.event.TenantCreated;
 import org.synanton.topology.domain.model.Connector;
 import org.synanton.topology.domain.model.Grant;
@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
 @RequestMapping("/topology")
@@ -43,24 +44,18 @@ public class TenantController {
     private final JdbcTenantRepository tenants;
     private final JdbcGrantRepository grants;
     private final JdbcPolicyRepository policies;
-    private final JdbcOutboxRepository outbox;
     private final JdbcConnectorRepository connectors;
-    private final ObjectMapper objectMapper;
     private final TopologyEventPublisher events;
 
     public TenantController(JdbcTenantRepository tenants,
                             JdbcGrantRepository grants,
                             JdbcPolicyRepository policies,
-                            JdbcOutboxRepository outbox,
                             JdbcConnectorRepository connectors,
-                            ObjectMapper objectMapper,
                             TopologyEventPublisher events) {
         this.tenants = tenants;
         this.grants = grants;
         this.policies = policies;
-        this.outbox = outbox;
         this.connectors = connectors;
-        this.objectMapper = objectMapper;
         this.events = events;
     }
 
@@ -117,6 +112,7 @@ public class TenantController {
     @PostMapping("/grants")
     public ResponseEntity<GrantResponse> createGrant(@RequestParam String tenantId,
                                                      @RequestBody CreateGrantRequest req) {
+        Instant now = Instant.now();
         Grant grant = new Grant(
                 null,
                 tenantId,
@@ -125,42 +121,38 @@ public class TenantController {
                 req.resourcePath(),
                 req.permission(),
                 "MANUAL",
-                Instant.now()
+                now
         );
-        Grant saved = grants.insert(grant);
-
-        String payload = toJson(Map.of(
-                "tenantId", tenantId,
-                "subjectId", req.subjectId(),
-                "subjectType", req.subjectType(),
-                "resourcePath", req.resourcePath(),
-                "permission", req.permission()
-        ));
-        outbox.insert("GRANT_CREATED", payload);
+        AtomicReference<Grant> saved = new AtomicReference<>();
+        events.publishResourceGrantCreated(
+                tenantId,
+                new ResourceGrantCreated(tenantId, req.subjectId(), req.resourcePath(), req.permission()),
+                connection -> saved.set(grants.insert(connection, grant)));
 
         return ResponseEntity.status(201).body(new GrantResponse(
-                saved.grantId(),
-                saved.tenantId(),
-                saved.subjectId(),
-                saved.resourcePath(),
-                saved.permission(),
-                saved.createdAt()
+                saved.get().grantId(),
+                saved.get().tenantId(),
+                saved.get().subjectId(),
+                saved.get().resourcePath(),
+                saved.get().permission(),
+                saved.get().createdAt()
         ));
     }
 
     @DeleteMapping("/grants/{grantId}")
     public ResponseEntity<Map<String, Object>> revokeGrant(@PathVariable UUID grantId) {
         Instant now = Instant.now();
-        boolean revoked = grants.revoke(grantId, now);
-        if (!revoked) {
-            throw new NotFoundException("No active grant with id=" + grantId);
-        }
-
-        String payload = toJson(Map.of(
-                "grantId", grantId.toString(),
-                "revokedAt", now.toString()
-        ));
-        outbox.insert("GRANT_REVOKED", payload);
+        Grant existing = grants.findById(grantId)
+                .orElseThrow(() -> new NotFoundException("No active grant with id=" + grantId));
+        events.publishResourceGrantRevoked(
+                existing.tenantId(),
+                new ResourceGrantRevoked(grantId, existing.tenantId()),
+                connection -> {
+                    boolean revoked = grants.revoke(connection, grantId, now);
+                    if (!revoked) {
+                        throw new NotFoundException("No active grant with id=" + grantId);
+                    }
+                });
 
         return ResponseEntity.ok(Map.of("status", "revoked", "grantId", grantId));
     }
@@ -170,15 +162,5 @@ public class TenantController {
     @GetMapping("/connectors")
     public List<Connector> listConnectors() {
         return connectors.findAll();
-    }
-
-    // ── Helpers ─────────────────────────────────────────────────────────────
-
-    private String toJson(Object value) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize outbox payload", e);
-        }
     }
 }
