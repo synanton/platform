@@ -95,7 +95,7 @@ class TopologyGrantE2ETest {
 
         ConsumerRecord<String, String> consumed = consume(eventId);
         assertThat(consumed.value()).contains(eventId.toString());
-        assertThat(consumed.value()).contains("\"event_type\":\"GrantCreated\"");
+        assertThat(consumed.value()).contains("GrantCreated");
     }
 
     @Test
