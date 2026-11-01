@@ -6,15 +6,16 @@ dependencies {
     api(project(":java:eventing-contract"))
     api(project(":java:eventing-publisher"))
     api(libs.jackson.databind)
-    // Kafka client backs KafkaOutboxDispatcher only; compileOnly keeps the
-    // broker-agnostic OutboxDispatcher seam usable by consumers without a broker.
-    compileOnly(libs.kafka.clients)
+    // KafkaOutboxDispatcher ships alongside the broker-agnostic OutboxDispatcher seam
+    // in this module, so kafka-clients is a runtime dependency (implementation, not api:
+    // consumers construct the dispatcher via KafkaOutboxDispatcher.connect and do not
+    // touch KafkaProducer directly).
+    implementation(libs.kafka.clients)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.core)
-    testImplementation(libs.kafka.clients)
     testImplementation(libs.postgresql)
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.postgresql)

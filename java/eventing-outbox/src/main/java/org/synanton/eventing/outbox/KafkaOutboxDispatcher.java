@@ -25,7 +25,10 @@ public final class KafkaOutboxDispatcher implements OutboxDispatcher, AutoClosea
 
     /**
      * Builds an idempotent producer (acks=all) for the given bootstrap servers and topic.
-     * The caller owns the returned dispatcher and must close it when finished.
+     * {@code delivery.timeout.ms} bounds the broker-acknowledgement wait: if the broker does
+     * not acknowledge within it, the send future fails and {@link #dispatch} propagates the
+     * failure, so the row stays pending. The caller owns the returned dispatcher and must
+     * close it when finished.
      */
     public static KafkaOutboxDispatcher connect(String bootstrapServers, String topic) {
         Properties properties = new Properties();
@@ -34,6 +37,7 @@ public final class KafkaOutboxDispatcher implements OutboxDispatcher, AutoClosea
         properties.put("value.serializer", StringSerializer.class.getName());
         properties.put("acks", "all");
         properties.put("enable.idempotence", "true");
+        properties.put("delivery.timeout.ms", "30000");
         return new KafkaOutboxDispatcher(new KafkaProducer<>(properties), topic);
     }
 
