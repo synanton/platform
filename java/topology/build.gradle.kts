@@ -25,4 +25,24 @@ dependencies {
 
     testImplementation(libs.spring.boot.starter.test)
     testRuntimeOnly(libs.h2)  // H2 for unit tests (POSIX mode)
+    testImplementation(libs.postgresql)
+    testImplementation(libs.kafka.clients)
+    testImplementation(platform(libs.testcontainers.bom))
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.redpanda)
+}
+
+tasks.test {
+    useJUnitPlatform {
+        excludeTags("e2e")
+    }
+}
+
+tasks.register<Test>("e2eTest") {
+    description = "Runs the publish -> Redpanda -> consume E2E against testcontainers Postgres + Redpanda."
+    group = "verification"
+    useJUnitPlatform {
+        includeTags("e2e")
+    }
+    shouldRunAfter(tasks.test)
 }
