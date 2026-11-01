@@ -13,21 +13,36 @@ public final class OutboxEventPublisher extends AbstractEventPublisher {
     private final EventOutbox outbox;
     private final OutboxDispatcher dispatcher;
     private final OutboxTransaction transaction;
+    private final BusinessWork businessWork;
 
     public OutboxEventPublisher(
             EventTypeRegistry eventTypes,
             EventOutbox outbox,
             OutboxDispatcher dispatcher,
             OutboxTransaction transaction) {
+        this(eventTypes, outbox, dispatcher, transaction, BusinessWork.NONE);
+    }
+
+    /** The business work runs in the same transaction as the outbox append, then dispatch after commit. */
+    public OutboxEventPublisher(
+            EventTypeRegistry eventTypes,
+            EventOutbox outbox,
+            OutboxDispatcher dispatcher,
+            OutboxTransaction transaction,
+            BusinessWork businessWork) {
         super(eventTypes);
         this.outbox = Objects.requireNonNull(outbox, "outbox");
         this.dispatcher = Objects.requireNonNull(dispatcher, "dispatcher");
         this.transaction = Objects.requireNonNull(transaction, "transaction");
+        this.businessWork = Objects.requireNonNull(businessWork, "businessWork");
     }
 
     @Override
     protected void deliver(Event<?> event) {
-        OutboxEntry entry = transaction.execute(connection -> outbox.append(connection, event));
+        OutboxEntry entry = transaction.execute(connection -> {
+            businessWork.execute(connection);
+            return outbox.append(connection, event);
+        });
         dispatchAfterCommit(entry.eventId());
     }
 

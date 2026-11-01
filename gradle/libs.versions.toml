@@ -95,6 +95,7 @@ networknt-validator = { module = "com.networknt:json-schema-validator", version.
 testcontainers-bom  = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
 testcontainers-junit      = { module = "org.testcontainers:junit-jupiter" }
+testcontainers-redpanda   = { module = "org.testcontainers:redpanda" }
 
 # Cassandra
 cassandra-driver-core = { module = "com.datastax.oss:java-driver-core", version.ref = "cassandraDriver" }
