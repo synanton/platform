@@ -128,6 +128,22 @@ class OutboxEventPublisherTest {
     }
 
     @Test
+    void threeArgPublishDoesNotRunConstructorBusinessWork() {
+        InMemoryEventOutbox outbox = new InMemoryEventOutbox();
+        RecordingDispatcher dispatcher = new RecordingDispatcher(0);
+        OutboxEventPublisher publisher = new OutboxEventPublisher(
+                eventTypes, outbox, dispatcher, DIRECT,
+                connection -> {
+                    throw new IllegalStateException("constructor work must not run");
+                });
+
+        publisher.publish("tenant-a", event(), connection -> { });
+
+        assertThat(dispatcher.eventIds).containsExactly(EVENT_ID);
+        assertThat(outbox.isDispatched(EVENT_ID)).isTrue();
+    }
+
+    @Test
     void publishWithBusinessWork_businessWorkFailureRollsBackAndDoesNotDispatch() {
         InMemoryEventOutbox outbox = new InMemoryEventOutbox();
         RecordingDispatcher dispatcher = new RecordingDispatcher(0);
