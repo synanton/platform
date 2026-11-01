@@ -8,6 +8,7 @@ import org.synanton.eventing.contract.EventTypeRegistry;
 import org.synanton.eventing.contract.Producer;
 import org.synanton.eventing.contract.ReplayClass;
 import org.synanton.eventing.contract.SecurityMetadata;
+import org.synanton.eventing.contract.TenantScopeMismatchException;
 
 import java.sql.Connection;
 import java.time.Instant;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -98,6 +100,74 @@ class OutboxEventPublisherTest {
                 .hasMessage("outbox unavailable");
 
         assertThat(outbox.find(EVENT_ID)).isEmpty();
+        assertThat(dispatcher.eventIds).isEmpty();
+    }
+
+    @Test
+    void publishWithBusinessWork_runsPerCallWorkInTheSameTransactionAndDispatches() {
+        InMemoryEventOutbox outbox = new InMemoryEventOutbox();
+        RecordingDispatcher dispatcher = new RecordingDispatcher(0);
+        AtomicInteger committed = new AtomicInteger();
+        OutboxTransaction transaction = work -> {
+            OutboxEntry entry = work.execute(null);
+            committed.incrementAndGet();
+            return entry;
+        };
+        AtomicBoolean fixedWorkRan = new AtomicBoolean();
+        OutboxEventPublisher publisher = new OutboxEventPublisher(
+                eventTypes, outbox, dispatcher, transaction, connection -> fixedWorkRan.set(true));
+
+        AtomicBoolean perCallWorkRan = new AtomicBoolean();
+        publisher.publish("tenant-a", event(), connection -> perCallWorkRan.set(true));
+
+        assertThat(perCallWorkRan).isTrue();
+        assertThat(fixedWorkRan).isFalse();
+        assertThat(committed).hasValue(1);
+        assertThat(dispatcher.eventIds).containsExactly(EVENT_ID);
+        assertThat(outbox.isDispatched(EVENT_ID)).isTrue();
+    }
+
+    @Test
+    void threeArgPublishDoesNotRunConstructorBusinessWork() {
+        InMemoryEventOutbox outbox = new InMemoryEventOutbox();
+        RecordingDispatcher dispatcher = new RecordingDispatcher(0);
+        OutboxEventPublisher publisher = new OutboxEventPublisher(
+                eventTypes, outbox, dispatcher, DIRECT,
+                connection -> {
+                    throw new IllegalStateException("constructor work must not run");
+                });
+
+        publisher.publish("tenant-a", event(), connection -> { });
+
+        assertThat(dispatcher.eventIds).containsExactly(EVENT_ID);
+        assertThat(outbox.isDispatched(EVENT_ID)).isTrue();
+    }
+
+    @Test
+    void publishWithBusinessWork_businessWorkFailureRollsBackAndDoesNotDispatch() {
+        InMemoryEventOutbox outbox = new InMemoryEventOutbox();
+        RecordingDispatcher dispatcher = new RecordingDispatcher(0);
+        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher, DIRECT);
+
+        assertThatThrownBy(() -> publisher.publish("tenant-a", event(), connection -> {
+            throw new IllegalStateException("business failed");
+        })).isInstanceOf(IllegalStateException.class).hasMessage("business failed");
+
+        assertThat(outbox.find(EVENT_ID)).isEmpty();
+        assertThat(dispatcher.eventIds).isEmpty();
+    }
+
+    @Test
+    void publishWithBusinessWork_rejectsCrossTenantBeforeBusinessWorkRuns() {
+        InMemoryEventOutbox outbox = new InMemoryEventOutbox();
+        RecordingDispatcher dispatcher = new RecordingDispatcher(0);
+        OutboxEventPublisher publisher = new OutboxEventPublisher(eventTypes, outbox, dispatcher, DIRECT);
+        AtomicBoolean workRan = new AtomicBoolean();
+
+        assertThatThrownBy(() -> publisher.publish("tenant-b", event(), connection -> workRan.set(true)))
+                .isInstanceOf(TenantScopeMismatchException.class);
+
+        assertThat(workRan).isFalse();
         assertThat(dispatcher.eventIds).isEmpty();
     }
 

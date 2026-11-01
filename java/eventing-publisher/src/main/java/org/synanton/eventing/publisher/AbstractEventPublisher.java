@@ -16,10 +16,15 @@ public abstract class AbstractEventPublisher implements EventPublisher {
 
     @Override
     public final void publish(String verifiedTenantId, Event<?> event) {
+        validate(verifiedTenantId, event);
+        deliver(event);
+    }
+
+    /** Tenant-scope and registry admission; shared by per-publish overrides in subclasses. */
+    protected final void validate(String verifiedTenantId, Event<?> event) {
         Objects.requireNonNull(event, "event");
         TenantScope.requireMatches(verifiedTenantId, event);
         eventTypes.validate(event);
-        deliver(event);
     }
 
     protected abstract void deliver(Event<?> event);
