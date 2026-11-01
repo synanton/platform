@@ -16,8 +16,6 @@ syntology:
   storage:
     jena:
       path: ${java.io.tmpdir}/syntology-test/tdb2
-  events:
-    log-path: ${java.io.tmpdir}/syntology-test/events.log
   ontology-dir: /tmp/syntology-test-ontologies
   schema:
     git-root: ${java.io.tmpdir}/syntology-test/git-root

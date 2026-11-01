@@ -35,8 +35,6 @@ syntology:
       path: /mcp
   tenant:
     default-id: demo
-  events:
-    log-path: ${SYNTOLOGY_EVENTS_LOG:./data/syntology/syntology-events.log}
   ontology-dir: ${SYNTOLOGY_ONTOLOGY_DIR:/data/ontologies}
   schema:
     git-root: ${SYNTOLOGY_SCHEMA_GIT_ROOT:.}
