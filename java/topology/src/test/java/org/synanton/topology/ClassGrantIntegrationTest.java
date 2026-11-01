@@ -8,10 +8,14 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.test.context.jdbc.Sql;
+import org.synanton.topology.domain.ClassGrantMutationService;
 import org.synanton.topology.infra.jdbc.JdbcClassGrantMutationStore;
 import org.synanton.topology.infra.jdbc.JdbcClassGrantRepository;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,6 +36,7 @@ class ClassGrantIntegrationTest {
     @Autowired JdbcClassGrantRepository classGrants;
     @Autowired JdbcClassGrantMutationStore mutationStore;
     @Autowired JdbcTemplate jdbc;
+    @Autowired DataSource dataSource;
 
     @BeforeEach
     void clean() {
@@ -46,12 +51,9 @@ class ClassGrantIntegrationTest {
 
     @Test
     void shouldResolveGroupClassGrant() {
-        mutationStore.insertPending(
-                new org.synanton.topology.domain.ClassGrantMutationService.ClassGrantCommand(
-                        "demo", "4000", "GROUP", "PERSONAL", "SEARCH", "k1",
-                        "admin", "USER_SUBJECT", "user"),
-                java.time.Instant.parse("2026-08-28T09:00:00Z")
-        );
+        insertPending(new org.synanton.topology.domain.ClassGrantMutationService.ClassGrantCommand(
+                "demo", "4000", "GROUP", "PERSONAL", "SEARCH", "k1",
+                "admin", "USER_SUBJECT", "user"));
 
         Set<String> classes = classGrants.resolveCallerClasses("demo", "user:alice", Set.of("4000"));
 
@@ -60,17 +62,23 @@ class ClassGrantIntegrationTest {
 
     @Test
     void shouldListActiveClassGrantsByTenant() {
-        UUID grantId = mutationStore.insertPending(
-                new org.synanton.topology.domain.ClassGrantMutationService.ClassGrantCommand(
-                        "demo", "payroll", "GROUP", "FINANCIAL", "SEARCH", "k2",
-                        "admin", "USER_SUBJECT", "user"),
-                java.time.Instant.parse("2026-08-28T09:00:00Z")
-        );
+        UUID grantId = insertPending(new org.synanton.topology.domain.ClassGrantMutationService.ClassGrantCommand(
+                "demo", "payroll", "GROUP", "FINANCIAL", "SEARCH", "k2",
+                "admin", "USER_SUBJECT", "user"));
 
         var grants = classGrants.findActiveByTenant("demo");
 
         assertThat(grants).hasSize(1);
         assertThat(grants.getFirst().grantId()).isEqualTo(grantId);
         assertThat(grants.getFirst().sensitivityClass()).isEqualTo("FINANCIAL");
+    }
+
+    private UUID insertPending(ClassGrantMutationService.ClassGrantCommand command) {
+        Connection connection = DataSourceUtils.getConnection(dataSource);
+        try {
+            return mutationStore.insertPending(connection, command, java.time.Instant.parse("2026-08-28T09:00:00Z"));
+        } finally {
+            DataSourceUtils.releaseConnection(connection, dataSource);
+        }
     }
 }
