@@ -5,6 +5,7 @@ import org.synanton.topology.domain.AckTracker;
 import org.synanton.topology.domain.ClassGrantMutationService;
 import org.synanton.topology.domain.GrantMutationService;
 import org.synanton.topology.domain.ResidencyPolicyValidator;
+import org.synanton.topology.infra.events.TopologyEventPublisher;
 import org.synanton.topology.infra.jdbc.JdbcClassGrantMutationStore;
 import org.synanton.topology.infra.jdbc.JdbcGrantMutationStore;
 import org.synanton.topology.infra.jdbc.JdbcOrganizationPolicyRepository;
@@ -12,7 +13,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.sql.DataSource;
 import java.time.Clock;
 import java.util.LinkedHashSet;
 
@@ -46,9 +46,9 @@ public class TopologyConfig {
             JdbcGrantMutationStore store,
             JdbcOrganizationPolicyRepository policies,
             Clock clock,
-            DataSource dataSource
+            TopologyEventPublisher events
     ) {
-        return new GrantMutationService(catalogue, store, store, store, policies::require, clock, dataSource);
+        return new GrantMutationService(catalogue, store, store, policies::require, clock, events);
     }
 
     @Bean
@@ -57,8 +57,8 @@ public class TopologyConfig {
             JdbcClassGrantMutationStore store,
             JdbcOrganizationPolicyRepository policies,
             Clock clock,
-            DataSource dataSource
+            TopologyEventPublisher events
     ) {
-        return new ClassGrantMutationService(catalogue, store, store, store, policies::require, clock, dataSource);
+        return new ClassGrantMutationService(catalogue, store, store, policies::require, clock, events);
     }
 }
