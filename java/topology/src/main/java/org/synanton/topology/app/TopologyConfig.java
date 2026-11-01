@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.sql.DataSource;
 import java.time.Clock;
 import java.util.LinkedHashSet;
 
@@ -44,9 +45,10 @@ public class TopologyConfig {
             PgvRuleCatalogue catalogue,
             JdbcGrantMutationStore store,
             JdbcOrganizationPolicyRepository policies,
-            Clock clock
+            Clock clock,
+            DataSource dataSource
     ) {
-        return new GrantMutationService(catalogue, store, store, store, policies::require, clock);
+        return new GrantMutationService(catalogue, store, store, store, policies::require, clock, dataSource);
     }
 
     @Bean
@@ -54,8 +56,9 @@ public class TopologyConfig {
             PgvRuleCatalogue catalogue,
             JdbcClassGrantMutationStore store,
             JdbcOrganizationPolicyRepository policies,
-            Clock clock
+            Clock clock,
+            DataSource dataSource
     ) {
-        return new ClassGrantMutationService(catalogue, store, store, store, policies::require, clock);
+        return new ClassGrantMutationService(catalogue, store, store, store, policies::require, clock, dataSource);
     }
 }

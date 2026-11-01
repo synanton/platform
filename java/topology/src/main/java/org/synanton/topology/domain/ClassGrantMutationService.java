@@ -4,7 +4,10 @@ import org.synanton.common.grpc.validation.PgvFieldViolation;
 import org.synanton.common.grpc.validation.PgvRuleCatalogue;
 import org.synanton.topology.domain.model.OrganizationPolicy;
 import org.synanton.topology.domain.model.PropagationId;
+import org.synanton.topology.infra.jdbc.TransactionalJdbc;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -38,23 +41,24 @@ public class ClassGrantMutationService {
     }
 
     public interface ClassGrantStore {
-        UUID insertPending(ClassGrantCommand command, Instant now);
+        UUID insertPending(Connection connection, ClassGrantCommand command, Instant now);
 
         void markPropagated(UUID grantId, Instant at);
 
         void markStuck(UUID grantId);
 
-        void revoke(UUID grantId, Instant at);
+        void revoke(Connection connection, UUID grantId, Instant at);
 
         String currentStateJson(String tenantId, String subjectId, String sensitivityClass);
     }
 
     public interface OutboxStore {
-        UUID insert(String eventType, Map<String, Object> payload, Instant now);
+        UUID insert(Connection connection, String eventType, Map<String, Object> payload, Instant now);
     }
 
     public interface AuditStore {
         void insert(
+                Connection connection,
                 String actorSubjectId,
                 String actorType,
                 String actorRole,
@@ -77,6 +81,7 @@ public class ClassGrantMutationService {
     private final AuditStore audit;
     private final PolicyLookup policies;
     private final Clock clock;
+    private final DataSource dataSource;
 
     public ClassGrantMutationService(
             PgvRuleCatalogue catalogue,
@@ -84,7 +89,8 @@ public class ClassGrantMutationService {
             OutboxStore outbox,
             AuditStore audit,
             PolicyLookup policies,
-            Clock clock
+            Clock clock,
+            DataSource dataSource
     ) {
         this.catalogue = catalogue;
         this.grants = grants;
@@ -92,6 +98,7 @@ public class ClassGrantMutationService {
         this.audit = audit;
         this.policies = policies;
         this.clock = clock;
+        this.dataSource = dataSource;
     }
 
     public PropagationId grant(ClassGrantCommand command) {
@@ -102,35 +109,38 @@ public class ClassGrantMutationService {
         OrganizationPolicy policy = policies.require(command.tenantId());
         Instant now = Instant.now(clock);
         String before = grants.currentStateJson(command.tenantId(), command.subjectId(), command.sensitivityClass());
-        UUID grantId = grants.insertPending(command, now);
-        Map<String, Object> afterState = Map.of(
-                "grantId", grantId.toString(),
-                "tenantId", command.tenantId(),
-                "subjectId", command.subjectId(),
-                "class", command.sensitivityClass(),
-                "permission", command.permission(),
-                "tier", policy.tier()
-        );
-        UUID outboxId = outbox.insert("CLASS_GRANT_UPSERT", Map.of(
-                "event_type", "CLASS_GRANT_UPSERT",
-                "grant_id", grantId.toString(),
-                "tenant_id", command.tenantId(),
-                "subject_id", command.subjectId(),
-                "class", command.sensitivityClass(),
-                "permission", command.permission()
-        ), now);
-        audit.insert(
-                command.actorSubjectId(),
-                command.actorType(),
-                command.actorRole(),
-                command.tenantId(),
-                "CLASS_GRANT_CREATED",
-                command.sensitivityClass(),
-                StateHasher.sha256(before == null ? "" : before),
-                StateHasher.sha256(afterState),
-                afterState
-        );
-        return new PropagationId(grantId, outboxId, PropagationId.PENDING, now);
+        return TransactionalJdbc.inTransaction(dataSource, connection -> {
+            UUID grantId = grants.insertPending(connection, command, now);
+            Map<String, Object> afterState = Map.of(
+                    "grantId", grantId.toString(),
+                    "tenantId", command.tenantId(),
+                    "subjectId", command.subjectId(),
+                    "class", command.sensitivityClass(),
+                    "permission", command.permission(),
+                    "tier", policy.tier()
+            );
+            UUID outboxId = outbox.insert(connection, "CLASS_GRANT_UPSERT", Map.of(
+                    "event_type", "CLASS_GRANT_UPSERT",
+                    "grant_id", grantId.toString(),
+                    "tenant_id", command.tenantId(),
+                    "subject_id", command.subjectId(),
+                    "class", command.sensitivityClass(),
+                    "permission", command.permission()
+            ), now);
+            audit.insert(
+                    connection,
+                    command.actorSubjectId(),
+                    command.actorType(),
+                    command.actorRole(),
+                    command.tenantId(),
+                    "CLASS_GRANT_CREATED",
+                    command.sensitivityClass(),
+                    StateHasher.sha256(before == null ? "" : before),
+                    StateHasher.sha256(afterState),
+                    afterState
+            );
+            return new PropagationId(grantId, outboxId, PropagationId.PENDING, now);
+        });
     }
 
     public PropagationId revoke(
@@ -141,24 +151,27 @@ public class ClassGrantMutationService {
             String actorRole
     ) {
         Instant now = Instant.now(clock);
-        grants.revoke(grantId, now);
-        UUID outboxId = outbox.insert("CLASS_GRANT_REVOKE", Map.of(
-                "event_type", "CLASS_GRANT_REVOKE",
-                "grant_id", grantId.toString(),
-                "tenant_id", tenantId
-        ), now);
-        audit.insert(
-                actorSubjectId,
-                actorType,
-                actorRole,
-                tenantId,
-                "CLASS_GRANT_REVOKED",
-                grantId.toString(),
-                StateHasher.sha256("active"),
-                StateHasher.sha256("revoked"),
-                Map.of("grantId", grantId.toString())
-        );
-        return new PropagationId(grantId, outboxId, PropagationId.PENDING, now);
+        return TransactionalJdbc.inTransaction(dataSource, connection -> {
+            grants.revoke(connection, grantId, now);
+            UUID outboxId = outbox.insert(connection, "CLASS_GRANT_REVOKE", Map.of(
+                    "event_type", "CLASS_GRANT_REVOKE",
+                    "grant_id", grantId.toString(),
+                    "tenant_id", tenantId
+            ), now);
+            audit.insert(
+                    connection,
+                    actorSubjectId,
+                    actorType,
+                    actorRole,
+                    tenantId,
+                    "CLASS_GRANT_REVOKED",
+                    grantId.toString(),
+                    StateHasher.sha256("active"),
+                    StateHasher.sha256("revoked"),
+                    Map.of("grantId", grantId.toString())
+            );
+            return new PropagationId(grantId, outboxId, PropagationId.PENDING, now);
+        });
     }
 
     public static class InvalidClassGrantException extends RuntimeException {

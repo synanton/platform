@@ -5,6 +5,9 @@ import org.synanton.common.grpc.validation.PgvRuleCatalogue;
 import org.synanton.topology.domain.model.OrganizationPolicy;
 import org.synanton.topology.domain.model.PropagationId;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -15,6 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ClassGrantMutationServiceTest {
 
@@ -24,7 +29,7 @@ class ClassGrantMutationServiceTest {
     void shouldGrantClassAndWriteAuditHashes() {
         AtomicReference<String> after = new AtomicReference<>();
         AtomicReference<UUID> grantId = new AtomicReference<>();
-        ClassGrantMutationService service = service(after, grantId);
+        ClassGrantMutationService service = service(after, grantId, mockDataSource());
 
         PropagationId result = service.grant(command());
 
@@ -35,7 +40,7 @@ class ClassGrantMutationServiceTest {
 
     @Test
     void shouldRejectInvalidSensitivityClass() {
-        ClassGrantMutationService service = service(new AtomicReference<>(), new AtomicReference<>());
+        ClassGrantMutationService service = service(new AtomicReference<>(), new AtomicReference<>(), mockDataSource());
         ClassGrantMutationService.ClassGrantCommand invalid = new ClassGrantMutationService.ClassGrantCommand(
                 "demo", "hr", "GROUP", "SECRET", "SEARCH", "k1",
                 "admin", "USER_SUBJECT", "user");
@@ -51,7 +56,8 @@ class ClassGrantMutationServiceTest {
 
     private static ClassGrantMutationService service(
             AtomicReference<String> afterHash,
-            AtomicReference<UUID> grantId
+            AtomicReference<UUID> grantId,
+            DataSource dataSource
     ) {
         OrganizationPolicy policy = new OrganizationPolicy(
                 "demo", "STANDARD", List.of("us-east-1"), "ALWAYS", "bge-reranker-large",
@@ -60,7 +66,7 @@ class ClassGrantMutationServiceTest {
                 new PgvRuleCatalogue(),
                 new ClassGrantMutationService.ClassGrantStore() {
                     @Override
-                    public UUID insertPending(ClassGrantMutationService.ClassGrantCommand command, Instant now) {
+                    public UUID insertPending(Connection c, ClassGrantMutationService.ClassGrantCommand command, Instant now) {
                         UUID id = UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc");
                         grantId.set(id);
                         return id;
@@ -73,17 +79,28 @@ class ClassGrantMutationServiceTest {
                     public void markStuck(UUID id) {}
 
                     @Override
-                    public void revoke(UUID id, Instant at) {}
+                    public void revoke(Connection c, UUID id, Instant at) {}
 
                     @Override
                     public String currentStateJson(String tenantId, String subjectId, String sensitivityClass) {
                         return "";
                     }
                 },
-                (eventType, payload, now) -> UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd"),
-                (actor, type, role, tenant, action, resource, before, after, payload) -> afterHash.set(after),
+                (c, eventType, payload, now) -> UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                (c, actor, type, role, tenant, action, resource, before, after, payload) -> afterHash.set(after),
                 tenantId -> policy,
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                dataSource
         );
+    }
+
+    private static DataSource mockDataSource() {
+        DataSource dataSource = mock(DataSource.class);
+        try {
+            when(dataSource.getConnection()).thenReturn(mock(Connection.class));
+        } catch (SQLException e) {
+            throw new AssertionError(e);
+        }
+        return dataSource;
     }
 }
