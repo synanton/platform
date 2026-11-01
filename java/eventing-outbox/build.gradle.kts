@@ -11,6 +11,8 @@ dependencies {
     // consumers construct the dispatcher via KafkaOutboxDispatcher.connect and do not
     // touch KafkaProducer directly).
     implementation(libs.kafka.clients)
+    implementation(libs.micrometer.core)
+    implementation(libs.slf4j.api)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

@@ -151,6 +151,11 @@ class OutboxEventPublisherTest {
         }
 
         @Override
+        public long pendingCount() {
+            return 0;
+        }
+
+        @Override
         public Optional<OutboxEntry> find(UUID eventId) {
             return Optional.empty();
         }
