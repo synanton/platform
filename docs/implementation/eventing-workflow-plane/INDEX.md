@@ -1,7 +1,7 @@
 ---
 title: "Eventing and Workflow Plane - Implementation Plan"
-status: "EWP-0 and EWP-1 complete; EWP-2 first slice in progress; later phases not started"
-last_reviewed: "2026-10-23"
+status: "EWP-0 and EWP-1 complete; EWP-2 publisher + outbox/broker slices in progress; later phases not started"
+last_reviewed: "2026-11-01"
 ---
 
 # Eventing and Workflow Plane - Implementation Plan
@@ -10,7 +10,7 @@ last_reviewed: "2026-10-23"
 **Architecture reference:** `docs/architecture/synanton-design-1.27.md`; [ADR-004](../../architecture/decisions/adr-004-eventing-workflow-plane.md); capstone positioning in `docs/architecture/synanton-platform-architecture-1.0.md` §6, §14, §15.
 **Target repository:** `synanton/platform` (this repo) - no cross-repo split; unlike the extraction plane, there is no separate deployable service implied by the design.
 **Audience:** Architects, module owners, platform engineers
-**Last Updated:** 2026-10-23
+**Last Updated:** 2026-11-01
 
 **Status reviewed 2026-10-23:** Design 1.27 is approved and its delivery
 contract was frozen on 2026-10-17 (#247). The freeze closes the contract gate;
@@ -26,10 +26,14 @@ merge commit [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05
 from the code commits. The profile is the stable reference for EWP-2 and EWP-4.
 Reliable publication is tracked in [#394](https://github.com/synanton/platform/issues/394).
 [Local Real Demo v1 #399](https://github.com/synanton/platform/issues/399) is On Track
-(merged PR #401; green post-merge CI), so EWP-2 is unblocked. The first slice adds
-`java/eventing-publisher` — a publication port and write-time validation, without a
-transport, outbox, or consumer — and is in progress. The full EWP-2 deliverables below
-remain; workflow execution and integration remain later phases.
+(merged PR #401; green post-merge CI), so EWP-2 is unblocked. The publisher slice added
+`java/eventing-publisher` — a publication port and write-time validation — and the outbox
+slice added `java/eventing-outbox`: a transactional outbox, the broker-agnostic
+`OutboxDispatcher` seam with a `KafkaOutboxDispatcher` (Redpanda in local Compose, no K8s),
+and a pending-row `OutboxReader` loop. E2E publish → broker → consume runs against the
+Compose broker and is separated from the unit suite. The three legacy publisher
+migrations, retry policy, and per-aggregate ordering below remain; workflow execution and
+integration remain later phases.
 
 ## Progress delivery — decision (2026-10-22)
 
@@ -106,7 +110,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 |-------|------|--------|
 | EWP-0 | Contract-to-implementation reconciliation and scope decision | Complete — #375 |
 | EWP-1 | Implement frozen Event/Command contract | Complete — PRs #393 and #396 (`a288f7b`) |
-| EWP-2 | Reliable Publication | In progress — publisher port/validation slice; outbox/transport not started — #394 |
+| EWP-2 | Reliable Publication | In progress — publisher port + transactional outbox/Redpanda broker; migrations, retry policy, ordering remain — #394 |
 | EWP-3 | Reliable Consumption | Not started |
 | EWP-4 | Workflow Foundation | Not started |
 | EWP-5 | Platform Integration | Not started |
@@ -122,6 +126,7 @@ Phases follow Design 1.27 §104 directly (Event Contract → Reliable Publicatio
 |---|---|---|
 | `java/eventing-contract` | library | EWP-1 Event/Command types, type/version registries, and canonical JSON profile; base records #393, admission validation #396 (`a288f7b`). Publication, transport, outbox/inbox, and workflow APIs remain separately gated phases. Mirrors how `java/extraction-contract` carries a contract with no service dependencies. |
 | `java/eventing-publisher` | library | EWP-2 publication port and write-time tenant/schema validation. No transport, outbox, consumer, or broker; the first slice only. |
+| `java/eventing-outbox` | library | EWP-2 transactional outbox: `EventOutbox`/`JdbcEventOutbox` + `V1__event_outbox.sql`, commit-then-dispatch `OutboxEventPublisher`, broker-agnostic `OutboxDispatcher` seam with `KafkaOutboxDispatcher` (Redpanda) and `OutboxReader` pending-row loop. |
 | `java/workflow-engine` | library/service | Workflow definition, durable state, timeout, cancellation, recovery (EWP-4). PostgreSQL-backed only, per §99 - no broker dependency. |
 
 ### Modified modules
@@ -236,31 +241,37 @@ model: { id: embedding, version: "4" }
 
 ## Phase EWP-2 - Reliable Publication
 
-**Status:** In progress — first slice (publisher port and write-time validation). Tracked by [#394](https://github.com/synanton/platform/issues/394). The Local Real Demo gate ([#399](https://github.com/synanton/platform/issues/399)) is On Track; full reliable publication remains not started.
+**Status:** In progress — publisher port plus transactional outbox and local Redpanda broker. Tracked by [#394](https://github.com/synanton/platform/issues/394); outbox slice is [#461](https://github.com/synanton/platform/issues/461). The Local Real Demo gate ([#399](https://github.com/synanton/platform/issues/399)) is On Track. The three legacy publisher migrations, retry policy, per-aggregate ordering, and publication-lag observability remain.
 Consumes code commits [`7523fae`](https://github.com/synanton/platform/commit/7523fae137088056d111c11b7e90cb9a230936be) (base records) and [`a288f7b`](https://github.com/synanton/platform/commit/a288f7b9282df73ec2060b1cff60fcdd25b45112) (registries), plus profile revision [`fbcb5ee`](https://github.com/synanton/platform/commit/fbcb5ee7e05b806a6c9e9705e90609074715e8f5) of [`EWP-1-contract.md`](./EWP-1-contract.md). Security metadata is a claim, not authorization data. Register and validate `(event_type, event_version)` before outbox publication. `CausationChainValidator` validates complete chains only; an individual message may have an external parent, so EWP-2 must not treat a partial chain as invalid or complete-chain validation as a per-message publication check.
 
 **Goal:** outbox pattern, retryable and monitorable, replacing all three ad-hoc mechanisms identified in EWP-0 - not adding a fourth.
 
-### First slice (in progress)
+### Landed slices
 
 `java/eventing-publisher` adds the `EventPublisher` port and `AbstractEventPublisher`,
 which enforce verified tenant scope and `EventTypeRegistry` admission before delivery.
-Unit tests cover stable event/correlation/causation identity across retries, cross-tenant
-rejection, and unregistered event-version rejection at publish time. This slice has no
-outbox, broker, transport, consumer, retry policy, or end-to-end delivery; those remain
-the deliverables below.
+
+`java/eventing-outbox` (PR #462 then the broker slice) adds the transactional outbox: the
+domain write and the outbox append share one transaction, dispatch happens after commit,
+`KafkaOutboxDispatcher` awaits broker acknowledgement before `markDispatched`, and an
+`OutboxReader` loop drains `pending()` for restart recovery. E2E publish → Redpanda →
+consume runs against a local Compose broker pinned by digest (no Kubernetes) and is
+separated from the unit suite. Failure tests cover outbox-write rollback, dispatch-failure
+row retention, and stable `event_id` reuse across retries.
 
 ### Deliverables
 
-| # | Deliverable |
-|---|---|
-| 1 | Outbox table/record per the §28 shape above, shared schema (or shared library over per-service tables - decide once, document, apply everywhere). |
-| 2 | `EventPublisher` implementation: claims outbox rows, publishes, marks `published_at`, increments `attempt_count`/`last_error` on failure. |
-| 3 | Preserve the existing dynamic tenant-registry enumeration; adapt the legacy manifest/source outbox records to the frozen envelope/publisher contract without reintroducing a tenant allowlist. |
-| 4 | Replace `TopologyOutboxDispatcher`'s dead Kafka stub with the real publisher. |
-| 5 | Replace `syntology`'s `EventPublisher`/`FileEventLogger` with the conformant publisher. |
-| 6 | Publication retry policy using the §32 error classes; publication-lag monitoring metric. |
-| 7 | Preserve per-aggregate ordering on a failed publication within a selected poll batch; a later event for the same aggregate must wait until the earlier event is acknowledged or explicitly dispositioned. |
+Deliverables 1 and 2 are implemented in `java/eventing-outbox`; 3-7 remain open.
+
+| # | Deliverable | Status |
+|---|---|---|
+| 1 | Outbox table/record per the §28 shape above, shared schema (or shared library over per-service tables - decide once, document, apply everywhere). | Done — `V1__event_outbox.sql` + `JdbcEventOutbox` |
+| 2 | `EventPublisher` implementation: claims outbox rows, publishes, marks `published_at`, increments `attempt_count`/`last_error` on failure. | Done — `OutboxEventPublisher` + `OutboxReader` |
+| 3 | Preserve the existing dynamic tenant-registry enumeration; adapt the legacy manifest/source outbox records to the frozen envelope/publisher contract without reintroducing a tenant allowlist. | Open |
+| 4 | Replace `TopologyOutboxDispatcher`'s dead Kafka stub with the real publisher. | Open |
+| 5 | Replace `syntology`'s `EventPublisher`/`FileEventLogger` with the conformant publisher. | Open |
+| 6 | Publication retry policy using the §32 error classes; publication-lag monitoring metric. | Open |
+| 7 | Preserve per-aggregate ordering on a failed publication within a selected poll batch; a later event for the same aggregate must wait until the earlier event is acknowledged or explicitly dispositioned. | Open |
 
 ### Definition of Done
 

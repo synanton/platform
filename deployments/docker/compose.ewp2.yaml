@@ -1,0 +1,36 @@
+# EWP-2 outbox broker (issue #461 PR 2): single-node Redpanda, pinned by digest.
+# Redpanda is Kafka-protocol-compatible and runs as one binary (no ZooKeeper),
+# so the publisher/outbox slice needs no Kubernetes cluster. Host clients reach
+# the broker on localhost:9092 (OUTSIDE listener); Compose services use
+# redpanda:29092 (PLAINTEXT listener).
+#
+#   docker compose -f deployments/docker/compose.ewp2.yaml up -d
+#   docker compose -f deployments/docker/compose.ewp2.yaml down
+services:
+  redpanda:
+    image: redpandadata/redpanda@sha256:8b2802411074676c96a81eb65483b29e63a212673023869e91fd41d728aaa278
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -qi 'healthy'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped

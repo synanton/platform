@@ -1,0 +1,15 @@
+{
+  "archive_note": "Proves the blind-sheet + packet + fresh-context mechanism end to end; superseded by chunking change 28c20b1; not calibration evidence.",
+  "not_calibration_evidence": true,
+  "not_validated": [
+    "grades against current benchmark-aligned chunks",
+    "kappa or B4 relevance"
+  ],
+  "status": "provisional_pipeline_evidence",
+  "superseded_by": "#467 path B (hierarchical chunking rebuild)",
+  "validated": [
+    "blind sheet + metadata-free packet",
+    "fresh-context grader mechanism",
+    "4-level schema and lineage flags"
+  ]
+}
