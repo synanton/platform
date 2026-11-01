@@ -40,6 +40,10 @@ public final class JdbcEventOutbox implements EventOutbox {
             LIMIT ?
             """;
 
+    private static final String SELECT_PENDING_COUNT = """
+            SELECT COUNT(*) FROM event_outbox WHERE dispatched_at IS NULL
+            """;
+
     private static final String MARK_DISPATCHED = """
             UPDATE event_outbox
             SET dispatched_at = now()
@@ -102,6 +106,19 @@ public final class JdbcEventOutbox implements EventOutbox {
             }
         } catch (SQLException exception) {
             throw new IllegalStateException("outbox pending query failed", exception);
+        }
+    }
+
+    @Override
+    public long pendingCount() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement select = connection.prepareStatement(SELECT_PENDING_COUNT)) {
+            try (ResultSet result = select.executeQuery()) {
+                result.next();
+                return result.getLong(1);
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("outbox pending count query failed", exception);
         }
     }
 

@@ -1,5 +1,8 @@
 package org.synanton.eventing.outbox;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -15,19 +18,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class OutboxReader implements AutoCloseable {
 
+    private static final Logger log = LoggerFactory.getLogger(OutboxReader.class);
+
     private final EventOutbox outbox;
     private final OutboxDispatcher dispatcher;
     private final int batchSize;
+    private final OutboxMetrics metrics;
     private final AtomicBoolean running = new AtomicBoolean();
     private volatile ScheduledExecutorService scheduler;
 
     public OutboxReader(EventOutbox outbox, OutboxDispatcher dispatcher, int batchSize) {
+        this(outbox, dispatcher, batchSize, new OutboxMetrics());
+    }
+
+    public OutboxReader(EventOutbox outbox, OutboxDispatcher dispatcher, int batchSize, OutboxMetrics metrics) {
         this.outbox = Objects.requireNonNull(outbox, "outbox");
         this.dispatcher = Objects.requireNonNull(dispatcher, "dispatcher");
         if (batchSize < 1) {
             throw new IllegalArgumentException("batchSize must be positive");
         }
         this.batchSize = batchSize;
+        this.metrics = Objects.requireNonNull(metrics, "metrics");
     }
 
     /** Starts the scheduled reader loop. Idempotent; a second start is a no-op. */
@@ -59,11 +70,19 @@ public final class OutboxReader implements AutoCloseable {
     }
 
     private boolean dispatchOne(OutboxEntry entry) {
+        metrics.attempt(entry.attempts() + 1);
         try {
             dispatcher.dispatch(entry);
-            return outbox.markDispatched(entry.eventId());
+            boolean marked = outbox.markDispatched(entry.eventId());
+            if (marked) {
+                metrics.dispatched();
+            }
+            return marked;
         } catch (RuntimeException failure) {
             outbox.markFailed(entry.eventId(), failure.getMessage());
+            metrics.failed();
+            log.warn("outbox dispatch failed event_id={} attempt={} error={}",
+                    entry.eventId(), entry.attempts() + 1, failure.getClass().getSimpleName());
             return false;
         }
     }

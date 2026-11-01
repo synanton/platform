@@ -53,6 +53,11 @@ public final class InMemoryEventOutbox implements EventOutbox {
     }
 
     @Override
+    public synchronized long pendingCount() {
+        return rows.values().stream().filter(stored -> !stored.dispatched()).count();
+    }
+
+    @Override
     public synchronized Optional<OutboxEntry> find(UUID eventId) {
         StoredEntry stored = rows.get(Objects.requireNonNull(eventId, "eventId"));
         return stored == null ? Optional.empty() : Optional.of(stored.entry());

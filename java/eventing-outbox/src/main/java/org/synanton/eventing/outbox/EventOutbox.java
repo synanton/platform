@@ -19,6 +19,9 @@ public interface EventOutbox {
     /** Returns undispatched rows ordered by creation time. */
     List<OutboxEntry> pending(int limit);
 
+    /** Returns the number of undispatched rows. */
+    long pendingCount();
+
     /** Returns the durable row even after dispatch. */
     Optional<OutboxEntry> find(UUID eventId);
 
