@@ -5,6 +5,9 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.synanton.topology.domain.model.Tenant;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,13 +36,16 @@ public class JdbcTenantRepository {
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
-    public void insert(Tenant tenant) {
-        jdbc.update(
-                "INSERT INTO topology.tenants (tenant_id, display_name, created_at) VALUES (?, ?, ?)",
-                tenant.tenantId(),
-                tenant.displayName(),
-                tenant.createdAt() != null ? java.sql.Timestamp.from(tenant.createdAt()) : null
-        );
+    public void insert(Connection connection, Tenant tenant) {
+        try (PreparedStatement insert = connection.prepareStatement(
+                "INSERT INTO topology.tenants (tenant_id, display_name, created_at) VALUES (?, ?, ?)")) {
+            insert.setString(1, tenant.tenantId());
+            insert.setString(2, tenant.displayName());
+            insert.setTimestamp(3, tenant.createdAt() != null ? java.sql.Timestamp.from(tenant.createdAt()) : null);
+            insert.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to insert tenant row", e);
+        }
     }
 
     public boolean exists(String tenantId) {

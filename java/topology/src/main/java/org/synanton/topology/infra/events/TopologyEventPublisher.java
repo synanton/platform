@@ -11,6 +11,7 @@ import org.synanton.eventing.outbox.OutboxEventPublisher;
 import org.synanton.topology.domain.event.ClassGrantRevoke;
 import org.synanton.topology.domain.event.ClassGrantUpsert;
 import org.synanton.topology.domain.event.GrantCreated;
+import org.synanton.topology.domain.event.TenantCreated;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @Component
 public class TopologyEventPublisher {
 
+    public static final String TENANT_CREATED = "TenantCreated";
     public static final String GRANT_CREATED = "GrantCreated";
     public static final String CLASS_GRANT_UPSERT = "ClassGrantUpsert";
     public static final String CLASS_GRANT_REVOKE = "ClassGrantRevoke";
@@ -38,6 +40,10 @@ public class TopologyEventPublisher {
     public TopologyEventPublisher(OutboxEventPublisher publisher, Clock clock) {
         this.publisher = publisher;
         this.clock = clock;
+    }
+
+    public UUID publishTenantCreated(String tenantId, TenantCreated payload, BusinessWork businessWork) {
+        return publish(tenantId, TENANT_CREATED, payload, businessWork);
     }
 
     public UUID publishGrantCreated(String tenantId, GrantCreated payload, BusinessWork businessWork) {

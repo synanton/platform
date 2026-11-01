@@ -19,8 +19,11 @@ import org.synanton.eventing.outbox.OutboxEventPublisher;
 import org.synanton.eventing.outbox.OutboxReader;
 import org.synanton.topology.domain.GrantMutationService;
 import org.synanton.topology.domain.event.GrantCreated;
+import org.synanton.topology.domain.event.TenantCreated;
+import org.synanton.topology.domain.model.Tenant;
 import org.synanton.topology.infra.events.TopologyEventPublisher;
 import org.synanton.topology.infra.jdbc.JdbcGrantMutationStore;
+import org.synanton.topology.infra.jdbc.JdbcTenantRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.redpanda.RedpandaContainer;
@@ -99,6 +102,24 @@ class TopologyGrantE2ETest {
     }
 
     @Test
+    void tenantCreated_publishesAndConsumes() {
+        JdbcEventOutbox outbox = new JdbcEventOutbox(dataSource(), "topology.event_outbox");
+        TopologyEventPublisher events = publisher(outbox, dispatcher);
+        JdbcTenantRepository tenants = new JdbcTenantRepository(new JdbcTemplate(dataSource()));
+        String tenantId = "tenant-b";
+
+        UUID eventId = events.publishTenantCreated(
+                tenantId,
+                new TenantCreated(tenantId, "Tenant B", "owner-1"),
+                connection -> tenants.insert(connection, new Tenant(tenantId, "Tenant B", Instant.now())));
+
+        assertThat(outbox.isDispatched(eventId)).isTrue();
+        assertThat(jdbc().queryForObject(
+                "SELECT COUNT(*) FROM topology.tenants WHERE tenant_id = ?", Integer.class, tenantId)).isEqualTo(1);
+        assertThat(consume(eventId).value()).contains("TenantCreated");
+    }
+
+    @Test
     void dispatchFailure_leavesTheRowPendingAndTheReaderRetriesIt() throws Exception {
         JdbcEventOutbox outbox = new JdbcEventOutbox(dataSource(), "topology.event_outbox");
         TopologyEventPublisher failing = publisher(outbox, entry -> {
@@ -129,6 +150,7 @@ class TopologyGrantE2ETest {
 
     private static TopologyEventPublisher publisher(JdbcEventOutbox outbox, org.synanton.eventing.outbox.OutboxDispatcher dispatcher) {
         EventTypeRegistry registry = new EventTypeRegistry(List.of(
+                new EventTypeDeclaration(TopologyEventPublisher.TENANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(TopologyEventPublisher.GRANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(TopologyEventPublisher.CLASS_GRANT_UPSERT, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(TopologyEventPublisher.CLASS_GRANT_REVOKE, 1, ReplayClass.REPLAY_SAFE, Optional.empty())));
@@ -188,6 +210,13 @@ class TopologyGrantE2ETest {
     private static void applySchema() {
         JdbcTemplate jdbc = jdbc();
         jdbc.execute("CREATE SCHEMA topology");
+        jdbc.execute("""
+                CREATE TABLE topology.tenants (
+                    tenant_id    TEXT PRIMARY KEY,
+                    display_name TEXT NOT NULL,
+                    created_at   TIMESTAMPTZ
+                )
+                """);
         jdbc.execute("""
                 CREATE TABLE topology.acl_grants (
                     grant_id          UUID PRIMARY KEY,

@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.synanton.common.error.NotFoundException;
+import org.synanton.topology.domain.event.TenantCreated;
 import org.synanton.topology.domain.model.Connector;
 import org.synanton.topology.domain.model.Grant;
 import org.synanton.topology.domain.model.Tenant;
 import org.synanton.topology.domain.model.TenantPolicy;
+import org.synanton.topology.infra.events.TopologyEventPublisher;
 import org.synanton.topology.infra.jdbc.*;
 
 import java.math.BigDecimal;
@@ -44,19 +46,22 @@ public class TenantController {
     private final JdbcOutboxRepository outbox;
     private final JdbcConnectorRepository connectors;
     private final ObjectMapper objectMapper;
+    private final TopologyEventPublisher events;
 
     public TenantController(JdbcTenantRepository tenants,
                             JdbcGrantRepository grants,
                             JdbcPolicyRepository policies,
                             JdbcOutboxRepository outbox,
                             JdbcConnectorRepository connectors,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper,
+                            TopologyEventPublisher events) {
         this.tenants = tenants;
         this.grants = grants;
         this.policies = policies;
         this.outbox = outbox;
         this.connectors = connectors;
         this.objectMapper = objectMapper;
+        this.events = events;
     }
 
     // ── Tenant endpoints ────────────────────────────────────────────────────
@@ -72,14 +77,13 @@ public class TenantController {
     public ResponseEntity<TenantResponse> createTenant(@RequestBody CreateTenantRequest req) {
         Instant now = Instant.now();
         Tenant tenant = new Tenant(req.tenantId(), req.displayName(), now);
-        tenants.insert(tenant);
-
-        String payload = toJson(Map.of(
-                "tenantId", req.tenantId(),
-                "displayName", req.displayName(),
-                "ownerSubjectId", req.ownerSubjectId() != null ? req.ownerSubjectId() : ""
-        ));
-        outbox.insert("TENANT_CREATED", payload);
+        events.publishTenantCreated(
+                req.tenantId(),
+                new TenantCreated(
+                        req.tenantId(),
+                        req.displayName(),
+                        req.ownerSubjectId() != null ? req.ownerSubjectId() : ""),
+                connection -> tenants.insert(connection, tenant));
 
         return ResponseEntity.status(201)
                 .body(new TenantResponse(tenant.tenantId(), tenant.displayName(), tenant.createdAt()));
