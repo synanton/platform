@@ -30,7 +30,11 @@ public class TopologyEventConfig {
     public EventTypeRegistry topologyEventTypes() {
         return new EventTypeRegistry(List.of(
                 new EventTypeDeclaration(
-                        TopologyEventPublisher.GRANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
+                        TopologyEventPublisher.TENANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
+                new EventTypeDeclaration(
+                        TopologyEventPublisher.RESOURCE_GRANT_CREATED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
+                new EventTypeDeclaration(
+                        TopologyEventPublisher.RESOURCE_GRANT_REVOKED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(
                         TopologyEventPublisher.CLASS_GRANT_UPSERT, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 new EventTypeDeclaration(
