@@ -117,6 +117,8 @@ expected failures on a bare machine, not a regression:
 #   synquest-ydb, synvault-ydb, synvault-migrate, synquest-lucene, synanton-bench-emitter
 ```
 
+Local `buildAll` also requires `-PskipUi` until the `syntology-admin` UI build (tailwind/postcss) is fixed.
+
 For the local ingestion demo, the repository includes a Docker Compose stack and sample documents. Follow the current [demo instructions](docs/demos) for the required services, profiles, and ingestion commands. Copy `.env.example` and configure secrets before starting services:
 
 ```bash
