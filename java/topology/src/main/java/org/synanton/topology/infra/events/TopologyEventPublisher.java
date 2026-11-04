@@ -3,6 +3,7 @@ package org.synanton.topology.infra.events;
 import org.springframework.stereotype.Component;
 import org.synanton.eventing.contract.ActorKind;
 import org.synanton.eventing.contract.Event;
+import org.synanton.eventing.contract.EventEnvelopeBuilder;
 import org.synanton.eventing.contract.Producer;
 import org.synanton.eventing.contract.ReplayClass;
 import org.synanton.eventing.contract.SecurityMetadata;
@@ -15,9 +16,7 @@ import org.synanton.topology.domain.event.ResourceGrantRevoked;
 import org.synanton.topology.domain.event.TenantCreated;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -65,22 +64,16 @@ public class TopologyEventPublisher {
     }
 
     private <T> UUID publish(String tenantId, String eventType, T payload, BusinessWork businessWork) {
-        UUID eventId = UUID.randomUUID();
-        Event<T> event = new Event<>(
-                eventId,
+        Event<T> event = EventEnvelopeBuilder.build(
                 eventType,
                 1,
-                Instant.now(clock),
-                new Producer("topology", "0.1.0"),
                 tenantId,
-                Optional.empty(),
-                UUID.randomUUID(),
-                Optional.empty(),
+                payload,
+                new Producer("topology", "0.1.0"),
                 ReplayClass.REPLAY_SAFE,
-                Optional.empty(),
                 new SecurityMetadata(ActorKind.SERVICE, "topology", "UNCLASSIFIED", 1, List.of()),
-                payload);
+                clock);
         publisher.publish(tenantId, event, businessWork);
-        return eventId;
+        return event.eventId();
     }
 }

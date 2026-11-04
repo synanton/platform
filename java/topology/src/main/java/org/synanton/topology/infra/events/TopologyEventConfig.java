@@ -1,5 +1,8 @@
 package org.synanton.topology.infra.events;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.synanton.eventing.contract.EventTypeDeclaration;
@@ -8,6 +11,7 @@ import org.synanton.eventing.contract.ReplayClass;
 import org.synanton.eventing.outbox.EventOutbox;
 import org.synanton.eventing.outbox.JdbcEventOutbox;
 import org.synanton.eventing.outbox.JdbcOutboxTransaction;
+import org.synanton.eventing.outbox.KafkaOutboxDispatcher;
 import org.synanton.eventing.outbox.NoOpDispatcher;
 import org.synanton.eventing.outbox.OutboxDispatcher;
 import org.synanton.eventing.outbox.OutboxEventPublisher;
@@ -25,6 +29,8 @@ import java.util.Optional;
  */
 @Configuration
 public class TopologyEventConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(TopologyEventConfig.class);
 
     @Bean
     public EventTypeRegistry topologyEventTypes() {
@@ -52,8 +58,19 @@ public class TopologyEventConfig {
     }
 
     @Bean
-    public OutboxDispatcher topologyOutboxDispatcher() {
-        return new NoOpDispatcher();
+    public OutboxDispatcher topologyOutboxDispatcher(
+            @Value("${eventing.dispatcher.mode:}") String mode,
+            @Value("${eventing.kafka.bootstrap-servers:}") String bootstrapServers,
+            @Value("${eventing.kafka.topic:topology.events}") String topic) {
+        if ("demo".equalsIgnoreCase(mode)) {
+            log.warn("NoOpDispatcher active — topology events will not be delivered");
+            return new NoOpDispatcher();
+        }
+        if (bootstrapServers == null || bootstrapServers.isBlank()) {
+            throw new IllegalStateException(
+                    "eventing.kafka.bootstrap-servers is required; set eventing.dispatcher.mode=demo for no-op");
+        }
+        return KafkaOutboxDispatcher.connect(bootstrapServers, topic);
     }
 
     @Bean

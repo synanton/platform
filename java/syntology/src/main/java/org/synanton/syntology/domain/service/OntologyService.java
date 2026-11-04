@@ -180,9 +180,12 @@ public class OntologyService {
         checkWritePermission(tenant);
         EntityType created = jena().createEntity(tenant, version, label, superType);
         entityCache.invalidateAll();
-        // TODO(EWP-4): 4-arg path for TDB2 writes — see #394. Jena cannot share the outbox
-        // JDBC transaction, so this entity write and its event are never atomic; keep this on
-        // the append-only path rather than the same-transaction path.
+        // TODO(#485): Two non-atomic cases in syntology:
+        //   1. ENTITY_CREATED (this method): Jena TDB2 cannot share the JDBC Connection.
+        //      Permanent 4-arg path — will not be fixed by #485.
+        //   2. VERSION_BUMPED (createVersion / persist): MetadataRepository uses JdbcTemplate
+        //      (connection-per-op). Same-transaction requires the Connection-scoped refactor in #485.
+        // Until #485 lands, metadata writes and VersionBumped publication are not atomic.
         events.publishEntityCreated(tenant, new EntityCreated(label));
         return created;
     }
