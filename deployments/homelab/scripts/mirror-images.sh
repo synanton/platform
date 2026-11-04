@@ -189,6 +189,14 @@ build_and_push() {
             *)                  jar_glob="$PLATFORM_ROOT/java/$name/build/libs/$name*.jar" ;;
         esac
         local stage; stage="$(prebuilt_stage "$name" "$jar_glob")"
+        if [ "$name" = "synquest" ]; then
+            mkdir -p "$stage/demo-data/eval/retrieval-benchmark"
+            cp "$PLATFORM_ROOT/demo-data/eval/retrieval-benchmark/ontology-v2.jsonl" \
+               "$PLATFORM_ROOT/demo-data/eval/retrieval-benchmark/graph-v2.json" \
+               "$PLATFORM_ROOT/demo-data/eval/retrieval-benchmark/dense-embeddings-v2.json" \
+               "$PLATFORM_ROOT/demo-data/eval/retrieval-benchmark/queries-v2.rb-fixed-g5.jsonl" \
+               "$stage/demo-data/eval/retrieval-benchmark/"
+        fi
         docker build -f "$dockerfile" -t "$dest" "$stage" \
             || { note "build failed for ${name} — are the host jars built? (run the gradle bootJar first)"; FAILED_IMAGES+=("$dest"); rm -rf "$stage"; return 1; }
         rm -rf "$stage"

@@ -1,0 +1,1078 @@
+{
+  "rb003": [
+    {
+      "gold": "0110d461-0321-5085-874a-ec716a610909#0",
+      "entities": [
+        {
+          "type": "date",
+          "surface": "2016",
+          "df": 3,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2024",
+          "df": 6,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2015",
+          "df": 4,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2026",
+          "df": 5,
+          "kind": "year"
+        }
+      ],
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2016",
+              "df": 3,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2016",
+              "df": 3,
+              "kind": "year"
+            }
+          ]
+        }
+      ],
+      "neighbor_count": 12,
+      "neighbors_by_kind": {
+        "year": 12
+      }
+    }
+  ],
+  "rb010": [
+    {
+      "gold": "0110d461-0321-5085-874a-ec716a610909#0",
+      "entities": [
+        {
+          "type": "date",
+          "surface": "2016",
+          "df": 3,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2024",
+          "df": 6,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2015",
+          "df": 4,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2026",
+          "df": 5,
+          "kind": "year"
+        }
+      ],
+      "neighbors": [
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2016",
+              "df": 3,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#32",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2016",
+              "df": 3,
+              "kind": "year"
+            }
+          ]
+        }
+      ],
+      "neighbor_count": 12,
+      "neighbors_by_kind": {
+        "year": 12
+      }
+    },
+    {
+      "gold": "03219438-50b5-58c7-8aea-44378f987de8#0",
+      "entities": [
+        {
+          "type": "date",
+          "surface": "2022",
+          "df": 5,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2009",
+          "df": 3,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2026",
+          "df": 5,
+          "kind": "year"
+        },
+        {
+          "type": "identifier",
+          "surface": "iatf 16949",
+          "df": 3,
+          "kind": "identifier"
+        },
+        {
+          "type": "date",
+          "surface": "2003",
+          "df": 7,
+          "kind": "year"
+        }
+      ],
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "type": "identifier",
+              "surface": "iatf 16949",
+              "df": 3,
+              "kind": "identifier"
+            },
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2009",
+              "df": 3,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2009",
+              "df": 3,
+              "kind": "year"
+            },
+            {
+              "type": "identifier",
+              "surface": "iatf 16949",
+              "df": 3,
+              "kind": "identifier"
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        }
+      ],
+      "neighbor_count": 14,
+      "neighbors_by_kind": {
+        "year": 14,
+        "identifier": 2
+      }
+    },
+    {
+      "gold": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+      "entities": [
+        {
+          "type": "date",
+          "surface": "2024",
+          "df": 6,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2015",
+          "df": 4,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2025",
+          "df": 5,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2022",
+          "df": 5,
+          "kind": "year"
+        },
+        {
+          "type": "identifier",
+          "surface": "iatf 16949",
+          "df": 3,
+          "kind": "identifier"
+        },
+        {
+          "type": "date",
+          "surface": "2003",
+          "df": 7,
+          "kind": "year"
+        }
+      ],
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "03219438-50b5-58c7-8aea-44378f987de8#0",
+          "via": [
+            {
+              "type": "identifier",
+              "surface": "iatf 16949",
+              "df": 3,
+              "kind": "identifier"
+            },
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "16bb330d-bdef-5eb4-9326-984875348c29#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2025",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "3387fbaf-72e3-54d1-b2c3-42e330ff71cd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#33",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2015",
+              "df": 4,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            },
+            {
+              "type": "identifier",
+              "surface": "iatf 16949",
+              "df": 3,
+              "kind": "identifier"
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2025",
+              "df": 5,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "b155d470-17bb-57e7-8c2c-66cb54862f12#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2024",
+              "df": 6,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2025",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2025",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        }
+      ],
+      "neighbor_count": 16,
+      "neighbors_by_kind": {
+        "year": 16,
+        "identifier": 2
+      }
+    }
+  ],
+  "rb008": [
+    {
+      "gold": "03219438-50b5-58c7-8aea-44378f987de8#0",
+      "entities": [
+        {
+          "type": "date",
+          "surface": "2022",
+          "df": 5,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2009",
+          "df": 3,
+          "kind": "year"
+        },
+        {
+          "type": "date",
+          "surface": "2026",
+          "df": 5,
+          "kind": "year"
+        },
+        {
+          "type": "identifier",
+          "surface": "iatf 16949",
+          "df": 3,
+          "kind": "identifier"
+        },
+        {
+          "type": "date",
+          "surface": "2003",
+          "df": 7,
+          "kind": "year"
+        }
+      ],
+      "neighbors": [
+        {
+          "chunk_id": "0110d461-0321-5085-874a-ec716a610909#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "2d5ae12a-6f01-5c28-8544-e659fd184817#0",
+          "via": [
+            {
+              "type": "identifier",
+              "surface": "iatf 16949",
+              "df": 3,
+              "kind": "identifier"
+            },
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#5",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#7",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "4e54d1ae-7e10-528c-9bcb-e49160c1145d#8",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2009",
+              "df": 3,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#40",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            },
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "57e23383-c832-5d3b-ad45-3ae63540f319#41",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "72d1cb5b-1f7c-52a2-ae6d-b2ade75e0849#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2009",
+              "df": 3,
+              "kind": "year"
+            },
+            {
+              "type": "identifier",
+              "surface": "iatf 16949",
+              "df": 3,
+              "kind": "identifier"
+            }
+          ]
+        },
+        {
+          "chunk_id": "93f806eb-d33e-52af-9639-90ffd1d289f8#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2022",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#15",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#16",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "be15399f-3cce-511d-be22-83aad53ed80e#18",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2003",
+              "df": 7,
+              "kind": "year"
+            }
+          ]
+        },
+        {
+          "chunk_id": "c7fed121-0599-55fb-b4db-4486e324f9fd#0",
+          "via": [
+            {
+              "type": "date",
+              "surface": "2026",
+              "df": 5,
+              "kind": "year"
+            }
+          ]
+        }
+      ],
+      "neighbor_count": 14,
+      "neighbors_by_kind": {
+        "year": 14,
+        "identifier": 2
+      }
+    }
+  ]
+}

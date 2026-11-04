@@ -1,4 +1,7 @@
 server:
+  tomcat:
+    max-http-form-post-size: ${SYNFLUX_TOMCAT_MAX_FORM_POST_SIZE:110MB}
+    max-swallow-size: ${SYNFLUX_TOMCAT_MAX_SWALLOW_SIZE:110MB}
   port: 8090
 
 spring:

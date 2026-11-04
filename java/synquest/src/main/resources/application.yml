@@ -14,6 +14,11 @@ management:
       exposure:
         include: health,info,metrics
 
+ontology:
+  v2:
+    path: ${ONTOLOGY_V2_PATH:demo-data/eval/retrieval-benchmark/ontology-v2.jsonl}
+    sha256: ${ONTOLOGY_V2_SHA256:00c7e8fb6e1385ffe97710c26523a720dbe57cd922653bf1d099e7dec051a389}
+
 synquest:
   index:
     path: ${SYNQUEST_INDEX_PATH:./data/synquest}

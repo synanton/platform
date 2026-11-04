@@ -1,0 +1,40 @@
+{
+  "section_refs": {
+    "restatement (second) of contracts": [
+      "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#24",
+      "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+      "57e23383-c832-5d3b-ad45-3ae63540f319#20"
+    ],
+    "section 2": [
+      "4e54d1ae-7e10-528c-9bcb-e49160c1145d#1",
+      "57e23383-c832-5d3b-ad45-3ae63540f319#38",
+      "57e23383-c832-5d3b-ad45-3ae63540f319#42"
+    ],
+    "section 6.2": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#57",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#97"
+    ],
+    "section 7.2": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#107",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#183"
+    ],
+    "section 10.1": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#123",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#127",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#128"
+    ],
+    "section 13.4": [
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#150",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#151",
+      "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#189"
+    ],
+    "\u00a7 74": [
+      "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#32",
+      "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#33",
+      "43ead8a1-a8ff-57ca-89e5-e2a3c3b30ca9#34"
+    ]
+  },
+  "note": "All df 3\u201315 section refs occur in legal casebook chunks; none of the current demo gold chunks contain them."
+}

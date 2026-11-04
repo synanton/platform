@@ -4,6 +4,7 @@ namespace: synanton
 resources:
   - namespace.yaml
   - configmap.yaml
+  - security-htpasswd.yaml
   - security.yaml
   - synquest.yaml
   - synflux.yaml

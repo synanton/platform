@@ -1,0 +1,162 @@
+{
+  "corpus_version": "demo-v2",
+  "base_corpus": "demo-v1/a993e6a1",
+  "documents": [
+    {
+      "id": "acme-corp-profile",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/acme-corp-profile.md",
+      "sha256": "5d1d73b38f8da34709c1de4e552c98e5b9306a6d0fd238633c59e870a666f82b",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "compliance-report",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/compliance-report.txt",
+      "sha256": "845bf03d88c465ef54f1b1c6c0b9108695f0d47a5a15340b3e16cbc26e8e4ce6",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "globex-manufacturing",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/globex-manufacturing.md",
+      "sha256": "e95578c260137147fcbff410d88896b9eac8be7e414c58236b3573a035482fcb",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "initech-ltd",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/initech-ltd.txt",
+      "sha256": "fc6ba3727e4a57de65f93ef27551eb7bf0939ef421d4e9ea1d8b40fdfbc004d5",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "logistics-network",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/logistics-network.md",
+      "sha256": "d5a093f416cc998a8d4584bb479b4bc0b44447bc32966e10e05dd2cafc4b14d2",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "market-analysis",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/market-analysis.txt",
+      "sha256": "6119114cacd8f84a0bddff438ba3ec1209456c267078f03f27d2d63f31ab6091",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "mental-health-report-2010",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/mental-health-report-2010.pdf",
+      "sha256": "d60e114c25f8bf7d69df2bdddead567b2958c8df326f30ccfb8800c3ebdb191f",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "outsourcing-agreement",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/outsourcing-agreement.pdf",
+      "sha256": "efdc607a19a80f5dd4d5a385baf876a08c5e51fdbaa08bc8332f16c422d4ae7e",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "quarterly-report-q1",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/quarterly-report-q1.md",
+      "sha256": "61ce2b2334b31383ea9ff745b7d8c15c62361b9b55bc75d5eadb093618ce114e",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "quarterly-report",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/quarterly-report.pdf",
+      "sha256": "1d3e11e15bae66182e91b37fe07b7e9b49de613aece146f81756bce212a0b9cc",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "risk-factors-2025",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/risk-factors-2025.txt",
+      "sha256": "e122bd2083c05aa07ce513009f2fe41881e482fad1dd3df06d731ffe35ba94d2",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "sks8300-web-interface-manual",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/sks8300-web-interface-manual.pdf",
+      "sha256": "a6c929ff06bb75883ad022461f0ed451ceb1b1d3242e9949ca689ae90ec7346e",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "structured-supply-chain",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/structured-supply-chain.md",
+      "sha256": "e135c0c1a794e44393de434963aa820211a7e3592f1c2533fe11f88b07951ace",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "supply-chain-overview",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/supply-chain-overview.txt",
+      "sha256": "ba1db29e87762db14596505073764a18028ed69213bf0a2809fad33dd9ba00b0",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "vendor-agreements",
+      "path": "/home/aminin/workspace/synanton/platform/demo-data/documents/vendor-agreements.txt",
+      "sha256": "ed36a4410ae887b3fa3c4bed5548fe8f0adaf94e44c35a5929d328092f368983",
+      "origin": "v1",
+      "license": "repo fixture"
+    },
+    {
+      "id": "filenet-p8-architecture-ch1-2",
+      "path": "/home/aminin/workspace/synanton/testing/Domain_Books/filenet-p8-architecture-ch1-2.pdf",
+      "sha256": "e60a3371d1b43d04958a4c4996e62681d6b6c179574f0ef4dc88184dfe3bca85",
+      "origin": "fileNet",
+      "pages": "62 (PDF 23-84)",
+      "source": "IBM Redbooks SG24-7667-01",
+      "source_url": "https://www.redbooks.ibm.com/abstracts/sg247667.html",
+      "license": "IBM Redbooks; internal demo; PDF not committed",
+      "note": "mutool page subset; 821 KB"
+    },
+    {
+      "id": "A1-Introduction",
+      "path": "/home/aminin/workspace/synanton/testing/Domain_Books/Open Source Contracts/A1-Introduction.pdf",
+      "sha256": "264e330d7a3bc1ee0dd5ceef02696a657106f26703a6822209f4007aab0a4f2e",
+      "origin": "legal",
+      "source": "Open Source Contracts casebook",
+      "license": "local demo only; not committed; verify redistribution before publishing"
+    },
+    {
+      "id": "B2-Consideration",
+      "path": "/home/aminin/workspace/synanton/testing/Domain_Books/Open Source Contracts/B2-Consideration.pdf",
+      "sha256": "def7ee1b15af40ddc6726cd10e84a2abd8eeea68a7c4a5c932d1f5d79cca17c1",
+      "origin": "legal",
+      "source": "Open Source Contracts casebook",
+      "license": "local demo only; not committed; verify redistribution before publishing"
+    },
+    {
+      "id": "R1-Introduction-to-Contract-Remedies",
+      "path": "/home/aminin/workspace/synanton/testing/Domain_Books/Open Source Contracts/R1-Introduction-to-Contract-Remedies.pdf",
+      "sha256": "793db6e5a6d23d7bd5e4114d7650f92d1f2ef35101a0beb30f64c02eff199b60",
+      "origin": "legal",
+      "source": "Open Source Contracts casebook",
+      "license": "local demo only; not committed; verify redistribution before publishing"
+    },
+    {
+      "id": "R2-Establishing-Expectation-Damages",
+      "path": "/home/aminin/workspace/synanton/testing/Domain_Books/Open Source Contracts/R2-Establishing-Expectation-Damages.pdf",
+      "sha256": "1be4f6c730edd97fd1df82d061c5fb46ba4f905eea269c0c11a03d323605f439",
+      "origin": "legal",
+      "source": "Open Source Contracts casebook",
+      "license": "local demo only; not committed; verify redistribution before publishing"
+    }
+  ],
+  "total_documents": 20,
+  "notes": "FileNet subset chapters 1-2 only; legal A1/B2/R1/R2; v1 unchanged; PDFs not committed.",
+  "chunks": 634,
+  "determinism_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
+  "determinism_check": "two fresh ingests demo-v2/demo-v2-b, 20 docs, 634 chunks each, identical IDs/text",
+  "fileNet_chunks": 194,
+  "legal_chunks": 123,
+  "v1_chunks": 317
+}

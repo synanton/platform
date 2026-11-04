@@ -1,0 +1,174 @@
+{
+  "corpus": "demo-v2",
+  "corpus_digest": "5cf5b9553610482b2b5a1db2075def77b62c8cad6c8ddebcf080e6e26fd21e37",
+  "queries_tested": 25,
+  "gold_rank_candidates": 8,
+  "candidate_rule": "Gold rank differs by >=2 between BM25 and Dense, or one leg misses the gold.",
+  "k": 20,
+  "k_sweep": "k=10/20/60 produce identical gold ranks for the selected four; k=20 chosen.",
+  "selected": [
+    {
+      "query_id": "pdf005",
+      "question": "Which medications are listed for substance use disorders?",
+      "class": "rank_gap",
+      "bm25": 7,
+      "dense": 2,
+      "rrf": 2,
+      "why": "largest gold gap; RRF/dense lift the answer from BM25 #7 to #2"
+    },
+    {
+      "query_id": "pdf004",
+      "question": "How does the report's glossary define a major depressive episode?",
+      "class": "rank_gap",
+      "bm25": 1,
+      "dense": 4,
+      "rrf": 1,
+      "why": "BM25 holds #1 against Dense #4; shows leg divergence without losing the answer"
+    },
+    {
+      "query_id": "rb003",
+      "question": "In what year was Globex Manufacturing founded and where is it headquartered?",
+      "class": "rank_gap",
+      "bm25": 3,
+      "dense": 1,
+      "rrf": 2,
+      "why": "Dense wins #1 vs BM25 #3; RRF #2"
+    },
+    {
+      "query_id": "rb010",
+      "question": "IATF 16949",
+      "class": "one_miss",
+      "bm25": 1,
+      "dense": null,
+      "rrf": 1,
+      "why": "exact identifier; Dense misses entirely, RRF keeps #1"
+    }
+  ],
+  "excluded": [
+    {
+      "query_id": "pdf011",
+      "reason": "BM25 #2, Dense miss, RRF #4; RRF degrades"
+    },
+    {
+      "query_id": "pdf012",
+      "reason": "BM25 #1, Dense miss, RRF #7; RRF degrades"
+    },
+    {
+      "query_id": "pdf015",
+      "reason": "Dense #17, RRF #26; no graph bridge"
+    },
+    {
+      "query_id": "pdf008",
+      "reason": "BM25 #2, Dense #1, RRF #1; legs agree on gold, not a hybrid-gap demo"
+    }
+  ],
+  "note": "v1 top-3 disagreement was noise; this is gold-rank disagreement on v2.",
+  "rrf_strict_wins": 0,
+  "rrf_vs_best_leg": {
+    "strict_wins": 0,
+    "ties_or_equals_best": 3,
+    "between_legs_but_worse_than_best": 1,
+    "worse_than_best_single_leg": 4,
+    "detail": {
+      "equal": "pdf004, pdf005, rb010",
+      "between": "rb003 (BM25 #3, Dense #1, RRF #2)",
+      "worse": "pdf011 (#2/miss/#4), pdf012 (#1/miss/#7), pdf015 (miss/#17/#26), rb008 (#1/miss/#5)"
+    }
+  },
+  "narration": "Fixed-weight RRF has 0/25 strict wins. It ties the best leg on 3 candidates, sits between on rb003, and can lose when one leg misses. Show attribution and robustness, not a quality win.",
+  "backups": [
+    {
+      "query_id": "rb008",
+      "why": "Dense misses; BM25 #1 but RRF #5 \u2014 honest failure-mode rehearsal, not demo proof"
+    },
+    {
+      "query_id": "pdf011",
+      "why": "Dense misses; BM25 #2 but RRF #4 \u2014 second single-leg-failure rehearsal"
+    }
+  ],
+  "graph_availability": {
+    "pdf005": {
+      "gold": "4e54d1ae\u2026#26",
+      "useful_entities": [],
+      "neighbors": 0,
+      "question": "Which medications are listed for substance use disorders?"
+    },
+    "pdf004": {
+      "gold": "4e54d1ae\u2026#13",
+      "useful_entities": [],
+      "neighbors": 0,
+      "question": "How does the report's glossary define a major depressive episode?"
+    },
+    "rb003": {
+      "gold": "0110d461\u2026#0",
+      "useful_entities": [
+        "iatf 16949",
+        "2015",
+        "2016",
+        "2024",
+        "2026"
+      ],
+      "neighbors": 12,
+      "question": "In what year was Globex Manufacturing founded and where is it headquartered?"
+    },
+    "rb010": {
+      "gold": "0110d461\u2026#0, 03219438\u2026#0, 2d5ae12a\u2026#0",
+      "neighbors": "12/21/19",
+      "question": "IATF 16949",
+      "useful_entities": [
+        "iatf 16949",
+        "2003",
+        "2009",
+        "2015",
+        "2016",
+        "2022",
+        "2024",
+        "2025",
+        "2026",
+        "financial",
+        "principal"
+      ]
+    },
+    "result": "2/4 retrieval picks have non-empty graph neighborhoods; graph panel as planned would be empty for pdf005/pdf004",
+    "rb008": {
+      "question": "What is the on-time delivery performance threshold that triggers financial penalties under the Initech Ltd agreement?",
+      "gold": "03219438-50b5-58c7-8aea-44378f987de8#0",
+      "useful_entities": [
+        "2022",
+        "2009",
+        "financial",
+        "principal",
+        "iatf 16949",
+        "2003",
+        "2026"
+      ],
+      "neighbors": 21
+    },
+    "pdf012": {
+      "question": "What share of combined voting power triggers a change of control of the Supplier?",
+      "gold": "e02fffcc-edd4-5b36-a7da-00ede17e5dd1#41",
+      "useful_entities": [
+        "authority"
+      ],
+      "neighbors": 8
+    }
+  },
+  "graph_demo_set": [
+    {
+      "query_id": "rb003",
+      "neighbors": 12,
+      "why": "gold #3, useful entities, rank gap"
+    },
+    {
+      "query_id": "rb010",
+      "neighbors": "12/21/19",
+      "why": "gold #1, single-leg miss, graph-rich"
+    },
+    {
+      "query_id": "rb008",
+      "neighbors": 21,
+      "why": "gold #1, Dense miss, RRF #5; graph-rich failure-mode"
+    }
+  ],
+  "graph_demo_note": "Hard-entity-only graph subset: rb003, rb010, rb008. pdf012 has 0 hard-entity neighbors (only soft glossary); pdf005/pdf004 still 0. Graph is visualization-only."
+}
