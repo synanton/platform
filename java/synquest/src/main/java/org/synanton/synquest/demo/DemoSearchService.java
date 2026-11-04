@@ -55,12 +55,14 @@ public final class DemoSearchService {
         String cacheQuery = HtmlUtils.htmlUnescape(query);
         Cache data = cache();
         float[] queryVector = data.queryVectors().get(cacheQuery);
-        if (queryVector == null) {
-            log.warn("No cached demo query embedding for '{}'; known questions={}", cacheQuery, data.queryVectors().keySet());
-            throw new IllegalStateException("no cached query embedding for this demo query");
-        }
         List<KnowledgeCandidate> bm25 = backend.candidates(tenantId, query, K);
-        List<DenseHit> dense = dense(queryVector, data.chunkVectors());
+        List<DenseHit> dense;
+        if (queryVector == null) {
+            log.info("No cached demo query embedding for '{}'; running BM25-only", cacheQuery);
+            dense = List.of();
+        } else {
+            dense = dense(queryVector, data.chunkVectors());
+        }
         Map<String, Entry> entries = new HashMap<>();
         for (int i = 0; i < bm25.size(); i++) {
             KnowledgeCandidate c = bm25.get(i);
