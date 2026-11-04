@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -93,6 +94,112 @@ class OutboxPublisherTest {
 
         verify(cache).recordSourceOutboxFailure(
             eq(event), eq(1), contains("invalid event payload"), eq(null), eq(true), eq(NOW));
+    }
+
+    private static final String LEGACY_PAYLOAD =
+            "{\"event_type\":\"SourcePublished\",\"event_id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\","
+            + "\"tenant_id\":\"tenant-a\"}";
+    private static final String TYPED_PAYLOAD =
+            "{\"event_id\":\"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\",\"event_type\":\"SourcePublished\","
+            + "\"event_version\":1,\"tenant\":{\"id\":\"tenant-a\"},\"tenant_id\":\"tenant-a\","
+            + "\"replay_class\":\"REPLAY_SAFE\",\"payload\":{\"version\":\"1.0.0\"}}";
+
+    @Test
+    void legacyStringPayload_isForwardedUnchanged() throws Exception {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        KafkaProducer<String, String> producer = mock(KafkaProducer.class);
+        SourceOutboxRow row = row("tenant-a", LEGACY_PAYLOAD);
+        when(cache.listTenantIds()).thenReturn(List.of("tenant-a"));
+        when(cache.listUnpublishedOutbox("tenant-a", 100, NOW)).thenReturn(List.of());
+        when(cache.listUnpublishedSourceOutbox("tenant-a", 100, NOW)).thenReturn(List.of(row));
+        when(producer.send(any(ProducerRecord.class))).thenReturn(CompletableFuture.completedFuture(null));
+
+        new OutboxPublisher(cache, producer, Clock.fixed(NOW, ZoneOffset.UTC)).publishPending();
+
+        ArgumentCaptor<ProducerRecord<String, String>> published = ArgumentCaptor.forClass(ProducerRecord.class);
+        verify(producer).send(published.capture());
+        assertThat(published.getValue().value()).isEqualTo(LEGACY_PAYLOAD);
+    }
+
+    @Test
+    void typedEnvelopePayload_isForwardedUnchanged() throws Exception {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        KafkaProducer<String, String> producer = mock(KafkaProducer.class);
+        SourceOutboxRow row = row("tenant-a", TYPED_PAYLOAD);
+        when(cache.listTenantIds()).thenReturn(List.of("tenant-a"));
+        when(cache.listUnpublishedOutbox("tenant-a", 100, NOW)).thenReturn(List.of());
+        when(cache.listUnpublishedSourceOutbox("tenant-a", 100, NOW)).thenReturn(List.of(row));
+        when(producer.send(any(ProducerRecord.class))).thenReturn(CompletableFuture.completedFuture(null));
+
+        new OutboxPublisher(cache, producer, Clock.fixed(NOW, ZoneOffset.UTC)).publishPending();
+
+        ArgumentCaptor<ProducerRecord<String, String>> published = ArgumentCaptor.forClass(ProducerRecord.class);
+        verify(producer).send(published.capture());
+        assertThat(published.getValue().value()).isEqualTo(TYPED_PAYLOAD);
+    }
+
+    @Test
+    void mixedBatch_bothShapesForwarded() throws Exception {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        KafkaProducer<String, String> producer = mock(KafkaProducer.class);
+        SourceOutboxRow legacy = row("tenant-a", LEGACY_PAYLOAD);
+        SourceOutboxRow typed = row("tenant-a", TYPED_PAYLOAD);
+        when(cache.listTenantIds()).thenReturn(List.of("tenant-a"));
+        when(cache.listUnpublishedOutbox("tenant-a", 100, NOW)).thenReturn(List.of());
+        when(cache.listUnpublishedSourceOutbox("tenant-a", 100, NOW)).thenReturn(List.of(legacy, typed));
+        when(producer.send(any(ProducerRecord.class))).thenReturn(CompletableFuture.completedFuture(null));
+
+        new OutboxPublisher(cache, producer, Clock.fixed(NOW, ZoneOffset.UTC)).publishPending();
+
+        ArgumentCaptor<ProducerRecord<String, String>> published = ArgumentCaptor.forClass(ProducerRecord.class);
+        verify(producer, times(2)).send(published.capture());
+        assertThat(published.getAllValues())
+                .extracting(ProducerRecord::value)
+                .containsExactly(LEGACY_PAYLOAD, TYPED_PAYLOAD);
+    }
+
+    @Test
+    void keyDerivation_ignoresPayloadShape() throws Exception {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        KafkaProducer<String, String> producer = mock(KafkaProducer.class);
+        SourceOutboxRow legacy = row("tenant-a", LEGACY_PAYLOAD);
+        SourceOutboxRow typed = row("tenant-a", TYPED_PAYLOAD);
+        when(cache.listTenantIds()).thenReturn(List.of("tenant-a"));
+        when(cache.listUnpublishedOutbox("tenant-a", 100, NOW)).thenReturn(List.of());
+        when(cache.listUnpublishedSourceOutbox("tenant-a", 100, NOW)).thenReturn(List.of(legacy, typed));
+        when(producer.send(any(ProducerRecord.class))).thenReturn(CompletableFuture.completedFuture(null));
+
+        new OutboxPublisher(cache, producer, Clock.fixed(NOW, ZoneOffset.UTC)).publishPending();
+
+        ArgumentCaptor<ProducerRecord<String, String>> published = ArgumentCaptor.forClass(ProducerRecord.class);
+        verify(producer, times(2)).send(published.capture());
+        assertThat(published.getAllValues())
+                .extracting(ProducerRecord::key)
+                .containsExactly("tenant-a:file:source-a:guide.md", "tenant-a:file:source-a:guide.md");
+    }
+
+    @Test
+    void dispatchedAt_markedOnBothShapes() throws Exception {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        KafkaProducer<String, String> producer = mock(KafkaProducer.class);
+        SourceOutboxRow legacy = row("tenant-a", LEGACY_PAYLOAD);
+        SourceOutboxRow typed = row("tenant-a", TYPED_PAYLOAD);
+        when(cache.listTenantIds()).thenReturn(List.of("tenant-a"));
+        when(cache.listUnpublishedOutbox("tenant-a", 100, NOW)).thenReturn(List.of());
+        when(cache.listUnpublishedSourceOutbox("tenant-a", 100, NOW)).thenReturn(List.of(legacy, typed));
+        when(producer.send(any(ProducerRecord.class))).thenReturn(CompletableFuture.completedFuture(null));
+
+        new OutboxPublisher(cache, producer, Clock.fixed(NOW, ZoneOffset.UTC)).publishPending();
+
+        verify(cache).markSourceOutboxPublished(legacy, NOW);
+        verify(cache).markSourceOutboxPublished(typed, NOW);
+    }
+
+    private static SourceOutboxRow row(String tenantId, String payloadJson) {
+        UUID eventId = UUID.randomUUID();
+        return new SourceOutboxRow(
+            tenantId, "file", "source-a", "guide.md", eventId, "SourcePublished",
+            UUID.randomUUID(), null, payloadJson, NOW, false, null, 0, null, null, false);
     }
 
     private static SourceOutboxRow event(String tenantId, int attemptCount) {
