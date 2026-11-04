@@ -37,6 +37,12 @@ spec:
             - configMapRef:
                 name: tenant-demo-config
           env:
+            - name: CASSANDRA_CONTACT_POINTS
+              value: "cassandra-0.cassandra-headless.synanton.svc.cluster.local,cassandra-1.cassandra-headless.synanton.svc.cluster.local,cassandra-2.cassandra-headless.synanton.svc.cluster.local"
+            - name: CASSANDRA_PORT
+              value: "9042"
+            - name: CASSANDRA_LOCAL_DC
+              value: "datacenter1"
             - name: SERVER_PORT
               value: "8090"
             - name: KAFKA_BOOTSTRAP_SERVERS
@@ -45,6 +51,8 @@ spec:
               value: filesystem
             - name: SYNFLUX_CONTENT_CACHE_ROOT
               value: /content-cache
+            - name: SYNFLUX_FIXTURE_ROOT
+              value: /fixtures
             - name: EXTRACTION_CLIENT_ENABLED
               value: "true"
             - name: EXTRACTION_ENDPOINT
@@ -88,10 +96,14 @@ spec:
           volumeMounts:
             - name: content-cache
               mountPath: /content-cache
+            - name: fixtures
+              mountPath: /fixtures
       volumes:
         - name: content-cache
           persistentVolumeClaim:
             claimName: synflux-content-cache
+        - name: fixtures
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
