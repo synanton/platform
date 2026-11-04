@@ -1,5 +1,6 @@
 package org.synanton.security.app;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -118,9 +119,10 @@ public class AppConfig {
 
     @org.springframework.context.annotation.Bean
     public DemoTenantTokenIssuer demoTenantTokenIssuer(
+            @Value("${SYNANTON_JWT_SECRET}") String jwtSecret,
             SecurityProperties props, JdbcIssuanceAudit issuanceAudit) {
         long ttl = Math.min(DemoTenantTokenIssuer.MAX_TTL_SECONDS, props.jwt().expiresInSeconds());
         return new DemoTenantTokenIssuer(
-                props.jwt().secret(), "synanton-security", "synanton", ttl, issuanceAudit);
+                jwtSecret, "synanton-security", "synanton", ttl, issuanceAudit);
     }
 }
