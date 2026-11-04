@@ -82,11 +82,11 @@ spec:
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef: {name: minio-cred-env}
-          command: ["ready", "local"]
+          command: ["mc", "ready", "local"]
       containers:
         - name: mc
           image: local-registry:5000/synanton/minio-mc:latest
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef: {name: minio-cred-env}
-          command: ["mb", "--ignore-existing", "local/synanton-hot"]
+          command: ["mc", "mb", "--ignore-existing", "local/synanton-hot"]
