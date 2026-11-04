@@ -3,6 +3,7 @@ package org.synanton.syntology.infra.events;
 import org.springframework.stereotype.Component;
 import org.synanton.eventing.contract.ActorKind;
 import org.synanton.eventing.contract.Event;
+import org.synanton.eventing.contract.EventEnvelopeBuilder;
 import org.synanton.eventing.contract.Producer;
 import org.synanton.eventing.contract.ReplayClass;
 import org.synanton.eventing.contract.SecurityMetadata;
@@ -12,10 +13,7 @@ import org.synanton.syntology.domain.event.OntologyCreated;
 import org.synanton.syntology.domain.event.VersionBumped;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Conformant publication facade: emits syntology's three facts as EWP-1 {@link Event}
@@ -51,20 +49,15 @@ public class SyntologyEventPublisher {
     }
 
     private <T> void publish(String tenantId, String eventType, T payload) {
-        Event<T> event = new Event<>(
-                UUID.randomUUID(),
+        Event<T> event = EventEnvelopeBuilder.build(
                 eventType,
                 1,
-                Instant.now(clock),
-                new Producer("syntology", "0.1.0"),
                 tenantId,
-                Optional.empty(),
-                UUID.randomUUID(),
-                Optional.empty(),
+                payload,
+                new Producer("syntology", "0.1.0"),
                 ReplayClass.REPLAY_SAFE,
-                Optional.empty(),
                 new SecurityMetadata(ActorKind.SERVICE, "syntology", "UNCLASSIFIED", 1, List.of()),
-                payload);
+                clock);
         publisher.publish(tenantId, event);
     }
 }
