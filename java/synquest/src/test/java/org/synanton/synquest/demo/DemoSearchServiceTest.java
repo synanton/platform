@@ -126,6 +126,17 @@ class DemoSearchServiceTest {
     }
 
     @Test
+    void uncachedQueryFallsBackToBm25Only() throws Exception {
+        var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
+        when(backend.candidates("tenant", "totally uncached question", 20)).thenReturn(List.of(candidate()));
+        var service = service(backend, cache(List.of(CHUNK)), mock(IngestionCacheClient.class));
+        var result = service.search("tenant", "totally uncached question").results().get(0);
+        assertThat(result.bm25Rank()).isEqualTo(1);
+        assertThat(result.denseRank()).isNull();
+        assertThat(result.legsPresent()).containsExactly("bm25");
+    }
+
+    @Test
     void queryTypeFallbackIsMixed() {
         assertThat(DemoSearchService.queryType("test")).isEqualTo("mixed");
         assertThat(DemoSearchService.queryType("IATF 16949")).isEqualTo("exact");
