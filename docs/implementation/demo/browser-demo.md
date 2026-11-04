@@ -4,8 +4,8 @@
 
 ## Start
 1. Start the local-real-demo stack (Cassandra, security, synquest, synflux, extractor).
-2. Run `./scripts/demo/start-browser-demo.sh`; it reindexes `demo-v2`, verifies `/v1/demo/search` returns 200, then starts Vite on `localhost:18083`/`localhost:18081`.
-3. Open `http://127.0.0.1:5173/search`; sign in as `aminin`, tenant `demo-v2` is prefilled.
+2. Run `./scripts/demo/start-browser-demo.sh`; it reindexes `demo`, verifies `/v1/demo/search` returns 200, then starts Vite on `localhost:18083`/`localhost:18081`.
+3. Open `http://127.0.0.1:5173/search`; sign in as `aminin`, tenant `demo` is prefilled.
 
 ## Narrative order (hard-entity taxonomy)
 
@@ -43,13 +43,13 @@ If search returns 503 after a synquest restart, the tenant searcher map is empty
 ```bash
 TOKEN=$(curl -fsS -X POST "$SECURITY/v1/auth/tenant" \
   -H 'Content-Type: application/json' \
-  -d '{"principal_id":"demo-runner","tenant_id":"demo-v2","capabilities":[]}' \
+  -d '{"principal_id":"demo-runner","tenant_id":"demo","capabilities":[]}' \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
-curl -fsS -X POST "$SYNQUEST/reindex?tenant=demo-v2" \
+curl -fsS -X POST "$SYNQUEST/reindex?tenant=demo" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-Expected: `{"status":"done","tenant":"demo-v2"}` in ~10s, then search works. `start-browser-demo.sh` performs the same step.
+Expected: `{"status":"done","tenant":"demo"}` in ~10s, then search works. `start-browser-demo.sh` performs the same step.
 
 
 ## Graph API pre-check

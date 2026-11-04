@@ -2,7 +2,7 @@
 """Print BM25, Dense, and RRF attribution for a demo query.
 
 Uses cached dense-v2 query/chunk vectors so TEI can be down; BM25 is live against
-the local demo-v2 synquest. Unknown queries fall back to TEI only for the query
+the local demo synquest. Unknown queries fall back to TEI only for the query
 embedding. Gold flags come from demo-v2-gold-ranks.json.
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ SYNQUEST = os.environ.get("SYNANTON_SYNQUEST_URL", os.environ.get("SYNQUEST_URL"
 SECURITY = os.environ.get("SYNANTON_SECURITY_URL", os.environ.get("SECURITY_URL", "http://localhost:18081"))
 TEI = os.environ.get("TEI_URL", "http://localhost:30801")
 API = os.environ.get("SYNANTON_API_URL", "")
-TENANT = os.environ.get("DEMO_TENANT", "demo-v2")
+TENANT = os.environ.get("DEMO_TENANT", "demo")
 K = 20
 TOKEN = ""
 AUTH_EXPIRES = 0
@@ -120,9 +120,11 @@ def main() -> None:
     print(f"Auth: tenant={issued['tenant_id']} expires_at={AUTH_EXPIRES} "
           f"ttl_seconds={max(0, AUTH_EXPIRES - int(time.time()))}")
     gold = json.loads((BENCH / "demo-v2-gold-ranks.json").read_text())["gold"]
-    gold_ids = set()
-    for ids in gold.values():
-        gold_ids.update(ids)
+    questions = {q["query_id"]: q["question"] for q in
+                 map(json.loads, (BENCH / "queries-v2.rb-fixed-g5.jsonl").read_text().splitlines())}
+    query_id = query if query in gold else next(
+        (qid for qid, question in questions.items() if question == query), None)
+    gold_ids = set(gold.get(query_id, [])) if query_id else set()
     cache = json.loads((BENCH / "dense-embeddings-v2.json").read_text())
     bm25 = post_json(SYNQUEST + "/v1/search", {"query": query})
     bm25_ids = [r["object_id"].replace(":", "#", 1) for r in bm25.get("results", [])]

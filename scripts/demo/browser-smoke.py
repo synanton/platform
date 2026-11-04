@@ -12,7 +12,7 @@ import websocket
 
 UI = os.environ.get("BROWSER_URL", "http://127.0.0.1:5173")
 SECURITY = os.environ.get("SYNANTON_SECURITY_URL", "http://localhost:18081")
-TENANT = os.environ.get("DEMO_TENANT", "demo-v2")
+TENANT = os.environ.get("DEMO_TENANT", "demo")
 SECRET = os.environ.get("SYNANTON_JWT_SECRET", "local-real-demo-secret-at-least-32-bytes")
 DEBUG = int(os.environ.get("BROWSER_DEBUG_PORT", "9223"))
 CHROME = os.environ.get("CHROME", "/usr/bin/chromium-browser")

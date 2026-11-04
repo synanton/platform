@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import base64, hashlib, hmac, json, os, time
-tenant = os.environ.get("DEMO_TENANT", "demo-v2")
+tenant = os.environ.get("DEMO_TENANT", "demo")
 secret = os.environ.get("SYNANTON_JWT_SECRET", "local-real-demo-secret-at-least-32-bytes")
 def b(v): return base64.urlsafe_b64encode(v).rstrip(b"=").decode()
 now = int(time.time())

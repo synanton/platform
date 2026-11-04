@@ -2,7 +2,7 @@
 set -euo pipefail
 PLATFORM="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UI="${UI_ROOT:-$PLATFORM/../ui}"
-TENANT="${DEMO_TENANT:-demo-v2}"
+TENANT="${DEMO_TENANT:-demo}"
 SECURITY="${SYNANTON_SECURITY_URL:-http://localhost:18081}"
 SYNQUEST="${SYNANTON_SYNQUEST_URL:-http://localhost:18083}"
 ENV_FILE="$UI/apps/web/.env.local"
@@ -43,6 +43,13 @@ if curl -fsS --max-time 1 http://127.0.0.1:5173 >/dev/null 2>&1; then
   echo "error: port 5173 already in use; stop the existing Vite server first" >&2
   exit 1
 fi
+# Preserve a pre-existing .env.local across this run; restore it on exit.
+RESTORE_ENV=0
+if [ -f "$ENV_FILE" ]; then
+  BACKUP="$ENV_FILE.bak.$$"
+  cp "$ENV_FILE" "$BACKUP"
+  RESTORE_ENV=1
+fi
 cat > "$ENV_FILE" <<EOF
 VITE_REAL_API=true
 VITE_API_BASE=
@@ -59,7 +66,14 @@ export VITE_SECURITY_URL="$SECURITY"
 export VITE_SYNQUEST_URL="$SYNQUEST"
 export VITE_DEMO_AUTH_USER=aminin
 export VITE_DEMO_AUTH_TENANT="$TENANT"
-trap 'rm -f "$ENV_FILE"' EXIT INT TERM
+cleanup() {
+  if [ "${RESTORE_ENV:-0}" = "1" ]; then
+    mv "$BACKUP" "$ENV_FILE"
+  else
+    rm -f "$ENV_FILE"
+  fi
+}
+trap cleanup EXIT INT TERM
 
 cat <<EOF
 Browser demo: http://127.0.0.1:5173/search
