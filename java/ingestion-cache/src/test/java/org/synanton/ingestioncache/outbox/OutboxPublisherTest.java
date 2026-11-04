@@ -97,10 +97,12 @@ class OutboxPublisherTest {
     }
 
     private static final String LEGACY_PAYLOAD =
-            "{\"event_type\":\"SourcePublished\",\"version\":\"1.0.0\"}";
+            "{\"event_type\":\"SourcePublished\",\"event_id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\","
+            + "\"tenant_id\":\"tenant-a\"}";
     private static final String TYPED_PAYLOAD =
-            "{\"event_id\":\"11111111-1111-4111-8111-111111111111\",\"event_type\":\"SourcePublished\","
-            + "\"event_version\":1,\"replay_class\":\"REPLAY_SAFE\",\"payload\":{\"version\":\"1.0.0\"}}";
+            "{\"event_id\":\"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\",\"event_type\":\"SourcePublished\","
+            + "\"event_version\":1,\"tenant\":{\"id\":\"tenant-a\"},\"tenant_id\":\"tenant-a\","
+            + "\"replay_class\":\"REPLAY_SAFE\",\"payload\":{\"version\":\"1.0.0\"}}";
 
     @Test
     void legacyStringPayload_isForwardedUnchanged() throws Exception {
