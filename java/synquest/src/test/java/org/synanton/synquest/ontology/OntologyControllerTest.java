@@ -110,6 +110,22 @@ class OntologyControllerTest {
     }
 
     @Test
+    void entityClassAll_273() throws Exception {
+        mvc.perform(get("/v1/demo/ontology/all?entity_class=all")
+                        .header("Authorization", "Bearer " + token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(273));
+    }
+
+    @Test
+    void unknownEntityClass_400() throws Exception {
+        mvc.perform(get("/v1/demo/ontology/all?entity_class=wrong")
+                        .header("Authorization", "Bearer " + token()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("unknown entity_class"));
+    }
+
+    @Test
     void unknownType_400() throws Exception {
         mvc.perform(get("/v1/demo/ontology/foobar")
                         .header("Authorization", "Bearer " + token()))

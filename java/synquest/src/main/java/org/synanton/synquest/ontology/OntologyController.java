@@ -25,7 +25,7 @@ public class OntologyController {
     private static final Set<String> VALID_BANDS = Set.of(
             "all", "graph_useful", "df_1", "pair", "df_3_15", "df_16_50", "df_over_50");
     private static final Set<String> VALID_CLASSES = Set.of(
-            "hard", "soft", "soft_glossary", "soft_doctrinal");
+            "all", "hard", "soft", "soft_glossary", "soft_doctrinal");
 
     private final OntologyMapper mapper;
 
