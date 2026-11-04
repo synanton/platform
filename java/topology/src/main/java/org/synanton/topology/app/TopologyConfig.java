@@ -5,6 +5,7 @@ import org.synanton.topology.domain.AckTracker;
 import org.synanton.topology.domain.ClassGrantMutationService;
 import org.synanton.topology.domain.GrantMutationService;
 import org.synanton.topology.domain.ResidencyPolicyValidator;
+import org.synanton.topology.infra.events.TopologyEventPublisher;
 import org.synanton.topology.infra.jdbc.JdbcClassGrantMutationStore;
 import org.synanton.topology.infra.jdbc.JdbcGrantMutationStore;
 import org.synanton.topology.infra.jdbc.JdbcOrganizationPolicyRepository;
@@ -44,9 +45,10 @@ public class TopologyConfig {
             PgvRuleCatalogue catalogue,
             JdbcGrantMutationStore store,
             JdbcOrganizationPolicyRepository policies,
-            Clock clock
+            Clock clock,
+            TopologyEventPublisher events
     ) {
-        return new GrantMutationService(catalogue, store, store, store, policies::require, clock);
+        return new GrantMutationService(catalogue, store, store, policies::require, clock, events);
     }
 
     @Bean
@@ -54,8 +56,9 @@ public class TopologyConfig {
             PgvRuleCatalogue catalogue,
             JdbcClassGrantMutationStore store,
             JdbcOrganizationPolicyRepository policies,
-            Clock clock
+            Clock clock,
+            TopologyEventPublisher events
     ) {
-        return new ClassGrantMutationService(catalogue, store, store, store, policies::require, clock);
+        return new ClassGrantMutationService(catalogue, store, store, policies::require, clock, events);
     }
 }

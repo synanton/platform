@@ -62,6 +62,25 @@ class OutboxReaderTest {
     }
 
     @Test
+    void drain_recordsDispatchedAndFailedMetrics() {
+        InMemoryEventOutbox outbox = new InMemoryEventOutbox();
+        outbox.append(null, event(FIRST_ID));
+        RecordingDispatcher dispatcher = new RecordingDispatcher(1);
+        OutboxMetrics metrics = new OutboxMetrics();
+        OutboxReader reader = new OutboxReader(outbox, dispatcher, 10, metrics);
+
+        reader.drain();
+
+        assertThat(metrics.failedCount()).isEqualTo(1);
+        assertThat(metrics.dispatchedCount()).isZero();
+
+        reader.drain();
+
+        assertThat(metrics.dispatchedCount()).isEqualTo(1);
+        assertThat(metrics.failedCount()).isEqualTo(1);
+    }
+
+    @Test
     void drain_afterRestartPublishesRowsLeftByAStoppedProcess() {
         InMemoryEventOutbox outbox = new InMemoryEventOutbox();
         outbox.append(null, event(FIRST_ID));

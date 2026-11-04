@@ -39,8 +39,22 @@ public final class OutboxEventPublisher extends AbstractEventPublisher {
 
     @Override
     protected void deliver(Event<?> event) {
+        deliver(event, businessWork);
+    }
+
+    /**
+     * Publishes with per-call business work that runs in the same transaction as the outbox
+     * append for this single call. Use this when the domain write differs per event and is only
+     * known at call time; the constructor's fixed {@link BusinessWork} is not applied.
+     */
+    public void publish(String verifiedTenantId, Event<?> event, BusinessWork perCallBusinessWork) {
+        validate(verifiedTenantId, event);
+        deliver(event, Objects.requireNonNull(perCallBusinessWork, "perCallBusinessWork"));
+    }
+
+    private void deliver(Event<?> event, BusinessWork perCallBusinessWork) {
         OutboxEntry entry = transaction.execute(connection -> {
-            businessWork.execute(connection);
+            perCallBusinessWork.execute(connection);
             return outbox.append(connection, event);
         });
         dispatchAfterCommit(entry.eventId());

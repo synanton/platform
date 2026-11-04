@@ -98,6 +98,8 @@ The shared security contract spans [platform, UI, and security-provider](docs/se
 
 Requirements and service-specific setup vary by demo. Start with the [development setup and demo documentation](docs/demos) and the [implementation index](docs/implementation).
 
+### Local build
+
 ```bash
 # Unit tests (no Docker required)
 ./gradlew test
@@ -105,6 +107,17 @@ Requirements and service-specific setup vary by demo. Start with the [developmen
 # Acceptance tests (requires Docker)
 ./gradlew acceptanceTest
 ```
+
+A local `./gradlew buildAll` runs live YDB suites and fails on five modules unless a YDB
+PoC instance is running. CI starts one (`.github/workflows/gradle-build.yml`), so these are
+expected failures on a bare machine, not a regression:
+
+```text
+# Expected failures locally without YDB:
+#   synquest-ydb, synvault-ydb, synvault-migrate, synquest-lucene, synanton-bench-emitter
+```
+
+Local `buildAll` also requires `-PskipUi` until the `syntology-admin` UI build (tailwind/postcss) is fixed.
 
 For the local ingestion demo, the repository includes a Docker Compose stack and sample documents. Follow the current [demo instructions](docs/demos) for the required services, profiles, and ingestion commands. Copy `.env.example` and configure secrets before starting services:
 

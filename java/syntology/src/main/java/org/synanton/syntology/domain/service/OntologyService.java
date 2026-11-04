@@ -5,15 +5,18 @@ import org.springframework.web.multipart.MultipartFile;
 import org.synanton.common.fs.FsPermissionGuard;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.syntology.app.SyntologyProperties;
+import org.synanton.syntology.domain.event.EntityCreated;
+import org.synanton.syntology.domain.event.VersionBumped;
+import org.synanton.syntology.domain.event.VersionBumpSource;
 import org.synanton.syntology.domain.model.EntityType;
 import org.synanton.syntology.domain.model.Feature;
 import org.synanton.syntology.domain.model.OntologyGraph;
 import org.synanton.syntology.domain.model.OntologyVersion;
 import org.synanton.syntology.domain.model.RelationType;
-import org.synanton.syntology.domain.port.out.EventPublisher;
 import org.synanton.syntology.domain.port.out.MetadataRepository;
 import org.synanton.syntology.domain.port.out.OntologyAdapter;
 import org.synanton.syntology.infra.cache.EntityCache;
+import org.synanton.syntology.infra.events.SyntologyEventPublisher;
 import org.synanton.syntology.infra.jena.JenaTdb2Adapter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -42,7 +45,7 @@ public class OntologyService {
     private final OntologyAdapter ontologyAdapter;
     private final MetadataRepository metadataRepository;
     private final EntityCache entityCache;
-    private final EventPublisher eventPublisher;
+    private final SyntologyEventPublisher events;
     private final SyntologyProperties properties;
     private final FsPermissionGuard fsPermissionGuard;
 
@@ -50,14 +53,14 @@ public class OntologyService {
             OntologyAdapter ontologyAdapter,
             MetadataRepository metadataRepository,
             EntityCache entityCache,
-            EventPublisher eventPublisher,
+            SyntologyEventPublisher events,
             SyntologyProperties properties,
             FsPermissionGuard fsPermissionGuard
     ) {
         this.ontologyAdapter = ontologyAdapter;
         this.metadataRepository = metadataRepository;
         this.entityCache = entityCache;
-        this.eventPublisher = eventPublisher;
+        this.events = events;
         this.properties = properties;
         this.fsPermissionGuard = fsPermissionGuard;
     }
@@ -90,7 +93,7 @@ public class OntologyService {
         );
         metadataRepository.insert(ontologyVersion);
         entityCache.invalidateAll();
-        eventPublisher.publish("VERSION_BUMPED", "{\"version\":\"" + version + "\"}");
+        events.publishVersionBumped(tenant, new VersionBumped(ontologyVersion.versionId(), version, VersionBumpSource.ONTOLOGY));
         return ontologyVersion;
     }
 
@@ -177,7 +180,13 @@ public class OntologyService {
         checkWritePermission(tenant);
         EntityType created = jena().createEntity(tenant, version, label, superType);
         entityCache.invalidateAll();
-        eventPublisher.publish("ENTITY_CREATED", "{\"label\":\"" + label + "\"}");
+        // TODO(#485): Two non-atomic cases in syntology:
+        //   1. ENTITY_CREATED (this method): Jena TDB2 cannot share the JDBC Connection.
+        //      Permanent 4-arg path — will not be fixed by #485.
+        //   2. VERSION_BUMPED (createVersion / persist): MetadataRepository uses JdbcTemplate
+        //      (connection-per-op). Same-transaction requires the Connection-scoped refactor in #485.
+        // Until #485 lands, metadata writes and VersionBumped publication are not atomic.
+        events.publishEntityCreated(tenant, new EntityCreated(label));
         return created;
     }
 

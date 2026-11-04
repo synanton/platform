@@ -5,6 +5,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.synanton.topology.domain.GrantMutationService;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -12,8 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Repository
-public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, GrantMutationService.OutboxStore,
-        GrantMutationService.AuditStore {
+public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, GrantMutationService.AuditStore {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
@@ -24,29 +26,32 @@ public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, 
     }
 
     @Override
-    public UUID insertPending(GrantMutationService.GrantCommand command, Instant now) {
+    public UUID insertPending(Connection connection, GrantMutationService.GrantCommand command, Instant now) {
         UUID grantId = UUID.randomUUID();
         UUID subjectUuid = UUID.nameUUIDFromBytes(command.subjectId().getBytes());
-        jdbc.update(
+        try (PreparedStatement insert = connection.prepareStatement(
                 """
                 INSERT INTO topology.acl_grants
                   (grant_id, org_id, subject_id, subject_type, resource_path, permission, source, tenant_id,
                    propagation_state, resource_id, resource_type, subject_key, created_at)
                 VALUES (?, '00000000-0000-0000-0000-000000000001'::uuid, ?, ?, ?, ?, 'MANUAL', ?,
                         'PENDING_PROPAGATION', ?, ?, ?, ?)
-                """,
-                grantId,
-                subjectUuid,
-                command.subjectType(),
-                command.resourceId(),
-                command.permission(),
-                command.tenantId(),
-                command.resourceId(),
-                command.resourceType(),
-                command.subjectId(),
-                Timestamp.from(now)
-        );
-        return grantId;
+                """)) {
+            insert.setObject(1, grantId);
+            insert.setObject(2, subjectUuid);
+            insert.setString(3, command.subjectType());
+            insert.setString(4, command.resourceId());
+            insert.setString(5, command.permission());
+            insert.setString(6, command.tenantId());
+            insert.setString(7, command.resourceId());
+            insert.setString(8, command.resourceType());
+            insert.setString(9, command.subjectId());
+            insert.setTimestamp(10, Timestamp.from(now));
+            insert.executeUpdate();
+            return grantId;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to insert acl_grants row", e);
+        }
     }
 
     @Override
@@ -86,28 +91,8 @@ public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, 
     }
 
     @Override
-    public UUID insert(String eventType, Map<String, Object> payload, Instant now) {
-        UUID outboxId = UUID.randomUUID();
-        try {
-            String json = mapper.writeValueAsString(payload);
-            jdbc.update(
-                    """
-                    INSERT INTO topology.topology_outbox (event_id, event_type, payload, created_at, ack_state)
-                    VALUES (?, ?, CAST(? AS jsonb), ?, CAST('{}' AS jsonb))
-                    """,
-                    outboxId,
-                    eventType,
-                    json,
-                    Timestamp.from(now)
-            );
-            return outboxId;
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to insert outbox row", e);
-        }
-    }
-
-    @Override
     public void insert(
+            Connection connection,
             String actorSubjectId,
             String actorType,
             String actorRole,
@@ -120,23 +105,24 @@ public class JdbcGrantMutationStore implements GrantMutationService.GrantStore, 
     ) {
         try {
             String json = mapper.writeValueAsString(payload);
-            jdbc.update(
+            try (PreparedStatement insert = connection.prepareStatement(
                     """
                     INSERT INTO audit.admin_audit
                       (actor_subject_id, actor_type, actor_role, target_tenant_id, action, target_resource_id,
                        before_state_hash, after_state_hash, payload)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb))
-                    """,
-                    actorSubjectId,
-                    actorType,
-                    actorRole,
-                    tenantId,
-                    action,
-                    resourceId,
-                    beforeHash,
-                    afterHash,
-                    json
-            );
+                    """)) {
+                insert.setString(1, actorSubjectId);
+                insert.setString(2, actorType);
+                insert.setString(3, actorRole);
+                insert.setString(4, tenantId);
+                insert.setString(5, action);
+                insert.setString(6, resourceId);
+                insert.setString(7, beforeHash);
+                insert.setString(8, afterHash);
+                insert.setString(9, json);
+                insert.executeUpdate();
+            }
         } catch (Exception e) {
             throw new IllegalStateException("Failed to insert admin_audit row", e);
         }

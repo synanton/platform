@@ -5,10 +5,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.synanton.common.tenant.TenantContext;
+import org.synanton.syntology.domain.event.OntologyCreated;
 import org.synanton.syntology.domain.model.OntologyVersion;
 import org.synanton.syntology.domain.port.out.MetadataRepository;
 import org.synanton.syntology.domain.port.out.OntologyAdapter;
-import org.synanton.syntology.domain.port.out.EventPublisher;
+import org.synanton.syntology.infra.events.SyntologyEventPublisher;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -21,18 +22,18 @@ public class DemoDataLoader {
 
     private final MetadataRepository metadataRepository;
     private final OntologyAdapter ontologyAdapter;
-    private final EventPublisher eventPublisher;
+    private final SyntologyEventPublisher events;
     private final SyntologyProperties properties;
 
     public DemoDataLoader(
             MetadataRepository metadataRepository,
             OntologyAdapter ontologyAdapter,
-            EventPublisher eventPublisher,
+            SyntologyEventPublisher events,
             SyntologyProperties properties
     ) {
         this.metadataRepository = metadataRepository;
         this.ontologyAdapter = ontologyAdapter;
-        this.eventPublisher = eventPublisher;
+        this.events = events;
         this.properties = properties;
     }
 
@@ -55,8 +56,9 @@ public class DemoDataLoader {
         byte[] turtle = resource.getInputStream().readAllBytes();
         ontologyAdapter.persistTurtle(tenant, SEED_VERSION, turtle);
         String graphUri = properties.storage().jena().path() + "/" + tenant + "/" + SEED_VERSION;
+        UUID versionId = UUID.randomUUID();
         metadataRepository.insert(new OntologyVersion(
-                UUID.randomUUID(),
+                versionId,
                 tenant,
                 SEED_VERSION,
                 "Supply Chain Ontology",
@@ -65,6 +67,6 @@ public class DemoDataLoader {
                 "ACTIVE",
                 Instant.now()
         ));
-        eventPublisher.publish("ONTOLOGY_CREATED", "{\"version\":\"" + SEED_VERSION + "\"}");
+        events.publishOntologyCreated(tenant, new OntologyCreated(versionId, SEED_VERSION));
     }
 }

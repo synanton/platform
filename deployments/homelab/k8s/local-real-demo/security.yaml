@@ -31,7 +31,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: security
-          image: local-registry:5000/synanton/security@sha256:fbf0dee18cde0d516e94c7c37315572c54f33270a495baa0fe501b5ecd76f3e4
+          image: local-registry:5000/synanton/security@sha256:cf2566aceb47c0d486d11af1d50868996f47ff408a323ce6c4b5949c7bb27446
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:

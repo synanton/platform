@@ -2,9 +2,13 @@ package org.synanton.topology.domain;
 
 import org.junit.jupiter.api.Test;
 import org.synanton.common.grpc.validation.PgvRuleCatalogue;
+import org.synanton.eventing.outbox.BusinessWork;
+import org.synanton.topology.domain.event.ResourceGrantCreated;
 import org.synanton.topology.domain.model.OrganizationPolicy;
 import org.synanton.topology.domain.model.PropagationId;
+import org.synanton.topology.infra.events.TopologyEventPublisher;
 
+import java.sql.Connection;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -15,10 +19,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class GrantMutationServiceTest {
 
     private static final Instant NOW = Instant.parse("2026-08-18T07:00:00Z");
+    private static final UUID OUTBOX_ID = UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
 
     @Test
     void shouldGrantAndWriteAuditHashes() {
@@ -30,6 +39,7 @@ class GrantMutationServiceTest {
         PropagationId result = service.grant(command());
 
         assertThat(result.state()).isEqualTo(PropagationId.PENDING);
+        assertThat(result.outboxId()).isEqualTo(OUTBOX_ID);
         assertThat(grantId.get()).isNotNull();
         assertThat(after.get()).isNotBlank();
         assertThat(after.get()).isNotEqualTo(StateHasher.sha256(""));
@@ -37,7 +47,8 @@ class GrantMutationServiceTest {
 
     @Test
     void shouldRejectInvalidResourceType() {
-        GrantMutationService service = service(new AtomicReference<>(""), new AtomicReference<>(), new AtomicReference<>());
+        GrantMutationService service = service(
+                new AtomicReference<>(""), new AtomicReference<>(), new AtomicReference<>());
         GrantMutationService.GrantCommand invalid = new GrantMutationService.GrantCommand(
                 "demo", "user:alice", "USER",
                 "11111111-1111-1111-1111-111111111111", "WIDGET", "READ", "k1",
@@ -58,14 +69,17 @@ class GrantMutationServiceTest {
             AtomicReference<String> afterHash,
             AtomicReference<UUID> grantId
     ) {
-        OrganizationPolicy policy = new OrganizationPolicy(
-                "demo", "HIGH_SECURITY", List.of("us-east-1"), "ALWAYS", "bge-reranker-large",
-                100, 20, 1000, 100, 8, 32000, Map.of());
+        TopologyEventPublisher events = mock(TopologyEventPublisher.class);
+        when(events.publishResourceGrantCreated(anyString(), any(ResourceGrantCreated.class), any(BusinessWork.class)))
+                .thenAnswer(invocation -> {
+                    invocation.<BusinessWork>getArgument(2).execute(null);
+                    return OUTBOX_ID;
+                });
         return new GrantMutationService(
                 new PgvRuleCatalogue(),
                 new GrantMutationService.GrantStore() {
                     @Override
-                    public UUID insertPending(GrantMutationService.GrantCommand command, Instant now) {
+                    public UUID insertPending(Connection c, GrantMutationService.GrantCommand command, Instant now) {
                         UUID id = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
                         grantId.set(id);
                         return id;
@@ -82,13 +96,15 @@ class GrantMutationServiceTest {
                         return "";
                     }
                 },
-                (eventType, payload, now) -> UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                (actor, type, role, tenant, action, resource, before, after, payload) -> {
+                (c, actor, type, role, tenant, action, resource, before, after, payload) -> {
                     beforeHash.set(before);
                     afterHash.set(after);
                 },
-                tenantId -> policy,
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                tenantId -> new OrganizationPolicy(
+                        "demo", "HIGH_SECURITY", List.of("us-east-1"), "ALWAYS", "bge-reranker-large",
+                        100, 20, 1000, 100, 8, 32000, Map.of()),
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                events
         );
     }
 }
