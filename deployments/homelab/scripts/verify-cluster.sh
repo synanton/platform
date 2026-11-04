@@ -57,9 +57,11 @@ done
     || bad "missing/wrong labels on:$missing — apply the labels in cluster-as-built.md"
 
 check "5. workers schedulable (gpu-runtime's cluster-stop.sh parks them)"
-cordoned=$(kubectl get nodes --no-headers | awk '$2 ~ /SchedulingDisabled/ {print $1}')
+# node0 is the control-plane and stays cordoned/tainted by design; only the
+# workers (node1-3) must be schedulable.
+cordoned=$(kubectl get nodes --no-headers | grep -vE 'control-plane|master' | awk '$2 ~ /SchedulingDisabled/ {print $1}')
 if [ -n "$cordoned" ]; then
-    bad "cordoned: $cordoned — run 'kubectl uncordon <node>' (scripts/start.sh also uncordons, but it expects the slice to be deployed)"
+    bad "cordoned workers: $cordoned — run 'kubectl uncordon <node>' (scripts/start.sh also uncordons, but it expects the slice to be deployed)"
 else
     ok "no cordoned workers"
 fi
