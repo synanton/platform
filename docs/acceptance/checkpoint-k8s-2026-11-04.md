@@ -19,7 +19,7 @@
 - #503 — security `@Value("${SYNANTON_JWT_SECRET}")` + signer/verifier contract test.
 - #504 — pin security image to `cf2566ac`.
 - #505 — pin synquest to demo-data image `ffd40f16` + data env vars.
-- demo fixes 5/6 + tenant rename (on `demo/vertical-slice` → PR #469).
+- #469 — demo fixes 5/6 (gold ID scope, `.env.local` preservation) + tenant rename; merged.
 
 ## Verification — PASS
 - `/v1/auth/tenant` (body `{principal_id, tenant_id}`) → 200, token minted.
@@ -52,6 +52,6 @@
 - Canonical-store ingestion (synflux fixtures).
 
 ## Reproducible from
-- git: `main` @ merge of #501–#505 (security/synquest pins), demo fixes on PR #469.
+- git: `main` @ `7519b9d` (merge of #469 + #501–#509; all demo fixes are on `main`).
 - `config/.env`: `DEMO_USER`, `DEMO_PASSWORD` set (gitignored).
 - commands: `deploy-demo.sh` + `kubectl apply -k k8s/local-real-demo/`.
