@@ -1,8 +1,8 @@
 package org.synanton.eventing.publisher;
 
 import org.synanton.eventing.contract.Event;
+import org.synanton.eventing.contract.EventEnvelopeValidator;
 import org.synanton.eventing.contract.EventTypeRegistry;
-import org.synanton.eventing.contract.TenantScope;
 
 import java.util.Objects;
 
@@ -22,9 +22,7 @@ public abstract class AbstractEventPublisher implements EventPublisher {
 
     /** Tenant-scope and registry admission; shared by per-publish overrides in subclasses. */
     protected final void validate(String verifiedTenantId, Event<?> event) {
-        Objects.requireNonNull(event, "event");
-        TenantScope.requireMatches(verifiedTenantId, event);
-        eventTypes.validate(event);
+        EventEnvelopeValidator.validate(verifiedTenantId, event, eventTypes);
     }
 
     protected abstract void deliver(Event<?> event);
