@@ -12,7 +12,7 @@ NAMESPACE="${NAMESPACE:-synanton}"
 log() { printf '\033[1;34m[stop]\033[0m %s\n' "$*"; }
 
 log "scaling the slice to zero (PVCs retained, nodes stay schedulable)"
-for d in synflux synquest extraction-gateway minio; do
+for d in security ui platform synflux synquest extraction-gateway minio; do
     kubectl -n "$NAMESPACE" scale deployment/"$d" --replicas=0 2>/dev/null || true
 done
 for s in cassandra postgres; do
