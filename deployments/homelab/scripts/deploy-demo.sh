@@ -30,6 +30,8 @@ kubectl cluster-info >/dev/null 2>&1 || die "cluster unreachable"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-changeme}"
 MINIO_USER="${MINIO_USER:-minioadmin}"
 MINIO_PASSWORD="${MINIO_PASSWORD:-minioadmin}"
+: "${DEMO_USER:?set DEMO_USER in $ENV_FILE}"
+: "${DEMO_PASSWORD:?set DEMO_PASSWORD in $ENV_FILE}"
 
 # ── Namespace + secrets (apply refreshes to match config/.env) ──────────────
 log "namespace"
@@ -46,6 +48,21 @@ kubectl -n "$NAMESPACE" create secret generic minio-cred \
 kubectl -n "$NAMESPACE" create secret generic minio-cred-env \
     --from-literal=MC_HOST_local="http://$MINIO_USER:$MINIO_PASSWORD@minio:9000" \
     --dry-run=client -o yaml | kubectl apply -f -
+
+# security-htpasswd: demo login path. HtpasswdBackend reads lines
+# username:bcrypt_hash:uid:gid1,gid2,... (bcrypt, 4 fields). Applied before the
+# overlay so security loads the user at startup; re-run requires a restart.
+command -v htpasswd >/dev/null || die "htpasswd not found (apache2-utils)"
+HASH="$(htpasswd -nbB "$DEMO_USER" "$DEMO_PASSWORD" | cut -d: -f2)"
+case "$HASH" in
+    \$2y\$*|\$2b\$*|\$2a\$*) ;;
+    *) die "htpasswd did not produce a bcrypt hash" ;;
+esac
+TMP="$(mktemp)"
+printf '%s:%s:1:1\n' "$DEMO_USER" "$HASH" > "$TMP"
+kubectl -n "$NAMESPACE" create secret generic security-htpasswd \
+    --from-file=users="$TMP" --dry-run=client -o yaml | kubectl apply -f -
+rm -f "$TMP"
 
 log "registry pull secret"
 "$SCRIPT_DIR/create-registry-secret.sh"
