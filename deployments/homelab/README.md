@@ -38,6 +38,24 @@ CONFIRM=yes ./scripts/remove.sh      # namespace + PVs
 | synquest | node1 | 1 | Lucene index on local-ssd |
 | Kafka | — | 0 | outbox-only is the cluster-run default (optional profile) |
 
+## Demo overlay (local-real-demo)
+
+The checkpoint-1 demo runs a **different stack** than the base slice: it adds a
+`security` (JWT issuance), `ui` (SPA + `/v1/` nginx proxy), and `platform`
+service, and seeds synquest with the baked demo corpus. Deploy it with
+`./scripts/deploy-demo.sh` (not `deploy.sh`), which also generates the
+`security-htpasswd` secret from `config/.env` (`DEMO_USER`/`DEMO_PASSWORD`).
+
+| Component | Notes |
+|---|---|
+| security | `/v1/auth/tenant` token mint; `Loaded 1 users` |
+| ui | NodePort **30080** — `/search`, `/ontology` |
+| platform | CrashLoopBackOff (#500, out of demo path) |
+
+Browser access: `http://<node>:30080` (any worker IP). Search is live; ontology
+is green (273/31). Status and the corpus-identity gap are recorded in
+`docs/acceptance/checkpoint-k8s-2026-11-04.md` and #508.
+
 ## Cluster slot in the #253 run sequence
 1. M70q run 1 (outbox-only) — done
 2. M70q run 2 (Kafka) — done
