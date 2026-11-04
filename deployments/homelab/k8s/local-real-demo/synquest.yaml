@@ -35,7 +35,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: synquest
-          image: local-registry:5000/synanton/synquest@sha256:ffd40f16319a9d4d4704946ba98208f744fa29e13dd218976b41529a5f92f21b
+          image: local-registry:5000/synanton/synquest@sha256:d670e7738f327e78dcf7dac65bc779fb0cbaf7f9c9dc190cb589a849d4266aa2
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
