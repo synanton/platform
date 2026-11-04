@@ -56,6 +56,8 @@ services:
       TOPOLOGY_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       TOPOLOGY_ONTOLOGY_DIR: /data/ontologies
       SYNANTON_JWT_SECRET: ${SYNANTON_JWT_SECRET:-dev-secret-at-least-32-bytes-long!!}
+      # No broker in the base stack; explicit demo mode keeps the outbox writing to a no-op sink.
+      EVENTING_DISPATCHER_MODE: demo
     volumes:
       - ${DATA_ROOT:-./data}/ontologies:/data/ontologies:ro
     healthcheck:

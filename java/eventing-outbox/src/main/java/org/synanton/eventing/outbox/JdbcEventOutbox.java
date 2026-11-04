@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * PostgreSQL outbox. Append uses the caller's connection and never commits or closes it.
@@ -213,11 +214,19 @@ public final class JdbcEventOutbox implements EventOutbox {
         }
     }
 
+    private static final Pattern SIMPLE = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
+    private static final Pattern QUALIFIED =
+            Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*\\.[a-zA-Z_][a-zA-Z0-9_]*");
+
     private static String requireTableName(String tableName) {
-        Objects.requireNonNull(tableName, "tableName");
-        if (tableName.isBlank()) {
+        if (tableName == null || tableName.isBlank()) {
             throw new IllegalArgumentException("tableName must not be blank");
         }
-        return tableName;
+        String trimmed = tableName.trim();
+        if (!SIMPLE.matcher(trimmed).matches() && !QUALIFIED.matcher(trimmed).matches()) {
+            throw new IllegalArgumentException(
+                    "tableName must be a simple or schema-qualified SQL identifier: " + trimmed);
+        }
+        return trimmed;
     }
 }
