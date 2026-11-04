@@ -4,13 +4,14 @@ metadata:
   name: ui
   namespace: synanton
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: ui
   ports:
     - name: http
       port: 80
       targetPort: http
+      nodePort: 30080
 ---
 apiVersion: apps/v1
 kind: Deployment
