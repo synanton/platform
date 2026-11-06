@@ -65,8 +65,9 @@ public class SynfluxConfig {
     // constructed manually in tests — the composed boot needs the bean.
     @Bean
     public FixtureIngestionService fixtureIngestionService(
-            org.synanton.ingestioncache.client.IngestionCacheClient cache, Clock clock) {
-        return new FixtureIngestionService(cache, clock);
+            org.synanton.ingestioncache.client.IngestionCacheClient cache, Clock clock,
+            org.synanton.eventing.contract.EventTypeRegistry eventTypeRegistry) {
+        return new FixtureIngestionService(cache, clock, eventTypeRegistry);
     }
 
     @Bean

@@ -50,4 +50,41 @@ public final class EventEnvelopeBuilder {
         TenantScope.requireMatches(verifiedTenantId, event);
         registry.validate(event);
     }
+
+    /**
+     * Builds an EWP-1 envelope from caller-supplied identity/timing — deterministic
+     * event id, correlation/causation, occurred-at — and admits it through the same
+     * tenant-scope + registry checks as the generated-id path. Used by producers (e.g.
+     * the Cassandra outbox) that own stable ids and traceability links.
+     */
+    public static <T> Event<T> build(
+            UUID eventId,
+            String eventType,
+            int eventVersion,
+            Instant occurredAt,
+            String tenantId,
+            T payload,
+            Producer producer,
+            UUID correlationId,
+            Optional<UUID> causationId,
+            ReplayClass replayClass,
+            SecurityMetadata security,
+            EventTypeRegistry registry) {
+        Event<T> event = new Event<>(
+                eventId,
+                eventType,
+                eventVersion,
+                occurredAt,
+                producer,
+                tenantId,
+                Optional.empty(),
+                correlationId,
+                causationId,
+                replayClass,
+                Optional.empty(),
+                security,
+                payload);
+        validate(tenantId, event, registry);
+        return event;
+    }
 }
