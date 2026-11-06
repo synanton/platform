@@ -20,6 +20,14 @@ import org.synanton.synvault.domain.ContentRef;
 import org.synanton.synflux.events.SourceDeleted;
 import org.synanton.synflux.events.SourceIdentity;
 import org.synanton.synflux.events.SourcePublished;
+import org.synanton.synflux.events.IngestionEventConfig;
+import org.synanton.eventing.contract.ActorKind;
+import org.synanton.eventing.contract.Event;
+import org.synanton.eventing.contract.EventEnvelopeBuilder;
+import org.synanton.eventing.contract.EventTypeRegistry;
+import org.synanton.eventing.contract.Producer;
+import org.synanton.eventing.contract.ReplayClass;
+import org.synanton.eventing.contract.SecurityMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.UUID;
@@ -47,16 +56,22 @@ public final class FixtureIngestionService {
     private static final Logger log = LoggerFactory.getLogger(FixtureIngestionService.class);
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+            .registerModule(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module())
             .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private static final UUID VERSION_NAMESPACE = UUID.fromString("7cb4c7de-1670-5b0a-9e95-2be8499ea851");
     private static final UUID TOMBSTONE_NAMESPACE = UUID.fromString("3e3d365b-1e72-5a78-beb9-634dd27a20b2");
+    private static final Producer INGEST_PRODUCER = new Producer("synflux", "1");
+    private static final SecurityMetadata INGEST_SECURITY =
+            new SecurityMetadata(ActorKind.SERVICE, "synflux", "UNCLASSIFIED", 1, List.of());
 
     private final IngestionCacheClient cache;
     private final Clock clock;
+    private final EventTypeRegistry eventTypeRegistry;
 
-    public FixtureIngestionService(IngestionCacheClient cache, Clock clock) {
+    public FixtureIngestionService(IngestionCacheClient cache, Clock clock, EventTypeRegistry eventTypeRegistry) {
         this.cache = Objects.requireNonNull(cache);
         this.clock = Objects.requireNonNull(clock);
+        this.eventTypeRegistry = Objects.requireNonNull(eventTypeRegistry);
     }
 
     /**
@@ -633,37 +648,40 @@ public final class FixtureIngestionService {
         return false;
     }
 
-    private static SourceOutboxRow sourcePublishedEvent(
+    private SourceOutboxRow sourcePublishedEvent(
             SourceVersionRow version,
             UUID runId,
             UUID operationId,
             String workflowId,
             String correlationId,
             String causationId) {
-        UUID eventId = uuidV5(TOMBSTONE_NAMESPACE, nameKey("SourcePublished", version.versionId().toString()));
+        UUID eventId = uuidV5(TOMBSTONE_NAMESPACE,
+            nameKey(IngestionEventConfig.SOURCE_PUBLISHED, version.versionId().toString()));
         SourcePublished eventPayload = new SourcePublished(
             new SourceIdentity(version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId()),
             version.versionId(), version.contentDigest(), version.contentRefId(), version.observedAt(),
             runId, operationId, workflowId,
             version.contentCacheReference().isBlank() ? null : version.contentCacheReference());
-        Map<String, Object> envelope = eventEnvelope(
-            eventId, "SourcePublished", version.tenantId(), correlationId, causationId,
-            version.observedAt(), eventPayload);
+        Event<SourcePublished> envelope = EventEnvelopeBuilder.build(
+            eventId, IngestionEventConfig.SOURCE_PUBLISHED, 1, version.observedAt(), version.tenantId(),
+            eventPayload, INGEST_PRODUCER, eventUuid(correlationId, "correlation_id"),
+            eventCausation(causationId), ReplayClass.REPLAY_SAFE, INGEST_SECURITY, eventTypeRegistry);
         try {
             String payloadJson = MAPPER.writeValueAsString(envelope);
             return new SourceOutboxRow(
                 version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(),
-                eventId, "SourcePublished", version.versionId(), null, payloadJson, version.observedAt(), false
+                eventId, IngestionEventConfig.SOURCE_PUBLISHED, version.versionId(), null, payloadJson,
+                version.observedAt(), false
             );
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not serialize SourcePublished event", e);
         }
     }
 
-    private static SourceOutboxRow sourceDeletedEvent(
+    private SourceOutboxRow sourceDeletedEvent(
             SourceTombstoneRow tombstone, UUID runId, UUID operationId) {
         UUID eventId = uuidV5(TOMBSTONE_NAMESPACE,
-            nameKey("SourceDeleted", tombstone.tombstoneId().toString()));
+            nameKey(IngestionEventConfig.SOURCE_DELETED, tombstone.tombstoneId().toString()));
         String workflowId = workflowId(operationId);
         String deleteCommandId = commandId(UUID.fromString(workflowId), "DELETE").toString();
         SourceDeleted eventPayload = new SourceDeleted(
@@ -671,12 +689,15 @@ public final class FixtureIngestionService {
                 tombstone.sourceId(), tombstone.resourceId()),
             tombstone.deletedAt(), tombstone.tombstoneId(), tombstone.versionsManifestRef(),
             runId, operationId, workflowId);
+        Event<SourceDeleted> envelope = EventEnvelopeBuilder.build(
+            eventId, IngestionEventConfig.SOURCE_DELETED, 1, tombstone.deletedAt(), tombstone.tenantId(),
+            eventPayload, INGEST_PRODUCER, eventUuid(workflowId, "correlation_id"),
+            eventCausation(deleteCommandId), ReplayClass.REPLAY_SAFE, INGEST_SECURITY, eventTypeRegistry);
         try {
             return new SourceOutboxRow(
                 tombstone.tenantId(), tombstone.connectorId(), tombstone.sourceId(), tombstone.resourceId(),
-                eventId, "SourceDeleted", null, tombstone.tombstoneId(),
-                MAPPER.writeValueAsString(eventEnvelope(eventId, "SourceDeleted", tombstone.tenantId(),
-                    workflowId, deleteCommandId, tombstone.deletedAt(), eventPayload)),
+                eventId, IngestionEventConfig.SOURCE_DELETED, null, tombstone.tombstoneId(),
+                MAPPER.writeValueAsString(envelope),
                 tombstone.deletedAt(), false
             );
         } catch (JsonProcessingException e) {
@@ -684,27 +705,25 @@ public final class FixtureIngestionService {
         }
     }
 
-    private static Map<String, Object> eventEnvelope(
-            UUID eventId,
-            String eventType,
-            String tenantId,
-            String correlationId,
-            String causationId,
-            Instant occurredAt,
-            Object payload) {
-        Map<String, Object> envelope = new LinkedHashMap<>();
-        envelope.put("event_id", eventId.toString());
-        envelope.put("event_type", eventType);
-        envelope.put("event_version", 1);
-        envelope.put("occurred_at", occurredAt.toString());
-        envelope.put("producer", Map.of("service", "synflux", "version", "1"));
-        envelope.put("tenant", Map.of("id", tenantId));
-        envelope.put("tenant_id", tenantId);
-        envelope.put("correlation_id", correlationId);
-        envelope.put("causation_id", causationId);
-        envelope.put("security", Map.of("classification", "UNCLASSIFIED", "policy_version", "1"));
-        envelope.put("payload", payload);
-        return envelope;
+    private static UUID eventUuid(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("ingestion event " + field + " is blank");
+        }
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException notUuid) {
+            // EWP-1 correlation/causation ids are UUIDs. synflux also carries opaque
+            // workflow ids as its correlation string, so derive a stable UUID from it
+            // (same string -> same UUID, preserving traceability) instead of aborting.
+            return UUID.nameUUIDFromBytes(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
+
+    private static Optional<UUID> eventCausation(String value) {
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(eventUuid(value, "causation_id"));
     }
 
     private static String workflowId(UUID operationId) {

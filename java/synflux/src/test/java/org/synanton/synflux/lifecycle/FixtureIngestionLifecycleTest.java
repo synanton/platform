@@ -92,7 +92,8 @@ class FixtureIngestionLifecycleTest {
         SchemaInstaller.install(session);
         cache = new IngestionCacheClient(session);
         lifecycle = new FixtureIngestionService(
-            cache, Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC));
+            cache, Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC),
+            new org.synanton.synflux.events.IngestionEventConfig().ingestionEventTypes());
     }
 
     @AfterAll
@@ -326,7 +327,8 @@ class FixtureIngestionLifecycleTest {
             .hasSize(1);
 
         FixtureIngestionService afterDeletion = new FixtureIngestionService(cache,
-            Clock.fixed(Instant.parse("2026-10-17T12:00:01Z"), ZoneOffset.UTC));
+            Clock.fixed(Instant.parse("2026-10-17T12:00:01Z"), ZoneOffset.UTC),
+            new org.synanton.synflux.events.IngestionEventConfig().ingestionEventTypes());
         IngestionRunRow recreated = afterDeletion.ingest(
             context, UUID.randomUUID(), UUID.randomUUID(), "file", sourceId, resourceId,
             fileRef("file:///legal/policy.md", modified, bytes.length), bytes,
@@ -1098,17 +1100,42 @@ class FixtureIngestionLifecycleTest {
             .getFirst();
         WorkflowStepRow ingestStep = cache.readWorkflowStep(
             tenantId, persistedWorkflow.workflowId(), "INGEST").orElseThrow();
+        UUID expectedCorrelation = UUID.nameUUIDFromBytes(
+            "request-restart".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         assertThat(sourceEvent.payloadJson())
             .contains("\"event_version\":1", "\"tenant_id\":\"" + tenantId + "\"",
-                "\"correlation_id\":\"request-restart\"",
+                "\"correlation_id\":\"" + expectedCorrelation + "\"",
                 "\"causation_id\":\"" + ingestStep.commandId() + "\"",
                 "\"workflow_id\":\"" + persistedWorkflow.workflowId() + "\"",
                 "\"operation_id\":\"" + persistedWorkflow.operationId() + "\"",
-                "\"run_id\":\"" + persistedWorkflow.runId() + "\"");
+                "\"run_id\":\"" + persistedWorkflow.runId() + "\"",
+                "\"replay_class\":\"REPLAY_SAFE\"");
         verify(firstContentStore, times(1)).put(eq(tenantId), any(byte[].class), any());
         verify(reopenedContentStore, never()).put(eq(tenantId), any(byte[].class), any());
         verify(extraction, times(1)).apply(any(), any());
         verify(persist, times(1)).apply(any(), any());
+    }
+
+    @Test
+    void registryRejectionAbortsBeforeTheLwtSoNoSourceVersionIsWritten() {
+        // A registry that does not declare SourcePublished makes EventEnvelopeBuilder.build
+        // throw inside sourcePublishedEvent, before insertSourceVersionAndOutboxIfAbsent runs.
+        FixtureIngestionService rejecting = new FixtureIngestionService(
+            cache, Clock.fixed(Instant.parse("2026-10-17T12:00:00Z"), ZoneOffset.UTC),
+            new org.synanton.eventing.contract.EventTypeRegistry(java.util.List.of()));
+        VerifiedIngestionContext context = principal("tenant-registry-reject");
+        byte[] bytes = "rejected".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String sourceId = "reject-source";
+        String resourceId = "reject/doc.md";
+
+        IngestionRunRow run = rejecting.ingest(context, UUID.randomUUID(), UUID.randomUUID(),
+            "file", sourceId, resourceId,
+            fileRef("file:///reject/doc.md", Instant.parse("2026-10-11T10:00:00Z"), bytes.length),
+            bytes, testReference(context.tenantId()),
+            (ignored, versionId) -> new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
+
+        assertThat(run.status()).isEqualTo("FAILED");
+        assertThat(cache.listSourceVersions(context.tenantId(), "file", sourceId, resourceId)).isEmpty();
     }
 
     @Test
