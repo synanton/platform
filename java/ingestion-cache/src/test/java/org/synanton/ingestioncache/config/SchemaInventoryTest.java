@@ -127,5 +127,19 @@ class SchemaInventoryTest {
             "knowledge_processing_runs.producer_version",
             "knowledge_processing_runs.input_source_version_ids"
         );
+
+        // EWP-2 Migration 3 (V16): typed-envelope metadata on both outbox tables.
+        assertThat(actual).contains(
+            "source_versions.schema_version",
+            "source_versions.correlation_id",
+            "source_versions.causation_id",
+            "source_versions.replay_class",
+            "source_versions.security_metadata",
+            "manifest_transitions_outbox.schema_version",
+            "manifest_transitions_outbox.correlation_id",
+            "manifest_transitions_outbox.causation_id",
+            "manifest_transitions_outbox.replay_class",
+            "manifest_transitions_outbox.security_metadata"
+        );
     }
 }
