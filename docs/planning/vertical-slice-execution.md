@@ -38,6 +38,14 @@ Search → Provenance.
   payloads, write path, config gate, e2e. Paused at step 1 (reader test-locking).
 - [ ] Outbox delivery + idempotency under restart.
 - [ ] Projection lag and retrieval-failure visibility in the UI.
+- [ ] **Live Dense leg** — dynamic TEI embedding for uncached queries *and* new
+  chunks, and read the demo Dense leg from Cassandra instead of the static
+  `dense-v2.json`. Today the Dense leg is cache-only (uncached query → no vector;
+  `SYNFLUX_PIPELINE_EMBEDDING_ENABLED=false` → new chunks unembedded), so live
+  uploads show `BM25 #N · Dense — · RRF #N`.
+- [ ] **UX polish (503)** — catch the projection-rebuild `503` in `SearchPage.tsx`
+  and render a friendly "Index updating…" banner instead of a red error (the
+  consumer's full reindex closes the searcher for ~40s).
 
 ## P2 — Focused graph exploration (re-scoped #508)
 
