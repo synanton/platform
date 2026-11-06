@@ -22,6 +22,9 @@ kubectl -n "$NAMESPACE" scale deployment/minio --replicas=1
 kubectl -n "$NAMESPACE" scale deployment/extraction-gateway --replicas=1
 kubectl -n "$NAMESPACE" scale deployment/synquest --replicas=1
 kubectl -n "$NAMESPACE" scale deployment/synflux --replicas="${SYNFLUX_REPLICAS:-2}"
+for d in security ui platform; do
+    kubectl -n "$NAMESPACE" scale deployment/"$d" --replicas=1 2>/dev/null || true
+done
 
 log "waiting for rollouts"
 kubectl -n "$NAMESPACE" rollout status statefulset/cassandra --timeout=600s
