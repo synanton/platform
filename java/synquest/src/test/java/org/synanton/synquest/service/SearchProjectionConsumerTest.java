@@ -1,5 +1,7 @@
 package org.synanton.synquest.service;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -33,7 +35,7 @@ class SearchProjectionConsumerTest {
         when(cache.listUnpublishedSourceOutbox(eq("demo"), anyInt(), any(Instant.class)))
                 .thenReturn(List.of(event));
 
-        new SearchProjectionConsumer(cache, search, "demo", 200).projectNewSourceVersions();
+        new SearchProjectionConsumer(cache, search, "demo", 200, true).projectNewSourceVersions();
 
         verify(search).reindex("demo");
         verify(cache).markSourceOutboxPublished(eq(event), any(Instant.class));
@@ -46,19 +48,51 @@ class SearchProjectionConsumerTest {
         when(cache.listUnpublishedSourceOutbox(eq("demo"), anyInt(), any(Instant.class)))
                 .thenReturn(List.of());
 
-        new SearchProjectionConsumer(cache, search, "demo", 200).projectNewSourceVersions();
+        new SearchProjectionConsumer(cache, search, "demo", 200, true).projectNewSourceVersions();
 
         verify(search, never()).reindex(anyString());
     }
 
     @Test
-    void blankTenantIsNoOp() throws Exception {
+    void disabledProjectionSkipsPolling() throws Exception {
         var cache = mock(IngestionCacheClient.class);
         var search = mock(SearchService.class);
 
-        new SearchProjectionConsumer(cache, search, "", 200).projectNewSourceVersions();
+        new SearchProjectionConsumer(cache, search, "", 200, false).projectNewSourceVersions();
 
         verify(search, never()).reindex(anyString());
         verify(cache, never()).listUnpublishedSourceOutbox(anyString(), anyInt(), any(Instant.class));
+    }
+
+    @Test
+    void enabledProjectionWithBlankTenantFailsFast() {
+        var cache = mock(IngestionCacheClient.class);
+        var search = mock(SearchService.class);
+
+        var consumer = new SearchProjectionConsumer(cache, search, "", 200, true);
+
+        assertThatThrownBy(consumer::validateProjectionConfig)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no tenant is configured");
+    }
+
+    @Test
+    void enabledProjectionWithTenantStarts() {
+        var cache = mock(IngestionCacheClient.class);
+        var search = mock(SearchService.class);
+
+        assertThatCode(() -> new SearchProjectionConsumer(cache, search, "demo", 200, true)
+                .validateProjectionConfig())
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void disabledProjectionAllowsBlankTenant() {
+        var cache = mock(IngestionCacheClient.class);
+        var search = mock(SearchService.class);
+
+        assertThatCode(() -> new SearchProjectionConsumer(cache, search, "", 200, false)
+                .validateProjectionConfig())
+                .doesNotThrowAnyException();
     }
 }
