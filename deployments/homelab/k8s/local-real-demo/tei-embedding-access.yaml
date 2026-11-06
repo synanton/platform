@@ -1,5 +1,11 @@
 # Demo-only ingress exception for the Live Dense leg.
 #
+# TODO: Route via Envoy for prod. This opens namespace-to-namespace traffic to a
+# gpu-plane inference backend, bypassing the §19 perimeter (Platform -> Gateway ->
+# Envoy -> backend). It is intentional for the local homelab demo only: lower
+# latency, fewer moving parts before a live demo. Replace with gateway/Envoy
+# routing before this overlay is used anywhere non-demo.
+#
 # The gpu-plane NetworkPolicies admit inference backends only from Envoy
 # (§19: "direct client access to backends prohibited"). The local-real-demo
 # overlay configures synquest/synflux to call TEI over plain HTTP
