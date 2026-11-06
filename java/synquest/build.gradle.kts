@@ -6,6 +6,17 @@ plugins {
     alias(libs.plugins.spring.dep.mgmt)
 }
 
+// Align Testcontainers with the version catalog instead of Spring Boot's older
+// managed version; the Cassandra test uses the 1.20+ module API.
+dependencyManagement {
+    dependencies {
+        dependency("org.testcontainers:testcontainers:1.21.4")
+        dependency("org.testcontainers:junit-jupiter:1.21.4")
+        dependency("org.testcontainers:cassandra:1.21.4")
+        dependency("org.testcontainers:database-commons:1.21.4")
+    }
+}
+
 dependencies {
     implementation(project(":java:shared:common"))
     implementation(project(":java:ingestion-cache"))
@@ -24,6 +35,10 @@ dependencies {
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.junit)
+    testImplementation(project(":java:eventing-contract"))
+    testImplementation(platform(libs.testcontainers.bom))
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.cassandra)
     // 028b.1b bench wrapper (test sources, beside BaselineBench).
     testImplementation(project(":java:synquest-api"))
     testImplementation(project(":java:storage-contract"))
