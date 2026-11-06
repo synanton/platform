@@ -6,8 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.synquest.service.EmbeddingShape;
 import org.synanton.synquest.service.KnowledgeSearchBackend.KnowledgeCandidate;
+import org.synanton.synquest.service.QueryEmbedder;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +21,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,6 +31,7 @@ import static org.mockito.Mockito.when;
 class DemoSearchServiceTest {
 
     private static final String QUESTION = "Which medications are listed for substance use disorders?";
+    private static final String MODEL = "bge-base-en-v1.5";
     private static final UUID REF = UUID.fromString("11111111-1111-4111-8111-111111111111");
     private static final String CHUNK = REF + "#0";
 
@@ -35,7 +41,7 @@ class DemoSearchServiceTest {
     void twoLegContributionsAreDirectValuesAndSum() throws Exception {
         var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
         when(backend.candidates("tenant", QUESTION, 20)).thenReturn(List.of(candidate()));
-        var service = service(backend, cache(List.of(CHUNK)), mock(IngestionCacheClient.class));
+        var service = service(backend, cache(), clientWith(REF, List.of(embedding(REF, 0))), embedder(null));
         var result = service.search("tenant", QUESTION).results().get(0);
         assertThat(result.bm25Rank()).isEqualTo(1);
         assertThat(result.denseRank()).isEqualTo(1);
@@ -49,8 +55,8 @@ class DemoSearchServiceTest {
     void denseMissHasNullRankAndExactlyZeroContribution() throws Exception {
         var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
         when(backend.candidates("tenant", QUESTION, 20)).thenReturn(List.of(candidate()));
-        var other = UUID.fromString("22222222-2222-4222-8222-222222222222") + "#0";
-        var service = service(backend, cache(List.of(other)), mock(IngestionCacheClient.class));
+        UUID other = UUID.fromString("22222222-2222-4222-8222-222222222222");
+        var service = service(backend, cache(), clientWith(other, List.of(embedding(other, 0))), embedder(null));
         var result = service.search("tenant", QUESTION).results().stream()
                 .filter(r -> r.chunkId().equals(CHUNK)).findFirst().orElseThrow();
         assertThat(result.denseRank()).isNull();
@@ -62,10 +68,10 @@ class DemoSearchServiceTest {
     void bm25MissIsDenseOnlyWithZeroBm25Contribution() throws Exception {
         var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
         when(backend.candidates("tenant", QUESTION, 20)).thenReturn(List.of());
-        var cacheClient = mock(IngestionCacheClient.class);
+        var cacheClient = clientWith(REF, List.of(embedding(REF, 0)));
         when(cacheClient.readChunks("tenant", REF)).thenReturn(List.of(chunk()));
-        when(cacheClient.readManifest("tenant", REF)).thenReturn(Optional.of(manifest()));
-        var service = service(backend, cache(List.of(CHUNK)), cacheClient);
+        when(cacheClient.readManifest("tenant", REF)).thenReturn(Optional.of(manifest(REF)));
+        var service = service(backend, cache(), cacheClient, embedder(null));
         var result = service.search("tenant", QUESTION).results().get(0);
         assertThat(result.bm25Rank()).isNull();
         assertThat(Double.compare(result.bm25Contribution(), 0.0)).isZero();
@@ -79,10 +85,11 @@ class DemoSearchServiceTest {
         var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
         when(backend.candidates("tenant", sanitized, 20)).thenReturn(List.of(candidate()));
         Path cache = temp.resolve("apostrophe.json");
-        Files.writeString(cache, "{\"chunks\":[{\"id\":\"" + CHUNK + "\",\"embedding\":[1.0,0.0]}],\"queries\":[{\"query_id\":\"q1\",\"embedding\":[1.0,0.0]}]}");
-        Files.writeString(temp.resolve("queries.jsonl"),
+        Files.writeString(cache, "{\"queries\":[{\"query_id\":\"q1\",\"embedding\":[1.0,0.0]}]}");
+        Files.writeString(temp.resolve("queries-apostrophe.jsonl"),
                 "{\"query_id\":\"q1\",\"question\":\"" + raw + "\"}\n");
-        var service = new DemoSearchService(backend, mock(IngestionCacheClient.class), cache, temp.resolve("queries.jsonl"));
+        var service = new DemoSearchService(backend, mock(IngestionCacheClient.class), embedder(null),
+                shape(), MODEL, cache, temp.resolve("queries-apostrophe.jsonl"));
         assertThat(service.search("tenant", sanitized).results()).isNotEmpty();
     }
 
@@ -90,10 +97,10 @@ class DemoSearchServiceTest {
     void rawJsonIncludesNullBm25ForDenseOnly() throws Exception {
         var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
         when(backend.candidates("tenant", QUESTION, 20)).thenReturn(List.of());
-        var client = mock(IngestionCacheClient.class);
+        var client = clientWith(REF, List.of(embedding(REF, 0)));
         when(client.readChunks("tenant", REF)).thenReturn(List.of(chunk()));
-        when(client.readManifest("tenant", REF)).thenReturn(Optional.of(manifest()));
-        var service = service(backend, cache(List.of(CHUNK)), client);
+        when(client.readManifest("tenant", REF)).thenReturn(Optional.of(manifest(REF)));
+        var service = service(backend, cache(), client, embedder(null));
         var result = service.search("tenant", QUESTION).results().get(0);
         var mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
         String json = mapper.writeValueAsString(result);
@@ -121,17 +128,41 @@ class DemoSearchServiceTest {
     void emptyResultsAreSuccessful() throws Exception {
         var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
         when(backend.candidates("tenant", QUESTION, 20)).thenReturn(List.of());
-        var service = service(backend, cache(List.of()), mock(IngestionCacheClient.class));
+        var service = service(backend, cache(), mock(IngestionCacheClient.class), embedder(null));
         assertThat(service.search("tenant", QUESTION).results()).isEmpty();
     }
 
     @Test
-    void uncachedQueryFallsBackToBm25Only() throws Exception {
+    void uncachedQueryWithoutCanonicalVectorsFallsBackToBm25Only() throws Exception {
         var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
         when(backend.candidates("tenant", "totally uncached question", 20)).thenReturn(List.of(candidate()));
-        var service = service(backend, cache(List.of(CHUNK)), mock(IngestionCacheClient.class));
+        var service = service(backend, cache(), mock(IngestionCacheClient.class),
+                embedder(new float[] {1.0f, 0.0f}));
         var result = service.search("tenant", "totally uncached question").results().get(0);
         assertThat(result.bm25Rank()).isEqualTo(1);
+        assertThat(result.denseRank()).isNull();
+        assertThat(result.legsPresent()).containsExactly("bm25");
+    }
+
+    @Test
+    void uncachedQueryUsesLiveEmbeddingWhenCanonicalVectorsExist() throws Exception {
+        var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
+        when(backend.candidates("tenant", "totally uncached question", 20)).thenReturn(List.of(candidate()));
+        var service = service(backend, cache(), clientWith(REF, List.of(embedding(REF, 0))),
+                embedder(new float[] {1.0f, 0.0f}));
+        var result = service.search("tenant", "totally uncached question").results().get(0);
+        assertThat(result.denseRank()).isEqualTo(1);
+        assertThat(result.legsPresent()).containsExactly("bm25", "dense");
+    }
+
+    @Test
+    void failingQueryEmbeddingDegradesToBm25Only() throws Exception {
+        var backend = mock(org.synanton.synquest.service.KnowledgeSearchBackend.class);
+        when(backend.candidates("tenant", "totally uncached question", 20)).thenReturn(List.of(candidate()));
+        QueryEmbedder failing = mock(QueryEmbedder.class);
+        when(failing.embed(anyString(), any())).thenThrow(new IllegalStateException("tei down"));
+        var service = service(backend, cache(), clientWith(REF, List.of(embedding(REF, 0))), failing);
+        var result = service.search("tenant", "totally uncached question").results().get(0);
         assertThat(result.denseRank()).isNull();
         assertThat(result.legsPresent()).containsExactly("bm25");
     }
@@ -144,15 +175,37 @@ class DemoSearchServiceTest {
     }
 
     private DemoSearchService service(org.synanton.synquest.service.KnowledgeSearchBackend backend,
-                                      Path cache, IngestionCacheClient client) throws Exception {
-        return new DemoSearchService(backend, client, cache, temp.resolve("queries.jsonl"));
+                                      Path cache, IngestionCacheClient client, QueryEmbedder embedder) {
+        return new DemoSearchService(backend, client, embedder, shape(), MODEL, cache,
+                temp.resolve("queries.jsonl"));
     }
 
-    private Path cache(List<String> chunkIds) throws Exception {
-        String chunks = String.join(",", chunkIds.stream()
-                .map(id -> "{\"id\":\"" + id + "\",\"embedding\":[1.0,0.0]}").toList());
+    private static EmbeddingShape shape() {
+        return new EmbeddingShape(2, 0);
+    }
+
+    private static QueryEmbedder embedder(float[] vector) {
+        QueryEmbedder embedder = mock(QueryEmbedder.class);
+        if (vector != null) {
+            when(embedder.embed(anyString(), any())).thenReturn(vector);
+        }
+        return embedder;
+    }
+
+    private static IngestionCacheClient clientWith(UUID ref, List<EmbeddingRow> embeddings) {
+        var client = mock(IngestionCacheClient.class);
+        when(client.listManifest(eq("tenant"), anyInt())).thenReturn(List.of(manifest(ref)));
+        when(client.listEmbeddings("tenant", ref)).thenReturn(embeddings);
+        return client;
+    }
+
+    private static EmbeddingRow embedding(UUID ref, int ordinal) {
+        return new EmbeddingRow("tenant", ref, ordinal, MODEL, "sha", new float[] {1.0f, 0.0f}, 2, Instant.now());
+    }
+
+    private Path cache() throws Exception {
         Path cache = temp.resolve("dense.json");
-        Files.writeString(cache, "{\"chunks\":[" + chunks + "],\"queries\":[{\"query_id\":\"q1\",\"embedding\":[1.0,0.0]}]}");
+        Files.writeString(cache, "{\"queries\":[{\"query_id\":\"q1\",\"embedding\":[1.0,0.0]}]}");
         Files.writeString(temp.resolve("queries.jsonl"),
                 "{\"query_id\":\"q1\",\"question\":\"" + QUESTION + "\"}\n");
         return cache;
@@ -167,8 +220,8 @@ class DemoSearchServiceTest {
         return new ChunkRow("tenant", REF, 0, "text", "sha", 1, 2, "section", "section", "heading");
     }
 
-    private static ManifestRow manifest() {
-        return new ManifestRow("tenant", REF, Instant.now(), 1, "semantic-v1", 1, "READY", "hot",
+    private static ManifestRow manifest(UUID ref) {
+        return new ManifestRow("tenant", ref, Instant.now(), 1, "semantic-v1", 1, "READY", "hot",
                 "local", "file:///doc", "sha", 10, "text/plain", "high", null, "{}", "cache");
     }
 

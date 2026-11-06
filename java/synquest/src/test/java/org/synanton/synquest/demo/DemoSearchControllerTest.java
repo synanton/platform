@@ -11,8 +11,10 @@ import org.junit.jupiter.api.io.TempDir;
 import org.synanton.common.jwt.JwtVerifier;
 import org.synanton.common.tenant.TenantContextFilter;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.synquest.service.EmbeddingShape;
 import org.synanton.synquest.service.KnowledgeSearchBackend;
 import org.synanton.synquest.service.KnowledgeSearchBackend.KnowledgeCandidate;
+import org.synanton.synquest.service.QueryEmbedder;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -47,6 +49,7 @@ class DemoSearchControllerTest {
     void setUp() throws Exception {
         backend = mock(KnowledgeSearchBackend.class);
         var service = new DemoSearchService(backend, mock(IngestionCacheClient.class),
+                mock(QueryEmbedder.class), new EmbeddingShape(2, 0), "bge-base-en-v1.5",
                 cache(), temp.resolve("queries.jsonl"));
         mvc = MockMvcBuilders.standaloneSetup(new DemoSearchController(service, backend))
                 .addFilters(new TenantContextFilter(new JwtVerifier(SECRET), ""))

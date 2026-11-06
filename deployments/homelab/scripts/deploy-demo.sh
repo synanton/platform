@@ -114,5 +114,9 @@ kubectl -n "$NAMESPACE" wait --for=condition=complete job/minio-init --timeout=1
 log "local-real-demo overlay"
 kubectl apply -k "$ROOT/k8s/local-real-demo/"
 
+# Demo-only: allow synanton -> TEI:8000 (gpu-plane default-deny blocks direct access).
+log "demo network access to TEI embedding (gpu-plane)"
+kubectl apply -f "$ROOT/k8s/local-real-demo/tei-embedding-access.yaml"
+
 log "done — pods:"
 kubectl -n "$NAMESPACE" get pods -o wide

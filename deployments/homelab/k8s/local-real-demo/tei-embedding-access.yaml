@@ -1,0 +1,27 @@
+# Demo-only ingress exception for the Live Dense leg.
+#
+# The gpu-plane NetworkPolicies admit inference backends only from Envoy
+# (§19: "direct client access to backends prohibited"). The local-real-demo
+# overlay configures synquest/synflux to call TEI over plain HTTP
+# (VLLM_EMBED_BASE_URL / EMBED_BASE_URL), so without this rule the calls time
+# out under default-deny. NetworkPolicies are additive, so this narrows nothing
+# else. It is applied explicitly by deploy-demo.sh (not via kustomize) because
+# its namespace is gpu-plane, not the overlay's synanton.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-allow-synanton-tei
+  namespace: gpu-plane
+spec:
+  podSelector:
+    matchLabels:
+      app: tei-embedding
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: synanton
+      ports:
+        - protocol: TCP
+          port: 8000
