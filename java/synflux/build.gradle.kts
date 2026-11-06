@@ -25,6 +25,7 @@ dependencies {
     implementation(project(":java:synanton-llm-client"))
     implementation(project(":java:gpu-client"))
     implementation(project(":java:extraction-client"))
+    implementation(project(":java:eventing-contract"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.actuator)

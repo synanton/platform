@@ -17,6 +17,9 @@ import org.synanton.ingestioncache.domain.SourceTombstoneRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.ingestioncache.domain.SyncResultRow;
 import org.synanton.synvault.domain.ContentRef;
+import org.synanton.synflux.events.SourceDeleted;
+import org.synanton.synflux.events.SourceIdentity;
+import org.synanton.synflux.events.SourcePublished;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +45,9 @@ import java.util.UUID;
 public final class FixtureIngestionService {
 
     private static final Logger log = LoggerFactory.getLogger(FixtureIngestionService.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+            .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private static final UUID VERSION_NAMESPACE = UUID.fromString("7cb4c7de-1670-5b0a-9e95-2be8499ea851");
     private static final UUID TOMBSTONE_NAMESPACE = UUID.fromString("3e3d365b-1e72-5a78-beb9-634dd27a20b2");
 
@@ -636,23 +641,11 @@ public final class FixtureIngestionService {
             String correlationId,
             String causationId) {
         UUID eventId = uuidV5(TOMBSTONE_NAMESPACE, nameKey("SourcePublished", version.versionId().toString()));
-        Map<String, Object> eventPayload = new LinkedHashMap<>();
-        eventPayload.put("source_identity", Map.of(
-            "tenant_id", version.tenantId(),
-            "connector_id", version.connectorId(),
-            "source_id", version.sourceId(),
-            "resource_id", version.resourceId()
-        ));
-        eventPayload.put("version_id", version.versionId().toString());
-        eventPayload.put("content_digest", version.contentDigest());
-        eventPayload.put("content_ref_id", version.contentRefId().toString());
-        eventPayload.put("observed_at", version.observedAt().toString());
-        eventPayload.put("run_id", runId.toString());
-        eventPayload.put("operation_id", operationId.toString());
-        eventPayload.put("workflow_id", workflowId);
-        if (!version.contentCacheReference().isBlank()) {
-            eventPayload.put("content_cache_reference", version.contentCacheReference());
-        }
+        SourcePublished eventPayload = new SourcePublished(
+            new SourceIdentity(version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId()),
+            version.versionId(), version.contentDigest(), version.contentRefId(), version.observedAt(),
+            runId, operationId, workflowId,
+            version.contentCacheReference().isBlank() ? null : version.contentCacheReference());
         Map<String, Object> envelope = eventEnvelope(
             eventId, "SourcePublished", version.tenantId(), correlationId, causationId,
             version.observedAt(), eventPayload);
@@ -673,20 +666,11 @@ public final class FixtureIngestionService {
             nameKey("SourceDeleted", tombstone.tombstoneId().toString()));
         String workflowId = workflowId(operationId);
         String deleteCommandId = commandId(UUID.fromString(workflowId), "DELETE").toString();
-        Map<String, Object> eventPayload = Map.of(
-            "source_identity", Map.of(
-                "tenant_id", tombstone.tenantId(),
-                "connector_id", tombstone.connectorId(),
-                "source_id", tombstone.sourceId(),
-                "resource_id", tombstone.resourceId()
-            ),
-            "deleted_at", tombstone.deletedAt().toString(),
-            "tombstone_id", tombstone.tombstoneId().toString(),
-            "versions_manifest_ref", tombstone.versionsManifestRef().toString(),
-            "run_id", runId.toString(),
-            "operation_id", operationId.toString(),
-            "workflow_id", workflowId
-        );
+        SourceDeleted eventPayload = new SourceDeleted(
+            new SourceIdentity(tombstone.tenantId(), tombstone.connectorId(),
+                tombstone.sourceId(), tombstone.resourceId()),
+            tombstone.deletedAt(), tombstone.tombstoneId(), tombstone.versionsManifestRef(),
+            runId, operationId, workflowId);
         try {
             return new SourceOutboxRow(
                 tombstone.tenantId(), tombstone.connectorId(), tombstone.sourceId(), tombstone.resourceId(),
@@ -707,7 +691,7 @@ public final class FixtureIngestionService {
             String correlationId,
             String causationId,
             Instant occurredAt,
-            Map<String, Object> payload) {
+            Object payload) {
         Map<String, Object> envelope = new LinkedHashMap<>();
         envelope.put("event_id", eventId.toString());
         envelope.put("event_type", eventType);
