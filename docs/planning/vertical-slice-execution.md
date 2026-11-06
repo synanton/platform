@@ -34,7 +34,7 @@ Search → Provenance.
 - [x] Search returns the uploaded document's chunks on both legs (BM25 + live Dense via TEI).
 - [x] Provenance renders page range + section breadcrumb (no "#338" placeholder).
 - [x] Ontology panel renders (273 total / 31 graph-useful), df counts as badges.
-- [ ] Automated regression test replaying the manual upload → search → provenance path.
+- [ ] **#537** — automated vertical-slice regression (upload → dense search → provenance).
 
 ## P1 — Failure & operability
 
@@ -42,11 +42,14 @@ Search → Provenance.
   change; set `strategy: Recreate`. (Done — `synquest.yaml` sets `Recreate`.)
 - [x] **EWP-2 Migration 3** (eventing) steps 2–6: Cassandra schema columns, typed
   payloads, write path, config gate, e2e (#527, #530–#533; tracker #528 closed).
-- [ ] Outbox delivery + idempotency under restart.
+- [ ] **#536** — outbox consumer idempotency & recovery (kill mid-projection, restart, no duplicates).
 - [ ] Projection lag and retrieval-failure visibility in the UI.
+- [ ] **#539** — tenant isolation negative tests for live search + provenance.
 - [x] **UX polish (503)** — `SearchPage.tsx` catches the projection-rebuild `503`
   and renders a friendly "Index updating…" banner instead of a red error (#525).
 - [x] **Live Dense leg** — verified 2026-11-06; see the dedicated subsection below.
+- [ ] **#538** — route demo TEI via gateway/Envoy; drop the `demo-allow-synanton-tei`
+  NetworkPolicy exception (prod TODO in the manifest).
 
 ### P1: Live Dense Leg & GPU Integration — DONE (2026-11-06)
 
@@ -82,11 +85,15 @@ Search → Provenance.
 
 | Issue / track | Status | P-level |
 |---|---|---|
-| #508 (graph) | Open — re-scoped to bounded expansion | P2 |
-| #506 (RWO deadlock) | Open — Recreate strategy | P1 |
+| #508 (graph) | Open — bounded expansion | P2 |
+| #506 (RWO deadlock) | Closed — `Recreate` deployed (#534) | — |
 | #500 (platform crashloop) | Open — out of demo path | deferred |
-| EWP-2 Migration 3 | Paused at step 1 | P1 |
-| #507 | Closed (invalid — store is populated) | — |
+| EWP-2 Migration 3 (#528) | Closed — steps 1–6 complete | — |
+| #536 (outbox idempotency & recovery) | Open | P1 |
+| #537 (automated vertical-slice E2E) | Open | P0 |
+| #538 (TEI via gateway/Envoy) | Open | P1 |
+| #539 (tenant isolation negative tests) | Open | P1 |
+| #507 | Closed (invalid — store populated) | — |
 
 ## Operation
 
