@@ -34,11 +34,16 @@ search returns results once that finishes (see Known Limitations).
 - **Indexing lag:** uploading a new document triggers a background projection
   rebuild. Search returns `503` — the UI shows an "Index updating…" banner — for
   roughly 40 s after an upload.
-- **Live semantic search:** newly uploaded documents use BM25-only retrieval
-  (`Dense —`) until the TEI GPU service is deployed
-  (`gpu-runtime/deployments/homelab/scripts/deploy.sh inference`) and
-  `SYNFLUX_PIPELINE_EMBEDDING_ENABLED=true`, with `VLLM_EMBED_BASE_URL` pointed at
-  `http://tei-embedding.gpu-plane.svc.cluster.local:8000/v1`.
+- **Legacy corpus is lexical-only:** the 58 pre-existing demo manifests were
+  ingested before GPU embedding was enabled, so they have no canonical chunk
+  vectors and appear as `BM25 #N · Dense —`. Newly uploaded documents get full
+  hybrid retrieval (`BM25 · Dense · RRF`) through the in-cluster TEI service;
+  backfilling the legacy corpus is deferred. See
+  `docs/acceptance/live-dense-2026-11-06.md`.
+- **TEI networking is a demo exception:** synquest/synflux reach `tei-embedding`
+  directly across namespaces via the additive `demo-allow-synanton-tei`
+  NetworkPolicy. This bypasses the gpu-plane gateway/Envoy perimeter; route via
+  Envoy before production use (see the manifest TODO and #538).
 - **Graph UI:** scoped to bounded neighbor expansion (#508), not a full 20k-node
   visualization.
 
