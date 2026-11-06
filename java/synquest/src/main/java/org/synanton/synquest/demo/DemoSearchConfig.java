@@ -1,7 +1,10 @@
 package org.synanton.synquest.demo;
 
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.synquest.config.SynquestProperties;
+import org.synanton.synquest.service.EmbeddingShape;
 import org.synanton.synquest.service.KnowledgeSearchBackend;
+import org.synanton.synquest.service.QueryEmbedder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +24,12 @@ public class DemoSearchConfig {
     DemoSearchService demoSearchService(
             KnowledgeSearchBackend backend,
             IngestionCacheClient cacheClient,
+            QueryEmbedder queryEmbedder,
+            EmbeddingShape shape,
+            SynquestProperties props,
             @Value("${synquest.demo.dense-cache:demo-data/eval/retrieval-benchmark/dense-embeddings-v2.json}") String cache,
             @Value("${synquest.demo.queries:demo-data/eval/retrieval-benchmark/queries-v2.rb-fixed-g5.jsonl}") String queries) {
-        return new DemoSearchService(backend, cacheClient, Path.of(cache), Path.of(queries));
+        return new DemoSearchService(backend, cacheClient, queryEmbedder, shape, props.embedding().model(),
+                Path.of(cache), Path.of(queries));
     }
 }

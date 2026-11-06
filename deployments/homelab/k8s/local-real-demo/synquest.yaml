@@ -23,6 +23,10 @@ metadata:
     synanton.io/source-commit: "2094371"
 spec:
   replicas: 1
+  # Single replica with a ReadWriteOnce index volume: a rolling update would try
+  # to attach the PVC on a second node while the old pod still holds it.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: synquest
@@ -35,7 +39,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: synquest
-          image: local-registry:5000/synanton/synquest@sha256:5e17480b00fafed369e489ecc9490d855af39fb48c9091ed0943e704028a3f88
+          image: local-registry:5000/synanton/synquest@sha256:4fe2e272f9f714e5f607e22cd7daa2999a43451e4e417a96f4101c0af83e8d43
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:

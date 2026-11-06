@@ -6,9 +6,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.synquest.service.EmbeddingShape;
 import org.synanton.synquest.service.KnowledgeSearchBackend;
 import org.synanton.synquest.service.KnowledgeSearchBackend.KnowledgeCandidate;
+import org.synanton.synquest.service.QueryEmbedder;
 import org.slf4j.Logger;
 import org.springframework.web.util.HtmlUtils;
 import org.slf4j.LoggerFactory;
@@ -26,11 +29,19 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-/** Demo-only two-leg RRF with cached dense-v2 vectors. Not a production search path. */
+/**
+ * Demo-only two-leg RRF. Query vectors come from the benchmark cache when the question is
+ * known, otherwise they are embedded live through the GPU plane; chunk vectors always come
+ * from the canonical ingestion cache ({@code embedding_content_cache}) so a newly uploaded
+ * document is searchable on the dense leg without rebuilding a static file. Not a
+ * production search path.
+ */
 public final class DemoSearchService {
 
     private static final Logger log = LoggerFactory.getLogger(DemoSearchService.class);
     public static final int K = 20;
+    /** Upper bound on manifests scanned when assembling the canonical chunk-vector map. */
+    private static final int MANIFEST_LIMIT = 10_000;
     private static final ObjectMapper JSON = new ObjectMapper();
     static final Comparator<DemoResult> ORDER = Comparator
             .comparingDouble(DemoResult::finalScore).reversed()
@@ -39,14 +50,21 @@ public final class DemoSearchService {
 
     private final KnowledgeSearchBackend backend;
     private final IngestionCacheClient cacheClient;
+    private final QueryEmbedder queryEmbedder;
+    private final EmbeddingShape shape;
+    private final String embeddingModel;
     private final Path cachePath;
     private final Path queriesPath;
     private volatile Cache cache;
 
     public DemoSearchService(KnowledgeSearchBackend backend, IngestionCacheClient cacheClient,
+                             QueryEmbedder queryEmbedder, EmbeddingShape shape, String embeddingModel,
                              Path cachePath, Path queriesPath) {
         this.backend = Objects.requireNonNull(backend, "backend");
         this.cacheClient = Objects.requireNonNull(cacheClient, "cacheClient");
+        this.queryEmbedder = Objects.requireNonNull(queryEmbedder, "queryEmbedder");
+        this.shape = Objects.requireNonNull(shape, "shape");
+        this.embeddingModel = Objects.requireNonNull(embeddingModel, "embeddingModel");
         this.cachePath = Objects.requireNonNull(cachePath, "cachePath");
         this.queriesPath = Objects.requireNonNull(queriesPath, "queriesPath");
     }
@@ -55,13 +73,16 @@ public final class DemoSearchService {
         String cacheQuery = HtmlUtils.htmlUnescape(query);
         Cache data = cache();
         float[] queryVector = data.queryVectors().get(cacheQuery);
+        if (queryVector == null) {
+            queryVector = embedQuery(tenantId, cacheQuery);
+        }
         List<KnowledgeCandidate> bm25 = backend.candidates(tenantId, query, K);
         List<DenseHit> dense;
         if (queryVector == null) {
-            log.info("No cached demo query embedding for '{}'; running BM25-only", cacheQuery);
+            log.info("No query embedding for '{}'; running BM25-only", cacheQuery);
             dense = List.of();
         } else {
-            dense = dense(queryVector, data.chunkVectors());
+            dense = dense(queryVector, canonicalChunkVectors(tenantId));
         }
         Map<String, Entry> entries = new HashMap<>();
         for (int i = 0; i < bm25.size(); i++) {
@@ -158,16 +179,47 @@ public final class DemoSearchService {
         return hits.size() > K ? hits.subList(0, K) : hits;
     }
 
+    /** Live query embedding via the GPU plane; a failure degrades to BM25-only, never 500. */
+    private float[] embedQuery(String tenantId, String query) {
+        try {
+            return queryEmbedder.embed(query, tenantId);
+        } catch (RuntimeException failure) {
+            log.warn("Query embedding failed for '{}'; running BM25-only: {}", query, failure.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Canonical chunk vectors for the tenant, read from {@code embedding_content_cache}.
+     * Only vectors produced by the configured model are considered, and they pass through
+     * {@link EmbeddingShape#fit} so truncation/normalisation match the query vector.
+     */
+    private Map<String, float[]> canonicalChunkVectors(String tenantId) {
+        Map<String, float[]> chunks = new HashMap<>();
+        for (ManifestRow manifest : cacheClient.listManifest(tenantId, MANIFEST_LIMIT)) {
+            UUID contentRef = manifest.contentRefId();
+            for (EmbeddingRow row : cacheClient.listEmbeddings(tenantId, contentRef)) {
+                if (!embeddingModel.equals(row.modelId())
+                        || row.embedding() == null || row.embedding().length == 0) {
+                    continue;
+                }
+                try {
+                    chunks.put(contentRef + "#" + row.chunkOrdinal(), shape.fit(row.embedding()));
+                } catch (IllegalStateException mismatch) {
+                    log.warn("Skipping embedding for chunk {}#{} (model {}): {}",
+                            contentRef, row.chunkOrdinal(), row.modelId(), mismatch.getMessage());
+                }
+            }
+        }
+        return chunks;
+    }
+
     private Cache cache() throws IOException {
         Cache current = cache;
         if (current != null) return current;
         synchronized (this) {
             if (cache != null) return cache;
             JsonNode root = JSON.readTree(Files.readString(cachePath));
-            Map<String, float[]> chunks = new HashMap<>();
-            for (JsonNode chunk : root.path("chunks")) {
-                chunks.put(chunk.path("id").asText(), vector(chunk.path("embedding")));
-            }
             Map<String, String> queryIds = new HashMap<>();
             for (String line : Files.readAllLines(queriesPath)) {
                 if (line.isBlank()) continue;
@@ -179,7 +231,7 @@ public final class DemoSearchService {
                 String question = queryIds.get(q.path("query_id").asText());
                 if (question != null) queries.put(question, vector(q.path("embedding")));
             }
-            cache = new Cache(Map.copyOf(chunks), Map.copyOf(queries));
+            cache = new Cache(Map.copyOf(queries));
             return cache;
         }
     }
@@ -207,7 +259,7 @@ public final class DemoSearchService {
         return "mixed";
     }
 
-    private record Cache(Map<String, float[]> chunkVectors, Map<String, float[]> queryVectors) {}
+    private record Cache(Map<String, float[]> queryVectors) {}
     private record DenseHit(String chunkId, double score) {}
 
     private static final class Entry {
