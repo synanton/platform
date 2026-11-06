@@ -1,5 +1,6 @@
 package org.synanton.synquest.service;
 
+import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
@@ -29,21 +30,43 @@ public class SearchProjectionConsumer {
     private final SearchService searchService;
     private final String tenant;
     private final int batchLimit;
+    private final boolean projectionEnabled;
 
     public SearchProjectionConsumer(
             IngestionCacheClient cacheClient,
             SearchService searchService,
             @Value("${synquest.seed.demo-tenant:}") String tenant,
-            @Value("${synquest.projection.batch-limit:200}") int batchLimit) {
+            @Value("${synquest.projection.batch-limit:200}") int batchLimit,
+            @Value("${synquest.projection.enabled:true}") boolean projectionEnabled) {
         this.cacheClient = cacheClient;
         this.searchService = searchService;
         this.tenant = tenant;
         this.batchLimit = batchLimit;
+        this.projectionEnabled = projectionEnabled;
+    }
+
+    /**
+     * Fail-fast (Fix 1 pattern): an enabled projection with no tenant would silently
+     * no-op — ingestion keeps writing to Cassandra while the search index never
+     * updates and the outbox grows unbounded. Refuse to start instead.
+     */
+    @PostConstruct
+    public void validateProjectionConfig() {
+        if (!projectionEnabled) {
+            log.warn("Search projection consumer is DISABLED; the search index will not update automatically");
+            return;
+        }
+        if (tenant == null || tenant.isBlank()) {
+            throw new IllegalStateException(
+                    "Projection is enabled but no tenant is configured. Set synquest.seed.demo-tenant=<tenant> "
+                            + "or disable with synquest.projection.enabled=false.");
+        }
+        log.info("Search projection consumer active for tenant '{}'", tenant);
     }
 
     @Scheduled(fixedDelayString = "${synquest.projection.poll-delay-ms:5000}")
     public void projectNewSourceVersions() {
-        if (tenant == null || tenant.isBlank()) {
+        if (!projectionEnabled || tenant == null || tenant.isBlank()) {
             return;
         }
         try {
