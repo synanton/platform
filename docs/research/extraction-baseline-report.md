@@ -1,6 +1,6 @@
 # Extraction baseline report — Phase A regex adapter vs frozen gold
 
-**Status:** Baseline + Phase B prompt tuning
+**Status:** Baseline + Phase B (tuning + Java adapter)
 **Last reviewed:** 2026-11-08
 **Issue:** #558 (gold + baseline), RAKG epic (follow-up)
 **Gold:** `evaluation/gold/` (frozen; `MANIFEST.sha256`)
@@ -8,7 +8,8 @@
 **Extractor:** `java/extraction-engine` — `ExtractionEngineAdapter` port with
 `RegexExtractorAdapter` (Phase A). Phase B tuning runs Qwen3-4B-Instruct-2507
 (`qwen3-extraction` on the GPU plane) through the prompt-tuning harness; the Java
-`LlmExtractionAdapter` is the next implementation gate (ADR-022).
+`LlmExtractionAdapter` (Java) reproduces the tuned result against the live
+cluster endpoint (ADR-022).
 
 ## What changed since the 0.000 run
 
@@ -26,7 +27,7 @@ engine:
 - `RegexExtractorAdapter`: generic identifiers, metrics, quoted phrases,
   capitalized terms, and cue-based relations (`requires`, `uses`, `is`, `part of`,
   `discussed in`, …). No LLM, no resolution.
-- `LlmExtractionAdapter`: the Phase B adapter (in progress). The tuning harness
+- `LlmExtractionAdapter`: the Phase B adapter (landed). The tuning harness
   calls the same OpenAI-compatible vLLM endpoint and is the reference for the
   Java offset-recovery/endpoint-synthesis behavior.
 - `ExtractionCli`: batch bridge (`--corpus-dir … --out …`) so
@@ -132,14 +133,29 @@ diverge from the gold. Do not hide that in adapter heuristics; prompt v2 and
 resolution are the next levers.
 
 **Caveats:** the model's raw offsets are unusable (hence surface-form recovery);
-synthetic endpoints slightly inflate recall; the harness is Python, not the Java
-adapter; five documents is smoke-scale. The Java adapter must reproduce these
-numbers before they are treated as production evidence.
+synthetic endpoints slightly inflate recall; five documents is smoke-scale.
+
+### Java adapter (live E2E, 2026-11-08)
+
+`LlmExtractionAdapter` was run through the same frozen gold against
+`http://localhost:8000` (port-forwarded `vllm-extraction`):
+
+| Metric | Python harness | Java adapter |
+|---|---|---|
+| Entity P / R / F1 (overlap) | 0.636 / 0.600 / 0.618 | 0.636 / 0.600 / **0.618** |
+| Type accuracy | 0.717 | 0.697 |
+| Relationship P / R / F1 | 0.086 / 0.068 / 0.076 | 0.091 / 0.068 / **0.078** |
+| Predicted mentions / relations | 66 / 35 | 66 / 33 |
+
+Per-document entity F1 is identical to the harness (0.842, 0.737, 0.714, 0.519,
+0.465). The small type/relation delta is the adapter's honest `UNKNOWN` typing of
+synthetic endpoints (the harness guessed types) and stricter dedup. The live
+gated test is `LlmExtractionLiveTest` (`LLM_EXTRACTION_URL=...`).
 
 ## What the frozen gold measures next
 
-Phase B met the first three targets in the tuning harness. The next gate is the
-Java `LlmExtractionAdapter` reproducing them end-to-end, then:
+Phase B met the first three targets in both the tuning harness and the Java
+adapter. The next gate is ingestion integration + resolution:
 
 - Entity F1 (overlap) **> 0.618** with precision above 0.8; type accuracy **> 0.717**.
 - Relationship F1 **> 0.076**, with evidence spans that overlap the gold.
@@ -156,12 +172,16 @@ python3 evaluation/eval_extraction.py      # regex baseline, both chunk modes
 kubectl -n gpu-plane port-forward deploy/vllm-extraction 8000:8000
 python3 evaluation/eval_extraction.py --llm-endpoint http://localhost:8000
 python3 evaluation/eval_extraction.py --llm-endpoint http://localhost:8000 --only doc-5
+# Java adapter (same endpoint, sentence chunks):
+python3 evaluation/eval_extraction.py --java-llm-endpoint http://localhost:8000/v1
+LLM_EXTRACTION_URL=http://localhost:8000/v1 \
+  ./gradlew :java:extraction-engine:test --tests '*LlmExtractionLiveTest'
 ```
 
 `--skip-manifest` exists for debugging only; a reportable run must verify the
 golden hashes. The evaluator writes `evaluation/regex-predictions.json`,
-`evaluation/regex-predictions-chunked.json`, and `evaluation/baseline-result.json`
-(both modes).
+`evaluation/regex-predictions-chunked.json`, `evaluation/baseline-result.json`,
+`evaluation/llm-*.json`, and `evaluation/java-llm-*.json`.
 
 ## Artifacts
 

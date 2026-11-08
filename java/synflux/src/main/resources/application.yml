@@ -46,6 +46,12 @@ synflux:
     service-base-url: ${ANNOTATIONS_SERVICE_BASE_URL:http://localhost:8095}
     producer: rule-engine
     producer-version: "1.0"
+  extraction-engine:
+    # RAKG Phase B (ADR-022): regex is the safe default; llm uses the GPU plane.
+    provider: ${EXTRACTION_PROVIDER:regex}
+    endpoint: ${LLM_EXTRACTION_URL:http://localhost:8000/v1}
+    model: ${LLM_EXTRACTION_MODEL:qwen3-extraction}
+    timeout-seconds: ${LLM_EXTRACTION_TIMEOUT_SECONDS:120}
 
 synanton:
   extraction:

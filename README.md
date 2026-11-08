@@ -177,20 +177,22 @@ keeps ingestion working when the GPU plane is down. See
   full-rebuild/503 window is gone.
 - **Knowledge extraction:** the `ExtractionEngineAdapter` port separates the
   deterministic `RegexExtractorAdapter` baseline from the RAKG
-  `LlmExtractionAdapter` (Phase B, in progress) that calls out-of-process vLLM.
-- **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the tuned
-  Qwen3-4B prompt reaches entity F1 **0.618** / relationship F1 **0.076** in the
-  prompt-tuning harness (the Java adapter is the next gate).
+  `LlmExtractionAdapter` (Phase B, landed) that calls out-of-process vLLM.
+- **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
+  adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
+  live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
 - **Operational:** automated vertical-slice E2E, outbox idempotency, tenant
   isolation, source-status endpoint, and incremental `SourceDeleted` projection
   are on `main`.
 
 ## Known limitations
 
-- **LLM extraction is experimental.** The 0.618 / 0.076 numbers come from the
-  tuning harness, not the production adapter. Coreference resolution and
-  pre-entity resolution are still pending; docs 3–5 of the gold have zero
-  relationship F1 (predicate/endpoint alignment).
+- **LLM extraction is experimental.** The Java adapter reproduces 0.618 entity /
+  0.078 relationship F1 on the frozen gold, but it is not yet invoked by the
+  ingestion stage (the provider bean and evaluation CLI are wired; resolution,
+  SHACL validation, and graph commit are the next RAKG phases). Coreference
+  resolution is still pending; docs 3–5 have zero relationship F1
+  (predicate/endpoint alignment).
 - **Gold is smoke-scale:** 5 documents / 70 mentions / 44 relationships, no
   inter-annotator agreement yet.
 - **Graph exploration is partial:** the search-result graph exists; entity-rooted
@@ -200,9 +202,9 @@ keeps ingestion working when the GPU plane is down. See
 
 ## Next steps
 
-- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** land the
-  Java `LlmExtractionAdapter`, resolution, SHACL validation, and graph commit on
-  top of the frozen gold.
+- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** invoke the
+  adapter from ingestion, then add retrieval-assisted resolution, SHACL
+  validation, and graph commit on top of the frozen gold.
 - **#556:** query-adaptive RRF on the now-frozen retrieval corpus (deferred).
 - **#538:** route demo TEI through the gateway and drop the direct exception.
 

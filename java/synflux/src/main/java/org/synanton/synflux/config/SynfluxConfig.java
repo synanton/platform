@@ -1,6 +1,9 @@
 package org.synanton.synflux.config;
 
 import org.synanton.contentcache.ContentStore;
+import org.synanton.extraction.engine.ExtractionEngineAdapter;
+import org.synanton.extraction.engine.llm.LlmExtractionAdapter;
+import org.synanton.extraction.engine.regex.RegexExtractorAdapter;
 import org.synanton.contentcache.FileSystemContentStore;
 import org.synanton.common.kafka.KafkaClientConfig;
 import org.synanton.extraction.client.ExtractionClientMetrics;
@@ -34,12 +37,15 @@ import org.springframework.context.annotation.Import;
 import java.util.List;
 import java.util.Optional;
 import java.time.Clock;
+import java.time.Duration;
+import java.util.Locale;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Configuration
-@EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class})
+@EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class,
+        ExtractionEngineProperties.class})
 @Import(KafkaClientConfig.class)
 public class SynfluxConfig {
 
@@ -84,6 +90,34 @@ public class SynfluxConfig {
     @Bean
     public AcquireStage acquireStage(ContentPullPort pullPort, ContentStore contentStore) {
         return new AcquireStage(pullPort, contentStore);
+    }
+
+    /**
+     * RAKG extraction engine switch: regex is the deterministic default so
+     * ingestion keeps working without the GPU plane; llm calls the vLLM
+     * extraction endpoint (ADR-022). Unknown providers fail loud at startup.
+     */
+    @Bean
+    @ConditionalOnMissingBean(ExtractionEngineAdapter.class)
+    public ExtractionEngineAdapter extractionEngineAdapter(ExtractionEngineProperties properties) {
+        String provider = properties.provider() == null
+                ? "regex"
+                : properties.provider().strip().toLowerCase(Locale.ROOT);
+        return switch (provider) {
+            case "regex" -> new RegexExtractorAdapter();
+            case "llm" -> new LlmExtractionAdapter(
+                    properties.endpoint() == null || properties.endpoint().isBlank()
+                            ? "http://localhost:8000/v1"
+                            : properties.endpoint(),
+                    properties.model() == null || properties.model().isBlank()
+                            ? "qwen3-extraction"
+                            : properties.model(),
+                    Duration.ofSeconds(properties.timeoutSeconds() == null
+                            ? 120
+                            : Math.max(1, properties.timeoutSeconds())));
+            default -> throw new IllegalStateException(
+                    "unknown synflux.extraction-engine.provider: " + provider + " (want regex|llm)");
+        };
     }
 
     @Bean

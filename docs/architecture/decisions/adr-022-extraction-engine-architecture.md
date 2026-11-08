@@ -1,7 +1,7 @@
 # ADR-022: Pluggable Knowledge Extraction Pipeline (RAKG)
 
-**Status:** Accepted 2026-11-08 (Phase B adapter implementation in progress)
-**Basis:** The deterministic regex extractor scored entity F1 0.182 on the frozen 5-document gold and 0.000 relationship F1; a tuned Qwen3-4B prompt reached entity F1 0.618 / relationship F1 0.076 on the same artifact. The model must run out-of-process on the GPU plane, and regex must remain a working fallback when the GPU is down, so the ingestion pipeline cannot hardcode vLLM.
+**Status:** Accepted 2026-11-08 (Phase B adapter landed 2026-11-08)
+**Basis:** The deterministic regex extractor scored entity F1 0.182 on the frozen 5-document gold and 0.000 relationship F1; a tuned Qwen3-4B prompt reached entity F1 0.618 / relationship F1 0.076, and the Java adapter reproduced 0.618 / 0.078 on the live cluster endpoint. The model must run out-of-process on the GPU plane, and regex must remain a working fallback when the GPU is down, so the ingestion pipeline cannot hardcode vLLM.
 
 ## Decision
 
@@ -18,7 +18,7 @@ Consequences:
 - **Availability:** `EXTRACTION_PROVIDER=regex` remains the safe default; the LLM path needs the GPU plane and a reachable endpoint, and fails closed per document without blocking the deterministic path.
 - **Latency:** the LLM adapter adds a synchronous HTTP call per chunk; batch/concurrency tuning is deferred, and extraction is a candidate stage rather than a hard prerequisite for search projections.
 - **Correctness:** surface-form recovery fixes the dominant 4B failure mode but cannot anchor pronouns/aliases; coreference and retrieval-assisted resolution remain future phases (RAKG #560).
-- **Measurability:** the frozen gold and prompt version make regressions visible; the current 0.618 / 0.076 result is from the tuning harness and must be reproduced by the Java adapter before it is treated as production.
+- **Measurability:** the frozen gold and prompt version make regressions visible; the Java adapter reproduces **0.618 entity / 0.078 relationship F1** (type 0.697, 33 relation candidates) against the live cluster model.
 - **Known gap:** relationship F1 is still driven by docs 1–2; the Skiena docs have predicate/endpoint misalignment (implicit algorithmic relations), to be attacked by prompt v2 and resolution, not by adapter heuristics.
 - **Rejected:** embedding vLLM calls in the ingestion pipeline with no port, and making the LLM the only extractor. Both would couple availability and reproducibility to a single GPU service and lose the deterministic fallback.
 

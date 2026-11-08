@@ -1,0 +1,215 @@
+{
+  "extractor": {
+    "adapter": "LlmExtractionAdapter (tuning harness)",
+    "endpoint": "http://localhost:8000",
+    "model": "qwen3-extraction",
+    "prompt": "/home/aminin/workspace/synanton/platform/evaluation/prompts/llm_extraction_system.txt",
+    "phase": "B (prompt tuning)"
+  },
+  "aggregate": {
+    "documents": 5,
+    "gold_entities": 70,
+    "gold_relationships": 44,
+    "predicted_mentions": 66,
+    "predicted_relations": 35,
+    "entity_exact": {
+      "tp": 35,
+      "fp": 31,
+      "fn": 35,
+      "precision": 0.5303030303030303,
+      "recall": 0.5,
+      "f1": 0.5147058823529411
+    },
+    "entity_overlap": {
+      "tp": 42,
+      "fp": 24,
+      "fn": 28,
+      "precision": 0.6363636363636364,
+      "recall": 0.6,
+      "f1": 0.6176470588235293
+    },
+    "type_accuracy": 0.7171428571428571,
+    "resolution_accuracy": null,
+    "relationship": {
+      "tp": 3,
+      "fp": 32,
+      "fn": 41,
+      "precision": 0.08571428571428572,
+      "recall": 0.06818181818181818,
+      "f1": 0.07594936708860758
+    },
+    "evidence_coverage": 1.0
+  },
+  "per_document": [
+    {
+      "document_id": "halcyon-7-directive",
+      "gold_entities": 10,
+      "gold_relationships": 7,
+      "predicted_mentions": 9,
+      "predicted_relations": 3,
+      "entity_exact": {
+        "tp": 7,
+        "fp": 2,
+        "fn": 3,
+        "precision": 0.7777777777777778,
+        "recall": 0.7,
+        "f1": 0.7368421052631577
+      },
+      "entity_overlap": {
+        "tp": 8,
+        "fp": 1,
+        "fn": 2,
+        "precision": 0.8888888888888888,
+        "recall": 0.8,
+        "f1": 0.8421052631578948
+      },
+      "type_accuracy": 1.0,
+      "resolution_accuracy": null,
+      "relationship": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 5,
+        "precision": 0.6666666666666666,
+        "recall": 0.2857142857142857,
+        "f1": 0.4
+      },
+      "evidence_coverage": 1.0
+    },
+    {
+      "document_id": "e650-live-dense-v2",
+      "gold_entities": 12,
+      "gold_relationships": 7,
+      "predicted_mentions": 7,
+      "predicted_relations": 5,
+      "entity_exact": {
+        "tp": 4,
+        "fp": 3,
+        "fn": 8,
+        "precision": 0.5714285714285714,
+        "recall": 0.3333333333333333,
+        "f1": 0.4210526315789474
+      },
+      "entity_overlap": {
+        "tp": 7,
+        "fp": 0,
+        "fn": 5,
+        "precision": 1.0,
+        "recall": 0.5833333333333334,
+        "f1": 0.7368421052631579
+      },
+      "type_accuracy": 0.5714285714285714,
+      "resolution_accuracy": null,
+      "relationship": {
+        "tp": 1,
+        "fp": 4,
+        "fn": 6,
+        "precision": 0.2,
+        "recall": 0.14285714285714285,
+        "f1": 0.16666666666666666
+      },
+      "evidence_coverage": 1.0
+    },
+    {
+      "document_id": "skiena-sorting",
+      "gold_entities": 15,
+      "gold_relationships": 10,
+      "predicted_mentions": 13,
+      "predicted_relations": 11,
+      "entity_exact": {
+        "tp": 9,
+        "fp": 4,
+        "fn": 6,
+        "precision": 0.6923076923076923,
+        "recall": 0.6,
+        "f1": 0.6428571428571429
+      },
+      "entity_overlap": {
+        "tp": 10,
+        "fp": 3,
+        "fn": 5,
+        "precision": 0.7692307692307693,
+        "recall": 0.6666666666666666,
+        "f1": 0.7142857142857142
+      },
+      "type_accuracy": 0.6,
+      "resolution_accuracy": null,
+      "relationship": {
+        "tp": 0,
+        "fp": 11,
+        "fn": 10,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "evidence_coverage": null
+    },
+    {
+      "document_id": "skiena-dynamic-programming",
+      "gold_entities": 15,
+      "gold_relationships": 10,
+      "predicted_mentions": 12,
+      "predicted_relations": 8,
+      "entity_exact": {
+        "tp": 7,
+        "fp": 5,
+        "fn": 8,
+        "precision": 0.5833333333333334,
+        "recall": 0.4666666666666667,
+        "f1": 0.5185185185185186
+      },
+      "entity_overlap": {
+        "tp": 7,
+        "fp": 5,
+        "fn": 8,
+        "precision": 0.5833333333333334,
+        "recall": 0.4666666666666667,
+        "f1": 0.5185185185185186
+      },
+      "type_accuracy": 0.7142857142857143,
+      "resolution_accuracy": null,
+      "relationship": {
+        "tp": 0,
+        "fp": 8,
+        "fn": 10,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "evidence_coverage": null
+    },
+    {
+      "document_id": "skiena-tsp-parsing",
+      "gold_entities": 18,
+      "gold_relationships": 10,
+      "predicted_mentions": 25,
+      "predicted_relations": 8,
+      "entity_exact": {
+        "tp": 8,
+        "fp": 17,
+        "fn": 10,
+        "precision": 0.32,
+        "recall": 0.4444444444444444,
+        "f1": 0.37209302325581395
+      },
+      "entity_overlap": {
+        "tp": 10,
+        "fp": 15,
+        "fn": 8,
+        "precision": 0.4,
+        "recall": 0.5555555555555556,
+        "f1": 0.46511627906976744
+      },
+      "type_accuracy": 0.7,
+      "resolution_accuracy": null,
+      "relationship": {
+        "tp": 0,
+        "fp": 8,
+        "fn": 10,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "evidence_coverage": null
+    }
+  ]
+}
