@@ -100,7 +100,18 @@ public final class DefaultResolutionPolicy implements ResolutionPolicy {
                 context == null ? null : context.sourceVersionId(),
                 context == null ? null : context.mentionId(),
                 outcome, reasonCode, entityId, label, best, runnerUp,
-                policyVersion, context == null ? null : context.ontologyVersion(), diagnostics);
+                policyVersion, context == null ? null : context.ontologyVersion(), diagnostics,
+                retrievalStrategyFor(context, entityId));
+    }
+
+    private static String retrievalStrategyFor(ResolutionContext context, String entityId) {
+        if (context == null || entityId == null || context.candidates() == null) {
+            return null;
+        }
+        return context.candidates().stream()
+                .filter(candidate -> entityId.equals(candidate.entityId()))
+                .map(ResolutionCandidate::retrievalStrategy)
+                .findFirst().orElse(null);
     }
 
     private static String labelFor(ResolutionContext context, String entityId) {

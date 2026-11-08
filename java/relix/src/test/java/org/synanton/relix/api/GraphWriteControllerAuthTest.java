@@ -19,11 +19,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.jwt.JwtVerifier;
 import org.synanton.common.tenant.TenantContextFilter;
+import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.GraphConnector;
 import org.springframework.http.MediaType;
@@ -83,6 +86,43 @@ class GraphWriteControllerAuthTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("tenant-a")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void verifiedTenantMayPersistAResolution() throws Exception {
+        ResolutionDecision decision = new ResolutionDecision("tenant-a", "v1", "m1",
+                ResolutionOutcome.RESOLVED, "RESOLVED_LABEL", "e1", "Halcyon-7", 0.03, 0.01,
+                "v1", "1.0.0", Map.of(), "RRF");
+        mvc.perform(post("/graph/resolutions")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(decision)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
+        org.mockito.Mockito.verify(connector).upsertResolution(decision);
+    }
+
+    @Test
+    void resolutionWithoutTokenIsRejected() throws Exception {
+        ResolutionDecision decision = new ResolutionDecision("tenant-a", "v1", "m1",
+                ResolutionOutcome.RESOLVED, "RESOLVED_LABEL", "e1", "Halcyon-7", 0.03, 0.01,
+                "v1", "1.0.0", Map.of(), "RRF");
+        mvc.perform(post("/graph/resolutions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(decision)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void resolutionBodyTenantCannotOverrideVerifiedTenant() throws Exception {
+        ResolutionDecision decision = new ResolutionDecision("tenant-b", "v1", "m1",
+                ResolutionOutcome.RESOLVED, "RESOLVED_LABEL", "e1", "Halcyon-7", 0.03, 0.01,
+                "v1", "1.0.0", Map.of(), "RRF");
+        mvc.perform(post("/graph/resolutions")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(decision)))
+                .andExpect(status().isBadRequest());
     }
 
     private String body(String tenant) throws Exception {

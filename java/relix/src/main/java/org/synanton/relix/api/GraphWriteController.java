@@ -9,6 +9,8 @@ import org.synanton.common.tenant.TenantContext;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphConnector;
+import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionOutcome;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +45,16 @@ public class GraphWriteController {
         String tenant = requireVerifiedTenant(relations.stream().map(ExtractedRelation::tenantId).toList());
         int persisted = graphConnector.upsertRelations(relations);
         return Map.of("status", "ok", "count", persisted, "tenant", tenant);
+    }
+
+    @PostMapping("/graph/resolutions")
+    public Map<String, Object> upsertResolution(@RequestBody ResolutionDecision decision) {
+        String tenant = requireVerifiedTenant(List.of(
+                decision == null || decision.tenantId() == null ? "" : decision.tenantId()));
+        graphConnector.upsertResolution(decision);
+        return Map.of("status", "ok", "mention_id",
+                String.valueOf(decision.mentionId()), "active",
+                decision.outcome() == ResolutionOutcome.RESOLVED);
     }
 
     private static String requireVerifiedTenant(List<String> bodyTenants) {

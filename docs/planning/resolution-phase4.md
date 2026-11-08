@@ -1,6 +1,6 @@
 # RAKG Phase 4 — canonical resolution (PR #4a–#4d)
 
-**Status:** PR #4a contracts/persistence + #4b.1 entity projection + #4b.2 candidate provider + #4b.3 policy/evaluation landed (2026-11-08); no graph writes
+**Status:** PR #4a–#4b.3 landed; PR #4c.1 `:RESOLVES_TO` persistence landed (2026-11-08); canonical promotion not started
 **Issue:** #560
 **Prerequisites:** PR #569 graph hardening (verified-JWT writes, independent graph retry);
 #570 tracks lease-based VALIDATING recovery (P2, out of PR #4 scope). Graph writes stay disabled in the demo
@@ -103,6 +103,25 @@ no resolution consumer.
   unresolved 0.300, review 0.100. No `:RESOLVES_TO` or `:REL` writes.
 - The fixture is a contract test, not a calibrated benchmark; a larger held-out
   set is required before broad automatic promotion.
+
+## PR #4c.1 — `:RESOLVES_TO` lifecycle (landed)
+
+- Relix Neo4j `upsertResolution`: only `RESOLVED` decisions create an **ACTIVE**
+  `(:ExtractedMention)-[:RESOLVES_TO]->(:Entity)` link.
+- Both endpoints are MATCHed tenant-scoped: missing canonical entity, missing
+  mention, or cross-tenant target fails closed (no link, exception).
+- Replaying a decision (same deterministic `resolution_id`) is idempotent.
+- A new policy version/target supersedes the previous active edge
+  (`active=false`, `status=SUPERSEDED`, `superseded_at`), preserving history;
+  exactly one active link remains.
+- Edge metadata: resolution id, tenant, source version, mention, canonical entity,
+  policy version, retrieval strategy, best/runner scores, ontology version,
+  decision/superseded timestamps.
+- `POST /graph/resolutions` behind the verified tenant JWT.
+- Tests: v1 → one active; v2 → one active + one superseded; replay; non-resolved
+  no link; missing entity/cross-tenant fail closed; endpoint auth/tenant checks.
+- **Not in 4c.1:** canonical relation validation/promotion (4c.2/4c.3), concurrent
+  promotion and crash-recovery orchestration (4c.4).
 
 ## PR #4c — canonical promotion
 

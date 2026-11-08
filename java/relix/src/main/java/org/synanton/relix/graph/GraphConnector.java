@@ -3,6 +3,7 @@ package org.synanton.relix.graph;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.api.dto.GraphStats;
+import org.synanton.common.resolution.ResolutionGraphPort;
 import org.synanton.relix.api.dto.Path;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.UUID;
  * Outbound port for the graph engine. Domain query shapes never import JGraphT, Cypher, or nGQL.
  * Switch implementations with {@code relix.graph.connector} ({@code memory}, {@code neo4j}, {@code nebula}).
  */
-public interface GraphConnector extends GraphWritePort {
+public interface GraphConnector extends GraphWritePort, ResolutionGraphPort {
 
     String id();
 
