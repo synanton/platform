@@ -1,6 +1,7 @@
 package org.synanton.relix.adapter.out.graph.neo4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import java.time.Instant;
@@ -17,6 +18,8 @@ import org.neo4j.driver.Session;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionOutcome;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -77,6 +80,89 @@ class Neo4jGraphWriteIntegrationTest {
                 Map.of("id", subject.mentionId())).getFirst();
         assertThat(((Number) offsets.get("chunkStart")).intValue()).isZero();
         assertThat(((Number) offsets.get("documentStart")).intValue()).isEqualTo(100);
+    }
+
+    @Test
+    void resolvingARevisionSupersedesThePreviousActiveLink() {
+        String tenant = TENANT + "-resolution";
+        String mentionId = "mention-resolution";
+        String version = "version-resolution";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'entity-v1', label: 'Halcyon-7', "
+                + "type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'entity-v2', label: 'Halcyon-7', "
+                + "type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+
+        connector.upsertResolution(decision(tenant, version, mentionId, "entity-v1", "v1"));
+        assertThat(resolutionEdges(tenant, mentionId)).singleElement().satisfies(edge -> {
+            assertThat(edge.get("active")).isEqualTo(true);
+            assertThat(edge.get("status")).isEqualTo("ACTIVE");
+            assertThat(edge.get("target")).isEqualTo("entity-v1");
+            assertThat(edge.get("policy")).isEqualTo("v1");
+            assertThat(edge.get("retrieval")).isEqualTo("RRF");
+            assertThat(edge.get("resolution_id")).isNotNull();
+        });
+
+        connector.upsertResolution(decision(tenant, version, mentionId, "entity-v2", "v2"));
+        var edges = resolutionEdges(tenant, mentionId);
+        assertThat(edges).hasSize(2);
+        assertThat(edges.stream().filter(edge -> Boolean.TRUE.equals(edge.get("active"))).toList())
+                .singleElement().satisfies(edge -> assertThat(edge.get("target")).isEqualTo("entity-v2"));
+        assertThat(edges.stream().filter(edge -> "SUPERSEDED".equals(edge.get("status"))).toList())
+                .singleElement().satisfies(edge -> {
+                    assertThat(edge.get("target")).isEqualTo("entity-v1");
+                    assertThat(edge.get("superseded_at")).isNotNull();
+                });
+
+        // Replay the v2 decision: no new edge, still one active resolution.
+        connector.upsertResolution(decision(tenant, version, mentionId, "entity-v2", "v2"));
+        assertThat(resolutionEdges(tenant, mentionId)).hasSize(2);
+    }
+
+    @Test
+    void resolutionFailsClosedOnMissingEntityOrNonResolvedOutcome() {
+        String tenant = TENANT + "-resolution-fail";
+        String mentionId = "mention-resolution-fail";
+        String version = "version-resolution-fail";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'entity-ok', label: 'Halcyon-7', "
+                + "type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+
+        connector.upsertResolution(new ResolutionDecision(tenant, version, mentionId,
+                ResolutionOutcome.AMBIGUOUS, "LOW_MARGIN_AMBIGUOUS", null, null, 0.03, 0.029,
+                "v1", "1.0.0", Map.of(), "RRF"));
+        assertThat(resolutionEdges(tenant, mentionId)).isEmpty();
+
+        assertThatThrownBy(() -> connector.upsertResolution(
+                decision(tenant, version, mentionId, "entity-missing", "v1")))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(resolutionEdges(tenant, mentionId)).isEmpty();
+
+        cypher.write("CREATE (n:Entity {tenant: 'other-tenant', id: 'entity-other', "
+                + "label: 'Halcyon-7', type: 'MaintenanceSystem'})", Map.of());
+        assertThatThrownBy(() -> connector.upsertResolution(
+                decision(tenant, version, mentionId, "entity-other", "v1")))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(resolutionEdges(tenant, mentionId)).isEmpty();
+    }
+
+    private static ResolutionDecision decision(String tenant, String version, String mentionId,
+                                               String entityId, String policyVersion) {
+        return new ResolutionDecision(tenant, version, mentionId, ResolutionOutcome.RESOLVED,
+                "RESOLVED_LABEL", entityId, "Halcyon-7", 0.0328, 0.0161, policyVersion,
+                "1.0.0", Map.of(), "RRF");
+    }
+
+    private List<Map<String, Object>> resolutionEdges(String tenant, String mentionId) {
+        return cypher.read("MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})"
+                + "-[r:RESOLVES_TO]->(e:Entity) RETURN r.active AS active, r.status AS status, "
+                + "r.superseded_at AS superseded_at, e.id AS target, r.policy_version AS policy, "
+                + "r.retrieval_strategy AS retrieval, r.resolution_id AS resolution_id",
+                Map.of("tenant", tenant, "mentionId", mentionId));
     }
 
     @Test

@@ -15,7 +15,8 @@ public record ResolutionDecision(
         double runnerUpScore,
         String strategyVersion,
         String ontologyVersion,
-        Map<String, Object> diagnostics) {
+        Map<String, Object> diagnostics,
+        String retrievalStrategy) {
     public ResolutionDecision {
         diagnostics = diagnostics == null ? Map.of() : Map.copyOf(diagnostics);
     }

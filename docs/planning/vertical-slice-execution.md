@@ -112,7 +112,9 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Entity projection (PR #4b.1)** — shared Lucene index `doc_type`, `EntitySearchDocument`, `upsertEntities`, entity/chunk segregation, manual Neo4j→Lucene loader.
 - [x] **Candidate provider (PR #4b.2)** — `SearchAdapterCandidateProvider` over entity search + Relix `CanonicalEntityLookup`; stale drop, retryable failures, raw retrieval score/matched field/strategy.
 - [x] **Resolution policy (PR #4b.3)** — `DefaultResolutionPolicy` with absolute floor + rank margin + type compatibility, reason codes, V24, 10-case fixture (precision 1.000, recall@10 1.000, coverage 0.300), no graph writes.
-- [ ] **Canonical promotion (PR #4c)** — `:RESOLVES_TO`, validated `:REL` promotion, evidence accumulation.
+- [x] **`:RESOLVES_TO` persistence (PR #4c.1)** — active/superseded lifecycle, deterministic resolution id, tenant-safe fail-closed writes, history preserved; no canonical promotion.
+- [ ] **Canonical relation validation + promotion (PR #4c.2/4c.3)** — Syntology gate, `:REL` with `SUPPORTS` evidence accumulation.
+- [ ] **Promotion recovery/concurrency (PR #4c.4)** — replay, concurrency, crash reconciliation.
 - [ ] **Resolution consumer (PR #4d)** — independent claim/retry/reconciliation (#560).
 
 ## P2 — Focused graph exploration (#508)

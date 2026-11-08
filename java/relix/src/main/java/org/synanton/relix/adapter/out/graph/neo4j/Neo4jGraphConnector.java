@@ -13,6 +13,9 @@ import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.SourceRefCodec;
+import org.synanton.relix.graph.ResolutionIds;
+import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionOutcome;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -101,6 +104,73 @@ public class Neo4jGraphConnector implements GraphConnector {
 
         long loadTimeMs = System.currentTimeMillis() - start;
         statsByTenant.put(tenant, new GraphStats(tenant, nodes.size(), edges.size(), loadTimeMs, loaded.generation()));
+    }
+
+    @Override
+    public void upsertResolution(ResolutionDecision decision) {
+        if (decision == null || decision.outcome() != ResolutionOutcome.RESOLVED
+                || decision.resolvedEntityId() == null || decision.resolvedEntityId().isBlank()) {
+            return; // only RESOLVED creates an active :RESOLVES_TO link
+        }
+        String tenant = decision.tenantId();
+        String version = decision.sourceVersionId();
+        String mentionId = decision.mentionId();
+        String entityId = decision.resolvedEntityId();
+        if (tenant == null || version == null || mentionId == null) {
+            throw new IllegalArgumentException("resolution tenant/version/mention are required");
+        }
+        String resolutionId = ResolutionIds.of(decision);
+        String now = java.time.Instant.now().toString();
+        java.util.Map<String, Object> params = new java.util.LinkedHashMap<>();
+        params.put("tenant", tenant);
+        params.put("mentionId", mentionId);
+        params.put("entityId", entityId);
+        params.put("resolutionId", resolutionId);
+        params.put("sourceVersionId", version);
+        params.put("policyVersion", decision.strategyVersion());
+        params.put("retrievalStrategy", decision.retrievalStrategy());
+        params.put("bestScore", decision.bestScore());
+        params.put("runnerUpScore", decision.runnerUpScore());
+        params.put("ontologyVersion", decision.ontologyVersion());
+        params.put("now", now);
+
+        cypher.write("""
+                MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
+                MATCH (e:Entity {tenant: $tenant, id: $entityId})
+                WITH m, e
+                OPTIONAL MATCH (m)-[old:RESOLVES_TO {active: true}]->(:Entity)
+                WITH m, e, collect(old) AS olds
+                FOREACH (o IN [x IN olds WHERE x.resolution_id <> $resolutionId] |
+                    SET o.active = false, o.status = 'SUPERSEDED', o.superseded_at = $now)
+                MERGE (m)-[r:RESOLVES_TO {resolution_id: $resolutionId}]->(e)
+                SET r.active = true, r.status = 'ACTIVE', r.tenant_id = $tenant,
+                    r.source_version_id = $sourceVersionId, r.mention_id = $mentionId,
+                    r.canonical_entity_id = $entityId, r.policy_version = $policyVersion,
+                    r.retrieval_strategy = $retrievalStrategy, r.best_score = $bestScore,
+                    r.runner_up_score = $runnerUpScore, r.ontology_version = $ontologyVersion,
+                    r.decision_at = $now, r.superseded_at = null
+                """, params);
+
+        List<Map<String, Object>> persisted = cypher.read(
+                "MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})" +
+                "-[r:RESOLVES_TO {resolution_id: $resolutionId}]->" +
+                "(e:Entity {tenant: $tenant, id: $entityId}) RETURN count(r) AS c", params);
+        Object count = persisted.isEmpty() ? 0 : persisted.getFirst().get("c");
+        if (!(count instanceof Number number) || number.longValue() == 0) {
+            throw new IllegalStateException("Resolution target mention or canonical entity not found: "
+                    + "mention=" + mentionId + " entity=" + entityId);
+        }
+    }
+
+    @Override
+    public void supersedeResolution(String tenantId, String sourceVersionId,
+                                    String mentionId, java.time.Instant supersededAt) {
+        cypher.write("""
+                MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
+                -[r:RESOLVES_TO {active: true}]->(:Entity)
+                SET r.active = false, r.status = 'SUPERSEDED', r.superseded_at = $at
+                """, Map.of("tenant", tenantId, "mentionId", mentionId,
+                "at", (supersededAt == null ? java.time.Instant.now() : supersededAt).toString()));
     }
 
     @Override
