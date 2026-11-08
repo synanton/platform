@@ -20,7 +20,8 @@ PLATFORM = ROOT.parent
 CORPUS = ROOT / "corpus"
 GOLD = ROOT / "gold"
 MANIFEST = GOLD / "MANIFEST.sha256"
-PREDICTIONS = ROOT / "regex-predictions.json"
+PREDICTIONS_DOC = ROOT / "regex-predictions.json"
+PREDICTIONS_CHUNKED = ROOT / "regex-predictions-chunked.json"
 CLASSES = PLATFORM / "java" / "extraction-engine" / "build" / "classes" / "java" / "main"
 
 DOCS = ["doc-1", "doc-2", "doc-3", "doc-4", "doc-5"]
@@ -39,18 +40,22 @@ def verify_manifest() -> None:
     print(f"manifest OK ({len(expected)} files)")
 
 
-def run_java_adapter() -> dict:
+def run_java_adapter(sentence_chunks: bool = False) -> dict:
     if not CLASSES.exists():
         print("building java/extraction-engine ...")
         subprocess.run([str(PLATFORM / "gradlew"), "-q", ":java:extraction-engine:classes"],
                        cwd=PLATFORM, check=True)
-    subprocess.run([
+    out = PREDICTIONS_CHUNKED if sentence_chunks else PREDICTIONS_DOC
+    command = [
         "java", "-cp", str(CLASSES),
         "org.synanton.extraction.engine.cli.ExtractionCli",
         "--corpus-dir", str(CORPUS),
-        "--out", str(PREDICTIONS),
-    ], check=True)
-    return json.loads(PREDICTIONS.read_text(encoding="utf-8"))
+        "--out", str(out),
+    ]
+    if sentence_chunks:
+        command += ["--sentence-chunks", "--max-tokens", "512"]
+    subprocess.run(command, check=True)
+    return json.loads(out.read_text(encoding="utf-8"))
 
 
 def overlaps(a_start, a_end, b_start, b_end) -> bool:
@@ -191,17 +196,25 @@ def main() -> None:
     if not args.skip_manifest:
         verify_manifest()
 
-    predictions = run_java_adapter()
-
-    rows = []
-    for gold_id in DOCS:
-        gold = json.loads((GOLD / f"{gold_id}.json").read_text(encoding="utf-8"))
-        prediction = predictions.get(gold["document_id"], {"preEntities": [], "relations": []})
-        row = evaluate_document(gold, prediction)
-        rows.append(row)
-        print(f"{gold_id} {row['document_id']:28} pred={row['predicted_mentions']:3}e "
-              f"{row['predicted_relations']:3}r  entity_F1={row['entity_overlap']['f1']:.3f} "
-              f"rel_F1={row['relationship']['f1']:.3f}")
+    summaries = {}
+    for label, sentence_chunks in (("document_level", False), ("sentence_chunked", True)):
+        predictions = run_java_adapter(sentence_chunks)
+        rows = []
+        print(f"\n[{label}]")
+        for gold_id in DOCS:
+            gold = json.loads((GOLD / f"{gold_id}.json").read_text(encoding="utf-8"))
+            prediction = predictions.get(gold["document_id"], {"preEntities": [], "relations": []})
+            row = evaluate_document(gold, prediction)
+            rows.append(row)
+            print(f"{gold_id} {row['document_id']:28} pred={row['predicted_mentions']:3}e "
+                  f"{row['predicted_relations']:3}r  entity_F1={row['entity_overlap']['f1']:.3f} "
+                  f"rel_F1={row['relationship']['f1']:.3f}")
+        agg = aggregate(rows)
+        summaries[label] = {"aggregate": agg, "per_document": rows}
+        print(f"{label} entity(overlap) P={agg['entity_overlap']['precision']:.3f} "
+              f"R={agg['entity_overlap']['recall']:.3f} F1={agg['entity_overlap']['f1']:.3f} "
+              f"type={agg['type_accuracy']}  relationship F1={agg['relationship']['f1']:.3f} "
+              f"({agg['predicted_relations']} preds)")
 
     summary = {
         "extractor": {
@@ -209,24 +222,13 @@ def main() -> None:
             "contract": "org.synanton.extraction.engine.ExtractionEngineAdapter",
             "phase": "A (deterministic baseline)",
         },
-        "aggregate": aggregate(rows),
-        "per_document": rows,
+        "document_level": summaries["document_level"],
+        "sentence_chunked": summaries["sentence_chunked"],
     }
     (ROOT / "baseline-result.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-
-    agg = summary["aggregate"]
+    agg = summary["sentence_chunked"]["aggregate"]
     print()
-    print(f"documents={agg['documents']} gold_entities={agg['gold_entities']} "
-          f"gold_relationships={agg['gold_relationships']} "
-          f"predicted_mentions={agg['predicted_mentions']} predicted_relations={agg['predicted_relations']}")
-    print(f"entity(overlap) P={agg['entity_overlap']['precision']:.3f} "
-          f"R={agg['entity_overlap']['recall']:.3f} F1={agg['entity_overlap']['f1']:.3f} "
-          f"type_accuracy={agg['type_accuracy']}")
-    print(f"relationship P={agg['relationship']['precision']:.3f} "
-          f"R={agg['relationship']['recall']:.3f} F1={agg['relationship']['f1']:.3f} "
-          f"evidence_coverage={agg['evidence_coverage']}")
-    print(f"resolution_accuracy={agg['resolution_accuracy']} (Phase A: no resolution)")
-    print(f"wrote {ROOT / 'baseline-result.json'}")
+    print(f"wrote {ROOT / 'baseline-result.json'} (sentence_chunked primary, document_level reference)")
 
 
 if __name__ == "__main__":

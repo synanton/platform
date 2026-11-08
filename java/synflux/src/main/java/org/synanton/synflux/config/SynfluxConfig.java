@@ -106,8 +106,8 @@ public class SynfluxConfig {
      * RQ1 chunker switch: {@code ingest.chunk.strategy} selects the chunking
      * ({@code semantic} default = current behavior, {@code fixed-window} =
      * word-count windows, {@code hierarchical} = one chunk per section for
-     * the RQ1 comparison legs). Unknown values fail loud at startup, never
-     * silently fall back.
+     * the RQ1 comparison legs, {@code sentence} = sentence-aligned RAKG chunks).
+     * Unknown values fail loud at startup, never silently fall back.
      */
     @Bean
     public PipelineStage<org.synanton.synflux.domain.ParsedDocument,
@@ -120,8 +120,9 @@ public class SynfluxConfig {
             case "fixed-window" -> new ChunkStage(targetTokens, overlapTokens);
             case "hierarchical" -> new HierarchicalChunkStage();
             case "semantic" -> new SemanticChunkStage(ChunkerConfig.of(targetTokens));
+            case "sentence" -> new SentenceChunkStage(targetTokens, 1);
             default -> throw new IllegalStateException(
-                    "unknown ingest.chunk.strategy: " + strategy + " (want fixed-window|semantic|hierarchical)");
+                    "unknown ingest.chunk.strategy: " + strategy + " (want fixed-window|semantic|hierarchical|sentence)");
         };
     }
 
