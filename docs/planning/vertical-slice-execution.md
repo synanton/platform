@@ -103,6 +103,8 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Sentence-boundary chunking** — `strategy=sentence`, shared `SentenceChunker` (Phase 0).
 - [x] **LLM prompt tuning** — Qwen3-4B vLLM, entity F1 0.618 / relationship F1 0.076 on the frozen gold.
 - [x] **`LlmExtractionAdapter`** — Java adapter with surface-form offset recovery + synthetic endpoints, behind `EXTRACTION_PROVIDER=regex|llm` (ADR-022). Live E2E: entity F1 **0.618** / relationship F1 **0.078** (33 candidates, type 0.697).
+- [x] **Preview endpoint + Playwright spec** — `POST /api/v1/extraction/preview` (tenant-verified, no persistence); gated `test/e2e/tests/extraction-preview.spec.ts`.
+- [ ] **Async extraction consumer** — event-driven, no inline LLM; design in [`extraction-consumer-phase2.md`](extraction-consumer-phase2.md).
 - [ ] **Ingestion integration + resolution + SHACL + graph commit** — invoke the adapter from the pipeline, then retrieval-assisted resolution, validation, provenance-backed commit (#560).
 
 ## P2 — Focused graph exploration (#508)

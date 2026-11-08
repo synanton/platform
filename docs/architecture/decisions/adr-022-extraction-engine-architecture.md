@@ -11,7 +11,11 @@
 4. **Offset recovery, not LLM counting.** LLMs return usable surface forms but unreliable character offsets. The adapter locates each `surfaceForm` in the segment (`indexOf` with a monotonic cursor, falling back to a broader search) and derives `charStart`/`charEnd`; unanchorable coreferences are dropped rather than assigned a fabricated span. The prompt still requests offsets, which are used only as hints.
 5. **Synthetic endpoints.** When a returned relation references a form absent from `preEntities`, the adapter adds a synthetic `PreEntity` at the recovered span with a default type (`UNKNOWN`, or a predicate-derived hint). Relations are deduplicated by `(subject, predicate, object, evidence span)`; evidence quotes are anchored when present, otherwise the endpoint union is used.
 6. **Versioned prompt.** The tuned system prompt lives in `src/main/resources/prompts/extraction-v1.txt`, versioned independently of the adapter code, so a prompt change is a reviewable artifact and the gold run is reproducible. The prompt lists the documented entity types and the allowed predicate vocabulary; unknown predicates are normalized to lower_snake_case.
-7. **Measurable against frozen gold.** `evaluation/gold/` (5 documents, 70 mentions, 44 relationships, `MANIFEST.sha256`) is the acceptance artifact. The regex baseline, the prompt-tuning harness, and the Java adapter are scored by the same overlap/exact/type/relationship/evidence metrics in `evaluation/eval_extraction.py`.
+7. **Diagnostic preview surface.** `POST /api/v1/extraction/preview` (JWT/tenant
+   verified) runs the selected engine over raw text for the UI, Playwright, and
+   troubleshooting. It never persists knowledge and is not the ingestion path;
+   asynchronous extraction is designed separately (`docs/planning/extraction-consumer-phase2.md`).
+8. **Measurable against frozen gold.** `evaluation/gold/` (5 documents, 70 mentions, 44 relationships, `MANIFEST.sha256`) is the acceptance artifact. The regex baseline, the prompt-tuning harness, and the Java adapter are scored by the same overlap/exact/type/relationship/evidence metrics in `evaluation/eval_extraction.py`.
 
 Consequences:
 - **Engines:** a third engine (local model, hosted API, or a different provider) is a new adapter, not an ingestion rewrite.
