@@ -46,6 +46,7 @@ include(
     "java:gpu-gateway",
     "java:extraction-contract",
     "java:extraction-client",
+    "java:extraction-engine",
     "java:annotations",
     "java:content-cache-api",
     "java:eventing-contract",

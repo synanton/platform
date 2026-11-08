@@ -1,116 +1,112 @@
-# Extraction baseline report — deterministic regex rule vs frozen gold
+# Extraction baseline report — Phase A regex adapter vs frozen gold
 
 **Status:** Baseline
 **Last reviewed:** 2026-11-08
-**Issue:** #558
+**Issue:** #558 (gold + baseline), RAKG epic (follow-up)
 **Gold:** `evaluation/gold/` (frozen; `MANIFEST.sha256`)
 **Corpus:** `evaluation/corpus/` (5 documents)
-**Extractor under test:** the only deterministic producer in `synflux` —
-`SynfluxConfig.annotationRules()` → `KeywordAnnotationRule` (`payment-detection`, v4,
-`TAG`, keywords `invoice number`, `payment reference`, `payment terms`).
+**Extractor:** `java/extraction-engine` — `ExtractionEngineAdapter` port with
+`RegexExtractorAdapter` (Phase A). The LLM adapter (`LlmExtractionAdapter`) is a
+stub returning an empty result; the RAKG integration lives there.
 
-## Gold dataset
+## What changed since the 0.000 run
 
-| Document | Entities | Relationships |
-|---|---|---|
-| `halcyon-7-directive` | 10 | 7 |
-| `e650-live-dense-v2` | 12 | 7 |
-| `skiena-sorting` | 15 | 10 |
-| `skiena-dynamic-programming` | 15 | 10 |
-| `skiena-tsp-parsing` | 18 | 10 |
-| **Total** | **70** | **44** |
+The first baseline ran the only deterministic producer in `synflux`: a single
+`payment-detection` keyword rule (3 payment keywords, whole-chunk, no spans,
+no relations). It matched nothing in the five documents → **0.000 across the
+board**. That result is retained as the pre-contract history.
 
-- Resolution status: **68 resolved, 1 ambiguous, 1 unresolved**.
-- Types: `Concept` 20, `Algorithm` 11, `Document` 7, `Component` 5, `Metric` 5,
-  `DataStructure` 5, `Problem` 4, `MaintenanceSystem` 3, `Role` 2, `Measurement` 2,
-  `Time` 2, `Procedure` 2, `Protocol` 1, `Event` 1.
-- Offsets are Unicode code points into the UTF-8 corpus text; every
-  `surface_form == text[char_start:char_end]` was verified at generation time.
-- The gold was authored by reading `evaluation/corpus/*.txt` only; no Cassandra,
-  Lucene, regex output, or model output was consulted. `annotate_gold.py` encodes
-  those manual decisions and only resolves offsets.
+Phase A now runs behind the same **ports & adapters** boundary as the search
+engine:
 
-## Baseline metrics
+- `org.synanton.extraction.engine`: `TextSegment`, `ExtractionContext`,
+  `PreEntity`, `RelationCandidate`, `ExtractionResult`,
+  `ExtractionEngineAdapter`.
+- `RegexExtractorAdapter`: generic identifiers, metrics, quoted phrases,
+  capitalized terms, and cue-based relations (`requires`, `uses`, `is`, `part of`,
+  `discussed in`, …). No LLM, no resolution.
+- `LlmExtractionAdapter`: the Phase B placeholder (empty result) so the RAKG
+  wiring is visible and testable.
+- `ExtractionCli`: batch bridge (`--corpus-dir … --out …`) so
+  `evaluation/eval_extraction.py` exercises the Java interface, not a Python
+  reimplementation.
 
-`python3 evaluation/eval_extraction.py` (manifest verified, 10 files):
+## Baseline metrics (Phase A)
+
+`python3 evaluation/eval_extraction.py` (manifest verified, 5 docs):
 
 | Metric | Value |
 |---|---|
-| Entity precision (span overlap) | **0.000** |
-| Entity recall | **0.000** |
-| Entity F1 | **0.000** |
-| Resolution accuracy | **N/A** (no matched mentions) |
-| Relationship precision | **N/A** |
-| Relationship recall | **0.000** |
-| Evidence coverage | **N/A** |
-| Predicted mentions | **0 / 70** |
+| Entity precision (exact span) | 0.058 |
+| Entity recall (exact span) | 0.114 |
+| Entity F1 (exact span) | 0.077 |
+| **Entity precision (overlap)** | **0.137** |
+| **Entity recall (overlap)** | **0.271** |
+| **Entity F1 (overlap)** | **0.182** |
+| Type accuracy (matched mentions) | 0.147 |
+| Resolution accuracy | **N/A** — Phase A performs no resolution |
+| Relationship precision | 0.000 |
+| Relationship recall | 0.000 |
+| Evidence coverage | **N/A** — no gold relation matched |
+| Predicted mentions / relations | 139 / 34 (gold: 70 / 44) |
 
-Per document: 0 predicted mentions; entity recall 0.00; relationship recall 0.00.
+Per document (overlap F1): halcyon 0.190, e650 0.364, Skiena sorting 0.122,
+dynamic programming 0.189, TSP/parsing 0.156.
 
-## Why the baseline is zero
+## Honest failure analysis
 
-This is a capability boundary, not an evaluation bug.
+1. **The regex finds capitalized/identifier surface forms, not entities.** It
+   recovers `Halcyon-7`, `Zephyr-9`, `Dynamic Programming`, `TSP`, section
+   numbers, etc., but misses lowercase domain terms that dominate the gold:
+   `auxiliary coolant loop`, `relief valve`, `secondary manifold`, `optimization`,
+   `recurrence relations`, `edit sequences`.
+2. **Precision is low by construction.** Maximal capitalized phrases produce
+   overlapping candidates (full phrase, 2-grams, hyphenated tokens): 139
+   predictions for 70 gold mentions (precision 0.137). The adapter makes no type
+   decision beyond `Concept`/`Identifier`/`Metric` (type accuracy 0.147).
+3. **No resolution.** The contract's `PreEntity` is intentionally pre-resolution;
+   `the platform` and `Technicians` remain unresolved. Phase C adds retrieval-
+   assisted resolution via the `SearchEngineAdapter`.
+4. **Relationship extraction is 0.000.** The cue-based relations are only as good
+   as the endpoints: most gold objects are lowercase terms the regex never emits
+   (e.g. `Zephyr-9 protocol requires helium leak check`), and the predicate
+   vocabulary differs (`has_component`, `tested_every`, `signs`, `records`). 34
+   candidate relations were produced; 0 aligned to a gold edge.
+5. **No evidence coverage yet** because no relation matched.
 
-1. **The only deterministic producer is a three-keyword tag rule.** `payment-detection`
-   matches `invoice number`, `payment reference`, or `payment terms` in a chunk and emits
-   one whole-chunk `TAG` annotation. None of the five documents contains those keywords,
-   so there are 0 matches.
-2. **No span extraction.** The rule returns `Match(value, confidence)`; the annotation row
-   is keyed by `chunk:<contentRef>:<ordinal>`. There are no `char_start`/`char_end` offsets.
-3. **No entity typing.** The output type is the rule's `TAG`, not `MaintenanceSystem`,
-   `Component`, `Algorithm`, etc.
-4. **No resolution.** The rule cannot distinguish a resolved entity, an ambiguous alias
-   (`the platform`), or an unresolved one (`Technicians`).
-5. **No relationships or evidence.** Nothing in the deterministic path emits edges or
-   evidence spans; relationship recall is 0 by construction.
-6. **Off by default.** The annotation stage is enabled only with
-   `synflux.pipeline.annotation-enabled=true`; the demo/benchmark configuration leaves it
-   off, so the rule is not even exercised during normal ingestion.
+## What the frozen gold measures next
 
-## Worked failure examples (from the frozen corpus)
+The RAKG/LLM pipeline must beat this baseline on the same frozen artifact:
 
-- **e650** — `the platform` is an ambiguous alias of `Zephyr-9`; `Technicians` is an
-  unresolved role; `Zephyr-9 protocol → requires → helium leak check` spans sentences.
-  A keyword rule resolves none of these.
-- **halcyon** — `relief valve on the secondary manifold` needs a `part_of` relation and
-  nested component resolution, not keyword presence.
-- **Skiena** — `heapsort is_a sorting algorithms` needs type hierarchy; `Dynamic
-  programming combines greedy and exhaustive search` needs cross-sentence relation
-  extraction with evidence.
-
-## What the RAKG/LLM pipeline must add
-
-Acceptance targets for the next producer, measured on this same frozen gold:
-
-1. Span-level mentions with character offsets (baseline F1 0.000 → non-zero).
-2. Typed entities, not only a `TAG`.
-3. Resolution status (`resolved`/`ambiguous`/`unresolved`) with canonical ids.
-4. Relationship extraction with evidence spans.
-5. Alias/pronoun resolution and cross-sentence relations.
-6. No regression on exact/identifier mentions when adding semantic extraction.
+- Entity F1 (overlap) **> 0.182**, ideally with precision above 0.5.
+- Type accuracy **> 0.147** (typed NER, not `Concept`).
+- Relationship F1 **> 0.000**, with evidence spans that overlap the gold.
+- Resolution accuracy becomes measurable (resolved / ambiguous / unresolved).
+- No regression on the capitalized/identifier mentions the regex already finds.
 
 ## Reproduce
 
 ```bash
 sha256sum -c evaluation/gold/MANIFEST.sha256
-python3 evaluation/eval_extraction.py          # verifies the manifest, then scores
-python3 evaluation/annotate_gold.py            # only to regenerate (gold is frozen)
+python3 evaluation/eval_extraction.py      # builds + runs the Java adapter, then scores
 ```
 
-`--skip-manifest` exists for debugging only; a reportable run must verify the golden
-hashes.
-
-## Caveats
-
-- Five documents / 70 mentions is a smoke-scale baseline, not a statistically powered
-  benchmark; there is no inter-annotator agreement yet.
-- The gold is a single-annotator artifact; the manifest freezes it against silent drift.
-- The brief’s “regex extractor (synflux / syntology)” maps to the repo’s only deterministic
-  producer above. There is no generic NER/RE regex pipeline to benchmark; `syntology`
-  manages ontology schemas, not text extraction.
+`--skip-manifest` exists for debugging only; a reportable run must verify the
+golden hashes. The evaluator writes `evaluation/regex-predictions.json` and
+`evaluation/baseline-result.json`.
 
 ## Artifacts
 
-- `docs/planning/extraction-gold-schema.md` — schema and annotation protocol.
-- `evaluation/corpus/*.txt`, `evaluation/gold/doc-*.json`, `evaluation/gold/MANIFEST.sha256`.
-- `evaluation/annotate_gold.py`, `evaluation/eval_extraction.py`, `evaluation/baseline-result.json`.
+- `java/extraction-engine/` — contract, regex adapter, LLM stub, CLI, tests.
+- `docs/planning/extraction-gold-schema.md` — schema and protocol.
+- `evaluation/corpus/*.txt`, `evaluation/gold/doc-*.json`, `MANIFEST.sha256`.
+- `evaluation/eval_extraction.py`, `evaluation/regex-predictions.json`,
+  `evaluation/baseline-result.json`.
+
+## Caveats
+
+- Five documents / 70 mentions is a smoke-scale baseline, not a statistically
+  powered benchmark; no inter-annotator agreement yet.
+- The regex adapter is a baseline, not a candidate production extractor.
+- The previous payment-keyword run (0.000) is superseded by this Phase A result;
+  both are recorded in the git history of this report.
