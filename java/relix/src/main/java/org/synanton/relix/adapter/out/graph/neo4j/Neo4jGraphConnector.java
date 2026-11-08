@@ -14,6 +14,8 @@ import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.SourceRefCodec;
 import org.synanton.relix.graph.ResolutionIds;
+import org.synanton.common.resolution.ActiveResolution;
+import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 
@@ -104,6 +106,62 @@ public class Neo4jGraphConnector implements GraphConnector {
 
         long loadTimeMs = System.currentTimeMillis() - start;
         statsByTenant.put(tenant, new GraphStats(tenant, nodes.size(), edges.size(), loadTimeMs, loaded.generation()));
+    }
+
+    @Override
+    public List<ActiveResolution> getActiveResolutions(String tenant, List<String> mentionIds) {
+        if (mentionIds == null || mentionIds.isEmpty()) {
+            return List.of();
+        }
+        List<String> ids = mentionIds.stream().filter(id -> id != null && !id.isBlank())
+                .distinct().toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        List<Map<String, Object>> rows = cypher.read("""
+                UNWIND $ids AS id
+                MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: id})
+                      -[r:RESOLVES_TO {active: true}]->
+                      (e:Entity {tenant: $tenant})
+                RETURN id AS mention_id, e.id AS canonical_entity_id, e.type AS canonical_entity_type
+                """, Map.of("tenant", tenant, "ids", ids));
+        List<ActiveResolution> resolutions = new ArrayList<>(rows.size());
+        for (Map<String, Object> row : rows) {
+            resolutions.add(new ActiveResolution(
+                    String.valueOf(row.get("mention_id")),
+                    String.valueOf(row.get("canonical_entity_id")),
+                    row.get("canonical_entity_type") == null ? null
+                            : String.valueOf(row.get("canonical_entity_type"))));
+        }
+        return resolutions;
+    }
+
+    @Override
+    public java.util.Optional<ExtractedRelationView> getExtractedRelation(String tenant, String relationId) {
+        if (relationId == null || relationId.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (s:ExtractedMention {tenant_id: $tenant})
+                      -[r:EXTRACTED_RELATION {tenant_id: $tenant, relation_id: $relationId}]->
+                      (o:ExtractedMention {tenant_id: $tenant})
+                RETURN r.relation_id AS relation_id, s.mention_id AS subject_mention_id,
+                       o.mention_id AS object_mention_id, r.predicate AS predicate,
+                       r.source_version_id AS source_version_id, r.evidence_chunk_id AS evidence_chunk_id
+                LIMIT 1
+                """, Map.of("tenant", tenant, "relationId", relationId));
+        if (rows.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        Map<String, Object> row = rows.getFirst();
+        return java.util.Optional.of(new ExtractedRelationView(
+                String.valueOf(row.get("relation_id")),
+                tenant,
+                String.valueOf(row.get("source_version_id")),
+                String.valueOf(row.get("subject_mention_id")),
+                String.valueOf(row.get("object_mention_id")),
+                String.valueOf(row.get("predicate")),
+                String.valueOf(row.get("evidence_chunk_id"))));
     }
 
     @Override

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -20,11 +21,14 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.jwt.JwtVerifier;
 import org.synanton.common.tenant.TenantContextFilter;
+import org.synanton.common.resolution.ActiveResolution;
+import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.relix.graph.ExtractedMention;
@@ -123,6 +127,38 @@ class GraphWriteControllerAuthTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(decision)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void activeResolutionsRequireVerifiedTenant() throws Exception {
+        when(connector.getActiveResolutions("tenant-a", List.of("m1")))
+                .thenReturn(List.of(new ActiveResolution("m1", "e1", "MaintenanceSystem")));
+        mvc.perform(post("/v1/resolutions/active")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mentionIds\":[\"m1\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].canonicalEntityId").value("e1"));
+
+        mvc.perform(post("/v1/resolutions/active")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mentionIds\":[\"m1\"]}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void extractedRelationLookupIsTenantVerifiedAnd404Aware() throws Exception {
+        when(connector.getExtractedRelation("tenant-a", "r1")).thenReturn(Optional.of(
+                new ExtractedRelationView("r1", "tenant-a", "v1", "m1", "m2", "requires", "ref:0")));
+        mvc.perform(get("/v1/extracted-relations/r1")
+                        .header("Authorization", "Bearer " + token("tenant-a")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.relationId").value("r1"));
+
+        when(connector.getExtractedRelation("tenant-a", "missing")).thenReturn(Optional.empty());
+        mvc.perform(get("/v1/extracted-relations/missing")
+                        .header("Authorization", "Bearer " + token("tenant-a")))
+                .andExpect(status().isNotFound());
     }
 
     private String body(String tenant) throws Exception {

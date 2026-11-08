@@ -113,7 +113,8 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Candidate provider (PR #4b.2)** — `SearchAdapterCandidateProvider` over entity search + Relix `CanonicalEntityLookup`; stale drop, retryable failures, raw retrieval score/matched field/strategy.
 - [x] **Resolution policy (PR #4b.3)** — `DefaultResolutionPolicy` with absolute floor + rank margin + type compatibility, reason codes, V24, 10-case fixture (precision 1.000, recall@10 1.000, coverage 0.300), no graph writes.
 - [x] **`:RESOLVES_TO` persistence (PR #4c.1)** — active/superseded lifecycle, deterministic resolution id, tenant-safe fail-closed writes, history preserved; no canonical promotion.
-- [ ] **Canonical relation validation + promotion (PR #4c.2/4c.3)** — Syntology gate, `:REL` with `SUPPORTS` evidence accumulation.
+- [x] **Canonical relation validation (PR #4c.2)** — active-resolution endpoints, Cassandra evidence re-check, Syntology pinned-ontology gate, `relation_promotion_results` persistence; no `:REL`/`:SUPPORTS` writes.
+- [ ] **Canonical `:REL` promotion + `:RelationEvidence` (PR #4c.3)** — one semantic edge, multiple evidence nodes.
 - [ ] **Promotion recovery/concurrency (PR #4c.4)** — replay, concurrency, crash reconciliation.
 - [ ] **Resolution consumer (PR #4d)** — independent claim/retry/reconciliation (#560).
 

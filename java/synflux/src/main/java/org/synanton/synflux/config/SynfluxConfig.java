@@ -28,6 +28,11 @@ import org.synanton.synflux.extraction.graph.HttpRelixGraphWriteClient;
 import org.synanton.synflux.extraction.graph.GraphWriteTokenMinter;
 import org.synanton.synflux.extraction.graph.HttpSyntologyRelationValidator;
 import org.synanton.synflux.extraction.graph.RelationValidator;
+import org.synanton.synflux.resolution.CanonicalRelationValidator;
+import org.synanton.synflux.resolution.DefaultCanonicalRelationValidator;
+import org.synanton.synflux.resolution.HttpRelixResolutionLookup;
+import org.synanton.common.jwt.ServiceTokenMinter;
+import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.stage.*;
@@ -152,6 +157,22 @@ public class SynfluxConfig {
     private static ObjectMapper graphMapper() {
         return new ObjectMapper().registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
+    @Bean
+    public ResolutionGraphLookup resolutionGraphLookup(
+            @Value("${RELIX_BASE_URL:http://relix:8080}") String relixBaseUrl,
+            @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
+        return new HttpRelixResolutionLookup(relixBaseUrl,
+                new ServiceTokenMinter(jwtSecret), new ObjectMapper());
+    }
+
+    @Bean
+    public CanonicalRelationValidator canonicalRelationValidator(
+            ResolutionGraphLookup resolutionGraphLookup, RelationValidator relationValidator,
+            IngestionCacheClient cacheClient, Clock clock) {
+        return new DefaultCanonicalRelationValidator(resolutionGraphLookup, relationValidator,
+                cacheClient, clock);
     }
 
     @Bean
