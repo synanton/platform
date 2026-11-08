@@ -1,6 +1,6 @@
 # RAKG Phase 4 — canonical resolution (PR #4a–#4d)
 
-**Status:** PR #4a contracts/persistence landed (2026-11-08); no resolution behavior yet
+**Status:** PR #4a contracts/persistence + PR #4b.1 entity projection landed (2026-11-08); resolution policy not started
 **Issue:** #560
 **Prerequisites:** PR #569 graph hardening (verified-JWT writes, independent graph retry);
 #570 tracks lease-based VALIDATING recovery (P2, out of PR #4 scope). Graph writes stay disabled in the demo
@@ -40,6 +40,23 @@ Persistence:
 
 **Zero behavior change:** no search calls, no `:RESOLVES_TO`, no promotion,
 no resolution consumer.
+
+## PR #4b.1 — Synquest entity projection (landed)
+
+- `SearchDocumentType` (CHUNK, ENTITY) and `doc_type` on every Lucene document.
+- `EntitySearchDocument` (entityId, label, aliases, type, description, optional embedding)
+  projected by `SearchIndexAdapter/SearchEngineAdapter.upsertEntities`.
+- Entity documents live in the **existing** Directory/SearcherManager; no second index.
+  Both the lexical and dense legs are FILTERed to `doc_type`, so chunk and entity
+  result sets cannot cross. A full chunk rebuild deletes only CHUNK documents;
+  entity docs survive.
+- Manual loader: `tools/entity-projection/project_entities.py` (Neo4j HTTP →
+  `POST /v1/search-projection/entities`; verified tenant JWT).
+- Tests: entity/chunk segregation, dense-entity retrieval, and entity survival
+  across a full chunk rebuild.
+- **Deploy note:** pre-4b.1 chunk documents have no `doc_type`; run a chunk
+  reindex after deploying so they are eligible for CHUNK searches.
+- Neo4j remains the source of truth; the resolver verifies candidates in 4b.3.
 
 ## PR #4b — ResolutionService
 

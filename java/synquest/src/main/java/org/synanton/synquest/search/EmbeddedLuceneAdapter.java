@@ -34,6 +34,11 @@ public final class EmbeddedLuceneAdapter implements SearchIndexAdapter {
     }
 
     @Override
+    public int upsertEntities(String tenant, java.util.List<EntitySearchDocument> entities) throws IOException {
+        return builder.upsertEntities(tenant, entities);
+    }
+
+    @Override
     public int deleteChunkIds(String tenant, Collection<String> chunkIds) throws IOException {
         return builder.deleteChunkIds(tenant, chunkIds);
     }

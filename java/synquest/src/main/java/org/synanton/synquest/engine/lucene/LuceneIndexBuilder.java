@@ -8,6 +8,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.synanton.ingestioncache.client.IngestionCacheClient;import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.synquest.search.EntitySearchDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -45,6 +46,12 @@ public class LuceneIndexBuilder {
     private static final String FIELD_PARENT_SECTION_ID = "parent_section_id";
     private static final String FIELD_HEADING_LEVEL = "heading_level";
     private static final String FIELD_CHUNK_TYPE = "chunk_type";
+    static final String FIELD_DOC_TYPE = "doc_type";
+    private static final String FIELD_ENTITY_ID = "entity_id";
+    private static final String FIELD_ENTITY_LABEL = "entity_label";
+    private static final String FIELD_ENTITY_ALIASES = "entity_aliases";
+    private static final String FIELD_ENTITY_TYPE = "entity_type";
+    private static final String FIELD_ENTITY_DESCRIPTION = "entity_description";
 
     private static final int MANIFEST_LIMIT = 200_000;
     private static final java.util.Set<String> INDEXABLE_STATES =
@@ -114,14 +121,18 @@ public class LuceneIndexBuilder {
         Path path = indexPath(tenant);
         Files.createDirectories(path);
 
+        // The index is shared with the ENTITY projection (RAKG PR #4b.1). A full
+        // chunk rebuild replaces only this tenant's CHUNK documents, never wipes
+        // the Directory; entity docs survive and are re-projected separately.
         IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
         Counters counters = new Counters();
         int skipCount = 0;
 
         try (FSDirectory dir = FSDirectory.open(path);
              IndexWriter writer = new IndexWriter(dir, config)) {
+            writer.deleteDocuments(new org.apache.lucene.index.Term(FIELD_DOC_TYPE, "CHUNK"));
 
             for (ManifestRow manifest : cacheClient.manifestCursor(tenant, MANIFEST_LIMIT)) {
                 if (!isIndexable(manifest)) {
@@ -219,6 +230,64 @@ public class LuceneIndexBuilder {
         return chunkIds.size();
     }
 
+    /**
+     * Upserts canonical entity documents into the same Lucene directory. Neo4j
+     * remains the source of truth; this is only a retrieval projection.
+     */
+    public int upsertEntities(String tenant, java.util.List<EntitySearchDocument> entities) throws IOException {
+        if (entities == null || entities.isEmpty()) {
+            return 0;
+        }
+        Path path = indexPath(tenant);
+        Files.createDirectories(path);
+        IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        int written = 0;
+        try (FSDirectory dir = FSDirectory.open(path);
+             IndexWriter writer = new IndexWriter(dir, config)) {
+            for (EntitySearchDocument entity : entities) {
+                if (entity.entityId() == null || entity.entityId().isBlank()) {
+                    continue;
+                }
+                Document doc = new Document();
+                String id = "entity:" + entity.entityId();
+                doc.add(new StringField(FIELD_ID, id, Field.Store.YES));
+                doc.add(new StringField(FIELD_DOC_TYPE, "ENTITY", Field.Store.YES));
+                doc.add(new StringField(FIELD_ENTITY_ID, entity.entityId(), Field.Store.YES));
+                String label = entity.label() == null ? "" : entity.label();
+                doc.add(new StoredField(FIELD_ENTITY_LABEL, label));
+                doc.add(new StoredField(FIELD_ENTITY_ALIASES,
+                        String.join("|", entity.aliases() == null ? java.util.List.of() : entity.aliases())));
+                doc.add(new StoredField(FIELD_ENTITY_TYPE, entity.type() == null ? "" : entity.type()));
+                doc.add(new StoredField(FIELD_ENTITY_DESCRIPTION,
+                        entity.description() == null ? "" : entity.description()));
+                StringBuilder searchable = new StringBuilder(label);
+                if (entity.aliases() != null) {
+                    for (String alias : entity.aliases()) {
+                        searchable.append(' ').append(alias);
+                    }
+                }
+                if (entity.description() != null) {
+                    searchable.append(' ').append(entity.description());
+                }
+                doc.add(new TextField(FIELD_TEXT, searchable.toString(), Field.Store.YES));
+                if (entity.embedding() != null) {
+                    try {
+                        doc.add(new KnnFloatVectorField(FIELD_EMBEDDING, shape.fit(entity.embedding()),
+                                VectorSimilarityFunction.COSINE));
+                    } catch (EmbeddingShape.DimensionMismatchException e) {
+                        log.warn("Entity embedding dimension mismatch for {}: {}",
+                                entity.entityId(), e.getMessage());
+                    }
+                }
+                writer.updateDocument(new org.apache.lucene.index.Term(FIELD_ID, id), doc);
+                written++;
+            }
+            writer.commit();
+        }
+        return written;
+    }
+
     private Document newDocument(ManifestRow manifest, ChunkRow chunk, String ingestUsage,
                                  long ingestWallMs, Counters counters) {
         var embOpt = cacheClient.readEmbedding(
@@ -227,6 +296,7 @@ public class LuceneIndexBuilder {
         Document doc = new Document();
         String id = manifest.contentRefId() + ":" + chunk.chunkOrdinal();
         doc.add(new StringField(FIELD_ID, id, Field.Store.YES));
+        doc.add(new StringField(FIELD_DOC_TYPE, "CHUNK", Field.Store.YES));
         doc.add(new StringField(FIELD_CONTENT_REF_ID, manifest.contentRefId().toString(), Field.Store.YES));
         doc.add(new NumericDocValuesField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));
         doc.add(new StoredField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));

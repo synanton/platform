@@ -29,7 +29,25 @@ public record SearchDocument(
         String ingestUsage,
         Double scoreRerank,
         String sectionId,
-        String expandedFrom) {
+        String expandedFrom,
+        SearchDocumentType documentType,
+        String entityId,
+        String entityLabel,
+        List<String> entityAliases,
+        String entityType,
+        String entityDescription) {
+
+    public SearchDocument(UUID contentRefId, int chunkOrdinal, double score, double scoreDense,
+                          double scoreLexical, int rankDense, int rankLexical, String snippet,
+                          String sourceUri, int pageStart, int pageEnd, String sectionPath,
+                          String heading, List<String> sourceElements, int tokenCount,
+                          String structuredContent, boolean isPartialSection, String ingestUsage,
+                          Double scoreRerank, String sectionId, String expandedFrom) {
+        this(contentRefId, chunkOrdinal, score, scoreDense, scoreLexical, rankDense, rankLexical,
+                snippet, sourceUri, pageStart, pageEnd, sectionPath, heading, sourceElements,
+                tokenCount, structuredContent, isPartialSection, ingestUsage, scoreRerank,
+                sectionId, expandedFrom, SearchDocumentType.CHUNK, null, null, List.of(), null, null);
+    }
 
     public static SearchDocument from(Hit hit) {
         return new SearchDocument(
@@ -41,6 +59,9 @@ public record SearchDocument(
     }
 
     public Hit toHit() {
+        if (documentType == SearchDocumentType.ENTITY) {
+            throw new IllegalStateException("entity documents cannot be mapped to a chunk Hit");
+        }
         return new Hit(contentRefId, chunkOrdinal, score, scoreDense, scoreLexical, rankDense, rankLexical,
                 snippet, sourceUri, pageStart, pageEnd, sectionPath, heading, sourceElements, tokenCount,
                 structuredContent, isPartialSection, ingestUsage, scoreRerank, sectionId, expandedFrom);

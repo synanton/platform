@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.storage.contract.TenantScope;
 import org.synanton.synquest.service.KnowledgeSearchBackend;
+import org.synanton.synquest.search.EntitySearchDocument;
 import org.synanton.synquest.service.SearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,6 +116,28 @@ public class KnowledgeSearchController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    /**
+     * Manual/automated canonical-entity projection (RAKG PR #4b.1). The payload
+     * carries only entity documents; the verified tenant is authoritative and
+     * Neo4j remains the source of truth (the resolver re-checks it).
+     */
+    @PostMapping("/v1/search-projection/entities")
+    public ResponseEntity<EntityProjectionResult> projectEntities(
+            @RequestBody EntityProjectionRequest request) {
+        TenantScope tenant = verifiedScope();
+        try {
+            int count = searchService.upsertEntities(tenant.tenantId(), request.entities());
+            return ResponseEntity.ok(new EntityProjectionResult("done", tenant.tenantId(), count));
+        } catch (IOException failure) {
+            log.error("Entity projection failed for tenant '{}'", tenant.tenantId(), failure);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    public record EntityProjectionRequest(List<EntitySearchDocument> entities) {}
+
+    public record EntityProjectionResult(String status, String tenant, int entities) {}
 
     /** Projection observability: readiness and the last build's chunk count. */
     @GetMapping("/v1/search-projection")

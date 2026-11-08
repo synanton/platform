@@ -20,6 +20,9 @@ public interface SearchEngineAdapter extends SearchIndexAdapter {
 
     SearchResult search(SearchQuery query, SearchFilter filter) throws IOException;
 
+    /** Upserts canonical entities; the resolver must still verify them in Neo4j. */
+    int upsertEntities(String tenant, java.util.List<EntitySearchDocument> entities) throws IOException;
+
     IndexStats stats(String tenant) throws IOException;
 
     boolean isReady(String tenant);

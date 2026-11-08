@@ -38,6 +38,12 @@ public class HybridSearcher implements Closeable {
      * an unfiltered run — an empty candidate set constrains to nothing).
      */
     public TopDocs dense(float[] queryVec, int topK, java.util.Set<String> allowedContentRefs) throws IOException {
+        return dense(queryVec, topK, allowedContentRefs, null);
+    }
+
+    /** Dense leg scoped to one document family; the entity leg has no content-ref universe. */
+    public TopDocs dense(float[] queryVec, int topK, java.util.Set<String> allowedContentRefs,
+                         String docType) throws IOException {
         IndexSearcher searcher = searcherManager.acquire();
         try {
             searcher.setSimilarity(new BM25Similarity());
@@ -53,13 +59,26 @@ public class HybridSearcher implements Closeable {
                         "embedding", queryVec, topK,
                         new TermInSetQuery("content_ref_id", terms));
             }
-            return searcher.search(knnQuery, topK);
+            Query effective = knnQuery;
+            if (docType != null) {
+                effective = new BooleanQuery.Builder()
+                        .add(knnQuery, BooleanClause.Occur.MUST)
+                        .add(new TermQuery(new org.apache.lucene.index.Term("doc_type", docType)),
+                                BooleanClause.Occur.FILTER)
+                        .build();
+            }
+            return searcher.search(effective, topK);
         } finally {
             searcherManager.release(searcher);
         }
     }
 
     public TopDocs lexical(String queryText, int topK) throws IOException {
+        return lexical(queryText, topK, null);
+    }
+
+    /** Lexical leg scoped to one document family; null preserves the unscoped test seam. */
+    public TopDocs lexical(String queryText, int topK, String docType) throws IOException {
         if (topK < 1) {
             // Leg disabled (e.g. vector-only bench runs): skip the search —
             // Lucene rejects numHits <= 0, and an empty leg must not 500 the query.
@@ -75,6 +94,13 @@ public class HybridSearcher implements Closeable {
                         new String[]{"text"},
                         new org.apache.lucene.analysis.standard.StandardAnalyzer());
                 Query query = parser.parse(MultiFieldQueryParser.escape(queryText));
+                if (docType != null) {
+                    query = new BooleanQuery.Builder()
+                            .add(query, BooleanClause.Occur.MUST)
+                            .add(new TermQuery(new org.apache.lucene.index.Term("doc_type", docType)),
+                                    BooleanClause.Occur.FILTER)
+                            .build();
+                }
                 return searcher.search(query, topK);
             } catch (ParseException e) {
                 log.warn("Query parse failed for '{}': {}", queryText, e.getMessage());
