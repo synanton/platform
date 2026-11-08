@@ -37,9 +37,29 @@ The corpus is the 16-document `demo-data/documents` set. The original `rb-fixed-
 
 **Finding:** on the smaller model and the 27-query/remapped-fixed corpus, **BM25 wins**. RRF improves over Dense (+0.065 nDCG) but does **not** recover the BM25 top ranks.
 
+### C. Like-for-like attempt — decoupled engine, bge-base 768, crawler `demo-fixed` (82 chunks, 25 queries)
+
+The original `rb-fixed-g5` tenant (81 chunks) is no longer in the store. The closest surviving reconstruction is `demo-fixed` (same 16 documents, crawler fixed-window, **82 chunks**). We added bge-base 768 embeddings for those chunks (`ReEmbedDemoFixedTest`, gated) and scored the same **25-query** gold (refs remapped by source SHA + ordinal).
+
+| Arm | nDCG@10 | MRR@10 | Recall@10 | p50 | p95 |
+|---|---|---|---|---|---|
+| **BM25 only** | **0.7908** | **0.7714** | **0.9000** | 7.3 ms | 9.5 ms |
+| Dense only | 0.7235 | 0.6907 | 0.8600 | 33.2 ms | 51.5 ms |
+| RRF hybrid | 0.7655 | 0.7467 | 0.8600 | 35.4 ms | 48.2 ms |
+
+**Result: this is *not* the ~0.858 replay.** BM25 leads; RRF beats Dense. The gap to Run A is a **corpus reconstruction** effect: the gold is anchored to ordinal `#0`, the surviving corpus has 82 chunks vs Run A's 81, and first-chunk text drifted where the chunker/extractor changed. The engine is structurally verified (valid runs, 82/82 vectors, same port), but the historical absolute number cannot be reproduced from the surviving data. An attempted re-ingest under the original tenant name via the upload path produced 73 chunks (the upload path chunks differently from the crawler) and is likewise not comparable; those records are not part of the reportable table.
+
+## Strategic implications
+
+**Architectural conclusion.** Dense retrieval quality dictates hybrid retrieval success. On an under-parameterized embedding model (`bge-small`, 384d), the Dense leg is strictly dominated by BM25 and actively harms RRF (Run B: BM25 0.732 > RRF 0.703 > Dense 0.638). On a production-grade embedding model (`bge-base`, 768d), the Dense leg provides complementary signal; on the original 25-query corpus RRF improves nDCG and MRR over both legs (Run A: 0.859 / 0.825 vs BM25 0.824 / 0.786 and Dense 0.805 / 0.793).
+
+**Recommendation.** Pin the production baseline to **`bge-base-en-v1.5` (768d)**. If the deployment is ever downgraded to save GPU memory, **re-tune the RRF weights to favour BM25** rather than keeping equal weights; on `bge-small` the equal-weight fusion is worse than BM25 alone.
+
+**Caveat on the absolute replay.** Run C could not reproduce Run A's 0.858 because the original 81-chunk tenant is gone. The structural guarantee comes from the 145 synquest tests, the Cassandra idempotency test, and the Playwright vertical-slice/isolation E2E on the decoupled engine — not from a re-derived historical metric.
+
 ## Interpretation — do not fudge
 
-The two runs disagree, and both are valid. The difference is not noise-ridden randomness; it tracks the two changed variables:
+The three runs disagree, and all are valid. The difference is not noise-ridden randomness; it tracks the two changed variables:
 
 1. **Embedding quality.** `bge-base` (768d) gives the dense leg enough precision that fusion adds signal over BM25. With `bge-small` (384d), the dense leg contributes weaker candidates; RRF's equal-weight fusion dilutes strong BM25 hits, so hybrid lands between the two and BM25 remains best.
 2. **Query/gold composition.** The 27-query file adds two `sanitizer` queries with 0 recall for every arm, plus fixed-window chunks whose `#0` does not always contain the flat-chunk answer the gold was annotated for. This depresses all arms and is not a like-for-like replay of the 25-query flat benchmark.

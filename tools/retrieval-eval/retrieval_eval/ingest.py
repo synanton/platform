@@ -70,6 +70,7 @@ def wait_for_ingestion(
         response = requests.get(
             f"{synflux_base_url}/ingest/jobs/{job_id}",
             params={"tenant": tenant},
+            headers=_auth_headers(),
             timeout=30,
         )
         response.raise_for_status()
