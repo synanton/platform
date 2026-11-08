@@ -24,6 +24,8 @@ from pathlib import Path
 
 from . import compose
 from .config import DEFAULT_CONFIG_PATH, check_dataset_root, load_config
+from .corpus_manifest import DEFAULT_MANIFEST as DEFAULT_CORPUS_MANIFEST
+from .corpus_manifest import CorpusManifestError, verify as verify_corpus
 from .gold import load_gold_queries
 import math
 
@@ -128,7 +130,25 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_check_corpus(args: argparse.Namespace) -> int:
+    try:
+        info = verify_corpus(args.manifest)
+    except CorpusManifestError as exc:
+        print(f"corpus manifest FAILED: {exc}", file=sys.stderr)
+        return 1
+    print("corpus manifest OK: " + json.dumps(info, sort_keys=True))
+    return 0
+
+
 def _cmd_evaluate(args: argparse.Namespace) -> int:
+    if args.corpus_manifest:
+        try:
+            info = verify_corpus(args.corpus_manifest)
+        except CorpusManifestError as exc:
+            print(f"corpus manifest FAILED, refusing to run: {exc}", file=sys.stderr)
+            return 1
+        print(f"corpus manifest OK: tenant={info['tenant']} chunks={info['chunk_count']} "
+              f"queries={info['query_count']}")
     if args.rerank and args.reranker == "none":
         print("--rerank needs --reranker <logical model id> so the run record names the reranker", file=sys.stderr)
         return 1
@@ -389,6 +409,10 @@ def build_parser() -> argparse.ArgumentParser:
     check_parser = subparsers.add_parser("check-config", help="Verify local dataset paths resolve")
     check_parser.set_defaults(func=_cmd_check_config)
 
+    corpus_parser = subparsers.add_parser("check-corpus", help="Verify the frozen retrieval-corpus manifest")
+    corpus_parser.add_argument("--manifest", type=Path, default=DEFAULT_CORPUS_MANIFEST)
+    corpus_parser.set_defaults(func=_cmd_check_corpus)
+
     ingest_parser = subparsers.add_parser("ingest", help="Ingest a corpus into a tenant and reindex")
     ingest_parser.add_argument("--tenant", required=True)
     ingest_parser.add_argument("--path", default="/demo-data/documents")
@@ -421,6 +445,8 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--expand-max-chunks", type=int, default=None, help="max chunks per expanded section")
     evaluate_parser.add_argument("--provider-mode", default=None, help="default: gpu-7→external-free, gpu-5→local")
     evaluate_parser.add_argument("--embedding-dim", type=int, default=None, help="default: from /index/stats")
+    evaluate_parser.add_argument("--corpus-manifest", type=Path, default=None,
+                                 help="verify the frozen retrieval-corpus manifest before running")
     evaluate_parser.add_argument("--max-rpm", type=int, default=None, help="searches per minute (default 15 on gpu-7; 0 = unthrottled)")
     evaluate_parser.add_argument("--daily-request-budget", type=int, default=None,
                                  help="stop before exceeding this many embedding requests today (default 900 on gpu-7; 0 = none)")

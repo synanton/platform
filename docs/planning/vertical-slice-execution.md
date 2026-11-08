@@ -73,11 +73,14 @@ api controllers ──► SearchService (facade, no Lucene imports)
   0.859 nDCG > BM25 0.824 > Dense 0.805), Run B (bge-small 384: BM25 wins; Dense harms
   RRF), Run C (decoupled engine, reconstructed corpus: not a byte-faithful replay —
   original 81-chunk tenant is gone).
-- Frozen corpus for future runs: `evaluation/retrieval/` + `check_corpus.py` (hash
-  validation before a benchmark run).
-- **#556** — query-adaptive weighted RRF (EXACT/CONCEPTUAL/MIXED) — deferred until the
-  frozen corpus is in place.
-- **#558** — extraction gold + deterministic baseline (0.000; closed). RAKG epic follows.
+- Frozen corpus for future runs: `evaluation/retrieval-corpus/` (`demo-fixed`, 82
+  chunks + 25 queries) with `MANIFEST.sha256`; the harness gates runs via
+  `retrieval-eval check-corpus` / `evaluate --corpus-manifest ...`.
+- **#556** — query-adaptive weighted RRF (EXACT/CONCEPTUAL/MIXED) — frozen corpus
+  now exists; still deferred (user).
+- **#558** — extraction gold + Phase A regex baseline (entity F1 0.182; closed).
+  RAKG Phase 0 sentence chunking landed (`strategy=sentence`, shared
+  `SentenceChunker`); the chunked baseline is unchanged (0.182).
 
 ## P2 — Focused graph exploration (#508)
 
@@ -99,10 +102,10 @@ api controllers ──► SearchService (facade, no Lucene imports)
 | #538 (TEI via gateway/Envoy) | Open | P1 |
 | #547 (incremental Lucene projection) | Closed (#551/#552) | — |
 | #550 (engine adapter boundary) | Closed (#552, ADR-021) | — |
-| #556 (query-adaptive RRF) | Open — blocked on frozen corpus | P1 |
+| #556 (query-adaptive RRF) | Open — frozen corpus ready; deferred | P1 |
 | #558 (extraction gold + baseline) | Closed (#559) | — |
 | #506, #528, #536, #537, #539 | Closed | — |
-| RAKG extraction epic | Open — sentence chunking first | P3 |
+| RAKG extraction epic | Open — sentence chunking done; LLM next | P3 |
 
 ## Operation
 

@@ -33,7 +33,10 @@ engine:
 
 ## Baseline metrics (Phase A)
 
-`python3 evaluation/eval_extraction.py` (manifest verified, 5 docs):
+`python3 evaluation/eval_extraction.py` (manifest verified, 5 docs). The
+evaluator runs both the document-level baseline and the RAKG Phase 0
+sentence-chunked shape; the document-level numbers are below and the chunked
+comparison follows.
 
 | Metric | Value |
 |---|---|
@@ -52,6 +55,30 @@ engine:
 
 Per document (overlap F1): halcyon 0.190, e650 0.364, Skiena sorting 0.122,
 dynamic programming 0.189, TSP/parsing 0.156.
+
+## Sentence-boundary chunking (RAKG Phase 0)
+
+`synflux` now exposes `SYNFLUX_INGEST_CHUNK_STRATEGY=sentence` backed by a
+shared `SentenceChunker` (`java/extraction-engine`): whole sentences (or blank
+lines), grouped to ≤ 512 tokens (chars/4), one-sentence overlap, oversize
+sentence kept whole. `synflux` and the evaluator CLI share the implementation,
+so the chunk offsets are document-relative and the gold spans align unchanged.
+
+`eval_extraction.py` also runs the regex adapter per sentence chunk (the shape
+Phase B will consume) and dedupes overlap mentions by span:
+
+| Mode | Entity P | Entity R | Entity F1 | Type | Rel F1 | Pred e/r |
+|---|---|---|---|---|---|---|
+| document-level | 0.137 | 0.271 | **0.182** | 0.147 | 0.000 | 139 / 34 |
+| sentence-chunked (512, overlap 1) | 0.137 | 0.271 | **0.182** | 0.147 | 0.000 | 139 / 30 |
+
+**Reading:** entity F1 is unchanged — the regex adapter is span-local and does
+not use the extra context, so chunking neither helps nor hurts mention
+precision/recall. The only difference is four relation candidates that crossed
+a chunk boundary beyond the one-sentence overlap. That is a real constraint for
+Phase B: relation extraction must either widen the overlap or resolve edges
+across chunks; the intended chunking win is LLM context, not a regex F1 lift.
+The Phase B acceptance target therefore stays **entity F1 (overlap) > 0.182**.
 
 ## Honest failure analysis
 
@@ -92,8 +119,9 @@ python3 evaluation/eval_extraction.py      # builds + runs the Java adapter, the
 ```
 
 `--skip-manifest` exists for debugging only; a reportable run must verify the
-golden hashes. The evaluator writes `evaluation/regex-predictions.json` and
-`evaluation/baseline-result.json`.
+golden hashes. The evaluator writes `evaluation/regex-predictions.json`,
+`evaluation/regex-predictions-chunked.json`, and `evaluation/baseline-result.json`
+(both modes).
 
 ## Artifacts
 
@@ -101,7 +129,7 @@ golden hashes. The evaluator writes `evaluation/regex-predictions.json` and
 - `docs/planning/extraction-gold-schema.md` — schema and protocol.
 - `evaluation/corpus/*.txt`, `evaluation/gold/doc-*.json`, `MANIFEST.sha256`.
 - `evaluation/eval_extraction.py`, `evaluation/regex-predictions.json`,
-  `evaluation/baseline-result.json`.
+  `evaluation/regex-predictions-chunked.json`, `evaluation/baseline-result.json`.
 
 ## Caveats
 

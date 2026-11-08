@@ -1,0 +1,12 @@
+{
+  "tenant": "demo-fixed",
+  "source": "docker-cassandra-1/ingestion_cache.chunks_payload",
+  "chunk_count": 82,
+  "chunk_fingerprint": "b2b2caee20f84de6e01116a67b7affb67d992dc8c2b9cd1642d3ead3e6a230ed",
+  "embedding_model": "BAAI/bge-base-en-v1.5",
+  "embedding_dim": 768,
+  "queries": "evaluation/retrieval-corpus/queries-q25.jsonl",
+  "query_count": 25,
+  "frozen_at": "2026-11-08",
+  "notes": "Frozen from the Run C corpus; chunk_sha256 is the synflux content hash."
+}
