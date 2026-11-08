@@ -9,10 +9,16 @@ format, so gold labels are directly comparable between the two plans.
 
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass
 
 import requests
+
+
+def _auth_headers() -> dict:
+    token = os.environ.get("RETRIEVAL_EVAL_TOKEN")
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 def chunk_id(content_ref_id: str, chunk_ordinal: int) -> str:
@@ -72,7 +78,7 @@ def index_stats(synquest_base_url: str, tenant: str) -> IndexStats:
     # synquest's MockTenantFilter takes the tenant from X-Tenant (default "demo") and it wins
     # over ?tenant=, so without the header this silently reported the demo tenant's index
     response = requests.get(f"{synquest_base_url}/index/stats", params={"tenant": tenant},
-                            headers={"X-Tenant": tenant}, timeout=30)
+                            headers={"X-Tenant": tenant, **_auth_headers()}, timeout=30)
     response.raise_for_status()
     body = response.json()
     return IndexStats(
@@ -126,6 +132,7 @@ def search(
     response = requests.post(
         f"{synquest_base_url}/search",
         json=request_body,
+        headers=_auth_headers(),
         timeout=30,
     )
     elapsed_ms = (time.monotonic() - started) * 1000
