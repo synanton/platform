@@ -6,16 +6,16 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
-import org.synanton.synquest.service.LuceneIndexBuilder;
+import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 
 /**
- * Embedded Lucene implementation of {@link SearchEngineAdapter} (#547).
+ * Embedded Lucene implementation of {@link SearchIndexAdapter} (#547).
  * All Lucene writer/indexing details stay behind this class; the search path
  * remains in {@code SearchService} today and moves here in the follow-up
  * recorded by ADR-020.
  */
 @Component
-public final class EmbeddedLuceneAdapter implements SearchEngineAdapter {
+public final class EmbeddedLuceneAdapter implements SearchIndexAdapter {
 
     private final LuceneIndexBuilder builder;
 

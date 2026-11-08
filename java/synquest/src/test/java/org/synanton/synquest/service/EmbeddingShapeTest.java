@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 
 /** EmbeddingShape: startup validation against the Lucene cap, truncation, fail-on-mismatch. */
 class EmbeddingShapeTest {

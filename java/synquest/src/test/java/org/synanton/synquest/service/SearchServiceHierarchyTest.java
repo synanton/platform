@@ -28,6 +28,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 
 /** B2/T05 small-to-big: expand=section pulls a hit's whole section, in reading order. */
 class SearchServiceHierarchyTest {

@@ -1,6 +1,7 @@
-package org.synanton.synquest.service;
+package org.synanton.synquest.engine.lucene;
 
 import org.apache.lucene.codecs.KnnVectorsFormat;
+import org.synanton.synquest.service.QueryEmbedder;
 import org.springframework.stereotype.Component;
 import org.synanton.synquest.config.SynquestProperties;
 

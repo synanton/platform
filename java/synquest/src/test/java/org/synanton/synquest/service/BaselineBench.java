@@ -25,6 +25,8 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.synanton.synquest.engine.lucene.RrfFusion;
+import org.synanton.synquest.engine.lucene.HybridSearcher;
 
 /**
  * YDB-POC-006 preliminary operating points. Runs ONLY with

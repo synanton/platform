@@ -12,8 +12,8 @@ import org.synanton.storage.contract.PrincipalRef;
 import org.synanton.storage.contract.SecurityContext;
 import org.synanton.storage.contract.TenantScope;
 import org.synanton.synquest.api.SearchMode;
-import org.synanton.synquest.service.HybridSearcher;
-import org.synanton.synquest.service.RrfFusion;
+import org.synanton.synquest.engine.lucene.HybridSearcher;
+import org.synanton.synquest.engine.lucene.RrfFusion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

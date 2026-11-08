@@ -2,7 +2,7 @@ package org.synanton.bench.baseline;
 
 import java.io.Closeable;
 import java.util.Map;
-import org.synanton.synquest.service.HybridSearcher;
+import org.synanton.synquest.engine.lucene.HybridSearcher;
 
 /**
  * Per-tenant Lucene index set (028b.3 builds all 50; 028b.1b proves the shape

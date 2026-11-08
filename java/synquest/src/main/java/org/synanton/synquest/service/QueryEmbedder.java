@@ -1,6 +1,7 @@
 package org.synanton.synquest.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 import org.synanton.llm.TenantAwareLlmClient;
 
 import org.synanton.llm.EmbedRequest;
@@ -73,7 +74,7 @@ public class QueryEmbedder {
         return required;
     }
 
-    static float[] normalise(float[] vec) {
+    public static float[] normalise(float[] vec) {
         double norm = 0.0;
         for (float v : vec) norm += (double) v * v;
         norm = Math.sqrt(norm);

@@ -28,6 +28,8 @@ import org.synanton.llm.LlmClient;
 import org.synanton.synquest.api.dto.SearchRequest;
 import org.synanton.synquest.api.dto.SearchResponse;
 import org.synanton.synquest.config.SynquestProperties;
+import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 
 /**
  * SYN-VECTOR-001 B4: sequential metadata-first mode against the parallel default.

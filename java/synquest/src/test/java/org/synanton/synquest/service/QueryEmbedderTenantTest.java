@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 
 /** Tenant propagation to tenant-aware (GPU plane) clients, and the no-vector guard. */
 class QueryEmbedderTenantTest {

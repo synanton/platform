@@ -8,7 +8,7 @@
 1. **Port for the projection write path.** All index mutations go through `org.synanton.synquest.search.SearchEngineAdapter` (domain-only surface: `rebuild`, `indexContentRefs`, `deleteChunkIds`, `isEmpty`, `indexPath`, `lastReport`). `EmbeddedLuceneAdapter` is the first implementation; `LuceneIndexBuilder` remains the engine-specific detail. `SearchProjectionConsumer` and the projection half of `SearchService` depend on the port, not the builder.
 2. **Stream, don't materialise.** Full rebuilds page manifests and chunks through the Cassandra driver (`fetchSize(1000)`) and rely on Lucene's RAM-buffer segment flush with a single final commit. Heap is bounded by the writer buffer, and a failed rebuild is never committed (a partial index cannot be mistaken for complete on the next boot).
 3. **Incremental re-projection + zero-downtime refresh.** `OpenMode.CREATE_OR_APPEND` plus `updateDocument(new Term("id", contentRef + ":" + ordinal))` replaces chunks by stable id. `SearcherManager.maybeRefresh()` swaps readers atomically; `reindex` keeps the current searcher open during a full rebuild, so searches continue on the previous snapshot (no 503 blackout from projection).
-4. **Staged read path.** The read-side DSL (`SearchQuery`/`SearchFilter` → `SearchResult`) and relocating `HybridSearcher`, `RrfFusion`, `LuceneKnowledgeSearchBackend`, and `EmbeddingShape` into an `engine` package remain a tracked follow-up. Until that lands, `SearchService` still owns the hybrid legs and imports Lucene for reads; the write/lifecycle boundary is the first extracted port. This staging is deliberate: moving ~400 lines of fusion/rerank logic in the same change as the operational fix would put the green suite and the demo at risk.
+4. **Read path behind the same port.** The read contract is `SearchEngineAdapter.search(SearchQuery, SearchFilter) -> SearchResult` with engine-neutral `SearchDocument`/`SearchQuery`/`SearchFilter`/`SearchResult`. `LuceneSearchEngine` implements the hybrid legs/fusion/rerank; `SearchService` is a thin facade that maps API DTOs to the port. `HybridSearcher`, `RrfFusion`, `EmbeddingShape`, `LuceneIndexBuilder`, and `LuceneSearchEngine` live in `org.synanton.synquest.engine.lucene`; the `service` and `api` packages have **zero** `org.apache.lucene` imports. The operational fix (#551) and the read-path move (#550) landed as separate changes so the green suite and demo were never destabilised together.
 
 Consequences:
 - **Swap path:** a remote adapter implements the same port; the projection path does not change.
@@ -16,7 +16,7 @@ Consequences:
 - **Availability:** index refreshes are atomic; projection no longer forces a 503 window.
 - **Test safety net:** `LuceneIndexIdempotencyTest` proves re-projected/duplicate events do not duplicate documents; it remains valid for the incremental refactor.
 - **Rejected:** adopting Solr/ES now — operational cost breaks the one-command deploy and the HTTP hop is not justified at the current corpus size.
-- **Known gap:** the read-path port is not yet extracted; `SearchService` still sees Lucene (documented above and in the tracking issue).
+- **Decoupling:** the physical engine is isolated to `engine.lucene`; a remote adapter can replace it without touching `SearchService`, the API controllers, or the projection consumer.
 
 ## Context
 
