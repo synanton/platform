@@ -31,7 +31,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: synflux
-          image: local-registry:5000/synanton/synflux@sha256:714c479f8f49d24d2af61faf8ad9161b78ebdd908af395d7cd521c7f3b4f154b
+          image: local-registry:5000/synanton/synflux@sha256:07f3ce9732f7d5e4cdb93b2fd5a8e611cd460bbad0820802349062b1f3b3efe1
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:

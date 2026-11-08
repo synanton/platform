@@ -1,14 +1,18 @@
 package org.synanton.synflux.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.synanton.common.context.RequestContext;
 import org.synanton.common.context.RequestContextHolder;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.domain.ManifestRow;
 import org.synanton.ingestioncache.domain.SourceIdentityRow;
+import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
+import org.synanton.ingestioncache.domain.WorkflowStateRow;
 import org.synanton.synflux.lifecycle.FixtureSourceWorkflow;
 import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
 import org.synanton.synflux.lifecycle.FixtureSourceWorkflow.Submission;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +32,9 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/v1/sources")
 public class SourceController {
+
+    private static final Set<String> INDEXABLE_STATES =
+            Set.of("CHUNKED", "ENRICHED", "EMBEDDED");
 
     private final IngestionCacheClient cache;
     private final Clock clock;
@@ -87,6 +95,57 @@ public class SourceController {
     public SourceResource get(@PathVariable String sourceId) {
         return SourceResource.from(readSource(sourceId));
     }
+
+    @GetMapping("/{sourceId}/status")
+    public SourceStatusResource status(@PathVariable String sourceId) {
+        SourceRow source = readSource(sourceId);
+        String tenantId = source.tenantId();
+        String connectorId = source.connectorId();
+
+        String status = cache.listWorkflowStates(tenantId).stream()
+                .filter(workflow -> sourceId.equals(workflow.sourceId()))
+                .max(Comparator.comparing(WorkflowStateRow::updatedAt,
+                        Comparator.nullsFirst(Comparator.<Instant>naturalOrder())))
+                .map(WorkflowStateRow::state)
+                .orElse("UNKNOWN");
+
+        int chunkCount = 0;
+        boolean sawVersion = false;
+        boolean indexed = true;
+        for (SourceIdentityRow identity : cache.listSourceIdentities(tenantId, sourceId, connectorId)) {
+            List<SourceVersionRow> versions = cache.listSourceVersions(
+                    identity.tenantId(), identity.connectorId(), identity.sourceId(), identity.resourceId());
+            if (versions.isEmpty()) {
+                continue;
+            }
+            sawVersion = true;
+            SourceVersionRow latest = versions.stream()
+                    .max(Comparator.comparing(SourceVersionRow::observedAt))
+                    .orElseThrow();
+            chunkCount += cache.readChunks(tenantId, latest.contentRefId()).size();
+            boolean projectedState = cache.readManifest(tenantId, latest.contentRefId())
+                    .map(manifest -> manifest.state() != null
+                            && INDEXABLE_STATES.contains(manifest.state().toUpperCase()))
+                    .orElse(false);
+            // published is the outbox acknowledgement; in the demo (Kafka disabled)
+            // the search projection consumer is the only writer of this flag.
+            boolean published = cache.listSourceOutbox(
+                            tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId())
+                    .stream()
+                    .filter(event -> latest.versionId().equals(event.sourceVersionId()))
+                    .findFirst()
+                    .map(SourceOutboxRow::published)
+                    .orElse(false);
+            indexed &= projectedState && published;
+        }
+        return new SourceStatusResource(sourceId, status, sawVersion && indexed, chunkCount);
+    }
+
+    public record SourceStatusResource(
+            @JsonProperty("source_id") String sourceId,
+            @JsonProperty("status") String status,
+            @JsonProperty("indexed") boolean indexed,
+            @JsonProperty("chunk_count") int chunkCount) {}
 
     @GetMapping
     public List<SourceResource> list() {

@@ -12,8 +12,12 @@ import org.synanton.common.jwt.JwtVerifier;
 import org.synanton.common.tenant.TenantContextFilter;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.SourceIdentityRow;
+import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
+import org.synanton.ingestioncache.domain.WorkflowStateRow;
 import org.synanton.synflux.lifecycle.FixtureSourceWorkflow;
 import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
 import org.springframework.http.MediaType;
@@ -154,6 +158,64 @@ class SourceControllerTenantTest {
         assertThat(source.getValue().connectorType()).isEqualTo("upload");
         assertThat(source.getValue().sourceEndpoint()).isEmpty();
     }
+
+    @Test
+    void sourceStatusReportsCompletedAndIndexedAfterProjectionAck() throws Exception {
+        StatusFixture fixture = statusFixture(true);
+
+        mvc.perform(get("/v1/sources/source-a/status")
+                .header("Authorization", "Bearer " + token("tenant-a")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.source_id").value("source-a"))
+            .andExpect(jsonPath("$.status").value("COMPLETED"))
+            .andExpect(jsonPath("$.indexed").value(true))
+            .andExpect(jsonPath("$.chunk_count").value(1));
+    }
+
+    @Test
+    void sourceStatusIsNotIndexedUntilTheOutboxEventIsPublished() throws Exception {
+        StatusFixture fixture = statusFixture(false);
+
+        mvc.perform(get("/v1/sources/source-a/status")
+                .header("Authorization", "Bearer " + token("tenant-a")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("COMPLETED"))
+            .andExpect(jsonPath("$.indexed").value(false))
+            .andExpect(jsonPath("$.chunk_count").value(1));
+    }
+
+    private StatusFixture statusFixture(boolean published) {
+        String tenant = "tenant-a";
+        Instant now = Instant.parse("2026-10-17T12:00:00Z");
+        UUID versionId = UUID.randomUUID();
+        UUID contentRef = UUID.randomUUID();
+        UUID runId = UUID.randomUUID();
+        SourceRow source = new SourceRow(tenant, "source-a", "upload", "upload",
+            "upload://source-a", Set.of(), "ACTIVE", now, null);
+        SourceIdentityRow identity = new SourceIdentityRow(tenant, "upload", "source-a", "docs/a.txt");
+        SourceVersionRow version = new SourceVersionRow(tenant, "upload", "source-a", "docs/a.txt",
+            versionId, "sha256:abc", "rev-1", now, contentRef, UUID.randomUUID(), "");
+        ManifestRow manifest = new ManifestRow(tenant, contentRef, now, 1, "semantic-v1", 1,
+            "EMBEDDED", "CONTENT_CACHE", "", "upload://source-a/docs/a.txt", "sha256:abc", 10,
+            "text/plain", "FULL", null, "", null, runId);
+        SourceOutboxRow event = new SourceOutboxRow(tenant, "upload", "source-a", "docs/a.txt",
+            UUID.randomUUID(), "SourcePublished", versionId, null, "{}", now, published);
+        WorkflowStateRow workflow = new WorkflowStateRow(tenant, UUID.randomUUID(), "ingestion", 1,
+            UUID.randomUUID(), runId, "source-a", "docs/a.txt", "user", "USER", "req-1", null,
+            "COMPLETED", "INGEST", now, now, now, now, null, null, null, 0, null);
+        ChunkRow chunk = new ChunkRow(tenant, contentRef, 0, "text", "sha", 1, 1, "", "", "");
+
+        when(cache.readSource(tenant, "source-a")).thenReturn(Optional.of(source));
+        when(cache.listWorkflowStates(tenant)).thenReturn(List.of(workflow));
+        when(cache.listSourceIdentities(tenant, "source-a", "upload")).thenReturn(List.of(identity));
+        when(cache.listSourceVersions(tenant, "upload", "source-a", "docs/a.txt")).thenReturn(List.of(version));
+        when(cache.readChunks(tenant, contentRef)).thenReturn(List.of(chunk));
+        when(cache.readManifest(tenant, contentRef)).thenReturn(Optional.of(manifest));
+        when(cache.listSourceOutbox(tenant, "upload", "source-a", "docs/a.txt")).thenReturn(List.of(event));
+        return new StatusFixture();
+    }
+
+    private record StatusFixture() {}
 
     private static String token(String tenantId) throws Exception {
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
