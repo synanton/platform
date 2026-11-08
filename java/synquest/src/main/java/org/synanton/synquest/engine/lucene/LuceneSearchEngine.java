@@ -1,0 +1,517 @@
+package org.synanton.synquest.engine.lucene;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.TopDocs;
+import org.synanton.synquest.api.dto.*;
+import org.synanton.synquest.config.SynquestProperties;
+import org.synanton.synquest.search.IndexReport;
+import org.synanton.synquest.search.SearchDocument;
+import org.synanton.synquest.search.SearchEngineAdapter;
+import org.synanton.synquest.search.SearchFilter;
+import org.synanton.synquest.search.SearchIndexAdapter;
+import org.synanton.synquest.search.SearchQuery;
+import org.synanton.synquest.search.SearchResult;
+import org.synanton.synquest.service.EmbeddingUnavailableException;
+import org.synanton.synquest.service.QueryEmbedder;
+import org.synanton.synquest.service.RerankUnavailableException;
+import org.synanton.synquest.service.SearchReranker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+public class LuceneSearchEngine implements SearchEngineAdapter {
+
+    private static final Logger log = LoggerFactory.getLogger(LuceneSearchEngine.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    public enum Status { STARTING, READY, ERROR }
+
+    private final SearchIndexAdapter indexAdapter;
+    private final QueryEmbedder queryEmbedder;
+    private final SynquestProperties props;
+
+    private final Map<String, AtomicReference<HybridSearcher>> searcherRefs = new ConcurrentHashMap<>();
+    private final Map<String, Object> rebuildLocks = new ConcurrentHashMap<>();
+
+    // The service itself is ready as soon as it can accept requests; tenant
+    // indexes are built on demand (/v1/search gates per tenant with 503).
+    // Previously this flipped to READY only when the boot seed initialised
+    // the demo tenant — coupling service health to demo data.
+    private volatile Status status = Status.READY;
+
+    private final ExecutorService searchPool = Executors.newFixedThreadPool(
+            Math.max(2, Runtime.getRuntime().availableProcessors()));
+
+    private final SearchReranker reranker;
+    private final org.synanton.synquest.config.SynquestRerankProperties rerankProps;
+
+    public LuceneSearchEngine(SearchIndexAdapter indexAdapter,
+                              QueryEmbedder queryEmbedder,
+                              SynquestProperties props) {
+        this(indexAdapter, queryEmbedder, props, (SearchReranker) null,
+                new org.synanton.synquest.config.SynquestRerankProperties());
+    }
+
+    public LuceneSearchEngine(SearchIndexAdapter indexAdapter,
+                              QueryEmbedder queryEmbedder,
+                              SynquestProperties props,
+                              SearchReranker reranker,
+                              org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
+        this.indexAdapter = indexAdapter;
+        this.queryEmbedder = queryEmbedder;
+        this.props = props;
+        this.reranker = reranker;
+        this.rerankProps = rerankProps;
+    }
+
+    public void initTenant(String tenant) {
+        try {
+            if (props.index().rebuildOnBootIfEmpty() && indexAdapter.isEmpty(tenant)) {
+                log.info("Index is empty for tenant '{}', building now...", tenant);
+                indexAdapter.rebuild(tenant);
+            }
+            Path idxPath = indexAdapter.indexPath(tenant);
+            HybridSearcher searcher = new HybridSearcher(idxPath, props.embedding().dim());
+            searcherRefs.computeIfAbsent(tenant, t -> new AtomicReference<>()).set(searcher);
+            rebuildLocks.put(tenant, new Object());
+            status = Status.READY;
+            log.info("Synquest ready for tenant '{}'", tenant);
+        } catch (Exception e) {
+            status = Status.ERROR;
+            log.error("Failed to initialise index for tenant '{}'", tenant, e);
+        }
+    }
+
+    public SearchResponse search(SearchRequest req) throws IOException {
+        String tenant = req.tenant();
+        if (tenant == null || tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
+        HybridSearcher searcher = getSearcher(tenant);
+        if (searcher == null) {
+            throw new IllegalStateException("Index not ready for tenant: " + tenant);
+        }
+
+        int topK = req.topK() != null ? req.topK() : props.search().defaultTopK();
+        int topKDense = req.topKDense() != null ? req.topKDense() : props.search().defaultTopKDense();
+        int topKLexical = req.topKLexical() != null ? req.topKLexical() : props.search().defaultTopKLexical();
+        int rrfK = req.rrfK() != null ? req.rrfK() : props.search().defaultRrfK();
+
+        long t0 = System.currentTimeMillis();
+        long queryInputChars = req.query() == null ? 0 : req.query().length();
+
+        float[] queryVec = null;
+        long embedMs = 0;
+        boolean embedSkipped = false;
+        boolean embedCached = false;
+        // top_k_dense <= 0 means "no dense side" (BM25-only rows such as T01): don't embed the query
+        // and don't run KNN. Lucene rejects k=0, which under synquest.embedding.required would have
+        // turned an intentionally lexical search into a 503.
+        boolean denseRequested = topKDense > 0;
+        if (denseRequested) try {
+            long embedStart = System.currentTimeMillis();
+            QueryEmbedder.QueryVector qv = queryEmbedder.embedForSearch(req.query(), tenant);
+            queryVec = qv.vector();
+            embedCached = qv.cached();
+            embedMs = System.currentTimeMillis() - embedStart;
+        } catch (Exception e) {
+            if (queryEmbedder.required()) {
+                throw new EmbeddingUnavailableException(e);
+            }
+            embedSkipped = true;
+            log.warn("Query embedding unavailable, using BM25 only: {}", e.getMessage());
+        }
+
+        final float[] denseVec = queryVec;
+        String executionMode = effectiveExecutionMode(req);
+        TopDocs denseResults;
+        TopDocs lexicalResults;
+        long denseMs;
+        long lexicalMs;
+        if ("sequential".equals(executionMode)) {
+            // VEC-B4.2 metadata-first: lexical runs first; its candidate universe
+            // constrains the dense leg. Fusion and everything below is shared,
+            // so result shapes are identical to parallel mode by construction.
+            long lexicalStart = System.currentTimeMillis();
+            lexicalResults = searcher.lexical(req.query(), topKLexical);
+            lexicalMs = System.currentTimeMillis() - lexicalStart;
+            java.util.Set<String> universe = contentRefIds(searcher, lexicalResults);
+            long denseStart = System.currentTimeMillis();
+            denseResults = searcher.dense(denseVec, topKDense, universe);
+            denseMs = System.currentTimeMillis() - denseStart;
+        } else {
+            Future<TopDocs> denseFuture = searchPool.submit(() -> {
+            if (!denseRequested || denseVec == null) {
+                return new TopDocs(new org.apache.lucene.search.TotalHits(0,
+                        org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
+            }
+            try {
+                return searcher.dense(denseVec, topKDense);
+            } catch (Exception e) {
+                if (queryEmbedder.required()) {
+                    // e.g. an index built at another dimension: never degrade silently to BM25-only
+                    throw new EmbeddingUnavailableException(e);
+                }
+                log.warn("Dense search skipped: {}", e.getMessage());
+                return new TopDocs(new org.apache.lucene.search.TotalHits(0,
+                        org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
+            }
+        });
+        Future<TopDocs> lexicalFuture = searchPool.submit(() -> searcher.lexical(req.query(), topKLexical));
+
+            long parallelDenseStart = System.currentTimeMillis();
+            try {
+                denseResults = denseFuture.get();
+                denseMs = System.currentTimeMillis() - parallelDenseStart;
+
+                long parallelLexicalStart = System.currentTimeMillis();
+                lexicalResults = lexicalFuture.get();
+                lexicalMs = System.currentTimeMillis() - parallelLexicalStart;
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof IOException ioe) {
+                    throw ioe;
+                }
+                if (cause instanceof EmbeddingUnavailableException eue) {
+                    throw eue;
+                }
+                if (cause instanceof RerankUnavailableException rue) {
+                    throw rue;
+                }
+                throw new RuntimeException("Search failed", cause);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Search interrupted", e);
+            }
+        }
+
+            // Rerank (B2/T10): fuse a wider candidate list, score full chunk text with the
+            // cross-encoder, reorder, cut to top_k. Fail closed: never return RRF order as "reranked".
+            boolean rerankRequested = Boolean.TRUE.equals(req.rerank());
+            int candidates = topK;
+            if (rerankRequested) {
+                if (reranker == null) {
+                    throw new RerankUnavailableException(
+                            "rerank requested but synquest.rerank is not enabled (gpu-plane profile)", null);
+                }
+                int asked = req.rerankCandidates() != null ? req.rerankCandidates() : rerankProps.getDefaultCandidates();
+                candidates = Math.max(topK, Math.min(asked, rerankProps.getMaxCandidates()));
+            }
+
+            long fusionStart = System.currentTimeMillis();
+            List<RrfFusion.FusedHit> fused = RrfFusion.combine(
+                    denseResults, lexicalResults, candidates, rrfK,
+                    props.search().defaultSingleLegBoost());
+            long fusionMs = System.currentTimeMillis() - fusionStart;
+
+            var stored = searcher.storedFields();
+            List<Hit> hits = new ArrayList<>(fused.size());
+            List<String> texts = new ArrayList<>(fused.size());
+            java.util.Map<String, Integer> docIdByChunk = new java.util.HashMap<>();
+            for (RrfFusion.FusedHit fh : fused) {
+                Document doc = stored.document(fh.docId());
+                String text = doc.get("text");
+                texts.add(text == null ? "" : text);
+                Hit h = toHit(doc, fh.rrfScore(), fh.denseScore(), fh.lexicalScore(), fh.rankDense(), fh.rankLexical());
+                docIdByChunk.put(h.chunkId(), fh.docId());
+                hits.add(h);
+            }
+
+            Long rerankMs = null;
+            if (rerankRequested && !hits.isEmpty()) {
+                long rerankStart = System.currentTimeMillis();
+                int maxChars = rerankProps.getMaxPassageChars();
+                List<String> passages = texts.stream()
+                        .map(t -> t.length() > maxChars ? t.substring(0, maxChars) : t).toList();
+                double[] scores;
+                try {
+                    scores = reranker.scores(tenant, req.query(), passages);
+                } catch (RuntimeException e) {
+                    throw new RerankUnavailableException("rerank failed: " + e.getMessage(), e);
+                }
+                List<Hit> reranked = new ArrayList<>(hits.size());
+                for (int i = 0; i < hits.size(); i++) {
+                    reranked.add(hits.get(i).withScoreRerank(scores[i]));
+                }
+                // stable sort: equal rerank scores keep RRF order
+                reranked.sort(java.util.Comparator.comparingDouble((Hit h) -> h.scoreRerank()).reversed());
+                hits = new ArrayList<>(reranked.subList(0, Math.min(topK, reranked.size())));
+                rerankMs = System.currentTimeMillis() - rerankStart;
+            }
+
+            if ("section".equalsIgnoreCase(req.expand())) {
+                int maxPerSection = req.expandMaxChunks() != null && req.expandMaxChunks() > 0 ? req.expandMaxChunks() : 8;
+                hits = expandSections(hits, docIdByChunk, searcher, stored, topK, maxPerSection);
+            } else if (req.expand() != null && !req.expand().isBlank()) {
+                throw new IllegalArgumentException("unsupported expand '" + req.expand() + "' (supported: section)");
+            }
+
+            long totalMs = System.currentTimeMillis() - t0;
+            SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
+                    searcher.generation(), rerankMs, rerankRequested ? fused.size() : null);
+            QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped, embedCached);
+            return new SearchResponse(hits, trace, queryUsage);
+    }
+
+    /**
+     * B2/T05 small-to-big: walk the ranked hits. Each hit with a section contributes its whole
+     * section in reading order, capped at {@code maxPerSection}; a larger section is windowed
+     * around the hit. Added siblings inherit the hit's score and carry {@code expanded_from}.
+     * Chunks without a section (flat/fallback) pass through unchanged. The result is cut at topK.
+     */
+    private List<Hit> expandSections(List<Hit> ranked, java.util.Map<String, Integer> docIdByChunk,
+                                     HybridSearcher searcher, org.apache.lucene.index.StoredFields stored,
+                                     int topK, int maxPerSection) throws IOException {
+        List<Hit> out = new ArrayList<>();
+        java.util.Set<String> emitted = new java.util.HashSet<>();
+        for (Hit hit : ranked) {
+            if (out.size() >= topK) break;
+            if (emitted.contains(hit.chunkId())) continue;
+            if (hit.sectionId() == null || hit.sectionId().isEmpty()) {
+                out.add(hit);
+                emitted.add(hit.chunkId());
+                continue;
+            }
+            List<Integer> members = searcher.sectionMembers(hit.contentRefId() + "|" + hit.sectionId(), 1000);
+            List<Hit> section = new ArrayList<>(members.size());
+            int self = -1;
+            for (int docId : members) {
+                Hit m = toHit(stored.document(docId), 0, 0, 0, -1, -1);
+                if (m.chunkId().equals(hit.chunkId())) self = section.size();
+                section.add(m);
+            }
+            if (self < 0) {          // index/section mismatch: keep the hit itself
+                section = List.of(hit);
+                self = 0;
+            }
+            int from = Math.max(0, Math.min(self - maxPerSection / 2, section.size() - maxPerSection));
+            int to = Math.min(section.size(), from + maxPerSection);
+            for (int k = from; k < to && out.size() < topK; k++) {
+                Hit m = section.get(k);
+                if (emitted.contains(m.chunkId())) continue;
+                out.add(k == self ? hit : m.withExpansion(hit.score(), hit.scoreRerank(), hit.chunkId()));
+                emitted.add(m.chunkId());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Effective retrieval execution mode (SYN-VECTOR-001 B4): per-query override
+     * wins, else the deployment default. Unknown values fail loud — a misspelled
+     * mode must never silently run as parallel.
+     */
+    private String effectiveExecutionMode(SearchRequest req) {
+        String override = req.executionMode();
+        String mode = override != null && !override.isBlank()
+                ? override
+                : props.execution().mode();
+        String normalized =
+                mode == null ? "parallel" : mode.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!normalized.equals("parallel") && !normalized.equals("sequential")) {
+            throw new IllegalArgumentException(
+                    "unknown execution mode '" + mode + "' (expected parallel|sequential)");
+        }
+        return normalized;
+    }
+
+    /** Content-ref IDs backing lexical hits — the sequential candidate universe. */
+    private static java.util.Set<String> contentRefIds(HybridSearcher searcher, TopDocs docs)
+            throws IOException {
+        var stored = searcher.storedFields();
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (var scoreDoc : docs.scoreDocs) {
+            String ref = stored.document(scoreDoc.doc).get("content_ref_id");
+            if (ref != null) {
+                ids.add(ref);
+            }
+        }
+        return ids;
+    }
+    private Hit toHit(Document doc, double score, double dense, double lexical, int rankDense, int rankLexical) {
+        String text = doc.get("text");
+        // Snippet length is deployment policy (rerank legs need full chunks;
+        // UI previews want short). Default 200 preserves prior behavior.
+        int cap = props.search() != null ? props.search().snippetChars() : 200;
+        String snippet = text != null && cap > 0 && text.length() > cap
+                ? text.substring(0, cap) + "…" : text;
+        String sectionId = doc.get("section_id");
+        return new Hit(
+                UUID.fromString(doc.get("content_ref_id")),
+                Integer.parseInt(Objects.requireNonNullElse(doc.get("chunk_ordinal"), "0")),
+                score, dense, lexical, rankDense, rankLexical,
+                snippet,
+                doc.get("source_uri"),
+                parseInt(doc.get("page_start"), -1),
+                parseInt(doc.get("page_end"), -1),
+                doc.get("section_path"),
+                doc.get("heading"),
+                parseSourceElements(doc.get("source_elements")),
+                parseInt(doc.get("token_count"), 0),
+                emptyToNull(doc.get("structured_content")),
+                parseBoolean(doc.get("is_partial_section")),
+                emptyToNull(doc.get("ingest_usage")),
+                null,
+                sectionId == null || sectionId.isEmpty() ? null : sectionId,
+                null);
+    }
+
+    /**
+     * Full rebuild. The existing searcher is kept open during the rebuild and
+     * refreshed afterwards, so searches continue on the previous snapshot and
+     * swap atomically when the writer commits (zero-downtime, #547 Phase 2).
+     */
+    public void reindex(String tenant) throws IOException {
+        Object lock = rebuildLocks.computeIfAbsent(tenant, t -> new Object());
+        synchronized (lock) {
+            log.info("Reindexing tenant '{}'...", tenant);
+            indexAdapter.rebuild(tenant);
+            HybridSearcher existing = getSearcher(tenant);
+            if (existing == null) {
+                HybridSearcher fresh = new HybridSearcher(indexAdapter.indexPath(tenant), props.embedding().dim());
+                searcherRefs.computeIfAbsent(tenant, t -> new AtomicReference<>()).set(fresh);
+            } else {
+                existing.maybeRefresh();
+            }
+            log.info("Reindex complete for tenant '{}'", tenant);
+        }
+    }
+
+    /**
+     * Incremental projection (Phase 2, #547): upserts only the listed content
+     * refs and refreshes the searcher. Falls back to a full rebuild when the
+     * tenant index does not exist yet, so the first projection is complete.
+     */
+    public void projectContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException {
+        Object lock = rebuildLocks.computeIfAbsent(tenant, t -> new Object());
+        synchronized (lock) {
+            if (contentRefs == null || contentRefs.isEmpty()) {
+                return;
+            }
+            if (indexAdapter.isEmpty(tenant) || getSearcher(tenant) == null) {
+                reindex(tenant);
+                return;
+            }
+            indexAdapter.indexContentRefs(tenant, contentRefs);
+            HybridSearcher searcher = getSearcher(tenant);
+            if (searcher != null) {
+                searcher.maybeRefresh();
+            }
+        }
+    }
+
+    public IndexStats stats(String tenant) throws IOException {
+        HybridSearcher searcher = getSearcher(tenant);
+        if (searcher == null) {
+            return new IndexStats(tenant, 0, -1, status.name().toLowerCase());
+        }
+        var report = indexAdapter.lastReport(tenant).orElse(null);
+        if (report == null) {
+            return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready");
+        }
+        return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready",
+                report.embeddingModel(), report.embeddingDim(), report.truncated(),
+                report.vectorDocs(), report.dimMismatches(), report.missingVectors(), report.sectionDocs());
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    private HybridSearcher getSearcher(String tenant) {
+        AtomicReference<HybridSearcher> ref = searcherRefs.get(tenant);
+        return ref != null ? ref.get() : null;
+    }
+
+    /** True when a searcher is loaded for the tenant (projection built and swapped in). */
+    public boolean isReady(String tenant) {
+        return getSearcher(tenant) != null;
+    }
+
+    private static int parseInt(String value, int fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private static boolean parseBoolean(String value) {
+        return "true".equalsIgnoreCase(value);
+    }
+
+    private static String emptyToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private static List<String> parseSourceElements(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return MAPPER.readValue(json, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    @Override
+    public void rebuild(String tenant) throws IOException {
+        indexAdapter.rebuild(tenant);
+    }
+
+    @Override
+    public int indexContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException {
+        return indexAdapter.indexContentRefs(tenant, contentRefs);
+    }
+
+    @Override
+    public int deleteChunkIds(String tenant, Collection<String> chunkIds) throws IOException {
+        return indexAdapter.deleteChunkIds(tenant, chunkIds);
+    }
+
+    @Override
+    public boolean isEmpty(String tenant) {
+        return indexAdapter.isEmpty(tenant);
+    }
+
+    @Override
+    public java.nio.file.Path indexPath(String tenant) {
+        return indexAdapter.indexPath(tenant);
+    }
+
+    @Override
+    public java.util.Optional<IndexReport> lastReport(String tenant) {
+        return indexAdapter.lastReport(tenant);
+    }
+
+    @Override
+    public String statusName() {
+        return getStatus().name();
+    }
+
+    /**
+     * Read port (#550): the hybrid legs/fusion/rerank execute here, behind the
+     * engine boundary; callers receive engine-neutral documents only.
+     */
+    @Override
+    public SearchResult search(SearchQuery query, SearchFilter filter) throws IOException {
+        SearchResponse response = search(new SearchRequest(
+                filter.tenantId(), query.text(), query.topK(), query.topKDense(), query.topKLexical(),
+                query.rrfK(), query.rerank(), query.rerankCandidates(), query.expand(),
+                query.expandMaxChunks(), query.executionMode()));
+        return new SearchResult(
+                response.hits().stream().map(SearchDocument::from).toList(),
+                response.trace(), response.queryUsage());
+    }
+}

@@ -1,4 +1,4 @@
-package org.synanton.synquest.service;
+package org.synanton.synquest.engine.lucene;
 
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;

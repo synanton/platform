@@ -22,8 +22,8 @@ import org.synanton.synquest.api.SearchRequest;
 import org.synanton.synquest.api.SearchResult;
 import org.synanton.synquest.api.SynquestEngine;
 import org.synanton.synquest.api.TemporalExtension;
-import org.synanton.synquest.service.HybridSearcher;
-import org.synanton.synquest.service.RrfFusion;
+import org.synanton.synquest.engine.lucene.HybridSearcher;
+import org.synanton.synquest.engine.lucene.RrfFusion;
 
 /**
  * 028b.1b baseline port wrapper: presents production {@code HybridSearcher} +

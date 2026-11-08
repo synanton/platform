@@ -18,7 +18,7 @@ import org.synanton.bench.emitter.Q3Emitter;
 import org.synanton.bench.emitter.QueryExecutor;
 import org.synanton.bench.emitter.QueryExecutor.GoldenInput;
 import org.synanton.bench.emitter.QueryExecutor.QueryOutput;
-import org.synanton.synquest.service.HybridSearcher;
+import org.synanton.synquest.engine.lucene.HybridSearcher;
 
 /**
  * 028b.8 documented baseline run (test-scope direct, like BaselineBench —

@@ -1,4 +1,4 @@
-package org.synanton.synquest.service;
+package org.synanton.synquest.engine.lucene;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.StoredFields;

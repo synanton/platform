@@ -1,6 +1,7 @@
 package org.synanton.synquest.config;
 
 import org.slf4j.Logger;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;

@@ -24,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 
 /** Index build: truncation of stored native vectors, build report, fail-closed when required. */
 class LuceneIndexBuilderDimensionTest {

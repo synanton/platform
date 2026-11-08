@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
+import org.synanton.synquest.engine.lucene.RrfFusion;
 
 class RrfFusionTest {
 

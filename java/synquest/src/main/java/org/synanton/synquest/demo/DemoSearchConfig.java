@@ -2,7 +2,7 @@ package org.synanton.synquest.demo;
 
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.synquest.config.SynquestProperties;
-import org.synanton.synquest.service.EmbeddingShape;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 import org.synanton.synquest.service.KnowledgeSearchBackend;
 import org.synanton.synquest.service.QueryEmbedder;
 import org.springframework.beans.factory.annotation.Value;

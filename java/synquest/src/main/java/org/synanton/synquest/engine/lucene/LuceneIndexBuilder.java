@@ -1,4 +1,4 @@
-package org.synanton.synquest.service;
+package org.synanton.synquest.engine.lucene;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;

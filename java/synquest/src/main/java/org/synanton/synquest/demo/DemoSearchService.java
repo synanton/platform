@@ -8,7 +8,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
-import org.synanton.synquest.service.EmbeddingShape;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 import org.synanton.synquest.service.KnowledgeSearchBackend;
 import org.synanton.synquest.service.KnowledgeSearchBackend.KnowledgeCandidate;
 import org.synanton.synquest.service.QueryEmbedder;

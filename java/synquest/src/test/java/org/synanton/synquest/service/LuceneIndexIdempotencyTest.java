@@ -31,6 +31,7 @@ import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.synquest.config.SynquestProperties;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 
 /**
  * #536: the search projection is a full rebuild ({@link LuceneIndexBuilder} opens

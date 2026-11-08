@@ -8,6 +8,7 @@ import org.synanton.llm.HttpLlmClient;
 import org.synanton.llm.LlmClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 
 /** The gpu-plane profile swaps the HTTP embed client for the fail-closed GPU plane client. */
 class GpuPlaneProfileWiringTest {
@@ -36,12 +37,12 @@ class GpuPlaneProfileWiringTest {
 
     @Test
     void embeddingDimAndTruncationBindFromConfiguration() {
-        runner.withBean(org.synanton.synquest.service.EmbeddingShape.class)
+        runner.withBean(org.synanton.synquest.engine.lucene.EmbeddingShape.class)
                 .withPropertyValues("synquest.embedding.model=m", "synquest.embedding.dim=1024",
                         "synquest.embedding.truncate-dim=1024", "synquest.embedding.normalise-l2=true")
                 .run(ctx -> {
                     assertThat(ctx).hasNotFailed();
-                    var shape = ctx.getBean(org.synanton.synquest.service.EmbeddingShape.class);
+                    var shape = ctx.getBean(org.synanton.synquest.engine.lucene.EmbeddingShape.class);
                     assertThat(shape.dim()).isEqualTo(1024);
                     assertThat(shape.truncates()).isTrue();
                 });
@@ -49,7 +50,7 @@ class GpuPlaneProfileWiringTest {
 
     @Test
     void dimAboveTheLuceneCapFailsAtStartup() {
-        runner.withBean(org.synanton.synquest.service.EmbeddingShape.class)
+        runner.withBean(org.synanton.synquest.engine.lucene.EmbeddingShape.class)
                 .withPropertyValues("synquest.embedding.model=m", "synquest.embedding.dim=2048")
                 .run(ctx -> assertThat(ctx).hasFailed());
     }

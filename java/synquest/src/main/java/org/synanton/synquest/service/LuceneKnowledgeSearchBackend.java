@@ -1,6 +1,7 @@
 package org.synanton.synquest.service;
 
 import org.slf4j.Logger;
+import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;

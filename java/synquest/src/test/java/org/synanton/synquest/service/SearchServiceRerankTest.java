@@ -29,6 +29,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
+import org.synanton.synquest.engine.lucene.EmbeddingShape;
 
 /** B2/T10: post-RRF cross-encoder reranking on a real Lucene index, fail closed. */
 class SearchServiceRerankTest {

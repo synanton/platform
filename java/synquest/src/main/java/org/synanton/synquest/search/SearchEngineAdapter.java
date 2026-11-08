@@ -1,33 +1,28 @@
 package org.synanton.synquest.search;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.UUID;
+import org.synanton.synquest.api.dto.IndexStats;
 
 /**
- * Engine-neutral write/lifecycle port for the search projection (#547).
- * Implementations hide the physical engine (embedded Lucene today; remote
- * Solr/Elasticsearch later, see ADR-020). No engine types cross this boundary.
+ * Combined search-engine port (#550): projection writes/lifecycle plus the
+ * read path. Implementations hide the physical engine (embedded Lucene today,
+ * remote Solr/Elasticsearch later, ADR-021). No engine types cross this boundary.
  */
-public interface SearchEngineAdapter {
+public interface SearchEngineAdapter extends SearchIndexAdapter {
 
-    /** Full rebuild of the tenant projection from canonical knowledge. */
-    void rebuild(String tenant) throws IOException;
+    void initTenant(String tenant);
 
-    /** Incrementally upserts the listed canonical content refs. */
-    int indexContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException;
+    void reindex(String tenant) throws IOException;
 
-    /** Deletes chunks by their stable document ids. */
-    int deleteChunkIds(String tenant, Collection<String> chunkIds) throws IOException;
+    void projectContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException;
 
-    /** True when the tenant has no index yet (the first projection needs a rebuild). */
-    boolean isEmpty(String tenant);
+    SearchResult search(SearchQuery query, SearchFilter filter) throws IOException;
 
-    /** Physical index location for the current embedded engine. */
-    Path indexPath(String tenant);
+    IndexStats stats(String tenant) throws IOException;
 
-    /** Last full-build report, when available. */
-    Optional<IndexReport> lastReport(String tenant);
+    boolean isReady(String tenant);
+
+    String statusName();
 }
