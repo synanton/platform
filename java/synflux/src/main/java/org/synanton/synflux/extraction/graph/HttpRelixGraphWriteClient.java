@@ -16,25 +16,27 @@ public final class HttpRelixGraphWriteClient implements GraphWriteClient {
     private final HttpClient client;
     private final String baseUrl;
     private final ObjectMapper mapper;
+    private final GraphWriteTokenMinter tokenMinter;
 
-    public HttpRelixGraphWriteClient(String baseUrl, ObjectMapper mapper) {
+    public HttpRelixGraphWriteClient(String baseUrl, ObjectMapper mapper, GraphWriteTokenMinter tokenMinter) {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.mapper = mapper;
+        this.tokenMinter = tokenMinter;
         this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(10)).build();
     }
 
     @Override
-    public void upsertMentions(List<GraphMention> mentions) {
-        post("/graph/mentions", Map.of("mentions", mentions));
+    public int upsertMentions(List<GraphMention> mentions) {
+        return post("/graph/mentions", Map.of("mentions", mentions));
     }
 
     @Override
-    public void upsertRelations(List<GraphRelation> relations) {
-        post("/graph/relations", Map.of("relations", relations));
+    public int upsertRelations(List<GraphRelation> relations) {
+        return post("/graph/relations", Map.of("relations", relations));
     }
 
-    private void post(String path, Map<String, ?> payload) {
+    private int post(String path, Map<String, ?> payload) {
         try {
             String body = mapper.writeValueAsString(payload);
             String tenant = payload.values().stream()
@@ -51,6 +53,7 @@ public final class HttpRelixGraphWriteClient implements GraphWriteClient {
             HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + path))
                     .timeout(Duration.ofSeconds(30))
                     .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + tokenMinter.mint(tenant))
                     .header("X-Tenant-ID", tenant)
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
@@ -60,6 +63,9 @@ public final class HttpRelixGraphWriteClient implements GraphWriteClient {
                 throw new IllegalStateException("Relix graph write returned HTTP "
                         + response.statusCode() + ": " + response.body());
             }
+            Map<String, Object> result = mapper.readValue(response.body(), Map.class);
+            Object count = result.get("count");
+            return count instanceof Number number ? number.intValue() : -1;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Relix graph write interrupted", e);

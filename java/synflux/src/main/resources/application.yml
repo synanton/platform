@@ -72,6 +72,7 @@ synflux:
       syntology-url: ${SYNTOLOGY_BASE_URL:http://syntology:8080}
       relix-url: ${RELIX_BASE_URL:http://relix:8080}
       ontology-version: ${EXTRACTION_GRAPH_ONTOLOGY_VERSION:active}
+      retry-poll-delay-ms: ${EXTRACTION_GRAPH_RETRY_POLL_DELAY_MS:30000}
 
 synanton:
   extraction:

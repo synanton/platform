@@ -1,6 +1,6 @@
 # RAKG Phase 2 — asynchronous extraction consumer (design)
 
-**Status:** PR #1 emission + PR #2 consumer + PR #3 validated graph persistence landed (2026-11-08); canonical resolution is PR #4
+**Status:** PR #1 emission + PR #2 consumer + PR #3 validated graph persistence + PR #3.5 hardening landed (2026-11-08); canonical resolution is PR #4
 **Date:** 2026-11-08
 **Issue:** #560 (RAKG), follow-up to ADR-022
 **Preview seam:** `POST /api/v1/extraction/preview` (synchronous, diagnostic only)
@@ -139,6 +139,16 @@ flowchart LR
 - `extraction_status` still means extraction+persistence; `graph_status`
   (`PENDING|VALIDATING|GRAPH_COMMITTED|PARTIAL|FAILED`) is separate.
 - Nothing writes canonical `:Entity`, `:REL`, or `:RESOLVES_TO` yet.
+
+### PR #3.5 hardening
+
+- graph writes require a verified tenant JWT; no body fallback
+- independent `GraphCommitConsumer` retries PENDING/FAILED graph commits from
+  persisted results (no LLM re-call), with LWT claim + attempt/backoff (V21)
+- evidence chunk id is taken from the current segment, never the model
+- Relix returns actual persisted counts; the writer fails on any shortfall
+- Neo4j unique `(tenant_id, mention_id)` constraint + concurrent-write test
+- transitive type inheritance for relation domain/range
 
 ## Failure and retry
 

@@ -1,22 +1,24 @@
 package org.synanton.relix.api;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.synanton.common.tenant.MissingTenantContextException;
+import org.synanton.common.tenant.TenantContext;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphConnector;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Internal RAKG graph-write seam. Writes only :ExtractedMention and
- * :EXTRACTED_RELATION; never canonical :Entity/:REL. The tenant is taken from
- * the verified request attribute when present, otherwise from the body (the
- * synflux caller is internal); a missing tenant fails closed.
+ * :EXTRACTED_RELATION; never canonical :Entity/:REL. The tenant MUST come from
+ * the verified JWT filter; the request body can only confirm it, never choose it.
  */
 @RestController
 public class GraphWriteController {
@@ -28,39 +30,33 @@ public class GraphWriteController {
     }
 
     @PostMapping("/graph/mentions")
-    public Map<String, Object> upsertMentions(
-            @RequestBody MentionsRequest body, HttpServletRequest request) {
+    public Map<String, Object> upsertMentions(@RequestBody MentionsRequest body) {
         List<ExtractedMention> mentions = body == null ? List.of() : body.mentions();
-        String tenant = requireTenant(mentions.stream().map(ExtractedMention::tenantId).toList(), request);
-        graphConnector.upsertMentions(mentions);
-        return Map.of("status", "ok", "count", mentions.size(), "tenant", tenant);
+        String tenant = requireVerifiedTenant(mentions.stream().map(ExtractedMention::tenantId).toList());
+        int persisted = graphConnector.upsertMentions(mentions);
+        return Map.of("status", "ok", "count", persisted, "tenant", tenant);
     }
 
     @PostMapping("/graph/relations")
-    public Map<String, Object> upsertRelations(
-            @RequestBody RelationsRequest body, HttpServletRequest request) {
+    public Map<String, Object> upsertRelations(@RequestBody RelationsRequest body) {
         List<ExtractedRelation> relations = body == null ? List.of() : body.relations();
-        String tenant = requireTenant(relations.stream().map(ExtractedRelation::tenantId).toList(), request);
-        graphConnector.upsertRelations(relations);
-        return Map.of("status", "ok", "count", relations.size(), "tenant", tenant);
+        String tenant = requireVerifiedTenant(relations.stream().map(ExtractedRelation::tenantId).toList());
+        int persisted = graphConnector.upsertRelations(relations);
+        return Map.of("status", "ok", "count", persisted, "tenant", tenant);
     }
 
-    private static String requireTenant(List<String> bodyTenants, HttpServletRequest request) {
+    private static String requireVerifiedTenant(List<String> bodyTenants) {
+        TenantContext context = TenantContext.get();
+        if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
+            throw new MissingTenantContextException();
+        }
+        String tenant = context.tenantId();
         Set<String> distinct = new HashSet<>(bodyTenants);
         distinct.remove(null);
         distinct.remove("");
-        if (distinct.size() > 1) {
-            throw new IllegalArgumentException("all graph rows in a write must share a tenant");
-        }
-        String bodyTenant = distinct.isEmpty() ? null : distinct.iterator().next();
-        Object attr = request.getAttribute("tenant");
-        String verified = attr instanceof String value && !value.isBlank() ? value : null;
-        if (verified != null && bodyTenant != null && !verified.equals(bodyTenant)) {
-            throw new IllegalArgumentException("body tenant does not match the verified tenant");
-        }
-        String tenant = verified != null ? verified : bodyTenant;
-        if (tenant == null) {
-            throw new org.synanton.common.tenant.MissingTenantContextException();
+        if (distinct.size() > 1 || (!distinct.isEmpty() && !distinct.contains(tenant))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "body tenant must match the verified tenant");
         }
         return tenant;
     }

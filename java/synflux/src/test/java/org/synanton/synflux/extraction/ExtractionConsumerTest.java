@@ -114,6 +114,27 @@ class ExtractionConsumerTest {
                 });
     }
 
+    @Test
+    void failedGraphCommitIsListedClaimableAndCompletable() {
+        String tenant = "tenant-graph-retry";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        Instant now = Instant.now();
+        var request = new org.synanton.ingestioncache.domain.ExtractionRequestRow(
+                tenant, CONNECTOR, SOURCE, RESOURCE, UUID.randomUUID(), fixture.versionId(),
+                fixture.contentRefId(), "{}", now, now, "KNOWLEDGE_READY", 0, null, null, false);
+        cache.markExtractionSucceeded(request, now);
+        cache.upsertExtractionResult(tenant, fixture.contentRefId(), 0, fixture.versionId(),
+                "[]", "[]", now);
+        cache.markGraphFailed(request, "FAILED", java.util.Map.of("relations_rejected", 1),
+                1, now.plusSeconds(30), now);
+
+        assertThat(cache.listPendingGraphCommits(tenant, 10, now.plusSeconds(31))).hasSize(1);
+        assertThat(cache.claimGraphCommit(request)).isTrue();
+        cache.markGraphCommitted(request, "GRAPH_COMMITTED", java.util.Map.of("relations_accepted", 1),
+                1, now.plusSeconds(32));
+        assertThat(cache.listPendingGraphCommits(tenant, 10, now.plusSeconds(60))).isEmpty();
+    }
+
     private static ExtractionConsumer consumer(String tenant, ExtractionEngineAdapter adapter) {
         return new ExtractionConsumer(cache, adapter,
                 new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),

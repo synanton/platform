@@ -40,6 +40,9 @@ class GraphWriterTest {
     @Test
     void writesDeterministicMentionAndRelationIdsWithDocumentOffsets() {
         when(validator.validate(any(), any(), any(), any(), any())).thenReturn(new RelationValidation(true, List.of()));
+        when(graphClient.upsertMentions(any())).thenReturn(2);
+        when(graphClient.upsertRelations(any())).thenReturn(1);
+        when(cache.claimGraphCommit(any())).thenReturn(true);
         GraphWriter writer = writer(true);
         ExtractionRequestRow request = request();
         ChunkRow chunk = chunk();
@@ -66,10 +69,11 @@ class GraphWriterTest {
                 TENANT, VERSION.toString(), subject.mentionId(), "requires",
                 mentions.getValue().get(1).mentionId()));
         assertThat(relations.getValue().getFirst().evidenceDocumentOffsetStart()).isEqualTo(100);
+        assertThat(relations.getValue().getFirst().evidenceChunkId()).isEqualTo(REF + ":0");
 
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
-        verify(cache).markGraphValidating(request);
-        verify(cache).markGraphCommitted(eq(request), eq("GRAPH_COMMITTED"), counters.capture(), any());
+        verify(cache).claimGraphCommit(request);
+        verify(cache).markGraphCommitted(eq(request), eq("GRAPH_COMMITTED"), counters.capture(), eq(0), any());
         assertThat(counters.getValue()).containsEntry("mentions_accepted", 2)
                 .containsEntry("relations_accepted", 1)
                 .containsEntry("relations_rejected", 0);
@@ -79,18 +83,17 @@ class GraphWriterTest {
     void rejectedRelationProducesPartialStatusAndIsNotWritten() {
         when(validator.validate(any(), any(), any(), any(), any())).thenReturn(
                 new RelationValidation(false, List.of(new RelationValidation.Violation("range_mismatch", "bad", "x"))));
+        when(graphClient.upsertMentions(any())).thenReturn(2);
+        when(cache.claimGraphCommit(any())).thenReturn(true);
         GraphWriter writer = writer(true);
         ExtractionRequestRow request = request();
 
         writer.commit(request, List.of(chunk()), Map.of(0, result()));
 
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<GraphRelation>> relations = ArgumentCaptor.forClass(List.class);
-        verify(graphClient).upsertRelations(relations.capture());
-        assertThat(relations.getValue()).isEmpty();
+        verify(graphClient, never()).upsertRelations(any());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
-        verify(cache).markGraphCommitted(eq(request), eq("PARTIAL"), counters.capture(), any());
+        verify(cache).markGraphCommitted(eq(request), eq("PARTIAL"), counters.capture(), eq(0), any());
         assertThat(counters.getValue()).containsEntry("relations_rejected", 1);
     }
 
@@ -98,19 +101,33 @@ class GraphWriterTest {
     void validationFailureMarksGraphFailedWithoutWrites() {
         when(validator.validate(any(), any(), any(), any(), any()))
                 .thenThrow(new IllegalStateException("syntology down"));
+        when(cache.claimGraphCommit(any())).thenReturn(true);
         GraphWriter writer = writer(true);
         ExtractionRequestRow request = request();
 
         writer.commit(request, List.of(chunk()), Map.of(0, result()));
 
         verify(graphClient, never()).upsertMentions(any());
-        verify(cache).markGraphFailed(eq(request), eq("FAILED"), anyMap(), any());
+        verify(cache).markGraphFailed(eq(request), eq("FAILED"), anyMap(), eq(1), any(), any());
+    }
+
+    @Test
+    void persistedCountMismatchMarksGraphFailed() {
+        when(validator.validate(any(), any(), any(), any(), any())).thenReturn(new RelationValidation(true, List.of()));
+        when(graphClient.upsertMentions(any())).thenReturn(1);
+        when(cache.claimGraphCommit(any())).thenReturn(true);
+        ExtractionRequestRow request = request();
+
+        writer(true).commit(request, List.of(chunk()), Map.of(0, result()));
+
+        verify(graphClient, never()).upsertRelations(any());
+        verify(cache).markGraphFailed(eq(request), eq("FAILED"), anyMap(), eq(1), any(), any());
     }
 
     @Test
     void disabledGraphWriteIsANoOp() {
         writer(false).commit(request(), List.of(chunk()), Map.of(0, result()));
-        verify(cache, never()).markGraphValidating(any());
+        verify(cache, never()).claimGraphCommit(any());
     }
 
     private GraphWriter writer(boolean enabled) {

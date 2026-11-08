@@ -191,7 +191,8 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
   consumer (bounded, sequential) gates on `search_projected_at` and moves
   `PENDING → EXTRACTING → KNOWLEDGE_READY` while storing pre-Relix results.
   Validated mentions/relations are written to the isolated
-  `:ExtractedMention` / `:EXTRACTED_RELATION` graph with a separate `graph_status`;
+  `:ExtractedMention` / `:EXTRACTED_RELATION` graph with a separate `graph_status`,
+  verified-JWT Relix writes, and an independent retrying graph-commit consumer;
   canonical entities and `:RESOLVES_TO` are PR #4.
 - **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
   adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the

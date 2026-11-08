@@ -25,6 +25,7 @@ import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.extraction.graph.GraphWriteClient;
 import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.synanton.synflux.extraction.graph.HttpRelixGraphWriteClient;
+import org.synanton.synflux.extraction.graph.GraphWriteTokenMinter;
 import org.synanton.synflux.extraction.graph.HttpSyntologyRelationValidator;
 import org.synanton.synflux.extraction.graph.RelationValidator;
 import org.synanton.synflux.domain.ChunkerConfig;
@@ -135,8 +136,10 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public GraphWriteClient graphWriteClient(ExtractionGraphProperties properties) {
-        return new HttpRelixGraphWriteClient(properties.relixUrlOrDefault(), graphMapper());
+    public GraphWriteClient graphWriteClient(ExtractionGraphProperties properties,
+                                             @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
+        return new HttpRelixGraphWriteClient(properties.relixUrlOrDefault(), graphMapper(),
+                new GraphWriteTokenMinter(jwtSecret));
     }
 
     @Bean

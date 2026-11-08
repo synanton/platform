@@ -35,9 +35,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -199,13 +203,13 @@ public class OntologyService {
         }
 
         if (relation != null && subject != null && relation.domain() != null
-                && !typeMatches(subject, relation.domain())) {
+                && !typeMatches(subject, relation.domain(), tenant, version)) {
             violations.add(violation("domain_mismatch",
                     "Subject type " + subject.label() + " is not compatible with domain "
                             + relation.domain(), relation.domain()));
         }
         if (relation != null && object != null && relation.range() != null
-                && !typeMatches(object, relation.range())) {
+                && !typeMatches(object, relation.range(), tenant, version)) {
             violations.add(violation("range_mismatch",
                     "Object type " + object.label() + " is not compatible with range "
                             + relation.range(), relation.range()));
@@ -250,9 +254,33 @@ public class OntologyService {
         return result;
     }
 
-    private static boolean typeMatches(EntityType type, String requiredUri) {
-        return requiredUri.equals(type.uri())
-                || (type.superTypes() != null && type.superTypes().contains(requiredUri));
+    private boolean typeMatches(EntityType type, String requiredUri, String tenant, String version) {
+        if (requiredUri.equals(type.uri())) {
+            return true;
+        }
+        Set<String> visited = new HashSet<>();
+        Deque<String> queue = new ArrayDeque<>();
+        if (type.superTypes() != null) {
+            queue.addAll(type.superTypes());
+        }
+        while (!queue.isEmpty()) {
+            String candidate = queue.poll();
+            if (!visited.add(candidate)) {
+                continue;
+            }
+            if (requiredUri.equals(candidate)) {
+                return true;
+            }
+            try {
+                EntityType parent = jena().resolveEntity(tenant, version, candidate);
+                if (parent.superTypes() != null) {
+                    queue.addAll(parent.superTypes());
+                }
+            } catch (JenaTdb2Adapter.NotFoundException ignored) {
+                // Unknown intermediate supertype: keep checking the rest.
+            }
+        }
+        return false;
     }
 
     private static Map<String, Object> violation(String code, String message, String path) {
