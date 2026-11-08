@@ -228,6 +228,11 @@ build_images() {
     cp "$REPO_ROOT"/java/security/build/libs/security*.jar "$stage/java/security/build/libs/"
     cp "$CONTENT_EXTRACTOR_ROOT"/java/extraction-gateway/build/libs/extraction-gateway*.jar \
         "$stage/java/extraction-gateway/build/libs/"
+    # synquest.prebuilt.Dockerfile also packages the demo benchmark data; the
+    # build context is the stage dir, so stage it beside the jars (CI cold path).
+    mkdir -p "$stage/demo-data/eval/retrieval-benchmark"
+    cp "$REPO_ROOT"/demo-data/eval/retrieval-benchmark/{ontology-v2.jsonl,graph-v2.json,dense-embeddings-v2.json,queries-v2.rb-fixed-g5.jsonl} \
+        "$stage/demo-data/eval/retrieval-benchmark/"
     docker build -q -f "$COMPOSE_DIR/synflux.prebuilt.Dockerfile" \
         -t "$IMAGE_PREFIX/synflux:$IMAGE_TAG" "$stage" >/dev/null
     docker build -q -f "$COMPOSE_DIR/synquest.prebuilt.Dockerfile" \
