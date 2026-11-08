@@ -25,7 +25,7 @@ public class RelixSecurityConfig {
         }
         TenantContextFilter filter = new TenantContextFilter(new JwtVerifier(jwtSecret), "", "/health");
         FilterRegistrationBean<TenantContextFilter> registration = new FilterRegistrationBean<>(filter);
-        registration.addUrlPatterns("/graph/mentions", "/graph/relations");
+        registration.addUrlPatterns("/graph/mentions", "/graph/relations", "/v1/entities/*");
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registration;
     }

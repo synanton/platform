@@ -76,6 +76,11 @@ public class SearchService {
         engine.initTenant(tenant);
     }
 
+    /** Engine-neutral candidate retrieval used by the resolution layer. */
+    public SearchResult search(SearchQuery query, SearchFilter filter) throws IOException {
+        return engine.search(query, filter);
+    }
+
     public SearchResponse search(SearchRequest request) throws IOException {
         SearchQuery query = new SearchQuery(
                 request.query(), request.topK(), request.topKDense(), request.topKLexical(), request.rrfK(),
