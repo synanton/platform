@@ -149,8 +149,17 @@ curl -s localhost:8000/v1/models   # {"data":[{"id":"qwen3-extraction", ...}]}
 Synflux selects the engine with `EXTRACTION_PROVIDER=regex|llm` (default
 `regex`) and calls `LLM_EXTRACTION_URL` (in-cluster:
 `http://vllm-extraction.gpu-plane.svc.cluster.local:8000/v1`). The regex default
-keeps ingestion working when the GPU plane is down. See
-[ADR-022](docs/architecture/decisions/adr-022-extraction-engine-architecture.md).
+keeps ingestion working when the GPU plane is down. Preview the selected engine
+without ingesting:
+
+```bash
+curl -s -X POST localhost:8090/api/v1/extraction/preview \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"text":"Halcyon-7 requires a helium leak check."}'
+```
+
+See [ADR-022](docs/architecture/decisions/adr-022-extraction-engine-architecture.md)
+and the [async extraction consumer design](docs/planning/extraction-consumer-phase2.md).
 
 ## Documentation
 
