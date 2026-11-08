@@ -776,6 +776,47 @@ public class IngestionCacheClient {
 
     /** SourceVersion and its SourcePublished event share one immutable Cassandra row. */
     public boolean insertSourceVersionAndOutboxIfAbsent(SourceVersionRow version, SourceOutboxRow event) {
+        return insertSourceVersionAndOutboxIfAbsent(version, event, null);
+    }
+
+    /**
+     * Writes the SourceVersion, its SourcePublished event, and (optionally) the
+     * ExtractionRequested event in one LWT. All three live on the same
+     * source_versions row / partition, so the conditional insert is atomic.
+     */
+    public boolean insertSourceVersionAndOutboxIfAbsent(
+            SourceVersionRow version, SourceOutboxRow event, SourceOutboxRow extractionEvent) {
+        requireMatchingIdentity(version, event);
+        if (extractionEvent != null) {
+            requireMatchingIdentity(version, extractionEvent);
+        }
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.source_versions " +
+            "(tenant_id, connector_id, source_id, resource_id, version_id, content_digest, source_revision, " +
+            "observed_at, content_ref_id, incarnation_id, content_cache_reference, event_id, event_type, " +
+            "event_payload_json, event_published, event_published_at, event_attempt_count, event_last_error, " +
+            "event_next_attempt_at, event_dead_lettered, extraction_event_id, extraction_event_type, " +
+            "extraction_event_payload_json, extraction_event_published, extraction_event_published_at, " +
+            "extraction_event_attempt_count, extraction_event_last_error, extraction_event_next_attempt_at, " +
+            "extraction_event_dead_lettered) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,false,?,?,?,?,?) IF NOT EXISTS",
+            version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
+            version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
+            version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson(),
+            event.publishedAt(), event.attemptCount(), event.lastError(), event.nextAttemptAt(), event.deadLettered(),
+            extractionEvent == null ? null : extractionEvent.eventId(),
+            extractionEvent == null ? null : extractionEvent.eventType(),
+            extractionEvent == null ? null : extractionEvent.payloadJson(),
+            extractionEvent == null ? null : extractionEvent.publishedAt(),
+            extractionEvent == null ? 0 : extractionEvent.attemptCount(),
+            extractionEvent == null ? null : extractionEvent.lastError(),
+            extractionEvent == null ? null : extractionEvent.nextAttemptAt(),
+            extractionEvent == null ? false : extractionEvent.deadLettered()
+        ));
+        return result.wasApplied();
+    }
+
+    private static void requireMatchingIdentity(SourceVersionRow version, SourceOutboxRow event) {
         if (!version.tenantId().equals(event.tenantId())
                 || !version.connectorId().equals(event.connectorId())
                 || !version.sourceId().equals(event.sourceId())
@@ -783,19 +824,62 @@ public class IngestionCacheClient {
                 || !version.versionId().equals(event.sourceVersionId())) {
             throw new IllegalArgumentException("SourceVersion and outbox event identities must match");
         }
-        ResultSet result = session.execute(SimpleStatement.newInstance(
-            "INSERT INTO ingestion_cache.source_versions " +
-            "(tenant_id, connector_id, source_id, resource_id, version_id, content_digest, source_revision, " +
-            "observed_at, content_ref_id, incarnation_id, content_cache_reference, event_id, event_type, " +
-            "event_payload_json, event_published, event_published_at, event_attempt_count, event_last_error, " +
-            "event_next_attempt_at, event_dead_lettered) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?) IF NOT EXISTS",
-            version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
-            version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
-            version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson(),
-            event.publishedAt(), event.attemptCount(), event.lastError(), event.nextAttemptAt(), event.deadLettered()
+    }
+
+    /** Reads the ExtractionRequested slot for a source; historical rows are absent. */
+    public List<SourceOutboxRow> listExtractionOutbox(
+            String tenantId, String connectorId, String sourceId, String resourceId) {
+        ResultSet versions = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=?",
+            tenantId, connectorId, sourceId, resourceId
         ));
-        return result.wasApplied();
+        List<SourceOutboxRow> rows = new ArrayList<>();
+        for (Row row : versions) {
+            UUID eventId = row.getUuid("extraction_event_id");
+            if (eventId == null) {
+                continue;
+            }
+            rows.add(new SourceOutboxRow(
+                row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
+                row.getString("resource_id"), eventId, row.getString("extraction_event_type"),
+                row.getUuid("version_id"), null, row.getString("extraction_event_payload_json"),
+                row.getInstant("observed_at"), boolOrDefault(row, "extraction_event_published", false),
+                row.getInstant("extraction_event_published_at"),
+                intOrDefault(row, "extraction_event_attempt_count", 0),
+                row.getString("extraction_event_last_error"),
+                row.getInstant("extraction_event_next_attempt_at"),
+                boolOrDefault(row, "extraction_event_dead_lettered", false)
+            ));
+        }
+        return rows.stream().sorted(Comparator.comparing(SourceOutboxRow::createdAt)
+            .thenComparing(SourceOutboxRow::eventId)).toList();
+    }
+
+    /**
+     * Readiness write-back: the search projection completed and committed the
+     * document's chunks. The extraction consumer gates on this value.
+     */
+    public void markSourceSearchProjected(SourceOutboxRow event, Instant projectedAt) {
+        if (event.sourceVersionId() == null) {
+            return;
+        }
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET search_projected_at=? WHERE tenant_id=? " +
+            "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            projectedAt, event.tenantId(), event.connectorId(), event.sourceId(), event.resourceId(),
+            event.sourceVersionId()
+        ));
+    }
+
+    public Optional<Instant> readSearchProjectedAt(
+            String tenantId, String connectorId, String sourceId, String resourceId, UUID versionId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT search_projected_at FROM ingestion_cache.source_versions WHERE tenant_id=? " +
+            "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            tenantId, connectorId, sourceId, resourceId, versionId
+        )).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getInstant("search_projected_at"));
     }
 
     public List<SourceOutboxRow> listSourceOutbox(

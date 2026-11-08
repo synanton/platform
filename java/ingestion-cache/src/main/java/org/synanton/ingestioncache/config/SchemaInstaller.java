@@ -30,6 +30,7 @@ public class SchemaInstaller {
         "cql/V14__chunk_source_version_junction.cql",
         "cql/V15__operation_details.cql",
         "cql/V16__ewp2_envelope.cql",
+        "cql/V17__extraction_request_outbox.cql",
     };
 
     public static void install(CqlSession session) {

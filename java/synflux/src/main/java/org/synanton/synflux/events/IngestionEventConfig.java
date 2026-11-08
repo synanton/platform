@@ -18,6 +18,7 @@ public class IngestionEventConfig {
 
     public static final String SOURCE_PUBLISHED = "SourcePublished";
     public static final String SOURCE_DELETED = "SourceDeleted";
+    public static final String EXTRACTION_REQUESTED = "ExtractionRequested";
 
     @Bean
     public EventTypeRegistry ingestionEventTypes() {
@@ -25,6 +26,9 @@ public class IngestionEventConfig {
                 new EventTypeDeclaration(SOURCE_PUBLISHED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
                 // Hazard H-1: a stale SourcePublished delivered after SourceDeleted can
                 // resurrect the source; consumers must enforce per-source ordering.
-                new EventTypeDeclaration(SOURCE_DELETED, 1, ReplayClass.REPLAY_SAFE, Optional.empty())));
+                new EventTypeDeclaration(SOURCE_DELETED, 1, ReplayClass.REPLAY_SAFE, Optional.empty()),
+                // Hazard H-2: a duplicate/retried LWT can re-emit this event.
+                // Replay-safe and idempotent by (source identity, version_id).
+                new EventTypeDeclaration(EXTRACTION_REQUESTED, 1, ReplayClass.REPLAY_SAFE, Optional.empty())));
     }
 }

@@ -129,6 +129,9 @@ class LuceneIndexIdempotencyTest {
 
         consumer.projectNewSourceVersions();
         assertThat(indexedIds(builder.indexPath(TENANT))).hasSize(CHUNKS);
+        assertThat(cache.readSearchProjectedAt(TENANT, CONNECTOR, SOURCE, RESOURCE, versionId))
+                .as("extraction readiness is written after the Lucene projection")
+                .isPresent();
 
         // Crash before acknowledgement: the event is durable but still unpublished.
         session.execute(SimpleStatement.newInstance(

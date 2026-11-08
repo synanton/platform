@@ -186,7 +186,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
   full-rebuild/503 window is gone.
 - **Knowledge extraction:** the `ExtractionEngineAdapter` port separates the
   deterministic `RegexExtractorAdapter` baseline from the RAKG
-  `LlmExtractionAdapter` (Phase B, landed) that calls out-of-process vLLM.
+  `LlmExtractionAdapter` (Phase B, landed) that calls out-of-process vLLM;
+  `ExtractionRequested` is emitted atomically with `SourcePublished` and gated on
+  `search_projected_at` for the asynchronous consumer.
 - **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
   adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
   live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
