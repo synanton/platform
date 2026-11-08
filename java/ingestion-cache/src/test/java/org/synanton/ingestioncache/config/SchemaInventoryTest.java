@@ -175,6 +175,7 @@ class SchemaInventoryTest {
             "source_versions.resolution_counters",
             "resolution_results.outcome",
             "resolution_results.strategy_version",
+            "resolution_results.reason_code",
             "relation_promotion_results.promotion_status"
         );
     }

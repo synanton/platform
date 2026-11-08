@@ -999,12 +999,13 @@ public class IngestionCacheClient {
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.resolution_results (tenant_id, source_version_id, mention_id, " +
             "content_ref_id, chunk_ordinal, chunk_offset_start, chunk_offset_end, document_offset_start, " +
-            "document_offset_end, surface_form, proposed_type, outcome, resolved_entity_id, canonical_label, " +
-            "best_score, runner_up_score, strategy_version, ontology_version, diagnostics_json, decided_at, " +
-            "superseded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "document_offset_end, surface_form, proposed_type, outcome, reason_code, resolved_entity_id, " +
+            "canonical_label, best_score, runner_up_score, strategy_version, ontology_version, " +
+            "diagnostics_json, decided_at, superseded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row.tenantId(), row.sourceVersionId(), row.mentionId(), row.contentRefId(), row.chunkOrdinal(),
             row.chunkOffsetStart(), row.chunkOffsetEnd(), row.documentOffsetStart(), row.documentOffsetEnd(),
-            row.surfaceForm(), row.proposedType(), row.outcome(), row.resolvedEntityId(), row.canonicalLabel(),
+            row.surfaceForm(), row.proposedType(), row.outcome(), row.reasonCode(), row.resolvedEntityId(),
+            row.canonicalLabel(),
             row.bestScore(), row.runnerUpScore(), row.strategyVersion(), row.ontologyVersion(),
             row.diagnosticsJson(), row.decidedAt(), row.supersededAt()
         ));
@@ -1021,7 +1022,7 @@ public class IngestionCacheClient {
                 intOrDefault(row, "chunk_offset_start", -1), intOrDefault(row, "chunk_offset_end", -1),
                 intOrDefault(row, "document_offset_start", -1), intOrDefault(row, "document_offset_end", -1),
                 row.getString("surface_form"), row.getString("proposed_type"), row.getString("outcome"),
-                row.getString("resolved_entity_id"), row.getString("canonical_label"),
+                row.getString("reason_code"), row.getString("resolved_entity_id"), row.getString("canonical_label"),
                 row.getDouble("best_score"), row.getDouble("runner_up_score"),
                 row.getString("strategy_version"), row.getString("ontology_version"),
                 row.getString("diagnostics_json"), row.getInstant("decided_at"), row.getInstant("superseded_at")
