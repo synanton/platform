@@ -73,7 +73,9 @@ Search → Provenance.
 
 - [ ] **#508** — bounded neighbor expansion from a single selected entity
   (open a graph from an entity, expand ≤ ~200 nodes). Full 20k-chunk graph
-  visualization is **not** a prerequisite.
+  visualization is **not** a prerequisite. **Partial (ui#31):** search-result →
+  chunk neighbor graph with a 50-node bound and click-to-re-root; entity-rooted
+  entry from the Ontology tab still needs a reverse entity→chunk API.
 
 ## P3 — Operational reality
 
