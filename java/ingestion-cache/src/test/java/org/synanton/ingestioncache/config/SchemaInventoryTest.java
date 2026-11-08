@@ -157,7 +157,12 @@ class SchemaInventoryTest {
             "source_versions.extraction_event_dead_lettered",
             "source_versions.extraction_status",
             "extraction_results.entities_json",
-            "extraction_results.relations_json"
+            "extraction_results.relations_json",
+            "source_versions.graph_status",
+            "source_versions.graph_commit_at",
+            "source_versions.graph_validation_counters",
+            "chunks_payload.document_offset_start",
+            "chunks_payload.document_offset_end"
         );
     }
 }

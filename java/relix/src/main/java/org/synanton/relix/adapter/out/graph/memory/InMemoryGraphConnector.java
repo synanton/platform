@@ -3,6 +3,8 @@ package org.synanton.relix.adapter.out.graph.memory;
 import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.relix.graph.GraphConnector;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.graph.ExtractedMention;
+import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.InMemoryConnector;
 
 import java.util.List;
@@ -17,6 +19,8 @@ public class InMemoryGraphConnector implements GraphConnector {
 
     private final GraphLoader graphLoader;
     private final Map<String, InMemoryConnector> tenants = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, ExtractedMention>> mentions = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, ExtractedRelation>> relations = new ConcurrentHashMap<>();
 
     public InMemoryGraphConnector(GraphLoader graphLoader) {
         this.graphLoader = graphLoader;
@@ -68,6 +72,30 @@ public class InMemoryGraphConnector implements GraphConnector {
     public KHopResult kHopPaths(String tenant, UUID fromEntityId, UUID toEntityId, int maxHops, int maxPaths) {
         InMemoryConnector connector = requireTenant(tenant);
         return connector.kHopPaths(fromEntityId, toEntityId, maxHops, maxPaths);
+    }
+
+    @Override
+    public void upsertMentions(List<ExtractedMention> batch) {
+        for (ExtractedMention mention : batch) {
+            mentions.computeIfAbsent(mention.tenantId(), ignored -> new ConcurrentHashMap<>())
+                    .put(mention.mentionId(), mention);
+        }
+    }
+
+    @Override
+    public void upsertRelations(List<ExtractedRelation> batch) {
+        for (ExtractedRelation relation : batch) {
+            relations.computeIfAbsent(relation.tenantId(), ignored -> new ConcurrentHashMap<>())
+                    .put(relation.relationId(), relation);
+        }
+    }
+
+    public int extractedMentionCount(String tenant) {
+        return mentions.getOrDefault(tenant, Map.of()).size();
+    }
+
+    public int extractedRelationCount(String tenant) {
+        return relations.getOrDefault(tenant, Map.of()).size();
     }
 
     private InMemoryConnector requireTenant(String tenant) {

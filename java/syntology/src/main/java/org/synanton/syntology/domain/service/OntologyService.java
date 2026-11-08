@@ -24,6 +24,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shacl.ShaclValidator;
+import org.apache.jena.shacl.validation.ReportEntry;
 import org.apache.jena.shacl.Shapes;
 import org.apache.jena.shacl.ValidationReport;
 import org.apache.jena.vocabulary.RDF;
@@ -149,6 +150,119 @@ public class OntologyService {
         result.put("conforms", report.conforms());
         result.put("message", report.conforms() ? "SHACL validation passed" : "SHACL validation failed");
         return result;
+    }
+
+    /**
+     * Relation-level validation for RAKG PR #3. Domain/range are checked from the
+     * TBox; SHACL property-shape violations for the predicate are included when the
+     * ontology declares them. Unknown types/predicates are structured violations,
+     * not exceptions. Tenant comes from the verified context.
+     */
+    public Map<String, Object> validateRelation(
+            String subjectType, String predicate, String objectType, String ontologyVersion) {
+        String tenant = tenant();
+        String version = resolveVersion(
+                ontologyVersion == null || ontologyVersion.isBlank() ? "active" : ontologyVersion);
+        List<Map<String, Object>> violations = new java.util.ArrayList<>();
+        EntityType subject = null;
+        EntityType object = null;
+        RelationType relation = null;
+
+        if (subjectType == null || subjectType.isBlank()) {
+            violations.add(violation("missing_subject_type", "subjectType is required", null));
+        } else {
+            try {
+                subject = resolveEntity(subjectType, version);
+            } catch (JenaTdb2Adapter.NotFoundException e) {
+                violations.add(violation("unknown_subject_type",
+                        "Unknown subject type: " + subjectType, subjectType));
+            }
+        }
+        if (predicate == null || predicate.isBlank()) {
+            violations.add(violation("missing_predicate", "predicate is required", null));
+        } else {
+            try {
+                relation = resolveRelation(predicate, version);
+            } catch (JenaTdb2Adapter.NotFoundException e) {
+                violations.add(violation("unknown_predicate", "Unknown predicate: " + predicate, predicate));
+            }
+        }
+        if (objectType == null || objectType.isBlank()) {
+            violations.add(violation("missing_object_type", "objectType is required", null));
+        } else {
+            try {
+                object = resolveEntity(objectType, version);
+            } catch (JenaTdb2Adapter.NotFoundException e) {
+                violations.add(violation("unknown_object_type",
+                        "Unknown object type: " + objectType, objectType));
+            }
+        }
+
+        if (relation != null && subject != null && relation.domain() != null
+                && !typeMatches(subject, relation.domain())) {
+            violations.add(violation("domain_mismatch",
+                    "Subject type " + subject.label() + " is not compatible with domain "
+                            + relation.domain(), relation.domain()));
+        }
+        if (relation != null && object != null && relation.range() != null
+                && !typeMatches(object, relation.range())) {
+            violations.add(violation("range_mismatch",
+                    "Object type " + object.label() + " is not compatible with range "
+                            + relation.range(), relation.range()));
+        }
+
+        if (relation != null && subject != null && object != null) {
+            var shapesTurtle = ontologyAdapter.loadShapes(tenant, version);
+            if (shapesTurtle.isPresent()) {
+                Model data = ModelFactory.createDefaultModel();
+                Resource s = data.createResource("urn:synanton:subject");
+                Resource o = data.createResource("urn:synanton:object");
+                s.addProperty(RDF.type, data.createResource(subject.uri()));
+                s.addProperty(RDFS.label, subject.label());
+                o.addProperty(RDF.type, data.createResource(object.uri()));
+                o.addProperty(RDFS.label, object.label());
+                s.addProperty(data.createProperty(relation.uri()), o);
+                Model shapeModel = ModelFactory.createDefaultModel();
+                RDFDataMgr.read(shapeModel, new ByteArrayInputStream(shapesTurtle.get()), Lang.TURTLE);
+                Shapes shapes = Shapes.parse(shapeModel);
+                ValidationReport report = ShaclValidator.get().validate(shapes, data.getGraph());
+                for (ReportEntry entry : report.getEntries()) {
+                    String path = entry.resultPath() == null ? null : entry.resultPath().toString();
+                    // Only relation-shape violations; entity property completeness is the
+                    // concept validator's job, not a reason to reject the candidate edge.
+                    if (path == null || !path.equals(relation.uri())) {
+                        continue;
+                    }
+                    violations.add(violation("shacl_violation",
+                            entry.message() == null ? "SHACL relation violation" : entry.message(), path));
+                }
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("conformant", violations.isEmpty());
+        result.put("valid", violations.isEmpty());
+        result.put("violations", violations);
+        result.put("subject_type", subjectType);
+        result.put("predicate", predicate);
+        result.put("object_type", objectType);
+        result.put("version", version);
+        return result;
+    }
+
+    private static boolean typeMatches(EntityType type, String requiredUri) {
+        return requiredUri.equals(type.uri())
+                || (type.superTypes() != null && type.superTypes().contains(requiredUri));
+    }
+
+    private static Map<String, Object> violation(String code, String message, String path) {
+        Map<String, Object> violation = new LinkedHashMap<>();
+        violation.put("code", code);
+        violation.put("message", message);
+        if (path != null) {
+            violation.put("path", path);
+        }
+        return violation;
     }
 
     public Map<String, Object> getCapabilities() {

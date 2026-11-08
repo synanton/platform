@@ -28,7 +28,10 @@ public record SemanticChunk(
      */
     String sectionId,
     String parentSectionId,
-    int headingLevel
+    int headingLevel,
+    /** Parsed-document span; -1 when the chunker cannot supply it. */
+    int documentOffsetStart,
+    int documentOffsetEnd
 ) {
     public static final List<String> PUBLIC_ONLY = List.of("PUBLIC");
 
@@ -38,13 +41,23 @@ public record SemanticChunk(
                          boolean isPartialSection, Map<String, Object> metadata, List<String> classification,
                          String sha256) {
         this(chunkId, documentId, ordinal, type, content, structuredContent, sectionPath, heading, sourceElements,
-            pageStart, pageEnd, tokenCount, isPartialSection, metadata, classification, sha256, null, null, 0);
+            pageStart, pageEnd, tokenCount, isPartialSection, metadata, classification, sha256, null, null, 0, -1, -1);
+    }
+
+    public SemanticChunk(String chunkId, String documentId, int ordinal, ChunkType type, String content,
+                         StructuredContent structuredContent, List<String> sectionPath, String heading,
+                         List<String> sourceElements, int pageStart, int pageEnd, int tokenCount,
+                         boolean isPartialSection, Map<String, Object> metadata, List<String> classification,
+                         String sha256, int documentOffsetStart, int documentOffsetEnd) {
+        this(chunkId, documentId, ordinal, type, content, structuredContent, sectionPath, heading, sourceElements,
+            pageStart, pageEnd, tokenCount, isPartialSection, metadata, classification, sha256, null, null, 0,
+            documentOffsetStart, documentOffsetEnd);
     }
 
     public SemanticChunk withHierarchy(String sectionId, String parentSectionId, int headingLevel, boolean partial) {
         return new SemanticChunk(chunkId, documentId, ordinal, type, content, structuredContent, sectionPath, heading,
             sourceElements, pageStart, pageEnd, tokenCount, partial, metadata, classification, sha256,
-            sectionId, parentSectionId, headingLevel);
+            sectionId, parentSectionId, headingLevel, documentOffsetStart, documentOffsetEnd);
     }
     public enum ChunkType {
         SECTION, SUBSECTION, SUBSECTION_CHUNK, PARAGRAPH, LIST, TABLE, FIGURE,

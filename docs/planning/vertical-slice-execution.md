@@ -106,7 +106,8 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Preview endpoint + Playwright spec** — `POST /api/v1/extraction/preview` (tenant-verified, no persistence); gated `test/e2e/tests/extraction-preview.spec.ts`.
 - [x] **`ExtractionRequested` emission** — second event slot on `source_versions`, atomic with `SourcePublished`; `ExtractionRequested@1` REPLAY_SAFE; `search_projected_at` readiness gate (PR #1).
 - [x] **Async extraction consumer** — bounded `@Scheduled` poller, sequential LLM calls, `PENDING → EXTRACTING → KNOWLEDGE_READY/EXTRACTION_FAILED`, per-chunk result stub in Cassandra; `extraction_status` on the source status API (PR #2). Design: [`extraction-consumer-phase2.md`](extraction-consumer-phase2.md).
-- [ ] **Resolution + SHACL + graph commit** — retrieval-assisted resolution, validation, provenance-backed Relix commit (#560).
+- [x] **Validated graph persistence (PR #3)** — Syntology relation validation, Relix `GraphWritePort` for `:ExtractedMention` + validated `:EXTRACTED_RELATION`, deterministic ids, chunk/document offsets, `graph_status`/counters. Contract: [`extracted-mention-graph-contract.md`](extracted-mention-graph-contract.md).
+- [ ] **Canonical resolution (PR #4)** — retrieval-assisted resolution, `:RESOLVES_TO`, canonical `:Entity` links, then canonical graph edges (#560).
 
 ## P2 — Focused graph exploration (#508)
 
@@ -132,7 +133,7 @@ api controllers ──► SearchService (facade, no Lucene imports)
 | #558 (extraction gold + baseline) | Closed (#559) | — |
 | #506, #528, #536, #537, #539 | Closed | — |
 | ADR-022 (extraction engine) | Accepted — Phase B adapter landed | P2 |
-| RAKG extraction epic (#560) | Open — adapter, emission, and async consumer landed; resolution/SHACL/Relix pending | P2 |
+| RAKG extraction epic (#560) | Open — adapter/emission/consumer/validated mention graph landed; canonical resolution pending | P2 |
 
 ## Operation
 

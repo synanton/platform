@@ -150,6 +150,8 @@ class SourceControllerTenantTest {
             .thenReturn(List.of(version));
         when(cache.readExtractionStatus("tenant-a", "fixture", "source-a", "manuals/a.md", version.versionId()))
             .thenReturn(Optional.of("KNOWLEDGE_READY"));
+        when(cache.readGraphStatus("tenant-a", "fixture", "source-a", "manuals/a.md", version.versionId()))
+            .thenReturn(Optional.of("GRAPH_COMMITTED"));
         when(cache.readChunks("tenant-a", version.contentRefId())).thenReturn(List.of());
         when(cache.readManifest("tenant-a", version.contentRefId())).thenReturn(Optional.empty());
         when(cache.listSourceOutbox("tenant-a", "fixture", "source-a", "manuals/a.md")).thenReturn(List.of());
@@ -157,7 +159,8 @@ class SourceControllerTenantTest {
         mvc.perform(get("/v1/sources/source-a/status")
                 .header("Authorization", "Bearer " + token("tenant-a")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.extraction_status").value("KNOWLEDGE_READY"));
+            .andExpect(jsonPath("$.extraction_status").value("KNOWLEDGE_READY"))
+            .andExpect(jsonPath("$.graph_status").value("GRAPH_COMMITTED"));
     }
 
     @Test

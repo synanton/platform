@@ -157,7 +157,9 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             c.parentSectionId() == null ? "" : c.parentSectionId(),
             c.headingLevel(),
             Set.copyOf(sourceVersionIds),
-            processingRunId
+            processingRunId,
+            c.documentOffsetStart(),
+            c.documentOffsetEnd()
         );
     }
 

@@ -30,7 +30,10 @@ public record ChunkRow(
      */
     java.util.Set<UUID> sourceVersionIds,
     /** Processing run that produced this chunk (Design 1.25 §12). */
-    UUID processingRunId
+    UUID processingRunId,
+    /** Parsed-document span; -1 when the chunker cannot supply it. */
+    int documentOffsetStart,
+    int documentOffsetEnd
 ) {
     public static final List<String> PUBLIC_ONLY = List.of("PUBLIC");
 
@@ -52,6 +55,18 @@ public record ChunkRow(
         this(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256, pageStart, pageEnd, sectionPath, chunkType,
             heading, sourceElementsJson, tokenCount, structuredContentJson, isPartialSection, classification,
             sectionId, parentSectionId, headingLevel, null, null);
+    }
+
+    /** Legacy constructor: no document offsets recorded. */
+    public ChunkRow(
+            String tenantId, UUID contentRefId, int chunkOrdinal, String chunkText, String chunkSha256,
+            int pageStart, int pageEnd, String sectionPath, String chunkType, String heading,
+            String sourceElementsJson, int tokenCount, String structuredContentJson, boolean isPartialSection,
+            List<String> classification, String sectionId, String parentSectionId, int headingLevel,
+            java.util.Set<UUID> sourceVersionIds, UUID processingRunId) {
+        this(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256, pageStart, pageEnd, sectionPath,
+            chunkType, heading, sourceElementsJson, tokenCount, structuredContentJson, isPartialSection,
+            classification, sectionId, parentSectionId, headingLevel, sourceVersionIds, processingRunId, -1, -1);
     }
 
     public ChunkRow(
@@ -84,7 +99,7 @@ public record ChunkRow(
         return new ChunkRow(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256,
             pageStart, pageEnd, sectionPath, chunkType, heading, sourceElementsJson, tokenCount,
             structuredContentJson, isPartialSection, classification, sectionId, parentSectionId,
-            headingLevel, null, null);
+            headingLevel, null, null, documentOffsetStart, documentOffsetEnd);
     }
 
     /** Attributes this chunk to one more observing source version (content-addressed dedup). */
@@ -94,6 +109,6 @@ public record ChunkRow(
         return new ChunkRow(tenantId, contentRefId, chunkOrdinal, chunkText, chunkSha256,
             pageStart, pageEnd, sectionPath, chunkType, heading, sourceElementsJson, tokenCount,
             structuredContentJson, isPartialSection, classification, sectionId, parentSectionId,
-            headingLevel, attributed, processingRunId);
+            headingLevel, attributed, processingRunId, documentOffsetStart, documentOffsetEnd);
     }
 }

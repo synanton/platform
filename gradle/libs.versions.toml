@@ -132,6 +132,7 @@ kafka-clients            = { module = "org.apache.kafka:kafka-clients",         
 
 # Testcontainers extras
 testcontainers-cassandra = { module = "org.testcontainers:cassandra" }
+testcontainers-neo4j = { module = "org.testcontainers:neo4j" }
 testcontainers-core = { module = "org.testcontainers:testcontainers" }
 
 # Vector engines (SYN-VECTOR-001 B3; server/client pairs verified 2026-10-09)

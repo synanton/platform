@@ -65,6 +65,13 @@ synflux:
       max-attempts: ${EXTRACTION_CONSUMER_MAX_ATTEMPTS:5}
       retry-backoff-seconds: ${EXTRACTION_CONSUMER_RETRY_BACKOFF_SECONDS:30}
       poll-delay-ms: ${EXTRACTION_CONSUMER_POLL_DELAY_MS:5000}
+    graph:
+      # RAKG PR #3: validated mention/relation writes. Off until Syntology+Relix
+      # are reachable; extraction still completes when this is false.
+      enabled: ${EXTRACTION_GRAPH_ENABLED:false}
+      syntology-url: ${SYNTOLOGY_BASE_URL:http://syntology:8080}
+      relix-url: ${RELIX_BASE_URL:http://relix:8080}
+      ontology-version: ${EXTRACTION_GRAPH_ONTOLOGY_VERSION:active}
 
 synanton:
   extraction:

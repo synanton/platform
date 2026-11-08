@@ -74,7 +74,7 @@ public class HierarchicalChunkStage implements PipelineStage<ParsedDocument, Chu
                 List.of(), heading, List.of(), -1, -1,
                 Math.max(1, text.length() / 4), false, Map.of(),
                 SemanticChunk.PUBLIC_ONLY, sha256(text),
-                sectionId, parentId, level);
+                sectionId, parentId, level, -1, -1);
     }
 
     private static String sha256(String text) {

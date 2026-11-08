@@ -121,6 +121,9 @@ data:
   LLM_EXTRACTION_MODEL: "qwen3-extraction"
   EXTRACTION_CONSUMER_ENABLED: "false"
   EXTRACTION_CONSUMER_TENANT: "demo"
+  EXTRACTION_GRAPH_ENABLED: "false"
+  SYNTOLOGY_BASE_URL: "http://syntology.synanton.svc.cluster.local:8080"
+  RELIX_BASE_URL: "http://relix.synanton.svc.cluster.local:8080"
   MINIO_ENDPOINT: "http://minio:9000"
   # Outbox-only eventing for the cluster run: KAFKA_BOOTSTRAP_SERVERS stays
   # unset (the Kafka adapter is a config choice — see #301).

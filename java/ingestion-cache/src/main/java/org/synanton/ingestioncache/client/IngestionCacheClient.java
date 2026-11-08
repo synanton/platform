@@ -248,15 +248,16 @@ public class IngestionCacheClient {
                     "(tenant_id, content_ref_id, chunk_ordinal, chunk_text, chunk_sha256, " +
                     "page_start, page_end, section_path, chunk_type, heading, " +
                     "source_elements, token_count, structured_content, is_partial_section, classification, " +
-                    "section_id, parent_section_id, heading_level, processing_run_id) " +
-                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    "section_id, parent_section_id, heading_level, processing_run_id, " +
+                    "document_offset_start, document_offset_end) " +
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     c.tenantId(), c.contentRefId(), c.chunkOrdinal(), c.chunkText(),
                     c.chunkSha256(), c.pageStart(), c.pageEnd(), c.sectionPath(),
                     c.chunkType(), c.heading(), c.sourceElementsJson(), c.tokenCount(),
                     c.structuredContentJson(), c.isPartialSection(),
                     new java.util.HashSet<>(c.classification()),
                     c.sectionId(), c.parentSectionId(), c.headingLevel(),
-                    c.processingRunId()
+                    c.processingRunId(), c.documentOffsetStart(), c.documentOffsetEnd()
                 ));
                 batch = batch.add(SimpleStatement.newInstance(
                     "INSERT INTO ingestion_cache.chunk_source_versions " +
@@ -356,7 +357,9 @@ public class IngestionCacheClient {
             stringOrEmpty(r, "parent_section_id"),
             intOrDefault(r, "heading_level", 0),
             java.util.Set.copyOf(sourceVersions),
-            r.getUuid("processing_run_id")
+            r.getUuid("processing_run_id"),
+            intOrDefault(r, "document_offset_start", -1),
+            intOrDefault(r, "document_offset_end", -1)
         );
     }
 
@@ -798,8 +801,8 @@ public class IngestionCacheClient {
             "event_next_attempt_at, event_dead_lettered, extraction_event_id, extraction_event_type, " +
             "extraction_event_payload_json, extraction_event_published, extraction_event_published_at, " +
             "extraction_event_attempt_count, extraction_event_last_error, extraction_event_next_attempt_at, " +
-            "extraction_event_dead_lettered, extraction_status) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?) IF NOT EXISTS",
+            "extraction_event_dead_lettered, extraction_status, graph_status) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?) IF NOT EXISTS",
             version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
             version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
             version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson(),
@@ -812,6 +815,7 @@ public class IngestionCacheClient {
             extractionEvent == null ? null : extractionEvent.lastError(),
             extractionEvent == null ? null : extractionEvent.nextAttemptAt(),
             extractionEvent == null ? false : extractionEvent.deadLettered(),
+            extractionEvent == null ? null : "PENDING",
             extractionEvent == null ? null : "PENDING"
         ));
         return result.wasApplied();
@@ -926,6 +930,41 @@ public class IngestionCacheClient {
         }
         return pending.stream().sorted(Comparator.comparing(ExtractionRequestRow::requestedAt)
             .thenComparing(ExtractionRequestRow::eventId)).limit(limit).toList();
+    }
+
+    public void markGraphValidating(ExtractionRequestRow request) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET graph_status='VALIDATING' " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            request.tenantId(), request.connectorId(), request.sourceId(), request.resourceId(),
+            request.versionId()
+        ));
+    }
+
+    public void markGraphCommitted(
+            ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters, Instant committedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET graph_status=?, graph_commit_at=?, " +
+            "graph_validation_counters=? WHERE tenant_id=? AND connector_id=? AND source_id=? " +
+            "AND resource_id=? AND version_id=?",
+            graphStatus, committedAt, counters, request.tenantId(), request.connectorId(),
+            request.sourceId(), request.resourceId(), request.versionId()
+        ));
+    }
+
+    public void markGraphFailed(
+            ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters, Instant failedAt) {
+        markGraphCommitted(request, graphStatus, counters, failedAt);
+    }
+
+    public Optional<String> readGraphStatus(
+            String tenantId, String connectorId, String sourceId, String resourceId, UUID versionId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT graph_status FROM ingestion_cache.source_versions WHERE tenant_id=? " +
+            "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            tenantId, connectorId, sourceId, resourceId, versionId
+        )).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getString("graph_status"));
     }
 
     public Optional<String> readExtractionStatus(

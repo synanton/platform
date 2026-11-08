@@ -190,6 +190,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
   `ExtractionRequested` is emitted atomically with `SourcePublished`; an async
   consumer (bounded, sequential) gates on `search_projected_at` and moves
   `PENDING → EXTRACTING → KNOWLEDGE_READY` while storing pre-Relix results.
+  Validated mentions/relations are written to the isolated
+  `:ExtractedMention` / `:EXTRACTED_RELATION` graph with a separate `graph_status`;
+  canonical entities and `:RESOLVES_TO` are PR #4.
 - **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
   adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
   live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
@@ -200,10 +203,10 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 ## Known limitations
 
 - **LLM extraction is experimental.** The adapter reproduces 0.618 entity /
-  0.078 relationship F1 on the frozen gold; the async consumer is landed, but
-  results are stored pre-Relix and resolution/SHACL/graph commit are pending.
-  Coreference resolution is still pending; docs 3–5 have zero relationship F1
-  (predicate/endpoint alignment).
+  0.078 relationship F1 on the frozen gold. The async consumer and validated
+  mention-graph persistence are landed; canonical entity resolution and
+  `:RESOLVES_TO` are PR #4. Coreference resolution is still pending; docs 3–5
+  have zero relationship F1 (predicate/endpoint alignment).
 - **Gold is smoke-scale:** 5 documents / 70 mentions / 44 relationships, no
   inter-annotator agreement yet.
 - **Graph exploration is partial:** the search-result graph exists; entity-rooted
@@ -214,8 +217,8 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 ## Next steps
 
 - **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** add
-  retrieval-assisted resolution, SHACL validation, and Relix graph commit on top
-  of the asynchronous consumer.
+  retrieval-assisted canonical resolution and `:RESOLVES_TO` (PR #4) on top of
+  the validated mention graph.
 - **#556:** query-adaptive RRF on the now-frozen retrieval corpus (deferred).
 - **#538:** route demo TEI through the gateway and drop the direct exception.
 
