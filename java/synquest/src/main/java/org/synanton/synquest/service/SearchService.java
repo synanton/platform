@@ -6,6 +6,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.TopDocs;
 import org.synanton.synquest.api.dto.*;
 import org.synanton.synquest.config.SynquestProperties;
+import org.synanton.synquest.search.EmbeddedLuceneAdapter;
+import org.synanton.synquest.search.SearchEngineAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ public class SearchService {
 
     public enum Status { STARTING, READY, ERROR }
 
-    private final LuceneIndexBuilder indexBuilder;
+    private final SearchEngineAdapter engine;
     private final QueryEmbedder queryEmbedder;
     private final SynquestProperties props;
 
@@ -43,40 +45,56 @@ public class SearchService {
     private final SearchReranker reranker;
     private final org.synanton.synquest.config.SynquestRerankProperties rerankProps;
 
-    public SearchService(LuceneIndexBuilder indexBuilder,
+    public SearchService(SearchEngineAdapter engine,
                          QueryEmbedder queryEmbedder,
                          SynquestProperties props) {
-        this(indexBuilder, queryEmbedder, props, (SearchReranker) null, new org.synanton.synquest.config.SynquestRerankProperties());
+        this(engine, queryEmbedder, props, (SearchReranker) null, new org.synanton.synquest.config.SynquestRerankProperties());
     }
 
     @org.springframework.beans.factory.annotation.Autowired
-    public SearchService(LuceneIndexBuilder indexBuilder,
+    public SearchService(SearchEngineAdapter engine,
                          QueryEmbedder queryEmbedder,
                          SynquestProperties props,
                          org.springframework.beans.factory.ObjectProvider<SearchReranker> reranker,
                          org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
-        this(indexBuilder, queryEmbedder, props, reranker.getIfAvailable(), rerankProps);
+        this(engine, queryEmbedder, props, reranker.getIfAvailable(), rerankProps);
     }
 
-    public SearchService(LuceneIndexBuilder indexBuilder,
+    public SearchService(SearchEngineAdapter engine,
                          QueryEmbedder queryEmbedder,
                          SynquestProperties props,
                          SearchReranker reranker,
                          org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
-        this.indexBuilder = indexBuilder;
+        this.engine = engine;
         this.queryEmbedder = queryEmbedder;
         this.props = props;
         this.reranker = reranker;
         this.rerankProps = rerankProps;
     }
 
+    /** Test/back-compat: wraps the concrete Lucene builder behind the port. */
+    public SearchService(LuceneIndexBuilder indexBuilder,
+                         QueryEmbedder queryEmbedder,
+                         SynquestProperties props) {
+        this(new EmbeddedLuceneAdapter(indexBuilder), queryEmbedder, props);
+    }
+
+    /** Test/back-compat: wraps the concrete Lucene builder behind the port. */
+    public SearchService(LuceneIndexBuilder indexBuilder,
+                         QueryEmbedder queryEmbedder,
+                         SynquestProperties props,
+                         SearchReranker reranker,
+                         org.synanton.synquest.config.SynquestRerankProperties rerankProps) {
+        this(new EmbeddedLuceneAdapter(indexBuilder), queryEmbedder, props, reranker, rerankProps);
+    }
+
     public void initTenant(String tenant) {
         try {
-            if (props.index().rebuildOnBootIfEmpty() && indexBuilder.isEmpty(tenant)) {
+            if (props.index().rebuildOnBootIfEmpty() && engine.isEmpty(tenant)) {
                 log.info("Index is empty for tenant '{}', building now...", tenant);
-                indexBuilder.build(tenant);
+                engine.rebuild(tenant);
             }
-            Path idxPath = indexBuilder.indexPath(tenant);
+            Path idxPath = engine.indexPath(tenant);
             HybridSearcher searcher = new HybridSearcher(idxPath, props.embedding().dim());
             searcherRefs.computeIfAbsent(tenant, t -> new AtomicReference<>()).set(searcher);
             rebuildLocks.put(tenant, new Object());
@@ -362,19 +380,47 @@ public class SearchService {
                 null);
     }
 
+    /**
+     * Full rebuild. The existing searcher is kept open during the rebuild and
+     * refreshed afterwards, so searches continue on the previous snapshot and
+     * swap atomically when the writer commits (zero-downtime, #547 Phase 2).
+     */
     public void reindex(String tenant) throws IOException {
         Object lock = rebuildLocks.computeIfAbsent(tenant, t -> new Object());
         synchronized (lock) {
             log.info("Reindexing tenant '{}'...", tenant);
-            AtomicReference<HybridSearcher> ref = searcherRefs.get(tenant);
-            if (ref != null && ref.get() != null) {
-                ref.get().close();
-                ref.set(null);
+            engine.rebuild(tenant);
+            HybridSearcher existing = getSearcher(tenant);
+            if (existing == null) {
+                HybridSearcher fresh = new HybridSearcher(engine.indexPath(tenant), props.embedding().dim());
+                searcherRefs.computeIfAbsent(tenant, t -> new AtomicReference<>()).set(fresh);
+            } else {
+                existing.maybeRefresh();
             }
-            indexBuilder.build(tenant);
-            HybridSearcher fresh = new HybridSearcher(indexBuilder.indexPath(tenant), props.embedding().dim());
-            searcherRefs.computeIfAbsent(tenant, t -> new AtomicReference<>()).set(fresh);
             log.info("Reindex complete for tenant '{}'", tenant);
+        }
+    }
+
+    /**
+     * Incremental projection (Phase 2, #547): upserts only the listed content
+     * refs and refreshes the searcher. Falls back to a full rebuild when the
+     * tenant index does not exist yet, so the first projection is complete.
+     */
+    public void projectContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException {
+        Object lock = rebuildLocks.computeIfAbsent(tenant, t -> new Object());
+        synchronized (lock) {
+            if (contentRefs == null || contentRefs.isEmpty()) {
+                return;
+            }
+            if (engine.isEmpty(tenant) || getSearcher(tenant) == null) {
+                reindex(tenant);
+                return;
+            }
+            engine.indexContentRefs(tenant, contentRefs);
+            HybridSearcher searcher = getSearcher(tenant);
+            if (searcher != null) {
+                searcher.maybeRefresh();
+            }
         }
     }
 
@@ -383,7 +429,7 @@ public class SearchService {
         if (searcher == null) {
             return new IndexStats(tenant, 0, -1, status.name().toLowerCase());
         }
-        var report = indexBuilder.lastReport(tenant).orElse(null);
+        var report = engine.lastReport(tenant).orElse(null);
         if (report == null) {
             return new IndexStats(tenant, searcher.docCount(), searcher.generation(), "ready");
         }

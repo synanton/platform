@@ -2,7 +2,10 @@ package org.synanton.synquest.service;
 
 import jakarta.annotation.PostConstruct;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 
 /**
  * Projects newly-ingested source versions into the tenant search index.
@@ -75,15 +79,50 @@ public class SearchProjectionConsumer {
             if (pending.isEmpty()) {
                 return;
             }
-            searchService.reindex(tenant);
+            boolean fullRebuild = false;
+            Set<UUID> contentRefs = new LinkedHashSet<>();
+            for (SourceOutboxRow event : pending) {
+                if (!"SourcePublished".equals(event.eventType())) {
+                    // Deletes (and any future event type) fall back to a full
+                    // rebuild: correctness first, and deletes are rare (#547).
+                    fullRebuild = true;
+                    break;
+                }
+                UUID contentRef = resolveContentRef(event);
+                if (contentRef == null) {
+                    fullRebuild = true;
+                    break;
+                }
+                contentRefs.add(contentRef);
+            }
+
+            if (fullRebuild) {
+                searchService.reindex(tenant);
+            } else {
+                searchService.projectContentRefs(tenant, contentRefs);
+            }
+
             Instant publishedAt = Instant.now();
             for (SourceOutboxRow event : pending) {
                 cacheClient.markSourceOutboxPublished(event, publishedAt);
             }
-            log.info("Projected {} source event(s) into tenant '{}' index", pending.size(), tenant);
+            log.info("Projected {} source event(s) ({} content ref(s), {}) into tenant '{}' index",
+                    pending.size(), contentRefs.size(),
+                    fullRebuild ? "full rebuild" : "incremental", tenant);
         } catch (Exception failure) {
             log.warn("Search projection poll failed for tenant '{}'; events stay unpublished for retry",
                     tenant, failure);
         }
     }
+
+    private UUID resolveContentRef(SourceOutboxRow event) {
+        if (event.sourceVersionId() == null) {
+            return null;
+        }
+        return cacheClient.readSourceVersion(
+                        tenant, event.connectorId(), event.sourceId(), event.resourceId(), event.sourceVersionId())
+                .map(SourceVersionRow::contentRefId)
+                .orElse(null);
+    }
+
 }

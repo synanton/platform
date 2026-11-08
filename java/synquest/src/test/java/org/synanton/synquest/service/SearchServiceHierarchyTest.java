@@ -50,6 +50,7 @@ class SearchServiceHierarchyTest {
     @BeforeEach
     void index() throws Exception {
         IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        CacheCursorStubs.wire(cache);
         when(cache.listManifest(eq(tenant), anyInt())).thenReturn(List.of(new ManifestRow(tenant, ref, Instant.now(), 1,
                 "structure-aware", 1, "EMBEDDED", "hot", null, "file:///mh.pdf", "sha", 10, "application/pdf", null, null, null)));
         List<ChunkRow> rows = new ArrayList<>();

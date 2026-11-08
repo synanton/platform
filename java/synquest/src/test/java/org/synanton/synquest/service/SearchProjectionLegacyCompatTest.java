@@ -1,6 +1,8 @@
 package org.synanton.synquest.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -119,7 +121,7 @@ class SearchProjectionLegacyCompatTest {
 
         consumer.projectNewSourceVersions();
 
-        verify(search).reindex(TENANT);
+        verify(search).projectContentRefs(eq(TENANT), any());
         assertThat(cache.listUnpublishedSourceOutbox(TENANT, 200, Instant.now())).isEmpty();
         assertThat(cache.listSourceOutbox(TENANT, CONNECTOR, SOURCE, RESOURCE))
                 .allMatch(SourceOutboxRow::published);

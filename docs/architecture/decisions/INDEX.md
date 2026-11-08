@@ -1,7 +1,7 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-10-17"
+last_reviewed: "2026-11-08"
 ---
 
 # Architecture Decision Records (ADRs)
@@ -14,6 +14,7 @@ last_reviewed: "2026-10-17"
 
 | Document | Decision |
 |----------|---------|
+| [ADR-021: Pluggable Search Engine Boundary](./adr-021-pluggable-search-engine.md) | Projection writes go through a domain `SearchEngineAdapter`; streaming rebuild, incremental `updateDocument`, atomic `SearcherManager` refresh; read-path DSL staged (Accepted 2026-11-08) |
 | [ADR-020: Operation Partial Outcome](./adr-020-operation-partial-outcome.md) | Additive `outcome: FULL \| PARTIAL` on the Operation resource; partial extraction success is first-class, design doc stays frozen (Accepted 2026-10-17) |
 | [ADR-019: Downstream Trust Predicate](./adr-019-downstream-trust-predicate.md) | Signed short-lived context for downstream trust (slice); mTLS as target state; Wave 1 interfaces landed (Accepted 2026-10-17) |
 | [ADR-018: OAuth Surface — AS Facade](./adr-018-oauth-facade.md) | Platform is an OAuth 2.1 authorization-server facade — fronts `/oauth/*` and discovery, federates to the external security service (Accepted 2026-10-16) |

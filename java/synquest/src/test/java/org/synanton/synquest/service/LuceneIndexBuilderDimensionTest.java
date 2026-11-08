@@ -4,6 +4,7 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.FloatVectorValues;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.store.FSDirectory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -108,4 +109,9 @@ class LuceneIndexBuilderDimensionTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("1 chunks without a vector");
     }
+    @BeforeEach
+    void wireCacheCursors() {
+        CacheCursorStubs.wire(cache);
+    }
+
 }
