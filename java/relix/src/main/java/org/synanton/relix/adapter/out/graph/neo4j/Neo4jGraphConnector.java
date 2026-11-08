@@ -8,6 +8,8 @@ import org.synanton.relix.api.dto.Path;
 import org.synanton.relix.api.dto.SourceRef;
 import org.synanton.relix.graph.GraphConnector;
 import org.synanton.relix.graph.GraphEdge;
+import org.synanton.relix.graph.ExtractedMention;
+import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.SourceRefCodec;
@@ -98,6 +100,88 @@ public class Neo4jGraphConnector implements GraphConnector {
 
         long loadTimeMs = System.currentTimeMillis() - start;
         statsByTenant.put(tenant, new GraphStats(tenant, nodes.size(), edges.size(), loadTimeMs, loaded.generation()));
+    }
+
+    @Override
+    public void upsertMentions(List<ExtractedMention> batch) {
+        if (batch == null || batch.isEmpty()) {
+            return;
+        }
+        String tenant = batch.getFirst().tenantId();
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (ExtractedMention mention : batch) {
+            if (!tenant.equals(mention.tenantId())) {
+                throw new IllegalArgumentException("all extracted mentions in a write must share a tenant");
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("mentionId", mention.mentionId());
+            row.put("sourceVersionId", mention.sourceVersionId());
+            row.put("contentRefId", mention.contentRefId());
+            row.put("chunkId", mention.chunkId());
+            row.put("chunkOffsetStart", mention.chunkOffsetStart());
+            row.put("chunkOffsetEnd", mention.chunkOffsetEnd());
+            row.put("documentOffsetStart", mention.documentOffsetStart());
+            row.put("documentOffsetEnd", mention.documentOffsetEnd());
+            row.put("surfaceForm", mention.surfaceForm());
+            row.put("proposedType", mention.proposedType());
+            row.put("extractedAt", mention.extractedAt() == null ? null : mention.extractedAt().toString());
+            rows.add(row);
+        }
+        cypher.write("""
+                UNWIND $rows AS row
+                MERGE (n:ExtractedMention {tenant_id: $tenant, mention_id: row.mentionId})
+                SET n.source_version_id = row.sourceVersionId,
+                    n.content_ref_id = row.contentRefId,
+                    n.chunk_id = row.chunkId,
+                    n.chunk_offset_start = row.chunkOffsetStart,
+                    n.chunk_offset_end = row.chunkOffsetEnd,
+                    n.document_offset_start = row.documentOffsetStart,
+                    n.document_offset_end = row.documentOffsetEnd,
+                    n.surface_form = row.surfaceForm,
+                    n.proposed_type = row.proposedType,
+                    n.extracted_at = row.extractedAt
+                """, Map.of("tenant", tenant, "rows", rows));
+    }
+
+    @Override
+    public void upsertRelations(List<ExtractedRelation> batch) {
+        if (batch == null || batch.isEmpty()) {
+            return;
+        }
+        String tenant = batch.getFirst().tenantId();
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (ExtractedRelation relation : batch) {
+            if (!tenant.equals(relation.tenantId())) {
+                throw new IllegalArgumentException("all extracted relations in a write must share a tenant");
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("relationId", relation.relationId());
+            row.put("sourceVersionId", relation.sourceVersionId());
+            row.put("predicate", relation.predicate());
+            row.put("subjectMentionId", relation.subjectMentionId());
+            row.put("objectMentionId", relation.objectMentionId());
+            row.put("evidenceChunkId", relation.evidenceChunkId());
+            row.put("evidenceChunkOffsetStart", relation.evidenceChunkOffsetStart());
+            row.put("evidenceChunkOffsetEnd", relation.evidenceChunkOffsetEnd());
+            row.put("evidenceDocumentOffsetStart", relation.evidenceDocumentOffsetStart());
+            row.put("evidenceDocumentOffsetEnd", relation.evidenceDocumentOffsetEnd());
+            row.put("validatedAt", relation.validatedAt() == null ? null : relation.validatedAt().toString());
+            rows.add(row);
+        }
+        cypher.write("""
+                UNWIND $rows AS row
+                MATCH (s:ExtractedMention {tenant_id: $tenant, mention_id: row.subjectMentionId})
+                MATCH (o:ExtractedMention {tenant_id: $tenant, mention_id: row.objectMentionId})
+                MERGE (s)-[e:EXTRACTED_RELATION {tenant_id: $tenant, relation_id: row.relationId}]->(o)
+                SET e.source_version_id = row.sourceVersionId,
+                    e.predicate = row.predicate,
+                    e.evidence_chunk_id = row.evidenceChunkId,
+                    e.evidence_chunk_offset_start = row.evidenceChunkOffsetStart,
+                    e.evidence_chunk_offset_end = row.evidenceChunkOffsetEnd,
+                    e.evidence_document_offset_start = row.evidenceDocumentOffsetStart,
+                    e.evidence_document_offset_end = row.evidenceDocumentOffsetEnd,
+                    e.validated_at = row.validatedAt
+                """, Map.of("tenant", tenant, "rows", rows));
     }
 
     @Override

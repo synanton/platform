@@ -54,7 +54,8 @@ public class SentenceChunkStage implements PipelineStage<ParsedDocument, Chunked
                     documentId + "-s" + ordinal, documentId, ordinal, SemanticChunk.ChunkType.PARAGRAPH,
                     content, null, List.of(), null, List.of(), -1, -1,
                     SemanticChunker.estimateTokens(content), false, Map.of(),
-                    SemanticChunk.PUBLIC_ONLY, SemanticChunker.sha256(content)));
+                    SemanticChunk.PUBLIC_ONLY, SemanticChunker.sha256(content),
+                    chunk.charStart(), chunk.charEnd()));
             ordinal++;
         }
         return new ChunkedDocument(doc, chunks);

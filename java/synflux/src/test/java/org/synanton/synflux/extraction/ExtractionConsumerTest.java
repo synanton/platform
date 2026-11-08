@@ -29,6 +29,7 @@ import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
+import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -116,7 +117,7 @@ class ExtractionConsumerTest {
     private static ExtractionConsumer consumer(String tenant, ExtractionEngineAdapter adapter) {
         return new ExtractionConsumer(cache, adapter,
                 new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
-                Clock.systemUTC());
+                mock(GraphWriter.class), Clock.systemUTC());
     }
 
     private static UUID latestVersion(String tenant) {

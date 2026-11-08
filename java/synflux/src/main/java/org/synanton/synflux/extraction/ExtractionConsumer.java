@@ -17,13 +17,16 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
+import org.synanton.synflux.extraction.graph.GraphWriter;
 
 /**
  * RAKG Phase 2 background consumer (PR #2). Polls at most
  * {@code batch-documents} ready ExtractionRequested events, processes their
  * chunks sequentially through the configured adapter, stores the pre-Relix
  * output, and advances PENDING -> EXTRACTING -> KNOWLEDGE_READY/
- * EXTRACTION_FAILED. No SHACL/Relix graph commit here.
+ * EXTRACTION_FAILED. After extraction succeeds, GraphWriter validates relations
+ * and persists the isolated mention graph (graph_status); canonical resolution is
+ * PR #4.
  *
  * <p>One scheduled invocation at a time (fixedDelay); the scheduler pool is
  * sized in application.yml so workflow recovery is not blocked.
@@ -36,6 +39,7 @@ public class ExtractionConsumer {
     private final IngestionCacheClient cacheClient;
     private final ExtractionEngineAdapter adapter;
     private final ExtractionConsumerProperties properties;
+    private final GraphWriter graphWriter;
     private final Clock clock;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -43,10 +47,12 @@ public class ExtractionConsumer {
             IngestionCacheClient cacheClient,
             ExtractionEngineAdapter adapter,
             ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
             Clock clock) {
         this.cacheClient = cacheClient;
         this.adapter = adapter;
         this.properties = properties;
+        this.graphWriter = graphWriter;
         this.clock = clock;
     }
 
@@ -77,12 +83,14 @@ public class ExtractionConsumer {
         try {
             cacheClient.markExtractionStarted(request);
             List<ChunkRow> chunks = cacheClient.readChunks(request.tenantId(), request.contentRefId());
+            java.util.Map<Integer, ExtractionResult> resultsByOrdinal = new java.util.LinkedHashMap<>();
             int processed = 0;
             for (ChunkRow chunk : chunks) {
                 ExtractionResult result = adapter.extract(
                         new TextSegment(request.contentRefId() + ":" + chunk.chunkOrdinal(),
                                 chunk.chunkText(), 0),
                         new ExtractionContext(request.tenantId(), request.contentRefId().toString(), Set.of()));
+                resultsByOrdinal.put(chunk.chunkOrdinal(), result);
                 cacheClient.upsertExtractionResult(
                         request.tenantId(), request.contentRefId(), chunk.chunkOrdinal(), request.versionId(),
                         mapper.writeValueAsString(result.preEntities()),
@@ -90,6 +98,14 @@ public class ExtractionConsumer {
                 processed++;
             }
             cacheClient.markExtractionSucceeded(request, clock.instant());
+            // extraction_status is final here; graph_status tracks the separate
+            // validation/persistence stage and must not change extraction state.
+            try {
+                graphWriter.commit(request, chunks, resultsByOrdinal);
+            } catch (Exception graphFailure) {
+                log.warn("Graph writer failed after extraction ref={} version={}: {}",
+                        request.contentRefId(), request.versionId(), graphFailure.toString());
+            }
             log.info("Extraction completed ref={} version={} chunks={}",
                     request.contentRefId(), request.versionId(), processed);
         } catch (Exception e) {

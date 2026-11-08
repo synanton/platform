@@ -78,6 +78,16 @@ public class OntologyController {
         return ontologyService.validateConcept(request.label(), request.uri());
     }
 
+    @PostMapping("/validate-relation")
+    public Map<String, Object> validateRelation(@RequestBody ValidateRelationRequest request) {
+        return ontologyService.validateRelation(request.subjectType(), request.predicate(),
+                request.objectType(), request.ontologyVersion());
+    }
+
     public record ValidateRequest(String label, String uri) {
+    }
+
+    public record ValidateRelationRequest(
+            String subjectType, String predicate, String objectType, String ontologyVersion) {
     }
 }

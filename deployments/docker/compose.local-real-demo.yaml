@@ -45,6 +45,10 @@ services:
       LLM_EXTRACTION_MODEL: ${LLM_EXTRACTION_MODEL:-qwen3-extraction}
       EXTRACTION_CONSUMER_ENABLED: ${EXTRACTION_CONSUMER_ENABLED:-false}
       EXTRACTION_CONSUMER_TENANT: ${EXTRACTION_CONSUMER_TENANT:-demo}
+      EXTRACTION_GRAPH_ENABLED: ${EXTRACTION_GRAPH_ENABLED:-false}
+      SYNTOLOGY_BASE_URL: ${SYNTOLOGY_BASE_URL:-http://syntology:8080}
+      RELIX_BASE_URL: ${RELIX_BASE_URL:-http://relix:8080}
+      EXTRACTION_GRAPH_ONTOLOGY_VERSION: ${EXTRACTION_GRAPH_ONTOLOGY_VERSION:-active}
     # The base actuator healthcheck is unauthenticated-deny in this stack;
     # use the service's own /health endpoint instead.
     healthcheck:

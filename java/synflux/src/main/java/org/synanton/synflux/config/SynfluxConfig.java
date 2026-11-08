@@ -18,7 +18,15 @@ import org.synanton.synflux.annotation.AnnotationRule;
 import org.synanton.synflux.annotation.AnnotationsServiceClient;
 import org.synanton.synflux.annotation.HttpAnnotationsServiceClient;
 import org.synanton.synflux.annotation.KeywordAnnotationRule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.synanton.synflux.domain.ChunkedDocument;
+import org.synanton.synflux.extraction.graph.GraphWriteClient;
+import org.synanton.synflux.extraction.graph.GraphWriter;
+import org.synanton.synflux.extraction.graph.HttpRelixGraphWriteClient;
+import org.synanton.synflux.extraction.graph.HttpSyntologyRelationValidator;
+import org.synanton.synflux.extraction.graph.RelationValidator;
 import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.stage.*;
@@ -45,7 +53,8 @@ import java.util.concurrent.Executors;
 
 @Configuration
 @EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class,
-        ExtractionEngineProperties.class, ExtractionConsumerProperties.class})
+        ExtractionEngineProperties.class, ExtractionConsumerProperties.class,
+        ExtractionGraphProperties.class})
 @Import(KafkaClientConfig.class)
 public class SynfluxConfig {
 
@@ -118,6 +127,28 @@ public class SynfluxConfig {
             default -> throw new IllegalStateException(
                     "unknown synflux.extraction-engine.provider: " + provider + " (want regex|llm)");
         };
+    }
+
+    @Bean
+    public RelationValidator relationValidator(ExtractionGraphProperties properties) {
+        return new HttpSyntologyRelationValidator(properties.syntologyUrlOrDefault(), graphMapper());
+    }
+
+    @Bean
+    public GraphWriteClient graphWriteClient(ExtractionGraphProperties properties) {
+        return new HttpRelixGraphWriteClient(properties.relixUrlOrDefault(), graphMapper());
+    }
+
+    @Bean
+    public GraphWriter graphWriter(IngestionCacheClient cacheClient, RelationValidator validator,
+                                   GraphWriteClient graphWriteClient, ExtractionGraphProperties properties,
+                                   Clock clock) {
+        return new GraphWriter(cacheClient, validator, graphWriteClient, properties, clock);
+    }
+
+    private static ObjectMapper graphMapper() {
+        return new ObjectMapper().registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     @Bean

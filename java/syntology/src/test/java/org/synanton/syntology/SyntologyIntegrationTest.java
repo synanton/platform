@@ -77,6 +77,42 @@ class SyntologyIntegrationTest {
     }
 
     @Test
+    void shouldValidateRelationDomainAndRange() throws Exception {
+        mockMvc.perform(
+                        post("/api/v1/ontology/validate-relation")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"subjectType\":\"Product\",\"predicate\":\"has supplier\","
+                                        + "\"objectType\":\"Supplier\",\"ontologyVersion\":\"1.0.0\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conformant").value(true))
+                .andExpect(jsonPath("$.violations").isEmpty());
+    }
+
+    @Test
+    void shouldRejectRelationDomainMismatchWithStructuredViolation() throws Exception {
+        mockMvc.perform(
+                        post("/api/v1/ontology/validate-relation")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"subjectType\":\"Order\",\"predicate\":\"has supplier\","
+                                        + "\"objectType\":\"Supplier\",\"ontologyVersion\":\"1.0.0\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conformant").value(false))
+                .andExpect(jsonPath("$.violations[0].code").value("domain_mismatch"));
+    }
+
+    @Test
+    void shouldRejectUnknownRelationPredicate() throws Exception {
+        mockMvc.perform(
+                        post("/api/v1/ontology/validate-relation")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"subjectType\":\"Product\",\"predicate\":\"nope\","
+                                        + "\"objectType\":\"Supplier\",\"ontologyVersion\":\"1.0.0\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conformant").value(false))
+                .andExpect(jsonPath("$.violations[0].code").value("unknown_predicate"));
+    }
+
+    @Test
     void shouldLoadHclSchemaBundleAndExposeIr() throws Exception {
         MockMultipartFile zip = new MockMultipartFile(
                 "file",

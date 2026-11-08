@@ -32,6 +32,8 @@ public class SchemaInstaller {
         "cql/V16__ewp2_envelope.cql",
         "cql/V17__extraction_request_outbox.cql",
         "cql/V18__extraction_consumer.cql",
+        "cql/V19__extraction_graph_status.cql",
+        "cql/V20__chunk_document_offsets.cql",
     };
 
     public static void install(CqlSession session) {

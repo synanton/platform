@@ -1,6 +1,6 @@
 # RAKG Phase 2 — asynchronous extraction consumer (design)
 
-**Status:** PR #1 emission + PR #2 consumer landed (2026-11-08); SHACL/Relix commit is the next phase
+**Status:** PR #1 emission + PR #2 consumer + PR #3 validated graph persistence landed (2026-11-08); canonical resolution is PR #4
 **Date:** 2026-11-08
 **Issue:** #560 (RAKG), follow-up to ADR-022
 **Preview seam:** `POST /api/v1/extraction/preview` (synchronous, diagnostic only)
@@ -125,6 +125,20 @@ flowchart LR
   `EXTRACTION_CONSUMER_ENABLED=true` and `EXTRACTION_PROVIDER=llm`.
 - Results table is overwritten per `(content_ref_id, chunk_ordinal)`; the graph
   commit path remains out of scope.
+
+## PR #3 implementation (landed)
+
+- Syntology: `POST /api/v1/ontology/validate-relation` returns
+  `{conformant, violations}` using TBox domain/range + predicate SHACL shapes.
+- Relix: `GraphWritePort` upserts `:ExtractedMention` and validated
+  `:EXTRACTED_RELATION` edges; InMemory and Neo4j adapters, MERGE-based
+  idempotency; a real Neo4j Testcontainers test proves write-twice == one node.
+- Synflux: `GraphWriter` derives SHA-256 ids, preserves chunk/document offsets,
+  validates each relation, writes mentions + accepted edges, and records
+  `graph_status`/`graph_validation_counters`.
+- `extraction_status` still means extraction+persistence; `graph_status`
+  (`PENDING|VALIDATING|GRAPH_COMMITTED|PARTIAL|FAILED`) is separate.
+- Nothing writes canonical `:Entity`, `:REL`, or `:RESOLVES_TO` yet.
 
 ## Failure and retry
 
