@@ -19,6 +19,9 @@ public interface SearchIndexAdapter {
     /** Incrementally upserts the listed canonical content refs. */
     int indexContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException;
 
+    /** Upserts canonical entity documents into the same tenant index. */
+    int upsertEntities(String tenant, java.util.List<EntitySearchDocument> entities) throws IOException;
+
     /** Deletes chunks by their stable document ids. */
     int deleteChunkIds(String tenant, Collection<String> chunkIds) throws IOException;
 

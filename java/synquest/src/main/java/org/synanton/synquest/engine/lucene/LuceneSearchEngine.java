@@ -8,6 +8,7 @@ import org.synanton.synquest.api.dto.*;
 import org.synanton.synquest.config.SynquestProperties;
 import org.synanton.synquest.search.IndexReport;
 import org.synanton.synquest.search.SearchDocument;
+import org.synanton.synquest.search.EntitySearchDocument;
 import org.synanton.synquest.search.SearchEngineAdapter;
 import org.synanton.synquest.search.SearchFilter;
 import org.synanton.synquest.search.SearchIndexAdapter;
@@ -140,11 +141,11 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
             // constrains the dense leg. Fusion and everything below is shared,
             // so result shapes are identical to parallel mode by construction.
             long lexicalStart = System.currentTimeMillis();
-            lexicalResults = searcher.lexical(req.query(), topKLexical);
+            lexicalResults = searcher.lexical(req.query(), topKLexical, "CHUNK");
             lexicalMs = System.currentTimeMillis() - lexicalStart;
             java.util.Set<String> universe = contentRefIds(searcher, lexicalResults);
             long denseStart = System.currentTimeMillis();
-            denseResults = searcher.dense(denseVec, topKDense, universe);
+            denseResults = searcher.dense(denseVec, topKDense, universe, "CHUNK");
             denseMs = System.currentTimeMillis() - denseStart;
         } else {
             Future<TopDocs> denseFuture = searchPool.submit(() -> {
@@ -153,7 +154,7 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
                         org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
             }
             try {
-                return searcher.dense(denseVec, topKDense);
+                return searcher.dense(denseVec, topKDense, null, "CHUNK");
             } catch (Exception e) {
                 if (queryEmbedder.required()) {
                     // e.g. an index built at another dimension: never degrade silently to BM25-only
@@ -164,7 +165,7 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
                         org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0]);
             }
         });
-        Future<TopDocs> lexicalFuture = searchPool.submit(() -> searcher.lexical(req.query(), topKLexical));
+        Future<TopDocs> lexicalFuture = searchPool.submit(() -> searcher.lexical(req.query(), topKLexical, "CHUNK"));
 
             long parallelDenseStart = System.currentTimeMillis();
             try {
@@ -506,6 +507,16 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
     }
 
     @Override
+    public int upsertEntities(String tenant, java.util.List<EntitySearchDocument> entities) throws IOException {
+        int count = indexAdapter.upsertEntities(tenant, entities);
+        HybridSearcher searcher = getSearcher(tenant);
+        if (searcher != null) {
+            searcher.maybeRefresh();
+        }
+        return count;
+    }
+
+    @Override
     public String statusName() {
         return getStatus().name();
     }
@@ -516,6 +527,12 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
      */
     @Override
     public SearchResult search(SearchQuery query, SearchFilter filter) throws IOException {
+        return filter.documentType() == org.synanton.synquest.search.SearchDocumentType.ENTITY
+                ? searchEntities(query, filter)
+                : chunkSearch(query, filter);
+    }
+
+    private SearchResult chunkSearch(SearchQuery query, SearchFilter filter) throws IOException {
         SearchResponse response = search(new SearchRequest(
                 filter.tenantId(), query.text(), query.topK(), query.topKDense(), query.topKLexical(),
                 query.rrfK(), query.rerank(), query.rerankCandidates(), query.expand(),
@@ -523,5 +540,78 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
         return new SearchResult(
                 response.hits().stream().map(SearchDocument::from).toList(),
                 response.trace(), response.queryUsage());
+    }
+
+    /**
+     * Entity retrieval over the shared index: lexical + dense legs are both
+     * FILTERed to doc_type=ENTITY, so chunk documents can never leak into entity
+     * candidates (and vice versa). No rerank/expansion on this path.
+     */
+    private SearchResult searchEntities(SearchQuery query, SearchFilter filter) throws IOException {
+        String tenant = filter.tenantId();
+        if (tenant == null || tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException();
+        }
+        HybridSearcher searcher = getSearcher(tenant);
+        if (searcher == null) {
+            throw new IllegalStateException("Index not ready for tenant: " + tenant);
+        }
+        int topK = query.topK() != null ? query.topK() : props.search().defaultTopK();
+        int topKDense = query.topKDense() != null ? query.topKDense() : props.search().defaultTopKDense();
+        int topKLexical = query.topKLexical() != null ? query.topKLexical() : props.search().defaultTopKLexical();
+        int rrfK = query.rrfK() != null ? query.rrfK() : props.search().defaultRrfK();
+        long t0 = System.currentTimeMillis();
+        float[] denseVec = null;
+        long embedMs = 0;
+        boolean embedSkipped = false;
+        boolean embedCached = false;
+        if (topKDense > 0) {
+            try {
+                long start = System.currentTimeMillis();
+                QueryEmbedder.QueryVector qv = queryEmbedder.embedForSearch(query.text(), tenant);
+                denseVec = qv.vector();
+                embedCached = qv.cached();
+                embedMs = System.currentTimeMillis() - start;
+            } catch (Exception e) {
+                if (queryEmbedder.required()) {
+                    throw new EmbeddingUnavailableException(e);
+                }
+                embedSkipped = true;
+                log.warn("Entity query embedding unavailable, using BM25 only: {}", e.getMessage());
+            }
+        }
+        long denseStart = System.currentTimeMillis();
+        TopDocs dense = denseVec == null
+                ? new TopDocs(new org.apache.lucene.search.TotalHits(0,
+                        org.apache.lucene.search.TotalHits.Relation.EQUAL_TO), new org.apache.lucene.search.ScoreDoc[0])
+                : searcher.dense(denseVec, topKDense, null, "ENTITY");
+        long denseMs = System.currentTimeMillis() - denseStart;
+        long lexicalStart = System.currentTimeMillis();
+        TopDocs lexical = searcher.lexical(query.text(), topKLexical, "ENTITY");
+        long lexicalMs = System.currentTimeMillis() - lexicalStart;
+        long fusionStart = System.currentTimeMillis();
+        List<RrfFusion.FusedHit> fused = RrfFusion.combine(
+                dense, lexical, topK, rrfK, props.search().defaultSingleLegBoost());
+        long fusionMs = System.currentTimeMillis() - fusionStart;
+        var stored = searcher.storedFields();
+        List<SearchDocument> documents = new ArrayList<>(fused.size());
+        for (RrfFusion.FusedHit fh : fused) {
+            Document doc = stored.document(fh.docId());
+            String aliases = doc.get("entity_aliases");
+            documents.add(new SearchDocument(
+                    null, -1, fh.rrfScore(), fh.denseScore(), fh.lexicalScore(),
+                    fh.rankDense(), fh.rankLexical(), doc.get("text"), null, -1, -1, null,
+                    doc.get("entity_label"), List.of(), 0, null, false, null, null, null, null,
+                    org.synanton.synquest.search.SearchDocumentType.ENTITY,
+                    doc.get("entity_id"), doc.get("entity_label"),
+                    aliases == null || aliases.isBlank() ? List.of() : Arrays.asList(aliases.split("\\|")),
+                    doc.get("entity_type"), doc.get("entity_description")));
+        }
+        long totalMs = System.currentTimeMillis() - t0;
+        SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
+                searcher.generation());
+        QueryUsage usage = new QueryUsage(totalMs, embedMs,
+                query.text() == null ? 0 : query.text().length(), 0, embedSkipped, embedCached);
+        return new SearchResult(documents, trace, usage);
     }
 }

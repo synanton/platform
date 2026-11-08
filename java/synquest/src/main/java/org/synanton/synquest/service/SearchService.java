@@ -2,6 +2,7 @@ package org.synanton.synquest.service;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import org.synanton.synquest.api.dto.IndexStats;
 import org.synanton.synquest.api.dto.SearchRequest;
@@ -11,6 +12,7 @@ import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 import org.synanton.synquest.engine.lucene.LuceneSearchEngine;
 import org.synanton.synquest.search.EmbeddedLuceneAdapter;
 import org.synanton.synquest.search.SearchDocument;
+import org.synanton.synquest.search.EntitySearchDocument;
 import org.synanton.synquest.search.SearchEngineAdapter;
 import org.synanton.synquest.search.SearchFilter;
 import org.synanton.synquest.search.SearchIndexAdapter;
@@ -87,6 +89,10 @@ public class SearchService {
 
     public void reindex(String tenant) throws IOException {
         engine.reindex(tenant);
+    }
+
+    public int upsertEntities(String tenant, List<EntitySearchDocument> entities) throws IOException {
+        return engine.upsertEntities(tenant, entities);
     }
 
     public void projectContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException {
