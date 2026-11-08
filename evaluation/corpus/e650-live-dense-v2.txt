@@ -1,0 +1,7 @@
+Zephyr-9 Calibration Protocol (Revision B)
+
+Quarterly torque audits of the auxiliary coolant manifold are mandatory for the
+Zephyr-9 platform. Technicians must log manifold pressure drift, verify the
+titanium retaining fasteners, and replace any fastener whose audit tolerance
+exceeds two percent. The Zephyr-9 protocol uniquely requires a helium leak
+check after every fifth audit cycle.
