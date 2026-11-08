@@ -28,6 +28,8 @@ class SchemaInventoryTest {
                     "dead_letter_events",
                     "embedding_content_cache",
                     "extraction_results",
+                    "relation_promotion_results",
+                    "resolution_results",
                     "image_caption_cache",
                     "ingestion_errors",
                     "ingestion_manifest_entries",
@@ -164,7 +166,16 @@ class SchemaInventoryTest {
             "chunks_payload.document_offset_start",
             "chunks_payload.document_offset_end",
             "source_versions.graph_attempt_count",
-            "source_versions.graph_next_attempt_at"
+            "source_versions.graph_next_attempt_at",
+            "source_versions.resolution_status",
+            "source_versions.resolution_started_at",
+            "source_versions.resolution_completed_at",
+            "source_versions.resolution_attempt_count",
+            "source_versions.resolution_next_attempt_at",
+            "source_versions.resolution_counters",
+            "resolution_results.outcome",
+            "resolution_results.strategy_version",
+            "relation_promotion_results.promotion_status"
         );
     }
 }

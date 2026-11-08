@@ -995,6 +995,93 @@ public class IngestionCacheClient {
         return result.wasApplied();
     }
 
+    public void upsertResolutionResult(ResolutionResultRow row) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.resolution_results (tenant_id, source_version_id, mention_id, " +
+            "content_ref_id, chunk_ordinal, chunk_offset_start, chunk_offset_end, document_offset_start, " +
+            "document_offset_end, surface_form, proposed_type, outcome, resolved_entity_id, canonical_label, " +
+            "best_score, runner_up_score, strategy_version, ontology_version, diagnostics_json, decided_at, " +
+            "superseded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            row.tenantId(), row.sourceVersionId(), row.mentionId(), row.contentRefId(), row.chunkOrdinal(),
+            row.chunkOffsetStart(), row.chunkOffsetEnd(), row.documentOffsetStart(), row.documentOffsetEnd(),
+            row.surfaceForm(), row.proposedType(), row.outcome(), row.resolvedEntityId(), row.canonicalLabel(),
+            row.bestScore(), row.runnerUpScore(), row.strategyVersion(), row.ontologyVersion(),
+            row.diagnosticsJson(), row.decidedAt(), row.supersededAt()
+        ));
+    }
+
+    public List<ResolutionResultRow> listResolutionResults(String tenantId, UUID sourceVersionId) {
+        List<ResolutionResultRow> rows = new ArrayList<>();
+        for (Row row : session.execute(SimpleStatement.newInstance(
+                "SELECT * FROM ingestion_cache.resolution_results WHERE tenant_id=? AND source_version_id=?",
+                tenantId, sourceVersionId))) {
+            rows.add(new ResolutionResultRow(
+                row.getString("tenant_id"), row.getUuid("source_version_id"), row.getString("mention_id"),
+                row.getUuid("content_ref_id"), row.getInt("chunk_ordinal"),
+                intOrDefault(row, "chunk_offset_start", -1), intOrDefault(row, "chunk_offset_end", -1),
+                intOrDefault(row, "document_offset_start", -1), intOrDefault(row, "document_offset_end", -1),
+                row.getString("surface_form"), row.getString("proposed_type"), row.getString("outcome"),
+                row.getString("resolved_entity_id"), row.getString("canonical_label"),
+                row.getDouble("best_score"), row.getDouble("runner_up_score"),
+                row.getString("strategy_version"), row.getString("ontology_version"),
+                row.getString("diagnostics_json"), row.getInstant("decided_at"), row.getInstant("superseded_at")
+            ));
+        }
+        return rows.stream().sorted(Comparator.comparing(ResolutionResultRow::mentionId)).toList();
+    }
+
+    public void upsertRelationPromotionResult(RelationPromotionResultRow row) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.relation_promotion_results (tenant_id, source_version_id, relation_id, " +
+            "subject_mention_id, object_mention_id, predicate, promotion_status, canonical_subject_id, " +
+            "canonical_object_id, reason, evidence_json, strategy_version, ontology_version, decided_at, " +
+            "superseded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            row.tenantId(), row.sourceVersionId(), row.relationId(), row.subjectMentionId(),
+            row.objectMentionId(), row.predicate(), row.promotionStatus(), row.canonicalSubjectId(),
+            row.canonicalObjectId(), row.reason(), row.evidenceJson(), row.strategyVersion(),
+            row.ontologyVersion(), row.decidedAt(), row.supersededAt()
+        ));
+    }
+
+    public List<RelationPromotionResultRow> listRelationPromotionResults(String tenantId, UUID sourceVersionId) {
+        List<RelationPromotionResultRow> rows = new ArrayList<>();
+        for (Row row : session.execute(SimpleStatement.newInstance(
+                "SELECT * FROM ingestion_cache.relation_promotion_results " +
+                "WHERE tenant_id=? AND source_version_id=?",
+                tenantId, sourceVersionId))) {
+            rows.add(new RelationPromotionResultRow(
+                row.getString("tenant_id"), row.getUuid("source_version_id"), row.getString("relation_id"),
+                row.getString("subject_mention_id"), row.getString("object_mention_id"),
+                row.getString("predicate"), row.getString("promotion_status"),
+                row.getString("canonical_subject_id"), row.getString("canonical_object_id"),
+                row.getString("reason"), row.getString("evidence_json"), row.getString("strategy_version"),
+                row.getString("ontology_version"), row.getInstant("decided_at"), row.getInstant("superseded_at")
+            ));
+        }
+        return rows.stream().sorted(Comparator.comparing(RelationPromotionResultRow::relationId)).toList();
+    }
+
+    public void markResolutionStatus(
+            String tenantId, String connectorId, String sourceId, String resourceId, UUID versionId,
+            String status, Instant startedAt, Instant completedAt, Map<String, Integer> counters) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET resolution_status=?, resolution_started_at=?, " +
+            "resolution_completed_at=?, resolution_counters=? WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=? AND version_id=?",
+            status, startedAt, completedAt, counters, tenantId, connectorId, sourceId, resourceId, versionId
+        ));
+    }
+
+    public Optional<String> readResolutionStatus(
+            String tenantId, String connectorId, String sourceId, String resourceId, UUID versionId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT resolution_status FROM ingestion_cache.source_versions WHERE tenant_id=? " +
+            "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            tenantId, connectorId, sourceId, resourceId, versionId
+        )).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getString("resolution_status"));
+    }
+
     public void markGraphValidating(ExtractionRequestRow request) {
         session.execute(SimpleStatement.newInstance(
             "UPDATE ingestion_cache.source_versions SET graph_status='VALIDATING' " +

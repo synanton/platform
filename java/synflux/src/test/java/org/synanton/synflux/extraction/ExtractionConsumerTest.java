@@ -28,6 +28,8 @@ import org.synanton.ingestioncache.domain.SourceIdentityRow;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
+import org.synanton.ingestioncache.domain.ResolutionResultRow;
+import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
 import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.testcontainers.cassandra.CassandraContainer;
@@ -133,6 +135,35 @@ class ExtractionConsumerTest {
         cache.markGraphCommitted(request, "GRAPH_COMMITTED", java.util.Map.of("relations_accepted", 1),
                 1, now.plusSeconds(32));
         assertThat(cache.listPendingGraphCommits(tenant, 10, now.plusSeconds(60))).isEmpty();
+    }
+
+    @Test
+    void resolutionAndPromotionResultsRoundTrip() {
+        String tenant = "tenant-resolution";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        Instant now = Instant.now();
+        cache.upsertResolutionResult(new ResolutionResultRow(
+                tenant, fixture.versionId(), "mention-1", fixture.contentRefId(), 0,
+                0, 9, 100, 109, "Halcyon-7", "MaintenanceSystem", "RESOLVED",
+                "entity-halcyon-7", "Halcyon-7", 0.91, 0.22, "resolution-v1", "1.0.0",
+                "{}", now, null));
+        var resolutions = cache.listResolutionResults(tenant, fixture.versionId());
+        assertThat(resolutions).hasSize(1);
+        assertThat(resolutions.getFirst().outcome()).isEqualTo("RESOLVED");
+        assertThat(resolutions.getFirst().bestScore()).isEqualTo(0.91);
+
+        cache.upsertRelationPromotionResult(new RelationPromotionResultRow(
+                tenant, fixture.versionId(), "relation-1", "mention-1", "mention-2", "requires",
+                "PROMOTED", "entity-halcyon-7", "entity-helium", null, "{\"chunks\":[\"ref:0\"]}",
+                "resolution-v1", "1.0.0", now, null));
+        assertThat(cache.listRelationPromotionResults(tenant, fixture.versionId()))
+                .singleElement()
+                .satisfies(row -> assertThat(row.promotionStatus()).isEqualTo("PROMOTED"));
+
+        cache.markResolutionStatus(tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId(),
+                "COMPLETED", now, now, java.util.Map.of("resolved", 1));
+        assertThat(cache.readResolutionStatus(tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId()))
+                .contains("COMPLETED");
     }
 
     private static ExtractionConsumer consumer(String tenant, ExtractionEngineAdapter adapter) {
