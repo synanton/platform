@@ -1,6 +1,6 @@
 # RAKG Phase 2 — asynchronous extraction consumer (design)
 
-**Status:** Design + PR #1 emission landed (2026-11-08); consumer loop not implemented
+**Status:** PR #1 emission + PR #2 consumer landed (2026-11-08); SHACL/Relix commit is the next phase
 **Date:** 2026-11-08
 **Issue:** #560 (RAKG), follow-up to ADR-022
 **Preview seam:** `POST /api/v1/extraction/preview` (synchronous, diagnostic only)
@@ -108,6 +108,23 @@ flowchart LR
   commit; a superseded generation is dropped without writing graph state.
 - `SourceDeleted` emits `ExtractionCancelled` (or the consumer observes the
   tombstone) and deletes the generation's derived knowledge.
+
+## PR #2 implementation (landed)
+
+- `ExtractionConsumer` (`@Scheduled(fixedDelay=5s)`) polls at most one document
+  per invocation, processes its chunks sequentially through the adapter, and
+  stores per-chunk `PreEntity`/`RelationCandidate` JSON in
+  `ingestion_cache.extraction_results` (the pre-Relix stub).
+- Status transitions: `PENDING` at emission, `EXTRACTING` at pickup,
+  `KNOWLEDGE_READY` on success (and `extraction_event_published=true`), or
+  `EXTRACTION_FAILED` with attempt/backoff and `published=false` for retry.
+- The scheduler pool is 4 so the long extraction call does not block workflow
+  recovery; the consumer itself never runs concurrently for one bean.
+- `GET /v1/sources/{sourceId}/status` exposes `extraction_status`.
+- Safe defaults: consumer disabled and provider `regex`; enable with
+  `EXTRACTION_CONSUMER_ENABLED=true` and `EXTRACTION_PROVIDER=llm`.
+- Results table is overwritten per `(content_ref_id, chunk_ordinal)`; the graph
+  commit path remains out of scope.
 
 ## Failure and retry
 

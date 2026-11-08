@@ -112,6 +112,7 @@ public class SourceController {
         int chunkCount = 0;
         boolean sawVersion = false;
         boolean indexed = true;
+        List<String> extractionStatuses = new java.util.ArrayList<>();
         for (SourceIdentityRow identity : cache.listSourceIdentities(tenantId, sourceId, connectorId)) {
             List<SourceVersionRow> versions = cache.listSourceVersions(
                     identity.tenantId(), identity.connectorId(), identity.sourceId(), identity.resourceId());
@@ -122,6 +123,8 @@ public class SourceController {
             SourceVersionRow latest = versions.stream()
                     .max(Comparator.comparing(SourceVersionRow::observedAt))
                     .orElseThrow();
+            cache.readExtractionStatus(tenantId, identity.connectorId(), identity.sourceId(),
+                    identity.resourceId(), latest.versionId()).ifPresent(extractionStatuses::add);
             chunkCount += cache.readChunks(tenantId, latest.contentRefId()).size();
             boolean projectedState = cache.readManifest(tenantId, latest.contentRefId())
                     .map(manifest -> manifest.state() != null
@@ -138,14 +141,29 @@ public class SourceController {
                     .orElse(false);
             indexed &= projectedState && published;
         }
-        return new SourceStatusResource(sourceId, status, sawVersion && indexed, chunkCount);
+        return new SourceStatusResource(sourceId, status, sawVersion && indexed, chunkCount,
+                aggregateExtractionStatus(extractionStatuses));
+    }
+
+    private static String aggregateExtractionStatus(List<String> statuses) {
+        if (statuses.contains("EXTRACTION_FAILED")) {
+            return "EXTRACTION_FAILED";
+        }
+        if (statuses.contains("EXTRACTING")) {
+            return "EXTRACTING";
+        }
+        if (!statuses.isEmpty() && statuses.stream().allMatch("KNOWLEDGE_READY"::equals)) {
+            return "KNOWLEDGE_READY";
+        }
+        return "PENDING";
     }
 
     public record SourceStatusResource(
             @JsonProperty("source_id") String sourceId,
             @JsonProperty("status") String status,
             @JsonProperty("indexed") boolean indexed,
-            @JsonProperty("chunk_count") int chunkCount) {}
+            @JsonProperty("chunk_count") int chunkCount,
+            @JsonProperty("extraction_status") String extractionStatus) {}
 
     @GetMapping
     public List<SourceResource> list() {

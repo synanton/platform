@@ -798,8 +798,8 @@ public class IngestionCacheClient {
             "event_next_attempt_at, event_dead_lettered, extraction_event_id, extraction_event_type, " +
             "extraction_event_payload_json, extraction_event_published, extraction_event_published_at, " +
             "extraction_event_attempt_count, extraction_event_last_error, extraction_event_next_attempt_at, " +
-            "extraction_event_dead_lettered) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,false,?,?,?,?,?) IF NOT EXISTS",
+            "extraction_event_dead_lettered, extraction_status) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?) IF NOT EXISTS",
             version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
             version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
             version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson(),
@@ -811,7 +811,8 @@ public class IngestionCacheClient {
             extractionEvent == null ? 0 : extractionEvent.attemptCount(),
             extractionEvent == null ? null : extractionEvent.lastError(),
             extractionEvent == null ? null : extractionEvent.nextAttemptAt(),
-            extractionEvent == null ? false : extractionEvent.deadLettered()
+            extractionEvent == null ? false : extractionEvent.deadLettered(),
+            extractionEvent == null ? null : "PENDING"
         ));
         return result.wasApplied();
     }
@@ -880,6 +881,120 @@ public class IngestionCacheClient {
             tenantId, connectorId, sourceId, resourceId, versionId
         )).one();
         return row == null ? Optional.empty() : Optional.ofNullable(row.getInstant("search_projected_at"));
+    }
+
+    /** Pending extraction requests: readiness set, unpublished, not dead-lettered, backoff elapsed. */
+    public List<ExtractionRequestRow> listPendingExtractionRequests(String tenantId, int limit, Instant now) {
+        List<ExtractionRequestRow> pending = new ArrayList<>();
+        for (SourceRow source : listSources(tenantId)) {
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                ResultSet rows = session.execute(SimpleStatement.newInstance(
+                    "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+                    "AND source_id=? AND resource_id=?",
+                    tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId()
+                ));
+                for (Row row : rows) {
+                    UUID eventId = row.getUuid("extraction_event_id");
+                    if (eventId == null
+                            || boolOrDefault(row, "extraction_event_published", false)
+                            || boolOrDefault(row, "extraction_event_dead_lettered", false)
+                            || row.getInstant("search_projected_at") == null) {
+                        continue;
+                    }
+                    Instant nextAttempt = row.getInstant("extraction_event_next_attempt_at");
+                    if (nextAttempt != null && nextAttempt.isAfter(now)) {
+                        continue;
+                    }
+                    String status = row.getString("extraction_status");
+                    if ("KNOWLEDGE_READY".equals(status)) {
+                        continue;
+                    }
+                    pending.add(new ExtractionRequestRow(
+                        row.getString("tenant_id"), row.getString("connector_id"),
+                        row.getString("source_id"), row.getString("resource_id"), eventId,
+                        row.getUuid("version_id"), row.getUuid("content_ref_id"),
+                        row.getString("extraction_event_payload_json"), row.getInstant("observed_at"),
+                        row.getInstant("search_projected_at"), status,
+                        intOrDefault(row, "extraction_event_attempt_count", 0),
+                        row.getString("extraction_event_last_error"),
+                        row.getInstant("extraction_event_next_attempt_at"),
+                        boolOrDefault(row, "extraction_event_dead_lettered", false)
+                    ));
+                }
+            }
+        }
+        return pending.stream().sorted(Comparator.comparing(ExtractionRequestRow::requestedAt)
+            .thenComparing(ExtractionRequestRow::eventId)).limit(limit).toList();
+    }
+
+    public Optional<String> readExtractionStatus(
+            String tenantId, String connectorId, String sourceId, String resourceId, UUID versionId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT extraction_status FROM ingestion_cache.source_versions WHERE tenant_id=? " +
+            "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            tenantId, connectorId, sourceId, resourceId, versionId
+        )).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getString("extraction_status"));
+    }
+
+    public void markExtractionStarted(ExtractionRequestRow request) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET extraction_status='EXTRACTING' " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            request.tenantId(), request.connectorId(), request.sourceId(), request.resourceId(),
+            request.versionId()
+        ));
+    }
+
+    public void markExtractionSucceeded(ExtractionRequestRow request, Instant completedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET extraction_status='KNOWLEDGE_READY', " +
+            "extraction_event_published=true, extraction_event_published_at=?, " +
+            "extraction_event_last_error=null, extraction_event_next_attempt_at=null, " +
+            "extraction_event_dead_lettered=false WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=? AND version_id=?",
+            completedAt, request.tenantId(), request.connectorId(), request.sourceId(),
+            request.resourceId(), request.versionId()
+        ));
+    }
+
+    public void markExtractionFailed(
+            ExtractionRequestRow request, int attemptCount, String error, Instant nextAttemptAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET extraction_status='EXTRACTION_FAILED', " +
+            "extraction_event_published=false, extraction_event_attempt_count=?, " +
+            "extraction_event_last_error=?, extraction_event_next_attempt_at=? " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            attemptCount, error, nextAttemptAt, request.tenantId(), request.connectorId(),
+            request.sourceId(), request.resourceId(), request.versionId()
+        ));
+    }
+
+    public void upsertExtractionResult(
+            String tenantId, UUID contentRefId, int chunkOrdinal, UUID sourceVersionId,
+            String entitiesJson, String relationsJson, Instant extractedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.extraction_results (tenant_id, content_ref_id, chunk_ordinal, " +
+            "source_version_id, entities_json, relations_json, extracted_at) VALUES (?,?,?,?,?,?,?)",
+            tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson, relationsJson, extractedAt
+        ));
+    }
+
+    public List<ExtractionResultRow> listExtractionResults(String tenantId, UUID contentRefId) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.extraction_results WHERE tenant_id=? AND content_ref_id=?",
+            tenantId, contentRefId
+        ));
+        List<ExtractionResultRow> rows = new ArrayList<>();
+        for (Row row : result) {
+            rows.add(new ExtractionResultRow(
+                row.getString("tenant_id"), row.getUuid("content_ref_id"), row.getInt("chunk_ordinal"),
+                row.getUuid("source_version_id"), row.getString("entities_json"),
+                row.getString("relations_json"), row.getInstant("extracted_at")
+            ));
+        }
+        return rows.stream().sorted(Comparator.comparingInt(ExtractionResultRow::chunkOrdinal)).toList();
     }
 
     public List<SourceOutboxRow> listSourceOutbox(

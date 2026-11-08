@@ -7,6 +7,11 @@ server:
 spring:
   application:
     name: synflux
+  task:
+    scheduling:
+      pool:
+        # The extraction consumer can hold one scheduler thread for minutes.
+        size: ${SPRING_TASK_SCHEDULING_POOL_SIZE:4}
   servlet:
     multipart:
       # The ingest business limit is 100 MB (synflux.ingest.max-file-size-bytes).
@@ -52,6 +57,14 @@ synflux:
     endpoint: ${LLM_EXTRACTION_URL:http://localhost:8000/v1}
     model: ${LLM_EXTRACTION_MODEL:qwen3-extraction}
     timeout-seconds: ${LLM_EXTRACTION_TIMEOUT_SECONDS:120}
+    consumer:
+      # Safe default: disabled until the GPU plane and model are reachable.
+      enabled: ${EXTRACTION_CONSUMER_ENABLED:false}
+      tenant: ${EXTRACTION_CONSUMER_TENANT:demo}
+      batch-documents: ${EXTRACTION_CONSUMER_BATCH_DOCUMENTS:1}
+      max-attempts: ${EXTRACTION_CONSUMER_MAX_ATTEMPTS:5}
+      retry-backoff-seconds: ${EXTRACTION_CONSUMER_RETRY_BACKOFF_SECONDS:30}
+      poll-delay-ms: ${EXTRACTION_CONSUMER_POLL_DELAY_MS:5000}
 
 synanton:
   extraction:

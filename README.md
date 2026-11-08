@@ -187,8 +187,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 - **Knowledge extraction:** the `ExtractionEngineAdapter` port separates the
   deterministic `RegexExtractorAdapter` baseline from the RAKG
   `LlmExtractionAdapter` (Phase B, landed) that calls out-of-process vLLM;
-  `ExtractionRequested` is emitted atomically with `SourcePublished` and gated on
-  `search_projected_at` for the asynchronous consumer.
+  `ExtractionRequested` is emitted atomically with `SourcePublished`; an async
+  consumer (bounded, sequential) gates on `search_projected_at` and moves
+  `PENDING → EXTRACTING → KNOWLEDGE_READY` while storing pre-Relix results.
 - **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
   adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
   live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
@@ -198,11 +199,10 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 
 ## Known limitations
 
-- **LLM extraction is experimental.** The Java adapter reproduces 0.618 entity /
-  0.078 relationship F1 on the frozen gold, but it is not yet invoked by the
-  ingestion stage (the provider bean and evaluation CLI are wired; resolution,
-  SHACL validation, and graph commit are the next RAKG phases). Coreference
-  resolution is still pending; docs 3–5 have zero relationship F1
+- **LLM extraction is experimental.** The adapter reproduces 0.618 entity /
+  0.078 relationship F1 on the frozen gold; the async consumer is landed, but
+  results are stored pre-Relix and resolution/SHACL/graph commit are pending.
+  Coreference resolution is still pending; docs 3–5 have zero relationship F1
   (predicate/endpoint alignment).
 - **Gold is smoke-scale:** 5 documents / 70 mentions / 44 relationships, no
   inter-annotator agreement yet.
@@ -213,9 +213,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 
 ## Next steps
 
-- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** invoke the
-  adapter from ingestion, then add retrieval-assisted resolution, SHACL
-  validation, and graph commit on top of the frozen gold.
+- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** add
+  retrieval-assisted resolution, SHACL validation, and Relix graph commit on top
+  of the asynchronous consumer.
 - **#556:** query-adaptive RRF on the now-frozen retrieval corpus (deferred).
 - **#538:** route demo TEI through the gateway and drop the direct exception.
 

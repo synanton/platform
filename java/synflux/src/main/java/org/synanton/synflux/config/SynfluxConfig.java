@@ -45,7 +45,7 @@ import java.util.concurrent.Executors;
 
 @Configuration
 @EnableConfigurationProperties({SynfluxProperties.class, ExtractionClientProperties.class,
-        ExtractionEngineProperties.class})
+        ExtractionEngineProperties.class, ExtractionConsumerProperties.class})
 @Import(KafkaClientConfig.class)
 public class SynfluxConfig {
 
