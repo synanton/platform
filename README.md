@@ -21,6 +21,9 @@ flowchart LR
     Vault[Synvault<br/>content storage] --> Flux[Synflux<br/>acquire · extract · chunk · enrich]
     Extract[Structured extraction] --> Flux
   end
+  Flux <-->|sentence chunks / pre-entities| VLLM
+  Flux -->|pre-entities| Ontology
+  Flux -->|candidate relations| Relix
   Ingest --> Knowledge
   subgraph Knowledge
     Quest[Synquest<br/>BM25 · vector retrieval]
@@ -32,12 +35,16 @@ flowchart LR
   Planner --> Gateway[Execution gateway<br/>synthesis · reranking]
   Gateway --> API[Synapt<br/>REST · gRPC · auth]
   API --> Clients[Applications · MCP clients]
-  Gateway <--> GPU[GPU execution plane<br/>synanton.gpu.v1 over gRPC/mTLS]
+  subgraph GPUPlane[GPU execution plane]
+    GPU[gRPC model execution<br/>synanton.gpu.v1 · mTLS]
+    VLLM[vLLM extraction<br/>Qwen3-4B · OpenAI-compatible]
+  end
+  Gateway <--> GPU
   API --> Analytics[Protected analytics boundary]
   Analytics --> Events[Events → facts → aggregates → reports]
 ```
 
-The GPU execution plane is isolated from the CPU/control plane by a versioned gRPC contract, allowing model serving and GPU capacity to evolve independently. This diagram is a conceptual view; individual components and end-to-end paths have different implementation status.
+The GPU execution plane is isolated from the CPU/control plane by a versioned gRPC contract, allowing model serving and GPU capacity to evolve independently. RAKG extraction uses a separate OpenAI-compatible vLLM endpoint in that plane during ingestion; candidate entities/relations flow back to Synflux and then to Syntology/Relix. This diagram is a conceptual view; individual components and end-to-end paths have different implementation status.
 
 ### Knowledge lifecycle and recalculation
 
@@ -76,6 +83,7 @@ See the [implementation documentation](docs/implementation) and [research plans]
 | --- | --- |
 | **Synvault** | Content storage and source adapters |
 | **Synflux** | Acquisition, extraction orchestration, chunking, enrichment, and embedding |
+| **Extraction engine (RAKG)** | `ExtractionEngineAdapter`: regex baseline + out-of-process Qwen3-4B vLLM; frozen gold evaluation |
 | **Synquest** | BM25 and vector retrieval |
 | **Relix** | Graph reasoning, GraphRAG, and graph connectors |
 | **Syntology** | Ontology, SHACL validation, and versioning |
@@ -125,6 +133,25 @@ For the local ingestion demo, the repository includes a Docker Compose stack and
 cp .env.example .env
 ```
 
+### LLM extraction (RAKG Phase B, optional)
+
+The extraction adapter calls an OpenAI-compatible vLLM endpoint. To run the LLM
+path locally/homelab, deploy `vllm-extraction` from `gpu-runtime` and make the
+Qwen3-4B weights available on the GPU node:
+
+```bash
+# gpu-runtime checkout; node3 needs /mnt/local-fast/models/qwen3-4b-instruct-2507
+kubectl apply -f gpu-runtime/deployments/homelab/blueprints/vllm/extraction-llm.yaml
+kubectl -n gpu-plane port-forward deploy/vllm-extraction 8000:8000
+curl -s localhost:8000/v1/models   # {"data":[{"id":"qwen3-extraction", ...}]}
+```
+
+Synflux selects the engine with `EXTRACTION_PROVIDER=regex|llm` (default
+`regex`) and calls `LLM_EXTRACTION_URL` (in-cluster:
+`http://vllm-extraction.gpu-plane.svc.cluster.local:8000/v1`). The regex default
+keeps ingestion working when the GPU plane is down. See
+[ADR-022](docs/architecture/decisions/adr-022-extraction-engine-architecture.md).
+
 ## Documentation
 
 - [Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) — architecture decisions and implementation status
@@ -138,6 +165,48 @@ cp .env.example .env
 - [Platform API plane](docs/implementation/platform-api-plane/INDEX.md)
 - [Vertical-slice acceptance and diagnostic runbook](docs/implementation/vertical-slice/INDEX.md)
 - [Vector-engine selection and benchmark evidence](docs/architecture/vector-engine-selection.md) · [Retrieval evaluation plan](docs/research/retrieval-evaluation-benchmark-plan.md)
+- [Extraction engine architecture (ADR-022)](docs/architecture/decisions/adr-022-extraction-engine-architecture.md) · [Extraction baseline report](docs/research/extraction-baseline-report.md)
+
+## Current implementation status (2026-11-08)
+
+- **Hybrid search:** BM25 + Dense + RRF behind the decoupled
+  [`SearchEngineAdapter`](java/synquest/src/main/java/org/synanton/synquest/search/SearchEngineAdapter.java)
+  (ADR-021).
+- **Zero-downtime indexing:** streamed/incremental projection with
+  `SearcherManager.maybeRefresh()` and `updateDocument`; the previous ~40 s
+  full-rebuild/503 window is gone.
+- **Knowledge extraction:** the `ExtractionEngineAdapter` port separates the
+  deterministic `RegexExtractorAdapter` baseline from the RAKG
+  `LlmExtractionAdapter` (Phase B, landed) that calls out-of-process vLLM.
+- **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
+  adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
+  live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
+- **Operational:** automated vertical-slice E2E, outbox idempotency, tenant
+  isolation, source-status endpoint, and incremental `SourceDeleted` projection
+  are on `main`.
+
+## Known limitations
+
+- **LLM extraction is experimental.** The Java adapter reproduces 0.618 entity /
+  0.078 relationship F1 on the frozen gold, but it is not yet invoked by the
+  ingestion stage (the provider bean and evaluation CLI are wired; resolution,
+  SHACL validation, and graph commit are the next RAKG phases). Coreference
+  resolution is still pending; docs 3–5 have zero relationship F1
+  (predicate/endpoint alignment).
+- **Gold is smoke-scale:** 5 documents / 70 mentions / 44 relationships, no
+  inter-annotator agreement yet.
+- **Graph exploration is partial:** the search-result graph exists; entity-rooted
+  expansion needs a reverse entity→chunk API (#508).
+- **GPU plane:** TEI still uses a direct NetworkPolicy exception in the demo
+  (#538).
+
+## Next steps
+
+- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** invoke the
+  adapter from ingestion, then add retrieval-assisted resolution, SHACL
+  validation, and graph commit on top of the frozen gold.
+- **#556:** query-adaptive RRF on the now-frozen retrieval corpus (deferred).
+- **#538:** route demo TEI through the gateway and drop the direct exception.
 
 ## Project status
 

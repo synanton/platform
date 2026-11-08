@@ -12,6 +12,7 @@ docs/planning/extraction-gold-schema.md and docs/research/extraction-baseline-re
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -22,7 +23,9 @@ GOLD = ROOT / "gold"
 MANIFEST = GOLD / "MANIFEST.sha256"
 PREDICTIONS_DOC = ROOT / "regex-predictions.json"
 PREDICTIONS_CHUNKED = ROOT / "regex-predictions-chunked.json"
+JAVA_LLM_PREDICTIONS = ROOT / "java-llm-predictions.json"
 CLASSES = PLATFORM / "java" / "extraction-engine" / "build" / "classes" / "java" / "main"
+RESOURCES = PLATFORM / "java" / "extraction-engine" / "build" / "resources" / "main"
 
 DOCS = ["doc-1", "doc-2", "doc-3", "doc-4", "doc-5"]
 
@@ -40,20 +43,24 @@ def verify_manifest() -> None:
     print(f"manifest OK ({len(expected)} files)")
 
 
-def run_java_adapter(sentence_chunks: bool = False) -> dict:
-    if not CLASSES.exists():
+def run_java_adapter(sentence_chunks: bool = False, llm_endpoint: str | None = None,
+                     llm_model: str = "qwen3-extraction") -> dict:
+    if not CLASSES.exists() or not RESOURCES.exists():
         print("building java/extraction-engine ...")
         subprocess.run([str(PLATFORM / "gradlew"), "-q", ":java:extraction-engine:classes"],
                        cwd=PLATFORM, check=True)
-    out = PREDICTIONS_CHUNKED if sentence_chunks else PREDICTIONS_DOC
+    out = (JAVA_LLM_PREDICTIONS if llm_endpoint
+           else PREDICTIONS_CHUNKED if sentence_chunks else PREDICTIONS_DOC)
     command = [
-        "java", "-cp", str(CLASSES),
+        "java", "-cp", f"{CLASSES}{os.pathsep}{RESOURCES}",
         "org.synanton.extraction.engine.cli.ExtractionCli",
         "--corpus-dir", str(CORPUS),
         "--out", str(out),
     ]
-    if sentence_chunks:
+    if sentence_chunks or llm_endpoint:
         command += ["--sentence-chunks", "--max-tokens", "512"]
+    if llm_endpoint:
+        command += ["--llm-endpoint", llm_endpoint, "--llm-model", llm_model]
     subprocess.run(command, check=True)
     return json.loads(out.read_text(encoding="utf-8"))
 
@@ -191,10 +198,77 @@ def aggregate(rows: list[dict]) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-manifest", action="store_true", help="skip the frozen-gold hash check")
+    parser.add_argument("--llm-endpoint", default=None,
+                        help="OpenAI-compatible base URL; enables LLM prompt-tuning mode")
+    parser.add_argument("--llm-model", default="qwen3-extraction")
+    parser.add_argument("--prompt", type=Path,
+                        default=ROOT / "prompts" / "llm_extraction_system.txt")
+    parser.add_argument("--llm-max-tokens", type=int, default=2048)
+    parser.add_argument("--llm-temperature", type=float, default=0.0)
+    parser.add_argument("--limit", type=int, default=None, help="score only the first N documents")
+    parser.add_argument("--only", default=None, help="comma-separated gold doc ids (e.g. doc-5)")
+    parser.add_argument("--java-llm-endpoint", default=None,
+                        help="run the Java LlmExtractionAdapter (not the Python harness) against this endpoint")
+    parser.add_argument("--java-llm-model", default="qwen3-extraction")
+    parser.add_argument("--show-raw", action="store_true", help="print raw model JSON per chunk")
     args = parser.parse_args()
 
     if not args.skip_manifest:
         verify_manifest()
+
+    if args.llm_endpoint:
+        from llm_tuning import run as run_llm
+
+        run_llm(
+            endpoint=args.llm_endpoint,
+            model=args.llm_model,
+            prompt_path=args.prompt,
+            corpus=CORPUS,
+            gold=GOLD,
+            docs=DOCS,
+            evaluate_document=evaluate_document,
+            aggregate=aggregate,
+            out_dir=ROOT,
+            max_tokens=args.llm_max_tokens,
+            temperature=args.llm_temperature,
+            limit=args.limit,
+            only=[item.strip() for item in args.only.split(",")] if args.only else None,
+            show_raw=args.show_raw,
+        )
+        return
+
+    if args.java_llm_endpoint:
+        predictions = run_java_adapter(True, llm_endpoint=args.java_llm_endpoint,
+                                       llm_model=args.java_llm_model)
+        rows = []
+        print("\n[java_llm_adapter]")
+        for gold_id in DOCS:
+            gold = json.loads((GOLD / f"{gold_id}.json").read_text(encoding="utf-8"))
+            prediction = predictions.get(gold["document_id"], {"preEntities": [], "relations": []})
+            row = evaluate_document(gold, prediction)
+            rows.append(row)
+            print(f"{gold_id} {row['document_id']:28} pred={row['predicted_mentions']:3}e "
+                  f"{row['predicted_relations']:3}r  entity_F1={row['entity_overlap']['f1']:.3f} "
+                  f"rel_F1={row['relationship']['f1']:.3f}")
+        agg = aggregate(rows)
+        summary = {
+            "extractor": {
+                "adapter": "LlmExtractionAdapter (Java)",
+                "endpoint": args.java_llm_endpoint,
+                "model": args.java_llm_model,
+                "phase": "B (Java adapter)",
+            },
+            "aggregate": agg,
+            "per_document": rows,
+        }
+        (ROOT / "java-llm-baseline-result.json").write_text(
+            json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+        print(f"java_llm entity(overlap) P={agg['entity_overlap']['precision']:.3f} "
+              f"R={agg['entity_overlap']['recall']:.3f} F1={agg['entity_overlap']['f1']:.3f} "
+              f"type={agg['type_accuracy']}  relationship F1={agg['relationship']['f1']:.3f} "
+              f"({agg['predicted_relations']} preds) evidence={agg['evidence_coverage']}")
+        print(f"wrote {ROOT / 'java-llm-predictions.json'} and {ROOT / 'java-llm-baseline-result.json'}")
+        return
 
     summaries = {}
     for label, sentence_chunks in (("document_level", False), ("sentence_chunked", True)):

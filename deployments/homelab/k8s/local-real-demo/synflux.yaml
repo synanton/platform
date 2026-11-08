@@ -57,6 +57,13 @@ spec:
               value: "true"
             - name: EXTRACTION_ENDPOINT
               value: extraction-gateway:9091
+            # RAKG Phase B (ADR-022): flip to "llm" to use the GPU-plane extractor.
+            - name: EXTRACTION_PROVIDER
+              value: "regex"
+            - name: LLM_EXTRACTION_URL
+              value: "http://vllm-extraction.gpu-plane.svc.cluster.local:8000/v1"
+            - name: LLM_EXTRACTION_MODEL
+              value: "qwen3-extraction"
             - name: MINIO_ENDPOINT
               value: http://minio:9000
             - name: MINIO_ACCESS_KEY

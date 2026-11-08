@@ -1,0 +1,774 @@
+{
+  "halcyon-7-directive": {
+    "preEntities": [
+      {
+        "mentionId": "m1",
+        "surfaceForm": "Halcyon-7",
+        "proposedType": "MaintenanceSystem",
+        "charStart": 8,
+        "charEnd": 17
+      },
+      {
+        "mentionId": "m2",
+        "surfaceForm": "auxiliary coolant loop",
+        "proposedType": "Component",
+        "charStart": 54,
+        "charEnd": 76
+      },
+      {
+        "mentionId": "m3",
+        "surfaceForm": "relief valve",
+        "proposedType": "Component",
+        "charStart": 124,
+        "charEnd": 136
+      },
+      {
+        "mentionId": "m4",
+        "surfaceForm": "secondary manifold",
+        "proposedType": "Component",
+        "charStart": 144,
+        "charEnd": 162
+      },
+      {
+        "mentionId": "m5",
+        "surfaceForm": "pressure-test log",
+        "proposedType": "Document",
+        "charStart": 262,
+        "charEnd": 279
+      },
+      {
+        "mentionId": "m6",
+        "surfaceForm": "ambient dew point",
+        "proposedType": "Measurement",
+        "charStart": 312,
+        "charEnd": 329
+      },
+      {
+        "mentionId": "m7",
+        "surfaceForm": "ninety days",
+        "proposedType": "Time",
+        "charStart": 107,
+        "charEnd": 118
+      },
+      {
+        "mentionId": "m8",
+        "surfaceForm": "two hundred seventy days",
+        "proposedType": "Time",
+        "charStart": 186,
+        "charEnd": 210
+      },
+      {
+        "mentionId": "m9",
+        "surfaceForm": "every test",
+        "proposedType": "Concept",
+        "charStart": 285,
+        "charEnd": 295
+      }
+    ],
+    "relations": [
+      {
+        "subjectMentionId": "m2",
+        "predicate": "tested_every",
+        "objectMentionId": "m7",
+        "evidenceChunkId": "halcyon-7-directive",
+        "evidenceCharStart": 40,
+        "evidenceCharEnd": 119
+      },
+      {
+        "subjectMentionId": "m3",
+        "predicate": "replaced_every",
+        "objectMentionId": "m8",
+        "evidenceChunkId": "halcyon-7-directive",
+        "evidenceCharStart": 124,
+        "evidenceCharEnd": 210
+      },
+      {
+        "subjectMentionId": "m9",
+        "predicate": "records",
+        "objectMentionId": "m6",
+        "evidenceChunkId": "halcyon-7-directive",
+        "evidenceCharStart": 285,
+        "evidenceCharEnd": 329
+      }
+    ]
+  },
+  "e650-live-dense-v2": {
+    "preEntities": [
+      {
+        "mentionId": "m1",
+        "surfaceForm": "Zephyr-9 Calibration Protocol",
+        "proposedType": "Protocol",
+        "charStart": 0,
+        "charEnd": 29
+      },
+      {
+        "mentionId": "m2",
+        "surfaceForm": "Zephyr-9 platform",
+        "proposedType": "MaintenanceSystem",
+        "charStart": 124,
+        "charEnd": 141
+      },
+      {
+        "mentionId": "m3",
+        "surfaceForm": "auxiliary coolant manifold",
+        "proposedType": "Component",
+        "charStart": 75,
+        "charEnd": 101
+      },
+      {
+        "mentionId": "m4",
+        "surfaceForm": "manifold pressure drift",
+        "proposedType": "Measurement",
+        "charStart": 164,
+        "charEnd": 187
+      },
+      {
+        "mentionId": "m5",
+        "surfaceForm": "titanium retaining fasteners",
+        "proposedType": "Component",
+        "charStart": 200,
+        "charEnd": 228
+      },
+      {
+        "mentionId": "m6",
+        "surfaceForm": "fifth audit cycle",
+        "proposedType": "Time",
+        "charStart": 370,
+        "charEnd": 387
+      },
+      {
+        "mentionId": "m7",
+        "surfaceForm": "technicians",
+        "proposedType": "Concept",
+        "charStart": 143,
+        "charEnd": 154
+      }
+    ],
+    "relations": [
+      {
+        "subjectMentionId": "m2",
+        "predicate": "has_component",
+        "objectMentionId": "m3",
+        "evidenceChunkId": "e650-live-dense-v2",
+        "evidenceCharStart": 75,
+        "evidenceCharEnd": 141
+      },
+      {
+        "subjectMentionId": "m7",
+        "predicate": "performs_on",
+        "objectMentionId": "m4",
+        "evidenceChunkId": "e650-live-dense-v2",
+        "evidenceCharStart": 143,
+        "evidenceCharEnd": 187
+      },
+      {
+        "subjectMentionId": "m7",
+        "predicate": "verifies",
+        "objectMentionId": "m5",
+        "evidenceChunkId": "e650-live-dense-v2",
+        "evidenceCharStart": 143,
+        "evidenceCharEnd": 228
+      },
+      {
+        "subjectMentionId": "m7",
+        "predicate": "replaces",
+        "objectMentionId": "m5",
+        "evidenceChunkId": "e650-live-dense-v2",
+        "evidenceCharStart": 143,
+        "evidenceCharEnd": 228
+      },
+      {
+        "subjectMentionId": "m2",
+        "predicate": "tested_every",
+        "objectMentionId": "m6",
+        "evidenceChunkId": "e650-live-dense-v2",
+        "evidenceCharStart": 124,
+        "evidenceCharEnd": 387
+      }
+    ]
+  },
+  "skiena-sorting": {
+    "preEntities": [
+      {
+        "mentionId": "m1",
+        "surfaceForm": "sorting",
+        "proposedType": "Concept",
+        "charStart": 70,
+        "charEnd": 77
+      },
+      {
+        "mentionId": "m2",
+        "surfaceForm": "sorting algorithms",
+        "proposedType": "Concept",
+        "charStart": 70,
+        "charEnd": 88
+      },
+      {
+        "mentionId": "m3",
+        "surfaceForm": "heapsort",
+        "proposedType": "Algorithm",
+        "charStart": 1175,
+        "charEnd": 1183
+      },
+      {
+        "mentionId": "m4",
+        "surfaceForm": "mergesort",
+        "proposedType": "Algorithm",
+        "charStart": 1185,
+        "charEnd": 1194
+      },
+      {
+        "mentionId": "m5",
+        "surfaceForm": "quicksort",
+        "proposedType": "Algorithm",
+        "charStart": 1196,
+        "charEnd": 1205
+      },
+      {
+        "mentionId": "m6",
+        "surfaceForm": "distribution sort",
+        "proposedType": "Algorithm",
+        "charStart": 1211,
+        "charEnd": 1228
+      },
+      {
+        "mentionId": "m7",
+        "surfaceForm": "divide-and-conquer",
+        "proposedType": "Concept",
+        "charStart": 603,
+        "charEnd": 621
+      },
+      {
+        "mentionId": "m8",
+        "surfaceForm": "data structures",
+        "proposedType": "Concept",
+        "charStart": 174,
+        "charEnd": 189
+      },
+      {
+        "mentionId": "m9",
+        "surfaceForm": "randomized algorithms",
+        "proposedType": "Concept",
+        "charStart": 650,
+        "charEnd": 671
+      },
+      {
+        "mentionId": "m10",
+        "surfaceForm": "O(n log n)",
+        "proposedType": "Metric",
+        "charStart": 1566,
+        "charEnd": 1576
+      },
+      {
+        "mentionId": "m11",
+        "surfaceForm": "Section 17.1",
+        "proposedType": "Document",
+        "charStart": 1313,
+        "charEnd": 1325
+      },
+      {
+        "mentionId": "m12",
+        "surfaceForm": "page 506",
+        "proposedType": "Location",
+        "charStart": 1327,
+        "charEnd": 1335
+      },
+      {
+        "mentionId": "m13",
+        "surfaceForm": "Algorithm",
+        "proposedType": "Concept",
+        "charStart": 1901,
+        "charEnd": 1910
+      }
+    ],
+    "relations": [
+      {
+        "subjectMentionId": "m3",
+        "predicate": "is_a",
+        "objectMentionId": "m13",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 1175,
+        "evidenceCharEnd": 1910
+      },
+      {
+        "subjectMentionId": "m4",
+        "predicate": "is_a",
+        "objectMentionId": "m13",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 1185,
+        "evidenceCharEnd": 1910
+      },
+      {
+        "subjectMentionId": "m5",
+        "predicate": "is_a",
+        "objectMentionId": "m13",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 1196,
+        "evidenceCharEnd": 1910
+      },
+      {
+        "subjectMentionId": "m6",
+        "predicate": "is_a",
+        "objectMentionId": "m13",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 1211,
+        "evidenceCharEnd": 1910
+      },
+      {
+        "subjectMentionId": "m7",
+        "predicate": "related_to",
+        "objectMentionId": "m1",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 70,
+        "evidenceCharEnd": 621
+      },
+      {
+        "subjectMentionId": "m8",
+        "predicate": "related_to",
+        "objectMentionId": "m1",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 70,
+        "evidenceCharEnd": 189
+      },
+      {
+        "subjectMentionId": "m9",
+        "predicate": "related_to",
+        "objectMentionId": "m1",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 70,
+        "evidenceCharEnd": 671
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "seeks",
+        "objectMentionId": "m10",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 70,
+        "evidenceCharEnd": 1576
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "documents",
+        "objectMentionId": "m11",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 70,
+        "evidenceCharEnd": 1325
+      },
+      {
+        "subjectMentionId": "m11",
+        "predicate": "applies_to",
+        "objectMentionId": "m1",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 70,
+        "evidenceCharEnd": 1325
+      },
+      {
+        "subjectMentionId": "m12",
+        "predicate": "part_of",
+        "objectMentionId": "m11",
+        "evidenceChunkId": "skiena-sorting",
+        "evidenceCharStart": 1313,
+        "evidenceCharEnd": 1335
+      }
+    ]
+  },
+  "skiena-dynamic-programming": {
+    "preEntities": [
+      {
+        "mentionId": "m1",
+        "surfaceForm": "dynamic programming",
+        "proposedType": "Concept",
+        "charStart": 1326,
+        "charEnd": 1345
+      },
+      {
+        "mentionId": "m2",
+        "surfaceForm": "optimization",
+        "proposedType": "Concept",
+        "charStart": 83,
+        "charEnd": 95
+      },
+      {
+        "mentionId": "m3",
+        "surfaceForm": "objective function",
+        "proposedType": "Concept",
+        "charStart": 160,
+        "charEnd": 178
+      },
+      {
+        "mentionId": "m4",
+        "surfaceForm": "greedy algorithms",
+        "proposedType": "Algorithm",
+        "charStart": 578,
+        "charEnd": 595
+      },
+      {
+        "mentionId": "m5",
+        "surfaceForm": "exhaustive search algorithms",
+        "proposedType": "Algorithm",
+        "charStart": 716,
+        "charEnd": 744
+      },
+      {
+        "mentionId": "m6",
+        "surfaceForm": "subproblems",
+        "proposedType": "Concept",
+        "charStart": 1840,
+        "charEnd": 1851
+      },
+      {
+        "mentionId": "m7",
+        "surfaceForm": "intermediate results",
+        "proposedType": "DataStructure",
+        "charStart": 1087,
+        "charEnd": 1107
+      },
+      {
+        "mentionId": "m8",
+        "surfaceForm": "total cost",
+        "proposedType": "Metric",
+        "charStart": 301,
+        "charEnd": 311
+      },
+      {
+        "mentionId": "m9",
+        "surfaceForm": "time complexity",
+        "proposedType": "Metric",
+        "charStart": 873,
+        "charEnd": 888
+      },
+      {
+        "mentionId": "m10",
+        "surfaceForm": "dynamic programming",
+        "proposedType": "Concept",
+        "charStart": 2019,
+        "charEnd": 2038
+      },
+      {
+        "mentionId": "m11",
+        "surfaceForm": "recursive algorithm",
+        "proposedType": "Procedure",
+        "charStart": 2053,
+        "charEnd": 2072
+      },
+      {
+        "mentionId": "m12",
+        "surfaceForm": "results matrix",
+        "proposedType": "DataStructure",
+        "charStart": 2181,
+        "charEnd": 2195
+      }
+    ],
+    "relations": [
+      {
+        "subjectMentionId": "m1",
+        "predicate": "improves_over",
+        "objectMentionId": "m4",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 578,
+        "evidenceCharEnd": 1345
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "improves_over",
+        "objectMentionId": "m5",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 716,
+        "evidenceCharEnd": 1345
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "uses",
+        "objectMentionId": "m7",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 1087,
+        "evidenceCharEnd": 1345
+      },
+      {
+        "subjectMentionId": "m11",
+        "predicate": "requires",
+        "objectMentionId": "m6",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 1840,
+        "evidenceCharEnd": 2072
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "combines",
+        "objectMentionId": "m5",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 716,
+        "evidenceCharEnd": 1345
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "combines",
+        "objectMentionId": "m4",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 578,
+        "evidenceCharEnd": 1345
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "measures",
+        "objectMentionId": "m9",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 873,
+        "evidenceCharEnd": 1345
+      },
+      {
+        "subjectMentionId": "m1",
+        "predicate": "uses",
+        "objectMentionId": "m12",
+        "evidenceChunkId": "skiena-dynamic-programming",
+        "evidenceCharStart": 1326,
+        "evidenceCharEnd": 2195
+      }
+    ]
+  },
+  "skiena-tsp-parsing": {
+    "preEntities": [
+      {
+        "mentionId": "m1",
+        "surfaceForm": "dynamic programming",
+        "proposedType": "Concept",
+        "charStart": 44,
+        "charEnd": 63
+      },
+      {
+        "mentionId": "m2",
+        "surfaceForm": "TSP",
+        "proposedType": "Problem",
+        "charStart": 94,
+        "charEnd": 97
+      },
+      {
+        "mentionId": "m3",
+        "surfaceForm": "simple path",
+        "proposedType": "Concept",
+        "charStart": 678,
+        "charEnd": 689
+      },
+      {
+        "mentionId": "m4",
+        "surfaceForm": "closed tour",
+        "proposedType": "Concept",
+        "charStart": 168,
+        "charEnd": 179
+      },
+      {
+        "mentionId": "m5",
+        "surfaceForm": "longest simple path",
+        "proposedType": "Problem",
+        "charStart": 1083,
+        "charEnd": 1102
+      },
+      {
+        "mentionId": "m6",
+        "surfaceForm": "Hamiltonian paths",
+        "proposedType": "Problem",
+        "charStart": 735,
+        "charEnd": 752
+      },
+      {
+        "mentionId": "m7",
+        "surfaceForm": "LP [i, j]",
+        "proposedType": "Algorithm",
+        "charStart": 1002,
+        "charEnd": 1011
+      },
+      {
+        "mentionId": "m8",
+        "surfaceForm": "LP [i, x]",
+        "proposedType": "Algorithm",
+        "charStart": 1403,
+        "charEnd": 1412
+      },
+      {
+        "mentionId": "m9",
+        "surfaceForm": "c(x, j)",
+        "proposedType": "Metric",
+        "charStart": 1320,
+        "charEnd": 1327
+      },
+      {
+        "mentionId": "m10",
+        "surfaceForm": "edge (x, j)",
+        "proposedType": "Component",
+        "charStart": 1350,
+        "charEnd": 1361
+      },
+      {
+        "mentionId": "m11",
+        "surfaceForm": "unweighted graphs",
+        "proposedType": "Concept",
+        "charStart": 609,
+        "charEnd": 626
+      },
+      {
+        "mentionId": "m12",
+        "surfaceForm": "weight n \u2212 1",
+        "proposedType": "Measurement",
+        "charStart": 708,
+        "charEnd": 720
+      },
+      {
+        "mentionId": "m13",
+        "surfaceForm": "Section 19.5",
+        "proposedType": "Document",
+        "charStart": 813,
+        "charEnd": 825
+      },
+      {
+        "mentionId": "m14",
+        "surfaceForm": "LP \u0002 [i, j, k]",
+        "proposedType": "Algorithm",
+        "charStart": 1933,
+        "charEnd": 1947
+      },
+      {
+        "mentionId": "m15",
+        "surfaceForm": "vertex k",
+        "proposedType": "Component",
+        "charStart": 2010,
+        "charEnd": 2018
+      },
+      {
+        "mentionId": "m16",
+        "surfaceForm": "dynamic programming",
+        "proposedType": "Protocol",
+        "charStart": 2428,
+        "charEnd": 2447
+      },
+      {
+        "mentionId": "m17",
+        "surfaceForm": "approximate string matching",
+        "proposedType": "Problem",
+        "charStart": 2744,
+        "charEnd": 2771
+      },
+      {
+        "mentionId": "m18",
+        "surfaceForm": "substitution, insertion, or deletion",
+        "proposedType": "Procedure",
+        "charStart": 2777,
+        "charEnd": 2813
+      },
+      {
+        "mentionId": "m19",
+        "surfaceForm": "edit sequences",
+        "proposedType": "Concept",
+        "charStart": 2938,
+        "charEnd": 2952
+      },
+      {
+        "mentionId": "m20",
+        "surfaceForm": "problem",
+        "proposedType": "Concept",
+        "charStart": 74,
+        "charEnd": 81
+      },
+      {
+        "mentionId": "m21",
+        "surfaceForm": "cost/weight of edge (x, j)",
+        "proposedType": "Concept",
+        "charStart": 1335,
+        "charEnd": 1361
+      },
+      {
+        "mentionId": "m22",
+        "surfaceForm": "recurrence relation",
+        "proposedType": "Concept",
+        "charStart": 945,
+        "charEnd": 964
+      },
+      {
+        "mentionId": "m23",
+        "surfaceForm": "algorithm",
+        "proposedType": "Concept",
+        "charStart": 907,
+        "charEnd": 916
+      },
+      {
+        "mentionId": "m24",
+        "surfaceForm": "future decisions",
+        "proposedType": "Concept",
+        "charStart": 3047,
+        "charEnd": 3063
+      },
+      {
+        "mentionId": "m25",
+        "surfaceForm": "consequences of previous decisions",
+        "proposedType": "Concept",
+        "charStart": 3086,
+        "charEnd": 3120
+      }
+    ],
+    "relations": [
+      {
+        "subjectMentionId": "m5",
+        "predicate": "is_a",
+        "objectMentionId": "m20",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 74,
+        "evidenceCharEnd": 1102
+      },
+      {
+        "subjectMentionId": "m6",
+        "predicate": "is_a",
+        "objectMentionId": "m20",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 74,
+        "evidenceCharEnd": 752
+      },
+      {
+        "subjectMentionId": "m9",
+        "predicate": "measures",
+        "objectMentionId": "m21",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 1314,
+        "evidenceCharEnd": 1361
+      },
+      {
+        "subjectMentionId": "m10",
+        "predicate": "part_of",
+        "objectMentionId": "m22",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 945,
+        "evidenceCharEnd": 1361
+      },
+      {
+        "subjectMentionId": "m14",
+        "predicate": "is_a",
+        "objectMentionId": "m23",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 907,
+        "evidenceCharEnd": 1947
+      },
+      {
+        "subjectMentionId": "m13",
+        "predicate": "discusses",
+        "objectMentionId": "m6",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 735,
+        "evidenceCharEnd": 825
+      },
+      {
+        "subjectMentionId": "m17",
+        "predicate": "uses",
+        "objectMentionId": "m18",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 2744,
+        "evidenceCharEnd": 2813
+      },
+      {
+        "subjectMentionId": "m24",
+        "predicate": "depends_on",
+        "objectMentionId": "m25",
+        "evidenceChunkId": "skiena-tsp-parsing",
+        "evidenceCharStart": 3047,
+        "evidenceCharEnd": 3120
+      }
+    ]
+  }
+}

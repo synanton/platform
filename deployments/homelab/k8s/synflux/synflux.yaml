@@ -114,6 +114,11 @@ data:
   SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "false"
   EXTRACTION_CLIENT_ENABLED: "true"
   EXTRACTION_ENDPOINT: "extraction-gateway:9091"
+  # RAKG Phase B (ADR-022): regex keeps the CPU path working; set llm to use
+  # the GPU-plane vLLM extractor.
+  EXTRACTION_PROVIDER: "regex"
+  LLM_EXTRACTION_URL: "http://vllm-extraction.gpu-plane.svc.cluster.local:8000/v1"
+  LLM_EXTRACTION_MODEL: "qwen3-extraction"
   MINIO_ENDPOINT: "http://minio:9000"
   # Outbox-only eventing for the cluster run: KAFKA_BOOTSTRAP_SERVERS stays
   # unset (the Kafka adapter is a config choice — see #301).

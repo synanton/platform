@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.TextSegment;
-import org.synanton.extraction.engine.llm.LlmExtractionAdapter;
 
 class RegexExtractorAdapterTest {
 
@@ -29,13 +28,5 @@ class RegexExtractorAdapterTest {
                         && relation.objectMentionId() != null);
         assertThat(result.relations()).allSatisfy(relation ->
                 assertThat(relation.evidenceCharEnd()).isGreaterThan(relation.evidenceCharStart()));
-    }
-
-    @Test
-    void llmStubReturnsAnEmptyResult() {
-        ExtractionResult result = new LlmExtractionAdapter()
-                .extract(new TextSegment("c1", "anything", 0), CONTEXT);
-        assertThat(result.preEntities()).isEmpty();
-        assertThat(result.relations()).isEmpty();
     }
 }

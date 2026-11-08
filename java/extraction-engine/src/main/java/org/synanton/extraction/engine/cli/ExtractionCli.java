@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.synanton.extraction.engine.ExtractionContext;
+import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.extraction.engine.TextSegment;
 import org.synanton.extraction.engine.chunking.SentenceChunker;
+import org.synanton.extraction.engine.llm.LlmExtractionAdapter;
 import org.synanton.extraction.engine.regex.RegexExtractorAdapter;
 
 /**
@@ -24,6 +26,7 @@ import org.synanton.extraction.engine.regex.RegexExtractorAdapter;
  *
  * Usage: ExtractionCli --corpus-dir evaluation/corpus --out evaluation/regex-predictions.json
  *        [--sentence-chunks] [--max-tokens 512]
+ *        [--llm-endpoint http://localhost:8000/v1 --llm-model qwen3-extraction]
  *
  * With {@code --sentence-chunks} each document is split on sentence boundaries
  * (max tokens, one-sentence overlap) and the adapter runs per chunk; mention
@@ -39,12 +42,16 @@ public final class ExtractionCli {
         Path out = null;
         boolean sentenceChunks = false;
         int maxTokens = 512;
+        String llmEndpoint = null;
+        String llmModel = "qwen3-extraction";
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--corpus-dir" -> corpusDir = Path.of(args[++i]);
                 case "--out" -> out = Path.of(args[++i]);
                 case "--sentence-chunks" -> sentenceChunks = true;
                 case "--max-tokens" -> maxTokens = Integer.parseInt(args[++i]);
+                case "--llm-endpoint" -> llmEndpoint = args[++i];
+                case "--llm-model" -> llmModel = args[++i];
                 default -> throw new IllegalArgumentException("unknown argument: " + args[i]);
             }
         }
@@ -52,7 +59,9 @@ public final class ExtractionCli {
             throw new IllegalArgumentException("--corpus-dir and --out are required");
         }
 
-        RegexExtractorAdapter adapter = new RegexExtractorAdapter();
+        ExtractionEngineAdapter adapter = llmEndpoint == null
+                ? new RegexExtractorAdapter()
+                : new LlmExtractionAdapter(llmEndpoint, llmModel);
         List<Path> files;
         try (var stream = Files.list(corpusDir)) {
             files = stream.filter(path -> path.toString().endsWith(".txt")).sorted().toList();

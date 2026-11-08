@@ -1,13 +1,15 @@
 # Extraction baseline report — Phase A regex adapter vs frozen gold
 
-**Status:** Baseline
+**Status:** Baseline + Phase B (tuning + Java adapter)
 **Last reviewed:** 2026-11-08
 **Issue:** #558 (gold + baseline), RAKG epic (follow-up)
 **Gold:** `evaluation/gold/` (frozen; `MANIFEST.sha256`)
 **Corpus:** `evaluation/corpus/` (5 documents)
 **Extractor:** `java/extraction-engine` — `ExtractionEngineAdapter` port with
-`RegexExtractorAdapter` (Phase A). The LLM adapter (`LlmExtractionAdapter`) is a
-stub returning an empty result; the RAKG integration lives there.
+`RegexExtractorAdapter` (Phase A). Phase B tuning runs Qwen3-4B-Instruct-2507
+(`qwen3-extraction` on the GPU plane) through the prompt-tuning harness; the Java
+`LlmExtractionAdapter` (Java) reproduces the tuned result against the live
+cluster endpoint (ADR-022).
 
 ## What changed since the 0.000 run
 
@@ -25,8 +27,9 @@ engine:
 - `RegexExtractorAdapter`: generic identifiers, metrics, quoted phrases,
   capitalized terms, and cue-based relations (`requires`, `uses`, `is`, `part of`,
   `discussed in`, …). No LLM, no resolution.
-- `LlmExtractionAdapter`: the Phase B placeholder (empty result) so the RAKG
-  wiring is visible and testable.
+- `LlmExtractionAdapter`: the Phase B adapter (landed). The tuning harness
+  calls the same OpenAI-compatible vLLM endpoint and is the reference for the
+  Java offset-recovery/endpoint-synthesis behavior.
 - `ExtractionCli`: batch bridge (`--corpus-dir … --out …`) so
   `evaluation/eval_extraction.py` exercises the Java interface, not a Python
   reimplementation.
@@ -101,35 +104,97 @@ The Phase B acceptance target therefore stays **entity F1 (overlap) > 0.182**.
    candidate relations were produced; 0 aligned to a gold edge.
 5. **No evidence coverage yet** because no relation matched.
 
+## Phase B prompt tuning (2026-11-08)
+
+Qwen3-4B-Instruct-2507 (`qwen3-extraction`, vLLM on node3) was run over the same
+sentence chunks through `evaluation/llm_tuning.py`. The model returns surface
+forms with unreliable char offsets; the harness recovers spans by matching the
+surface form (evidence-quote anchored), synthetically adds relation endpoints
+missing from `preEntities`, and scores with the same frozen-gold functions.
+
+| Metric | Regex (Phase A) | Qwen3-4B tuning |
+|---|---|---|
+| Entity P / R / F1 (overlap) | 0.137 / 0.271 / **0.182** | 0.636 / 0.600 / **0.618** |
+| Entity exact F1 | 0.077 | 0.515 |
+| Type accuracy | 0.147 | 0.717 |
+| Relationship P / R / F1 | 0.000 / 0.000 / **0.000** | 0.086 / 0.068 / **0.076** |
+| Predicted mentions / relations | 139 / 34 | 66 / 35 |
+| Evidence coverage | N/A (0 matched) | 1.0 (3 matched) |
+| Resolution accuracy | N/A | N/A |
+
+Per-document entity F1: halcyon 0.842, e650 0.737, sorting 0.714, dynamic
+programming 0.519, TSP/parsing 0.465. Per-document relationship F1: 0.400, 0.167,
+0.000, 0.000, 0.000.
+
+**Reading:** both Phase B targets are met in the tuning harness (entity F1 > 0.182,
+relationship F1 > 0). The remaining relationship gap is docs 3–5: the Skiena text
+states implicit algorithmic relations, and the model's predicate/endpoint choices
+diverge from the gold. Do not hide that in adapter heuristics; prompt v2 and
+resolution are the next levers.
+
+**Caveats:** the model's raw offsets are unusable (hence surface-form recovery);
+synthetic endpoints slightly inflate recall; five documents is smoke-scale.
+
+### Java adapter (live E2E, 2026-11-08)
+
+`LlmExtractionAdapter` was run through the same frozen gold against
+`http://localhost:8000` (port-forwarded `vllm-extraction`):
+
+| Metric | Python harness | Java adapter |
+|---|---|---|
+| Entity P / R / F1 (overlap) | 0.636 / 0.600 / 0.618 | 0.636 / 0.600 / **0.618** |
+| Type accuracy | 0.717 | 0.697 |
+| Relationship P / R / F1 | 0.086 / 0.068 / 0.076 | 0.091 / 0.068 / **0.078** |
+| Predicted mentions / relations | 66 / 35 | 66 / 33 |
+
+Per-document entity F1 is identical to the harness (0.842, 0.737, 0.714, 0.519,
+0.465). The small type/relation delta is the adapter's honest `UNKNOWN` typing of
+synthetic endpoints (the harness guessed types) and stricter dedup. The live
+gated test is `LlmExtractionLiveTest` (`LLM_EXTRACTION_URL=...`).
+
 ## What the frozen gold measures next
 
-The RAKG/LLM pipeline must beat this baseline on the same frozen artifact:
+Phase B met the first three targets in both the tuning harness and the Java
+adapter. The next gate is ingestion integration + resolution:
 
-- Entity F1 (overlap) **> 0.182**, ideally with precision above 0.5.
-- Type accuracy **> 0.147** (typed NER, not `Concept`).
-- Relationship F1 **> 0.000**, with evidence spans that overlap the gold.
-- Resolution accuracy becomes measurable (resolved / ambiguous / unresolved).
+- Entity F1 (overlap) **> 0.618** with precision above 0.8; type accuracy **> 0.717**.
+- Relationship F1 **> 0.076**, with evidence spans that overlap the gold.
+- Resolution accuracy becomes measurable (resolved / ambiguous / unresolved) and
+  coreference/aliases are anchored rather than dropped.
 - No regression on the capitalized/identifier mentions the regex already finds.
 
 ## Reproduce
 
 ```bash
 sha256sum -c evaluation/gold/MANIFEST.sha256
-python3 evaluation/eval_extraction.py      # builds + runs the Java adapter, then scores
+python3 evaluation/eval_extraction.py      # regex baseline, both chunk modes
+# Phase B tuning against the live GPU plane:
+kubectl -n gpu-plane port-forward deploy/vllm-extraction 8000:8000
+python3 evaluation/eval_extraction.py --llm-endpoint http://localhost:8000
+python3 evaluation/eval_extraction.py --llm-endpoint http://localhost:8000 --only doc-5
+# Java adapter (same endpoint, sentence chunks):
+python3 evaluation/eval_extraction.py --java-llm-endpoint http://localhost:8000/v1
+LLM_EXTRACTION_URL=http://localhost:8000/v1 \
+  ./gradlew :java:extraction-engine:test --tests '*LlmExtractionLiveTest'
 ```
 
 `--skip-manifest` exists for debugging only; a reportable run must verify the
 golden hashes. The evaluator writes `evaluation/regex-predictions.json`,
-`evaluation/regex-predictions-chunked.json`, and `evaluation/baseline-result.json`
-(both modes).
+`evaluation/regex-predictions-chunked.json`, `evaluation/baseline-result.json`,
+`evaluation/llm-*.json`, and `evaluation/java-llm-*.json`.
 
 ## Artifacts
 
-- `java/extraction-engine/` — contract, regex adapter, LLM stub, CLI, tests.
+- `java/extraction-engine/` — contract, regex adapter, LLM adapter, CLI, chunker, tests.
 - `docs/planning/extraction-gold-schema.md` — schema and protocol.
 - `evaluation/corpus/*.txt`, `evaluation/gold/doc-*.json`, `MANIFEST.sha256`.
-- `evaluation/eval_extraction.py`, `evaluation/regex-predictions.json`,
-  `evaluation/regex-predictions-chunked.json`, `evaluation/baseline-result.json`.
+- `evaluation/eval_extraction.py`, `evaluation/llm_tuning.py`,
+  `evaluation/prompts/llm_extraction_system.txt`,
+  `evaluation/regex-predictions.json`, `evaluation/regex-predictions-chunked.json`,
+  `evaluation/baseline-result.json`, `evaluation/llm-predictions.json`,
+  `evaluation/llm-baseline-result.json`.
+- `docs/architecture/decisions/adr-022-extraction-engine-architecture.md` — port,
+  provider flag, offset recovery, prompt versioning.
 
 ## Caveats
 
