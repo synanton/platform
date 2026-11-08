@@ -113,6 +113,15 @@ public class HybridSearcher implements Closeable {
         }
     }
 
+    /**
+     * Reopen the reader after a writer commit. The old searcher stays valid for
+     * in-flight queries and is released by {@link SearcherManager}, so a rebuild
+     * or incremental upsert swaps visibility atomically (no 503 window).
+     */
+    public boolean maybeRefresh() throws IOException {
+        return searcherManager.maybeRefresh();
+    }
+
     public int docCount() throws IOException {
         IndexSearcher searcher = searcherManager.acquire();
         try {

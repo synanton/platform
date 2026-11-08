@@ -42,6 +42,7 @@ class SearchServiceRequiredModeTest {
         String tenant = "t";
         UUID ref = UUID.randomUUID();
         IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        CacheCursorStubs.wire(cache);
         when(cache.listManifest(eq(tenant), anyInt())).thenReturn(List.of(new ManifestRow(tenant, ref, Instant.now(), 1,
                 "flat", 1, "EMBEDDED", "hot", null, "file:///a.md", "sha", 10, "text/markdown", null, null, null)));
         when(cache.readChunks(tenant, ref)).thenReturn(List.of(new ChunkRow(tenant, ref, 0, "acme revenue fiscal 2024", "s0")));

@@ -107,6 +107,47 @@ public class IngestionCacheClient {
         return run != null && "COMPLETED".equals(run.getString("status"));
     }
 
+    /**
+     * Lazily pages the tenant's manifests (fetch size 1,000), applying the same
+     * publishing-run visibility gate as {@link #listManifest}. A full rebuild no
+     * longer materialises the tenant's manifest list on the heap.
+     */
+    public Iterable<ManifestRow> manifestCursor(String tenantId, int limit) {
+        SimpleStatement statement = SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.manifest WHERE tenant_id=? LIMIT ? ALLOW FILTERING",
+            tenantId, limit
+        ).setPageSize(1_000);
+        ResultSet result = session.execute(statement);
+        return () -> new Iterator<>() {
+            private final Iterator<Row> rows = result.iterator();
+            private ManifestRow next;
+            private boolean ready;
+
+            @Override
+            public boolean hasNext() {
+                while (!ready && rows.hasNext()) {
+                    ManifestRow candidate = rowToManifest(rows.next());
+                    if (manifestVisible(candidate)) {
+                        next = candidate;
+                        ready = true;
+                    }
+                }
+                return ready;
+            }
+
+            @Override
+            public ManifestRow next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                ManifestRow value = next;
+                next = null;
+                ready = false;
+                return value;
+            }
+        };
+    }
+
     public List<ManifestRow> listManifest(String tenantId, int limit) {
         var result = session.execute(SimpleStatement.newInstance(
             "SELECT * FROM ingestion_cache.manifest WHERE tenant_id=? LIMIT ? ALLOW FILTERING",
@@ -257,38 +298,66 @@ public class IngestionCacheClient {
     }
 
     public List<ChunkRow> readChunks(String tenantId, UUID contentRefId) {
-        var result = session.execute(SimpleStatement.newInstance(
-            "SELECT * FROM ingestion_cache.chunks_payload WHERE tenant_id=? AND content_ref_id=?",
-            tenantId, contentRefId
-        ));
         List<ChunkRow> rows = new ArrayList<>();
-        for (Row r : result) {
-            java.util.Set<UUID> sourceVersions = new java.util.HashSet<>();
-            if (!r.isNull("source_version_ids")) {
-                r.getSet("source_version_ids", UUID.class).forEach(sourceVersions::add);
-            }
-            rows.add(new ChunkRow(
-                r.getString("tenant_id"), r.getUuid("content_ref_id"),
-                r.getInt("chunk_ordinal"), r.getString("chunk_text"),
-                r.getString("chunk_sha256"),
-                intOrDefault(r, "page_start", -1),
-                intOrDefault(r, "page_end", -1),
-                stringOrEmpty(r, "section_path"),
-                stringOrEmpty(r, "chunk_type"),
-                stringOrEmpty(r, "heading"),
-                stringOrDefault(r, "source_elements", "[]"),
-                intOrDefault(r, "token_count", 0),
-                stringOrEmpty(r, "structured_content"),
-                boolOrDefault(r, "is_partial_section", false),
-                setOrDefault(r, "classification", ChunkRow.PUBLIC_ONLY),
-                stringOrEmpty(r, "section_id"),
-                stringOrEmpty(r, "parent_section_id"),
-                intOrDefault(r, "heading_level", 0),
-                java.util.Set.copyOf(sourceVersions),
-                r.getUuid("processing_run_id")
-            ));
+        for (Row row : session.execute(SimpleStatement.newInstance(
+                "SELECT * FROM ingestion_cache.chunks_payload WHERE tenant_id=? AND content_ref_id=?",
+                tenantId, contentRefId))) {
+            rows.add(chunkFromRow(row));
         }
         return rows;
+    }
+
+    /**
+     * Lazily pages one content ref's chunks (Cassandra fetch size 1,000) without
+     * materialising the whole document. Single-use iterable: the underlying
+     * {@link ResultSet} is paged on demand.
+     */
+    public Iterable<ChunkRow> chunkCursor(String tenantId, UUID contentRefId) {
+        SimpleStatement statement = SimpleStatement.newInstance(
+            "SELECT * FROM ingestion_cache.chunks_payload WHERE tenant_id=? AND content_ref_id=?",
+            tenantId, contentRefId
+        ).setPageSize(1_000);
+        ResultSet result = session.execute(statement);
+        return () -> new Iterator<>() {
+            private final Iterator<Row> rows = result.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return rows.hasNext();
+            }
+
+            @Override
+            public ChunkRow next() {
+                return chunkFromRow(rows.next());
+            }
+        };
+    }
+
+    private ChunkRow chunkFromRow(Row r) {
+        java.util.Set<UUID> sourceVersions = new java.util.HashSet<>();
+        if (!r.isNull("source_version_ids")) {
+            r.getSet("source_version_ids", UUID.class).forEach(sourceVersions::add);
+        }
+        return new ChunkRow(
+            r.getString("tenant_id"), r.getUuid("content_ref_id"),
+            r.getInt("chunk_ordinal"), r.getString("chunk_text"),
+            r.getString("chunk_sha256"),
+            intOrDefault(r, "page_start", -1),
+            intOrDefault(r, "page_end", -1),
+            stringOrEmpty(r, "section_path"),
+            stringOrEmpty(r, "chunk_type"),
+            stringOrEmpty(r, "heading"),
+            stringOrDefault(r, "source_elements", "[]"),
+            intOrDefault(r, "token_count", 0),
+            stringOrEmpty(r, "structured_content"),
+            boolOrDefault(r, "is_partial_section", false),
+            setOrDefault(r, "classification", ChunkRow.PUBLIC_ONLY),
+            stringOrEmpty(r, "section_id"),
+            stringOrEmpty(r, "parent_section_id"),
+            intOrDefault(r, "heading_level", 0),
+            java.util.Set.copyOf(sourceVersions),
+            r.getUuid("processing_run_id")
+        );
     }
 
     // ---- Knowledge processing runs (Design 1.25 §12) ----

@@ -189,4 +189,9 @@ class LuceneKnowledgeSearchBackendTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(tenantB);
     }
+    @BeforeEach
+    void wireCacheCursors() {
+        CacheCursorStubs.wire(cache);
+    }
+
 }

@@ -51,6 +51,7 @@ class SearchServiceSequentialTest {
     @BeforeEach
     void index() throws Exception {
         IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        CacheCursorStubs.wire(cache);
         when(cache.listManifest(eq(tenant), anyInt())).thenReturn(List.of(
                 new ManifestRow(tenant, refA, Instant.now(), 1,
                         "flat", 1, "EMBEDDED", "hot", null, "file:///a.pdf", "sha", 10, "application/pdf", null, null, null),

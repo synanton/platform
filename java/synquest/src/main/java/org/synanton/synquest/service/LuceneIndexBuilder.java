@@ -5,7 +5,8 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.FSDirectory;
-import org.synanton.ingestioncache.client.IngestionCacheClient;import org.synanton.ingestioncache.domain.EmbeddingRow;
+import org.synanton.ingestioncache.client.IngestionCacheClient;import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.EmbeddingRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class LuceneIndexBuilder {
@@ -44,6 +46,7 @@ public class LuceneIndexBuilder {
     private static final String FIELD_HEADING_LEVEL = "heading_level";
     private static final String FIELD_CHUNK_TYPE = "chunk_type";
 
+    private static final int MANIFEST_LIMIT = 200_000;
     private static final java.util.Set<String> INDEXABLE_STATES =
             java.util.Set.of("CHUNKED", "ENRICHED", "EMBEDDED");
 
@@ -98,7 +101,15 @@ public class LuceneIndexBuilder {
         }
     }
 
-    /** Build (or rebuild) the Lucene index for the given tenant from Cassandra. */
+    /**
+     * Build (or rebuild) the Lucene index for the given tenant from Cassandra.
+     *
+     * <p>Streams manifests and chunks through the driver's paging (fetch size
+     * 1,000) instead of materialising the tenant on the heap. Lucene's writer
+     * already flushes segments when its RAM buffer fills, so a single final
+     * commit is memory-bounded and crash-safe: a failed rebuild never leaves a
+     * partially committed index that a later boot would mistake for complete.
+     */
     public void build(String tenant) throws IOException {
         Path path = indexPath(tenant);
         Files.createDirectories(path);
@@ -106,107 +117,181 @@ public class LuceneIndexBuilder {
         IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
-        int docCount = 0;
+        Counters counters = new Counters();
         int skipCount = 0;
-        int vectorDocs = 0;
-        int dimMismatches = 0;
-        int missingVectors = 0;
-        int sectionDocs = 0;
 
         try (FSDirectory dir = FSDirectory.open(path);
              IndexWriter writer = new IndexWriter(dir, config)) {
 
-            List<ManifestRow> manifests = cacheClient.listManifest(tenant, 200_000);
-            for (ManifestRow manifest : manifests) {
-                if (!INDEXABLE_STATES.contains(manifest.state() == null ? "" : manifest.state().toUpperCase())) {
+            for (ManifestRow manifest : cacheClient.manifestCursor(tenant, MANIFEST_LIMIT)) {
+                if (!isIndexable(manifest)) {
                     skipCount++;
                     continue;
                 }
-
-                var chunks = cacheClient.readChunks(tenant, manifest.contentRefId());
                 String ingestUsage = manifest.ingestUsage() == null ? "" : manifest.ingestUsage();
                 long ingestWallMs = parseIngestWallMs(ingestUsage);
-                for (var chunk : chunks) {
-                    var embOpt = cacheClient.readEmbedding(
-                            tenant, manifest.contentRefId(), chunk.chunkOrdinal(), embeddingModel);
-
-                    Document doc = new Document();
-                    String id = manifest.contentRefId() + ":" + chunk.chunkOrdinal();
-                    doc.add(new StringField(FIELD_ID, id, Field.Store.YES));
-                    doc.add(new StringField(FIELD_CONTENT_REF_ID, manifest.contentRefId().toString(), Field.Store.YES));
-                    doc.add(new NumericDocValuesField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));
-                    doc.add(new StoredField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));
-                    doc.add(new TextField(FIELD_TEXT, chunk.chunkText() == null ? "" : chunk.chunkText(), Field.Store.YES));
-                    if (manifest.sourceUri() != null) {
-                        doc.add(new StoredField(FIELD_SOURCE_URI, manifest.sourceUri()));
-                    }
-                    if (manifest.mimeType() != null) {
-                        doc.add(new StoredField(FIELD_MIME_TYPE, manifest.mimeType()));
-                    }
-                    doc.add(new StoredField(FIELD_PAGE_START, chunk.pageStart()));
-                    doc.add(new StoredField(FIELD_PAGE_END, chunk.pageEnd()));
-                    doc.add(new StoredField(FIELD_SECTION_PATH, chunk.sectionPath() == null ? "" : chunk.sectionPath()));
-                    doc.add(new StoredField(FIELD_HEADING, chunk.heading() == null ? "" : chunk.heading()));
-                    doc.add(new StoredField(FIELD_SOURCE_ELEMENTS, chunk.sourceElementsJson() == null ? "[]" : chunk.sourceElementsJson()));
-                    doc.add(new StoredField(FIELD_TOKEN_COUNT, chunk.tokenCount()));
-                    doc.add(new StoredField(FIELD_STRUCTURED_CONTENT, chunk.structuredContentJson() == null ? "" : chunk.structuredContentJson()));
-                    doc.add(new StoredField(FIELD_IS_PARTIAL_SECTION, String.valueOf(chunk.isPartialSection())));
-                    for (String cls : chunk.classification()) {
-                        doc.add(new StringField(FIELD_CLASSIFICATION, cls, Field.Store.YES));
-                    }
-                    doc.add(new StoredField(FIELD_INGEST_USAGE, ingestUsage));
-                    if (chunk.chunkType() != null && !chunk.chunkType().isEmpty()) {
-                        doc.add(new StringField(FIELD_CHUNK_TYPE, chunk.chunkType(), Field.Store.YES));
-                    }
-                    if (chunk.sectionId() != null && !chunk.sectionId().isEmpty()) {
-                        doc.add(new StringField(FIELD_SECTION_KEY,
-                                manifest.contentRefId() + "|" + chunk.sectionId(), Field.Store.NO));
-                        doc.add(new StoredField(FIELD_SECTION_ID, chunk.sectionId()));
-                        doc.add(new StoredField(FIELD_PARENT_SECTION_ID,
-                                chunk.parentSectionId() == null ? "" : chunk.parentSectionId()));
-                        doc.add(new StoredField(FIELD_HEADING_LEVEL, chunk.headingLevel()));
-                        sectionDocs++;
-                    }
-                    doc.add(new StoredField(FIELD_INGEST_WALL_MS, ingestWallMs));
-
-                    if (embOpt.isPresent()) {
-                        EmbeddingRow emb = embOpt.get();
-                        try {
-                            float[] vec = shape.fit(emb.embedding());
-                            doc.add(new KnnFloatVectorField(FIELD_EMBEDDING, vec, VectorSimilarityFunction.COSINE));
-                            vectorDocs++;
-                        } catch (EmbeddingShape.DimensionMismatchException e) {
-                            dimMismatches++;
-                            if (dimMismatches <= 5) {
-                                log.warn("Embedding dim mismatch for {}#{}: {}",
-                                        manifest.contentRefId(), chunk.chunkOrdinal(), e.getMessage());
-                            }
-                        }
-                    } else {
-                        missingVectors++;
-                    }
-
-                    writer.addDocument(doc);
-                    docCount++;
+                for (ChunkRow chunk : cacheClient.chunkCursor(tenant, manifest.contentRefId())) {
+                    writer.addDocument(newDocument(manifest, chunk, ingestUsage, ingestWallMs, counters));
+                    counters.docs++;
                 }
             }
 
             writer.commit();
         }
+        finishBuild(tenant, counters, skipCount);
+    }
 
+    /**
+     * Incrementally upserts the given content refs (Phase 2, #547): reopens the
+     * existing index with {@code CREATE_OR_APPEND}, replaces each chunk by its
+     * stable id, and commits. A re-delivered event updates the document instead
+     * of duplicating it.
+     */
+    public int upsertContentRefs(String tenant, java.util.Collection<UUID> contentRefIds) throws IOException {
+        if (contentRefIds == null || contentRefIds.isEmpty()) {
+            return 0;
+        }
+        Path path = indexPath(tenant);
+        Files.createDirectories(path);
+        IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+
+        Counters counters = new Counters();
+        try (FSDirectory dir = FSDirectory.open(path);
+             IndexWriter writer = new IndexWriter(dir, config)) {
+            for (UUID contentRefId : new java.util.LinkedHashSet<>(contentRefIds)) {
+                ManifestRow manifest = cacheClient.readManifest(tenant, contentRefId).orElse(null);
+                if (manifest == null || !isIndexable(manifest)) {
+                    continue;
+                }
+                String ingestUsage = manifest.ingestUsage() == null ? "" : manifest.ingestUsage();
+                long ingestWallMs = parseIngestWallMs(ingestUsage);
+                for (ChunkRow chunk : cacheClient.chunkCursor(tenant, contentRefId)) {
+                    writer.updateDocument(
+                            new org.apache.lucene.index.Term(FIELD_ID,
+                                    manifest.contentRefId() + ":" + chunk.chunkOrdinal()),
+                            newDocument(manifest, chunk, ingestUsage, ingestWallMs, counters));
+                    counters.docs++;
+                }
+            }
+            writer.commit();
+        }
+        log.info("Incrementally projected {} chunk(s) from {} content ref(s) for tenant '{}'",
+                counters.docs, contentRefIds.size(), tenant);
+        return counters.docs;
+    }
+
+    /** Deletes chunks by their stable Lucene id (used by delete projection). */
+    public int deleteChunkIds(String tenant, java.util.Collection<String> chunkIds) throws IOException {
+        if (chunkIds == null || chunkIds.isEmpty()) {
+            return 0;
+        }
+        Path path = indexPath(tenant);
+        Files.createDirectories(path);
+        IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        try (FSDirectory dir = FSDirectory.open(path);
+             IndexWriter writer = new IndexWriter(dir, config)) {
+            for (String chunkId : new java.util.LinkedHashSet<>(chunkIds)) {
+                writer.deleteDocuments(new org.apache.lucene.index.Term(FIELD_ID, chunkId));
+            }
+            writer.commit();
+        }
+        return chunkIds.size();
+    }
+
+    private Document newDocument(ManifestRow manifest, ChunkRow chunk, String ingestUsage,
+                                 long ingestWallMs, Counters counters) {
+        var embOpt = cacheClient.readEmbedding(
+                manifest.tenantId(), manifest.contentRefId(), chunk.chunkOrdinal(), embeddingModel);
+
+        Document doc = new Document();
+        String id = manifest.contentRefId() + ":" + chunk.chunkOrdinal();
+        doc.add(new StringField(FIELD_ID, id, Field.Store.YES));
+        doc.add(new StringField(FIELD_CONTENT_REF_ID, manifest.contentRefId().toString(), Field.Store.YES));
+        doc.add(new NumericDocValuesField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));
+        doc.add(new StoredField(FIELD_CHUNK_ORDINAL, chunk.chunkOrdinal()));
+        doc.add(new TextField(FIELD_TEXT, chunk.chunkText() == null ? "" : chunk.chunkText(), Field.Store.YES));
+        if (manifest.sourceUri() != null) {
+            doc.add(new StoredField(FIELD_SOURCE_URI, manifest.sourceUri()));
+        }
+        if (manifest.mimeType() != null) {
+            doc.add(new StoredField(FIELD_MIME_TYPE, manifest.mimeType()));
+        }
+        doc.add(new StoredField(FIELD_PAGE_START, chunk.pageStart()));
+        doc.add(new StoredField(FIELD_PAGE_END, chunk.pageEnd()));
+        doc.add(new StoredField(FIELD_SECTION_PATH, chunk.sectionPath() == null ? "" : chunk.sectionPath()));
+        doc.add(new StoredField(FIELD_HEADING, chunk.heading() == null ? "" : chunk.heading()));
+        doc.add(new StoredField(FIELD_SOURCE_ELEMENTS, chunk.sourceElementsJson() == null ? "[]" : chunk.sourceElementsJson()));
+        doc.add(new StoredField(FIELD_TOKEN_COUNT, chunk.tokenCount()));
+        doc.add(new StoredField(FIELD_STRUCTURED_CONTENT, chunk.structuredContentJson() == null ? "" : chunk.structuredContentJson()));
+        doc.add(new StoredField(FIELD_IS_PARTIAL_SECTION, String.valueOf(chunk.isPartialSection())));
+        for (String cls : chunk.classification()) {
+            doc.add(new StringField(FIELD_CLASSIFICATION, cls, Field.Store.YES));
+        }
+        doc.add(new StoredField(FIELD_INGEST_USAGE, ingestUsage));
+        if (chunk.chunkType() != null && !chunk.chunkType().isEmpty()) {
+            doc.add(new StringField(FIELD_CHUNK_TYPE, chunk.chunkType(), Field.Store.YES));
+        }
+        if (chunk.sectionId() != null && !chunk.sectionId().isEmpty()) {
+            doc.add(new StringField(FIELD_SECTION_KEY,
+                    manifest.contentRefId() + "|" + chunk.sectionId(), Field.Store.NO));
+            doc.add(new StoredField(FIELD_SECTION_ID, chunk.sectionId()));
+            doc.add(new StoredField(FIELD_PARENT_SECTION_ID,
+                    chunk.parentSectionId() == null ? "" : chunk.parentSectionId()));
+            doc.add(new StoredField(FIELD_HEADING_LEVEL, chunk.headingLevel()));
+            counters.sectionDocs++;
+        }
+        doc.add(new StoredField(FIELD_INGEST_WALL_MS, ingestWallMs));
+
+        if (embOpt.isPresent()) {
+            EmbeddingRow emb = embOpt.get();
+            try {
+                float[] vec = shape.fit(emb.embedding());
+                doc.add(new KnnFloatVectorField(FIELD_EMBEDDING, vec, VectorSimilarityFunction.COSINE));
+                counters.vectorDocs++;
+            } catch (EmbeddingShape.DimensionMismatchException e) {
+                counters.dimMismatches++;
+                if (counters.dimMismatches <= 5) {
+                    log.warn("Embedding dim mismatch for {}#{}: {}",
+                            manifest.contentRefId(), chunk.chunkOrdinal(), e.getMessage());
+                }
+            }
+        } else {
+            counters.missingVectors++;
+        }
+        return doc;
+    }
+
+    private static boolean isIndexable(ManifestRow manifest) {
+        return INDEXABLE_STATES.contains(manifest.state() == null ? "" : manifest.state().toUpperCase());
+    }
+
+    private void finishBuild(String tenant, Counters counters, int skipCount) {
         BuildReport report = new BuildReport(embeddingModel, shape.dim(), shape.truncates(),
-                docCount, vectorDocs, dimMismatches, missingVectors, sectionDocs);
+                counters.docs, counters.vectorDocs, counters.dimMismatches, counters.missingVectors,
+                counters.sectionDocs);
         lastReports.put(tenant, report);
         log.info("Built Lucene index for tenant '{}': {} docs indexed ({} with {}-dim vectors of model '{}', "
                         + "{} dim mismatches, {} without a vector), {} manifests skipped",
-                tenant, docCount, vectorDocs, shape.describe(), embeddingModel, dimMismatches, missingVectors, skipCount);
-        if (embeddingRequired && (dimMismatches > 0 || missingVectors > 0)) {
+                tenant, counters.docs, counters.vectorDocs, shape.describe(), embeddingModel,
+                counters.dimMismatches, counters.missingVectors, skipCount);
+        if (embeddingRequired && (counters.dimMismatches > 0 || counters.missingVectors > 0)) {
             // Fail closed: under synquest.embedding.required a partly-vectorised index would make
             // a "dense"/"hybrid" run silently lexical for the affected chunks.
             throw new IllegalStateException("index for tenant '" + tenant + "' is not fully vectorised with model '"
-                    + embeddingModel + "' at dim " + shape.describe() + ": " + dimMismatches + " dim mismatches, "
-                    + missingVectors + " chunks without a vector (synquest.embedding.required=true)");
+                    + embeddingModel + "' at dim " + shape.describe() + ": " + counters.dimMismatches
+                    + " dim mismatches, " + counters.missingVectors
+                    + " chunks without a vector (synquest.embedding.required=true)");
         }
+    }
+
+    private static final class Counters {
+        int docs;
+        int vectorDocs;
+        int dimMismatches;
+        int missingVectors;
+        int sectionDocs;
     }
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
