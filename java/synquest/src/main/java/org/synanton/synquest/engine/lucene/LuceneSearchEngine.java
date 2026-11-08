@@ -481,6 +481,16 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
     }
 
     @Override
+    public int deleteContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException {
+        int deleted = indexAdapter.deleteContentRefs(tenant, contentRefs);
+        HybridSearcher searcher = getSearcher(tenant);
+        if (searcher != null) {
+            searcher.maybeRefresh();
+        }
+        return deleted;
+    }
+
+    @Override
     public boolean isEmpty(String tenant) {
         return indexAdapter.isEmpty(tenant);
     }

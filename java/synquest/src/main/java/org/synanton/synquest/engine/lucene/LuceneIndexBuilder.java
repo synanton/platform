@@ -181,6 +181,25 @@ public class LuceneIndexBuilder {
         return counters.docs;
     }
 
+    /** Deletes every chunk of the given content refs (incremental source deletion). */
+    public int deleteContentRefs(String tenant, java.util.Collection<UUID> contentRefIds) throws IOException {
+        if (contentRefIds == null || contentRefIds.isEmpty()) {
+            return 0;
+        }
+        Path path = indexPath(tenant);
+        Files.createDirectories(path);
+        IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        try (FSDirectory dir = FSDirectory.open(path);
+             IndexWriter writer = new IndexWriter(dir, config)) {
+            for (UUID contentRefId : new java.util.LinkedHashSet<>(contentRefIds)) {
+                writer.deleteDocuments(new org.apache.lucene.index.Term(FIELD_CONTENT_REF_ID, contentRefId.toString()));
+            }
+            writer.commit();
+        }
+        return contentRefIds.size();
+    }
+
     /** Deletes chunks by their stable Lucene id (used by delete projection). */
     public int deleteChunkIds(String tenant, java.util.Collection<String> chunkIds) throws IOException {
         if (chunkIds == null || chunkIds.isEmpty()) {

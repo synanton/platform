@@ -2,104 +2,110 @@
 
 Reference acceptance case: **`refresher-algebra-calculus.pdf`** — one
 representative document uploaded through the UI, ingested, searchable, and
-returning provenance with page + section. This replaces the synthetic
-Acme/Globex corpus as the demo's reference case; the synthetic corpus is retired
-from the demo path (see #508).
+returning provenance with page + section. The synthetic corpus is retired from the
+demo path (see #508).
 
 ## Status dimensions
 
-Each issue is tracked against three independent statuses:
-
 - **Demo Complete** — the happy path works live in the room.
-- **Architecture Complete** — contracts frozen, design coherent, no known
-  structural gaps.
-- **Operationally Complete** — survives pod restart, node drain, and failure
-  injection.
+- **Architecture Complete** — contracts frozen, design coherent, no known structural gaps.
+- **Operationally Complete** — survives pod restart, node drain, and failure injection.
 
-The slice is Demo Complete; this plan drives it to Operationally Complete.
+The slice is Demo Complete and the search projection is now **Architecture Complete**
+(#550/#552). Remaining operational gaps are tracked in P1.
 
-**Milestone — Vertical Slice: Demo Complete (achieved 2026-11-06).** Live hybrid
-retrieval verified end to end: a newly uploaded PDF returns `BM25 #1 · Dense #1 ·
-RRF #1`; provenance renders source/chunk SHA-256 plus page/section; the ontology
-panel loads 273 entities with `df` badges. Evidence:
+**Milestone — Vertical Slice: Demo Complete (achieved 2026-11-06).** New PDF upload
+returns `BM25 #1 · Dense #1 · RRF #1`; provenance renders source/chunk SHA-256 plus
+page/section; ontology loads 273 entities with `df` badges. Evidence:
 `docs/acceptance/live-dense-2026-11-06.md`.
+
+## Search engine architecture (post-#552)
+
+```
+api controllers ──► SearchService (facade, no Lucene imports)
+                        │
+                        ├─ SearchEngineAdapter (search/read/lifecycle port)
+                        │      └─ LuceneSearchEngine  ──► engine.lucene
+                        │             ├─ HybridSearcher (SearcherManager, NRT)
+                        │             ├─ RrfFusion
+                        │             └─ LuceneIndexBuilder (streamed writes)
+                        └─ SearchIndexAdapter (write/lifecycle) ──► EmbeddedLuceneAdapter
+```
+
+- **Write path:** `LuceneIndexBuilder.build` streams manifests/chunks through Cassandra
+  paging (fetch size 1,000) and relies on Lucene's RAM-buffer flush; incremental
+  projection uses `OpenMode.CREATE_OR_APPEND` + `updateDocument(id)`.
+- **Read path:** `LuceneSearchEngine` owns the hybrid legs/fusion/rerank and returns
+  engine-neutral `SearchDocument`/`SearchResult`; `SearchService` maps API DTOs only.
+- **Visibility:** `SearcherManager.maybeRefresh()` after a commit; `reindex` keeps the
+  current searcher open, so a full rebuild does not 503.
+- **Boundary guard:** `grep -rn org.apache.lucene java/synquest/src/main/.../service` and
+  `.../api` returns zero (ADR-021).
 
 ## P0 — Baseline (Demo Complete)
 
-Path: Source → Ingestion run → Operation → Source version → Search projection →
-Search → Provenance.
-
-- [x] Upload one representative document (`refresher-algebra-calculus.pdf`).
+- [x] Upload one representative document.
 - [x] Ingestion run + operation state visible.
-- [x] Search returns the uploaded document's chunks on both legs (BM25 + live Dense via TEI).
-- [x] Provenance renders page range + section breadcrumb (no "#338" placeholder).
-- [x] Ontology panel renders (273 total / 31 graph-useful), df counts as badges.
-- [x] **#537** — automated vertical-slice regression (upload → dense search → provenance). (ui#28; cold-path CI green; Dense mandatory locally, skipped on GPU-less CI)
+- [x] Search returns chunks on both legs (BM25 + live Dense via TEI).
+- [x] Provenance renders page range + section breadcrumb.
+- [x] Ontology panel renders (273 total / 31 graph-useful), df badges.
+- [x] **#537** — automated vertical-slice regression (ui#28; cold-path CI green).
 
 ## P1 — Failure & operability
 
-- [x] **#506** — synquest `ReadWriteOnce` PVC + `RollingUpdate` deadlocks on image
-  change; set `strategy: Recreate`. (Done — `synquest.yaml` sets `Recreate`.)
-- [x] **EWP-2 Migration 3** (eventing) steps 2–6: Cassandra schema columns, typed
-  payloads, write path, config gate, e2e (#527, #530–#533; tracker #528 closed).
-- [x] **#536** — outbox consumer idempotency & recovery (kill mid-projection, restart, no duplicates). (#545)
+- [x] **#506** — synquest RWO PVC + RollingUpdate deadlock; `strategy: Recreate`.
+- [x] **EWP-2 Migration 3** — typed envelopes, incremental outbox, config gate (#527, #530–#533).
+- [x] **#536** — outbox consumer idempotency & recovery (#545).
+- [x] **#539** — tenant isolation negative tests for live search + provenance (ui#29).
+- [x] **UX polish (503)** — index-updating banner (#525).
+- [x] **Live Dense leg** — verified 2026-11-06.
+- [x] **#547 / #550 / #552** — streamed rebuild, incremental `updateDocument`, atomic
+  `SearcherManager` refresh, and the `SearchEngineAdapter` boundary (ADR-021).
+- [ ] **Incremental SourceDeleted projection** — today a delete falls back to a full
+  tenant rebuild; replace with `deleteDocuments(new Term("content_ref_id", …))`.
+- [ ] **Streaming scale test** — 1,000+ chunks through `build()` without materialising the tenant.
+- [ ] **#538** — route demo TEI via gateway/Envoy; drop the direct NetworkPolicy exception.
 - [ ] Projection lag and retrieval-failure visibility in the UI.
-- [x] **#539** — tenant isolation negative tests for live search + provenance. (ui#29)
-- [x] **UX polish (503)** — `SearchPage.tsx` catches the projection-rebuild `503`
-  and renders a friendly "Index updating…" banner instead of a red error (#525).
-- [x] **Live Dense leg** — verified 2026-11-06; see the dedicated subsection below.
-- [ ] **#538** — route demo TEI via gateway/Envoy; drop the `demo-allow-synanton-tei`
-  NetworkPolicy exception (prod TODO in the manifest).
 
-### P1: Live Dense Leg & GPU Integration — DONE (2026-11-06)
+## Retrieval benchmark (validation track)
 
-- **Config:** `VLLM_EMBED_BASE_URL` (synquest) and `EMBED_BASE_URL` (synflux — note
-  synflux does **not** read `VLLM_EMBED_BASE_URL`) point at
-  `http://tei-embedding.gpu-plane.svc.cluster.local:8000/v1`;
-  `SYNFLUX_PIPELINE_EMBEDDING_ENABLED=true`.
-- **Code:** `DemoSearchService` embeds uncached queries through `QueryEmbedder` (TEI)
-  and reads chunk vectors from `embedding_content_cache` (model-filtered, shape-fit).
-  The static `dense-v2.json` is now a query cache only.
-- **Infra:** additive demo NetworkPolicy `demo-allow-synanton-tei` (prod TODO: route via
-  Envoy); synquest uses `strategy: Recreate` for its RWO index PVC.
-- **Verified:** new PDF upload → manifest `EMBEDDED` → canonical chunk vector → projection
-  → `BM25 #1 · Dense #1 · RRF #1`. A mixed query shows lexical hits (`Dense —`) fused with
-  semantic hits (`BM25 — · Dense #N`) by RRF.
-- **Trade-off:** the 58 legacy manifests were ingested with embedding disabled and have no
-  canonical vectors, so they remain BM25-only. New uploads get full hybrid retrieval;
-  corpus backfill is intentionally deferred (would trigger 58 TEI jobs + reindexes).
+- `docs/research/retrieval-benchmark-results.md` — Run A (recorded q25, bge-base: RRF
+  0.859 nDCG > BM25 0.824 > Dense 0.805), Run B (bge-small 384: BM25 wins; Dense harms
+  RRF), Run C (decoupled engine, reconstructed corpus: not a byte-faithful replay —
+  original 81-chunk tenant is gone).
+- Frozen corpus for future runs: `evaluation/retrieval/` + `check_corpus.py` (hash
+  validation before a benchmark run).
+- **#556** — query-adaptive weighted RRF (EXACT/CONCEPTUAL/MIXED) — deferred until the
+  frozen corpus is in place.
+- **#558** — extraction gold + deterministic baseline (0.000; closed). RAKG epic follows.
 
-## P2 — Focused graph exploration (re-scoped #508)
+## P2 — Focused graph exploration (#508)
 
-- [ ] **#508** — bounded neighbor expansion from a single selected entity
-  (open a graph from an entity, expand ≤ ~200 nodes). Full 20k-chunk graph
-  visualization is **not** a prerequisite. **Partial (ui#31):** search-result →
-  chunk neighbor graph with a 50-node bound and click-to-re-root; entity-rooted
-  entry from the Ontology tab still needs a reverse entity→chunk API.
+- [ ] **#508** — bounded neighbor expansion. **Partial (ui#31):** search-result → chunk
+  graph (50-node cap, click-to-re-root). Entity-rooted entry needs a reverse
+  entity→chunk API.
 
 ## P3 — Operational reality
 
 - [ ] Survives pod restart / node drain / redeploy.
-- [ ] `stop.sh` / `start.sh` cleanly quiesce + resume the demo stack. *(stop.sh
-  now covers security/ui/platform; start.sh resumes.)*
+- [ ] `stop.sh` / `start.sh` cleanly quiesce + resume (security/ui/platform covered).
 
 ## Current issue mapping
 
 | Issue / track | Status | P-level |
 |---|---|---|
-| #508 (graph) | Open — bounded expansion | P2 |
-| #506 (RWO deadlock) | Closed — `Recreate` deployed (#534) | — |
+| #508 (graph) | Open — search-result graph done; entity root pending | P2 |
 | #500 (platform crashloop) | Open — out of demo path | deferred |
-| EWP-2 Migration 3 (#528) | Closed — steps 1–6 complete | — |
-| #536 (outbox idempotency & recovery) | Closed (#545) | — |
-| #537 (automated vertical-slice E2E) | Closed (ui#28; CI green) | — |
 | #538 (TEI via gateway/Envoy) | Open | P1 |
-| #539 (tenant isolation negative tests) | Closed (ui#29) | — |
-| #547 (incremental Lucene projection) | Open | P1 |
-| #507 | Closed (invalid — store populated) | — |
+| #547 (incremental Lucene projection) | Closed (#551/#552) | — |
+| #550 (engine adapter boundary) | Closed (#552, ADR-021) | — |
+| #556 (query-adaptive RRF) | Open — blocked on frozen corpus | P1 |
+| #558 (extraction gold + baseline) | Closed (#559) | — |
+| #506, #528, #536, #537, #539 | Closed | — |
+| RAKG extraction epic | Open — sentence chunking first | P3 |
 
 ## Operation
 
-- Demo bring-up: `./scripts/deploy-demo.sh` (data layer + `local-real-demo` overlay + htpasswd).
-- Resume after stop: `./scripts/start.sh`; quiesce: `./scripts/stop.sh`.
+- Demo bring-up: `./scripts/deploy-demo.sh`.
+- Resume: `./scripts/start.sh`; quiesce: `./scripts/stop.sh`.
 - Browser: `http://<worker>:30080/search` and `/ontology`.
