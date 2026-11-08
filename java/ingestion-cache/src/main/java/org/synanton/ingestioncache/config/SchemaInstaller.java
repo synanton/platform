@@ -31,6 +31,7 @@ public class SchemaInstaller {
         "cql/V15__operation_details.cql",
         "cql/V16__ewp2_envelope.cql",
         "cql/V17__extraction_request_outbox.cql",
+        "cql/V18__extraction_consumer.cql",
     };
 
     public static void install(CqlSession session) {

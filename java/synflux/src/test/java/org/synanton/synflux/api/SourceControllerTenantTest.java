@@ -135,6 +135,32 @@ class SourceControllerTenantTest {
     }
 
     @Test
+    void sourceStatusIncludesExtractionStatus() throws Exception {
+        SourceRow source = new SourceRow("tenant-a", "source-a", "fixture", "file",
+            "file:///fixture", Set.of(), "ACTIVE", Instant.parse("2026-10-17T10:00:00Z"), null);
+        SourceIdentityRow identity = new SourceIdentityRow("tenant-a", "fixture", "source-a", "manuals/a.md");
+        SourceVersionRow version = new SourceVersionRow(
+            "tenant-a", "fixture", "source-a", "manuals/a.md", UUID.randomUUID(), "sha256:abc", "etag:123",
+            Instant.parse("2026-10-17T11:00:00Z"), UUID.randomUUID(), null, "ref"
+        );
+        when(cache.readSource("tenant-a", "source-a")).thenReturn(Optional.of(source));
+        when(cache.listWorkflowStates("tenant-a")).thenReturn(List.of());
+        when(cache.listSourceIdentities("tenant-a", "source-a", "fixture")).thenReturn(List.of(identity));
+        when(cache.listSourceVersions("tenant-a", "fixture", "source-a", "manuals/a.md"))
+            .thenReturn(List.of(version));
+        when(cache.readExtractionStatus("tenant-a", "fixture", "source-a", "manuals/a.md", version.versionId()))
+            .thenReturn(Optional.of("KNOWLEDGE_READY"));
+        when(cache.readChunks("tenant-a", version.contentRefId())).thenReturn(List.of());
+        when(cache.readManifest("tenant-a", version.contentRefId())).thenReturn(Optional.empty());
+        when(cache.listSourceOutbox("tenant-a", "fixture", "source-a", "manuals/a.md")).thenReturn(List.of());
+
+        mvc.perform(get("/v1/sources/source-a/status")
+                .header("Authorization", "Bearer " + token("tenant-a")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.extraction_status").value("KNOWLEDGE_READY"));
+    }
+
+    @Test
     void sourceReadDoesNotTrustTenantHeaderWithoutBearerToken() throws Exception {
         mvc.perform(get("/v1/sources/shared-source").header("X-Tenant", "tenant-a"))
             .andExpect(status().isUnauthorized());

@@ -64,6 +64,10 @@ spec:
               value: "http://vllm-extraction.gpu-plane.svc.cluster.local:8000/v1"
             - name: LLM_EXTRACTION_MODEL
               value: "qwen3-extraction"
+            - name: EXTRACTION_CONSUMER_ENABLED
+              value: "false"
+            - name: EXTRACTION_CONSUMER_TENANT
+              value: "demo"
             - name: MINIO_ENDPOINT
               value: http://minio:9000
             - name: MINIO_ACCESS_KEY

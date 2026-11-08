@@ -38,6 +38,13 @@ services:
     environment:
       SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "false"
       KAFKA_BOOTSTRAP_SERVERS: ""
+      # RAKG Phase 2. Defaults are safe (regex, consumer off); the local E2E
+      # enables llm + the consumer via env.
+      EXTRACTION_PROVIDER: ${EXTRACTION_PROVIDER:-regex}
+      LLM_EXTRACTION_URL: ${LLM_EXTRACTION_URL:-http://host.docker.internal:8000/v1}
+      LLM_EXTRACTION_MODEL: ${LLM_EXTRACTION_MODEL:-qwen3-extraction}
+      EXTRACTION_CONSUMER_ENABLED: ${EXTRACTION_CONSUMER_ENABLED:-false}
+      EXTRACTION_CONSUMER_TENANT: ${EXTRACTION_CONSUMER_TENANT:-demo}
     # The base actuator healthcheck is unauthenticated-deny in this stack;
     # use the service's own /health endpoint instead.
     healthcheck:

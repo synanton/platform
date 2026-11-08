@@ -27,6 +27,7 @@ class SchemaInventoryTest {
                     "chunk_source_versions",
                     "dead_letter_events",
                     "embedding_content_cache",
+                    "extraction_results",
                     "image_caption_cache",
                     "ingestion_errors",
                     "ingestion_manifest_entries",
@@ -153,7 +154,10 @@ class SchemaInventoryTest {
             "source_versions.extraction_event_attempt_count",
             "source_versions.extraction_event_last_error",
             "source_versions.extraction_event_next_attempt_at",
-            "source_versions.extraction_event_dead_lettered"
+            "source_versions.extraction_event_dead_lettered",
+            "source_versions.extraction_status",
+            "extraction_results.entities_json",
+            "extraction_results.relations_json"
         );
     }
 }
