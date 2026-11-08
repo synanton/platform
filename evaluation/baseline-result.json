@@ -1,45 +1,40 @@
 {
   "extractor": {
-    "definition_id": "payment-detection",
-    "definition_version": 4,
-    "annotation_type": "TAG",
-    "namespace": "billing",
-    "name": "payment",
-    "producer": "payment-rule-engine",
-    "producer_version": "4.2",
-    "keywords": [
-      "invoice number",
-      "payment reference",
-      "payment terms"
-    ]
+    "adapter": "RegexExtractorAdapter",
+    "contract": "org.synanton.extraction.engine.ExtractionEngineAdapter",
+    "phase": "A (deterministic baseline)"
   },
   "aggregate": {
     "documents": 5,
     "gold_entities": 70,
     "gold_relationships": 44,
-    "predicted_mentions": 0,
+    "predicted_mentions": 139,
+    "predicted_relations": 34,
     "entity_exact": {
-      "tp": 0,
-      "fp": 0,
-      "fn": 70,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0
+      "tp": 8,
+      "fp": 131,
+      "fn": 62,
+      "precision": 0.05755395683453238,
+      "recall": 0.11428571428571428,
+      "f1": 0.07655502392344497
     },
     "entity_overlap": {
+      "tp": 19,
+      "fp": 120,
+      "fn": 51,
+      "precision": 0.1366906474820144,
+      "recall": 0.2714285714285714,
+      "f1": 0.18181818181818185
+    },
+    "type_accuracy": 0.14666666666666667,
+    "resolution_accuracy": null,
+    "relationship": {
       "tp": 0,
-      "fp": 0,
-      "fn": 70,
+      "fp": 34,
+      "fn": 44,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
-    },
-    "resolution_accuracy": null,
-    "relationship": {
-      "recall": 0.0,
-      "precision": null,
-      "f1": 0.0,
-      "note": "the rule emits no relationships"
     },
     "evidence_coverage": null
   },
@@ -48,31 +43,33 @@
       "document_id": "halcyon-7-directive",
       "gold_entities": 10,
       "gold_relationships": 7,
-      "predicted_mentions": 0,
-      "rule_matched": false,
+      "predicted_mentions": 11,
+      "predicted_relations": 0,
       "entity_exact": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 10,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 2,
+        "fp": 9,
+        "fn": 8,
+        "precision": 0.18181818181818182,
+        "recall": 0.2,
+        "f1": 0.1904761904761905
       },
       "entity_overlap": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 10,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 2,
+        "fp": 9,
+        "fn": 8,
+        "precision": 0.18181818181818182,
+        "recall": 0.2,
+        "f1": 0.1904761904761905
       },
+      "type_accuracy": 0.0,
       "resolution_accuracy": null,
       "relationship": {
         "tp": 0,
         "fp": 0,
         "fn": 7,
-        "precision": null,
-        "recall": 0.0
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
       },
       "evidence_coverage": null
     },
@@ -80,31 +77,33 @@
       "document_id": "e650-live-dense-v2",
       "gold_entities": 12,
       "gold_relationships": 7,
-      "predicted_mentions": 0,
-      "rule_matched": false,
+      "predicted_mentions": 10,
+      "predicted_relations": 1,
       "entity_exact": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 12,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 2,
+        "fp": 8,
+        "fn": 10,
+        "precision": 0.2,
+        "recall": 0.16666666666666666,
+        "f1": 0.1818181818181818
       },
       "entity_overlap": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 12,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 4,
+        "fp": 6,
+        "fn": 8,
+        "precision": 0.4,
+        "recall": 0.3333333333333333,
+        "f1": 0.3636363636363636
       },
+      "type_accuracy": 0.0,
       "resolution_accuracy": null,
       "relationship": {
         "tp": 0,
-        "fp": 0,
+        "fp": 1,
         "fn": 7,
-        "precision": null,
-        "recall": 0.0
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
       },
       "evidence_coverage": null
     },
@@ -112,31 +111,33 @@
       "document_id": "skiena-sorting",
       "gold_entities": 15,
       "gold_relationships": 10,
-      "predicted_mentions": 0,
-      "rule_matched": false,
+      "predicted_mentions": 34,
+      "predicted_relations": 9,
       "entity_exact": {
         "tp": 0,
-        "fp": 0,
+        "fp": 34,
         "fn": 15,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0
       },
       "entity_overlap": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 15,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 3,
+        "fp": 31,
+        "fn": 12,
+        "precision": 0.08823529411764706,
+        "recall": 0.2,
+        "f1": 0.12244897959183675
       },
+      "type_accuracy": 0.3333333333333333,
       "resolution_accuracy": null,
       "relationship": {
         "tp": 0,
-        "fp": 0,
+        "fp": 9,
         "fn": 10,
-        "precision": null,
-        "recall": 0.0
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
       },
       "evidence_coverage": null
     },
@@ -144,31 +145,33 @@
       "document_id": "skiena-dynamic-programming",
       "gold_entities": 15,
       "gold_relationships": 10,
-      "predicted_mentions": 0,
-      "rule_matched": false,
+      "predicted_mentions": 38,
+      "predicted_relations": 11,
       "entity_exact": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 15,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 2,
+        "fp": 36,
+        "fn": 13,
+        "precision": 0.05263157894736842,
+        "recall": 0.13333333333333333,
+        "f1": 0.07547169811320754
       },
       "entity_overlap": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 15,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 5,
+        "fp": 33,
+        "fn": 10,
+        "precision": 0.13157894736842105,
+        "recall": 0.3333333333333333,
+        "f1": 0.18867924528301885
       },
+      "type_accuracy": 0.2,
       "resolution_accuracy": null,
       "relationship": {
         "tp": 0,
-        "fp": 0,
+        "fp": 11,
         "fn": 10,
-        "precision": null,
-        "recall": 0.0
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
       },
       "evidence_coverage": null
     },
@@ -176,31 +179,33 @@
       "document_id": "skiena-tsp-parsing",
       "gold_entities": 18,
       "gold_relationships": 10,
-      "predicted_mentions": 0,
-      "rule_matched": false,
+      "predicted_mentions": 46,
+      "predicted_relations": 13,
       "entity_exact": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 18,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 2,
+        "fp": 44,
+        "fn": 16,
+        "precision": 0.043478260869565216,
+        "recall": 0.1111111111111111,
+        "f1": 0.0625
       },
       "entity_overlap": {
-        "tp": 0,
-        "fp": 0,
-        "fn": 18,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0
+        "tp": 5,
+        "fp": 41,
+        "fn": 13,
+        "precision": 0.10869565217391304,
+        "recall": 0.2777777777777778,
+        "f1": 0.15625
       },
+      "type_accuracy": 0.2,
       "resolution_accuracy": null,
       "relationship": {
         "tp": 0,
-        "fp": 0,
+        "fp": 13,
         "fn": 10,
-        "precision": null,
-        "recall": 0.0
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
       },
       "evidence_coverage": null
     }
