@@ -197,7 +197,8 @@ public final class RegexExtractorAdapter implements ExtractionEngineAdapter {
     }
 
     private static String sentenceContaining(String text, int offset) {
-        int start = Math.max(text.lastIndexOf(". ", offset) + 2, 0);
+        int previous = text.lastIndexOf(". ", offset);
+        int start = previous < 0 ? 0 : previous + 2;
         int end = text.indexOf(". ", offset);
         if (end < 0) {
             end = text.length();
