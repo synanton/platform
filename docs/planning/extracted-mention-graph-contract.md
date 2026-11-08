@@ -103,6 +103,31 @@ included when present.
 `graph_validation_counters` (mentions/relations accepted/rejected) and
 `graph_commit_at`.
 
+## PR #3.5 hardening (2026-11-08)
+
+- **Tenant auth:** `/graph/mentions` and `/graph/relations` require a verified
+  HS256 tenant JWT (`TenantContextFilter`); the body tenant is confirmatory only.
+  Synflux mints a short-lived service token with the shared secret. A missing
+  `SYNANTON_JWT_SECRET` fails Relix startup.
+- **Independent retry:** `GraphCommitConsumer` scans `extraction_status=KNOWLEDGE_READY`
+  rows with `graph_status IN (PENDING, FAILED)` and past `graph_next_attempt_at`,
+  rebuilds `ExtractionResult` from `extraction_results`, and re-runs `GraphWriter`
+  without re-calling the LLM. V21 adds attempt/backoff columns; the writer claims a
+  row with an LWT (`graph_status='VALIDATING'`) so workers do not double-commit.
+- **Evidence identity:** the writer always uses the current chunk id
+  (`content_ref:ordinal`) for edge provenance, never the model's candidate id.
+- **Actual counts:** Relix returns the number of persisted nodes/edges; the
+  controller reports it and `GraphWriter` fails the commit if persisted < expected.
+  Neo4j uses MATCH endpoints + a post-write count, so a missing endpoint is a
+  loud failure, not a silent drop.
+- **Uniqueness:** Neo4j enforces
+  `CREATE CONSTRAINT ... REQUIRE (m.tenant_id, m.mention_id) IS UNIQUE`; a
+  concurrent write test proves four racers produce one node.
+- **Type inheritance:** relation domain/range checks walk the supertype graph
+  transitively, not just direct `rdfs:subClassOf` entries.
+- **Attempt state:** `graph_attempt_count` and `graph_next_attempt_at`; failures
+  use capped exponential backoff (30s → 300s). `extraction_status` is unchanged.
+
 ## Explicit non-goals
 
 Canonical `:Entity` creation, `:RESOLVES_TO`, retrieval-assisted resolution,

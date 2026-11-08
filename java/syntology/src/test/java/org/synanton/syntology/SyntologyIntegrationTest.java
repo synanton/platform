@@ -101,6 +101,25 @@ class SyntologyIntegrationTest {
     }
 
     @Test
+    void shouldValidateTransitiveTypeInheritance() throws Exception {
+        MockMultipartFile zip = new MockMultipartFile(
+                "file", "ontology.zip", "application/zip", zipSchemaBundle());
+        mockMvc.perform(multipart("/api/v1/admin/ontology/schemas")
+                        .file(zip)
+                        .param("version", "1.2.0")
+                        .param("entry", "schema.hcl"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(
+                        post("/api/v1/ontology/validate-relation")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"subjectType\":\"Purchase Order\",\"predicate\":\"belongs to\","
+                                        + "\"objectType\":\"Sales Order\",\"ontologyVersion\":\"1.2.0\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conformant").value(true));
+    }
+
+    @Test
     void shouldRejectUnknownRelationPredicate() throws Exception {
         mockMvc.perform(
                         post("/api/v1/ontology/validate-relation")

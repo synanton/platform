@@ -42,18 +42,26 @@ public final class GraphWriter {
 
     public void commit(ExtractionRequestRow request, List<ChunkRow> chunks,
                        Map<Integer, ExtractionResult> resultsByOrdinal) {
+        commit(request, chunks, resultsByOrdinal, 0);
+    }
+
+    public void commit(ExtractionRequestRow request, List<ChunkRow> chunks,
+                       Map<Integer, ExtractionResult> resultsByOrdinal, int graphAttempt) {
         if (!properties.enabled()) {
+            return;
+        }
+        if (!cacheClient.claimGraphCommit(request)) {
             return;
         }
         Map<String, Integer> counters = counters(0, 0, 0, 0);
         try {
-            cacheClient.markGraphValidating(request);
             Map<Integer, ChunkRow> chunkByOrdinal = new LinkedHashMap<>();
             for (ChunkRow chunk : chunks) {
                 chunkByOrdinal.put(chunk.chunkOrdinal(), chunk);
             }
             Instant now = clock.instant();
             List<GraphMention> mentions = new ArrayList<>();
+            Map<String, GraphMention> uniqueMentions = new LinkedHashMap<>();
             Map<String, GraphMention> byRawMention = new LinkedHashMap<>();
             for (Map.Entry<Integer, ExtractionResult> entry : resultsByOrdinal.entrySet()) {
                 int ordinal = entry.getKey();
@@ -74,13 +82,14 @@ public final class GraphWriter {
                             request.versionId().toString(), request.contentRefId().toString(), chunkId,
                             entity.charStart(), entity.charEnd(), documentStart, documentEnd,
                             entity.surfaceForm(), entity.proposedType(), now);
-                    mentions.add(mention);
+                    uniqueMentions.putIfAbsent(mention.mentionId(), mention);
                     byRawMention.put(ordinal + "|" + entity.mentionId(), mention);
                 }
             }
+            mentions.addAll(uniqueMentions.values());
             counters.put("mentions_accepted", mentions.size());
 
-            List<GraphRelation> accepted = new ArrayList<>();
+            Map<String, GraphRelation> acceptedById = new LinkedHashMap<>();
             int rejected = 0;
             for (Map.Entry<Integer, ExtractionResult> entry : resultsByOrdinal.entrySet()) {
                 int ordinal = entry.getKey();
@@ -111,34 +120,44 @@ public final class GraphWriter {
                             ? chunk.documentOffsetStart() + relation.evidenceCharStart() : -1;
                     int evidenceDocumentEnd = chunk.documentOffsetStart() >= 0
                             ? chunk.documentOffsetStart() + relation.evidenceCharEnd() : -1;
-                    String evidenceChunkId = relation.evidenceChunkId() == null
-                            || relation.evidenceChunkId().isBlank()
-                            ? request.contentRefId() + ":" + ordinal
-                            : relation.evidenceChunkId();
-                    accepted.add(new GraphRelation(relationId, request.tenantId(),
+                    // Provenance is authoritative from the current TextSegment,
+                    // never the model's candidate id.
+                    String evidenceChunkId = request.contentRefId() + ":" + ordinal;
+                    acceptedById.putIfAbsent(relationId, new GraphRelation(relationId, request.tenantId(),
                             request.versionId().toString(), relation.predicate(), subject.mentionId(),
                             object.mentionId(), evidenceChunkId,
                             relation.evidenceCharStart(), relation.evidenceCharEnd(),
                             evidenceDocumentStart, evidenceDocumentEnd, now));
                 }
             }
+            List<GraphRelation> accepted = new ArrayList<>(acceptedById.values());
             counters.put("relations_accepted", accepted.size());
             counters.put("relations_rejected", rejected);
 
             if (!mentions.isEmpty()) {
-                graphClient.upsertMentions(mentions);
+                int persistedMentions = graphClient.upsertMentions(mentions);
+                if (persistedMentions < mentions.size()) {
+                    throw new IllegalStateException("Relix persisted " + persistedMentions
+                            + " of " + mentions.size() + " extracted mentions");
+                }
             }
             if (!accepted.isEmpty()) {
-                graphClient.upsertRelations(accepted);
+                int persistedRelations = graphClient.upsertRelations(accepted);
+                if (persistedRelations < accepted.size()) {
+                    throw new IllegalStateException("Relix persisted " + persistedRelations
+                            + " of " + accepted.size() + " extracted relations");
+                }
             }
             String graphStatus = rejected > 0 ? "PARTIAL" : "GRAPH_COMMITTED";
-            cacheClient.markGraphCommitted(request, graphStatus, counters, clock.instant());
+            cacheClient.markGraphCommitted(request, graphStatus, counters, graphAttempt, clock.instant());
             log.info("Graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
                     request.tenantId(), request.versionId(), graphStatus, mentions.size(),
                     accepted.size(), rejected);
         } catch (Exception e) {
+            int attempt = graphAttempt + 1;
+            Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempt));
             try {
-                cacheClient.markGraphFailed(request, "FAILED", counters, clock.instant());
+                cacheClient.markGraphFailed(request, "FAILED", counters, attempt, nextAttemptAt, clock.instant());
             } catch (Exception markFailure) {
                 log.warn("Could not mark graph failure tenant={} version={}: {}",
                         request.tenantId(), request.versionId(), markFailure.toString());
@@ -146,6 +165,11 @@ public final class GraphWriter {
             log.warn("Graph commit failed tenant={} version={}: {}",
                     request.tenantId(), request.versionId(), e.toString());
         }
+    }
+
+    private static long backoffSeconds(int attempt) {
+        long multiplier = 1L << Math.min(Math.max(0, attempt - 1), 5);
+        return Math.min(300, 30 * multiplier);
     }
 
     private static Map<String, Integer> counters(int mentionsAccepted, int mentionsRejected,

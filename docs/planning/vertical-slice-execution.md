@@ -107,6 +107,7 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **`ExtractionRequested` emission** — second event slot on `source_versions`, atomic with `SourcePublished`; `ExtractionRequested@1` REPLAY_SAFE; `search_projected_at` readiness gate (PR #1).
 - [x] **Async extraction consumer** — bounded `@Scheduled` poller, sequential LLM calls, `PENDING → EXTRACTING → KNOWLEDGE_READY/EXTRACTION_FAILED`, per-chunk result stub in Cassandra; `extraction_status` on the source status API (PR #2). Design: [`extraction-consumer-phase2.md`](extraction-consumer-phase2.md).
 - [x] **Validated graph persistence (PR #3)** — Syntology relation validation, Relix `GraphWritePort` for `:ExtractedMention` + validated `:EXTRACTED_RELATION`, deterministic ids, chunk/document offsets, `graph_status`/counters. Contract: [`extracted-mention-graph-contract.md`](extracted-mention-graph-contract.md).
+- [x] **Graph hardening (PR #3.5)** — verified-JWT Relix writes, independent `GraphCommitConsumer` retry/backoff, evidence-id authority, actual persisted counts, Neo4j uniqueness + concurrent test, transitive type inheritance.
 - [ ] **Canonical resolution (PR #4)** — retrieval-assisted resolution, `:RESOLVES_TO`, canonical `:Entity` links, then canonical graph edges (#560).
 
 ## P2 — Focused graph exploration (#508)

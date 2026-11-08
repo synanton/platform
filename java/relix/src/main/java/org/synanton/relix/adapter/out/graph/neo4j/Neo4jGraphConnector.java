@@ -33,6 +33,7 @@ public class Neo4jGraphConnector implements GraphConnector {
     private final GraphLoader graphLoader;
     private final CypherExecutor cypher;
     private final Map<String, GraphStats> statsByTenant = new ConcurrentHashMap<>();
+    private volatile boolean extractedSchemaEnsured;
 
     public Neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypher) {
         this.graphLoader = graphLoader;
@@ -103,10 +104,11 @@ public class Neo4jGraphConnector implements GraphConnector {
     }
 
     @Override
-    public void upsertMentions(List<ExtractedMention> batch) {
+    public int upsertMentions(List<ExtractedMention> batch) {
         if (batch == null || batch.isEmpty()) {
-            return;
+            return 0;
         }
+        ensureExtractedSchema();
         String tenant = batch.getFirst().tenantId();
         List<Map<String, Object>> rows = new ArrayList<>();
         for (ExtractedMention mention : batch) {
@@ -141,13 +143,16 @@ public class Neo4jGraphConnector implements GraphConnector {
                     n.proposed_type = row.proposedType,
                     n.extracted_at = row.extractedAt
                 """, Map.of("tenant", tenant, "rows", rows));
+        return countByIds(tenant, rows, "mentionId",
+                "MATCH (n:ExtractedMention {tenant_id: $tenant, mention_id: id}) RETURN count(n) AS c");
     }
 
     @Override
-    public void upsertRelations(List<ExtractedRelation> batch) {
+    public int upsertRelations(List<ExtractedRelation> batch) {
         if (batch == null || batch.isEmpty()) {
-            return;
+            return 0;
         }
+        ensureExtractedSchema();
         String tenant = batch.getFirst().tenantId();
         List<Map<String, Object>> rows = new ArrayList<>();
         for (ExtractedRelation relation : batch) {
@@ -182,6 +187,32 @@ public class Neo4jGraphConnector implements GraphConnector {
                     e.evidence_document_offset_end = row.evidenceDocumentOffsetEnd,
                     e.validated_at = row.validatedAt
                 """, Map.of("tenant", tenant, "rows", rows));
+        return countByIds(tenant, rows, "relationId",
+                "MATCH ()-[e:EXTRACTED_RELATION {tenant_id: $tenant, relation_id: id}]->() RETURN count(e) AS c");
+    }
+
+    private int countByIds(String tenant, List<Map<String, Object>> rows, String idField, String query) {
+        List<String> ids = rows.stream().map(row -> String.valueOf(row.get(idField))).distinct().toList();
+        List<Map<String, Object>> countRows = cypher.read(
+                "UNWIND $ids AS id " + query, Map.of("tenant", tenant, "ids", ids));
+        Object count = countRows.isEmpty() ? 0 : countRows.getFirst().get("c");
+        return count instanceof Number number ? number.intValue() : 0;
+    }
+
+    private void ensureExtractedSchema() {
+        if (extractedSchemaEnsured) {
+            return;
+        }
+        synchronized (this) {
+            if (extractedSchemaEnsured) {
+                return;
+            }
+            cypher.write("""
+                    CREATE CONSTRAINT extracted_mention_unique IF NOT EXISTS
+                    FOR (m:ExtractedMention) REQUIRE (m.tenant_id, m.mention_id) IS UNIQUE
+                    """, Map.of());
+            extractedSchemaEnsured = true;
+        }
     }
 
     @Override

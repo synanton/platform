@@ -932,6 +932,69 @@ public class IngestionCacheClient {
             .thenComparing(ExtractionRequestRow::eventId)).limit(limit).toList();
     }
 
+    /** Ready extractions whose graph write is pending/failed and past backoff. */
+    public List<GraphCommitRequestRow> listPendingGraphCommits(String tenantId, int limit, Instant now) {
+        List<GraphCommitRequestRow> pending = new ArrayList<>();
+        for (SourceRow source : listSources(tenantId)) {
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                ResultSet rows = session.execute(SimpleStatement.newInstance(
+                    "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+                    "AND source_id=? AND resource_id=?",
+                    tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId()
+                ));
+                for (Row row : rows) {
+                    UUID eventId = row.getUuid("extraction_event_id");
+                    if (eventId == null || !"KNOWLEDGE_READY".equals(row.getString("extraction_status"))) {
+                        continue;
+                    }
+                    String graphStatus = row.getString("graph_status");
+                    if (graphStatus != null && !"PENDING".equals(graphStatus) && !"FAILED".equals(graphStatus)) {
+                        continue;
+                    }
+                    Instant nextAttempt = row.getInstant("graph_next_attempt_at");
+                    if (nextAttempt != null && nextAttempt.isAfter(now)) {
+                        continue;
+                    }
+                    pending.add(new GraphCommitRequestRow(
+                        row.getString("tenant_id"), row.getString("connector_id"),
+                        row.getString("source_id"), row.getString("resource_id"), eventId,
+                        row.getUuid("version_id"), row.getUuid("content_ref_id"),
+                        row.getString("extraction_event_payload_json"), row.getInstant("observed_at"),
+                        row.getInstant("search_projected_at"), row.getString("extraction_status"),
+                        graphStatus, intOrDefault(row, "graph_attempt_count", 0),
+                        nextAttempt, intOrDefault(row, "extraction_event_attempt_count", 0),
+                        row.getString("extraction_event_last_error"),
+                        row.getInstant("extraction_event_next_attempt_at"),
+                        boolOrDefault(row, "extraction_event_dead_lettered", false)
+                    ));
+                }
+            }
+        }
+        return pending.stream().sorted(Comparator.comparing(GraphCommitRequestRow::requestedAt))
+                .limit(limit).toList();
+    }
+
+    /** Claims a PENDING/FAILED graph commit with an LWT; false means another worker owns it. */
+    public boolean claimGraphCommit(ExtractionRequestRow request) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET graph_status='VALIDATING' WHERE tenant_id=? " +
+            "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? IF graph_status='PENDING'",
+            request.tenantId(), request.connectorId(), request.sourceId(), request.resourceId(),
+            request.versionId()
+        ));
+        if (result.wasApplied()) {
+            return true;
+        }
+        result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET graph_status='VALIDATING' WHERE tenant_id=? " +
+            "AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? IF graph_status='FAILED'",
+            request.tenantId(), request.connectorId(), request.sourceId(), request.resourceId(),
+            request.versionId()
+        ));
+        return result.wasApplied();
+    }
+
     public void markGraphValidating(ExtractionRequestRow request) {
         session.execute(SimpleStatement.newInstance(
             "UPDATE ingestion_cache.source_versions SET graph_status='VALIDATING' " +
@@ -942,19 +1005,27 @@ public class IngestionCacheClient {
     }
 
     public void markGraphCommitted(
-            ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters, Instant committedAt) {
+            ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters,
+            int attemptCount, Instant committedAt) {
         session.execute(SimpleStatement.newInstance(
             "UPDATE ingestion_cache.source_versions SET graph_status=?, graph_commit_at=?, " +
-            "graph_validation_counters=? WHERE tenant_id=? AND connector_id=? AND source_id=? " +
-            "AND resource_id=? AND version_id=?",
-            graphStatus, committedAt, counters, request.tenantId(), request.connectorId(),
+            "graph_validation_counters=?, graph_attempt_count=?, graph_next_attempt_at=null " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            graphStatus, committedAt, counters, attemptCount, request.tenantId(), request.connectorId(),
             request.sourceId(), request.resourceId(), request.versionId()
         ));
     }
 
     public void markGraphFailed(
-            ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters, Instant failedAt) {
-        markGraphCommitted(request, graphStatus, counters, failedAt);
+            ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters,
+            int attemptCount, Instant nextAttemptAt, Instant failedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET graph_status=?, graph_commit_at=?, " +
+            "graph_validation_counters=?, graph_attempt_count=?, graph_next_attempt_at=? " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            graphStatus, failedAt, counters, attemptCount, nextAttemptAt, request.tenantId(),
+            request.connectorId(), request.sourceId(), request.resourceId(), request.versionId()
+        ));
     }
 
     public Optional<String> readGraphStatus(

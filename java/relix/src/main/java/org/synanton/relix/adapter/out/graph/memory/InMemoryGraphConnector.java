@@ -75,19 +75,21 @@ public class InMemoryGraphConnector implements GraphConnector {
     }
 
     @Override
-    public void upsertMentions(List<ExtractedMention> batch) {
+    public int upsertMentions(List<ExtractedMention> batch) {
         for (ExtractedMention mention : batch) {
             mentions.computeIfAbsent(mention.tenantId(), ignored -> new ConcurrentHashMap<>())
                     .put(mention.mentionId(), mention);
         }
+        return (int) batch.stream().map(ExtractedMention::mentionId).distinct().count();
     }
 
     @Override
-    public void upsertRelations(List<ExtractedRelation> batch) {
+    public int upsertRelations(List<ExtractedRelation> batch) {
         for (ExtractedRelation relation : batch) {
             relations.computeIfAbsent(relation.tenantId(), ignored -> new ConcurrentHashMap<>())
                     .put(relation.relationId(), relation);
         }
+        return (int) batch.stream().map(ExtractedRelation::relationId).distinct().count();
     }
 
     public int extractedMentionCount(String tenant) {

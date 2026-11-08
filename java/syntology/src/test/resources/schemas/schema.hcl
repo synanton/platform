@@ -144,3 +144,9 @@ relation "fulfillsOrder" {
   domain = "Shipment"
   range  = "Order"
 }
+
+relation "belongsTo" {
+  label  = "belongs to"
+  domain = "Thing"
+  range  = "Thing"
+}

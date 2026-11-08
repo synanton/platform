@@ -9,11 +9,11 @@ import java.util.List;
  */
 public interface GraphWritePort {
 
-    default void upsertMentions(List<ExtractedMention> mentions) {
+    default int upsertMentions(List<ExtractedMention> mentions) {
         throw new UnsupportedOperationException("graph connector does not support extracted-mention writes");
     }
 
-    default void upsertRelations(List<ExtractedRelation> relations) {
+    default int upsertRelations(List<ExtractedRelation> relations) {
         throw new UnsupportedOperationException("graph connector does not support extracted-relation writes");
     }
 }

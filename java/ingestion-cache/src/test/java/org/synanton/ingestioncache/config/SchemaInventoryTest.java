@@ -162,7 +162,9 @@ class SchemaInventoryTest {
             "source_versions.graph_commit_at",
             "source_versions.graph_validation_counters",
             "chunks_payload.document_offset_start",
-            "chunks_payload.document_offset_end"
+            "chunks_payload.document_offset_end",
+            "source_versions.graph_attempt_count",
+            "source_versions.graph_next_attempt_at"
         );
     }
 }

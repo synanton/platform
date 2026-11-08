@@ -61,10 +61,10 @@ class Neo4jGraphWriteIntegrationTest {
                 "relation-1", TENANT, "version-1", "requires", subject.mentionId(), object.mentionId(),
                 "content-ref:0", 0, 41, 100, 141, now);
 
-        connector.upsertMentions(List.of(subject, object));
-        connector.upsertMentions(List.of(subject, object));
-        connector.upsertRelations(List.of(relation));
-        connector.upsertRelations(List.of(relation));
+        assertThat(connector.upsertMentions(List.of(subject, object))).isEqualTo(2);
+        assertThat(connector.upsertMentions(List.of(subject, object))).isEqualTo(2);
+        assertThat(connector.upsertRelations(List.of(relation))).isEqualTo(1);
+        assertThat(connector.upsertRelations(List.of(relation))).isEqualTo(1);
 
         assertThat(count("MATCH (n:ExtractedMention {tenant_id: $tenant}) RETURN count(n) AS c")).isEqualTo(2);
         assertThat(count("MATCH ()-[e:EXTRACTED_RELATION {tenant_id: $tenant}]->() RETURN count(e) AS c")).isEqualTo(1);
@@ -77,6 +77,45 @@ class Neo4jGraphWriteIntegrationTest {
                 Map.of("id", subject.mentionId())).getFirst();
         assertThat(((Number) offsets.get("chunkStart")).intValue()).isZero();
         assertThat(((Number) offsets.get("documentStart")).intValue()).isEqualTo(100);
+    }
+
+    @Test
+    void missingRelationshipEndpointIsReportedAsNotPersisted() {
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        String tenant = TENANT + "-orphan";
+        ExtractedMention subject = new ExtractedMention(
+                "orphan-subject", tenant, "version-o", "ref", "ref:0",
+                0, 9, 0, 9, "Subject", "Concept", now);
+        connector.upsertMentions(List.of(subject));
+        ExtractedRelation orphan = new ExtractedRelation(
+                "orphan-relation", tenant, "version-o", "requires", subject.mentionId(),
+                "missing-object", "ref:0", 0, 9, 0, 9, now);
+
+        assertThat(connector.upsertRelations(List.of(orphan))).isZero();
+    }
+
+    @Test
+    void concurrentMentionWritesAreUnique() throws Exception {
+        String tenant = TENANT + "-concurrent";
+        ExtractedMention mention = new ExtractedMention(
+                "mention-concurrent", tenant, "version-c", "content-ref", "content-ref:0",
+                0, 9, 0, 9, "Concurrent", "Concept", Instant.parse("2026-11-08T00:00:00Z"));
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(4);
+        try {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int i = 0; i < 4; i++) {
+                futures.add(pool.submit(() -> connector.upsertMentions(List.of(mention))));
+            }
+            for (var future : futures) {
+                future.get();
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+        Object value = cypher.read("MATCH (n:ExtractedMention {tenant_id: $tenant, "
+                + "mention_id: 'mention-concurrent'}) RETURN count(n) AS c", Map.of("tenant", tenant))
+                .getFirst().get("c");
+        assertThat(((Number) value).longValue()).isEqualTo(1);
     }
 
     private static long count(String query) {
