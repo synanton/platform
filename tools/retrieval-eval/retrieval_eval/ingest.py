@@ -13,6 +13,7 @@ scripts/run-extract-index-poc.sh, or started the equivalent services.
 """
 
 from __future__ import annotations
+import os
 
 import time
 from dataclasses import dataclass
@@ -39,11 +40,17 @@ class IngestionResult:
     error_count: int
 
 
+def _auth_headers() -> dict:
+    token = os.environ.get("RETRIEVAL_EVAL_TOKEN")
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
 def start_ingestion(synflux_base_url: str, tenant: str, path: str = DEFAULT_INGEST_PATH) -> str:
     """POST /ingest/run and return the jobId."""
     response = requests.post(
         f"{synflux_base_url}/ingest/run",
         json={"tenant": tenant, "source": "filesystem", "path": path},
+        headers=_auth_headers(),
         timeout=30,
     )
     response.raise_for_status()
@@ -96,6 +103,7 @@ def reindex(synquest_base_url: str, tenant: str) -> None:
     response = requests.post(
         f"{synquest_base_url}/reindex",
         params={"tenant": tenant},
+        headers=_auth_headers(),
         timeout=60,
     )
     response.raise_for_status()
