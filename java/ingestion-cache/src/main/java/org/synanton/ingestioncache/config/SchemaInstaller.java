@@ -37,6 +37,7 @@ public class SchemaInstaller {
         "cql/V21__graph_retry.cql",
         "cql/V22__resolution_status.cql",
         "cql/V23__relation_promotion.cql",
+        "cql/V24__resolution_reason.cql",
     };
 
     public static void install(CqlSession session) {

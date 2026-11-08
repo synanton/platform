@@ -8,6 +8,7 @@ public record ResolutionDecision(
         String sourceVersionId,
         String mentionId,
         ResolutionOutcome outcome,
+        String reasonCode,
         String resolvedEntityId,
         String canonicalLabel,
         double bestScore,

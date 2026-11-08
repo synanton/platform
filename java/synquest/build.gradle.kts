@@ -13,6 +13,7 @@ dependencyManagement {
         dependency("org.testcontainers:testcontainers:1.21.4")
         dependency("org.testcontainers:junit-jupiter:1.21.4")
         dependency("org.testcontainers:cassandra:1.21.4")
+        dependency("org.testcontainers:neo4j:1.21.4")
         dependency("org.testcontainers:database-commons:1.21.4")
     }
 }
@@ -39,6 +40,8 @@ dependencies {
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.cassandra)
+    testImplementation(libs.testcontainers.neo4j)
+    testImplementation(libs.neo4j.java.driver)
     // 028b.1b bench wrapper (test sources, beside BaselineBench).
     testImplementation(project(":java:synquest-api"))
     testImplementation(project(":java:storage-contract"))

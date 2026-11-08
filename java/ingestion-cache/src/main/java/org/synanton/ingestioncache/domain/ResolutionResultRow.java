@@ -17,6 +17,7 @@ public record ResolutionResultRow(
         String surfaceForm,
         String proposedType,
         String outcome,
+        String reasonCode,
         String resolvedEntityId,
         String canonicalLabel,
         double bestScore,

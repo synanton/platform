@@ -69,3 +69,10 @@ ingestion-cache:
   port: ${CASSANDRA_PORT:9042}
   keyspace: ingestion_cache
   local-dc: ${CASSANDRA_LOCAL_DC:datacenter1}
+
+resolution:
+  # PR #4b.3. Scores are RRF retrieval scores, not probabilities; tune against
+  # evaluation/resolution-fixture.jsonl, never by interpretation.
+  policy-version: ${RESOLUTION_POLICY_VERSION:v1}
+  absolute-threshold: ${RESOLUTION_ABSOLUTE_THRESHOLD:0.02}
+  margin-threshold: ${RESOLUTION_MARGIN_THRESHOLD:0.001}

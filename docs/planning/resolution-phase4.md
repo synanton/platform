@@ -1,6 +1,6 @@
 # RAKG Phase 4 — canonical resolution (PR #4a–#4d)
 
-**Status:** PR #4a contracts/persistence + PR #4b.1 entity projection + PR #4b.2 candidate provider landed (2026-11-08); resolution policy not started
+**Status:** PR #4a contracts/persistence + #4b.1 entity projection + #4b.2 candidate provider + #4b.3 policy/evaluation landed (2026-11-08); no graph writes
 **Issue:** #560
 **Prerequisites:** PR #569 graph hardening (verified-JWT writes, independent graph retry);
 #570 tracks lease-based VALIDATING recovery (P2, out of PR #4 scope). Graph writes stay disabled in the demo
@@ -83,6 +83,26 @@ no resolution consumer.
 - Search scores are ranking signals, not probabilities; thresholds come from a
   labeled fixture, never ad-hoc “confidence”.
 - New policy versions supersede old decisions explicitly.
+
+## PR #4b.3 — DefaultResolutionPolicy (landed)
+
+- Deterministic, pure policy over `ResolutionContext` candidates; no DB writes.
+- Signals: absolute retrieval floor **and** runner-up margin **and** type
+  compatibility. Unknown proposed type → REVIEW_REQUIRED; incompatible type →
+  UNRESOLVED; weak top → UNRESOLVED; close top/runner → AMBIGUOUS.
+- `TypeCompatibility` port with conservative `ExactTypeCompatibility` default.
+- Versioned config (`resolution.policy-version`, absolute/margin thresholds) and
+  reason codes persisted via V24 `resolution_results.reason_code`.
+- **RRF is not a probability.** The initial 0.75/0.15 guesses are meaningless in
+  RRF space; the measured fixture calibrates `absolute=0.02`, `margin=0.001`.
+- Fixture: `evaluation/resolution-fixture.jsonl` (10 cases: exact, alias,
+  abbreviation, semantic, near-duplicate, type mismatch, unknown type, no match,
+  context-dependent, tenant isolation).
+- Evaluation (real Lucene + real Neo4j): candidate recall@10 **1.000**,
+  resolution precision **1.000**, coverage **0.300**, ambiguous 0.300,
+  unresolved 0.300, review 0.100. No `:RESOLVES_TO` or `:REL` writes.
+- The fixture is a contract test, not a calibrated benchmark; a larger held-out
+  set is required before broad automatic promotion.
 
 ## PR #4c — canonical promotion
 

@@ -194,8 +194,8 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
   `:ExtractedMention` / `:EXTRACTED_RELATION` graph with a separate `graph_status`,
   verified-JWT Relix writes, and an independent retrying graph-commit consumer.
   Resolution contracts/persistence (PR #4a), the shared-index entity projection
-  (PR #4b.1), and verified candidate retrieval (PR #4b.2) are landed; the
-  resolution policy and `:RESOLVES_TO` are PR #4b.3–#4d.
+  (PR #4b.1), verified candidate retrieval (PR #4b.2), and the evaluation-first
+  resolution policy (PR #4b.3) are landed; `:RESOLVES_TO`/promotion are PR #4c–#4d.
 - **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
   adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
   live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
@@ -219,9 +219,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 
 ## Next steps
 
-- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** implement
-  the rank-margin policy (4b.3), `:RESOLVES_TO` promotion (4c), and the independent
-  resolution consumer (4d) on top of the verified candidate provider.
+- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** persist
+  `:RESOLVES_TO` and canonical promotion (4c), then the independent resolution
+  consumer (4d) on top of the verified candidate provider/policy.
 - **#556:** query-adaptive RRF on the now-frozen retrieval corpus (deferred).
 - **#538:** route demo TEI through the gateway and drop the direct exception.
 

@@ -144,7 +144,7 @@ class ExtractionConsumerTest {
         Instant now = Instant.now();
         cache.upsertResolutionResult(new ResolutionResultRow(
                 tenant, fixture.versionId(), "mention-1", fixture.contentRefId(), 0,
-                0, 9, 100, 109, "Halcyon-7", "MaintenanceSystem", "RESOLVED",
+                0, 9, 100, 109, "Halcyon-7", "MaintenanceSystem", "RESOLVED", "RESOLVED_LABEL",
                 "entity-halcyon-7", "Halcyon-7", 0.91, 0.22, "resolution-v1", "1.0.0",
                 "{}", now, null));
         var resolutions = cache.listResolutionResults(tenant, fixture.versionId());
