@@ -195,8 +195,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
   verified-JWT Relix writes, and an independent retrying graph-commit consumer.
   Resolution contracts/persistence (PR #4a), the shared-index entity projection
   (PR #4b.1), verified candidate retrieval (PR #4b.2), and the evaluation-first
-  resolution policy (PR #4b.3), and durable `:RESOLVES_TO` persistence (PR #4c.1)
-  are landed; canonical relation promotion and the resolution consumer are #4c.2–#4d.
+  resolution policy (PR #4b.3), durable `:RESOLVES_TO` (PR #4c.1), and canonical
+  relation validation (PR #4c.2) are landed; `:REL` promotion and the resolution
+  consumer are #4c.3–#4d.
 - **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
   adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
   live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
@@ -220,9 +221,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 
 ## Next steps
 
-- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** add the
-  Syntology relation gate and canonical `:REL` promotion with evidence (4c.2/4c.3),
-  then the independent resolution consumer (4d).
+- **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** promote
+  validated relations to canonical `:REL` with `:RelationEvidence` (4c.3), then the
+  independent resolution consumer and crash reconciliation (4d).
 - **#556:** query-adaptive RRF on the now-frozen retrieval corpus (deferred).
 - **#538:** route demo TEI through the gateway and drop the direct exception.
 

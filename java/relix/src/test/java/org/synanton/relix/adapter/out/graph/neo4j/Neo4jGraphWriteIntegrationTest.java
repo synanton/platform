@@ -115,10 +115,37 @@ class Neo4jGraphWriteIntegrationTest {
                     assertThat(edge.get("target")).isEqualTo("entity-v1");
                     assertThat(edge.get("superseded_at")).isNotNull();
                 });
+        assertThat(connector.getActiveResolutions(tenant, List.of(mentionId)))
+                .singleElement().satisfies(active -> {
+                    assertThat(active.canonicalEntityId()).isEqualTo("entity-v2");
+                    assertThat(active.canonicalEntityType()).isEqualTo("MaintenanceSystem");
+                });
 
         // Replay the v2 decision: no new edge, still one active resolution.
         connector.upsertResolution(decision(tenant, version, mentionId, "entity-v2", "v2"));
         assertThat(resolutionEdges(tenant, mentionId)).hasSize(2);
+    }
+
+    @Test
+    void extractedRelationLookupReturnsProvenanceAndIsTenantScoped() {
+        String tenant = TENANT + "-extracted-read";
+        String version = "version-extracted-read";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(
+                new ExtractedMention("subject-read", tenant, version, "ref", "ref:0",
+                        0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now),
+                new ExtractedMention("object-read", tenant, version, "ref", "ref:0",
+                        20, 30, 20, 30, "Protocol-A", "Protocol", now)));
+        connector.upsertRelations(List.of(new ExtractedRelation("relation-read", tenant, version,
+                "requires", "subject-read", "object-read", "ref:0", 0, 30, 0, 30, now)));
+
+        assertThat(connector.getExtractedRelation(tenant, "relation-read")).get().satisfies(view -> {
+            assertThat(view.subjectMentionId()).isEqualTo("subject-read");
+            assertThat(view.objectMentionId()).isEqualTo("object-read");
+            assertThat(view.predicate()).isEqualTo("requires");
+            assertThat(view.sourceVersionId()).isEqualTo(version);
+        });
+        assertThat(connector.getExtractedRelation(TENANT + "-other", "relation-read")).isEmpty();
     }
 
     @Test

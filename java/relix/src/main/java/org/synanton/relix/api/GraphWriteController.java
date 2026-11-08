@@ -9,6 +9,7 @@ import org.synanton.common.tenant.TenantContext;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphConnector;
+import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.springframework.http.HttpStatus;
@@ -56,6 +57,24 @@ public class GraphWriteController {
                 String.valueOf(decision.mentionId()), "active",
                 decision.outcome() == ResolutionOutcome.RESOLVED);
     }
+
+    @PostMapping("/v1/resolutions/active")
+    public java.util.List<ActiveResolution> activeResolutions(@RequestBody ActiveResolutionsRequest request) {
+        String tenant = requireVerifiedTenant(java.util.List.of());
+        return graphConnector.getActiveResolutions(tenant,
+                request == null || request.mentionIds() == null ? java.util.List.of() : request.mentionIds());
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/v1/extracted-relations/{relationId}")
+    public org.springframework.http.ResponseEntity<?> extractedRelation(
+            @org.springframework.web.bind.annotation.PathVariable String relationId) {
+        String tenant = requireVerifiedTenant(java.util.List.of());
+        return graphConnector.getExtractedRelation(tenant, relationId)
+                .<org.springframework.http.ResponseEntity<?>>map(org.springframework.http.ResponseEntity::ok)
+                .orElseGet(() -> org.springframework.http.ResponseEntity.notFound().build());
+    }
+
+    public record ActiveResolutionsRequest(java.util.List<String> mentionIds) {}
 
     private static String requireVerifiedTenant(List<String> bodyTenants) {
         TenantContext context = TenantContext.get();

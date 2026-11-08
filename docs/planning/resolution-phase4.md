@@ -1,6 +1,6 @@
 # RAKG Phase 4 — canonical resolution (PR #4a–#4d)
 
-**Status:** PR #4a–#4b.3 landed; PR #4c.1 `:RESOLVES_TO` persistence landed (2026-11-08); canonical promotion not started
+**Status:** PR #4a–#4b.3 + #4c.1 `:RESOLVES_TO` + #4c.2 canonical relation validation landed (2026-11-08); promotion not started
 **Issue:** #560
 **Prerequisites:** PR #569 graph hardening (verified-JWT writes, independent graph retry);
 #570 tracks lease-based VALIDATING recovery (P2, out of PR #4 scope). Graph writes stay disabled in the demo
@@ -123,7 +123,52 @@ no resolution consumer.
 - **Not in 4c.1:** canonical relation validation/promotion (4c.2/4c.3), concurrent
   promotion and crash-recovery orchestration (4c.4).
 
+## PR #4c.2 — canonical relation validation (landed)
+
+Validation-only, no graph mutation. Resolution validity is not relation validity;
+both endpoints resolved is necessary but not sufficient.
+
+Flow:
+1. Load the extracted relation/provenance (`:EXTRACTED_RELATION` projection) and the
+   authoritative ACTIVE resolutions for its endpoints from Relix.
+2. Require exactly one active resolution per endpoint; missing/multiple/cross-tenant
+   → INVALID.
+3. Re-check the Cassandra extraction evidence for the evidence chunk/predicate;
+   missing evidence → INVALID.
+4. Use the canonical entity **types from the active resolutions** (never types from
+   the extracted relation) and call Syntology relation validation against a pinned
+   ontology version.
+5. Persist `relation_promotion_results` (`VALID`/`INVALID`, canonical endpoint ids,
+   reason, evidence JSON, strategy/ontology versions, timestamp).
+6. Syntology/Relix/Cassandra infrastructure failures throw
+   `RetryableProcessingException`; they are never persisted as INVALID.
+
+Backlog (tracked):
+- #576 concurrent `:RESOLVES_TO` active-link uniqueness (4c.4)
+- #577 search-generation propagation into decisions/edges
+- #578 Cassandra↔Neo4j crash reconciliation (4d)
+
 ## PR #4c — canonical promotion
+
+### 4c.3 evidence model (pinned)
+
+Neo4j cannot attach a relationship to another relationship. The canonical edge is
+still `(:Entity)-[:REL {canonical_relation_id, predicate}]->(:Entity)`, but evidence
+is a node:
+
+```
+(:ExtractedRelation {relation_id})-[:SUPPORTS]->
+(:RelationEvidence {
+  canonical_relation_id,
+  source_version_id,
+  extracted_relation_id,
+  evidence_chunk_id
+})
+```
+
+One canonical semantic `:REL` edge per triple; multiple independently identifiable
+`:RelationEvidence` nodes; idempotent evidence insertion; no mutable
+`source_relation_id` overwrite.
 
 - `:ExtractedMention` → `:Entity` via `:RESOLVES_TO` (stores strategyVersion,
   best/runner-up scores, ontologyVersion).
