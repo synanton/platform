@@ -1,0 +1,240 @@
+{
+  "document_id": "skiena-tsp-parsing",
+  "text_sha256": "e3380b81c36db9fb574496f82eeb2e1fb9a5b85e640c65cbcf2e2ccdc933c245",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "TSP",
+      "char_start": 94,
+      "char_end": 97,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "problem-tsp"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "closed tour",
+      "char_start": 168,
+      "char_end": 179,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-closed-tour"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "path",
+      "char_start": 150,
+      "char_end": 154,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-path"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "edge (t, s)",
+      "char_start": 260,
+      "char_end": 271,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-edge"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "vertices",
+      "char_start": 432,
+      "char_end": 440,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-vertex"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "unweighted graphs",
+      "char_start": 609,
+      "char_end": 626,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-unweighted-graph"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "Hamiltonian paths",
+      "char_start": 735,
+      "char_end": 752,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "problem-hamiltonian-path"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Section 19.5 (page 598)",
+      "char_start": 813,
+      "char_end": 836,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "section-19-5"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Dynamic Programming",
+      "char_start": 858,
+      "char_end": 877,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-dynamic-programming"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "recurrence relations",
+      "char_start": 945,
+      "char_end": 965,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-recurrence-relation"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "LP [i, j]",
+      "char_start": 1002,
+      "char_end": 1011,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "function-lp"
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "simple path",
+      "char_start": 678,
+      "char_end": 689,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-simple-path"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "vertex x",
+      "char_start": 1133,
+      "char_end": 1141,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-vertex"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "optimality",
+      "char_start": 2508,
+      "char_end": 2518,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-optimality"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "edit sequences",
+      "char_start": 2938,
+      "char_end": 2952,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-edit-sequence"
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "approximate string matching",
+      "char_start": 2744,
+      "char_end": 2771,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-approximate-string-matching"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "pattern P",
+      "char_start": 3006,
+      "char_end": 3015,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-pattern"
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "string T",
+      "char_start": 3036,
+      "char_end": 3044,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-string"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "uses",
+      "object_id": "m2",
+      "evidence_span_start": 139,
+      "evidence_span_end": 179
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has",
+      "object_id": "m4",
+      "evidence_span_start": 628,
+      "evidence_span_end": 654
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "related_to",
+      "object_id": "m12",
+      "evidence_span_start": 722,
+      "evidence_span_end": 752
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "discussed_in",
+      "object_id": "m8",
+      "evidence_span_start": 800,
+      "evidence_span_end": 836
+    },
+    {
+      "subject_id": "m9",
+      "predicate": "requires",
+      "object_id": "m10",
+      "evidence_span_start": 887,
+      "evidence_span_end": 965
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "computes",
+      "object_id": "m11",
+      "evidence_span_start": 1223,
+      "evidence_span_end": 1281
+    },
+    {
+      "subject_id": "m11",
+      "predicate": "measures",
+      "object_id": "m12",
+      "evidence_span_start": 1002,
+      "evidence_span_end": 1043
+    },
+    {
+      "subject_id": "m9",
+      "predicate": "obeys",
+      "object_id": "m14",
+      "evidence_span_start": 2483,
+      "evidence_span_end": 2498
+    },
+    {
+      "subject_id": "m16",
+      "predicate": "uses",
+      "object_id": "m15",
+      "evidence_span_start": 2938,
+      "evidence_span_end": 2967
+    },
+    {
+      "subject_id": "m16",
+      "predicate": "matches",
+      "object_id": "m17",
+      "evidence_span_start": 2992,
+      "evidence_span_end": 3015
+    }
+  ]
+}

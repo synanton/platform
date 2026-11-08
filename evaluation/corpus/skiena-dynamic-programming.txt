@@ -1,0 +1,39 @@
+Chapter 10
+
+Dynamic Programming
+
+The most challenging algorithmic problems involve optimization, where we seek
+to ﬁnd a solution that maximizes or minimizes an objective function. Traveling
+salesman is a classic optimization problem, where we seek the tour visiting all
+vertices of a graph at minimum total cost. But as shown in Chapter 1, it is easy
+to propose TSP “algorithms” that generate reasonable-looking solutions but do
+not always produce the minimum cost tour.
+    Algorithms for optimization problems require proof that they always return
+the best possible solution. Greedy algorithms that make the best local decision
+at each step are typically eﬃcient, but usually do not guarantee global optimal-
+ity. Exhaustive search algorithms that try all possibilities and select the best
+always produce the optimum result, but usually at a prohibitive cost in terms
+of time complexity.
+    Dynamic programming combines the best of both worlds. It gives us a way to
+design custom algorithms that systematically search all possibilities (thus guar-
+anteeing correctness) while storing intermediate results to avoid recomputing
+(thus providing eﬃciency). By storing the consequences of all possible decisions
+and using this information in a systematic way, the total amount of work is
+minimized.
+    After you understand it, dynamic programming is probably the easiest al-
+gorithm design technique to apply in practice. In fact, I ﬁnd that dynamic
+programming algorithms are often easier to reinvent than to try to look up.
+That said, until you understand dynamic programming, it seems like magic.
+You have to ﬁgure out the trick before you can use it.
+    Dynamic programming is a technique for eﬃciently implementing a recursive
+algorithm by storing partial results. It requires seeing that a naive recursive
+algorithm computes the same subproblems over and over and over again. In
+such a situation, storing the answer for each subproblem in a table to look up
+instead of recompute can lead to an eﬃcient algorithm. Dynamic programming
+starts with a recursive algorithm or deﬁnition. Only after we have a correct
+recursive algorithm can we worry about speeding it up by using a results matrix.
+    Dynamic programming is generally the right method for optimization prob-
+© The Editor(s) (if applicable) and The Author(s), under exclusive license to   307
+Springer Nature Switzerland AG 2020
+S. S. Skiena, The Algorithm Design Manual, Texts in Computer Science,
+https://doi.org/10.1007/978-3-030-54256-6_10

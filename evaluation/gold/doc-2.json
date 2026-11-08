@@ -1,0 +1,165 @@
+{
+  "document_id": "e650-live-dense-v2",
+  "text_sha256": "c3b59d6c35630f7eccb99a5eb51bc83437ba68752898f93190ac80a27fdd0fac",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Zephyr-9",
+      "char_start": 0,
+      "char_end": 8,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-zephyr-9"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "platform",
+      "char_start": 133,
+      "char_end": 141,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": null
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Zephyr-9 protocol",
+      "char_start": 302,
+      "char_end": 319,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "protocol-zephyr-9"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "auxiliary coolant manifold",
+      "char_start": 75,
+      "char_end": 101,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "component-coolant-manifold"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "Technicians",
+      "char_start": 143,
+      "char_end": 154,
+      "proposed_type": "Role",
+      "resolution_status": "unresolved",
+      "canonical_id": null
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "titanium retaining fasteners",
+      "char_start": 200,
+      "char_end": 228,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "component-titanium-fasteners"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "audit tolerance",
+      "char_start": 261,
+      "char_end": 276,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "metric-audit-tolerance"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "two percent",
+      "char_start": 285,
+      "char_end": 296,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "metric-two-percent"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "helium leak",
+      "char_start": 340,
+      "char_end": 351,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "procedure-helium-leak-check"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "audit cycle",
+      "char_start": 376,
+      "char_end": 387,
+      "proposed_type": "Event",
+      "resolution_status": "resolved",
+      "canonical_id": "event-audit-cycle"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Quarterly torque audits",
+      "char_start": 44,
+      "char_end": 67,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "procedure-quarterly-torque-audit"
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "manifold pressure drift",
+      "char_start": 164,
+      "char_end": 187,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "measurement-manifold-pressure-drift"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m11",
+      "predicate": "performed_on",
+      "object_id": "m4",
+      "evidence_span_start": 44,
+      "evidence_span_end": 115
+    },
+    {
+      "subject_id": "m5",
+      "predicate": "logs",
+      "object_id": "m12",
+      "evidence_span_start": 143,
+      "evidence_span_end": 187
+    },
+    {
+      "subject_id": "m5",
+      "predicate": "verifies",
+      "object_id": "m6",
+      "evidence_span_start": 200,
+      "evidence_span_end": 228
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "replaced_at",
+      "object_id": "m8",
+      "evidence_span_start": 234,
+      "evidence_span_end": 276
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "requires",
+      "object_id": "m9",
+      "evidence_span_start": 298,
+      "evidence_span_end": 351
+    },
+    {
+      "subject_id": "m9",
+      "predicate": "repeats_every",
+      "object_id": "m10",
+      "evidence_span_start": 358,
+      "evidence_span_end": 387
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "has_component",
+      "object_id": "m4",
+      "evidence_span_start": 44,
+      "evidence_span_end": 101
+    }
+  ]
+}

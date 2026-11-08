@@ -1,0 +1,49 @@
+340                             CHAPTER 10. DYNAMIC PROGRAMMING
+
+    This problem diﬀers from TSP in two quite unimportant ways. First, it
+asks for a path instead of a closed tour. This diﬀerence isn’t substantial: we
+get a closed tour simply by including the edge (t, s). Second, it asks for the
+most expensive path instead of the least expensive tour. Again this diﬀerence
+isn’t very signiﬁcant: it encourages us to visit as many vertices as possible
+(ideally all), just as in TSP. The critical word in the problem statement is
+simple, meaning we are not allowed to visit any vertex more than once.
+    For unweighted graphs (where each edge has cost 1), the longest possible
+simple path from s to t is of weight n − 1. Finding such Hamiltonian paths (if
+they exist) is an important graph problem, discussed in Section 19.5 (page 598).
+
+10.9.1     When is Dynamic Programming Correct?
+Dynamic programming algorithms are only as correct as the recurrence relations
+they are based on. Suppose we deﬁne LP [i, j] to be the length of the longest
+simple path from i to j. Note that the longest simple path from i to j has to
+visit some vertex x right before reaching j. Thus, the last edge visited must be
+of the form (x, j). This suggests the following recurrence relation to compute
+the length of the longest path, where c(x, j) is the cost/weight of edge (x, j):
+
+                       LP [i, j] = max LP [i, x] + c(x, j)
+                                    x∈V
+                                  (x,j)∈E
+
+
+This idea seems reasonable, but can you see the problem? I see at least two of
+them.
+    First, this recurrence does nothing to enforce simplicity. How do we know
+that vertex j has not appeared previously on the longest simple path from i to
+x? If it did, then adding the edge (x, j) will create a cycle. To prevent this,
+we must deﬁne a recursive function that explicitly remembers where we have
+been. Perhaps we could deﬁne LP  [i, j, k] to denote the length of the longest
+path from i to j avoiding vertex k? This would be a step in the right direction,
+but still won’t lead to a viable recurrence.
+    The second problem concerns evaluation order. What can you evaluate ﬁrst?
+Because there is no left-to-right or smaller-to-bigger ordering of the vertices on
+the graph, it is not clear what the smaller subprograms are. Without such an
+ordering, we get stuck in an inﬁnite loop as soon as we try to do anything.
+    Dynamic programming can be applied to any problem that obeys the prin-
+ciple of optimality. Roughly stated, this means that partial solutions can be
+optimally extended given the state after the partial solution, instead of the
+speciﬁcs of the partial solution itself. For example, in deciding whether to ex-
+tend an approximate string matching by a substitution, insertion, or deletion,
+we did not need to know the sequence of operations that had been performed
+to date. In fact, there may be several diﬀerent edit sequences that achieve a
+cost of C on the ﬁrst p characters of pattern P and t characters of string T .
+Future decisions are made based on the consequences of previous decisions, not
+the actual decisions themselves.

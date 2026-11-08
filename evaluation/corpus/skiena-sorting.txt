@@ -1,0 +1,40 @@
+Chapter 4
+
+Sorting
+
+Typical computer science students study the basic sorting algorithms at least
+three times before they graduate: ﬁrst in introductory programming, then in
+data structures, and ﬁnally in their algorithms course. Why is sorting worth so
+much attention? There are several reasons:
+
+    • Sorting is the basic building block that many other algorithms are built
+      around. By understanding sorting, we obtain an amazing amount of power
+      to solve other problems.
+
+    • Most of the interesting ideas used in the design of algorithms appear in
+      the context of sorting, such as divide-and-conquer, data structures, and
+      randomized algorithms.
+
+    • Sorting is the most thoroughly studied problem in computer science. Lit-
+      erally dozens of diﬀerent algorithms are known, most of which possess
+      some particular advantage over all other algorithms in certain situations.
+
+    This chapter will discuss sorting, stressing how sorting can be applied to
+solving other problems. In this sense, sorting behaves more like a data structure
+than a problem in its own right. I then give detailed presentations of several
+fundamental algorithms: heapsort, mergesort, quicksort, and distribution sort as
+examples of important algorithm design paradigms. Sorting is also represented
+by Section 17.1 (page 506) in the problem catalog.
+
+
+4.1       Applications of Sorting
+I will review several sorting algorithms and their complexities over the course of
+this chapter. But the punch line is this: clever sorting algorithms exist that run
+in O(n log n). This is a big improvement over naive O(n2 ) sorting algorithms,
+for large values of n. Consider the number of steps done by two diﬀerent sorting
+algorithms for reasonable values of n:
+
+© The Editor(s) (if applicable) and The Author(s), under exclusive license to   109
+Springer Nature Switzerland AG 2020
+S. S. Skiena, The Algorithm Design Manual, Texts in Computer Science,
+https://doi.org/10.1007/978-3-030-54256-6_4

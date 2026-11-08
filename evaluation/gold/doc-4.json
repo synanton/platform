@@ -1,0 +1,213 @@
+{
+  "document_id": "skiena-dynamic-programming",
+  "text_sha256": "8709fbab96186e10ea3a42d768347d584c71b228bfcd357d7f7e7e3483649f68",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Dynamic Programming",
+      "char_start": 12,
+      "char_end": 31,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-dynamic-programming"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "optimization",
+      "char_start": 83,
+      "char_end": 95,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-optimization"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "objective function",
+      "char_start": 160,
+      "char_end": 178,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-objective-function"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "salesman",
+      "char_start": 190,
+      "char_end": 198,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "problem-traveling-salesman"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "TSP",
+      "char_start": 362,
+      "char_end": 365,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "problem-tsp"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "tour",
+      "char_start": 252,
+      "char_end": 256,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-tour"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "vertices",
+      "char_start": 270,
+      "char_end": 278,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-vertex"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "graph",
+      "char_start": 284,
+      "char_end": 289,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-graph"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Greedy algorithms",
+      "char_start": 578,
+      "char_end": 595,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-greedy"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Exhaustive search algorithms",
+      "char_start": 716,
+      "char_end": 744,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-exhaustive-search"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "time complexity",
+      "char_start": 873,
+      "char_end": 888,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-time-complexity"
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "recursive algorithm",
+      "char_start": 2053,
+      "char_end": 2072,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-recursive"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "results matrix",
+      "char_start": 2181,
+      "char_end": 2195,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "datastructure-results-matrix"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "table",
+      "char_start": 1947,
+      "char_end": 1952,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "datastructure-table"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Chapter 1",
+      "char_start": 0,
+      "char_end": 9,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "doc-chapter-1"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m4",
+      "predicate": "is_a",
+      "object_id": "m2",
+      "evidence_span_start": 190,
+      "evidence_span_end": 232
+    },
+    {
+      "subject_id": "m5",
+      "predicate": "same_as",
+      "object_id": "m4",
+      "evidence_span_start": 354,
+      "evidence_span_end": 365
+    },
+    {
+      "subject_id": "m4",
+      "predicate": "seeks",
+      "object_id": "m6",
+      "evidence_span_start": 234,
+      "evidence_span_end": 269
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "visits",
+      "object_id": "m7",
+      "evidence_span_start": 270,
+      "evidence_span_end": 311
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "part_of",
+      "object_id": "m8",
+      "evidence_span_start": 270,
+      "evidence_span_end": 289
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "combines",
+      "object_id": "m9",
+      "evidence_span_start": 894,
+      "evidence_span_end": 946
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "combines",
+      "object_id": "m10",
+      "evidence_span_start": 894,
+      "evidence_span_end": 946
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "implements",
+      "object_id": "m12",
+      "evidence_span_start": 1707,
+      "evidence_span_end": 1731
+    },
+    {
+      "subject_id": "m12",
+      "predicate": "uses",
+      "object_id": "m14",
+      "evidence_span_start": 1903,
+      "evidence_span_end": 1952
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "uses",
+      "object_id": "m13",
+      "evidence_span_start": 2173,
+      "evidence_span_end": 2196
+    }
+  ]
+}

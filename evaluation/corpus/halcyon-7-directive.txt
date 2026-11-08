@@ -1,0 +1,10 @@
+Project Halcyon-7 Maintenance Directive
+The Halcyon-7 auxiliary coolant loop must be pressure-tested every ninety days. The relief valve on
+the secondary manifold must be replaced every two hundred seventy days. Only certified Halcyon-7
+technicians may sign the pressure-test log, and every test must record the ambient dew point.
+
+
+
+
+                                                1
+
