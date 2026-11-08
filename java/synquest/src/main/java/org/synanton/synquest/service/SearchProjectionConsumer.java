@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
+import org.synanton.ingestioncache.domain.SourceTombstoneRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
 
 /**
@@ -80,39 +82,91 @@ public class SearchProjectionConsumer {
                 return;
             }
             boolean fullRebuild = false;
-            Set<UUID> contentRefs = new LinkedHashSet<>();
+            Set<UUID> upserts = new LinkedHashSet<>();
+            Set<UUID> deletes = new LinkedHashSet<>();
             for (SourceOutboxRow event : pending) {
-                if (!"SourcePublished".equals(event.eventType())) {
-                    // Deletes (and any future event type) fall back to a full
-                    // rebuild: correctness first, and deletes are rare (#547).
+                if ("SourcePublished".equals(event.eventType())) {
+                    UUID contentRef = resolveContentRef(event);
+                    if (contentRef == null) {
+                        fullRebuild = true;
+                        break;
+                    }
+                    upserts.add(contentRef);
+                } else if ("SourceDeleted".equals(event.eventType())) {
+                    Set<UUID> deletedRefs = resolveDeletedContentRefs(event);
+                    if (deletedRefs == null) {
+                        fullRebuild = true;
+                        break;
+                    }
+                    deletes.addAll(deletedRefs);
+                } else {
                     fullRebuild = true;
                     break;
                 }
-                UUID contentRef = resolveContentRef(event);
-                if (contentRef == null) {
-                    fullRebuild = true;
-                    break;
-                }
-                contentRefs.add(contentRef);
             }
 
             if (fullRebuild) {
                 searchService.reindex(tenant);
             } else {
-                searchService.projectContentRefs(tenant, contentRefs);
+                if (!upserts.isEmpty()) {
+                    searchService.projectContentRefs(tenant, upserts);
+                }
+                if (!deletes.isEmpty()) {
+                    searchService.deleteContentRefs(tenant, deletes);
+                }
             }
 
             Instant publishedAt = Instant.now();
             for (SourceOutboxRow event : pending) {
                 cacheClient.markSourceOutboxPublished(event, publishedAt);
             }
-            log.info("Projected {} source event(s) ({} content ref(s), {}) into tenant '{}' index",
-                    pending.size(), contentRefs.size(),
+            log.info("Projected {} source event(s) ({} upsert, {} delete, {}) into tenant '{}' index",
+                    pending.size(), upserts.size(), deletes.size(),
                     fullRebuild ? "full rebuild" : "incremental", tenant);
         } catch (Exception failure) {
             log.warn("Search projection poll failed for tenant '{}'; events stay unpublished for retry",
                     tenant, failure);
         }
+    }
+
+    /**
+     * Resolves the content refs of a source deletion. Only refs with no live
+     * (non-tombstoned) attribution are returned, so a content-addressed chunk
+     * still used by another source stays indexed. Returns {@code null} when the
+     * tombstone/version manifest cannot be resolved (full-rebuild fallback).
+     */
+    private Set<UUID> resolveDeletedContentRefs(SourceOutboxRow event) {
+        if (event.tombstoneId() == null) {
+            return null;
+        }
+        SourceTombstoneRow tombstone = cacheClient.readLatestSourceTombstone(
+                        tenant, event.connectorId(), event.sourceId(), event.resourceId())
+                .orElse(null);
+        if (tombstone == null || !event.tombstoneId().equals(tombstone.tombstoneId())) {
+            return null;
+        }
+        if (tombstone.versionsManifestRef() == null) {
+            return Set.of();
+        }
+        Set<UUID> tombstoned = cacheClient.readTombstonedVersionIds(tenant);
+        Set<UUID> refs = new LinkedHashSet<>();
+        for (UUID versionId : cacheClient.readVersionManifest(tenant, tombstone.versionsManifestRef())) {
+            cacheClient.readSourceVersion(
+                            tenant, event.connectorId(), event.sourceId(), event.resourceId(), versionId)
+                    .map(SourceVersionRow::contentRefId)
+                    .ifPresent(refs::add);
+        }
+        Set<UUID> deletable = new LinkedHashSet<>();
+        for (UUID ref : refs) {
+            boolean live = cacheClient.readChunks(tenant, ref).stream()
+                    .flatMap(chunk -> chunk.sourceVersionIds() == null
+                            ? Stream.empty() : chunk.sourceVersionIds().stream())
+                    .anyMatch(versionId -> !tombstoned.contains(versionId));
+            if (!live) {
+                deletable.add(ref);
+            }
+        }
+        return deletable;
     }
 
     private UUID resolveContentRef(SourceOutboxRow event) {

@@ -39,6 +39,11 @@ public final class EmbeddedLuceneAdapter implements SearchIndexAdapter {
     }
 
     @Override
+    public int deleteContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException {
+        return builder.deleteContentRefs(tenant, contentRefs);
+    }
+
+    @Override
     public boolean isEmpty(String tenant) {
         return builder.isEmpty(tenant);
     }

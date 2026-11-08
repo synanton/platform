@@ -22,6 +22,9 @@ public interface SearchIndexAdapter {
     /** Deletes chunks by their stable document ids. */
     int deleteChunkIds(String tenant, Collection<String> chunkIds) throws IOException;
 
+    /** Deletes every chunk of the given content refs. */
+    int deleteContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException;
+
     /** True when the tenant has no index yet (the first projection needs a rebuild). */
     boolean isEmpty(String tenant);
 

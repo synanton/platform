@@ -95,4 +95,55 @@ class SearchProjectionConsumerTest {
                 .validateProjectionConfig())
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void sourceDeletedEventProjectsIncrementally() throws Exception {
+        var cache = mock(IngestionCacheClient.class);
+        var search = mock(SearchService.class);
+        UUID tombstoneId = UUID.randomUUID();
+        UUID versionId = UUID.randomUUID();
+        UUID contentRef = UUID.randomUUID();
+        UUID manifestRef = UUID.randomUUID();
+        Instant now = Instant.now();
+        SourceOutboxRow event = new SourceOutboxRow("demo", "upload", "source", "resource",
+                UUID.randomUUID(), "SourceDeleted", null, tombstoneId, "{}", now, false, null, 0, null, null, false);
+        var tombstone = new org.synanton.ingestioncache.domain.SourceTombstoneRow(
+                "demo", "upload", "source", "resource", tombstoneId, now, "u", "USER", 1, manifestRef, UUID.randomUUID());
+        var version = new org.synanton.ingestioncache.domain.SourceVersionRow(
+                "demo", "upload", "source", "resource", versionId, "sha", "r", now, contentRef, UUID.randomUUID(), "");
+        var chunk = new org.synanton.ingestioncache.domain.ChunkRow(
+                "demo", contentRef, 0, "text", "sha", -1, -1, "", "", "", "[]", 0, "", false,
+                List.of("PUBLIC"), "", "", 0, java.util.Set.of(versionId), null);
+        when(cache.listUnpublishedSourceOutbox(eq("demo"), anyInt(), any(Instant.class))).thenReturn(List.of(event));
+        when(cache.readLatestSourceTombstone("demo", "upload", "source", "resource"))
+                .thenReturn(java.util.Optional.of(tombstone));
+        when(cache.readVersionManifest("demo", manifestRef)).thenReturn(List.of(versionId));
+        when(cache.readSourceVersion("demo", "upload", "source", "resource", versionId))
+                .thenReturn(java.util.Optional.of(version));
+        when(cache.readTombstonedVersionIds("demo")).thenReturn(java.util.Set.of(versionId));
+        when(cache.readChunks("demo", contentRef)).thenReturn(List.of(chunk));
+
+        new SearchProjectionConsumer(cache, search, "demo", 200, true).projectNewSourceVersions();
+
+        verify(search).deleteContentRefs(eq("demo"), eq(java.util.Set.of(contentRef)));
+        verify(search, never()).reindex("demo");
+        verify(cache).markSourceOutboxPublished(eq(event), any(Instant.class));
+    }
+
+    @Test
+    void sourceDeletedWithoutTombstoneFallsBackToRebuild() throws Exception {
+        var cache = mock(IngestionCacheClient.class);
+        var search = mock(SearchService.class);
+        SourceOutboxRow event = new SourceOutboxRow("demo", "upload", "source", "resource",
+                UUID.randomUUID(), "SourceDeleted", null, UUID.randomUUID(), "{}", Instant.now(),
+                false, null, 0, null, null, false);
+        when(cache.listUnpublishedSourceOutbox(eq("demo"), anyInt(), any(Instant.class))).thenReturn(List.of(event));
+        when(cache.readLatestSourceTombstone("demo", "upload", "source", "resource"))
+                .thenReturn(java.util.Optional.empty());
+
+        new SearchProjectionConsumer(cache, search, "demo", 200, true).projectNewSourceVersions();
+
+        verify(search).reindex("demo");
+        verify(search, never()).deleteContentRefs(anyString(), any());
+    }
 }

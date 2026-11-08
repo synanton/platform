@@ -93,6 +93,10 @@ public class SearchService {
         engine.projectContentRefs(tenant, contentRefs);
     }
 
+    public void deleteContentRefs(String tenant, Collection<UUID> contentRefs) throws IOException {
+        engine.deleteContentRefs(tenant, contentRefs);
+    }
+
     public IndexStats stats(String tenant) throws IOException {
         return engine.stats(tenant);
     }
