@@ -104,6 +104,7 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **LLM prompt tuning** — Qwen3-4B vLLM, entity F1 0.618 / relationship F1 0.076 on the frozen gold.
 - [x] **`LlmExtractionAdapter`** — Java adapter with surface-form offset recovery + synthetic endpoints, behind `EXTRACTION_PROVIDER=regex|llm` (ADR-022). Live E2E: entity F1 **0.618** / relationship F1 **0.078** (33 candidates, type 0.697).
 - [x] **Preview endpoint + Playwright spec** — `POST /api/v1/extraction/preview` (tenant-verified, no persistence); gated `test/e2e/tests/extraction-preview.spec.ts`.
+- [x] **`ExtractionRequested` emission** — second event slot on `source_versions`, atomic with `SourcePublished`; `ExtractionRequested@1` REPLAY_SAFE; `search_projected_at` readiness gate (PR #1).
 - [ ] **Async extraction consumer** — event-driven, no inline LLM; design in [`extraction-consumer-phase2.md`](extraction-consumer-phase2.md).
 - [ ] **Ingestion integration + resolution + SHACL + graph commit** — invoke the adapter from the pipeline, then retrieval-assisted resolution, validation, provenance-backed commit (#560).
 
@@ -131,7 +132,7 @@ api controllers ──► SearchService (facade, no Lucene imports)
 | #558 (extraction gold + baseline) | Closed (#559) | — |
 | #506, #528, #536, #537, #539 | Closed | — |
 | ADR-022 (extraction engine) | Accepted — Phase B adapter landed | P2 |
-| RAKG extraction epic (#560) | Open — Java adapter landed; ingestion integration/resolution/SHACL/commit pending | P2 |
+| RAKG extraction epic (#560) | Open — adapter + event emission landed; consumer/resolution/SHACL/commit pending | P2 |
 
 ## Operation
 

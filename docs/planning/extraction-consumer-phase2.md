@@ -1,6 +1,6 @@
 # RAKG Phase 2 — asynchronous extraction consumer (design)
 
-**Status:** Design (not implemented)
+**Status:** Design + PR #1 emission landed (2026-11-08); consumer loop not implemented
 **Date:** 2026-11-08
 **Issue:** #560 (RAKG), follow-up to ADR-022
 **Preview seam:** `POST /api/v1/extraction/preview` (synchronous, diagnostic only)
@@ -24,10 +24,16 @@ rebuilt independently.
 1. **Ingestion stays unchanged.** Synflux acquires, extracts text, chunks,
    embeds, persists, and publishes the existing `SourcePublished`/outbox event.
    It never calls `ExtractionEngineAdapter` inline.
-2. **Emit `ExtractionRequested` after the search projection is available.** The
-   event is written through the existing transactional outbox, keyed by
-   `(tenant_id, content_ref_id, source_version_id)`, and carries the chunk
-   manifest version / processing run so the consumer reads a stable snapshot.
+2. **Emit `ExtractionRequested` atomically with `SourcePublished`.** The source
+   outbox is the `source_versions` row (one event slot today). PR #1 adds a
+   second `extraction_event_*` slot to that same row and writes both events in
+   the same `INSERT ... IF NOT EXISTS` LWT — one partition, no cross-partition
+   conditional batch. `SearchProjectionConsumer` writes `search_projected_at`
+   after the Lucene commit; the extraction consumer must gate on
+   `search_projected_at IS NOT NULL` before reading chunks. Registry key:
+   `ExtractionRequested@1` (wire label `extraction.requested.v1`), `REPLAY_SAFE`;
+   duplicate LWT retries are possible (hazard H-2), so the consumer dedupes by
+   `(source identity, version_id)`.
 3. **A separate extraction consumer owns the LLM loop.** It runs as its own
    worker (separate deployment, same codebase seam) and:
    - loads the document's sentence chunks from Cassandra;
@@ -65,6 +71,20 @@ flowchart LR
   SHACL -->|qualified knowledge + evidence| RELIX[(Relix graph)]
   W -->|status/provenance| CASS
 ```
+
+## Pinned emission decision (PR #1, landed)
+
+- `source_versions` is the source outbox; extraction is a second event slot on
+  that row (`extraction_event_id/type/payload/published/...`), not a second
+  `manifest_transitions_outbox` row. The existing LWT already targets one row.
+- `source_versions.search_projected_at` is the readiness gate, written by
+  `SearchProjectionConsumer` (not the Kafka `OutboxPublisher`).
+- The event payload is the typed `ExtractionRequested` envelope in
+  `java/synflux/.../events`; the typed envelope is validated by
+  `EventTypeRegistry`.
+- Acceptance evidence: the fixture lifecycle integration test asserts both the
+  `SourcePublished` and `ExtractionRequested` slots, matching version/content
+  ref, and the readiness write-back.
 
 ## Event contract (draft)
 

@@ -39,6 +39,7 @@ class SearchProjectionConsumerTest {
 
         verify(search).reindex("demo");
         verify(cache).markSourceOutboxPublished(eq(event), any(Instant.class));
+        verify(cache).markSourceSearchProjected(eq(event), any(Instant.class));
     }
 
     @Test
@@ -128,6 +129,7 @@ class SearchProjectionConsumerTest {
         verify(search).deleteContentRefs(eq("demo"), eq(java.util.Set.of(contentRef)));
         verify(search, never()).reindex("demo");
         verify(cache).markSourceOutboxPublished(eq(event), any(Instant.class));
+        verify(cache, never()).markSourceSearchProjected(any(), any());
     }
 
     @Test

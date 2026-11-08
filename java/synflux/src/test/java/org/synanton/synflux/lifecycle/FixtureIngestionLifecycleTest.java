@@ -136,6 +136,13 @@ class FixtureIngestionLifecycleTest {
         assertThat(cache.listSourceOutbox(context.tenantId(), "file", sourceId, resourceId))
             .extracting(event -> event.eventType())
             .containsExactly("SourcePublished");
+        var extractionEvents = cache.listExtractionOutbox(context.tenantId(), "file", sourceId, resourceId);
+        assertThat(extractionEvents).hasSize(1);
+        assertThat(extractionEvents.getFirst().eventType()).isEqualTo("ExtractionRequested");
+        assertThat(extractionEvents.getFirst().sourceVersionId()).isEqualTo(firstVersion.versionId());
+        assertThat(extractionEvents.getFirst().payloadJson())
+            .contains("ExtractionRequested")
+            .contains(firstVersion.contentRefId().toString());
 
         IngestionRunRow unchanged = ingest(context, sourceId, resourceId, firstRef, firstBytes,
             (ignored, versionId) -> {
@@ -147,6 +154,7 @@ class FixtureIngestionLifecycleTest {
         assertThat(publications).hasValue(1);
         assertThat(versions(context, sourceId, resourceId)).containsExactly(firstVersion);
         assertThat(cache.listSourceOutbox(context.tenantId(), "file", sourceId, resourceId)).hasSize(1);
+        assertThat(cache.listExtractionOutbox(context.tenantId(), "file", sourceId, resourceId)).hasSize(1);
 
         ContentRef changedRef = fileRef("file:///fixture/manuals/guide.md",
             firstModified.plusSeconds(60), 6);
@@ -162,6 +170,7 @@ class FixtureIngestionLifecycleTest {
         assertThat(versionEvents).extracting(event -> event.eventType())
             .containsExactlyInAnyOrder("SourcePublished", "SourcePublished");
         assertThat(versionEvents).extracting(event -> event.eventId()).doesNotHaveDuplicates();
+        assertThat(cache.listExtractionOutbox(context.tenantId(), "file", sourceId, resourceId)).hasSize(2);
     }
 
     @Test

@@ -119,6 +119,11 @@ public class SearchProjectionConsumer {
             Instant publishedAt = Instant.now();
             for (SourceOutboxRow event : pending) {
                 cacheClient.markSourceOutboxPublished(event, publishedAt);
+                if (event.sourceVersionId() != null) {
+                    // RAKG readiness: extraction may start only after the search
+                    // projection for this version has been committed.
+                    cacheClient.markSourceSearchProjected(event, publishedAt);
+                }
             }
             log.info("Projected {} source event(s) ({} upsert, {} delete, {}) into tenant '{}' index",
                     pending.size(), upserts.size(), deletes.size(),

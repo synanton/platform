@@ -141,5 +141,19 @@ class SchemaInventoryTest {
             "manifest_transitions_outbox.replay_class",
             "manifest_transitions_outbox.security_metadata"
         );
+
+        // RAKG Phase 2 (V17): extraction request slot + search-projection readiness.
+        assertThat(actual).contains(
+            "source_versions.search_projected_at",
+            "source_versions.extraction_event_id",
+            "source_versions.extraction_event_type",
+            "source_versions.extraction_event_payload_json",
+            "source_versions.extraction_event_published",
+            "source_versions.extraction_event_published_at",
+            "source_versions.extraction_event_attempt_count",
+            "source_versions.extraction_event_last_error",
+            "source_versions.extraction_event_next_attempt_at",
+            "source_versions.extraction_event_dead_lettered"
+        );
     }
 }

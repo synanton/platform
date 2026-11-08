@@ -20,6 +20,7 @@ import org.synanton.synvault.domain.ContentRef;
 import org.synanton.synflux.events.SourceDeleted;
 import org.synanton.synflux.events.SourceIdentity;
 import org.synanton.synflux.events.SourcePublished;
+import org.synanton.synflux.events.ExtractionRequested;
 import org.synanton.synflux.events.IngestionEventConfig;
 import org.synanton.eventing.contract.ActorKind;
 import org.synanton.eventing.contract.Event;
@@ -205,7 +206,9 @@ public final class FixtureIngestionService {
                 contentCacheReference == null ? "" : contentCacheReference
             );
             boolean inserted = cache.insertSourceVersionAndOutboxIfAbsent(
-                version, sourcePublishedEvent(version, runId, operationId, workflowId, correlationId, causationId));
+                version,
+                sourcePublishedEvent(version, runId, operationId, workflowId, correlationId, causationId),
+                extractionRequestedEvent(version, correlationId, causationId));
             if (!inserted) {
                 SourceVersionRow concurrent = cache.readSourceVersion(
                     tenantId, connectorId, sourceId, resourceId, versionId
@@ -675,6 +678,28 @@ public final class FixtureIngestionService {
             );
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not serialize SourcePublished event", e);
+        }
+    }
+
+    private SourceOutboxRow extractionRequestedEvent(
+            SourceVersionRow version, String correlationId, String causationId) {
+        UUID eventId = uuidV5(TOMBSTONE_NAMESPACE,
+            nameKey(IngestionEventConfig.EXTRACTION_REQUESTED, version.versionId().toString()));
+        ExtractionRequested eventPayload = new ExtractionRequested(
+            new SourceIdentity(version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId()),
+            version.versionId(), version.contentRefId(), version.observedAt());
+        Event<ExtractionRequested> envelope = EventEnvelopeBuilder.build(
+            eventId, IngestionEventConfig.EXTRACTION_REQUESTED, 1, version.observedAt(), version.tenantId(),
+            eventPayload, INGEST_PRODUCER, eventUuid(correlationId, "correlation_id"),
+            eventCausation(causationId), ReplayClass.REPLAY_SAFE, INGEST_SECURITY, eventTypeRegistry);
+        try {
+            return new SourceOutboxRow(
+                version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(),
+                eventId, IngestionEventConfig.EXTRACTION_REQUESTED, version.versionId(), null,
+                MAPPER.writeValueAsString(envelope), version.observedAt(), false
+            );
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not serialize ExtractionRequested event", e);
         }
     }
 
