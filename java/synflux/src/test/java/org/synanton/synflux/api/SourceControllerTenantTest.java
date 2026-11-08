@@ -160,7 +160,8 @@ class SourceControllerTenantTest {
                 .header("Authorization", "Bearer " + token("tenant-a")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.extraction_status").value("KNOWLEDGE_READY"))
-            .andExpect(jsonPath("$.graph_status").value("GRAPH_COMMITTED"));
+            .andExpect(jsonPath("$.graph_status").value("GRAPH_COMMITTED"))
+            .andExpect(jsonPath("$.resolution_status").value("PENDING"));
     }
 
     @Test

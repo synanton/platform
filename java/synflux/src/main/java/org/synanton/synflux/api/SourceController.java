@@ -114,6 +114,7 @@ public class SourceController {
         boolean indexed = true;
         List<String> extractionStatuses = new java.util.ArrayList<>();
         List<String> graphStatuses = new java.util.ArrayList<>();
+        List<String> resolutionStatuses = new java.util.ArrayList<>();
         for (SourceIdentityRow identity : cache.listSourceIdentities(tenantId, sourceId, connectorId)) {
             List<SourceVersionRow> versions = cache.listSourceVersions(
                     identity.tenantId(), identity.connectorId(), identity.sourceId(), identity.resourceId());
@@ -128,6 +129,8 @@ public class SourceController {
                     identity.resourceId(), latest.versionId()).ifPresent(extractionStatuses::add);
             cache.readGraphStatus(tenantId, identity.connectorId(), identity.sourceId(),
                     identity.resourceId(), latest.versionId()).ifPresent(graphStatuses::add);
+            cache.readResolutionStatus(tenantId, identity.connectorId(), identity.sourceId(),
+                    identity.resourceId(), latest.versionId()).ifPresent(resolutionStatuses::add);
             chunkCount += cache.readChunks(tenantId, latest.contentRefId()).size();
             boolean projectedState = cache.readManifest(tenantId, latest.contentRefId())
                     .map(manifest -> manifest.state() != null
@@ -145,7 +148,8 @@ public class SourceController {
             indexed &= projectedState && published;
         }
         return new SourceStatusResource(sourceId, status, sawVersion && indexed, chunkCount,
-                aggregateExtractionStatus(extractionStatuses), aggregateGraphStatus(graphStatuses));
+                aggregateExtractionStatus(extractionStatuses), aggregateGraphStatus(graphStatuses),
+                aggregateResolutionStatus(resolutionStatuses));
     }
 
     private static String aggregateExtractionStatus(List<String> statuses) {
@@ -177,13 +181,30 @@ public class SourceController {
         return "PENDING";
     }
 
+    private static String aggregateResolutionStatus(List<String> statuses) {
+        if (statuses.contains("FAILED")) {
+            return "FAILED";
+        }
+        if (statuses.contains("RESOLVING")) {
+            return "RESOLVING";
+        }
+        if (statuses.contains("PARTIAL")) {
+            return "PARTIAL";
+        }
+        if (!statuses.isEmpty() && statuses.stream().allMatch("COMPLETED"::equals)) {
+            return "COMPLETED";
+        }
+        return "PENDING";
+    }
+
     public record SourceStatusResource(
             @JsonProperty("source_id") String sourceId,
             @JsonProperty("status") String status,
             @JsonProperty("indexed") boolean indexed,
             @JsonProperty("chunk_count") int chunkCount,
             @JsonProperty("extraction_status") String extractionStatus,
-            @JsonProperty("graph_status") String graphStatus) {}
+            @JsonProperty("graph_status") String graphStatus,
+            @JsonProperty("resolution_status") String resolutionStatus) {}
 
     @GetMapping
     public List<SourceResource> list() {

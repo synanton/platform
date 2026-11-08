@@ -35,6 +35,8 @@ public class SchemaInstaller {
         "cql/V19__extraction_graph_status.cql",
         "cql/V20__chunk_document_offsets.cql",
         "cql/V21__graph_retry.cql",
+        "cql/V22__resolution_status.cql",
+        "cql/V23__relation_promotion.cql",
     };
 
     public static void install(CqlSession session) {
