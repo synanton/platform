@@ -68,7 +68,7 @@ class Neo4jGraphWriteIntegrationTest {
 
         assertThat(count("MATCH (n:ExtractedMention {tenant_id: $tenant}) RETURN count(n) AS c")).isEqualTo(2);
         assertThat(count("MATCH ()-[e:EXTRACTED_RELATION {tenant_id: $tenant}]->() RETURN count(e) AS c")).isEqualTo(1);
-        assertThat(count("MATCH (n:Entity) RETURN count(n) AS c")).isZero();
+        assertThat(count("MATCH (n:Entity {tenant: $tenant}) RETURN count(n) AS c")).isZero();
         assertThat(count("MATCH ()-[e:REL]->() RETURN count(e) AS c")).isZero();
 
         Map<String, Object> offsets = cypher.read(
@@ -77,6 +77,16 @@ class Neo4jGraphWriteIntegrationTest {
                 Map.of("id", subject.mentionId())).getFirst();
         assertThat(((Number) offsets.get("chunkStart")).intValue()).isZero();
         assertThat(((Number) offsets.get("documentStart")).intValue()).isEqualTo(100);
+    }
+
+    @Test
+    void canonicalLookupReturnsTheActiveGraphType() {
+        String tenant = TENANT + "-lookup";
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'entity-lookup', "
+                + "label: 'Halcyon-7', type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+        assertThat(connector.getActiveEntityType(tenant, "entity-lookup"))
+                .contains("MaintenanceSystem");
+        assertThat(connector.getActiveEntityType(tenant, "missing")).isEmpty();
     }
 
     @Test

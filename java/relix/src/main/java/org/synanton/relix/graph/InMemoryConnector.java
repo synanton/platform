@@ -57,6 +57,16 @@ public class InMemoryConnector {
         return graph.edgeSet().size();
     }
 
+    public java.util.Optional<String> activeType(String entityId) {
+        try {
+            GraphNode node = nodeById.get(UUID.fromString(entityId));
+            return node == null ? java.util.Optional.empty()
+                    : java.util.Optional.ofNullable(node.type());
+        } catch (IllegalArgumentException e) {
+            return java.util.Optional.empty();
+        }
+    }
+
     public GraphConnector.EngineDescriptor getEngineDescriptor() {
         return new GraphConnector.EngineDescriptor("memory", "in-memory-jgrapht", "ALL_NATIVE");
     }

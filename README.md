@@ -193,9 +193,9 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
   Validated mentions/relations are written to the isolated
   `:ExtractedMention` / `:EXTRACTED_RELATION` graph with a separate `graph_status`,
   verified-JWT Relix writes, and an independent retrying graph-commit consumer.
-  Resolution contracts/persistence (PR #4a) and the shared-index entity
-  projection (PR #4b.1) are landed; candidate retrieval/policy and `:RESOLVES_TO`
-  are PR #4b.2–#4d.
+  Resolution contracts/persistence (PR #4a), the shared-index entity projection
+  (PR #4b.1), and verified candidate retrieval (PR #4b.2) are landed; the
+  resolution policy and `:RESOLVES_TO` are PR #4b.3–#4d.
 - **Measured:** regex entity F1 **0.182** on the frozen 5-document gold; the Java
   adapter reproduces entity F1 **0.618** / relationship F1 **0.078** against the
   live cluster model (type 0.697; docs 3–5 still have zero relationship F1).
@@ -220,8 +220,8 @@ and the [async extraction consumer design](docs/planning/extraction-consumer-pha
 ## Next steps
 
 - **[RAKG epic #560](https://github.com/synanton/platform/issues/560):** implement
-  entity candidate retrieval/policy (4b.2/4b.3), `:RESOLVES_TO` promotion (4c), and
-  the independent resolution consumer (4d) on top of the validated mention graph.
+  the rank-margin policy (4b.3), `:RESOLVES_TO` promotion (4c), and the independent
+  resolution consumer (4d) on top of the verified candidate provider.
 - **#556:** query-adaptive RRF on the now-frozen retrieval corpus (deferred).
 - **#538:** route demo TEI through the gateway and drop the direct exception.
 

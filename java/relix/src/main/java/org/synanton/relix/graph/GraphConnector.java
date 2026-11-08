@@ -6,6 +6,7 @@ import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.relix.api.dto.Path;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -27,6 +28,11 @@ public interface GraphConnector extends GraphWritePort {
     OneHopResult oneHop(String tenant, UUID entityId, List<String> edgeTypes, String direction, int limit);
 
     KHopResult kHopPaths(String tenant, UUID fromEntityId, UUID toEntityId, int maxHops, int maxPaths);
+
+    /** Canonical-entity verification: current type iff the entity exists in the graph. */
+    default Optional<String> getActiveEntityType(String tenant, String entityId) {
+        throw new UnsupportedOperationException("graph connector does not support entity lookup");
+    }
 
     record EngineDescriptor(String connectorId, String engine, String patternCoverage) {}
 

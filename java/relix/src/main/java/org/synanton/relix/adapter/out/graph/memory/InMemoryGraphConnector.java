@@ -75,6 +75,12 @@ public class InMemoryGraphConnector implements GraphConnector {
     }
 
     @Override
+    public java.util.Optional<String> getActiveEntityType(String tenant, String entityId) {
+        InMemoryConnector connector = tenants.get(tenant);
+        return connector == null ? java.util.Optional.empty() : connector.activeType(entityId);
+    }
+
+    @Override
     public int upsertMentions(List<ExtractedMention> batch) {
         for (ExtractedMention mention : batch) {
             mentions.computeIfAbsent(mention.tenantId(), ignored -> new ConcurrentHashMap<>())

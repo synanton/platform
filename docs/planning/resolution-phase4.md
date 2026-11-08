@@ -1,6 +1,6 @@
 # RAKG Phase 4 — canonical resolution (PR #4a–#4d)
 
-**Status:** PR #4a contracts/persistence + PR #4b.1 entity projection landed (2026-11-08); resolution policy not started
+**Status:** PR #4a contracts/persistence + PR #4b.1 entity projection + PR #4b.2 candidate provider landed (2026-11-08); resolution policy not started
 **Issue:** #560
 **Prerequisites:** PR #569 graph hardening (verified-JWT writes, independent graph retry);
 #570 tracks lease-based VALIDATING recovery (P2, out of PR #4 scope). Graph writes stay disabled in the demo
@@ -57,6 +57,22 @@ no resolution consumer.
 - **Deploy note:** pre-4b.1 chunk documents have no `doc_type`; run a chunk
   reindex after deploying so they are eligible for CHUNK searches.
 - Neo4j remains the source of truth; the resolver verifies candidates in 4b.3.
+
+## PR #4b.2 — Candidate provider (landed)
+
+- `SearchAdapterCandidateProvider` (stateless, bounded to 10): entity search via
+  the shared index (`SearchFilter(type=ENTITY)`), then **Relix source-of-truth
+  verification** through `CanonicalEntityLookup`.
+- `CanonicalEntityLookup.getActiveEntityType(tenant, entityId)`:
+  Neo4j-backed `RelixCanonicalEntityLookup` + `GET /v1/entities/{id}/type`
+  (verified JWT). 404 = stale projection → drop; unavailable store →
+  `RetryableProcessingException`.
+- Candidates carry raw `retrievalScore`, `matchedField` (label/alias/description),
+  and `retrievalStrategy=RRF`; no confidence percentages and no policy decisions.
+- Search/Neo4j failures throw `RetryableProcessingException` (never an empty
+  "no match"); no candidates → empty.
+- Tests: exact, alias, chunk exclusion, tenant isolation, stale projection,
+  fused RRF, infrastructure failure.
 
 ## PR #4b — ResolutionService
 

@@ -110,7 +110,7 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Graph hardening (PR #3.5)** — verified-JWT Relix writes, independent `GraphCommitConsumer` retry/backoff, evidence-id authority, actual persisted counts, Neo4j uniqueness + concurrent test, transitive type inheritance.
 - [x] **Resolution contracts/persistence (PR #4a)** — `ResolutionOutcome`/`ResolutionLifecycle`/`ResolutionPolicy`/`ResolutionGraphPort`, V22 resolution state + `resolution_results`, V23 `relation_promotion_results`; source status returns `resolution_status` (PENDING). Zero resolution behavior.
 - [x] **Entity projection (PR #4b.1)** — shared Lucene index `doc_type`, `EntitySearchDocument`, `upsertEntities`, entity/chunk segregation, manual Neo4j→Lucene loader.
-- [ ] **Candidate provider (PR #4b.2)** — `SearchAdapterCandidateProvider` over `SearchEngineAdapter.search(type=ENTITY)`.
+- [x] **Candidate provider (PR #4b.2)** — `SearchAdapterCandidateProvider` over entity search + Relix `CanonicalEntityLookup`; stale drop, retryable failures, raw retrieval score/matched field/strategy.
 - [ ] **Resolution policy (PR #4b.3)** — deterministic rank-margin policy + labeled fixture evaluation.
 - [ ] **Canonical promotion (PR #4c)** — `:RESOLVES_TO`, validated `:REL` promotion, evidence accumulation.
 - [ ] **Resolution consumer (PR #4d)** — independent claim/retry/reconciliation (#560).

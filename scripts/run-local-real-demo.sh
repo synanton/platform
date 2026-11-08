@@ -343,6 +343,8 @@ run_acceptance() {
     # A recreating Cassandra can leave synquest's driver briefly without a
     # node (observed after `up` recreated the database while synquest stayed
     # up). Rebuild is idempotent, so retry the transient 500/503 window.
+    # RAKG PR #4b.1: this rebuild replaces CHUNK docs (adding doc_type=CHUNK)
+    # while preserving the ENTITY projection; it migrates pre-4b.1 chunk indexes.
     for attempt in $(seq 1 15); do
         response="$(http POST "$SYNQUEST_URL/v1/search-projection/rebuild" "$token" '{}')"
         case "$(status_of "$response")" in

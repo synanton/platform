@@ -104,6 +104,21 @@ public class Neo4jGraphConnector implements GraphConnector {
     }
 
     @Override
+    public java.util.Optional<String> getActiveEntityType(String tenant, String entityId) {
+        if (entityId == null || entityId.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        List<Map<String, Object>> rows = cypher.read(
+                "MATCH (n:Entity {tenant: $tenant, id: $id}) RETURN n.type AS type",
+                Map.of("tenant", tenant, "id", entityId));
+        if (rows.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        Object type = rows.getFirst().get("type");
+        return type == null ? java.util.Optional.empty() : java.util.Optional.of(String.valueOf(type));
+    }
+
+    @Override
     public int upsertMentions(List<ExtractedMention> batch) {
         if (batch == null || batch.isEmpty()) {
             return 0;
