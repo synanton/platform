@@ -10,14 +10,23 @@ demo path (see #508).
 - **Demo Complete** — the happy path works live in the room.
 - **Architecture Complete** — contracts frozen, design coherent, no known structural gaps.
 - **Operationally Complete** — survives pod restart, node drain, and failure injection.
+- **Knowledge Construction Complete** — typed, evidenced knowledge is extracted,
+  resolved, validated, and committed from ingested chunks (RAKG #560).
 
-The slice is Demo Complete and the search projection is now **Architecture Complete**
-(#550/#552). Remaining operational gaps are tracked in P1.
+The slice is Demo Complete and the search projection is **Architecture Complete**
+(#550/#552). The P0/P1 baseline is complete; the next milestone is **Knowledge
+Construction Complete** (RAKG extraction).
 
 **Milestone — Vertical Slice: Demo Complete (achieved 2026-11-06).** New PDF upload
 returns `BM25 #1 · Dense #1 · RRF #1`; provenance renders source/chunk SHA-256 plus
 page/section; ontology loads 273 entities with `df` badges. Evidence:
 `docs/acceptance/live-dense-2026-11-06.md`.
+
+**Next milestone — Knowledge Construction Complete (RAKG #560).** A sentence-chunked
+document is extracted by the LLM adapter, resolved against search/ontology, validated,
+and committed as typed knowledge with evidence; acceptance is the frozen gold plus the
+end-to-end ingestion path. Baseline: regex entity F1 **0.182**; tuned Qwen3-4B prompt
+entity F1 **0.618** / relationship F1 **0.076**.
 
 ## Search engine architecture (post-#552)
 
@@ -61,9 +70,11 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Live Dense leg** — verified 2026-11-06.
 - [x] **#547 / #550 / #552** — streamed rebuild, incremental `updateDocument`, atomic
   `SearcherManager` refresh, and the `SearchEngineAdapter` boundary (ADR-021).
-- [ ] **Incremental SourceDeleted projection** — today a delete falls back to a full
-  tenant rebuild; replace with `deleteDocuments(new Term("content_ref_id", …))`.
-- [ ] **Streaming scale test** — 1,000+ chunks through `build()` without materialising the tenant.
+- [x] **Incremental SourceDeleted projection** — tombstone + version manifest resolution,
+  live-version safety, `deleteDocuments(new Term("content_ref_id", …))`, full-rebuild
+  fallback (#561).
+- [x] **Streaming scale test** — 1,200 chunks through `build()` into exactly 1,200
+  searchable documents (`LuceneScaleTest`).
 - [ ] **#538** — route demo TEI via gateway/Envoy; drop the direct NetworkPolicy exception.
 - [ ] Projection lag and retrieval-failure visibility in the UI.
 
@@ -80,7 +91,18 @@ api controllers ──► SearchService (facade, no Lucene imports)
   now exists; still deferred (user).
 - **#558** — extraction gold + Phase A regex baseline (entity F1 0.182; closed).
   RAKG Phase 0 sentence chunking landed (`strategy=sentence`, shared
-  `SentenceChunker`); the chunked baseline is unchanged (0.182).
+  `SentenceChunker`); the chunked regex baseline is unchanged (0.182).
+- **RAKG Phase B tuning** — Qwen3-4B (`qwen3-extraction` on `vllm-extraction`) reaches
+  entity P/R/F1 **0.636/0.600/0.618**, type **0.717**, relationship F1 **0.076** on
+  the frozen gold (prompt-tuning harness; Java adapter next, ADR-022).
+
+## Knowledge extraction (RAKG)
+
+- [x] **Gold + regex baseline** — 5 docs / 70 mentions / 44 relationships, entity F1 0.182 (#558).
+- [x] **Sentence-boundary chunking** — `strategy=sentence`, shared `SentenceChunker` (Phase 0).
+- [x] **LLM prompt tuning** — Qwen3-4B vLLM, entity F1 0.618 / relationship F1 0.076 on the frozen gold.
+- [ ] **`LlmExtractionAdapter`** — Java adapter with surface-form offset recovery + synthetic endpoints, behind `EXTRACTION_PROVIDER=regex|llm` (ADR-022).
+- [ ] **Resolution + SHACL + graph commit** — retrieval-assisted resolution, validation, provenance-backed commit (#560).
 
 ## P2 — Focused graph exploration (#508)
 
@@ -105,7 +127,8 @@ api controllers ──► SearchService (facade, no Lucene imports)
 | #556 (query-adaptive RRF) | Open — frozen corpus ready; deferred | P1 |
 | #558 (extraction gold + baseline) | Closed (#559) | — |
 | #506, #528, #536, #537, #539 | Closed | — |
-| RAKG extraction epic | Open — sentence chunking done; LLM next | P3 |
+| ADR-022 (extraction engine) | Accepted — Phase B adapter in progress | P2 |
+| RAKG extraction epic (#560) | Open — Java adapter next; resolution/SHACL/commit pending | P2 |
 
 ## Operation
 
