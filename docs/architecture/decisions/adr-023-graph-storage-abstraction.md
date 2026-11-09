@@ -1,6 +1,6 @@
 # ADR-023: Graph Storage Abstraction and Logical Projection Contracts
 
-**Status:** Proposed 2026-11-09
+**Status:** Accepted 2026-11-09
 **Basis:** Synanton's graph pipeline now persists extracted mentions, resolutions, canonical relations, and evidence through Relix/Neo4j. Resolution and promotion consumers, plus the planned Cassandra–graph reconciliation workflow, increase the cost of allowing Neo4j-specific assumptions to spread into domain services. The platform already establishes storage-independent adapter boundaries for search (ADR-021) and extraction (ADR-022). Graph storage needs the same explicit boundary before additional consumers and logical projections are built.
 
 ## Decision
@@ -11,15 +11,17 @@
 
 3. **Logical graph and projection identity.** Graph operations carry logical graph scope and projection identity/version. Initial logical scopes are `CONTEXT`, `KNOWLEDGE`, `PROVENANCE`, and `DOMAIN`. Graph identity, projection identity, and physical storage identity are distinct; adapters map logical identities to deployment-specific storage.
 
-4. **Explicit capability declarations.** Adapters declare the guarantees they support, including transaction atomicity scope, conditional writes/fencing, tenant-scoped uniqueness, read-after-write consistency, idempotent mutation support, and independent projection rebuild. Capability claims require conformance evidence. The contract does not pretend all providers have identical semantics.
+4. **Explicit capability declarations.** Capabilities are declared per adapter and per logical scope/projection, not as flat adapter-wide booleans. Declarations identify storage identity, scope, projection/version, operation class, guarantee, and limits. Capability claims require positive conformance evidence; unsupported capabilities require explicit rejection and negative conformance. Required capabilities are validated during wiring/startup, and incompatible workflows fail visibly before accepting work. A composite adapter advertises only the lower-bound/intersection of the capabilities of all constituents required for an operation, never their union.
 
 5. **Tenant isolation and deterministic semantics.** Tenant authorization and isolation apply across every adapter and logical scope. Deterministic identifiers, idempotency, stale-write handling, and observable replay outcomes are domain contract guarantees; provider-specific constraints and transactions are implementation mechanisms.
 
-6. **Composite projections are independently recoverable.** A composite adapter may route operations to multiple graph projections, but it is not a distributed transaction manager. Each projection has explicit commit/visibility status, partial outcomes, durable operation identity, retry, and reconciliation semantics. No atomicity is implied across projections or between Cassandra and graph storage.
+6. **Composite projections are independently recoverable.** A composite adapter may route operations to multiple graph projections, but it is not a distributed transaction manager. Each projection has explicit commit/visibility status, partial outcomes, durable operation identity, retry, and reconciliation semantics. Composite operations are workflows, not transactions; effective capabilities are the lower bound of required constituents. No atomicity is implied across projections or between Cassandra and graph storage.
 
 7. **Workflow ownership remains separate.** Cassandra remains authoritative for workflow claims, leases, attempt fences, retry scheduling, and terminal outcomes. Graph storage remains authoritative for persisted graph state. Consumers and reconciliation coordinate independently committed stores through idempotent, fenced operations.
 
-8. **Behavior-preserving adoption.** The existing Neo4j implementation remains the production path during contract extraction. A second in-memory adapter is introduced for contract testing; the same applicable conformance suite runs against the in-memory and Neo4j adapters. This ADR does not authorize a Neo4j replacement, composite graph rollout, or premature Relix rewrite.
+8. **Single-storage transaction boundary.** `GraphTransactionPort` is bound to one storage identity and reports atomicity, fencing/conditional-write, read-after-write, and rollback guarantees separately. It cannot coordinate across projections or storage identities; such coordination is represented as an independently recoverable workflow.
+
+9. **Behavior-preserving adoption.** The existing Neo4j implementation remains the production path during contract extraction. A second in-memory adapter is introduced for contract testing; the same applicable conformance suite runs against the in-memory and Neo4j adapters. This ADR does not authorize a Neo4j replacement, composite graph rollout, or premature Relix rewrite.
 
 Consequences:
 - **Portability:** a future graph engine can implement the domain contracts without changing graph-consuming services, provided it satisfies the required capabilities.
@@ -41,4 +43,4 @@ The graph model is also expected to grow beyond one canonical knowledge graph. C
 
 The platform already uses adapter boundaries to isolate Lucene in search (ADR-021) and regex/vLLM extraction engines (ADR-022). Applying the same principle to graph storage preserves the existing Neo4j implementation while making backend guarantees and future composite projection behavior explicit.
 
-The detailed normative proposal is [Synanton Design 1.35: Graph Storage Abstraction and Logical Projection Architecture](../proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md). It is a proposed design and does not alter the approved Design 1.25 or Platform Architecture 1.0 until the architecture review approves it.
+The detailed normative proposal is [Synanton Design 1.35: Graph Storage Abstraction and Logical Projection Architecture](../proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md). This decision is accepted on 2026-11-09. Integration into Design 1.25 and the architecture index/version metadata is the next documentation-governance step; this ADR does not itself authorize a runtime migration or composite graph rollout.
