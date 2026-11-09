@@ -243,6 +243,32 @@ PENDING --claim--> PROCESSING --complete--> COMPLETED
 `FailureClassifier` maps every caught path explicitly; unexpected exceptions are
 contract violations, never silent infrastructure retries.
 
+## PR #4d.2 — Cassandra ↔ Neo4j crash reconciliation (#578)
+
+State-driven and idempotent: scan persisted Cassandra work rows, read exact
+Neo4j resolution state, and repair only interrupted operations authorized by the
+stored decision and fence. No event replay; no shared-transaction assumption.
+
+| Cassandra | Neo4j | Action |
+|---|---|---|
+| COMPLETED RESOLVED, no edge | write graph at stored fence |
+| COMPLETED RESOLVED, same ID/entity, fence equal | no-op |
+| COMPLETED RESOLVED, same ID/entity, graph fence lower | re-drive upward |
+| COMPLETED RESOLVED, different entity or graph fence higher | contradiction; no write |
+| COMPLETED RESOLVED, history but no active edge | contradiction; no write |
+| PROCESSING, healthy lease | no-op, never steal |
+| PROCESSING, expired lease, exact ID/entity/fence | reclaim + owner-guarded Cassandra completion from graph |
+| PROCESSING, expired lease, no edge | normal consumer/lease retry |
+| COMPLETED UNRESOLVED/AMBIGUOUS, active edge | stale-edge detection only; metric + identifiers, no mutation |
+| COMPLETED UNRESOLVED/AMBIGUOUS, no active edge | no-op |
+
+Detection is not repair. A non-RESOLVED terminal outcome never authorizes
+deletion/supersession; that policy is #584. A higher graph fence is never
+overwritten by an older Cassandra snapshot. Repair requires exact resolution ID,
+entity ID, source version, and fence; Cassandra completion is owner/lease-guarded.
+The reconciler is default-disabled (`relix.reconciliation.enabled=false`) and
+requires the Neo4j connector. Metrics: `reconciliation.{graph_repaired,cassandra_repaired,stale_edge,contradiction,errors,skipped}`.
+
 ## Acceptance gates for PR #4
 
 - Tenant isolation for retrieval and promotion.

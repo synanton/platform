@@ -33,6 +33,13 @@ relix:
       username: ${NEBULA_USERNAME:root}
       password: ${NEBULA_PASSWORD:nebula}
       space: ${NEBULA_SPACE:synanton}
+  reconciliation:
+    # PR #578: Cassandra-driven crash-window repair. Keep disabled until validated.
+    enabled: ${RECONCILIATION_ENABLED:false}
+    tenant: ${RECONCILIATION_TENANT:}
+    batch: ${RECONCILIATION_BATCH:100}
+    poll-delay-ms: ${RECONCILIATION_POLL_DELAY_MS:60000}
+    lease-seconds: ${RECONCILIATION_LEASE_SECONDS:120}
   promotion-consumer:
     # PR #4d.1: independent of extraction/resolution; disabled by default.
     enabled: ${PROMOTION_CONSUMER_ENABLED:false}

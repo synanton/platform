@@ -19,7 +19,7 @@ import org.synanton.relix.graph.GraphConnector;
 import org.synanton.relix.graph.GraphLoader;
 
 @Configuration
-@EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class})
+@EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class, ReconciliationProperties.class})
 public class RelixConfig {
 
     @Bean

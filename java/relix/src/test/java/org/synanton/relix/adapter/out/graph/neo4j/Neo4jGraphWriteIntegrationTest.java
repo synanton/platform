@@ -25,10 +25,12 @@ import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.PromotionIds;
+import org.synanton.relix.graph.ResolutionIds;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
+import org.synanton.common.resolution.ResolutionGraphState;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -133,6 +135,33 @@ class Neo4jGraphWriteIntegrationTest {
         // Replay the v2 decision: no new edge, still one active resolution.
         connector.upsertResolution(decision(tenant, version, mentionId, "entity-v2", "v2"));
         assertThat(resolutionEdges(tenant, mentionId)).hasSize(2);
+    }
+
+    @Test
+    void exactResolutionStateExposesIdentityEntityAndFenceForReconciliation() {
+        String tenant = TENANT + "-reconcile-read";
+        String version = "version-reconcile-read";
+        String mentionId = "mention-reconcile-read";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'entity-reconcile', "
+                + "label: 'Halcyon-7', type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+        ResolutionDecision decision = decision(tenant, version, mentionId, "entity-reconcile", "v1", 7);
+
+        connector.upsertResolution(decision);
+
+        var states = connector.getResolutionStates(tenant, mentionId);
+        assertThat(connector.getResolutionStates(tenant + "-other", mentionId)).isEmpty();
+        assertThat(states).singleElement().satisfies(state -> {
+            assertThat(state.active()).isTrue();
+            assertThat(state.sourceVersionId()).isEqualTo(version);
+            assertThat(state.resolutionId()).isEqualTo(ResolutionIds.of(decision));
+            assertThat(state.entityId()).isEqualTo("entity-reconcile");
+            assertThat(state.fencingToken()).isEqualTo(7);
+            assertThat(state.policyVersion()).isEqualTo("v1");
+            assertThat(state.retrievalStrategy()).isEqualTo("RRF");
+        });
     }
 
     @Test
