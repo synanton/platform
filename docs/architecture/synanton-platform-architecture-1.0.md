@@ -4,8 +4,8 @@
 > **Version:** 1.0
 > **Document ID:** `synanton-platform-architecture-1.0`
 > **Date:** 2026-09-07
-> **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26 and 1.32, not started for 1.27–1.31 and 1.33–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
-> **Status revision 2026-10-21:** All Designs 1.22–1.34 remain **Approved (design)**; that is not an implementation or production-readiness claim. Design 1.32 contracts were frozen 2026-10-17 (#246) and generation-A implementation is in progress. Design 1.27's contract was frozen 2026-10-17 (#247); implementation has not started. Design 1.26 has a Go reference service and Java adapters at differing implementation stages; cross-plane adoption remains in progress. Security design 1.23 is approved; platform-wide enforcement remains tracked by #339. See §15 and the dated implementation evidence linked there.
+> **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26 and 1.32, not started for 1.27–1.31, 1.33–1.35, partial for 1.25 (see §15), furthest along for 1.22/1.23
+> **Status revision 2026-11-09:** Designs 1.22–1.35 remain **Approved (design)**; that is not an implementation or production-readiness claim. Design 1.32 contracts were frozen 2026-10-17 (#246) and generation-A implementation is in progress. Design 1.27's contract was frozen 2026-10-17 (#247); implementation has not started. Design 1.26 has a Go reference service and Java adapters at differing implementation stages; cross-plane adoption remains in progress. Security design 1.23 is approved; platform-wide enforcement remains tracked by #339. See §15 and the dated implementation evidence linked there.
 > **Basis:** [SNTP-14 / GitHub Issue #39](https://github.com/synanton/platform/issues/39); promoted from [`docs/architecture/proposals/synanton-platform-1.0-proposal.md`](./proposals/synanton-platform-1.0-proposal.md); extended by SNTP-15 with Design 1.34 (Temporal Versioned Knowledge and Retrieval)
 > **Audience:** Architects, module owners, security engineers, SREs, platform engineers, technical decision makers
 > **Related docs:** [ADR-011](./decisions/adr-011-platform-architecture-1.0.md), [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md), [Architecture Review Resolution](./proposals/synanton-architecture-review-resolution.md), and every design document listed in §3
@@ -90,7 +90,8 @@ Analytics           → derived observation
 |---|---|---|
 | Base | [1.22](./synanton-design-1.22.md) | Platform architecture overview and accumulated platform behavior |
 | Normative security | [1.23](./synanton-design-1.23.md) | Authentication/authorization/classification/masking/tenant/security baseline |
-| Knowledge extension | [1.25](./synanton-design-1.25.md) | Annotation, derived knowledge, recalculation, analytics/reporting; includes 1.24 |
+| Knowledge extension | [1.25](./synanton-design-1.25.md) | Annotation, derived knowledge, recalculation, analytics/reporting; includes 1.24 and owns the knowledge-projection lifecycle integration |
+| Graph storage contract | [1.35](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) | Detailed graph contract and adapter capability authority, referenced by Design 1.25; see [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) |
 | Content | [1.26](./synanton-design-1.26.md) | Content artifact contract |
 | Communication/execution | [1.27](./synanton-design-1.27.md) | Events, commands, workflows, retries, recovery — the common execution fabric other planes depend on |
 | Acquisition | [1.28](./synanton-design-1.28.md) | Source identity, versioning, synchronization, deletion |
