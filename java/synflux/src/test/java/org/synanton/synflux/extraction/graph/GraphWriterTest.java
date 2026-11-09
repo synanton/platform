@@ -23,6 +23,7 @@ import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
+import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.synflux.config.ExtractionGraphProperties;
 
 class GraphWriterTest {
@@ -77,6 +78,32 @@ class GraphWriterTest {
         assertThat(counters.getValue()).containsEntry("mentions_accepted", 2)
                 .containsEntry("relations_accepted", 1)
                 .containsEntry("relations_rejected", 0);
+    }
+
+    @Test
+    void commitsIdempotentResolutionWorkForEveryMention() {
+        when(validator.validate(any(), any(), any(), any(), any())).thenReturn(new RelationValidation(true, List.of()));
+        when(graphClient.upsertMentions(any())).thenReturn(2);
+        when(graphClient.upsertRelations(any())).thenReturn(1);
+        when(cache.claimGraphCommit(any())).thenReturn(true);
+        ExtractionRequestRow request = request();
+
+        writer(true).commit(request, List.of(chunk()), Map.of(0, result()));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<ResolutionWorkRow> work = ArgumentCaptor.forClass(ResolutionWorkRow.class);
+        verify(cache, org.mockito.Mockito.times(2)).insertResolutionWork(work.capture());
+        assertThat(work.getAllValues()).allSatisfy(row -> {
+            assertThat(row.tenantId()).isEqualTo(TENANT);
+            assertThat(row.sourceVersionId()).isEqualTo(VERSION);
+            assertThat(row.connectorId()).isEqualTo("upload");
+            assertThat(row.sourceId()).isEqualTo("source");
+            assertThat(row.resourceId()).isEqualTo("resource");
+            assertThat(row.claimStatus()).isEqualTo("PENDING");
+            assertThat(row.attemptCount()).isZero();
+            assertThat(row.workCreatedAt()).isEqualTo(NOW);
+        });
+        assertThat(work.getAllValues().getFirst().chunkOrdinal()).isZero();
     }
 
     @Test

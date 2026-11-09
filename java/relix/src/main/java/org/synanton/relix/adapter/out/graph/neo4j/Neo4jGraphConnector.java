@@ -20,6 +20,7 @@ import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.RetryableProcessingException;
+import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 
@@ -311,7 +312,7 @@ public class Neo4jGraphConnector implements GraphConnector {
                 """, params);
         Object appliedCount = appliedRows.isEmpty() ? 0 : appliedRows.getFirst().get("applied");
         if (!(appliedCount instanceof Number number) || number.longValue() == 0) {
-            throw new IllegalStateException("Stale fencing token or missing resolution targets for mention "
+            throw new StaleResolutionException("Stale fencing token or missing resolution targets for mention "
                     + mentionId);
         }
     }

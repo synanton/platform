@@ -1032,15 +1032,17 @@ public class IngestionCacheClient {
     }
 
     public void upsertRelationPromotionResult(RelationPromotionResultRow row) {
+        // VALID rows become claimable promotion work; INVALID rows are terminal.
+        String claimStatus = "VALID".equals(row.promotionStatus()) ? "PENDING" : "COMPLETED";
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.relation_promotion_results (tenant_id, source_version_id, relation_id, " +
             "subject_mention_id, object_mention_id, predicate, promotion_status, canonical_subject_id, " +
             "canonical_object_id, reason, evidence_json, strategy_version, ontology_version, decided_at, " +
-            "superseded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "superseded_at, claim_status, attempt_count) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row.tenantId(), row.sourceVersionId(), row.relationId(), row.subjectMentionId(),
             row.objectMentionId(), row.predicate(), row.promotionStatus(), row.canonicalSubjectId(),
             row.canonicalObjectId(), row.reason(), row.evidenceJson(), row.strategyVersion(),
-            row.ontologyVersion(), row.decidedAt(), row.supersededAt()
+            row.ontologyVersion(), row.decidedAt(), row.supersededAt(), claimStatus, 0
         ));
     }
 
@@ -1060,6 +1062,209 @@ public class IngestionCacheClient {
             ));
         }
         return rows.stream().sorted(Comparator.comparing(RelationPromotionResultRow::relationId)).toList();
+    }
+
+    // ---- PR #4d.1 claimable work ----
+
+    public void insertResolutionWork(ResolutionWorkRow row) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.resolution_results (tenant_id, source_version_id, mention_id, " +
+            "connector_id, source_id, resource_id, content_ref_id, chunk_ordinal, chunk_offset_start, " +
+            "chunk_offset_end, document_offset_start, document_offset_end, surface_form, proposed_type, " +
+            "claim_status, attempt_count, work_created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) " +
+            "IF NOT EXISTS",
+            row.tenantId(), row.sourceVersionId(), row.mentionId(), row.connectorId(), row.sourceId(),
+            row.resourceId(), row.contentRefId(), row.chunkOrdinal(), row.chunkOffsetStart(),
+            row.chunkOffsetEnd(), row.documentOffsetStart(), row.documentOffsetEnd(), row.surfaceForm(),
+            row.proposedType(), "PENDING", 0, row.workCreatedAt()
+        ));
+    }
+
+    public List<ResolutionWorkRow> listResolutionWorkRows(String tenantId, UUID sourceVersionId) {
+        List<ResolutionWorkRow> rows = new ArrayList<>();
+        for (Row row : session.execute(SimpleStatement.newInstance(
+                "SELECT * FROM ingestion_cache.resolution_results WHERE tenant_id=? AND source_version_id=?",
+                tenantId, sourceVersionId))) {
+            rows.add(new ResolutionWorkRow(
+                row.getString("tenant_id"), row.getUuid("source_version_id"), row.getString("mention_id"),
+                row.getString("connector_id"), row.getString("source_id"), row.getString("resource_id"),
+                row.getUuid("content_ref_id"), intOrDefault(row, "chunk_ordinal", 0),
+                intOrDefault(row, "chunk_offset_start", -1), intOrDefault(row, "chunk_offset_end", -1),
+                intOrDefault(row, "document_offset_start", -1), intOrDefault(row, "document_offset_end", -1),
+                row.getString("surface_form"), row.getString("proposed_type"),
+                row.getString("claim_status"), row.getString("claim_owner_id"),
+                row.getInstant("lease_expires_at"), intOrDefault(row, "attempt_count", 0),
+                row.getInstant("next_attempt_at"), row.getInstant("claimed_at"),
+                row.getInstant("work_created_at"), row.getString("last_error"),
+                row.getString("failure_class"), row.getString("outcome")
+            ));
+        }
+        return rows.stream().sorted(Comparator.comparing(ResolutionWorkRow::workCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(ResolutionWorkRow::mentionId)).toList();
+    }
+
+    /** LWT claim; only one worker wins. attempt_count is the fencing token. */
+    public boolean claimResolutionWork(ResolutionWorkRow row, String ownerId,
+                                       Instant now, java.time.Duration lease) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.resolution_results SET claim_status='PROCESSING', claim_owner_id=?, " +
+            "lease_expires_at=?, attempt_count=?, claimed_at=?, next_attempt_at=null, last_error=null, " +
+            "failure_class=null WHERE tenant_id=? AND source_version_id=? AND mention_id=? " +
+            "IF claim_status='PENDING'",
+            ownerId, now.plus(lease), row.attemptCount() + 1, now,
+            row.tenantId(), row.sourceVersionId(), row.mentionId()
+        ));
+        return result.wasApplied();
+    }
+
+    /** Completes only if this worker still owns the row. */
+    public boolean completeResolutionWork(ResolutionWorkRow row, String ownerId,
+                                          String outcome, String reasonCode, String resolvedEntityId,
+                                          String canonicalLabel, double bestScore, double runnerUpScore,
+                                          String strategyVersion, String ontologyVersion,
+                                          String diagnosticsJson, Instant now) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.resolution_results SET outcome=?, reason_code=?, resolved_entity_id=?, " +
+            "canonical_label=?, best_score=?, runner_up_score=?, strategy_version=?, ontology_version=?, " +
+            "diagnostics_json=?, decided_at=?, claim_status='COMPLETED', claim_owner_id=null, " +
+            "lease_expires_at=null, next_attempt_at=null, last_error=null, failure_class=null " +
+            "WHERE tenant_id=? AND source_version_id=? AND mention_id=? " +
+            "IF claim_owner_id=? AND claim_status='PROCESSING'",
+            outcome, reasonCode, resolvedEntityId, canonicalLabel, bestScore, runnerUpScore,
+            strategyVersion, ontologyVersion, diagnosticsJson, now,
+            row.tenantId(), row.sourceVersionId(), row.mentionId(), ownerId
+        ));
+        return result.wasApplied();
+    }
+
+    /** Releases a retryable/terminal failure while preserving ownership safety. */
+    public boolean releaseResolutionWork(ResolutionWorkRow row, String ownerId, String status,
+                                         String failureClass, String error, Instant nextAttemptAt) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.resolution_results SET claim_status=?, failure_class=?, last_error=?, " +
+            "next_attempt_at=?, claim_owner_id=null, lease_expires_at=null " +
+            "WHERE tenant_id=? AND source_version_id=? AND mention_id=? " +
+            "IF claim_owner_id=? AND claim_status='PROCESSING'",
+            status, failureClass, error, nextAttemptAt,
+            row.tenantId(), row.sourceVersionId(), row.mentionId(), ownerId
+        ));
+        return result.wasApplied();
+    }
+
+    public boolean supersedeResolutionWork(ResolutionWorkRow row, String ownerId,
+                                           String error, Instant now) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.resolution_results SET claim_status='SUPERSEDED', " +
+            "failure_class='STALE_REJECT', last_error=?, decided_at=?, claim_owner_id=null, " +
+            "lease_expires_at=null, next_attempt_at=null " +
+            "WHERE tenant_id=? AND source_version_id=? AND mention_id=? " +
+            "IF claim_owner_id=? AND claim_status='PROCESSING'",
+            error, now, row.tenantId(), row.sourceVersionId(), row.mentionId(), ownerId
+        ));
+        return result.wasApplied();
+    }
+
+    /**
+     * Lease expiry is read-scanned (Cassandra LWT has no range predicate), then
+     * reclaimed only from the exact old owner. A concurrent old-worker completion
+     * and this reclaim race on owner_id; exactly one wins.
+     */
+    public boolean reclaimResolutionWork(ResolutionWorkRow row, Instant now) {
+        if (row.claimOwnerId() == null) {
+            return false;
+        }
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.resolution_results SET claim_status='PENDING', claim_owner_id=null, " +
+            "lease_expires_at=null, next_attempt_at=?, last_error='LEASE_EXPIRED' " +
+            "WHERE tenant_id=? AND source_version_id=? AND mention_id=? " +
+            "IF claim_owner_id=? AND claim_status='PROCESSING'",
+            now, row.tenantId(), row.sourceVersionId(), row.mentionId(), row.claimOwnerId()
+        ));
+        return result.wasApplied();
+    }
+
+    public List<RelationPromotionWorkRow> listRelationPromotionWorkRows(
+            String tenantId, UUID sourceVersionId) {
+        List<RelationPromotionWorkRow> rows = new ArrayList<>();
+        for (Row row : session.execute(SimpleStatement.newInstance(
+                "SELECT * FROM ingestion_cache.relation_promotion_results " +
+                "WHERE tenant_id=? AND source_version_id=?",
+                tenantId, sourceVersionId))) {
+            rows.add(new RelationPromotionWorkRow(
+                new RelationPromotionResultRow(
+                    row.getString("tenant_id"), row.getUuid("source_version_id"),
+                    row.getString("relation_id"), row.getString("subject_mention_id"),
+                    row.getString("object_mention_id"), row.getString("predicate"),
+                    row.getString("promotion_status"), row.getString("canonical_subject_id"),
+                    row.getString("canonical_object_id"), row.getString("reason"),
+                    row.getString("evidence_json"), row.getString("strategy_version"),
+                    row.getString("ontology_version"), row.getInstant("decided_at"),
+                    row.getInstant("superseded_at")),
+                row.getString("claim_status"), row.getString("claim_owner_id"),
+                row.getInstant("lease_expires_at"), intOrDefault(row, "attempt_count", 0),
+                row.getInstant("next_attempt_at"), row.getInstant("claimed_at"),
+                row.getString("last_error"), row.getString("failure_class")
+            ));
+        }
+        return rows.stream().sorted(Comparator.comparing(
+                        (RelationPromotionWorkRow work) -> work.result().decidedAt(),
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(work -> work.result().relationId())).toList();
+    }
+
+    public boolean claimPromotionWork(RelationPromotionWorkRow work, String ownerId,
+                                      Instant now, java.time.Duration lease) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.relation_promotion_results SET claim_status='PROCESSING', " +
+            "claim_owner_id=?, lease_expires_at=?, attempt_count=?, claimed_at=?, " +
+            "next_attempt_at=null, last_error=null, failure_class=null " +
+            "WHERE tenant_id=? AND source_version_id=? AND relation_id=? IF claim_status='PENDING'",
+            ownerId, now.plus(lease), work.attemptCount() + 1, now,
+            work.result().tenantId(), work.result().sourceVersionId(), work.result().relationId()
+        ));
+        return result.wasApplied();
+    }
+
+    public boolean completePromotionWork(RelationPromotionWorkRow work, String ownerId, Instant now) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.relation_promotion_results SET claim_status='COMPLETED', " +
+            "claim_owner_id=null, lease_expires_at=null, next_attempt_at=null, last_error=null, " +
+            "failure_class=null WHERE tenant_id=? AND source_version_id=? AND relation_id=? " +
+            "IF claim_owner_id=? AND claim_status='PROCESSING'",
+            work.result().tenantId(), work.result().sourceVersionId(), work.result().relationId(),
+            ownerId
+        ));
+        return result.wasApplied();
+    }
+
+    public boolean releasePromotionWork(RelationPromotionWorkRow work, String ownerId, String status,
+                                        String failureClass, String error, Instant nextAttemptAt) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.relation_promotion_results SET claim_status=?, failure_class=?, " +
+            "last_error=?, next_attempt_at=?, claim_owner_id=null, lease_expires_at=null " +
+            "WHERE tenant_id=? AND source_version_id=? AND relation_id=? " +
+            "IF claim_owner_id=? AND claim_status='PROCESSING'",
+            status, failureClass, error, nextAttemptAt,
+            work.result().tenantId(), work.result().sourceVersionId(), work.result().relationId(),
+            ownerId
+        ));
+        return result.wasApplied();
+    }
+
+    public boolean reclaimPromotionWork(RelationPromotionWorkRow work, Instant now) {
+        if (work.claimOwnerId() == null) {
+            return false;
+        }
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.relation_promotion_results SET claim_status='PENDING', " +
+            "claim_owner_id=null, lease_expires_at=null, next_attempt_at=?, last_error='LEASE_EXPIRED' " +
+            "WHERE tenant_id=? AND source_version_id=? AND relation_id=? " +
+            "IF claim_owner_id=? AND claim_status='PROCESSING'",
+            now, work.result().tenantId(), work.result().sourceVersionId(),
+            work.result().relationId(), work.claimOwnerId()
+        ));
+        return result.wasApplied();
     }
 
     public void markResolutionStatus(

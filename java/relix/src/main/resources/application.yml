@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: relix
+  task:
+    scheduling:
+      pool:
+        size: ${RELIX_SCHEDULER_POOL:1}
   jackson:
     property-naming-strategy: SNAKE_CASE
     default-property-inclusion: non_null
@@ -29,6 +33,15 @@ relix:
       username: ${NEBULA_USERNAME:root}
       password: ${NEBULA_PASSWORD:nebula}
       space: ${NEBULA_SPACE:synanton}
+  promotion-consumer:
+    # PR #4d.1: independent of extraction/resolution; disabled by default.
+    enabled: ${PROMOTION_CONSUMER_ENABLED:false}
+    tenant: ${PROMOTION_CONSUMER_TENANT:}
+    batch-relations: ${PROMOTION_CONSUMER_BATCH:5}
+    max-attempts: ${PROMOTION_CONSUMER_MAX_ATTEMPTS:5}
+    retry-backoff-seconds: ${PROMOTION_CONSUMER_BACKOFF_SECONDS:30}
+    lease-seconds: ${PROMOTION_CONSUMER_LEASE_SECONDS:120}
+    poll-delay-ms: ${PROMOTION_CONSUMER_POLL_DELAY_MS:10000}
   query:
     entity-lookup-default-limit: 10
     one-hop-default-limit: 50

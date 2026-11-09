@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    api(project(":java:shared:common"))
     api(libs.cassandra.driver.core)
     api(libs.spring.boot.starter.web) // for @ConfigurationProperties
     implementation(libs.caffeine)

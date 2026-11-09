@@ -198,14 +198,50 @@ One canonical semantic `:REL` edge per triple; multiple independently identifiab
   the same canonical triple accumulate evidence rather than overwrite it.
 - No silent canonical `:Entity` creation; no cross-tenant promotion.
 
-## PR #4d — ResolutionConsumer
+## PR #4d.1 — recoverable resolution/promotion consumers
 
-- Mirrors `GraphCommitConsumer`: independent scheduled poll, LWT claim, bounded
-  batches, attempt/backoff, no LLM re-call.
-- Retries retrieval/Cassandra/Neo4j/Syntology failures independently.
-- Reconciles crash-after-Cassandra-decision/before-Neo4j-write and the inverse.
-- Never repeats completed decisions; supersession is audited (`superseded_at`),
-  never destructive.
+Implemented as orchestration over the 4c primitives, not another graph layer.
+
+### Claim lifecycle
+
+```text
+PENDING --claim--> PROCESSING --complete--> COMPLETED
+   ^                    |
+   |                    +--retryable/lease expired--> PENDING (attempt++, backoff)
+   |                    +--contract/stale--> FAILED | SUPERSEDED
+   +--claim, attempt >= max--> FAILED
+```
+
+- LWT claim on `resolution_results` / `relation_promotion_results` sets
+  `claim_status=PROCESSING`, `claim_owner_id`, `lease_expires_at`, and
+  `attempt_count++`. The attempt count is the resolution fencing token.
+- Lease expiry is read-scanned (Cassandra LWT has no range predicate), then
+  reclaimed only from the exact old owner. A stale worker's completion/rerelease
+  fails the owner condition.
+- Work rows are created PENDING by the extracted-mention graph commit; VALID
+  relation-validation rows are created claimable by 4c.2.
+- `ResolutionConsumer` (Synquest) and `PromotionConsumer` (Relix) have separate
+  flags, schedulers, batches, leases, retry budgets, and metrics. Both default
+  disabled.
+- A lost graph response is safe: the lease expires, the retry uses a higher fence,
+  deterministic IDs/slot locks make the write idempotent, and the claim converges.
+- No extraction re-run, cross-store reconciliation (#578), search-generation
+  propagation (#577), retraction, or GPU fairness in 4d.1.
+
+### Failure classes (enforced)
+
+| Signal | Class | Action |
+|---|---|---|
+| No candidates | LEGITIMATE_OUTCOME | UNRESOLVED, terminal success |
+| Close candidates | LEGITIMATE_OUTCOME | AMBIGUOUS, terminal success |
+| Type incompatible | LEGITIMATE_OUTCOME | UNRESOLVED, terminal success |
+| Neo4j/Syntology unavailable | INFRASTRUCTURE_RETRYABLE | PENDING + backoff |
+| Stale fence | STALE_REJECT | SUPERSEDED, terminal |
+| Invalid persisted row/evidence | CONTRACT_VIOLATION | FAILED, terminal |
+| Retry budget exhausted | INFRASTRUCTURE_RETRYABLE | FAILED, terminal |
+
+`FailureClassifier` maps every caught path explicitly; unexpected exceptions are
+contract violations, never silent infrastructure retries.
 
 ## Acceptance gates for PR #4
 

@@ -32,4 +32,11 @@ public record ResolutionDecision(
                 canonicalLabel, bestScore, runnerUpScore, strategyVersion, ontologyVersion,
                 diagnostics, retrievalStrategy, 0L);
     }
+
+    /** Claim attempts are monotonic fences: later attempts always win. */
+    public ResolutionDecision withFencingToken(long token) {
+        return new ResolutionDecision(tenantId, sourceVersionId, mentionId, outcome, reasonCode,
+                resolvedEntityId, canonicalLabel, bestScore, runnerUpScore, strategyVersion,
+                ontologyVersion, diagnostics, retrievalStrategy, token);
+    }
 }
