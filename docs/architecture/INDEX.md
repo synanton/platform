@@ -10,7 +10,7 @@ last_reviewed: "2026-11-09"
 **Audience:** Architects, module owners, security engineers
 **Last Updated:** 2026-11-09
 
-> **Synanton Platform Architecture 1.0 (capstone):** [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) — the cumulative document showing how Designs 1.22–1.34 fit together. Read this first for the platform-wide picture; each plane document below remains authoritative for its own domain.
+> **Synanton Platform Architecture 1.0 (capstone):** [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) — the cumulative document showing how Designs 1.22–1.35 fit together. Read this first for the platform-wide picture; each plane document below remains authoritative for its own domain.
 > **Current approved design (base):** [`synanton-design-1.22.md`](./synanton-design-1.22.md) (platform baseline)
 > **v1.23 (approved design):** [`synanton-design-1.23.md`](./synanton-design-1.23.md) — classification-aware semantic search; **normative for security platform-wide**; enforcement remains in progress (#339)
 > **v1.25 (approved, architecture-only; consolidates 1.24):** [`synanton-design-1.25.md`](./synanton-design-1.25.md) — annotations, derived knowledge, recalculation, analytics & reporting
