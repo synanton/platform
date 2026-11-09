@@ -1,7 +1,7 @@
 # Synanton Design 1.35 Proposal: Graph Storage Abstraction and Logical Projection Architecture
 
-**Status:** Integrated into Design 1.25 §§15/18 by reference — 2026-11-09
-**Normative authority:** The detailed graph contract, capability model, and adapter conformance requirements in this document remain authoritative; Design 1.25 owns the knowledge-projection lifecycle boundary and references this document rather than duplicating it.
+**Status:** Integrated (normative parts incorporated into Design 1.25 §§15/18); detailed contract and capability model remain authoritative here — 2026-11-09
+**Integration boundary:** Design 1.25 owns the knowledge-projection lifecycle boundary and references this document for the detailed graph contract, capability model, and adapter conformance requirements rather than duplicating them.
 **Proposal Date:** 2026-11-09
 **Target design:** Synanton Design 1.35
 **Architectural owner:** Knowledge Processing / Graph
