@@ -32,6 +32,7 @@ import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.relix.graph.ExtractedMention;
+import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.relix.graph.GraphConnector;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,14 +43,16 @@ class GraphWriteControllerAuthTest {
     private static final String SECRET = "relix-test-jwt-secret-at-least-32-bytes";
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private GraphConnector connector;
+    private CanonicalRelationPromotionPort promoter;
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
         connector = mock(GraphConnector.class);
+        promoter = mock(CanonicalRelationPromotionPort.class);
         when(connector.upsertMentions(any())).thenReturn(1);
         TenantContextFilter filter = new TenantContextFilter(new JwtVerifier(SECRET), "", "/health");
-        mvc = MockMvcBuilders.standaloneSetup(new GraphWriteController(connector))
+        mvc = MockMvcBuilders.standaloneSetup(new GraphWriteController(connector, promoter))
                 .addFilters(filter)
                 .build();
     }
@@ -149,7 +152,7 @@ class GraphWriteControllerAuthTest {
     @Test
     void extractedRelationLookupIsTenantVerifiedAnd404Aware() throws Exception {
         when(connector.getExtractedRelation("tenant-a", "r1")).thenReturn(Optional.of(
-                new ExtractedRelationView("r1", "tenant-a", "v1", "m1", "m2", "requires", "ref:0")));
+                new ExtractedRelationView("r1", "tenant-a", "v1", "m1", "m2", "requires", "ref:0", 0, 20)));
         mvc.perform(get("/v1/extracted-relations/r1")
                         .header("Authorization", "Bearer " + token("tenant-a")))
                 .andExpect(status().isOk())
@@ -159,6 +162,46 @@ class GraphWriteControllerAuthTest {
         mvc.perform(get("/v1/extracted-relations/missing")
                         .header("Authorization", "Bearer " + token("tenant-a")))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void verifiedTenantMayPromoteAValidatedRelation() throws Exception {
+        var relation = new org.synanton.common.resolution.CanonicalRelation(
+                "tenant-a", "v1", "r1", "m1", "e1", "m2", "e2", "requires", "1.0.0",
+                "ref:0", 0, 20);
+        when(promoter.promoteRelation(relation)).thenReturn(
+                new org.synanton.common.resolution.PromotionResult(1, 1, 1));
+        mvc.perform(post("/graph/promotions")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(relation)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.relations_created").value(1));
+    }
+
+    @Test
+    void promotionWithoutTokenIsRejected() throws Exception {
+        var relation = new org.synanton.common.resolution.CanonicalRelation(
+                "tenant-a", "v1", "r1", "m1", "e1", "m2", "e2", "requires", "1.0.0",
+                "ref:0", 0, 20);
+        mvc.perform(post("/graph/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(relation)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void invalidValidationRowReturnsConflict() throws Exception {
+        var relation = new org.synanton.common.resolution.CanonicalRelation(
+                "tenant-a", "v1", "r1", "m1", "e1", "m2", "e2", "requires", "1.0.0",
+                "ref:0", 0, 20);
+        when(promoter.promoteRelation(relation))
+                .thenThrow(new IllegalStateException("Relation validation is not VALID: INVALID"));
+        mvc.perform(post("/graph/promotions")
+                        .header("Authorization", "Bearer " + token("tenant-a"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(relation)))
+                .andExpect(status().isConflict());
     }
 
     private String body(String tenant) throws Exception {

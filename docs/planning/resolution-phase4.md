@@ -1,6 +1,6 @@
 # RAKG Phase 4 — canonical resolution (PR #4a–#4d)
 
-**Status:** PR #4a–#4b.3 + #4c.1 `:RESOLVES_TO` + #4c.2 canonical relation validation landed (2026-11-08); promotion not started
+**Status:** PR #4a–#4b.3 + #4c.1 `:RESOLVES_TO` + #4c.2 validation + #4c.3 canonical promotion landed (2026-11-08); no consumer yet
 **Issue:** #560
 **Prerequisites:** PR #569 graph hardening (verified-JWT writes, independent graph retry);
 #570 tracks lease-based VALIDATING recovery (P2, out of PR #4 scope). Graph writes stay disabled in the demo
@@ -148,7 +148,26 @@ Backlog (tracked):
 - #577 search-generation propagation into decisions/edges
 - #578 Cassandra↔Neo4j crash reconciliation (4d)
 
-## PR #4c — canonical promotion
+## PR #4c.3 — canonical promotion (landed)
+
+- `promoteRelation(CanonicalRelation)` in Relix; the promoter consumes only a
+  **VALID** `relation_promotion_results` row and rejects mismatched/invalid rows.
+- One Neo4j write transaction re-verifies both `:RESOLVES_TO {active:true}` links
+  and the exact canonical endpoints, then:
+  - `MERGE (:Entity)-[:REL {canonical_relation_id, predicate, tenant_id, ontology_version}]->(:Entity)`
+  - `MERGE (:RelationEvidence {evidence_id, ...})`
+  - `MERGE (:ExtractedRelation {relation_id})-[:SUPPORTS]->(:RelationEvidence)`
+  - returns `relationsCreated`, `evidenceCreated`, `evidenceMatched`.
+- IDs:
+  - `canonical_relation_id = sha256(tenant | subjectEntityId | normalizedPredicate | objectEntityId)`
+  - `evidence_id = sha256(tenant | sourceVersionId | extractedRelationId | evidenceChunkId | offsetStart | offsetEnd)`
+- One semantic `:REL` per canonical triple; a second document adds evidence and
+  `:SUPPORTS`, never a second `:REL`; replay is idempotent.
+- Missing/superseded/cross-tenant active resolutions return zero writes; an invalid
+  validation row fails before the graph; a Neo4j transaction failure is wrapped as
+  `RetryableProcessingException` and the single statement rolls back.
+- No consumer, concurrency fencing, search-generation propagation, crash
+  reconciliation, or evidence retraction in this PR.
 
 ### 4c.3 evidence model (pinned)
 

@@ -14,8 +14,12 @@ import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.SourceRefCodec;
 import org.synanton.relix.graph.ResolutionIds;
+import org.synanton.relix.graph.PromotionIds;
 import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.ExtractedRelationView;
+import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.PromotionResult;
+import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 
@@ -147,7 +151,9 @@ public class Neo4jGraphConnector implements GraphConnector {
                       (o:ExtractedMention {tenant_id: $tenant})
                 RETURN r.relation_id AS relation_id, s.mention_id AS subject_mention_id,
                        o.mention_id AS object_mention_id, r.predicate AS predicate,
-                       r.source_version_id AS source_version_id, r.evidence_chunk_id AS evidence_chunk_id
+                       r.source_version_id AS source_version_id, r.evidence_chunk_id AS evidence_chunk_id,
+                       r.evidence_chunk_offset_start AS offset_start,
+                       r.evidence_chunk_offset_end AS offset_end
                 LIMIT 1
                 """, Map.of("tenant", tenant, "relationId", relationId));
         if (rows.isEmpty()) {
@@ -161,7 +167,79 @@ public class Neo4jGraphConnector implements GraphConnector {
                 String.valueOf(row.get("subject_mention_id")),
                 String.valueOf(row.get("object_mention_id")),
                 String.valueOf(row.get("predicate")),
-                String.valueOf(row.get("evidence_chunk_id"))));
+                String.valueOf(row.get("evidence_chunk_id")),
+                row.get("offset_start") == null ? -1 : ((Number) row.get("offset_start")).intValue(),
+                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue()));
+    }
+
+    @Override
+    public PromotionResult promoteRelation(CanonicalRelation relation) {
+        String canonicalRelationId = PromotionIds.canonicalRelationId(relation);
+        String evidenceId = PromotionIds.evidenceId(relation);
+        String predicate = PromotionIds.normalizePredicate(relation.predicate());
+        String now = java.time.Instant.now().toString();
+        java.util.Map<String, Object> params = new java.util.LinkedHashMap<>();
+        params.put("tenant", relation.tenantId());
+        params.put("sourceVersionId", relation.sourceVersionId());
+        params.put("extractedRelationId", relation.extractedRelationId());
+        params.put("subjectMentionId", relation.subjectMentionId());
+        params.put("subjectEntityId", relation.subjectEntityId());
+        params.put("objectMentionId", relation.objectMentionId());
+        params.put("objectEntityId", relation.objectEntityId());
+        params.put("predicate", predicate);
+        params.put("ontologyVersion", relation.ontologyVersion());
+        params.put("evidenceChunkId", relation.evidenceChunkId());
+        params.put("offsetStart", relation.evidenceChunkOffsetStart());
+        params.put("offsetEnd", relation.evidenceChunkOffsetEnd());
+        params.put("canonicalRelationId", canonicalRelationId);
+        params.put("evidenceId", evidenceId);
+        params.put("now", now);
+
+        List<Map<String, Object>> rows;
+        try {
+            rows = cypher.writeReturning("""
+                MATCH (s:ExtractedMention {tenant_id: $tenant, mention_id: $subjectMentionId})
+                      -[:RESOLVES_TO {active: true}]->
+                      (se:Entity {tenant: $tenant, id: $subjectEntityId})
+                MATCH (o:ExtractedMention {tenant_id: $tenant, mention_id: $objectMentionId})
+                      -[:RESOLVES_TO {active: true}]->
+                      (oe:Entity {tenant: $tenant, id: $objectEntityId})
+                OPTIONAL MATCH (se)-[existingRel:REL {canonical_relation_id: $canonicalRelationId}]->(oe)
+                OPTIONAL MATCH (existingEv:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
+                WITH se, oe, existingRel, existingEv
+                MERGE (se)-[rel:REL {canonical_relation_id: $canonicalRelationId}]->(oe)
+                  ON CREATE SET rel.created_at = $now
+                SET rel.predicate = $predicate, rel.tenant_id = $tenant,
+                    rel.ontology_version = $ontologyVersion, rel.updated_at = $now
+                MERGE (ev:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
+                  ON CREATE SET ev.created_at = $now
+                SET ev.canonical_relation_id = $canonicalRelationId,
+                    ev.source_version_id = $sourceVersionId,
+                    ev.extracted_relation_id = $extractedRelationId,
+                    ev.evidence_chunk_id = $evidenceChunkId,
+                    ev.evidence_offset_start = $offsetStart,
+                    ev.evidence_offset_end = $offsetEnd
+                MERGE (xr:ExtractedRelation {tenant_id: $tenant, relation_id: $extractedRelationId})
+                SET xr.source_version_id = $sourceVersionId,
+                    xr.subject_mention_id = $subjectMentionId,
+                    xr.object_mention_id = $objectMentionId,
+                    xr.predicate = $predicate
+                MERGE (xr)-[sup:SUPPORTS {tenant_id: $tenant}]->(ev)
+                RETURN CASE WHEN existingRel IS NULL THEN 1 ELSE 0 END AS relations_created,
+                       CASE WHEN existingEv IS NULL THEN 1 ELSE 0 END AS evidence_created,
+                       1 AS evidence_matched
+                """, params);
+        } catch (RuntimeException e) {
+            throw new RetryableProcessingException("Canonical relation promotion transaction failed", e);
+        }
+        if (rows.isEmpty()) {
+            return new PromotionResult(0, 0, 0);
+        }
+        Map<String, Object> row = rows.getFirst();
+        return new PromotionResult(
+                ((Number) row.get("relations_created")).intValue(),
+                ((Number) row.get("evidence_created")).intValue(),
+                ((Number) row.get("evidence_matched")).intValue());
     }
 
     @Override

@@ -45,6 +45,19 @@ public class DriverCypherExecutor implements CypherExecutor {
         }
     }
 
+    @Override
+    public List<Map<String, Object>> writeReturning(String cypher, Map<String, Object> params) {
+        try (Session session = driver.session(SessionConfig.forDatabase(database))) {
+            return session.executeWrite(tx -> {
+                List<Map<String, Object>> rows = new ArrayList<>();
+                for (Record record : tx.run(cypher, Values.value(params)).list()) {
+                    rows.add(toMap(record));
+                }
+                return rows;
+            });
+        }
+    }
+
     private static Map<String, Object> toMap(Record record) {
         Map<String, Object> row = new LinkedHashMap<>();
         for (String key : record.keys()) {

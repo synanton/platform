@@ -4,6 +4,8 @@ import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.common.resolution.ResolutionGraphPort;
+import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.PromotionResult;
 import org.synanton.relix.api.dto.Path;
 
 import java.util.List;
@@ -33,6 +35,11 @@ public interface GraphConnector extends GraphWritePort, ResolutionGraphPort {
     /** Canonical-entity verification: current type iff the entity exists in the graph. */
     default Optional<String> getActiveEntityType(String tenant, String entityId) {
         throw new UnsupportedOperationException("graph connector does not support entity lookup");
+    }
+
+    /** 4c.3: atomic canonical promotion with evidence accumulation. */
+    default PromotionResult promoteRelation(CanonicalRelation relation) {
+        throw new UnsupportedOperationException("graph connector does not support relation promotion");
     }
 
     record EngineDescriptor(String connectorId, String engine, String patternCoverage) {}

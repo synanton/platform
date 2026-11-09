@@ -50,7 +50,7 @@ class DefaultCanonicalRelationValidatorTest {
     void seed() throws Exception {
         when(graph.getExtractedRelation(TENANT, RELATION_ID)).thenReturn(Optional.of(
                 new ExtractedRelationView(RELATION_ID, TENANT, VERSION.toString(),
-                        "m-subject", "m-object", "requires", REF + ":0")));
+                        "m-subject", "m-object", "requires", REF + ":0", 0, 20)));
         when(graph.getActiveResolutions(TENANT, List.of("m-subject", "m-object"))).thenReturn(List.of(
                 new ActiveResolution("m-subject", "e-subject", "MaintenanceSystem"),
                 new ActiveResolution("m-object", "e-object", "Protocol")));
