@@ -30,7 +30,7 @@ import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
-import org.synanton.common.resolution.ResolutionGraphState;
+import org.synanton.relix.reconciliation.ResolutionKey;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -142,7 +142,6 @@ class Neo4jGraphWriteIntegrationTest {
         String tenant = TENANT + "-reconcile-read";
         String version = "version-reconcile-read";
         String mentionId = "mention-reconcile-read";
-        assertThat(connector.supportsResolutionReconciliation()).isTrue();
         Instant now = Instant.parse("2026-11-08T00:00:00Z");
         connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
                 0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
@@ -152,10 +151,9 @@ class Neo4jGraphWriteIntegrationTest {
 
         connector.upsertResolution(decision);
 
-        var states = connector.getResolutionStates(tenant, mentionId);
-        assertThat(connector.getResolutionStates(tenant + "-other", mentionId)).isEmpty();
-        assertThat(states).singleElement().satisfies(state -> {
-            assertThat(state.active()).isTrue();
+        ResolutionKey key = new ResolutionKey(tenant, version, mentionId, null);
+        assertThat(connector.activeResolution(key)).satisfies(observation -> {
+            var state = observation.orElseThrow();
             assertThat(state.sourceVersionId()).isEqualTo(version);
             assertThat(state.resolutionId()).isEqualTo(ResolutionIds.of(decision));
             assertThat(state.entityId()).isEqualTo("entity-reconcile");
@@ -163,6 +161,10 @@ class Neo4jGraphWriteIntegrationTest {
             assertThat(state.policyVersion()).isEqualTo("v1");
             assertThat(state.retrievalStrategy()).isEqualTo("RRF");
         });
+        assertThat(connector.hasResolutionHistory(key)).isTrue();
+        ResolutionKey otherTenant = new ResolutionKey(tenant + "-other", version, mentionId, null);
+        assertThat(connector.activeResolution(otherTenant)).isEmpty();
+        assertThat(connector.hasResolutionHistory(otherTenant)).isFalse();
     }
 
     @Test

@@ -1,12 +1,11 @@
 package org.synanton.relix.reconciliation;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.resolution.ResolutionDecision;
-import org.synanton.common.resolution.ResolutionGraphState;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.ResolutionWorkRow;
@@ -28,7 +27,7 @@ class ResolutionReconciliationPolicyTest {
     void completedResolvedWithNoGraphHistoryRepairsAtStoredFence() {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
-                result("RESOLVED", ENTITY), List.of(), NOW);
+                result("RESOLVED", ENTITY), Optional.empty(), false, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.REPAIR_GRAPH);
         assertThat(action.resolutionId()).isEqualTo(resolutionId(ENTITY, "v1"));
@@ -40,7 +39,7 @@ class ResolutionReconciliationPolicyTest {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
                 result("RESOLVED", ENTITY),
-                List.of(state(ENTITY, "v1", 3, true)), NOW);
+                Optional.of(state(ENTITY, "v1", 3)), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.NOOP);
     }
@@ -50,7 +49,7 @@ class ResolutionReconciliationPolicyTest {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
                 result("RESOLVED", ENTITY),
-                List.of(state(ENTITY, "v1", 2, true)), NOW);
+                Optional.of(state(ENTITY, "v1", 2)), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.REPAIR_GRAPH);
         assertThat(action.resolutionDecision().fencingToken()).isEqualTo(3);
@@ -61,7 +60,7 @@ class ResolutionReconciliationPolicyTest {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
                 result("RESOLVED", ENTITY),
-                List.of(state("entity-other", "v1", 3, true)), NOW);
+                Optional.of(state("entity-other", "v1", 3)), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.CONTRADICTION);
         assertThat(action.resolutionDecision()).isNull();
@@ -72,7 +71,7 @@ class ResolutionReconciliationPolicyTest {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
                 result("RESOLVED", ENTITY),
-                List.of(state(ENTITY, "v1", 4, true)), NOW);
+                Optional.of(state(ENTITY, "v1", 4)), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.CONTRADICTION);
     }
@@ -81,8 +80,7 @@ class ResolutionReconciliationPolicyTest {
     void completedResolvedWithOnlyHistoryIsContradiction() {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
-                result("RESOLVED", ENTITY),
-                List.of(state(ENTITY, "v1", 3, false)), NOW);
+                result("RESOLVED", ENTITY), Optional.empty(), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.CONTRADICTION);
     }
@@ -92,7 +90,7 @@ class ResolutionReconciliationPolicyTest {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
                 result("UNRESOLVED", null),
-                List.of(state(ENTITY, "v1", 2, true)), NOW);
+                Optional.of(state(ENTITY, "v1", 2)), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.STALE_EDGE);
         assertThat(action.resolutionDecision()).isNull();
@@ -103,7 +101,7 @@ class ResolutionReconciliationPolicyTest {
     void completedNonResolvedWithoutActiveEdgeIsConsistent() {
         ReconciliationAction action = policy.decide(
                 work("COMPLETED", 3, NOW.plusSeconds(300)),
-                result("AMBIGUOUS", null), List.of(), NOW);
+                result("AMBIGUOUS", null), Optional.empty(), false, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.NOOP);
     }
@@ -112,7 +110,7 @@ class ResolutionReconciliationPolicyTest {
     void processingWithHealthyLeaseIsNeverStolen() {
         ReconciliationAction action = policy.decide(
                 work("PROCESSING", 3, NOW.plusSeconds(60)),
-                null, List.of(state(ENTITY, "v1", 3, true)), NOW);
+                null, Optional.of(state(ENTITY, "v1", 3)), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.NOOP);
     }
@@ -121,7 +119,7 @@ class ResolutionReconciliationPolicyTest {
     void processingWithExpiredLeaseAndExactGraphCompletesCassandra() {
         ReconciliationAction action = policy.decide(
                 work("PROCESSING", 3, NOW.minusSeconds(1)),
-                null, List.of(state(ENTITY, "v1", 3, true)), NOW);
+                null, Optional.of(state(ENTITY, "v1", 3)), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.REPAIR_CASSANDRA);
         assertThat(action.resolutionId()).isEqualTo(resolutionId(ENTITY, "v1"));
@@ -130,11 +128,12 @@ class ResolutionReconciliationPolicyTest {
 
     @Test
     void processingWithExpiredLeaseButCorruptGraphIdentityIsContradiction() {
-        ResolutionGraphState tampered = new ResolutionGraphState(
-                TENANT, MENTION, VERSION.toString(), "not-the-deterministic-id", ENTITY, 3,
-                true, "ACTIVE", "v1", "active", 0.5, 0.1, "RRF", NOW.toString());
+        GraphResolutionObservation tampered = new GraphResolutionObservation(
+                VERSION.toString(), "not-the-deterministic-id", ENTITY, 3,
+                "v1", "active", 0.5, 0.1, "RRF");
         ReconciliationAction action = policy.decide(
-                work("PROCESSING", 3, NOW.minusSeconds(1)), null, List.of(tampered), NOW);
+                work("PROCESSING", 3, NOW.minusSeconds(1)), null,
+                Optional.of(tampered), true, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.CONTRADICTION);
     }
@@ -142,7 +141,8 @@ class ResolutionReconciliationPolicyTest {
     @Test
     void processingWithExpiredLeaseAndNoGraphIsLeftToNormalRetry() {
         ReconciliationAction action = policy.decide(
-                work("PROCESSING", 3, NOW.minusSeconds(1)), null, List.of(), NOW);
+                work("PROCESSING", 3, NOW.minusSeconds(1)), null,
+                Optional.empty(), false, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.NOOP);
     }
@@ -150,7 +150,8 @@ class ResolutionReconciliationPolicyTest {
     @Test
     void completedWithoutPersistedDecisionIsContradiction() {
         ReconciliationAction action = policy.decide(
-                work("COMPLETED", 3, NOW.plusSeconds(300)), null, List.of(), NOW);
+                work("COMPLETED", 3, NOW.plusSeconds(300)), null,
+                Optional.empty(), false, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.CONTRADICTION);
     }
@@ -169,12 +170,10 @@ class ResolutionReconciliationPolicyTest {
                 0.5, 0.1, "v1", "active", "{}", NOW, null);
     }
 
-    private static ResolutionGraphState state(String entity, String policyVersion, long fence,
-                                              boolean active) {
-        return new ResolutionGraphState(TENANT, MENTION, VERSION.toString(),
-                resolutionId(entity, policyVersion), entity, fence, active,
-                active ? "ACTIVE" : "SUPERSEDED", policyVersion, "active", 0.5, 0.1,
-                "RRF", NOW.toString());
+    private static GraphResolutionObservation state(String entity, String policyVersion, long fence) {
+        return new GraphResolutionObservation(
+                VERSION.toString(), resolutionId(entity, policyVersion), entity, fence,
+                policyVersion, "active", 0.5, 0.1, "RRF");
     }
 
     private static String resolutionId(String entity, String policyVersion) {

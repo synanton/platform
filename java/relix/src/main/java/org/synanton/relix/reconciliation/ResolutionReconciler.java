@@ -8,33 +8,31 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.common.resolution.ResolutionDecision;
-import org.synanton.common.resolution.ResolutionGraphState;
-import org.synanton.common.resolution.RetryableProcessingException;
-import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.relix.config.ReconciliationProperties;
-import org.synanton.relix.graph.GraphConnector;
 
 /**
  * PR #578: crash-window reconciliation only. It starts from Cassandra work rows,
  * compares exact graph identity/fence, repairs interrupted operations, and
  * records decision inconsistencies without mutating them.
  *
- * <p>Capability assumptions (to be formalized and startup-validated by #587):
- * conditional graph writes with monotonic fencing, read-after-write consistency
- * for the active resolution edge, deterministic idempotent graph identities, and
- * Cassandra LWT owner/lease ownership. The reconciler uses only the logical
- * {@link org.synanton.common.resolution.ResolutionGraphLookup} capability; all
- * Cypher remains in the Neo4j adapter. This is a transitional #578/#587 seam.
+ * <p>Transitional #578/#587 seam. Capability assumptions (to be formalized and
+ * startup-validated by #587): exact-identity reads, conditional graph writes with
+ * monotonic fencing, read-after-write consistency for the active resolution edge,
+ * deterministic idempotent graph identities, and Cassandra LWT owner/lease
+ * ownership. The reconciler uses only single-identity graph observations and
+ * intent verbs; all Cypher remains in the Neo4j adapter. Delete this seam when
+ * #590 migrates #585 onto #587 contracts; deviation #591.
  */
 @Component
 public final class ResolutionReconciler {
@@ -43,7 +41,7 @@ public final class ResolutionReconciler {
 
     private final IngestionCacheClient cache;
     private final ClaimService claims;
-    private final GraphConnector graph;
+    private final ResolutionReconciliationGraph graph;
     private final ReconciliationProperties properties;
     private final ResolutionReconciliationPolicy policy = new ResolutionReconciliationPolicy();
     private final Clock clock = Clock.systemUTC();
@@ -57,11 +55,11 @@ public final class ResolutionReconciler {
     private final Counter leaseHeld;
 
     public ResolutionReconciler(IngestionCacheClient cache, ClaimService claims,
-                                GraphConnector graph, ReconciliationProperties properties,
-                                MeterRegistry registry) {
+                                Optional<ResolutionReconciliationGraph> graph,
+                                ReconciliationProperties properties, MeterRegistry registry) {
         this.cache = cache;
         this.claims = claims;
-        this.graph = graph;
+        this.graph = graph == null ? null : graph.orElse(null);
         this.properties = properties;
         this.graphRepaired = registry.counter("reconciliation.graph_repaired");
         this.cassandraRepaired = registry.counter("reconciliation.cassandra_repaired");
@@ -82,11 +80,12 @@ public final class ResolutionReconciler {
             log.warn("Reconciliation is enabled without a tenant; skipping poll");
             return;
         }
-        if (!graph.supportsResolutionReconciliation()) {
-            log.warn("Graph adapter does not advertise resolution reconciliation capability; current={}",
-                    graph.id());
+        if (graph == null) {
+            log.warn("Reconciliation graph seam is unavailable; current adapter does not provide it");
             return;
         }
+        // Transitional: assumes exact-identity read + fencing-conditional write.
+        // Enforced at startup validation in #587. See deviation #591.
         List<ResolutionWorkRow> work;
         try {
             work = claims.resolutionWorkForTenant(tenant);
@@ -113,6 +112,9 @@ public final class ResolutionReconciler {
                         tenant, row.sourceVersionId(), e.toString());
                 continue;
             }
+            if (!"COMPLETED".equals(row.claimStatus()) && !"PROCESSING".equals(row.claimStatus())) {
+                continue;
+            }
             reconcile(row, result, now);
         }
     }
@@ -126,16 +128,20 @@ public final class ResolutionReconciler {
     }
 
     private void reconcile(ResolutionWorkRow row, ResolutionResultRow result, Instant now) {
-        List<ResolutionGraphState> states;
+        ResolutionKey key = new ResolutionKey(row.tenantId(), row.sourceVersionId().toString(),
+                row.mentionId(), null);
+        Optional<GraphResolutionObservation> active;
+        boolean history;
         try {
-            states = graph.getResolutionStates(row.tenantId(), row.mentionId());
+            active = graph.activeResolution(key);
+            history = active.isEmpty() && graph.hasResolutionHistory(key);
         } catch (Exception e) {
             errors.increment();
-            log.warn("Reconciliation graph read failed tenant={} mention={}: {}",
+            log.warn("Reconciliation graph observation failed tenant={} mention={}: {}",
                     row.tenantId(), row.mentionId(), e.toString());
             return;
         }
-        ReconciliationAction action = policy.decide(row, result, states, now);
+        ReconciliationAction action = policy.decide(row, result, active, history, now);
         if (action.kind() == ReconciliationKind.NOOP
                 && "PROCESSING".equals(row.claimStatus())
                 && row.leaseExpiresAt() != null && row.leaseExpiresAt().isAfter(now)) {
@@ -152,27 +158,36 @@ public final class ResolutionReconciler {
 
     private void repairGraph(ResolutionWorkRow row, ReconciliationAction action) {
         try {
-            graph.upsertResolution(action.resolutionDecision());
-            graphRepaired.increment();
-            log.info("Reconciled missing graph resolution tenant={} mention={} version={} "
-                            + "resolutionId={} fence={}", row.tenantId(), row.mentionId(),
-                    row.sourceVersionId(), action.resolutionId(),
-                    action.resolutionDecision().fencingToken());
-        } catch (StaleResolutionException e) {
-            contradiction.increment();
-            log.warn("Reconciliation graph write rejected as stale/contradictory tenant={} "
-                            + "mention={} version={} resolutionId={} detail={}",
-                    row.tenantId(), row.mentionId(), row.sourceVersionId(),
-                    action.resolutionId(), e.getMessage());
-        } catch (RetryableProcessingException e) {
+            ResolutionWriteOutcome outcome = graph.ensureResolution(action.resolutionDecision());
+            switch (outcome) {
+                case APPLIED -> {
+                    graphRepaired.increment();
+                    log.info("Reconciled missing graph resolution tenant={} mention={} version={} "
+                                    + "resolutionId={} fence={}", row.tenantId(), row.mentionId(),
+                            row.sourceVersionId(), action.resolutionId(),
+                            action.resolutionDecision().fencingToken());
+                }
+                case REJECTED -> {
+                    contradiction.increment();
+                    log.warn("Reconciliation graph intent rejected tenant={} mention={} version={} "
+                                    + "resolutionId={}", row.tenantId(), row.mentionId(),
+                            row.sourceVersionId(), action.resolutionId());
+                }
+                case RETRYABLE -> {
+                    errors.increment();
+                    log.warn("Reconciliation graph intent retryable tenant={} mention={}",
+                            row.tenantId(), row.mentionId());
+                }
+            }
+        } catch (Exception e) {
             errors.increment();
-            log.warn("Reconciliation graph write retryable tenant={} mention={}: {}",
+            log.warn("Reconciliation graph intent failed tenant={} mention={}: {}",
                     row.tenantId(), row.mentionId(), e.toString());
         }
     }
 
     private void repairCassandra(ResolutionWorkRow row, ReconciliationAction action, Instant now) {
-        ResolutionGraphState state = action.activeState();
+        GraphResolutionObservation state = action.activeState();
         if (state == null) {
             contradiction.increment();
             return;
@@ -208,7 +223,7 @@ public final class ResolutionReconciler {
     private void detectStaleEdge(ResolutionWorkRow row, ResolutionResultRow result,
                                  ReconciliationAction action) {
         staleEdge.increment();
-        ResolutionGraphState state = action.activeState();
+        GraphResolutionObservation state = action.activeState();
         log.warn("Reconciliation detected stale active edge tenant={} mention={} sourceVersion={} "
                         + "resolutionId={} entityId={} graphFence={} cassandraOutcome={} "
                         + "policyVersion={} ontologyVersion={} detail={}",
@@ -225,7 +240,7 @@ public final class ResolutionReconciler {
     private void detectContradiction(ResolutionWorkRow row, ResolutionResultRow result,
                                      ReconciliationAction action) {
         contradiction.increment();
-        ResolutionGraphState state = action.activeState();
+        GraphResolutionObservation state = action.activeState();
         log.warn("Reconciliation detected contradictory state tenant={} mention={} sourceVersion={} "
                         + "resolutionId={} entityId={} graphFence={} cassandraOutcome={} "
                         + "policyVersion={} ontologyVersion={} detail={}",

@@ -1,13 +1,12 @@
 package org.synanton.relix.reconciliation;
 
 import org.synanton.common.resolution.ResolutionDecision;
-import org.synanton.common.resolution.ResolutionGraphState;
 
-/** A reconciliation decision plus the exact graph identity it was based on. */
+/** A reconciliation decision plus the single-identity observation it was based on. */
 public record ReconciliationAction(
         ReconciliationKind kind,
         String resolutionId,
-        ResolutionGraphState activeState,
+        GraphResolutionObservation activeState,
         ResolutionDecision resolutionDecision,
         String detail) {
 
@@ -21,19 +20,20 @@ public record ReconciliationAction(
     }
 
     public static ReconciliationAction repairCassandra(String resolutionId,
-                                                       ResolutionGraphState state,
+                                                       GraphResolutionObservation state,
                                                        ResolutionDecision decision) {
         return new ReconciliationAction(ReconciliationKind.REPAIR_CASSANDRA, resolutionId, state,
                 decision, "graph committed; Cassandra completion missing");
     }
 
-    public static ReconciliationAction staleEdge(String resolutionId, ResolutionGraphState state,
+    public static ReconciliationAction staleEdge(String resolutionId, GraphResolutionObservation state,
                                                  String detail) {
         return new ReconciliationAction(ReconciliationKind.STALE_EDGE, resolutionId, state, null,
                 detail);
     }
 
-    public static ReconciliationAction contradiction(String resolutionId, ResolutionGraphState state,
+    public static ReconciliationAction contradiction(String resolutionId,
+                                                     GraphResolutionObservation state,
                                                      String detail) {
         return new ReconciliationAction(ReconciliationKind.CONTRADICTION, resolutionId, state, null,
                 detail);

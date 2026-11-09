@@ -22,8 +22,11 @@ import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.common.resolution.ResolutionDecision;
-import org.synanton.common.resolution.ResolutionGraphState;
 import org.synanton.common.resolution.ResolutionOutcome;
+import org.synanton.relix.reconciliation.GraphResolutionObservation;
+import org.synanton.relix.reconciliation.ResolutionKey;
+import org.synanton.relix.reconciliation.ResolutionReconciliationGraph;
+import org.synanton.relix.reconciliation.ResolutionWriteOutcome;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Bolt/Cypher adapter. Relationship type is always {@code REL}; the original verb is a property (avoids Cypher injection).
  */
-public class Neo4jGraphConnector implements GraphConnector {
+public class Neo4jGraphConnector implements GraphConnector, ResolutionReconciliationGraph {
 
     private static final int MAX_HOPS_CAP = 6;
 
@@ -143,54 +146,73 @@ public class Neo4jGraphConnector implements GraphConnector {
     }
 
     @Override
-    public boolean supportsResolutionReconciliation() {
-        return true;
+    public java.util.Optional<GraphResolutionObservation> activeResolution(ResolutionKey key) {
+        if (key == null || key.tenantId() == null || key.mentionId() == null
+                || key.mentionId().isBlank()) {
+            return java.util.Optional.empty();
+        }
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
+                      -[r:RESOLVES_TO {active: true}]->
+                      (e:Entity {tenant: $tenant})
+                RETURN r.source_version_id AS source_version_id,
+                       r.resolution_id AS resolution_id, e.id AS entity_id,
+                       coalesce(r.fencing_token, 0) AS fencing_token,
+                       r.policy_version AS policy_version,
+                       r.ontology_version AS ontology_version,
+                       coalesce(r.best_score, 0.0) AS best_score,
+                       coalesce(r.runner_up_score, 0.0) AS runner_up_score,
+                       r.retrieval_strategy AS retrieval_strategy
+                LIMIT 1
+                """, Map.of("tenant", key.tenantId(), "mentionId", key.mentionId()));
+        if (rows.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        Map<String, Object> row = rows.getFirst();
+        return java.util.Optional.of(new GraphResolutionObservation(
+                row.get("source_version_id") == null ? null
+                        : String.valueOf(row.get("source_version_id")),
+                row.get("resolution_id") == null ? null
+                        : String.valueOf(row.get("resolution_id")),
+                row.get("entity_id") == null ? null : String.valueOf(row.get("entity_id")),
+                toLong(row.get("fencing_token")),
+                row.get("policy_version") == null ? null
+                        : String.valueOf(row.get("policy_version")),
+                row.get("ontology_version") == null ? null
+                        : String.valueOf(row.get("ontology_version")),
+                toDouble(row.get("best_score")),
+                toDouble(row.get("runner_up_score")),
+                row.get("retrieval_strategy") == null ? null
+                        : String.valueOf(row.get("retrieval_strategy"))));
     }
 
     @Override
-    public List<ResolutionGraphState> getResolutionStates(String tenant, String mentionId) {
-        if (tenant == null || tenant.isBlank() || mentionId == null || mentionId.isBlank()) {
-            return List.of();
+    public boolean hasResolutionHistory(ResolutionKey key) {
+        if (key == null || key.tenantId() == null || key.mentionId() == null
+                || key.mentionId().isBlank()) {
+            return false;
         }
         List<Map<String, Object>> rows = cypher.read("""
                 MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
                       -[r:RESOLVES_TO]->
-                      (e:Entity {tenant: $tenant})
-                RETURN m.mention_id AS mention_id, r.source_version_id AS source_version_id,
-                       r.resolution_id AS resolution_id, e.id AS entity_id,
-                       coalesce(r.fencing_token, 0) AS fencing_token,
-                       coalesce(r.active, false) AS active, r.status AS status,
-                       r.policy_version AS policy_version, r.ontology_version AS ontology_version,
-                       coalesce(r.best_score, 0.0) AS best_score,
-                       coalesce(r.runner_up_score, 0.0) AS runner_up_score,
-                       r.retrieval_strategy AS retrieval_strategy,
-                       r.decided_at AS decided_at
-                """, Map.of("tenant", tenant, "mentionId", mentionId));
-        List<ResolutionGraphState> states = new ArrayList<>(rows.size());
-        for (Map<String, Object> row : rows) {
-            states.add(new ResolutionGraphState(
-                    tenant,
-                    String.valueOf(row.get("mention_id")),
-                    row.get("source_version_id") == null ? null
-                            : String.valueOf(row.get("source_version_id")),
-                    row.get("resolution_id") == null ? null
-                            : String.valueOf(row.get("resolution_id")),
-                    row.get("entity_id") == null ? null : String.valueOf(row.get("entity_id")),
-                    toLong(row.get("fencing_token")),
-                    Boolean.TRUE.equals(row.get("active")),
-                    row.get("status") == null ? null : String.valueOf(row.get("status")),
-                    row.get("policy_version") == null ? null
-                            : String.valueOf(row.get("policy_version")),
-                    row.get("ontology_version") == null ? null
-                            : String.valueOf(row.get("ontology_version")),
-                    toDouble(row.get("best_score")),
-                    toDouble(row.get("runner_up_score")),
-                    row.get("retrieval_strategy") == null ? null
-                            : String.valueOf(row.get("retrieval_strategy")),
-                    row.get("decided_at") == null ? null : String.valueOf(row.get("decided_at"))
-            ));
+                      (:Entity {tenant: $tenant})
+                RETURN count(r) AS history_count
+                """, Map.of("tenant", key.tenantId(), "mentionId", key.mentionId()));
+        return !rows.isEmpty() && toLong(rows.getFirst().get("history_count")) > 0;
+    }
+
+    @Override
+    public ResolutionWriteOutcome ensureResolution(ResolutionDecision decision) {
+        try {
+            upsertResolution(decision);
+            return ResolutionWriteOutcome.APPLIED;
+        } catch (StaleResolutionException e) {
+            return ResolutionWriteOutcome.REJECTED;
+        } catch (RetryableProcessingException e) {
+            return ResolutionWriteOutcome.RETRYABLE;
+        } catch (RuntimeException e) {
+            return ResolutionWriteOutcome.REJECTED;
         }
-        return states;
     }
 
     @Override
