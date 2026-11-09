@@ -4,25 +4,27 @@
 > **Version:** 1.0
 > **Document ID:** `synanton-platform-architecture-1.0`
 > **Date:** 2026-09-07
-> **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26 and 1.32, not started for 1.27–1.31 and 1.33–1.34, partial for 1.25 (see §15), furthest along for 1.22/1.23
-> **Status revision 2026-10-21:** All Designs 1.22–1.34 remain **Approved (design)**; that is not an implementation or production-readiness claim. Design 1.32 contracts were frozen 2026-10-17 (#246) and generation-A implementation is in progress. Design 1.27's contract was frozen 2026-10-17 (#247); implementation has not started. Design 1.26 has a Go reference service and Java adapters at differing implementation stages; cross-plane adoption remains in progress. Security design 1.23 is approved; platform-wide enforcement remains tracked by #339. See §15 and the dated implementation evidence linked there.
+> **Status:** Approved (architecture) — capstone document; implementation in progress for 1.26 and 1.32, not started for 1.27–1.31, 1.33–1.35, partial for 1.25 (see §15), furthest along for 1.22/1.23
+> **Status revision 2026-11-09:** Designs 1.22–1.35 remain **Approved (design)**; that is not an implementation or production-readiness claim. Design 1.32 contracts were frozen 2026-10-17 (#246) and generation-A implementation is in progress. Design 1.27's contract was frozen 2026-10-17 (#247); implementation has not started. Design 1.26 has a Go reference service and Java adapters at differing implementation stages; cross-plane adoption remains in progress. Security design 1.23 is approved; platform-wide enforcement remains tracked by #339. See §15 and the dated implementation evidence linked there.
 > **Basis:** [SNTP-14 / GitHub Issue #39](https://github.com/synanton/platform/issues/39); promoted from [`docs/architecture/proposals/synanton-platform-1.0-proposal.md`](./proposals/synanton-platform-1.0-proposal.md); extended by SNTP-15 with Design 1.34 (Temporal Versioned Knowledge and Retrieval)
 > **Audience:** Architects, module owners, security engineers, SREs, platform engineers, technical decision makers
 > **Related docs:** [ADR-011](./decisions/adr-011-platform-architecture-1.0.md), [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md), [Architecture Review Resolution](./proposals/synanton-architecture-review-resolution.md), and every design document listed in §3
 
-> **Implementation principle:** This document does not introduce new architecture. It integrates and cross-references Designs 1.22–1.34, which remain the normative source for their respective planes. Where this document and a plane design document appear to disagree, the plane design document governs for its own domain and this document should be corrected.
+> **Implementation principle:** This document does not introduce new architecture. It integrates and cross-references Designs 1.22–1.35, which remain the normative source for their respective planes. Where this document and a plane design document appear to disagree, the plane design document governs for its own domain and this document should be corrected.
 
 ---
 
 ## 1. Executive Summary
 
-Synanton Platform 1.0 consolidates the architecture developed through Designs 1.22–1.34.
+Synanton Platform 1.0 consolidates the architecture developed through Designs 1.22–1.35.
 
 Design [1.22](./synanton-design-1.22.md) remains the **base architecture document**. Design [1.23](./synanton-design-1.23.md) is the **normative security and representation baseline**. Design 1.24 is not published independently; its annotation/derived-knowledge/recalculation content is consolidated into Design [1.25](./synanton-design-1.25.md).
 
 Designs [1.26](./synanton-design-1.26.md)–[1.33](./synanton-design-1.33.md) extend the base architecture with explicit content-cache, eventing/workflow, ingestion, identity, AI runtime, search, API and Kubernetes lifecycle contracts.
 
 Design [1.34](./synanton-design-1.34.md) adds a cross-plane **temporal versioning and point-in-time retrieval** capability — historical source versions, publication/observation/validity semantics, and temporal search eligibility — assigned to the existing owning planes (Ingestion 1.28, Knowledge 1.25, Search 1.31) rather than a new authority (see §10).
+
+Graph-storage ownership follows the same single-authority rule: Cassandra owns durable workflow coordination state (claims, leases, attempt fences, retries, and terminal outcomes); graph storage owns persisted graph state. Neo4j is the current graph implementation. The normative contract boundary and projection lifecycle are defined by [Design 1.25](./synanton-design-1.25.md) §§15 and 18, with detailed graph contracts in [Design 1.35](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) and rationale in [ADR-023](./decisions/adr-023-graph-storage-abstraction.md). This capstone records the ownership boundary only; it does not restate the graph contract. **no cross-store operation is atomic; every partial outcome is retryable, reconcilable, or surfaced as a contradiction.**
 
 The resulting architecture is:
 
@@ -70,6 +72,8 @@ The central authority rule is:
 Source state        → Ingestion 1.28
 Content artifacts   → Content Cache 1.26
 Canonical knowledge → Knowledge 1.25
+Workflow state      → Cassandra (claims, leases, fences, retries, terminal outcomes)
+Persisted graph state → Graph storage (Neo4j is the current implementation)
 Identity            → Identity 1.29
 Authorization       → Security 1.23
 AI execution        → AI Runtime 1.30
@@ -86,7 +90,8 @@ Analytics           → derived observation
 |---|---|---|
 | Base | [1.22](./synanton-design-1.22.md) | Platform architecture overview and accumulated platform behavior |
 | Normative security | [1.23](./synanton-design-1.23.md) | Authentication/authorization/classification/masking/tenant/security baseline |
-| Knowledge extension | [1.25](./synanton-design-1.25.md) | Annotation, derived knowledge, recalculation, analytics/reporting; includes 1.24 |
+| Knowledge extension | [1.25](./synanton-design-1.25.md) | Annotation, derived knowledge, recalculation, analytics/reporting; includes 1.24 and owns the knowledge-projection lifecycle integration |
+| Graph storage contract | [1.35](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) | Detailed graph contract and adapter capability authority, referenced by Design 1.25; see [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) |
 | Content | [1.26](./synanton-design-1.26.md) | Content artifact contract |
 | Communication/execution | [1.27](./synanton-design-1.27.md) | Events, commands, workflows, retries, recovery — the common execution fabric other planes depend on |
 | Acquisition | [1.28](./synanton-design-1.28.md) | Source identity, versioning, synchronization, deletion |
@@ -421,8 +426,9 @@ This table records implementation state, not target architecture. Its rows are m
 | 1.32 | Approved | Contract frozen 2026-10-17 (#246); generation-A implementation in progress |
 | 1.33 | Approved (contract/readiness review only) | No operator implementation exists; not in scope for this milestone |
 | 1.34 | Approved | Not started; per Design 1.34 §39, begins with a 1.28 (Ingestion) extension and should not precede 1.27/1.28 implementation |
+| 1.35 | Approved; graph-storage contract integrated by reference into 1.25 §§15/18 | Implementation not started; contract extraction and adapter conformance tracked by [#587](https://github.com/synanton/platform/issues/587) |
 
-Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence in §14. In particular, no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen, per the ordering rationale in §6.
+Accepting Designs 1.26–1.35 as architecture does not authorize skipping the implementation sequence in §14. In particular, no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen, per the ordering rationale in §6.
 
 > **Revision 2026-10-23:** the 1.32 contract set is frozen (five artifacts, #246 closed) and generation-A implementation — login/logout, search API, MCP adapter — is in progress. The §14 sequencing rule was relaxed for this slice by BBAG-A amendment A1, which split *M0-entry* (spec drafting and implementation may start) from *M0-freeze* (contracts frozen); see the [plane's implementation plan](../implementation/platform-api-plane/INDEX.md). The 1.27 contract was frozen 2026-10-17 (#247); EWP-1 is implemented through #393/#396, EWP-2 #394's first publisher slice is in progress, and EWP-3–EWP-6 plus 1.28–1.31 remain unstarted. Phase 1's separate BM25 ingestion-to-UI-search demo was accepted 2026-10-21; this validates that demonstrated slice only, not every approved design or production readiness ([acceptance evidence](../acceptance/p0-ingestion-search-2026-10-21.md)).
 
@@ -442,12 +448,13 @@ Platform 1.0 is architecturally complete when:
 - [x] 1.32 defines the stable external API and identity-management API.
 - [x] 1.33 defines Kubernetes readiness without Kubernetes leakage.
 - [x] 1.34 defines cross-plane temporal versioning and point-in-time retrieval without a competing ownership model.
+- [x] 1.35 defines graph storage contracts and logical projection lifecycle; Design 1.25 owns the knowledge-projection integration and the capstone records only the workflow-state/graph-state ownership boundary.
 - [ ] Cross-plane security tests pass.
 - [ ] Cross-plane idempotency/recovery tests pass.
 - [ ] Compatibility CI is operational.
 - [ ] First end-to-end vertical slice is reproducible.
 
-The first twelve criteria are architecture-level and are satisfied by this document and Designs 1.22–1.34 as accepted. The remaining four are implementation-level and remain open — see §15; they are tracked as follow-on implementation work, not as blockers to accepting the architecture itself.
+The first twelve criteria are architecture-level and are satisfied by this document and Designs 1.22–1.35 as accepted. The remaining four are implementation-level and remain open — see §15; they are tracked as follow-on implementation work, not as blockers to accepting the architecture itself.
 
 ## 17. Final Thesis
 

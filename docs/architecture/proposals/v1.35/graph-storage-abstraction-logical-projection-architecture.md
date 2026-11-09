@@ -1,12 +1,13 @@
 # Synanton Design 1.35 Proposal: Graph Storage Abstraction and Logical Projection Architecture
 
-**Status:** Approved 2026-11-09
+**Status:** Integrated (normative parts incorporated into Design 1.25 §§15/18); detailed contract and capability model remain authoritative here — 2026-11-09
+**Integration boundary:** Design 1.25 owns the knowledge-projection lifecycle boundary and references this document for the detailed graph contract, capability model, and adapter conformance requirements rather than duplicating them.
 **Proposal Date:** 2026-11-09
 **Target design:** Synanton Design 1.35
 **Architectural owner:** Knowledge Processing / Graph
 **Related designs:** 1.0 Platform Architecture; 1.25 Knowledge and Derived Projections; 1.27 Eventing and Workflow; 1.31 Search and Retrieval; 1.34 Temporal Versioned Knowledge and Retrieval
 **Related decisions:** ADR-021 Pluggable Search Engine Boundary; ADR-022 Pluggable Knowledge Extraction Pipeline
-**Related implementation work:** RAKG graph persistence, resolution and promotion workflow; #578 crash reconciliation; #584 resolution retraction/supersession policy
+**Related implementation work:** [#587 graph storage contracts and adapter conformance](https://github.com/synanton/platform/issues/587); #578 crash reconciliation; #584 resolution retraction/supersession policy
 
 ---
 

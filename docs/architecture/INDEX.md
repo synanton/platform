@@ -1,21 +1,24 @@
 ---
 title: "Architecture"
 status: "current"
-last_reviewed: "2026-10-23"
+last_reviewed: "2026-11-09"
 ---
 
 # Architecture
 
 **Purpose:** Long-lived design decisions, Architecture Decision Records (ADRs), and the current authoritative design document for the Synanton platform.
 **Audience:** Architects, module owners, security engineers
-**Last Updated:** 2026-10-21
+**Last Updated:** 2026-11-09
 
-> **Synanton Platform Architecture 1.0 (capstone):** [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) — the cumulative document showing how Designs 1.22–1.34 fit together. Read this first for the platform-wide picture; each plane document below remains authoritative for its own domain.
+`docs/VERSION` tracks the highest approved design number registered in this index (not a document-revision counter and not the current baseline pointer). The current baseline remains explicitly identified above; minor design numbers are not required to be contiguous. Designs 1.23–1.34 are registered below, so setting the highest approved design to 1.35 does not imply skipped or unpublished designs.
+
+> **Synanton Platform Architecture 1.0 (capstone):** [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) — the cumulative document showing how Designs 1.22–1.35 fit together. Read this first for the platform-wide picture; each plane document below remains authoritative for its own domain.
 > **Current approved design (base):** [`synanton-design-1.22.md`](./synanton-design-1.22.md) (platform baseline)
 > **v1.23 (approved design):** [`synanton-design-1.23.md`](./synanton-design-1.23.md) — classification-aware semantic search; **normative for security platform-wide**; enforcement remains in progress (#339)
 > **v1.25 (approved, architecture-only; consolidates 1.24):** [`synanton-design-1.25.md`](./synanton-design-1.25.md) — annotations, derived knowledge, recalculation, analytics & reporting
 > **v1.26–v1.33 (approved designs; implementation varies):** Content Cache ([1.26](./synanton-design-1.26.md), reference service/adapters in progress), Eventing and Workflow ([1.27](./synanton-design-1.27.md), EWP-1 complete through #393/#396; EWP-2 #394 first publisher slice in progress), Ingestion ([1.28](./synanton-design-1.28.md)), Identity/Tenant/Policy ([1.29](./synanton-design-1.29.md)), AI/Model Runtime ([1.30](./synanton-design-1.30.md)), Search and Retrieval ([1.31](./synanton-design-1.31.md)), Platform API ([1.32](./synanton-design-1.32.md), contracts frozen 2026-10-17 #246; generation-A in progress), Kubernetes Operator Readiness ([1.33](./synanton-design-1.33.md))
 > **v1.34 (approved design; implementation not started):** [`synanton-design-1.34.md`](./synanton-design-1.34.md) — Temporal Versioned Knowledge and Retrieval; cross-plane temporal semantics owned by Ingestion (1.28) for source history, Knowledge (1.25) for derived knowledge, and Search (1.31) for temporal retrieval
+> **v1.35 (approved; integrated by reference into Design 1.25 §§15/18):** [Graph Storage Abstraction and Logical Projection Architecture](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) — normative detailed graph contract and capability model remain here; Neo4j is the current implementation, not an architectural dependency; see accepted [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) and implementation work [#587](https://github.com/synanton/platform/issues/587)
 > Extraction plane (Part IX): [`synanton-design-1.21.md`](./archive/synanton-design-1.21.md)
 > GPU Execution Plane detail: [`synanton-design-1.20.md`](./archive/synanton-design-1.20.md)
 > 1.19 is the merged baseline for unchanged core sections - **not** the live pointer.
@@ -24,7 +27,8 @@ last_reviewed: "2026-10-23"
 
 | Document | Description |
 |----------|-------------|
-| [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) | **Approved (architecture) — capstone** — cumulative Synanton Platform Architecture 1.0, integrating 1.22–1.34 |
+| [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) | **Approved (architecture) — capstone** — cumulative Synanton Platform Architecture 1.0, integrating 1.22–1.35 |
+| [Graph Storage Abstraction and Logical Projection Architecture](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) | **Approved; integrated by reference into Design 1.25 §§15/18** - detailed graph contract and capability model; ADR-023; implementation #587 |
 | [`synanton-design-1.34.md`](./synanton-design-1.34.md) | **Approved (architecture)** - temporal versioned knowledge and retrieval; version series, point-in-time retrieval, correction model (v1.34) |
 | [`synanton-design-1.33.md`](./synanton-design-1.33.md) | **Approved (architecture)** - Kubernetes operator readiness and lifecycle contract (v1.33; no operator implementation) |
 | [`synanton-design-1.32.md`](./synanton-design-1.32.md) | **Approved (architecture)** - stable Platform API and compatibility (v1.32) |
@@ -42,6 +46,7 @@ last_reviewed: "2026-10-23"
 | [`archive/synanton-design-1.19.md`](./archive/synanton-design-1.19.md) | Superseded pointer; still the merged Parts I–VII baseline |
 | [`syntology/ontology-management.md`](./syntology/ontology-management.md) | Syntology ontology management |
 | [`decisions/`](./decisions/) | Architecture Decision Records (ADRs) |
+| [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) | **Accepted** - graph storage abstraction and logical projection contracts; implementation tracked by #587 |
 
 ## Sub-directories
 
@@ -54,7 +59,8 @@ last_reviewed: "2026-10-23"
 
 | Version | File | Status |
 |---------|------|--------|
-| 1.0 | [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) | **Approved (architecture) — capstone**; integrates 1.22–1.34; see [ADR-011](./decisions/adr-011-platform-architecture-1.0.md) |
+| 1.0 | [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) | **Approved (architecture) — capstone**; integrates 1.22–1.35; see [ADR-011](./decisions/adr-011-platform-architecture-1.0.md) |
+| 1.35 | [Graph Storage Abstraction and Logical Projection Architecture](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) | **Integrated (normative parts incorporated into Design 1.25 §§15/18); detailed contract and capability model remain authoritative here**; ADR-023; implementation #587 |
 | 1.34 | [`synanton-design-1.34.md`](./synanton-design-1.34.md) | Approved (architecture) - implementation not started; cross-plane temporal semantics (version series, correction model, temporal search eligibility); see [ADR-012](./decisions/adr-012-temporal-versioned-knowledge-retrieval.md) |
 | 1.33 | [`synanton-design-1.33.md`](./synanton-design-1.33.md) | Approved (architecture) - Kubernetes operator readiness/lifecycle contract only, no operator implementation; see [ADR-010](./decisions/adr-010-kubernetes-operator-readiness.md) |
 | 1.32 | [`synanton-design-1.32.md`](./synanton-design-1.32.md) | Approved (architecture); contracts frozen 2026-10-17 (#246); generation-A implementation in progress; see [ADR-009](./decisions/adr-009-platform-api-contract.md) |
