@@ -70,9 +70,19 @@ public class ClaimService {
         return reclaimed;
     }
 
+    /** All tenant work rows, including terminal rows; used by crash reconciliation. */
+    public List<ResolutionWorkRow> resolutionWorkForTenant(String tenantId) {
+        return resolutionWork(tenantId);
+    }
+
     public boolean claimResolution(ResolutionWorkRow row, String ownerId,
                                    Instant now, Duration lease) {
         return client.claimResolutionWork(row, ownerId, now, lease);
+    }
+
+    /** Reclaim exactly one expired lease from its old owner (PR #578). */
+    public boolean reclaimResolution(ResolutionWorkRow row, Instant now) {
+        return client.reclaimResolutionWork(row, now);
     }
 
     public boolean completeResolution(ResolutionWorkRow row, String ownerId,

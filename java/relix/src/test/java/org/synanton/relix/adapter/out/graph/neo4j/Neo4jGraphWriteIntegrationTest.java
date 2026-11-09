@@ -25,10 +25,12 @@ import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.PromotionIds;
+import org.synanton.relix.graph.ResolutionIds;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
+import org.synanton.relix.reconciliation.ResolutionKey;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -133,6 +135,65 @@ class Neo4jGraphWriteIntegrationTest {
         // Replay the v2 decision: no new edge, still one active resolution.
         connector.upsertResolution(decision(tenant, version, mentionId, "entity-v2", "v2"));
         assertThat(resolutionEdges(tenant, mentionId)).hasSize(2);
+    }
+
+    @Test
+    void exactResolutionStateExposesIdentityEntityAndFenceForReconciliation() {
+        String tenant = TENANT + "-reconcile-read";
+        String version = "version-reconcile-read";
+        String mentionId = "mention-reconcile-read";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'entity-reconcile', "
+                + "label: 'Halcyon-7', type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+        ResolutionDecision decision = decision(tenant, version, mentionId, "entity-reconcile", "v1", 7);
+
+        connector.upsertResolution(decision);
+
+        ResolutionKey key = new ResolutionKey(tenant, mentionId);
+        assertThat(connector.activeResolution(key)).satisfies(observation -> {
+            var state = observation.orElseThrow();
+            assertThat(state.sourceVersionId()).isEqualTo(version);
+            assertThat(state.resolutionId()).isEqualTo(ResolutionIds.of(decision));
+            assertThat(state.entityId()).isEqualTo("entity-reconcile");
+            assertThat(state.fencingToken()).isEqualTo(7);
+            assertThat(state.policyVersion()).isEqualTo("v1");
+            assertThat(state.retrievalStrategy()).isEqualTo("RRF");
+        });
+        assertThat(connector.hasResolutionHistory(key)).isTrue();
+        ResolutionKey otherTenant = new ResolutionKey(tenant + "-other", mentionId);
+        assertThat(connector.activeResolution(otherTenant)).isEmpty();
+        assertThat(connector.hasResolutionHistory(otherTenant)).isFalse();
+    }
+
+    @Test
+    void activeResolutionReadSurfacesPreExistingMultipleActiveCorruption() {
+        String tenant = TENANT + "-reconcile-corrupt";
+        String version = "version-reconcile-corrupt";
+        String mentionId = "mention-reconcile-corrupt";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("CREATE (e:Entity {tenant: $tenant, id: 'corrupt-e1', label: 'Halcyon-7', "
+                + "type: 'MaintenanceSystem'}) CREATE (f:Entity {tenant: $tenant, id: 'corrupt-e2', "
+                + "label: 'Halcyon-7', type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+        cypher.write("""
+                MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mention})
+                MATCH (e:Entity {tenant: $tenant, id: 'corrupt-e1'})
+                MATCH (f:Entity {tenant: $tenant, id: 'corrupt-e2'})
+                CREATE (m)-[:RESOLVES_TO {tenant_id: $tenant, mention_id: $mention,
+                    source_version_id: $version, resolution_id: 'corrupt-r1', active: true,
+                    fencing_token: 1}]->(e)
+                CREATE (m)-[:RESOLVES_TO {tenant_id: $tenant, mention_id: $mention,
+                    source_version_id: $version, resolution_id: 'corrupt-r2', active: true,
+                    fencing_token: 1}]->(f)
+                """, Map.of("tenant", tenant, "mention", mentionId, "version", version));
+
+        var observation = connector.activeResolution(new ResolutionKey(tenant, mentionId));
+        assertThat(observation).isPresent();
+        assertThat(observation.orElseThrow().multipleActive()).isTrue();
+        assertThat(connector.hasResolutionHistory(new ResolutionKey(tenant, mentionId))).isTrue();
     }
 
     @Test

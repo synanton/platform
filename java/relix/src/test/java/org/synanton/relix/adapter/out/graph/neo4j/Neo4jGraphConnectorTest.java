@@ -7,11 +7,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.relix.graph.EntityCanonicalizer;
 import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
+import org.synanton.relix.reconciliation.ResolutionWriteOutcome;
 import org.synanton.relix.index.EntityIndex;
 
 import java.util.LinkedHashMap;
@@ -97,6 +100,29 @@ class Neo4jGraphConnectorTest {
 
         assertThatThrownBy(() -> connector.promoteRelation(relation))
                 .isInstanceOf(RetryableProcessingException.class);
+    }
+
+    @Test
+    void ensureResolutionClassifiesUnknownDriverFailureAsRetryable() {
+        when(cypher.writeReturning(anyString(), anyMap()))
+                .thenThrow(new RuntimeException("session unavailable"));
+        Neo4jGraphConnector connector = new Neo4jGraphConnector(mock(GraphLoader.class), cypher);
+        ResolutionDecision decision = new ResolutionDecision("t", "v", "m", ResolutionOutcome.RESOLVED,
+                "TEST", "e", "label", 0.5, 0.1, "v1", "active", Map.of(), "RRF", 3);
+
+        assertThatThrownBy(() -> connector.ensureResolution(decision))
+                .isInstanceOf(RetryableProcessingException.class);
+    }
+
+    @Test
+    void ensureResolutionReturnsRejectedForAStaleGraphWrite() {
+        when(cypher.writeReturning(anyString(), anyMap()))
+                .thenReturn(List.of(Map.of("applied", 0)));
+        Neo4jGraphConnector connector = new Neo4jGraphConnector(mock(GraphLoader.class), cypher);
+        ResolutionDecision decision = new ResolutionDecision("t", "v", "m", ResolutionOutcome.RESOLVED,
+                "TEST", "e", "label", 0.5, 0.1, "v1", "active", Map.of(), "RRF", 3);
+
+        assertThat(connector.ensureResolution(decision)).isEqualTo(ResolutionWriteOutcome.REJECTED);
     }
 
     @Test
