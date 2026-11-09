@@ -21,4 +21,13 @@ public interface ResolutionGraphLookup {
     default List<ResolutionGraphState> getResolutionStates(String tenantId, String mentionId) {
         return List.of();
     }
+
+    /**
+     * Transitional capability declaration for #578. #587 replaces adapter-name
+     * probing with formal per-adapter capability negotiation. Reconciliation
+     * must only use this logical contract; Cypher stays in the adapter.
+     */
+    default boolean supportsResolutionReconciliation() {
+        return false;
+    }
 }

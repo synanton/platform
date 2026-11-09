@@ -28,6 +28,13 @@ import org.synanton.relix.graph.GraphConnector;
  * PR #578: crash-window reconciliation only. It starts from Cassandra work rows,
  * compares exact graph identity/fence, repairs interrupted operations, and
  * records decision inconsistencies without mutating them.
+ *
+ * <p>Capability assumptions (to be formalized and startup-validated by #587):
+ * conditional graph writes with monotonic fencing, read-after-write consistency
+ * for the active resolution edge, deterministic idempotent graph identities, and
+ * Cassandra LWT owner/lease ownership. The reconciler uses only the logical
+ * {@link org.synanton.common.resolution.ResolutionGraphLookup} capability; all
+ * Cypher remains in the Neo4j adapter. This is a transitional #578/#587 seam.
  */
 @Component
 public final class ResolutionReconciler {
@@ -47,6 +54,7 @@ public final class ResolutionReconciler {
     private final Counter contradiction;
     private final Counter errors;
     private final Counter skipped;
+    private final Counter leaseHeld;
 
     public ResolutionReconciler(IngestionCacheClient cache, ClaimService claims,
                                 GraphConnector graph, ReconciliationProperties properties,
@@ -61,6 +69,7 @@ public final class ResolutionReconciler {
         this.contradiction = registry.counter("reconciliation.contradiction");
         this.errors = registry.counter("reconciliation.errors");
         this.skipped = registry.counter("reconciliation.skipped");
+        this.leaseHeld = registry.counter("reconciliation.lease_held");
     }
 
     @Scheduled(fixedDelayString = "${relix.reconciliation.poll-delay-ms:60000}")
@@ -73,8 +82,9 @@ public final class ResolutionReconciler {
             log.warn("Reconciliation is enabled without a tenant; skipping poll");
             return;
         }
-        if (!"neo4j".equals(graph.id())) {
-            log.warn("Reconciliation requires the neo4j connector; current={}", graph.id());
+        if (!graph.supportsResolutionReconciliation()) {
+            log.warn("Graph adapter does not advertise resolution reconciliation capability; current={}",
+                    graph.id());
             return;
         }
         List<ResolutionWorkRow> work;
@@ -126,6 +136,11 @@ public final class ResolutionReconciler {
             return;
         }
         ReconciliationAction action = policy.decide(row, result, states, now);
+        if (action.kind() == ReconciliationKind.NOOP
+                && "PROCESSING".equals(row.claimStatus())
+                && row.leaseExpiresAt() != null && row.leaseExpiresAt().isAfter(now)) {
+            leaseHeld.increment();
+        }
         switch (action.kind()) {
             case NOOP -> { }
             case REPAIR_GRAPH -> repairGraph(row, action);

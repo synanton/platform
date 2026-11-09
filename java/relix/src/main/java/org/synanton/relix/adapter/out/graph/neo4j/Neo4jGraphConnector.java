@@ -143,6 +143,11 @@ public class Neo4jGraphConnector implements GraphConnector {
     }
 
     @Override
+    public boolean supportsResolutionReconciliation() {
+        return true;
+    }
+
+    @Override
     public List<ResolutionGraphState> getResolutionStates(String tenant, String mentionId) {
         if (tenant == null || tenant.isBlank() || mentionId == null || mentionId.isBlank()) {
             return List.of();

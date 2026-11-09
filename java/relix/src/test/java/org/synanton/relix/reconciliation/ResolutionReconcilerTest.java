@@ -22,6 +22,8 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -51,7 +53,7 @@ class ResolutionReconcilerTest {
     void staleActiveEdgeProducesMetricAndIdentifiersButNoMutation(CapturedOutput output) {
         ResolutionWorkRow work = work("COMPLETED", 3, NOW.plusSeconds(300));
         ResolutionResultRow result = result("UNRESOLVED");
-        when(graph.id()).thenReturn("neo4j");
+        when(graph.supportsResolutionReconciliation()).thenReturn(true);
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
         when(graph.getResolutionStates(TENANT, MENTION))
@@ -62,14 +64,20 @@ class ResolutionReconcilerTest {
         assertThat(registry.get("reconciliation.stale_edge").counter().count()).isEqualTo(1);
         assertThat(output.getOut()).contains(TENANT, MENTION, VERSION.toString(), ENTITY, "UNRESOLVED");
         verify(graph, never()).upsertResolution(any());
+        verify(graph, never()).supersedeResolution(any(), any(), any(), any());
+        verify(claims, never()).reclaimResolution(any(), any());
+        verify(claims, never()).claimResolution(any(), anyString(), any(), any());
         verify(claims, never()).completeResolution(any(), anyString(), any(), any());
+        verify(claims, never()).releaseResolution(any(), anyString(), any(), anyString(),
+                anyInt(), anyLong(), any());
+        verify(claims, never()).supersedeResolution(any(), anyString(), anyString(), any());
     }
 
     @Test
     void missingGraphForPersistedResolvedDecisionIsRepaired() {
         ResolutionWorkRow work = work("COMPLETED", 3, NOW.plusSeconds(300));
         ResolutionResultRow result = result("RESOLVED");
-        when(graph.id()).thenReturn("neo4j");
+        when(graph.supportsResolutionReconciliation()).thenReturn(true);
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
         when(graph.getResolutionStates(TENANT, MENTION)).thenReturn(List.of());
@@ -83,7 +91,7 @@ class ResolutionReconcilerTest {
     @Test
     void expiredLeaseWithExactGraphCompletesCassandra() {
         ResolutionWorkRow work = work("PROCESSING", 3, NOW.minusSeconds(1));
-        when(graph.id()).thenReturn("neo4j");
+        when(graph.supportsResolutionReconciliation()).thenReturn(true);
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of());
         when(graph.getResolutionStates(TENANT, MENTION))
@@ -102,7 +110,7 @@ class ResolutionReconcilerTest {
     @Test
     void lostClaimDuringRepairDoesNotCompleteOrWrite() {
         ResolutionWorkRow work = work("PROCESSING", 3, NOW.minusSeconds(1));
-        when(graph.id()).thenReturn("neo4j");
+        when(graph.supportsResolutionReconciliation()).thenReturn(true);
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of());
         when(graph.getResolutionStates(TENANT, MENTION))
@@ -120,7 +128,7 @@ class ResolutionReconcilerTest {
     @Test
     void healthyLeaseIsNotStolenEvenWithMatchingGraph() {
         ResolutionWorkRow work = work("PROCESSING", 3, NOW.plusSeconds(60));
-        when(graph.id()).thenReturn("neo4j");
+        when(graph.supportsResolutionReconciliation()).thenReturn(true);
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of());
         when(graph.getResolutionStates(TENANT, MENTION))
@@ -131,13 +139,19 @@ class ResolutionReconcilerTest {
         verify(claims, never()).reclaimResolution(any(), any());
         verify(claims, never()).claimResolution(any(), anyString(), any(), any());
         verify(claims, never()).completeResolution(any(), anyString(), any(), any());
+        verify(claims, never()).releaseResolution(any(), anyString(), any(), anyString(),
+                anyInt(), anyLong(), any());
+        verify(claims, never()).supersedeResolution(any(), anyString(), anyString(), any());
+        verify(graph, never()).upsertResolution(any());
+        verify(graph, never()).supersedeResolution(any(), any(), any(), any());
+        assertThat(registry.get("reconciliation.lease_held").counter().count()).isEqualTo(1);
     }
 
     @Test
     void higherGraphFenceIsNotOverwrittenByOlderCassandraSnapshot() {
         ResolutionWorkRow work = work("COMPLETED", 2, NOW.plusSeconds(300));
         ResolutionResultRow result = result("RESOLVED");
-        when(graph.id()).thenReturn("neo4j");
+        when(graph.supportsResolutionReconciliation()).thenReturn(true);
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
         when(graph.getResolutionStates(TENANT, MENTION))
