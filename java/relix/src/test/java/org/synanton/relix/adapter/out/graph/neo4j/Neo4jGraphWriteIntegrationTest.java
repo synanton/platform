@@ -142,6 +142,7 @@ class Neo4jGraphWriteIntegrationTest {
         String tenant = TENANT + "-reconcile-read";
         String version = "version-reconcile-read";
         String mentionId = "mention-reconcile-read";
+        assertThat(connector.supportsResolutionReconciliation()).isTrue();
         Instant now = Instant.parse("2026-11-08T00:00:00Z");
         connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
                 0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
