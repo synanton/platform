@@ -44,6 +44,7 @@ last_reviewed: "2026-11-09"
 | [`archive/synanton-design-1.19.md`](./archive/synanton-design-1.19.md) | Superseded pointer; still the merged Parts I–VII baseline |
 | [`syntology/ontology-management.md`](./syntology/ontology-management.md) | Syntology ontology management |
 | [`decisions/`](./decisions/) | Architecture Decision Records (ADRs) |
+| [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) | **Accepted** - graph storage abstraction and logical projection contracts; implementation tracked by #587 |
 
 ## Sub-directories
 
@@ -51,7 +52,6 @@ last_reviewed: "2026-11-09"
 |-----------|---------|
 | `syntology/` | Sub-domain design: Ontology Management |
 | `decisions/` | ADRs for significant architectural choices |
-| [`decisions/adr-023-graph-storage-abstraction.md`](./decisions/adr-023-graph-storage-abstraction.md) | Accepted graph-storage contract and logical projection decision |
 
 ## Design Version History
 
