@@ -1,6 +1,6 @@
 # Synanton Design 1.35 Proposal: Graph Storage Abstraction and Logical Projection Architecture
 
-**Status:** Proposed
+**Status:** Approved 2026-11-09
 **Proposal Date:** 2026-11-09
 **Target design:** Synanton Design 1.35
 **Architectural owner:** Knowledge Processing / Graph
@@ -143,11 +143,22 @@ At minimum, capabilities cover:
 | Idempotent mutation support | Which deterministic keys and uniqueness primitives are required to make retries safe? |
 | Transaction support | Which operations can share a transaction, and what isolation/rollback guarantees apply? |
 
-A capability may be unsupported, limited, or provider-specific. The adapter must not claim a stronger guarantee than the underlying engine and deployment configuration provide. Consumers and workflows must select a safe strategy based on required capabilities or fail closed when a required guarantee is absent.
+A capability declaration is made per adapter and per logical scope/projection, not as a flat adapter-wide boolean set. The same physical backend may provide different guarantees for different projections or operation groups. Each declaration identifies its storage identity, logical scope, projection identity/version, operation class, guarantee, and any relevant limits. For example, an adapter may provide atomic resolution-plus-evidence writes within the `KNOWLEDGE` projection while providing no atomicity spanning `KNOWLEDGE` and `PROVENANCE`.
+
+A capability may be unsupported, limited, or provider-specific. The adapter must not claim a stronger guarantee than the underlying engine and deployment configuration provide. Consumers and workflows must select a safe strategy based on required capabilities or fail closed when a required guarantee is absent. Capability declarations are validated during dependency wiring/startup: if a configured workflow requires a guarantee that its selected adapter/scope does not advertise, startup or activation fails with an explicit configuration error before work is accepted. Runtime checks remain defensive, but are not the primary discovery point for an unsupported guarantee.
+
+For a composite adapter, the effective capability for an operation is the lower bound (intersection) of the guarantees of every constituent projection participating in that operation. A composite may narrow a constituent's advertised guarantee to reflect routing or coordination overhead; it must never advertise the union of capabilities across constituents or a stronger atomicity/consistency guarantee than all required constituents jointly provide.
 
 ### 7.1 GraphTransactionPort
 
-`GraphTransactionPort` is not a lowest-common-denominator transaction API and does not promise identical semantics across providers. It describes the supported transaction boundary and guarantees of a selected adapter. A capability declaration may say, for example, that a particular adapter atomically writes a canonical relation and its evidence within one projection, while another adapter requires an explicit multi-step workflow with reconciliation.
+`GraphTransactionPort` is bound to exactly one physical storage identity. It describes that storage implementation's transaction boundary and per-guarantee semantics; it is not a coordinator for multiple storage identities or logical projections. The contract reports guarantees independently rather than exposing a monolithic `supportsTransactions` flag. At minimum, the declaration distinguishes:
+
+- atomicity for named operation groups within one projection (for example, resolution plus evidence);
+- conditional writes and fencing-token enforcement, including the scope over which the fence is checked;
+- read-after-write visibility and its applicable read path/consistency conditions;
+- rollback behavior for the declared transaction boundary.
+
+A capability declaration may say, for example, that a particular storage adapter atomically writes a canonical relation and its evidence within the `KNOWLEDGE` projection, while another operation spanning `KNOWLEDGE` and `PROVENANCE` is not atomic. The API must not accept a transaction scope containing multiple storage identities or projections. Cross-projection coordination belongs to a workflow with explicit per-projection outcomes and reconciliation, not to `GraphTransactionPort`.
 
 Transactions across graph projections, graph stores, or Cassandra are never implied by this contract.
 
@@ -211,7 +222,7 @@ A composite adapter must declare:
 6. the durable operation metadata needed to retry or reconcile each affected projection;
 7. how a projection is rebuilt, activated, retired, and audited independently.
 
-A fan-out write is not reported as globally complete merely because one target succeeded. The result identifies each projection's outcome. Failure of one projection does not cause an unsafe rollback of another projection unless that rollback is itself an explicitly supported and safe operation.
+A fan-out write is not reported as globally complete merely because one target succeeded. The result identifies each projection's outcome. Failure of one projection does not cause an unsafe rollback of another projection unless that rollback is itself an explicitly supported and safe operation. Composite projection operations are workflows, not transactions: each target has its own status, commit/visibility result, retry identity, and reconciliation path. A composite adapter's effective capabilities are the lower bound/intersection of the capabilities of all constituents required for the operation; it must not advertise a union of capabilities or imply that one constituent's stronger guarantee covers another constituent.
 
 Cross-projection workflows use deterministic operation IDs and independently retryable projection effects. Reconciliation compares desired logical state with each projection's observed state. It does not assume a shared commit point.
 
@@ -279,9 +290,12 @@ The contract test suite must be reusable by every adapter and cover applicable g
 - transaction rollback/atomicity within the declared scope;
 - projection rebuild/activation behavior where supported;
 - explicit partial outcomes and retry behavior for composite projections;
-- capability declaration validation and unsupported-capability failure.
+- capability declaration validation and unsupported-capability failure;
+- positive conformance: every advertised capability is exercised and the adapter must demonstrate the promised behavior;
+- negative conformance: an adapter that advertises fencing but accepts a stale fence must fail the suite; an adapter that does not advertise fencing must reject a fencing-dependent operation explicitly;
+- composite lower-bound conformance: a composite that advertises stronger atomicity or consistency than any required constituent can jointly provide must fail the suite; cross-projection transaction requests must be rejected rather than silently degraded.
 
-Not every adapter must pass tests for capabilities it does not claim. It must, however, reject unsupported operations explicitly and pass all mandatory safety tests. Adapter-specific integration tests remain necessary for provider behavior, failure injection, transaction rollback, and deployment configuration.
+Not every adapter must pass tests for capabilities it does not claim. It must, however, reject unsupported operations explicitly and pass all mandatory safety tests. An adapter that advertises a capability and fails its positive behavior test is non-conformant; an adapter that does not advertise a capability and silently emulates, ignores, or weakens a request is also non-conformant. Adapter-specific integration tests remain necessary for provider behavior, failure injection, transaction rollback, and deployment configuration.
 
 The Neo4j adapter must run the same applicable contract suite. The in-memory adapter supplements, but does not replace, real Neo4j/Testcontainers tests.
 
@@ -392,6 +406,6 @@ The design is ready for implementation when all of the following are satisfied:
 13. The in-memory adapter is a conformance/testing implementation, not evidence of production backend portability by itself.
 14. The Neo4j reference adapter must pass the same applicable contract suite as other adapters.
 
-## 20. Approval Requested
+## 20. Approval
 
-Approve Design 1.35 as the normative architecture for backend-independent graph contracts and logical graph projections, with Neo4j retained as the default implementation. Following approval, integrate the relevant knowledge-projection changes into Design 1.25 and update the architecture index and version metadata. Implementation remains incremental and behavior-preserving; no composite graph rollout or Neo4j replacement is authorized by this proposal alone.
+**Approved 2026-11-09.** Design 1.35 is approved as the normative architecture for backend-independent graph contracts and logical graph projections, with Neo4j retained as the default implementation. The capability model is scoped per adapter and logical projection; `GraphTransactionPort` is bound to one storage identity; composite projection operations are workflows with explicit partial outcomes and lower-bound capability declarations. Following this approval, integrate the relevant knowledge-projection changes into Design 1.25 and update the architecture index and version metadata. Implementation remains incremental and behavior-preserving; no composite graph rollout or Neo4j replacement is authorized by this approval alone.
