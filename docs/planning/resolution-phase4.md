@@ -1,6 +1,6 @@
 # RAKG Phase 4 — canonical resolution (PR #4a–#4d)
 
-**Status:** PR #4a–#4b.3 + #4c.1 `:RESOLVES_TO` + #4c.2 validation + #4c.3 canonical promotion landed (2026-11-08); no consumer yet
+**Status:** PR #4a–#4c.4 landed (2026-11-08): resolution graph persistence is concurrency-tested; 4d consumers/reconciliation next
 **Issue:** #560
 **Prerequisites:** PR #569 graph hardening (verified-JWT writes, independent graph retry);
 #570 tracks lease-based VALIDATING recovery (P2, out of PR #4 scope). Graph writes stay disabled in the demo

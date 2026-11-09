@@ -115,7 +115,7 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **`:RESOLVES_TO` persistence (PR #4c.1)** — active/superseded lifecycle, deterministic resolution id, tenant-safe fail-closed writes, history preserved; no canonical promotion.
 - [x] **Canonical relation validation (PR #4c.2)** — active-resolution endpoints, Cassandra evidence re-check, Syntology pinned-ontology gate, `relation_promotion_results` persistence; no `:REL`/`:SUPPORTS` writes.
 - [x] **Canonical `:REL` promotion + `:RelationEvidence` (PR #4c.3)** — VALID-only gate, one semantic edge per triple, deterministic evidence nodes, idempotent replay, zero writes on missing/superseded/cross-tenant endpoints.
-- [ ] **Concurrency fencing (PR #4c.4)** — DB-enforced active-link uniqueness and concurrent promotion tests.
+- [x] **Concurrency fencing (PR #4c.4)** — `:ResolutionSlot` locks, fencing tokens, unique anchor/evidence/relation constraints, 10-thread resolution/promotion tests.
 - [ ] **Promotion recovery/concurrency (PR #4c.4)** — replay, concurrency, crash reconciliation.
 - [ ] **Resolution consumer (PR #4d)** — independent claim/retry/reconciliation (#560).
 
