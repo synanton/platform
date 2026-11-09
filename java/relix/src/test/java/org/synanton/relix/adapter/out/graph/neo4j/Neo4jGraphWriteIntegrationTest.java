@@ -8,6 +8,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.IntFunction;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -180,13 +186,6 @@ class Neo4jGraphWriteIntegrationTest {
         assertThat(resolutionEdges(tenant, mentionId)).isEmpty();
     }
 
-    private static ResolutionDecision decision(String tenant, String version, String mentionId,
-                                               String entityId, String policyVersion) {
-        return new ResolutionDecision(tenant, version, mentionId, ResolutionOutcome.RESOLVED,
-                "RESOLVED_LABEL", entityId, "Halcyon-7", 0.0328, 0.0161, policyVersion,
-                "1.0.0", Map.of(), "RRF");
-    }
-
     private List<Map<String, Object>> resolutionEdges(String tenant, String mentionId) {
         return cypher.read("MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})"
                 + "-[r:RESOLVES_TO]->(e:Entity) RETURN r.active AS active, r.status AS status, "
@@ -289,6 +288,135 @@ class Neo4jGraphWriteIntegrationTest {
     private long countForTenant(String query, String tenant) {
         Object value = cypher.read(query, Map.of("tenant", tenant)).getFirst().get("c");
         return ((Number) value).longValue();
+    }
+
+    @Test
+    void concurrentIdenticalResolutionsLeaveOneActiveEdge() throws Exception {
+        String tenant = TENANT + "-concurrent-resolve";
+        String version = "version-concurrent-resolve";
+        String mention = "mention-concurrent-resolve";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mention, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("MERGE (n:Entity {tenant: $tenant, id: 'e-concurrent'}) "
+                + "SET n.label = 'Halcyon-7', n.type = 'MaintenanceSystem'", Map.of("tenant", tenant));
+        ResolutionDecision decision = decision(tenant, version, mention, "e-concurrent", "v1");
+
+        runConcurrently(10, ignored -> () -> connector.upsertResolution(decision));
+
+        var edges = resolutionEdges(tenant, mention);
+        assertThat(edges).hasSize(1);
+        assertThat(edges).allSatisfy(edge -> assertThat(edge.get("active")).isEqualTo(true));
+    }
+
+    @Test
+    void concurrentDistinctResolutionsLeaveOneActiveAndNineSuperseded() throws Exception {
+        String tenant = TENANT + "-concurrent-supersede";
+        String version = "version-concurrent-supersede";
+        String mention = "mention-concurrent-supersede";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mention, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("MERGE (n:Entity {tenant: $tenant, id: 'e-concurrent-s'}) "
+                + "SET n.label = 'Halcyon-7', n.type = 'MaintenanceSystem'", Map.of("tenant", tenant));
+        cypher.write("MERGE (n:Entity {tenant: $tenant, id: 'e-concurrent-o'}) "
+                + "SET n.label = 'Halcyon-7', n.type = 'MaintenanceSystem'", Map.of("tenant", tenant));
+
+        runConcurrently(10, index -> () -> {
+            String entity = index % 2 == 0 ? "e-concurrent-s" : "e-concurrent-o";
+            connector.upsertResolution(decision(tenant, version, mention, entity, "v" + index));
+        });
+
+        var edges = resolutionEdges(tenant, mention);
+        assertThat(edges).hasSize(10);
+        assertThat(edges.stream().filter(edge -> Boolean.TRUE.equals(edge.get("active"))).toList()).hasSize(1);
+        assertThat(edges.stream().filter(edge -> "SUPERSEDED".equals(edge.get("status"))).toList()).hasSize(9);
+    }
+
+    @Test
+    void staleFencingTokenCannotOverwriteANewerDecision() {
+        String tenant = TENANT + "-fencing";
+        String version = "version-fencing";
+        String mention = "mention-fencing";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mention, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("MERGE (n:Entity {tenant: $tenant, id: 'e-fencing'}) "
+                + "SET n.label = 'Halcyon-7', n.type = 'MaintenanceSystem'", Map.of("tenant", tenant));
+
+        connector.upsertResolution(decision(tenant, version, mention, "e-fencing", "v2", 5));
+        assertThatThrownBy(() -> connector.upsertResolution(
+                decision(tenant, version, mention, "e-fencing", "v1", 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Stale");
+
+        var edges = resolutionEdges(tenant, mention);
+        assertThat(edges).hasSize(1);
+        assertThat(edges.getFirst().get("active")).isEqualTo(true);
+    }
+
+    @Test
+    void concurrentPromotionOfSameAssertionWritesOnce() throws Exception {
+        String tenant = TENANT + "-concurrent-promote";
+        String version = "version-concurrent-promote";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        seedPromotionEndpoint(tenant, version, "s-c", "o-c", "e-s-c", "e-o-c", now);
+        CanonicalRelation relation = new CanonicalRelation(tenant, version, "relation-c",
+                "s-c", "e-s-c", "o-c", "e-o-c", "requires", "1.0.0", "ref:0", 0, 20);
+
+        runConcurrently(10, ignored -> () -> connector.promoteRelation(relation));
+
+        assertThat(promotionCounts(tenant)).containsEntry("relations", 1L)
+                .containsEntry("evidence", 1L).containsEntry("supports", 1L);
+    }
+
+    @Test
+    void concurrentPromotionOfSameTripleAccumulatesTenEvidenceNodes() throws Exception {
+        String tenant = TENANT + "-concurrent-evidence";
+        String version = "version-concurrent-evidence";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        seedPromotionEndpoint(tenant, version, "s-e", "o-e", "e-s-e", "e-o-e", now);
+
+        runConcurrently(10, index -> () -> connector.promoteRelation(new CanonicalRelation(
+                tenant, version, "relation-e" + index, "s-e", "e-s-e", "o-e", "e-o-e",
+                "requires", "1.0.0", "ref:" + index, 0, 20)));
+
+        assertThat(promotionCounts(tenant)).containsEntry("relations", 1L)
+                .containsEntry("evidence", 10L).containsEntry("supports", 10L);
+    }
+
+    private static void runConcurrently(int threads, IntFunction<Runnable> taskFactory) throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch ready = new CountDownLatch(threads);
+        CountDownLatch go = new CountDownLatch(1);
+        List<Future<?>> futures = new java.util.ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            int index = i;
+            futures.add(pool.submit(() -> {
+                ready.countDown();
+                go.await();
+                taskFactory.apply(index).run();
+                return null;
+            }));
+        }
+        assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+        go.countDown();
+        for (Future<?> future : futures) {
+            future.get(30, TimeUnit.SECONDS);
+        }
+        pool.shutdownNow();
+    }
+
+    private static ResolutionDecision decision(String tenant, String version, String mentionId,
+                                               String entityId, String policyVersion) {
+        return decision(tenant, version, mentionId, entityId, policyVersion, 0);
+    }
+
+    private static ResolutionDecision decision(String tenant, String version, String mentionId,
+                                               String entityId, String policyVersion, long fencingToken) {
+        return new ResolutionDecision(tenant, version, mentionId, ResolutionOutcome.RESOLVED,
+                "RESOLVED_LABEL", entityId, "Halcyon-7", 0.0328, 0.0161, policyVersion,
+                "1.0.0", Map.of(), "RRF", fencingToken);
     }
 
     @Test

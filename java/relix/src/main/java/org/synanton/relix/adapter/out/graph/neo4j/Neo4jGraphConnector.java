@@ -174,6 +174,7 @@ public class Neo4jGraphConnector implements GraphConnector {
 
     @Override
     public PromotionResult promoteRelation(CanonicalRelation relation) {
+        ensureExtractedSchema();
         String canonicalRelationId = PromotionIds.canonicalRelationId(relation);
         String evidenceId = PromotionIds.evidenceId(relation);
         String predicate = PromotionIds.normalizePredicate(relation.predicate());
@@ -198,12 +199,24 @@ public class Neo4jGraphConnector implements GraphConnector {
         List<Map<String, Object>> rows;
         try {
             rows = cypher.writeReturning("""
+                WITH [$subjectMentionId, $objectMentionId] AS mentionIds
+                UNWIND mentionIds AS mentionId
+                WITH DISTINCT mentionId
+                ORDER BY mentionId
+                MERGE (slot:ResolutionSlot {tenant_id: $tenant, mention_id: mentionId})
+                SET slot.locked_at = $now
+                WITH collect(slot) AS slots
                 MATCH (s:ExtractedMention {tenant_id: $tenant, mention_id: $subjectMentionId})
                       -[:RESOLVES_TO {active: true}]->
                       (se:Entity {tenant: $tenant, id: $subjectEntityId})
                 MATCH (o:ExtractedMention {tenant_id: $tenant, mention_id: $objectMentionId})
                       -[:RESOLVES_TO {active: true}]->
                       (oe:Entity {tenant: $tenant, id: $objectEntityId})
+                MERGE (anchor:CanonicalRelationAnchor {tenant_id: $tenant, canonical_relation_id: $canonicalRelationId})
+                SET anchor.updated_at = $now, anchor.predicate = $predicate,
+                    anchor.subject_entity_id = $subjectEntityId,
+                    anchor.object_entity_id = $objectEntityId
+                WITH se, oe
                 OPTIONAL MATCH (se)-[existingRel:REL {canonical_relation_id: $canonicalRelationId}]->(oe)
                 OPTIONAL MATCH (existingEv:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
                 WITH se, oe, existingRel, existingEv
@@ -248,6 +261,7 @@ public class Neo4jGraphConnector implements GraphConnector {
                 || decision.resolvedEntityId() == null || decision.resolvedEntityId().isBlank()) {
             return; // only RESOLVED creates an active :RESOLVES_TO link
         }
+        ensureExtractedSchema();
         String tenant = decision.tenantId();
         String version = decision.sourceVersionId();
         String mentionId = decision.mentionId();
@@ -268,14 +282,22 @@ public class Neo4jGraphConnector implements GraphConnector {
         params.put("bestScore", decision.bestScore());
         params.put("runnerUpScore", decision.runnerUpScore());
         params.put("ontologyVersion", decision.ontologyVersion());
+        params.put("fencingToken", decision.fencingToken());
         params.put("now", now);
 
-        cypher.write("""
+        List<Map<String, Object>> appliedRows = cypher.writeReturning("""
+                MERGE (slot:ResolutionSlot {tenant_id: $tenant, mention_id: $mentionId})
+                SET slot.locked_at = $now
+                WITH slot
                 MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
                 MATCH (e:Entity {tenant: $tenant, id: $entityId})
-                WITH m, e
                 OPTIONAL MATCH (m)-[old:RESOLVES_TO {active: true}]->(:Entity)
                 WITH m, e, collect(old) AS olds
+                WITH m, e, olds,
+                     reduce(maxToken = -1, o IN olds |
+                         CASE WHEN coalesce(o.fencing_token, 0) > maxToken
+                              THEN coalesce(o.fencing_token, 0) ELSE maxToken END) AS currentToken
+                WHERE currentToken <= $fencingToken
                 FOREACH (o IN [x IN olds WHERE x.resolution_id <> $resolutionId] |
                     SET o.active = false, o.status = 'SUPERSEDED', o.superseded_at = $now)
                 MERGE (m)-[r:RESOLVES_TO {resolution_id: $resolutionId}]->(e)
@@ -284,17 +306,13 @@ public class Neo4jGraphConnector implements GraphConnector {
                     r.canonical_entity_id = $entityId, r.policy_version = $policyVersion,
                     r.retrieval_strategy = $retrievalStrategy, r.best_score = $bestScore,
                     r.runner_up_score = $runnerUpScore, r.ontology_version = $ontologyVersion,
-                    r.decision_at = $now, r.superseded_at = null
+                    r.fencing_token = $fencingToken, r.decision_at = $now, r.superseded_at = null
+                RETURN count(r) AS applied
                 """, params);
-
-        List<Map<String, Object>> persisted = cypher.read(
-                "MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})" +
-                "-[r:RESOLVES_TO {resolution_id: $resolutionId}]->" +
-                "(e:Entity {tenant: $tenant, id: $entityId}) RETURN count(r) AS c", params);
-        Object count = persisted.isEmpty() ? 0 : persisted.getFirst().get("c");
-        if (!(count instanceof Number number) || number.longValue() == 0) {
-            throw new IllegalStateException("Resolution target mention or canonical entity not found: "
-                    + "mention=" + mentionId + " entity=" + entityId);
+        Object appliedCount = appliedRows.isEmpty() ? 0 : appliedRows.getFirst().get("applied");
+        if (!(appliedCount instanceof Number number) || number.longValue() == 0) {
+            throw new IllegalStateException("Stale fencing token or missing resolution targets for mention "
+                    + mentionId);
         }
     }
 
@@ -302,6 +320,9 @@ public class Neo4jGraphConnector implements GraphConnector {
     public void supersedeResolution(String tenantId, String sourceVersionId,
                                     String mentionId, java.time.Instant supersededAt) {
         cypher.write("""
+                MERGE (slot:ResolutionSlot {tenant_id: $tenant, mention_id: $mentionId})
+                SET slot.locked_at = $at
+                WITH slot
                 MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
                 -[r:RESOLVES_TO {active: true}]->(:Entity)
                 SET r.active = false, r.status = 'SUPERSEDED', r.superseded_at = $at
@@ -431,6 +452,22 @@ public class Neo4jGraphConnector implements GraphConnector {
             cypher.write("""
                     CREATE CONSTRAINT extracted_mention_unique IF NOT EXISTS
                     FOR (m:ExtractedMention) REQUIRE (m.tenant_id, m.mention_id) IS UNIQUE
+                    """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT resolution_slot_unique IF NOT EXISTS
+                    FOR (s:ResolutionSlot) REQUIRE (s.tenant_id, s.mention_id) IS UNIQUE
+                    """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT relation_evidence_unique IF NOT EXISTS
+                    FOR (e:RelationEvidence) REQUIRE e.evidence_id IS UNIQUE
+                    """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT canonical_relation_anchor_unique IF NOT EXISTS
+                    FOR (r:CanonicalRelationAnchor) REQUIRE r.canonical_relation_id IS UNIQUE
+                    """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS
+                    FOR (r:ExtractedRelation) REQUIRE (r.tenant_id, r.relation_id) IS UNIQUE
                     """, Map.of());
             extractedSchemaEnsured = true;
         }
