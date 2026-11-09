@@ -602,7 +602,9 @@ Canonical semantic knowledge may be projected into multiple technologies.
   Index Vector Graph
   ```
 
-Projections are derived, replaceable and lineage-aware.
+Projections are derived, replaceable and lineage-aware. Their lifecycle is managed independently: each projection has an explicit identity and version/generation, source lineage, rebuild and activation boundary, and observable status. A projection rebuild or replacement does not change the identity or authority of the canonical knowledge from which it is derived.
+
+The graph storage contract boundary and logical graph/projection identity model are defined normatively in [Design 1.35](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) and [ADR-023](./decisions/adr-023-graph-storage-abstraction.md). This section owns the knowledge-projection lifecycle; it references rather than duplicates the graph contract, backend capability model, or adapter conformance rules. Composite projection work is independently recoverable and exposes per-projection outcomes, including partial success; it does not imply a cross-projection transaction.
 
 ---
 
@@ -659,9 +661,9 @@ The graph represents relationships between knowledge objects.
               └── discussed-in → Call
   ```
 
-Graph data is derived from canonical knowledge and annotations.
+Graph data is derived from canonical knowledge and annotations. Graph operations address logical scopes and projection identities rather than provider-specific databases, labels, relationship types, or query languages; the contract and adapter boundary are defined in Design 1.35 and ADR-023. Neo4j is the currently implemented graph backend, not an architectural dependency.
 
-For Dual representations, graph entities and edges retain classification and representation metadata, following Design 1.23.
+Graph projection lifecycle, including independent versioning/rebuild and explicit partial outcomes for multi-projection workflows, follows §15. A graph projection does not become a second authority for source or annotation semantics. For Dual representations, graph entities and edges retain classification and representation metadata, following Design 1.23.
 
 ---
 
