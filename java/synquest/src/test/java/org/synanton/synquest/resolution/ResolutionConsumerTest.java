@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.synanton.common.resolution.FailureClass;
 import org.synanton.common.resolution.ResolutionCandidateProvider;
 import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionContext;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.common.resolution.ResolutionPolicy;
 import org.synanton.common.resolution.RetryableProcessingException;
@@ -113,14 +115,21 @@ class ResolutionConsumerTest {
     }
 
     @Test
-    void ambiguousWriteThenRetryConvergesWithoutExtraction() {
-        ResolutionWorkRow first = work(0);
-        ResolutionWorkRow retry = work(1);
+    void lostResponseAfterCommitReplaysSameWorkAtHigherFence() {
+        UUID version = UUID.randomUUID();
+        ResolutionWorkRow first = work(version, "mention-1", 0);
+        ResolutionWorkRow retry = work(version, "mention-1", 1);
         when(claims.pendingResolutions(eq("tenant-a"), anyInt(), any()))
-                .thenReturn(List.of(first), List.of(retry));
+                .thenReturn(List.of(first))
+                .thenReturn(List.of(retry));
         when(claims.claimResolution(any(), anyString(), any(), any())).thenReturn(true);
         when(provider.candidates(any())).thenReturn(List.of());
-        when(policy.decide(any())).thenReturn(decision(ResolutionOutcome.RESOLVED));
+        when(policy.decide(any())).thenAnswer(invocation -> {
+            ResolutionContext context = invocation.getArgument(0);
+            return new ResolutionDecision(context.tenantId(), context.sourceVersionId(),
+                    context.mentionId(), ResolutionOutcome.RESOLVED, "TEST", "entity-1",
+                    "Entity", 0.5, 0.1, "v1", "active", Map.of(), "RRF");
+        });
         when(claims.completeResolution(any(), anyString(), any(), any())).thenReturn(true);
         org.mockito.Mockito.doThrow(new RetryableProcessingException("response lost after commit"))
                 .doNothing().when(writer).upsertResolution(any());
@@ -128,7 +137,17 @@ class ResolutionConsumerTest {
         consumer.poll();
         consumer.poll();
 
-        verify(writer, times(2)).upsertResolution(any());
+        ArgumentCaptor<ResolutionDecision> decisions = ArgumentCaptor.forClass(ResolutionDecision.class);
+        verify(writer, times(2)).upsertResolution(decisions.capture());
+        assertThat(decisions.getAllValues())
+                .extracting(ResolutionDecision::sourceVersionId)
+                .containsOnly(version.toString());
+        assertThat(decisions.getAllValues())
+                .extracting(ResolutionDecision::mentionId)
+                .containsOnly("mention-1");
+        assertThat(decisions.getAllValues())
+                .extracting(ResolutionDecision::fencingToken)
+                .containsExactly(1L, 2L);
         verify(claims).releaseResolution(eq(first), anyString(),
                 eq(FailureClass.INFRASTRUCTURE_RETRYABLE), anyString(), eq(5), eq(30L), any());
         verify(claims).completeResolution(eq(retry), anyString(), any(), any());
@@ -165,8 +184,12 @@ class ResolutionConsumerTest {
     }
 
     private static ResolutionWorkRow work(int attempts) {
+        return work(UUID.randomUUID(), "mention-1", attempts);
+    }
+
+    private static ResolutionWorkRow work(UUID version, String mentionId, int attempts) {
         return new ResolutionWorkRow(
-                "tenant-a", UUID.randomUUID(), "mention-1", "connector", "source", "resource",
+                "tenant-a", version, mentionId, "connector", "source", "resource",
                 UUID.randomUUID(), 0, 0, 3, 0, 3, "Acme", "Organization",
                 "PENDING", null, null, attempts, null, null, Instant.now(), null, null, null);
     }
