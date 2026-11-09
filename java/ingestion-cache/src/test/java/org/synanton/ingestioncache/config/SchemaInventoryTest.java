@@ -176,7 +176,27 @@ class SchemaInventoryTest {
             "resolution_results.outcome",
             "resolution_results.strategy_version",
             "resolution_results.reason_code",
-            "relation_promotion_results.promotion_status"
+            "relation_promotion_results.promotion_status",
+            "resolution_results.claim_status",
+            "resolution_results.claim_owner_id",
+            "resolution_results.lease_expires_at",
+            "resolution_results.attempt_count",
+            "resolution_results.next_attempt_at",
+            "resolution_results.claimed_at",
+            "resolution_results.work_created_at",
+            "resolution_results.last_error",
+            "resolution_results.failure_class",
+            "resolution_results.connector_id",
+            "resolution_results.source_id",
+            "resolution_results.resource_id",
+            "relation_promotion_results.claim_status",
+            "relation_promotion_results.claim_owner_id",
+            "relation_promotion_results.lease_expires_at",
+            "relation_promotion_results.attempt_count",
+            "relation_promotion_results.next_attempt_at",
+            "relation_promotion_results.claimed_at",
+            "relation_promotion_results.last_error",
+            "relation_promotion_results.failure_class"
         );
     }
 }

@@ -14,6 +14,7 @@ import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
+import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.synflux.config.ExtractionGraphProperties;
 
 /**
@@ -148,6 +149,17 @@ public final class GraphWriter {
                             + " of " + accepted.size() + " extracted relations");
                 }
             }
+            // Create idempotent resolution work only after the mention graph is durable.
+            for (GraphMention mention : mentions) {
+                int ordinal = ordinalFromChunkId(mention.chunkId());
+                cacheClient.insertResolutionWork(new ResolutionWorkRow(
+                        request.tenantId(), request.versionId(), mention.mentionId(),
+                        request.connectorId(), request.sourceId(), request.resourceId(),
+                        request.contentRefId(), ordinal, mention.chunkOffsetStart(),
+                        mention.chunkOffsetEnd(), mention.documentOffsetStart(),
+                        mention.documentOffsetEnd(), mention.surfaceForm(), mention.proposedType(),
+                        "PENDING", null, null, 0, null, null, now, null, null, null));
+            }
             String graphStatus = rejected > 0 ? "PARTIAL" : "GRAPH_COMMITTED";
             cacheClient.markGraphCommitted(request, graphStatus, counters, graphAttempt, clock.instant());
             log.info("Graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
@@ -164,6 +176,21 @@ public final class GraphWriter {
             }
             log.warn("Graph commit failed tenant={} version={}: {}",
                     request.tenantId(), request.versionId(), e.toString());
+        }
+    }
+
+    private static int ordinalFromChunkId(String chunkId) {
+        if (chunkId == null) {
+            return -1;
+        }
+        int separator = chunkId.lastIndexOf(':');
+        if (separator < 0 || separator == chunkId.length() - 1) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(chunkId.substring(separator + 1));
+        } catch (NumberFormatException e) {
+            return -1;
         }
     }
 

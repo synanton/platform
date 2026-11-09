@@ -14,6 +14,7 @@ import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
+import org.synanton.common.resolution.StaleResolutionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,7 +58,13 @@ public class GraphWriteController {
     public Map<String, Object> upsertResolution(@RequestBody ResolutionDecision decision) {
         String tenant = requireVerifiedTenant(List.of(
                 decision == null || decision.tenantId() == null ? "" : decision.tenantId()));
-        graphConnector.upsertResolution(decision);
+        try {
+            graphConnector.upsertResolution(decision);
+        } catch (StaleResolutionException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
         return Map.of("status", "ok", "mention_id",
                 String.valueOf(decision.mentionId()), "active",
                 decision.outcome() == ResolutionOutcome.RESOLVED);

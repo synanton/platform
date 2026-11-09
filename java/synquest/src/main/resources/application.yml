@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: synquest
+  task:
+    scheduling:
+      pool:
+        size: ${SYNQUEST_SCHEDULER_POOL:2}
   jackson:
     property-naming-strategy: SNAKE_CASE
     default-property-inclusion: non_null
@@ -76,3 +80,13 @@ resolution:
   policy-version: ${RESOLUTION_POLICY_VERSION:v1}
   absolute-threshold: ${RESOLUTION_ABSOLUTE_THRESHOLD:0.02}
   margin-threshold: ${RESOLUTION_MARGIN_THRESHOLD:0.001}
+  consumer:
+    # PR #4d.1: independent of extraction; disabled until Relix is in the stack.
+    enabled: ${RESOLUTION_CONSUMER_ENABLED:false}
+    tenant: ${RESOLUTION_CONSUMER_TENANT:}
+    batch-mentions: ${RESOLUTION_CONSUMER_BATCH:10}
+    max-attempts: ${RESOLUTION_CONSUMER_MAX_ATTEMPTS:5}
+    retry-backoff-seconds: ${RESOLUTION_CONSUMER_BACKOFF_SECONDS:30}
+    lease-seconds: ${RESOLUTION_CONSUMER_LEASE_SECONDS:300}
+    poll-delay-ms: ${RESOLUTION_CONSUMER_POLL_DELAY_MS:5000}
+    ontology-version: ${RESOLUTION_ONTOLOGY_VERSION:active}
