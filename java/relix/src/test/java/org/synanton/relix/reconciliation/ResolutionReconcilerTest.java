@@ -72,6 +72,30 @@ class ResolutionReconcilerTest {
     }
 
     @Test
+    void multipleActiveCorruptionIsTerminalContradictionWithoutMutation(CapturedOutput output) {
+        ResolutionWorkRow work = work("COMPLETED", 3, NOW.plusSeconds(300));
+        ResolutionResultRow result = result("RESOLVED");
+        when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
+        when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
+        when(graph.activeResolution(any())).thenReturn(Optional.of(multipleActiveState()));
+
+        reconciler.poll();
+
+        assertThat(registry.get("reconciliation.contradiction").counter().count()).isEqualTo(1);
+        assertThat(registry.get("reconciliation.errors").counter().count()).isZero();
+        assertThat(registry.get("reconciliation.graph_repaired").counter().count()).isZero();
+        assertThat(output.getOut()).contains(TENANT, MENTION, VERSION.toString(), ENTITY,
+                "multiple active resolutions");
+        verify(graph, never()).ensureResolution(any());
+        verify(claims, never()).reclaimResolution(any(), any());
+        verify(claims, never()).claimResolution(any(), anyString(), any(), any());
+        verify(claims, never()).completeResolution(any(), anyString(), any(), any());
+        verify(claims, never()).releaseResolution(any(), anyString(), any(), anyString(),
+                anyInt(), anyLong(), any());
+        verify(claims, never()).supersedeResolution(any(), anyString(), anyString(), any());
+    }
+
+    @Test
     void missingGraphForPersistedResolvedDecisionUsesIntentVerb() {
         ResolutionWorkRow work = work("COMPLETED", 3, NOW.plusSeconds(300));
         ResolutionResultRow result = result("RESOLVED");
@@ -225,6 +249,11 @@ class ResolutionReconcilerTest {
     private static GraphResolutionObservation state(String entity, String policyVersion, long fence) {
         return new GraphResolutionObservation(VERSION.toString(),
                 resolutionId(), entity, fence, policyVersion, "active", 0.5, 0.1, "RRF", false);
+    }
+
+    private static GraphResolutionObservation multipleActiveState() {
+        return new GraphResolutionObservation(VERSION.toString(), resolutionId(), ENTITY, 3,
+                "v1", "active", 0.5, 0.1, "RRF", true);
     }
 
     private static String resolutionId() {
