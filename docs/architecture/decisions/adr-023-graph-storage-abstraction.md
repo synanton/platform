@@ -1,7 +1,6 @@
 # ADR-023: Graph Storage Abstraction and Logical Projection Contracts
 
 **Status:** Accepted 2026-11-09
-**Implementation work:** [#587 — Implement graph storage contracts and adapter conformance](https://github.com/synanton/platform/issues/587)
 **Basis:** Synanton's graph pipeline now persists extracted mentions, resolutions, canonical relations, and evidence through Relix/Neo4j. Resolution and promotion consumers, plus the planned Cassandra–graph reconciliation workflow, increase the cost of allowing Neo4j-specific assumptions to spread into domain services. The platform already establishes storage-independent adapter boundaries for search (ADR-021) and extraction (ADR-022). Graph storage needs the same explicit boundary before additional consumers and logical projections are built.
 
 ## Decision
