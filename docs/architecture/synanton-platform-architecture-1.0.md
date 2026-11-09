@@ -24,6 +24,8 @@ Designs [1.26](./synanton-design-1.26.md)–[1.33](./synanton-design-1.33.md) ex
 
 Design [1.34](./synanton-design-1.34.md) adds a cross-plane **temporal versioning and point-in-time retrieval** capability — historical source versions, publication/observation/validity semantics, and temporal search eligibility — assigned to the existing owning planes (Ingestion 1.28, Knowledge 1.25, Search 1.31) rather than a new authority (see §10).
 
+Graph-storage ownership follows the same single-authority rule: Cassandra owns durable workflow coordination state (claims, leases, attempt fences, retries, and terminal outcomes); graph storage owns persisted graph state. Neo4j is the current graph implementation. The normative contract boundary and projection lifecycle are defined by [Design 1.25](./synanton-design-1.25.md) §§15 and 18, with detailed graph contracts in [Design 1.35](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) and rationale in [ADR-023](./decisions/adr-023-graph-storage-abstraction.md). This capstone records the ownership boundary only; it does not restate the graph contract or imply a cross-store transaction.
+
 The resulting architecture is:
 
 ```text
@@ -70,6 +72,8 @@ The central authority rule is:
 Source state        → Ingestion 1.28
 Content artifacts   → Content Cache 1.26
 Canonical knowledge → Knowledge 1.25
+Workflow state      → Cassandra (claims, leases, fences, retries, terminal outcomes)
+Persisted graph state → Graph storage (Neo4j is the current implementation)
 Identity            → Identity 1.29
 Authorization       → Security 1.23
 AI execution        → AI Runtime 1.30
@@ -421,6 +425,7 @@ This table records implementation state, not target architecture. Its rows are m
 | 1.32 | Approved | Contract frozen 2026-10-17 (#246); generation-A implementation in progress |
 | 1.33 | Approved (contract/readiness review only) | No operator implementation exists; not in scope for this milestone |
 | 1.34 | Approved | Not started; per Design 1.34 §39, begins with a 1.28 (Ingestion) extension and should not precede 1.27/1.28 implementation |
+| 1.35 | Approved; graph-storage contract integrated by reference into 1.25 §§15/18 | Implementation not started; contract extraction and adapter conformance tracked by [#587](https://github.com/synanton/platform/issues/587) |
 
 Accepting Designs 1.26–1.34 as architecture does not authorize skipping the implementation sequence in §14. In particular, no plane should begin implementation ahead of the 1.27 (eventing/workflow) and 1.32 (API/Operation) contracts being frozen, per the ordering rationale in §6.
 
@@ -442,6 +447,7 @@ Platform 1.0 is architecturally complete when:
 - [x] 1.32 defines the stable external API and identity-management API.
 - [x] 1.33 defines Kubernetes readiness without Kubernetes leakage.
 - [x] 1.34 defines cross-plane temporal versioning and point-in-time retrieval without a competing ownership model.
+- [x] 1.35 defines graph storage contracts and logical projection lifecycle; Design 1.25 owns the knowledge-projection integration and the capstone records only the workflow-state/graph-state ownership boundary.
 - [ ] Cross-plane security tests pass.
 - [ ] Cross-plane idempotency/recovery tests pass.
 - [ ] Compatibility CI is operational.
