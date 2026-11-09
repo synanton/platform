@@ -6,6 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.relix.graph.EntityCanonicalizer;
 import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.GraphLoader;
@@ -18,12 +20,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class Neo4jGraphConnectorTest {
@@ -81,6 +85,18 @@ class Neo4jGraphConnectorTest {
         assertThat(result.candidateCount()).isEqualTo(1);
         assertThat(result.entities().getFirst().entityId()).isEqualTo(entityId);
         assertThat(result.entities().getFirst().label()).isEqualTo("Acme Corp");
+    }
+
+    @Test
+    void promotionTransactionFailureIsRetryable() {
+        when(cypher.writeReturning(anyString(), anyMap()))
+                .thenThrow(new RuntimeException("neo4j tx failed"));
+        Neo4jGraphConnector connector = new Neo4jGraphConnector(mock(GraphLoader.class), cypher);
+        CanonicalRelation relation = new CanonicalRelation("t", "v", "r", "m1", "e1",
+                "m2", "e2", "requires", "1.0.0", "ref:0", 0, 20);
+
+        assertThatThrownBy(() -> connector.promoteRelation(relation))
+                .isInstanceOf(RetryableProcessingException.class);
     }
 
     @Test

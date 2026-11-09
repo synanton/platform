@@ -8,4 +8,6 @@ public record ExtractedRelationView(
         String subjectMentionId,
         String objectMentionId,
         String predicate,
-        String evidenceChunkId) {}
+        String evidenceChunkId,
+        int evidenceChunkOffsetStart,
+        int evidenceChunkOffsetEnd) {}

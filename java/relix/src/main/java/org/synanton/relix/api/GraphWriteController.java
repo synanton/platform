@@ -8,8 +8,10 @@ import org.synanton.common.tenant.MissingTenantContextException;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
+import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.relix.graph.GraphConnector;
 import org.synanton.common.resolution.ActiveResolution;
+import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.springframework.http.HttpStatus;
@@ -27,9 +29,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class GraphWriteController {
 
     private final GraphConnector graphConnector;
+    private final CanonicalRelationPromotionPort relationPromoter;
 
-    public GraphWriteController(GraphConnector graphConnector) {
+    public GraphWriteController(GraphConnector graphConnector,
+                                CanonicalRelationPromotionPort relationPromoter) {
         this.graphConnector = graphConnector;
+        this.relationPromoter = relationPromoter;
     }
 
     @PostMapping("/graph/mentions")
@@ -56,6 +61,22 @@ public class GraphWriteController {
         return Map.of("status", "ok", "mention_id",
                 String.valueOf(decision.mentionId()), "active",
                 decision.outcome() == ResolutionOutcome.RESOLVED);
+    }
+
+    @PostMapping("/graph/promotions")
+    public Map<String, Object> promoteRelation(@RequestBody CanonicalRelation relation) {
+        String tenant = requireVerifiedTenant(java.util.List.of(
+                relation == null || relation.tenantId() == null ? "" : relation.tenantId()));
+        try {
+            var result = relationPromoter.promoteRelation(relation);
+            return Map.of("status", "ok", "tenant", tenant,
+                    "relations_created", result.relationsCreated(),
+                    "evidence_created", result.evidenceCreated(),
+                    "evidence_matched", result.evidenceMatched());
+        } catch (IllegalStateException e) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, e.getMessage());
+        }
     }
 
     @PostMapping("/v1/resolutions/active")

@@ -11,4 +11,10 @@ public interface CypherExecutor {
     List<Map<String, Object>> read(String cypher, Map<String, Object> params);
 
     void write(String cypher, Map<String, Object> params);
+
+    /** Single write transaction that returns rows (counts, MERGE markers). */
+    default List<Map<String, Object>> writeReturning(String cypher, Map<String, Object> params) {
+        write(cypher, params);
+        return List.of();
+    }
 }

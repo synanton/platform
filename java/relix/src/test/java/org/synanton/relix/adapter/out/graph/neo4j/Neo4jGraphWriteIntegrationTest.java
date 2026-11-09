@@ -18,6 +18,9 @@ import org.neo4j.driver.Session;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.graph.PromotionIds;
+import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.testcontainers.containers.Neo4jContainer;
@@ -72,7 +75,7 @@ class Neo4jGraphWriteIntegrationTest {
         assertThat(count("MATCH (n:ExtractedMention {tenant_id: $tenant}) RETURN count(n) AS c")).isEqualTo(2);
         assertThat(count("MATCH ()-[e:EXTRACTED_RELATION {tenant_id: $tenant}]->() RETURN count(e) AS c")).isEqualTo(1);
         assertThat(count("MATCH (n:Entity {tenant: $tenant}) RETURN count(n) AS c")).isZero();
-        assertThat(count("MATCH ()-[e:REL]->() RETURN count(e) AS c")).isZero();
+        assertThat(count("MATCH ()-[e:REL {tenant_id: $tenant}]->() RETURN count(e) AS c")).isZero();
 
         Map<String, Object> offsets = cypher.read(
                 "MATCH (n:ExtractedMention {mention_id: $id}) RETURN n.chunk_offset_start AS chunkStart, "
@@ -193,6 +196,102 @@ class Neo4jGraphWriteIntegrationTest {
     }
 
     @Test
+    void promotionCreatesOneSemanticRelationAndAccumulatesEvidence() {
+        String tenant = TENANT + "-promotion";
+        String version = "version-promotion";
+        String version2 = "version-promotion-2";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        seedPromotionEndpoint(tenant, version, "s1", "o1", "e-s", "e-o", now);
+        seedPromotionEndpoint(tenant, version2, "s2", "o2", "e-s", "e-o", now);
+
+        CanonicalRelation firstAssertion = new CanonicalRelation(tenant, version, "relation-p1",
+                "s1", "e-s", "o1", "e-o", "requires", "1.0.0", "ref:0", 0, 20);
+        assertThat(connector.promoteRelation(firstAssertion)).isEqualTo(new PromotionResult(1, 1, 1));
+        assertThat(promotionCounts(tenant)).containsEntry("relations", 1L)
+                .containsEntry("evidence", 1L).containsEntry("supports", 1L);
+        assertThat(cypher.read("MATCH ()-[r:REL {tenant_id: $tenant}]->() "
+                + "RETURN r.canonical_relation_id AS id", Map.of("tenant", tenant)).getFirst().get("id"))
+                .isEqualTo(PromotionIds.canonicalRelationId(firstAssertion));
+
+        // Replay is idempotent.
+        assertThat(connector.promoteRelation(firstAssertion)).isEqualTo(new PromotionResult(0, 0, 1));
+        assertThat(promotionCounts(tenant)).containsEntry("relations", 1L)
+                .containsEntry("evidence", 1L).containsEntry("supports", 1L);
+
+        // A second document asserting the same canonical triple adds evidence, not a second REL.
+        CanonicalRelation secondAssertion = new CanonicalRelation(tenant, version2, "relation-p2",
+                "s2", "e-s", "o2", "e-o", "requires", "1.0.0", "ref:1", 0, 20);
+        assertThat(connector.promoteRelation(secondAssertion)).isEqualTo(new PromotionResult(0, 1, 1));
+        assertThat(promotionCounts(tenant)).containsEntry("relations", 1L)
+                .containsEntry("evidence", 2L).containsEntry("supports", 2L);
+    }
+
+    @Test
+    void promotionFailsClosedWithoutActiveResolutionsOrForAnotherTenant() {
+        String tenant = TENANT + "-promotion-fail";
+        String version = "version-promotion-fail";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(
+                new ExtractedMention("s-no-resolution", tenant, version, "ref", "ref:0",
+                        0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now),
+                new ExtractedMention("o-no-resolution", tenant, version, "ref", "ref:0",
+                        20, 30, 20, 30, "Protocol-A", "Protocol", now)));
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'e-s-fail', label: 'Halcyon-7', "
+                + "type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+        cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'e-o-fail', label: 'Protocol-A', "
+                + "type: 'Protocol'})", Map.of("tenant", tenant));
+
+        CanonicalRelation missingResolution = new CanonicalRelation(tenant, version, "relation-fail",
+                "s-no-resolution", "e-s-fail", "o-no-resolution", "e-o-fail", "requires",
+                "1.0.0", "ref:0", 0, 20);
+        assertThat(connector.promoteRelation(missingResolution)).isEqualTo(new PromotionResult(0, 0, 0));
+        assertThat(promotionCounts(tenant)).containsEntry("relations", 0L)
+                .containsEntry("evidence", 0L).containsEntry("supports", 0L);
+
+        CanonicalRelation crossTenant = new CanonicalRelation(TENANT + "-other-tenant", version,
+                "relation-fail", "s-no-resolution", "e-s-fail", "o-no-resolution", "e-o-fail",
+                "requires", "1.0.0", "ref:0", 0, 20);
+        assertThat(connector.promoteRelation(crossTenant)).isEqualTo(new PromotionResult(0, 0, 0));
+    }
+
+    private void seedPromotionEndpoint(String tenant, String version, String subjectMention,
+                                       String objectMention, String subjectEntity,
+                                       String objectEntity, Instant now) {
+        connector.upsertMentions(List.of(
+                new ExtractedMention(subjectMention, tenant, version, "ref", "ref:0",
+                        0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now),
+                new ExtractedMention(objectMention, tenant, version, "ref", "ref:0",
+                        20, 30, 20, 30, "Protocol-A", "Protocol", now)));
+        cypher.write("MERGE (n:Entity {tenant: $tenant, id: $id}) SET n.label = $label, n.type = $type",
+                Map.of("tenant", tenant, "id", subjectEntity, "label", "Halcyon-7",
+                        "type", "MaintenanceSystem"));
+        cypher.write("MERGE (n:Entity {tenant: $tenant, id: $id}) SET n.label = $label, n.type = $type",
+                Map.of("tenant", tenant, "id", objectEntity, "label", "Protocol-A",
+                        "type", "Protocol"));
+        connector.upsertResolution(new ResolutionDecision(tenant, version, subjectMention,
+                org.synanton.common.resolution.ResolutionOutcome.RESOLVED, "RESOLVED_LABEL",
+                subjectEntity, "Halcyon-7", 0.03, 0.01, "v1", "1.0.0", Map.of(), "RRF"));
+        connector.upsertResolution(new ResolutionDecision(tenant, version, objectMention,
+                org.synanton.common.resolution.ResolutionOutcome.RESOLVED, "RESOLVED_LABEL",
+                objectEntity, "Protocol-A", 0.03, 0.01, "v1", "1.0.0", Map.of(), "RRF"));
+    }
+
+    private Map<String, Long> promotionCounts(String tenant) {
+        return Map.of(
+                "relations", countForTenant("MATCH ()-[r:REL {tenant_id: $tenant}]->() "
+                        + "RETURN count(r) AS c", tenant),
+                "evidence", countForTenant("MATCH (ev:RelationEvidence {tenant_id: $tenant}) "
+                        + "RETURN count(ev) AS c", tenant),
+                "supports", countForTenant("MATCH (:ExtractedRelation {tenant_id: $tenant})"
+                        + "-[:SUPPORTS]->(:RelationEvidence {tenant_id: $tenant}) RETURN count(*) AS c", tenant));
+    }
+
+    private long countForTenant(String query, String tenant) {
+        Object value = cypher.read(query, Map.of("tenant", tenant)).getFirst().get("c");
+        return ((Number) value).longValue();
+    }
+
+    @Test
     void canonicalLookupReturnsTheActiveGraphType() {
         String tenant = TENANT + "-lookup";
         cypher.write("CREATE (n:Entity {tenant: $tenant, id: 'entity-lookup', "
@@ -267,6 +366,20 @@ class Neo4jGraphWriteIntegrationTest {
                 session.executeWrite(tx -> {
                     tx.run(cypher, params).consume();
                     return null;
+                });
+            }
+        }
+
+        @Override
+        public List<Map<String, Object>> writeReturning(String cypher, Map<String, Object> params) {
+            try (Session session = driver.session()) {
+                return session.executeWrite(tx -> {
+                    var result = tx.run(cypher, params);
+                    List<Map<String, Object>> rows = new ArrayList<>();
+                    while (result.hasNext()) {
+                        rows.add(result.next().asMap());
+                    }
+                    return rows;
                 });
             }
         }
