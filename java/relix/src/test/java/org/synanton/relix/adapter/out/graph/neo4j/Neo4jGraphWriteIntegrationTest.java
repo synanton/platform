@@ -151,7 +151,7 @@ class Neo4jGraphWriteIntegrationTest {
 
         connector.upsertResolution(decision);
 
-        ResolutionKey key = new ResolutionKey(tenant, version, mentionId, null);
+        ResolutionKey key = new ResolutionKey(tenant, mentionId);
         assertThat(connector.activeResolution(key)).satisfies(observation -> {
             var state = observation.orElseThrow();
             assertThat(state.sourceVersionId()).isEqualTo(version);
@@ -162,9 +162,38 @@ class Neo4jGraphWriteIntegrationTest {
             assertThat(state.retrievalStrategy()).isEqualTo("RRF");
         });
         assertThat(connector.hasResolutionHistory(key)).isTrue();
-        ResolutionKey otherTenant = new ResolutionKey(tenant + "-other", version, mentionId, null);
+        ResolutionKey otherTenant = new ResolutionKey(tenant + "-other", mentionId);
         assertThat(connector.activeResolution(otherTenant)).isEmpty();
         assertThat(connector.hasResolutionHistory(otherTenant)).isFalse();
+    }
+
+    @Test
+    void activeResolutionReadSurfacesPreExistingMultipleActiveCorruption() {
+        String tenant = TENANT + "-reconcile-corrupt";
+        String version = "version-reconcile-corrupt";
+        String mentionId = "mention-reconcile-corrupt";
+        Instant now = Instant.parse("2026-11-08T00:00:00Z");
+        connector.upsertMentions(List.of(new ExtractedMention(mentionId, tenant, version, "ref", "ref:0",
+                0, 9, 0, 9, "Halcyon-7", "MaintenanceSystem", now)));
+        cypher.write("CREATE (e:Entity {tenant: $tenant, id: 'corrupt-e1', label: 'Halcyon-7', "
+                + "type: 'MaintenanceSystem'}) CREATE (f:Entity {tenant: $tenant, id: 'corrupt-e2', "
+                + "label: 'Halcyon-7', type: 'MaintenanceSystem'})", Map.of("tenant", tenant));
+        cypher.write("""
+                MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mention})
+                MATCH (e:Entity {tenant: $tenant, id: 'corrupt-e1'})
+                MATCH (f:Entity {tenant: $tenant, id: 'corrupt-e2'})
+                CREATE (m)-[:RESOLVES_TO {tenant_id: $tenant, mention_id: $mention,
+                    source_version_id: $version, resolution_id: 'corrupt-r1', active: true,
+                    fencing_token: 1}]->(e)
+                CREATE (m)-[:RESOLVES_TO {tenant_id: $tenant, mention_id: $mention,
+                    source_version_id: $version, resolution_id: 'corrupt-r2', active: true,
+                    fencing_token: 1}]->(f)
+                """, Map.of("tenant", tenant, "mention", mentionId, "version", version));
+
+        var observation = connector.activeResolution(new ResolutionKey(tenant, mentionId));
+        assertThat(observation).isPresent();
+        assertThat(observation.orElseThrow().multipleActive()).isTrue();
+        assertThat(connector.hasResolutionHistory(new ResolutionKey(tenant, mentionId))).isTrue();
     }
 
     @Test

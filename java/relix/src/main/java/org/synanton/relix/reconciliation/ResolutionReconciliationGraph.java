@@ -10,7 +10,10 @@ import org.synanton.common.resolution.ResolutionDecision;
  */
 public interface ResolutionReconciliationGraph {
 
-    /** Active graph state for exactly one mention identity, if present. */
+    /**
+     * Active graph state for exactly one mention identity, if present. The key is
+     * mention-scoped; policy compares the observed source version and identity.
+     */
     Optional<GraphResolutionObservation> activeResolution(ResolutionKey key);
 
     /** Whether any resolution edge (active or superseded) exists for one mention identity. */

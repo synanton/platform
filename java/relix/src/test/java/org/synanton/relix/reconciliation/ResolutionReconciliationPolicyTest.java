@@ -130,7 +130,7 @@ class ResolutionReconciliationPolicyTest {
     void processingWithExpiredLeaseButCorruptGraphIdentityIsContradiction() {
         GraphResolutionObservation tampered = new GraphResolutionObservation(
                 VERSION.toString(), "not-the-deterministic-id", ENTITY, 3,
-                "v1", "active", 0.5, 0.1, "RRF");
+                "v1", "active", 0.5, 0.1, "RRF", false);
         ReconciliationAction action = policy.decide(
                 work("PROCESSING", 3, NOW.minusSeconds(1)), null,
                 Optional.of(tampered), true, NOW);
@@ -145,6 +145,19 @@ class ResolutionReconciliationPolicyTest {
                 Optional.empty(), false, NOW);
 
         assertThat(action.kind()).isEqualTo(ReconciliationKind.NOOP);
+    }
+
+    @Test
+    void multipleActiveResolutionsAreContradictionNotSilentlyOneEdge() {
+        GraphResolutionObservation multiple = new GraphResolutionObservation(
+                VERSION.toString(), resolutionId(ENTITY, "v1"), ENTITY, 3,
+                "v1", "active", 0.5, 0.1, "RRF", true);
+        ReconciliationAction action = policy.decide(
+                work("COMPLETED", 3, NOW.plusSeconds(300)),
+                result("RESOLVED", ENTITY), Optional.of(multiple), true, NOW);
+
+        assertThat(action.kind()).isEqualTo(ReconciliationKind.CONTRADICTION);
+        assertThat(action.resolutionDecision()).isNull();
     }
 
     @Test
@@ -173,7 +186,7 @@ class ResolutionReconciliationPolicyTest {
     private static GraphResolutionObservation state(String entity, String policyVersion, long fence) {
         return new GraphResolutionObservation(
                 VERSION.toString(), resolutionId(entity, policyVersion), entity, fence,
-                policyVersion, "active", 0.5, 0.1, "RRF");
+                policyVersion, "active", 0.5, 0.1, "RRF", false);
     }
 
     private static String resolutionId(String entity, String policyVersion) {

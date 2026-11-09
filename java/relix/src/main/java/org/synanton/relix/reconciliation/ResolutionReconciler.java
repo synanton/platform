@@ -13,7 +13,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -34,7 +33,6 @@ import org.synanton.relix.config.ReconciliationProperties;
  * intent verbs; all Cypher remains in the Neo4j adapter. Delete this seam when
  * #590 migrates #585 onto #587 contracts; deviation #591.
  */
-@Component
 public final class ResolutionReconciler {
 
     private static final Logger log = LoggerFactory.getLogger(ResolutionReconciler.class);
@@ -55,11 +53,11 @@ public final class ResolutionReconciler {
     private final Counter leaseHeld;
 
     public ResolutionReconciler(IngestionCacheClient cache, ClaimService claims,
-                                Optional<ResolutionReconciliationGraph> graph,
+                                ResolutionReconciliationGraph graph,
                                 ReconciliationProperties properties, MeterRegistry registry) {
         this.cache = cache;
         this.claims = claims;
-        this.graph = graph == null ? null : graph.orElse(null);
+        this.graph = graph;
         this.properties = properties;
         this.graphRepaired = registry.counter("reconciliation.graph_repaired");
         this.cassandraRepaired = registry.counter("reconciliation.cassandra_repaired");
@@ -78,10 +76,6 @@ public final class ResolutionReconciler {
         String tenant = properties.tenant();
         if (tenant == null || tenant.isBlank()) {
             log.warn("Reconciliation is enabled without a tenant; skipping poll");
-            return;
-        }
-        if (graph == null) {
-            log.warn("Reconciliation graph seam is unavailable; current adapter does not provide it");
             return;
         }
         // Transitional: assumes exact-identity read + fencing-conditional write.
@@ -128,8 +122,7 @@ public final class ResolutionReconciler {
     }
 
     private void reconcile(ResolutionWorkRow row, ResolutionResultRow result, Instant now) {
-        ResolutionKey key = new ResolutionKey(row.tenantId(), row.sourceVersionId().toString(),
-                row.mentionId(), null);
+        ResolutionKey key = new ResolutionKey(row.tenantId(), row.mentionId());
         Optional<GraphResolutionObservation> active;
         boolean history;
         try {

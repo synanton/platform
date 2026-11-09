@@ -47,7 +47,7 @@ class ResolutionReconcilerTest {
     private final ReconciliationProperties properties =
             new ReconciliationProperties(true, TENANT, 100, 60000L, 120);
     private final ResolutionReconciler reconciler =
-            new ResolutionReconciler(cache, claims, Optional.of(graph), properties, registry);
+            new ResolutionReconciler(cache, claims, graph, properties, registry);
 
     @Test
     void staleActiveEdgeProducesMetricAndIdentifiersButNoMutation(CapturedOutput output) {
@@ -103,6 +103,24 @@ class ResolutionReconcilerTest {
         reconciler.poll();
 
         assertThat(registry.get("reconciliation.contradiction").counter().count()).isEqualTo(1);
+        assertThat(registry.get("reconciliation.graph_repaired").counter().count()).isZero();
+    }
+
+    @Test
+    void unknownGraphIntentFailureIsRetryableNotContradiction() {
+        ResolutionWorkRow work = work("COMPLETED", 3, NOW.plusSeconds(300));
+        ResolutionResultRow result = result("RESOLVED");
+        when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
+        when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
+        when(graph.activeResolution(any())).thenReturn(Optional.empty());
+        when(graph.hasResolutionHistory(any())).thenReturn(false);
+        when(graph.ensureResolution(any())).thenThrow(
+                new org.synanton.common.resolution.RetryableProcessingException("session unavailable"));
+
+        reconciler.poll();
+
+        assertThat(registry.get("reconciliation.errors").counter().count()).isEqualTo(1);
+        assertThat(registry.get("reconciliation.contradiction").counter().count()).isZero();
         assertThat(registry.get("reconciliation.graph_repaired").counter().count()).isZero();
     }
 
@@ -179,7 +197,7 @@ class ResolutionReconcilerTest {
 
     @Test
     void disabledReconciliationDoesNotScan() {
-        ResolutionReconciler disabled = new ResolutionReconciler(cache, claims, Optional.of(graph),
+        ResolutionReconciler disabled = new ResolutionReconciler(cache, claims, graph,
                 new ReconciliationProperties(false, TENANT, 100, 60000L, 120),
                 new SimpleMeterRegistry());
 
@@ -206,7 +224,7 @@ class ResolutionReconcilerTest {
 
     private static GraphResolutionObservation state(String entity, String policyVersion, long fence) {
         return new GraphResolutionObservation(VERSION.toString(),
-                resolutionId(), entity, fence, policyVersion, "active", 0.5, 0.1, "RRF");
+                resolutionId(), entity, fence, policyVersion, "active", 0.5, 0.1, "RRF", false);
     }
 
     private static String resolutionId() {

@@ -31,6 +31,10 @@ public final class ResolutionReconciliationPolicy {
             return ReconciliationAction.contradiction(null, null, "work identity is incomplete");
         }
         GraphResolutionObservation activeState = active == null ? null : active.orElse(null);
+        if (activeState != null && activeState.multipleActive()) {
+            return ReconciliationAction.contradiction(null, activeState,
+                    "multiple active resolutions for one mention");
+        }
         return switch (work.claimStatus() == null ? "" : work.claimStatus()) {
             case "COMPLETED" -> completed(work, result, activeState, hasHistory);
             case "PROCESSING" -> processing(work, activeState, now);

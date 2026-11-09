@@ -21,6 +21,7 @@ import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleResolutionException;
+import org.synanton.common.resolution.ContractViolationException;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.relix.reconciliation.GraphResolutionObservation;
@@ -145,6 +146,11 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
         return resolutions;
     }
 
+    /**
+     * Mention-scoped read: source version is observed and compared by policy, not
+     * part of the query key. LIMIT 2 + multipleActive surfaces pre-existing
+     * duplicate active edges instead of silently selecting one.
+     */
     @Override
     public java.util.Optional<GraphResolutionObservation> activeResolution(ResolutionKey key) {
         if (key == null || key.tenantId() == null || key.mentionId() == null
@@ -163,7 +169,7 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                        coalesce(r.best_score, 0.0) AS best_score,
                        coalesce(r.runner_up_score, 0.0) AS runner_up_score,
                        r.retrieval_strategy AS retrieval_strategy
-                LIMIT 1
+                LIMIT 2
                 """, Map.of("tenant", key.tenantId(), "mentionId", key.mentionId()));
         if (rows.isEmpty()) {
             return java.util.Optional.empty();
@@ -183,7 +189,8 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                 toDouble(row.get("best_score")),
                 toDouble(row.get("runner_up_score")),
                 row.get("retrieval_strategy") == null ? null
-                        : String.valueOf(row.get("retrieval_strategy"))));
+                        : String.valueOf(row.get("retrieval_strategy")),
+                rows.size() > 1));
     }
 
     @Override
@@ -206,12 +213,14 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
         try {
             upsertResolution(decision);
             return ResolutionWriteOutcome.APPLIED;
-        } catch (StaleResolutionException e) {
+        } catch (StaleResolutionException | ContractViolationException | IllegalArgumentException e) {
+            // Proven permanent rejection: stale fence or invalid intent.
             return ResolutionWriteOutcome.REJECTED;
         } catch (RetryableProcessingException e) {
             return ResolutionWriteOutcome.RETRYABLE;
         } catch (RuntimeException e) {
-            return ResolutionWriteOutcome.REJECTED;
+            // Unknown driver/session failure: unknown is retryable, never a contradiction.
+            throw new RetryableProcessingException("Resolution graph intent failed unexpectedly", e);
         }
     }
 
