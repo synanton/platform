@@ -12,6 +12,8 @@ dependencyManagement {
     dependencies {
         dependency("org.testcontainers:testcontainers:1.21.4")
         dependency("org.testcontainers:neo4j:1.21.4")
+        dependency("org.testcontainers:cassandra:1.21.4")
+        dependency("org.testcontainers:database-commons:1.21.4")
     }
 }
 
@@ -31,6 +33,12 @@ dependencies {
     testImplementation(libs.mockito.junit)
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.neo4j)
+    testImplementation(libs.testcontainers.cassandra)
+    testImplementation(project(":java:synquest"))
+    testImplementation(files(
+        layout.projectDirectory.dir("../synquest/build/classes/java/main"),
+        layout.projectDirectory.dir("../synquest/build/resources/main")
+    ))
 }
 
 tasks.named<BootJar>("bootJar") {
