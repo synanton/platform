@@ -197,6 +197,71 @@ class Neo4jGraphWriteIntegrationTest {
     }
 
     @Test
+    void entityNeighborhoodReturnsBoundedOneHopRelationsAndEvidence() {
+        String tenant = TENANT + "-neighbors";
+        cypher.write("""
+                CREATE (c:Entity {tenant: $tenant, id: 'center', label: 'Center', type: 'Concept'})
+                CREATE (a:Entity {tenant: $tenant, id: 'alpha', label: 'Alpha', type: 'Concept'})
+                CREATE (b:Entity {tenant: $tenant, id: 'beta', label: 'Beta', type: 'Concept'})
+                CREATE (c)-[:REL {tenant_id: $tenant, canonical_relation_id: 'rel-out',
+                    predicate: 'points_to'}]->(a)
+                CREATE (a)-[:REL {tenant_id: $tenant, canonical_relation_id: 'rel-back',
+                    predicate: 'observed_by'}]->(c)
+                CREATE (b)-[:REL {tenant_id: $tenant, canonical_relation_id: 'rel-in',
+                    predicate: 'supports'}]->(c)
+                CREATE (ev1:RelationEvidence {tenant_id: $tenant,
+                    canonical_relation_id: 'rel-out', evidence_id: 'ev-neighbor',
+                    evidence_chunk_id: 'chunk-1', source_version_id: 'version-1',
+                    evidence_offset_start: 4, evidence_offset_end: 12})
+                CREATE (ev2:RelationEvidence {tenant_id: $tenant,
+                    canonical_relation_id: 'rel-in', evidence_id: 'ev-neighbor-in',
+                    evidence_chunk_id: 'chunk-2', source_version_id: 'version-2',
+                    evidence_offset_start: 20, evidence_offset_end: 28})
+                CREATE (x:Entity {tenant: 'other-tenant', id: 'other-alpha',
+                    label: 'Other', type: 'Concept'})
+                CREATE (c)-[:REL {tenant_id: $tenant, canonical_relation_id: 'rel-cross',
+                    predicate: 'leaks'}]->(x)
+                """, Map.of("tenant", tenant));
+
+        var neighborhood = connector.neighborhood(tenant, "center", 50).orElseThrow();
+
+        assertThat(neighborhood.entityId()).isEqualTo("center");
+        assertThat(neighborhood.neighbors()).hasSize(3);
+        assertThat(neighborhood.neighbors()).noneMatch(neighbor ->
+                "other-alpha".equals(neighbor.entityId()));
+        assertThat(neighborhood.neighbors().stream()
+                .filter(neighbor -> "alpha".equals(neighbor.entityId()))
+                .map(org.synanton.relix.graph.EntityNeighborhood.Neighbor::direction)
+                .toList()).containsExactlyInAnyOrder("OUTGOING", "INCOMING");
+        assertThat(neighborhood.neighbors()).anySatisfy(neighbor -> {
+            if ("OUTGOING".equals(neighbor.direction()) && "alpha".equals(neighbor.entityId())) {
+                assertThat(neighbor.relation()).isEqualTo("points_to");
+            }
+        });
+        assertThat(neighborhood.evidence()).hasSize(2).allSatisfy(evidence -> {
+            if ("points_to".equals(evidence.relation())) {
+                assertThat(evidence.neighborEntityId()).isEqualTo("alpha");
+                assertThat(evidence.chunkId()).isEqualTo("chunk-1");
+                assertThat(evidence.sourceVersion()).isEqualTo("version-1");
+                assertThat(evidence.offsetStart()).isEqualTo(4);
+                assertThat(evidence.offsetEnd()).isEqualTo(12);
+            } else {
+                assertThat(evidence.relation()).isEqualTo("supports");
+                assertThat(evidence.neighborEntityId()).isEqualTo("beta");
+                assertThat(evidence.chunkId()).isEqualTo("chunk-2");
+                assertThat(evidence.sourceVersion()).isEqualTo("version-2");
+                assertThat(evidence.offsetStart()).isEqualTo(20);
+                assertThat(evidence.offsetEnd()).isEqualTo(28);
+            }
+        });
+
+        var bounded = connector.neighborhood(tenant, "center", 1).orElseThrow();
+        assertThat(bounded.neighbors()).hasSize(1);
+        assertThat(bounded.truncated()).isTrue();
+        assertThat(connector.neighborhood(tenant, "missing", 50)).isEmpty();
+    }
+
+    @Test
     void extractedRelationLookupReturnsProvenanceAndIsTenantScoped() {
         String tenant = TENANT + "-extracted-read";
         String version = "version-extracted-read";

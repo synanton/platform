@@ -12,6 +12,7 @@ import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
+import org.synanton.relix.graph.EntityNeighborhood;
 import org.synanton.relix.graph.SourceRefCodec;
 import org.synanton.relix.graph.ResolutionIds;
 import org.synanton.relix.graph.PromotionIds;
@@ -558,6 +559,10 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                     CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS
                     FOR (r:ExtractedRelation) REQUIRE (r.tenant_id, r.relation_id) IS UNIQUE
                     """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT entity_identity_unique IF NOT EXISTS
+                    FOR (e:Entity) REQUIRE (e.tenant, e.id) IS UNIQUE
+                    """, Map.of());
             extractedSchemaEnsured = true;
         }
     }
@@ -624,6 +629,98 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
             neighbours.put(neighbour.entityId(), neighbour);
         });
         return new OneHopResult(new ArrayList<>(neighbours.values()), edges, candidateCount);
+    }
+
+    @Override
+    public java.util.Optional<EntityNeighborhood> neighborhood(String tenant, String entityId, int limit) {
+        if (tenant == null || tenant.isBlank() || entityId == null || entityId.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        List<Map<String, Object>> center = cypher.read("""
+                MATCH (c:Entity {tenant: $tenant, id: $id})
+                RETURN c.id AS id, c.label AS label, c.type AS type
+                LIMIT 1
+                """, Map.of("tenant", tenant, "id", entityId));
+        if (center.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        ensureExtractedSchema();
+        int maxNeighbors = Math.min(50, Math.max(1, limit));
+        // Canonical Entity identity is (tenant, id); the unique constraint backs
+        // this start-node match. Every traversed REL and neighbor is tenant-scoped.
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (c:Entity {tenant: $tenant, id: $id})
+                CALL {
+                    WITH c
+                    MATCH (c)-[r:REL {tenant_id: $tenant}]->(n:Entity {tenant: $tenant})
+                    RETURN 'OUTGOING' AS direction,
+                           coalesce(r.predicate, r.verb) AS relation,
+                           r.canonical_relation_id AS canonical_relation_id,
+                           n.id AS nid, n.label AS nlabel, n.type AS ntype
+                    UNION ALL
+                    WITH c
+                    MATCH (n:Entity {tenant: $tenant})-[r:REL {tenant_id: $tenant}]->(c)
+                    RETURN 'INCOMING' AS direction,
+                           coalesce(r.predicate, r.verb) AS relation,
+                           r.canonical_relation_id AS canonical_relation_id,
+                           n.id AS nid, n.label AS nlabel, n.type AS ntype
+                }
+                RETURN direction, relation, canonical_relation_id, nid, nlabel, ntype
+                LIMIT $limit
+                """, Map.of("tenant", tenant, "id", entityId, "limit", maxNeighbors + 1));
+        boolean truncated = rows.size() > maxNeighbors;
+        List<Map<String, Object>> kept = rows.stream().limit(maxNeighbors).toList();
+        List<EntityNeighborhood.Neighbor> neighbors = new ArrayList<>(kept.size());
+        Map<String, String> relationByCanonicalId = new LinkedHashMap<>();
+        Map<String, String> neighborByCanonicalId = new LinkedHashMap<>();
+        for (Map<String, Object> row : kept) {
+            String nid = row.get("nid") == null ? null : String.valueOf(row.get("nid"));
+            String relation = row.get("relation") == null ? null : String.valueOf(row.get("relation"));
+            String canonicalId = row.get("canonical_relation_id") == null ? null
+                    : String.valueOf(row.get("canonical_relation_id"));
+            neighbors.add(new EntityNeighborhood.Neighbor(
+                    nid,
+                    row.get("nlabel") == null ? null : String.valueOf(row.get("nlabel")),
+                    row.get("ntype") == null ? null : String.valueOf(row.get("ntype")),
+                    relation,
+                    String.valueOf(row.get("direction"))));
+            if (canonicalId != null) {
+                relationByCanonicalId.putIfAbsent(canonicalId, relation);
+                neighborByCanonicalId.putIfAbsent(canonicalId, nid);
+            }
+        }
+
+        List<EntityNeighborhood.Evidence> evidence = new ArrayList<>();
+        if (!relationByCanonicalId.isEmpty()) {
+            List<Map<String, Object>> evidenceRows = cypher.read("""
+                    MATCH (ev:RelationEvidence {tenant_id: $tenant})
+                    WHERE ev.canonical_relation_id IN $ids
+                    RETURN ev.canonical_relation_id AS canonical_relation_id,
+                           ev.evidence_chunk_id AS chunk_id,
+                           ev.source_version_id AS source_version,
+                           ev.evidence_offset_start AS offset_start,
+                           ev.evidence_offset_end AS offset_end
+                    LIMIT 200
+                    """, Map.of("tenant", tenant, "ids", relationByCanonicalId.keySet().stream().toList()));
+            for (Map<String, Object> row : evidenceRows) {
+                String canonicalId = row.get("canonical_relation_id") == null ? null
+                        : String.valueOf(row.get("canonical_relation_id"));
+                evidence.add(new EntityNeighborhood.Evidence(
+                        canonicalId == null ? null : relationByCanonicalId.get(canonicalId),
+                        canonicalId == null ? null : neighborByCanonicalId.get(canonicalId),
+                        row.get("chunk_id") == null ? null : String.valueOf(row.get("chunk_id")),
+                        row.get("source_version") == null ? null
+                                : String.valueOf(row.get("source_version")),
+                        toInt(row.get("offset_start")),
+                        toInt(row.get("offset_end"))));
+            }
+        }
+        Map<String, Object> entity = center.getFirst();
+        return java.util.Optional.of(new EntityNeighborhood(
+                String.valueOf(entity.get("id")),
+                entity.get("label") == null ? null : String.valueOf(entity.get("label")),
+                entity.get("type") == null ? null : String.valueOf(entity.get("type")),
+                neighbors, evidence, truncated));
     }
 
     @Override
@@ -705,6 +802,10 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
 
     private static long toLong(Object value) {
         return value instanceof Number number ? number.longValue() : 0L;
+    }
+
+    private static int toInt(Object value) {
+        return value instanceof Number number ? number.intValue() : -1;
     }
 
     private static double toDouble(Object value) {

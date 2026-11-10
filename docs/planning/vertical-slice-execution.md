@@ -122,9 +122,11 @@ api controllers ──► SearchService (facade, no Lucene imports)
 
 ## P2 — Focused graph exploration (#508)
 
-- [ ] **#508** — bounded neighbor expansion. **Partial (ui#31):** search-result → chunk
-  graph (50-node cap, click-to-re-root). Entity-rooted entry needs a reverse
-  entity→chunk API.
+- [x] **#508 backend** — `GET /v1/entities/{entityId}/neighbors` returns a bounded
+  one-hop canonical neighborhood (max 50), outgoing/incoming `:REL` relations, and
+  `:RelationEvidence` provenance; string canonical IDs; JWT tenant scope.
+- [ ] **#508 UI** — entity-rooted graph tab wiring; search-result → chunk graph (50-node
+  cap, click-to-re-root) already exists.
 
 ## P3 — Operational reality
 

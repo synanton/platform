@@ -42,6 +42,11 @@ public interface GraphConnector extends GraphWritePort, ResolutionGraphPort {
         throw new UnsupportedOperationException("graph connector does not support relation promotion");
     }
 
+    /** #508: bounded one-hop canonical neighborhood with evidence provenance. */
+    default Optional<EntityNeighborhood> neighborhood(String tenant, String entityId, int limit) {
+        return Optional.empty();
+    }
+
     record EngineDescriptor(String connectorId, String engine, String patternCoverage) {}
 
     record EntityLookupResult(List<Entity> entities, int candidateCount) {}
