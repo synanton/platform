@@ -126,6 +126,30 @@ class Neo4jGraphConnectorTest {
     }
 
     @Test
+    void truncationIsExactAtTheFiftyNeighborBound() {
+        assertTruncation(49, 49, false);
+        assertTruncation(50, 50, false);
+        assertTruncation(51, 50, true);
+    }
+
+    private void assertTruncation(int rows, int expectedNeighbors, boolean expectedTruncated) {
+        List<Map<String, Object>> center = List.of(
+                Map.of("id", "center", "label", "Center", "type", "Concept"));
+        List<Map<String, Object>> neighbors = new java.util.ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            neighbors.add(Map.of("direction", "OUTGOING", "relation", "r",
+                    "nid", "n-" + i, "nlabel", "N", "ntype", "Concept"));
+        }
+        when(cypher.read(anyString(), anyMap())).thenReturn(center).thenReturn(neighbors);
+        Neo4jGraphConnector connector = new Neo4jGraphConnector(mock(GraphLoader.class), cypher);
+
+        var result = connector.neighborhood("tenant", "center", 50).orElseThrow();
+
+        assertThat(result.neighbors()).hasSize(expectedNeighbors);
+        assertThat(result.truncated()).isEqualTo(expectedTruncated);
+    }
+
+    @Test
     void shouldBoundVariableLengthPathInCypher() {
         when(cypher.read(anyString(), any())).thenReturn(List.of());
         Neo4jGraphConnector connector = new Neo4jGraphConnector(graphLoader, cypher);

@@ -65,7 +65,7 @@ class EntityNeighborhoodControllerTest {
     }
 
     @Test
-    void limitIsClampedToFifty() throws Exception {
+    void clientLimitCannotExpandTheServerBound() throws Exception {
         when(graph.neighborhood("tenant-a", "entity-1", 50)).thenReturn(Optional.of(
                 new EntityNeighborhood("entity-1", "Halcyon-7", "MaintenanceSystem",
                         List.of(), List.of(), true)));

@@ -559,6 +559,10 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                     CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS
                     FOR (r:ExtractedRelation) REQUIRE (r.tenant_id, r.relation_id) IS UNIQUE
                     """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT entity_identity_unique IF NOT EXISTS
+                    FOR (e:Entity) REQUIRE (e.tenant, e.id) IS UNIQUE
+                    """, Map.of());
             extractedSchemaEnsured = true;
         }
     }
@@ -640,19 +644,22 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
         if (center.isEmpty()) {
             return java.util.Optional.empty();
         }
+        ensureExtractedSchema();
         int maxNeighbors = Math.min(50, Math.max(1, limit));
+        // Canonical Entity identity is (tenant, id); the unique constraint backs
+        // this start-node match. Every traversed REL and neighbor is tenant-scoped.
         List<Map<String, Object>> rows = cypher.read("""
                 MATCH (c:Entity {tenant: $tenant, id: $id})
                 CALL {
                     WITH c
-                    MATCH (c)-[r:REL]->(n:Entity {tenant: $tenant})
+                    MATCH (c)-[r:REL {tenant_id: $tenant}]->(n:Entity {tenant: $tenant})
                     RETURN 'OUTGOING' AS direction,
                            coalesce(r.predicate, r.verb) AS relation,
                            r.canonical_relation_id AS canonical_relation_id,
                            n.id AS nid, n.label AS nlabel, n.type AS ntype
                     UNION ALL
                     WITH c
-                    MATCH (n:Entity {tenant: $tenant})-[r:REL]->(c)
+                    MATCH (n:Entity {tenant: $tenant})-[r:REL {tenant_id: $tenant}]->(c)
                     RETURN 'INCOMING' AS direction,
                            coalesce(r.predicate, r.verb) AS relation,
                            r.canonical_relation_id AS canonical_relation_id,
