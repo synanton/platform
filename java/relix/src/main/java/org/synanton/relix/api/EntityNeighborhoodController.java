@@ -46,12 +46,13 @@ public class EntityNeighborhoodController {
                 .map(neighbor -> new EntityNeighborhoodResponse.Neighbor(
                         new EntityNeighborhoodResponse.Node(neighbor.entityId(), neighbor.label(),
                                 neighbor.type()),
-                        neighbor.relation(), neighbor.direction()))
+                        neighbor.relation(), neighbor.direction(), neighbor.canonicalRelationId()))
                 .toList();
         List<EntityNeighborhoodResponse.Evidence> evidence = neighborhood.evidence().stream()
                 .map(item -> new EntityNeighborhoodResponse.Evidence(
                         item.relation(), item.neighborEntityId(), item.chunkId(),
-                        item.sourceVersion(), item.offsetStart(), item.offsetEnd()))
+                        item.sourceVersion(), item.offsetStart(), item.offsetEnd(),
+                        item.canonicalRelationId()))
                 .toList();
         return new EntityNeighborhoodResponse(entity, neighbors, evidence, neighborhood.truncated());
     }

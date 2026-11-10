@@ -88,6 +88,21 @@ class EntityNeighborhoodControllerTest {
     }
 
     @Test
+    void clientTenantHeaderAndQueryCannotOverrideTheVerifiedTenant() throws Exception {
+        when(graph.neighborhood("tenant-a", "entity-1", 50)).thenReturn(Optional.of(
+                new EntityNeighborhood("entity-1", "Halcyon-7", "MaintenanceSystem",
+                        List.of(), List.of(), false)));
+
+        mvc.perform(get("/v1/entities/entity-1/neighbors")
+                        .param("tenant", "tenant-b")
+                        .header("X-Tenant-ID", "tenant-b")
+                        .header("Authorization", "Bearer " + token("tenant-a")))
+                .andExpect(status().isOk());
+
+        verify(graph).neighborhood("tenant-a", "entity-1", 50);
+    }
+
+    @Test
     void missingTokenIsRejected() throws Exception {
         mvc.perform(get("/v1/entities/entity-1/neighbors"))
                 .andExpect(status().isUnauthorized());

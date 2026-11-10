@@ -236,10 +236,12 @@ class Neo4jGraphWriteIntegrationTest {
         assertThat(neighborhood.neighbors()).anySatisfy(neighbor -> {
             if ("OUTGOING".equals(neighbor.direction()) && "alpha".equals(neighbor.entityId())) {
                 assertThat(neighbor.relation()).isEqualTo("points_to");
+                assertThat(neighbor.canonicalRelationId()).isEqualTo("rel-out");
             }
         });
         assertThat(neighborhood.evidence()).hasSize(2).allSatisfy(evidence -> {
             if ("points_to".equals(evidence.relation())) {
+                assertThat(evidence.canonicalRelationId()).isEqualTo("rel-out");
                 assertThat(evidence.neighborEntityId()).isEqualTo("alpha");
                 assertThat(evidence.chunkId()).isEqualTo("chunk-1");
                 assertThat(evidence.sourceVersion()).isEqualTo("version-1");
@@ -247,6 +249,7 @@ class Neo4jGraphWriteIntegrationTest {
                 assertThat(evidence.offsetEnd()).isEqualTo(12);
             } else {
                 assertThat(evidence.relation()).isEqualTo("supports");
+                assertThat(evidence.canonicalRelationId()).isEqualTo("rel-in");
                 assertThat(evidence.neighborEntityId()).isEqualTo("beta");
                 assertThat(evidence.chunkId()).isEqualTo("chunk-2");
                 assertThat(evidence.sourceVersion()).isEqualTo("version-2");

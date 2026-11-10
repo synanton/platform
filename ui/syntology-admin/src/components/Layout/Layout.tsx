@@ -88,6 +88,9 @@ export function Layout() {
             <Link to="/viewer" className="hover:text-brand-50 opacity-90">
               Viewer
             </Link>
+            <Link to="/entity-graph" className="hover:text-brand-50 opacity-90">
+              Entity Graph
+            </Link>
             <Link to="/admin" className="hover:text-brand-50 opacity-90">
               Admin
             </Link>

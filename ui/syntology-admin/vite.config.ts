@@ -6,6 +6,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      "/api/v1/entities": {
+        target: "http://localhost:8084",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, "").split("?")[0],
+      },
       "/api": "http://localhost:8080",
       "/mcp": "http://localhost:8091",
       "/auth": "http://localhost:8081",
