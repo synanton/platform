@@ -166,6 +166,32 @@ class ConsumerFaultInjectionIntegrationTest {
     }
 
     @Test
+    void reconciliationCompletesCassandraWhenGraphAlreadyHasTheEdge() {
+        String mention = mention("reconcile");
+        String entity = entity("reconcile");
+        createResolvedMention(mention, "Acme", "Organization", entity);
+        insertWork(mention, "Acme", "Organization");
+
+        ResolutionWorkRow work = work(mention);
+        assertThat(cache.claimResolutionWork(work, "crashed-worker", Instant.now(),
+                Duration.ofSeconds(-1))).isTrue();
+        graph.upsertResolution(decision(mention, entity, 1));
+        assertThat(activeEdgeCount(mention)).isEqualTo(1);
+
+        ResolutionReconciler reconciler = new ResolutionReconciler(cache, claims, graph,
+                new ReconciliationProperties(true, TENANT, 100, 60000L, 60),
+                new SimpleMeterRegistry());
+        reconciler.poll();
+
+        ResolutionWorkRow repaired = work(mention);
+        assertThat(repaired.claimStatus()).isEqualTo("COMPLETED");
+        assertThat(repaired.outcome()).isEqualTo("RESOLVED");
+        assertThat(repaired.attemptCount()).isEqualTo(2);
+        assertThat(activeEdgeCount(mention)).isEqualTo(1);
+        assertThat(activeEntity(mention)).isEqualTo(entity);
+    }
+
+    @Test
     void missingTargetIsTerminalStaleNotAnInfiniteRetry() {
         String mention = mention("missing");
         createResolvedMention(mention, "Acme", "Organization", entity("missing"));
@@ -214,7 +240,7 @@ class ConsumerFaultInjectionIntegrationTest {
     }
 
     @Test
-    void restartRecoversGraphCommittedWorkWithoutDuplicatingState() {
+    void restartRecoversGraphCommittedWorkWithoutDuplicatingState() throws Exception {
         String mention = mention("restart");
         String entity = entity("restart");
         createResolvedMention(mention, "Acme", "Organization", entity);
@@ -222,7 +248,11 @@ class ConsumerFaultInjectionIntegrationTest {
 
         TestWriter crashing = new TestWriter(Mode.COMMIT_THEN_ERROR);
         ResolutionConsumer first = consumer(crashing, Map.of("Acme", entity), 1);
-        assertThatThrownBy(first::poll).isInstanceOf(AssertionError.class);
+        Thread crashedWorker = new Thread(first::poll, "crashed-consumer-589");
+        crashedWorker.setUncaughtExceptionHandler((thread, failure) -> { });
+        crashedWorker.start();
+        crashedWorker.join(10_000);
+        assertThat(crashedWorker.isAlive()).isFalse();
 
         ResolutionWorkRow stranded = work(mention);
         assertThat(stranded.claimStatus()).isEqualTo("PROCESSING");
