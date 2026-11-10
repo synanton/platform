@@ -168,7 +168,8 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                        r.ontology_version AS ontology_version,
                        coalesce(r.best_score, 0.0) AS best_score,
                        coalesce(r.runner_up_score, 0.0) AS runner_up_score,
-                       r.retrieval_strategy AS retrieval_strategy
+                       r.retrieval_strategy AS retrieval_strategy,
+                       r.search_generation AS search_generation
                 LIMIT 2
                 """, Map.of("tenant", key.tenantId(), "mentionId", key.mentionId()));
         if (rows.isEmpty()) {
@@ -190,7 +191,9 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                 toDouble(row.get("runner_up_score")),
                 row.get("retrieval_strategy") == null ? null
                         : String.valueOf(row.get("retrieval_strategy")),
-                rows.size() > 1));
+                rows.size() > 1,
+                row.get("search_generation") == null ? null
+                        : String.valueOf(row.get("search_generation"))));
     }
 
     @Override
@@ -367,6 +370,7 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
         params.put("runnerUpScore", decision.runnerUpScore());
         params.put("ontologyVersion", decision.ontologyVersion());
         params.put("fencingToken", decision.fencingToken());
+        params.put("searchGeneration", decision.searchGeneration());
         params.put("now", now);
 
         List<Map<String, Object>> appliedRows = cypher.writeReturning("""
@@ -390,6 +394,7 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                     r.canonical_entity_id = $entityId, r.policy_version = $policyVersion,
                     r.retrieval_strategy = $retrievalStrategy, r.best_score = $bestScore,
                     r.runner_up_score = $runnerUpScore, r.ontology_version = $ontologyVersion,
+                    r.search_generation = $searchGeneration,
                     r.fencing_token = $fencingToken, r.decision_at = $now, r.superseded_at = null
                 RETURN count(r) AS applied
                 """, params);

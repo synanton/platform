@@ -95,13 +95,18 @@ public final class DefaultResolutionPolicy implements ResolutionPolicy {
                                         String reasonCode, String entityId, double best,
                                         double runnerUp, Map<String, Object> diagnostics) {
         String label = entityId == null ? null : labelFor(context, entityId);
+        String searchGeneration = context == null || context.candidates() == null ? null
+                : context.candidates().stream()
+                        .map(ResolutionCandidate::searchGeneration)
+                        .filter(java.util.Objects::nonNull)
+                        .findFirst().orElse(null);
         return new ResolutionDecision(
                 context == null ? null : context.tenantId(),
                 context == null ? null : context.sourceVersionId(),
                 context == null ? null : context.mentionId(),
                 outcome, reasonCode, entityId, label, best, runnerUp,
                 policyVersion, context == null ? null : context.ontologyVersion(), diagnostics,
-                retrievalStrategyFor(context, entityId));
+                retrievalStrategyFor(context, entityId), 0L, searchGeneration);
     }
 
     private static String retrievalStrategyFor(ResolutionContext context, String entityId) {

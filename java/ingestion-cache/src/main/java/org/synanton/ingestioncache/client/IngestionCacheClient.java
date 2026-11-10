@@ -1001,13 +1001,14 @@ public class IngestionCacheClient {
             "content_ref_id, chunk_ordinal, chunk_offset_start, chunk_offset_end, document_offset_start, " +
             "document_offset_end, surface_form, proposed_type, outcome, reason_code, resolved_entity_id, " +
             "canonical_label, best_score, runner_up_score, strategy_version, ontology_version, " +
-            "diagnostics_json, decided_at, superseded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "diagnostics_json, decided_at, superseded_at, search_generation) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row.tenantId(), row.sourceVersionId(), row.mentionId(), row.contentRefId(), row.chunkOrdinal(),
             row.chunkOffsetStart(), row.chunkOffsetEnd(), row.documentOffsetStart(), row.documentOffsetEnd(),
             row.surfaceForm(), row.proposedType(), row.outcome(), row.reasonCode(), row.resolvedEntityId(),
             row.canonicalLabel(),
             row.bestScore(), row.runnerUpScore(), row.strategyVersion(), row.ontologyVersion(),
-            row.diagnosticsJson(), row.decidedAt(), row.supersededAt()
+            row.diagnosticsJson(), row.decidedAt(), row.supersededAt(), row.searchGeneration()
         ));
     }
 
@@ -1025,7 +1026,8 @@ public class IngestionCacheClient {
                 row.getString("reason_code"), row.getString("resolved_entity_id"), row.getString("canonical_label"),
                 row.getDouble("best_score"), row.getDouble("runner_up_score"),
                 row.getString("strategy_version"), row.getString("ontology_version"),
-                row.getString("diagnostics_json"), row.getInstant("decided_at"), row.getInstant("superseded_at")
+                row.getString("diagnostics_json"), row.getInstant("decided_at"), row.getInstant("superseded_at"),
+                row.getString("search_generation")
             ));
         }
         return rows.stream().sorted(Comparator.comparing(ResolutionResultRow::mentionId)).toList();
@@ -1124,15 +1126,25 @@ public class IngestionCacheClient {
                                           String canonicalLabel, double bestScore, double runnerUpScore,
                                           String strategyVersion, String ontologyVersion,
                                           String diagnosticsJson, Instant now) {
+        return completeResolutionWork(row, ownerId, outcome, reasonCode, resolvedEntityId,
+                canonicalLabel, bestScore, runnerUpScore, strategyVersion, ontologyVersion,
+                diagnosticsJson, null, now);
+    }
+
+    public boolean completeResolutionWork(ResolutionWorkRow row, String ownerId,
+                                          String outcome, String reasonCode, String resolvedEntityId,
+                                          String canonicalLabel, double bestScore, double runnerUpScore,
+                                          String strategyVersion, String ontologyVersion,
+                                          String diagnosticsJson, String searchGeneration, Instant now) {
         ResultSet result = session.execute(SimpleStatement.newInstance(
             "UPDATE ingestion_cache.resolution_results SET outcome=?, reason_code=?, resolved_entity_id=?, " +
             "canonical_label=?, best_score=?, runner_up_score=?, strategy_version=?, ontology_version=?, " +
-            "diagnostics_json=?, decided_at=?, claim_status='COMPLETED', claim_owner_id=null, " +
-            "lease_expires_at=null, next_attempt_at=null, last_error=null, failure_class=null " +
-            "WHERE tenant_id=? AND source_version_id=? AND mention_id=? " +
+            "diagnostics_json=?, decided_at=?, search_generation=?, claim_status='COMPLETED', " +
+            "claim_owner_id=null, lease_expires_at=null, next_attempt_at=null, last_error=null, " +
+            "failure_class=null WHERE tenant_id=? AND source_version_id=? AND mention_id=? " +
             "IF claim_owner_id=? AND claim_status='PROCESSING'",
             outcome, reasonCode, resolvedEntityId, canonicalLabel, bestScore, runnerUpScore,
-            strategyVersion, ontologyVersion, diagnosticsJson, now,
+            strategyVersion, ontologyVersion, diagnosticsJson, now, searchGeneration,
             row.tenantId(), row.sourceVersionId(), row.mentionId(), ownerId
         ));
         return result.wasApplied();

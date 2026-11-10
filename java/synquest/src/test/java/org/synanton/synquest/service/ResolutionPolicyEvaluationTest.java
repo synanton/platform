@@ -170,6 +170,8 @@ class ResolutionPolicyEvaluationTest {
             if (testCase.expectedOutcome() == ResolutionOutcome.RESOLVED) {
                 assertThat(decision.resolvedEntityId()).as("case " + testCase.id())
                         .isEqualTo(testCase.expectedEntityId());
+                assertThat(decision.searchGeneration()).as("search generation for " + testCase.id())
+                        .isNotBlank();
             }
         }
 

@@ -118,7 +118,7 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Concurrency fencing (PR #4c.4)** — `:ResolutionSlot` locks, fencing tokens, unique anchor/evidence/relation constraints, 10-thread resolution/promotion tests; closes #576.
 - [x] **Recoverable resolution/promotion consumers (PR #4d.1)** — LWT claims with lease/owner, attempt fencing, explicit failure classes, independent `ResolutionConsumer`/`PromotionConsumer`, V25 claim schema, default-disabled flags, retry/terminal/metrics tests.
 - [x] **Crash reconciliation (PR #4d.2 / #578)** — Cassandra-driven state matrix, exact resolution/entity/fence checks, owner-guarded repair, higher-fence protection, stale-edge detection-only with metrics/identifiers; `relix.reconciliation.enabled=false`. Retraction policy remains #584.
-- [ ] **Search-generation propagation (#577)** and **evidence retraction** — deferred.
+- [x] **Search-generation propagation (#577)** — Lucene generation → candidate → decision → Cassandra `resolution_results.search_generation` (V26) → Neo4j `:RESOLVES_TO.search_generation`; fixture and real-store assertions added. **Evidence retraction** remains deferred.
 
 ## P2 — Focused graph exploration (#508)
 

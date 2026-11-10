@@ -80,6 +80,7 @@ class SearchAdapterCandidateProviderTest {
             assertThat(candidate.matchedField()).isEqualTo("label");
             assertThat(candidate.retrievalStrategy()).isEqualTo("RRF");
             assertThat(candidate.retrievalScore()).isPositive();
+            assertThat(candidate.searchGeneration()).isNotBlank();
         });
     }
 

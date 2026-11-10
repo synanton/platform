@@ -135,6 +135,9 @@ class ConsumerFaultInjectionIntegrationTest {
         assertThat(completed.outcome()).isEqualTo("RESOLVED");
         assertThat(activeEdgeCount(mention)).isEqualTo(1);
         assertThat(activeEntity(mention)).isEqualTo(entity);
+        assertThat(activeSearchGeneration(mention)).isEqualTo("gen-589");
+        assertThat(cache.listResolutionResults(TENANT, VERSION)).filteredOn(row -> row.mentionId().equals(mention))
+                .singleElement().satisfies(row -> assertThat(row.searchGeneration()).isEqualTo("gen-589"));
         assertThat(writer.calls).isEqualTo(2);
     }
 
@@ -332,7 +335,7 @@ class ConsumerFaultInjectionIntegrationTest {
                 return List.of();
             }
             return List.of(new ResolutionCandidate(entity, context.surfaceForm(),
-                    context.proposedType(), 0.9, "label", "RRF"));
+                    context.proposedType(), 0.9, "label", "RRF", "gen-589"));
         };
         ResolutionPolicy policy = new org.synanton.synquest.resolution.DefaultResolutionPolicy(
                 "v1", 0.02, 0.001, new ExactTypeCompatibility());
@@ -390,6 +393,14 @@ class ConsumerFaultInjectionIntegrationTest {
         return count("MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mention}) "
                 + "-[r:RESOLVES_TO {active: true}]->() RETURN count(r) AS c",
                 Map.of("tenant", TENANT, "mention", mention));
+    }
+
+    private static String activeSearchGeneration(String mention) {
+        List<Map<String, Object>> rows = cypher.read(
+                "MATCH (m:ExtractedMention {tenant_id: $tenant, mention_id: $mention}) "
+                        + "-[r:RESOLVES_TO {active: true}]->() RETURN r.search_generation AS generation",
+                Map.of("tenant", TENANT, "mention", mention));
+        return rows.isEmpty() ? null : String.valueOf(rows.getFirst().get("generation"));
     }
 
     private static String activeEntity(String mention) {

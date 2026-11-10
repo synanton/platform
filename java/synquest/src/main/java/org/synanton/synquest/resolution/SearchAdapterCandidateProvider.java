@@ -76,7 +76,7 @@ public final class SearchAdapterCandidateProvider implements ResolutionCandidate
             String label = hit.entityLabel() == null ? hit.entityId() : hit.entityLabel();
             candidates.add(new ResolutionCandidate(
                     hit.entityId(), label, currentType.get(), hit.score(),
-                    matchedField(context.surfaceForm(), hit), "RRF"));
+                    matchedField(context.surfaceForm(), hit), "RRF", result.searchGeneration()));
         }
         return candidates;
     }
