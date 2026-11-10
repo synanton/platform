@@ -99,6 +99,9 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
         if (searcher == null) {
             throw new IllegalStateException("Index not ready for tenant: " + tenant);
         }
+        // Snapshot the searcher version at search start; never read it after the
+        // policy decision. The value is carried in SearchTrace/SearchResult.
+        long searchGeneration = searcher.generation();
 
         int topK = req.topK() != null ? req.topK() : props.search().defaultTopK();
         int topKDense = req.topKDense() != null ? req.topKDense() : props.search().defaultTopKDense();
@@ -256,7 +259,7 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
 
             long totalMs = System.currentTimeMillis() - t0;
             SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
-                    searcher.generation(), rerankMs, rerankRequested ? fused.size() : null);
+                    searchGeneration, rerankMs, rerankRequested ? fused.size() : null);
             QueryUsage queryUsage = new QueryUsage(totalMs, embedMs, queryInputChars, 0, embedSkipped, embedCached);
             return new SearchResponse(hits, trace, queryUsage);
     }
@@ -556,6 +559,8 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
         if (searcher == null) {
             throw new IllegalStateException("Index not ready for tenant: " + tenant);
         }
+        // Snapshot the searcher version before candidate retrieval.
+        long searchGeneration = searcher.generation();
         int topK = query.topK() != null ? query.topK() : props.search().defaultTopK();
         int topKDense = query.topKDense() != null ? query.topKDense() : props.search().defaultTopKDense();
         int topKLexical = query.topKLexical() != null ? query.topKLexical() : props.search().defaultTopKLexical();
@@ -609,7 +614,7 @@ public class LuceneSearchEngine implements SearchEngineAdapter {
         }
         long totalMs = System.currentTimeMillis() - t0;
         SearchTrace trace = new SearchTrace(embedMs, denseMs, lexicalMs, fusionMs, totalMs,
-                searcher.generation());
+                searchGeneration);
         QueryUsage usage = new QueryUsage(totalMs, embedMs,
                 query.text() == null ? 0 : query.text().length(), 0, embedSkipped, embedCached);
         return new SearchResult(documents, trace, usage);
