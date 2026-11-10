@@ -9,6 +9,8 @@ import { Login } from "./pages/Login";
 import { McpConfig } from "./pages/McpConfig";
 import { OntologyViewer } from "./pages/OntologyViewer";
 import { Chat } from "./pages/Chat";
+import { Settings } from "./pages/Settings";
+import { EntityGraphPage } from "./pages/EntityGraphPage";
 import { isAuthenticated } from "./services/auth";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -34,6 +36,7 @@ export default function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/viewer" element={<OntologyViewer />} />
+        <Route path="/entity-graph" element={<EntityGraphPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/grants" element={<GrantsView />} />
         <Route path="/mcp-config" element={<McpConfig />} />

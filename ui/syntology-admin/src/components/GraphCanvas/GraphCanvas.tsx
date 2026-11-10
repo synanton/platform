@@ -62,7 +62,12 @@ export function GraphCanvas() {
           },
         },
       ],
-      layout: { name: "cola", animate: true, randomize: true, maxSimulationTime: 3000 },
+      layout: {
+        name: "cola",
+        animate: true,
+        randomize: true,
+        maxSimulationTime: 3000,
+      } as unknown as cytoscape.LayoutOptions,
     });
 
     cy.on("tap", "node", (event) => {
