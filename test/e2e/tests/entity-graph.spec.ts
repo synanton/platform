@@ -1,3 +1,6 @@
+// Playwright tests use route interception to mock /api/v1/entities/{id}/neighbors.
+// A real E2E against deployed Relix is deferred to #589 activation.
+
 import { expect, test, type Page } from "@playwright/test";
 
 const session = {
@@ -11,8 +14,18 @@ const session = {
 
 const center = { id: "entity-1", label: "Halcyon-7", type: "MaintenanceSystem" };
 const neighbors = [
-  { entity: { id: "alpha", label: "Alpha", type: "Protocol" }, relation: "requires", direction: "OUTGOING" },
-  { entity: { id: "beta", label: "Beta", type: "Organization" }, relation: "supports", direction: "INCOMING" },
+  {
+    entity: { id: "alpha", label: "Alpha", type: "Protocol" },
+    relation: "requires",
+    direction: "OUTGOING",
+    canonical_relation_id: "rel-out",
+  },
+  {
+    entity: { id: "beta", label: "Beta", type: "Organization" },
+    relation: "supports",
+    direction: "INCOMING",
+    canonical_relation_id: "rel-in",
+  },
 ];
 const evidence = [
   {
@@ -22,6 +35,7 @@ const evidence = [
     source_version: "version-1",
     offset_start: 4,
     offset_end: 12,
+    canonical_relation_id: "rel-out",
   },
   {
     relation: "supports",
@@ -30,6 +44,7 @@ const evidence = [
     source_version: "version-2",
     offset_start: 20,
     offset_end: 28,
+    canonical_relation_id: "rel-in",
   },
 ];
 
@@ -66,14 +81,14 @@ test("renders bidirectional edges and edge evidence", async ({ page }) => {
   await page.goto("/entity-graph?entity=entity-1");
 
   await expect(page.getByRole("heading", { name: "Entity Graph" })).toBeVisible();
-  await expect(page.getByTestId("entity-edge-OUTGOING-alpha")).toBeVisible();
-  await expect(page.getByTestId("entity-edge-INCOMING-beta")).toBeVisible();
+  await expect(page.getByTestId("entity-edge-OUTGOING-rel-out-alpha")).toBeVisible();
+  await expect(page.getByTestId("entity-edge-INCOMING-rel-in-beta")).toBeVisible();
 
-  await page.getByTestId("entity-edge-OUTGOING-alpha").click();
+  await page.getByTestId("entity-edge-OUTGOING-rel-out-alpha").click();
   await expect(page.getByText("chunk-1")).toBeVisible();
   await expect(page.getByText("source version-1")).toBeVisible();
 
-  await page.getByTestId("entity-edge-INCOMING-beta").click();
+  await page.getByTestId("entity-edge-INCOMING-rel-in-beta").click();
   await expect(page.getByText("chunk-2")).toBeVisible();
   await expect(page.getByText("source version-2")).toBeVisible();
 });
@@ -109,6 +124,7 @@ test("renders loading and 50-neighbor truncation", async ({ page }) => {
     entity: { id: `n-${index}`, label: `N ${index}`, type: "Concept" },
     relation: "relates_to",
     direction: "OUTGOING",
+    canonical_relation_id: `rel-${index}`,
   }));
   await mockNeighbors(
     page,

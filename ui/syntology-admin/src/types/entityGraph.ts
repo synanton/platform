@@ -10,6 +10,7 @@ export interface EntityNeighbor {
   entity: EntityNode;
   relation: string;
   direction: NeighborDirection;
+  canonical_relation_id?: string | null;
 }
 
 export interface EntityEvidence {
@@ -19,6 +20,7 @@ export interface EntityEvidence {
   source_version: string;
   offset_start: number;
   offset_end: number;
+  canonical_relation_id?: string | null;
 }
 
 export interface EntityNeighborsResponse {

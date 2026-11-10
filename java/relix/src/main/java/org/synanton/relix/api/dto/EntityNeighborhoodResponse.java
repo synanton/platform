@@ -18,7 +18,8 @@ public record EntityNeighborhoodResponse(
     public record Neighbor(
             Node entity,
             String relation,
-            String direction) {}
+            String direction,
+            @JsonProperty("canonical_relation_id") String canonicalRelationId) {}
 
     public record Evidence(
             String relation,
@@ -26,5 +27,6 @@ public record EntityNeighborhoodResponse(
             @JsonProperty("chunk_id") String chunkId,
             @JsonProperty("source_version") String sourceVersion,
             @JsonProperty("offset_start") int offsetStart,
-            @JsonProperty("offset_end") int offsetEnd) {}
+            @JsonProperty("offset_end") int offsetEnd,
+            @JsonProperty("canonical_relation_id") String canonicalRelationId) {}
 }

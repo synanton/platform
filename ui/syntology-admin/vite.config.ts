@@ -9,7 +9,7 @@ export default defineConfig({
       "/api/v1/entities": {
         target: "http://localhost:8084",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        rewrite: (path) => path.replace(/^\/api/, "").split("?")[0],
       },
       "/api": "http://localhost:8080",
       "/mcp": "http://localhost:8091",

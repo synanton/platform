@@ -47,10 +47,11 @@ function EvidencePanel({
   evidence: EntityNeighborsResponse["evidence"];
 }) {
   const matching = selected
-    ? evidence.filter(
-        (item) =>
-          item.relation === selected.relation &&
-          item.neighbor_entity_id === selected.entity.id,
+    ? evidence.filter((item) =>
+        selected.canonical_relation_id
+          ? item.canonical_relation_id === selected.canonical_relation_id
+          : item.relation === selected.relation &&
+            item.neighbor_entity_id === selected.entity.id,
       )
     : [];
 

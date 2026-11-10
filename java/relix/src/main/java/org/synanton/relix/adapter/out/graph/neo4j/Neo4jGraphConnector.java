@@ -683,7 +683,8 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                     row.get("nlabel") == null ? null : String.valueOf(row.get("nlabel")),
                     row.get("ntype") == null ? null : String.valueOf(row.get("ntype")),
                     relation,
-                    String.valueOf(row.get("direction"))));
+                    String.valueOf(row.get("direction")),
+                    canonicalId));
             if (canonicalId != null) {
                 relationByCanonicalId.putIfAbsent(canonicalId, relation);
                 neighborByCanonicalId.putIfAbsent(canonicalId, nid);
@@ -712,7 +713,8 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                         row.get("source_version") == null ? null
                                 : String.valueOf(row.get("source_version")),
                         toInt(row.get("offset_start")),
-                        toInt(row.get("offset_end"))));
+                        toInt(row.get("offset_end")),
+                        canonicalId));
             }
         }
         Map<String, Object> entity = center.getFirst();

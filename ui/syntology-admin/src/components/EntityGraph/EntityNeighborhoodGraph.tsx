@@ -9,7 +9,8 @@ interface EntityNeighborhoodGraphProps {
 }
 
 export function edgeKey(neighbor: EntityNeighbor): string {
-  return `${neighbor.direction}|${neighbor.relation}|${neighbor.entity.id}`;
+  const identity = neighbor.canonical_relation_id ?? `${neighbor.relation}|${neighbor.entity.id}`;
+  return `${neighbor.direction}|${identity}`;
 }
 
 function truncate(value: string | null, max: number): string {
@@ -65,9 +66,19 @@ export function EntityNeighborhoodGraph({
         return (
           <g
             key={`${key}-${index}`}
-            data-testid={`entity-edge-OUTGOING-${neighbor.entity.id}`}
+            data-testid={`entity-edge-OUTGOING-${neighbor.canonical_relation_id ?? neighbor.relation}-${neighbor.entity.id}`}
+            data-selected={selected}
+            role="button"
+            tabIndex={0}
+            aria-label={`Outgoing ${neighbor.relation} to ${neighbor.entity.label ?? neighbor.entity.id}; press Enter to inspect evidence`}
             onClick={() => onSelect(neighbor)}
-            className="cursor-pointer"
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelect(neighbor);
+              }
+            }}
+            className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
           >
             <line
               x1={center.x + 34}
@@ -111,7 +122,7 @@ export function EntityNeighborhoodGraph({
               <circle cx={620} cy={y} r={26} fill={nodeColor(neighbor.entity.type ?? "")} opacity={0.15} />
               <circle cx={620} cy={y} r={20} fill={nodeColor(neighbor.entity.type ?? "")} />
               <text x={620} y={y + 4} textAnchor="middle" fontSize={9} fill="#fff">
-                {truncate(neighbor.entity.label ?? neighbor.entity.id, 16)}
+                {truncate(neighbor.entity.label ?? neighbor.entity.id, 20)}
               </text>
             </g>
           </g>
@@ -125,9 +136,19 @@ export function EntityNeighborhoodGraph({
         return (
           <g
             key={`${key}-${index}`}
-            data-testid={`entity-edge-INCOMING-${neighbor.entity.id}`}
+            data-testid={`entity-edge-INCOMING-${neighbor.canonical_relation_id ?? neighbor.relation}-${neighbor.entity.id}`}
+            data-selected={selected}
+            role="button"
+            tabIndex={0}
+            aria-label={`Incoming ${neighbor.relation} from ${neighbor.entity.label ?? neighbor.entity.id}; press Enter to inspect evidence`}
             onClick={() => onSelect(neighbor)}
-            className="cursor-pointer"
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelect(neighbor);
+              }
+            }}
+            className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
           >
             <line x1={76} y1={y} x2={center.x - 34} y2={center.y} stroke="transparent" strokeWidth={16} />
             <line
@@ -157,14 +178,14 @@ export function EntityNeighborhoodGraph({
               <circle cx={60} cy={y} r={26} fill={nodeColor(neighbor.entity.type ?? "")} opacity={0.15} />
               <circle cx={60} cy={y} r={20} fill={nodeColor(neighbor.entity.type ?? "")} />
               <text x={60} y={y + 4} textAnchor="middle" fontSize={9} fill="#fff">
-                {truncate(neighbor.entity.label ?? neighbor.entity.id, 16)}
+                {truncate(neighbor.entity.label ?? neighbor.entity.id, 20)}
               </text>
             </g>
           </g>
         );
       })}
 
-      <g pointerEvents="none">
+      <g tabIndex={0} role="img" aria-label={`Center entity ${entity.label ?? entity.id}`}>
         <circle cx={center.x} cy={center.y} r={38} fill={nodeColor(entity.type ?? "")} opacity={0.16} />
         <circle cx={center.x} cy={center.y} r={30} fill={nodeColor(entity.type ?? "")} />
         <text x={center.x} y={center.y + 4} textAnchor="middle" fontSize={11} fontWeight={600} fill="#fff">
