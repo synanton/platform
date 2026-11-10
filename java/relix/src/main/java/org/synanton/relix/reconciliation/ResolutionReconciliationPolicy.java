@@ -131,7 +131,8 @@ public final class ResolutionReconciliationPolicy {
                 ResolutionOutcome.valueOf(result.outcome()), result.reasonCode(),
                 result.resolvedEntityId(), result.canonicalLabel(), result.bestScore(),
                 result.runnerUpScore(), result.strategyVersion(), result.ontologyVersion(),
-                diagnostics(result.diagnosticsJson()), null, work.attemptCount());
+                diagnostics(result.diagnosticsJson()), null, work.attemptCount(),
+                result.searchGeneration());
     }
 
     private ResolutionDecision decisionFromGraph(ResolutionWorkRow work,
@@ -142,7 +143,7 @@ public final class ResolutionReconciliationPolicy {
                 state.bestScore(), state.runnerUpScore(), state.policyVersion(),
                 state.ontologyVersion(),
                 Map.of("reconciled", true, "resolution_id", String.valueOf(state.resolutionId())),
-                state.retrievalStrategy(), state.fencingToken());
+                state.retrievalStrategy(), state.fencingToken(), state.searchGeneration());
     }
 
     private Map<String, Object> diagnostics(String json) {

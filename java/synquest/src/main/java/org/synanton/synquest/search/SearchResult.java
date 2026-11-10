@@ -8,4 +8,10 @@ import org.synanton.synquest.api.dto.SearchTrace;
 public record SearchResult(
         List<SearchDocument> documents,
         SearchTrace trace,
-        QueryUsage queryUsage) {}
+        QueryUsage queryUsage) {
+
+    /** Generation of the Lucene searcher used for this result; null only for an empty trace. */
+    public String searchGeneration() {
+        return trace == null ? null : Long.toString(trace.indexGeneration());
+    }
+}

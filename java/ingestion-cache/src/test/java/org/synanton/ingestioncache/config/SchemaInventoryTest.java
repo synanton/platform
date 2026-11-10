@@ -189,6 +189,7 @@ class SchemaInventoryTest {
             "resolution_results.connector_id",
             "resolution_results.source_id",
             "resolution_results.resource_id",
+            "resolution_results.search_generation",
             "relation_promotion_results.claim_status",
             "relation_promotion_results.claim_owner_id",
             "relation_promotion_results.lease_expires_at",

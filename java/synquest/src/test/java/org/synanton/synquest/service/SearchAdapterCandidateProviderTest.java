@@ -80,7 +80,23 @@ class SearchAdapterCandidateProviderTest {
             assertThat(candidate.matchedField()).isEqualTo("label");
             assertThat(candidate.retrievalStrategy()).isEqualTo("RRF");
             assertThat(candidate.retrievalScore()).isPositive();
+            assertThat(candidate.searchGeneration()).isNotBlank();
         });
+    }
+
+    @Test
+    void generationChangesWhenProjectionRefreshes() throws Exception {
+        when(lookup.getActiveEntityType(TENANT, "e-halcyon")).thenReturn(Optional.of("MaintenanceSystem"));
+        service.upsertEntities(TENANT, List.of(new EntitySearchDocument(
+                "e-halcyon", "Halcyon-7", List.of(), "MaintenanceSystem", "coolant loop", null)));
+        String first = provider.candidates(context("Halcyon-7")).getFirst().searchGeneration();
+
+        service.upsertEntities(TENANT, List.of(new EntitySearchDocument(
+                "e-other", "Other", List.of(), "MaintenanceSystem", "other", null)));
+        String second = provider.candidates(context("Halcyon-7")).getFirst().searchGeneration();
+
+        assertThat(first).isNotBlank();
+        assertThat(second).isNotBlank().isNotEqualTo(first);
     }
 
     @Test

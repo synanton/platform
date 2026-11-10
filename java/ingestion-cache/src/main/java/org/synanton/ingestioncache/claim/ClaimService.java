@@ -96,7 +96,7 @@ public class ClaimService {
         return client.completeResolutionWork(row, ownerId, decision.outcome().name(),
                 decision.reasonCode(), decision.resolvedEntityId(), decision.canonicalLabel(),
                 decision.bestScore(), decision.runnerUpScore(), decision.strategyVersion(),
-                decision.ontologyVersion(), diagnostics, now);
+                decision.ontologyVersion(), diagnostics, decision.searchGeneration(), now);
     }
 
     public boolean releaseResolution(ResolutionWorkRow row, String ownerId,

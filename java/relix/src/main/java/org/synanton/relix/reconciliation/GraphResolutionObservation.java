@@ -15,4 +15,15 @@ public record GraphResolutionObservation(
         double bestScore,
         double runnerUpScore,
         String retrievalStrategy,
-        boolean multipleActive) {}
+        boolean multipleActive,
+        String searchGeneration) {
+
+    /** Backward-compatible constructor: no search generation. */
+    public GraphResolutionObservation(String sourceVersionId, String resolutionId, String entityId,
+                                      long fencingToken, String policyVersion, String ontologyVersion,
+                                      double bestScore, double runnerUpScore, String retrievalStrategy,
+                                      boolean multipleActive) {
+        this(sourceVersionId, resolutionId, entityId, fencingToken, policyVersion, ontologyVersion,
+                bestScore, runnerUpScore, retrievalStrategy, multipleActive, null);
+    }
+}

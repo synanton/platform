@@ -269,6 +269,17 @@ entity ID, source version, and fence; Cassandra completion is owner/lease-guarde
 The reconciler is default-disabled (`relix.reconciliation.enabled=false`) and
 requires the Neo4j connector. Metrics: `reconciliation.{graph_repaired,cassandra_repaired,stale_edge,contradiction,errors,skipped}`.
 
+## PR #577 — search-generation provenance
+
+Resolution decisions now carry the Lucene searcher generation used for candidate retrieval:
+
+- `SearchResult.searchGeneration()` exposes `SearchTrace.indexGeneration` (the existing SearcherManager generation).
+- `ResolutionCandidate.searchGeneration` carries it through the provider; the policy writes it to `ResolutionDecision.searchGeneration`.
+- V26 adds `resolution_results.search_generation`; completed Cassandra rows persist it.
+- `:RESOLVES_TO` stores `search_generation`; the reconciliation observation preserves it.
+- Tests: the real Lucene fixture asserts a non-blank generation on every RESOLVED decision; the real Cassandra+Neo4j fault-injection suite asserts the persisted Cassandra field and the Neo4j edge property.
+- Scope is metadata propagation only; annotation contract, extraction path, policy thresholds, and the frozen #558 baseline are unchanged.
+
 ## Acceptance gates for PR #4
 
 - Tenant isolation for retrieval and promotion.
