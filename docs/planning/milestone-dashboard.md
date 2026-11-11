@@ -1,6 +1,6 @@
 # Milestone dashboard
 
-**Status:** Restart-resilient live demo — achieved. Graph-contract migration and full activation verification — in progress.
+**Status:** Restart-resilient live vertical slice achieved. Graph-contract formalization and reconciliation migration in progress. Full adapter conformance and activation fault-matrix verification outstanding.
 
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap.
@@ -21,8 +21,8 @@ not a feature roadmap.
 | K8s RAKG overlay | #605 | Neo4j/Relix/Syntology/network policies | Post-#592 rerun |
 | Live K8s Entity Graph E2E | #608/#606 | `docs/acceptance/k8s-activation-2026-11-11.md`; 25.1s | Full #589 matrix |
 | Restart-safe graph persistence | #610/#612, ADR-025 | 122 Relix tests; repeated/partial/interrupted load; simultaneous Synquest+Relix restart; no duplicate edges | #592 seam migration |
-| Reconciliation port migration | #617 | seam removed; `ResolutionGraphPort`; Relix tests | #587 Increments B/C/D |
-| Graph identity + capabilities | this branch | `GraphIdentity`, `GraphCapabilities`, fail-fast capability checks (Relix tests 122) | conformance suite; broader port adoption |
+| Reconciliation port migration | #617 | Increment A merged; seam removed; Relix tests | #587 Increments B/C/D |
+| Graph identity + capabilities | #618 (in review) | `GraphIdentity`, `GraphCapabilities`, capability-gated startup; tests pending review | conformance suite; broader port adoption |
 
 ## Open gates
 
