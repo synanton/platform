@@ -4,9 +4,9 @@
 # Pattern copied from gpu-runtime/deployments/homelab/scripts/mirror-images.sh.
 #
 # Two image classes:
-#   1. BUILT   — synflux + synquest (this repo) and extraction-gateway (the
-#                sibling content_extractor repo): built from source on THIS
-#                machine, then pushed.
+#   1. BUILT   — synflux, synquest, relix, syntology (this repo) and
+#                extraction-gateway (the sibling content_extractor repo):
+#                built from source on THIS machine, then pushed.
 #   2. MIRRORED — third-party images pulled from upstream, retagged, pushed.
 #
 # The cluster runs offline: every image a pod references must exist in
@@ -28,7 +28,7 @@ case "${1:-}" in
          exit 1 ;;
 esac
 REGISTRY="${1:-local-registry:5000}"
-TAG="slice-$(date +%Y%m%d)"
+TAG="${IMAGE_TAG:-slice-$(date +%Y%m%d)}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLATFORM_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 # The extraction gateway lives in the sibling content_extractor repo
@@ -219,7 +219,8 @@ build_host_jars() {
     [ "$PREBUILT" = "1" ] || return 0
     log "building boot jars on the host"
     "$PLATFORM_ROOT/gradlew" -q -p "$PLATFORM_ROOT" \
-        :java:synflux:bootJar :java:synquest:bootJar -x test
+        :java:synflux:bootJar :java:synquest:bootJar :java:relix:bootJar -x test
+    "$PLATFORM_ROOT/gradlew" -q -p "$PLATFORM_ROOT" :java:syntology:bootJar -PskipUi -x test
     "$CONTENT_EXTRACTOR_ROOT/gradlew" -q -p "$CONTENT_EXTRACTOR_ROOT" \
         :java:extraction-gateway:bootJar -x test
 }
@@ -227,12 +228,15 @@ build_host_jars() {
 log "built images (tag ${TAG})"
 build_and_push synflux              "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synflux.Dockerfile"  || true
 build_and_push synquest             "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/synquest.Dockerfile" || true
+build_and_push relix                "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/relix.Dockerfile"    || true
+build_and_push syntology            "$PLATFORM_ROOT"           "$PLATFORM_ROOT/deployments/docker/syntology.Dockerfile" || true
 build_and_push extraction-gateway   "$CONTENT_EXTRACTOR_ROOT"  "$CONTENT_EXTRACTOR_ROOT/deployment/docker/extraction-gateway.Dockerfile" || true
 
 # ── 2. Mirrored third-party images (pinned; record digests at freeze) ───────
 declare -A IMAGES=(
   [cassandra]="docker.io/library/cassandra:4.1"
   [postgres]="docker.io/library/postgres:16-alpine"
+  [neo4j]="docker.io/library/neo4j:5.26"
   [alpine]="docker.io/library/alpine:3"
   [curlimages-curl]="docker.io/curlimages/curl:8.10.1"
   # MinIO withdrew its community images on 2025-10-23; Chainguard's free

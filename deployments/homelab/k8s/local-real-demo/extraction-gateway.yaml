@@ -34,8 +34,8 @@ spec:
         - name: local-registry-cred
       containers:
         - name: gateway
-          image: local-registry:5000/synanton/extraction-gateway@sha256:1f79c5991c395aab24e796e0500a2ed1f7c8dd21cd540ded4198eea29e8f65c2
-          imagePullPolicy: IfNotPresent
+          image: local-registry:5000/synanton/extraction-gateway:local-real-demo
+          imagePullPolicy: Always
           env:
             - name: EXTRACTION_DB_URL
               value: jdbc:postgresql://postgres:5432/synanton
