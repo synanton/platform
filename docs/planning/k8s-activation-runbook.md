@@ -30,6 +30,24 @@ Do not flip consumer flags to discover missing services at runtime.
 - [ ] Syntology is deployed; record service URL and ontology version/data digest. The overlay seeds `sample-ontology.ttl` as version `1.0.0` for tenant `demo` when the Syntology DB is empty; if it is not empty, create/activate the intended version explicitly.
 - [ ] Cassandra is running (`synanton` namespace) and the keyspace exists.
 
+### Deployment commands (manifests from #605)
+
+From `deployments/homelab/`, with `config/.env` populated (including
+`NEO4J_PASSWORD`):
+
+```bash
+IMAGE_TAG=local-real-demo ./scripts/mirror-images.sh
+./scripts/deploy-demo.sh
+```
+
+`deploy-demo.sh` creates `synanton-jwt`, `postgres-cred`, and `neo4j-cred`,
+applies the data layer and `kubectl apply -k k8s/local-real-demo/`, then applies
+the TEI and vLLM gpu-plane exceptions. Confirm the new workloads:
+
+```bash
+kubectl -n synanton get statefulset/neo4j deployment/relix deployment/syntology
+```
+
 ### Build and push at the activation head
 
 Use the commit that contains this runbook and record it:

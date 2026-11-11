@@ -1,13 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const relixTarget = process.env.VITE_RELIX_URL ?? "http://localhost:8084";
+
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
     proxy: {
       "/api/v1/entities": {
-        target: "http://localhost:8084",
+        target: relixTarget,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, "").split("?")[0],
       },
