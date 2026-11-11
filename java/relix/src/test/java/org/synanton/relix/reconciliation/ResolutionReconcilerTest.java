@@ -9,7 +9,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionGraphPort;
+import org.synanton.common.resolution.ResolutionWriteOutcome;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -42,7 +45,7 @@ class ResolutionReconcilerTest {
 
     private final IngestionCacheClient cache = mock(IngestionCacheClient.class);
     private final ClaimService claims = mock(ClaimService.class);
-    private final ResolutionReconciliationGraph graph = mock(ResolutionReconciliationGraph.class);
+    private final ResolutionGraphPort graph = mock(ResolutionGraphPort.class);
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
     private final ReconciliationProperties properties =
             new ReconciliationProperties(true, TENANT, 100, 60000L, 120);

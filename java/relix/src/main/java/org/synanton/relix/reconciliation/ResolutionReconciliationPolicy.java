@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.ingestioncache.domain.ResolutionResultRow;

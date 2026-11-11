@@ -1,5 +1,7 @@
 package org.synanton.relix.reconciliation;
 
+import org.synanton.common.resolution.GraphResolutionObservation;
+
 import org.synanton.common.resolution.ResolutionDecision;
 
 /** A reconciliation decision plus the single-identity observation it was based on. */

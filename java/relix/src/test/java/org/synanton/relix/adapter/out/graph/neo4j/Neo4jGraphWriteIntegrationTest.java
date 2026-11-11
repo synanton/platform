@@ -35,7 +35,7 @@ import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
-import org.synanton.relix.reconciliation.ResolutionKey;
+import org.synanton.common.resolution.ResolutionKey;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 

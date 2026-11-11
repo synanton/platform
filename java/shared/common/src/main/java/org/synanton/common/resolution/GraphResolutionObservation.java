@@ -1,4 +1,4 @@
-package org.synanton.relix.reconciliation;
+package org.synanton.common.resolution;
 
 /**
  * Minimal active-edge observation for one mention identity. No collections.
