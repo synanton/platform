@@ -21,14 +21,15 @@ not a feature roadmap.
 | K8s RAKG overlay | #605 | Neo4j/Relix/Syntology/network policies | Post-#592 rerun |
 | Live K8s Entity Graph E2E | #608/#606 | `docs/acceptance/k8s-activation-2026-11-11.md`; 25.1s | Full #589 matrix |
 | Restart-safe graph persistence | #610/#612, ADR-025 | 122 Relix tests; repeated/partial/interrupted load; simultaneous Synquest+Relix restart; no duplicate edges | #592 seam migration |
-| Reconciliation port migration | this branch | seam removed; `ResolutionGraphPort` capability validation; Relix tests | #587 full capability/conformance |
+| Reconciliation port migration | #617 | seam removed; `ResolutionGraphPort`; Relix tests | #587 Increments B/C/D |
+| Graph identity + capabilities | this branch | `GraphIdentity`, `GraphCapabilities`, fail-fast capability checks (Relix tests 122) | conformance suite; broader port adoption |
 
 ## Open gates
 
-- **#587** — full storage-neutral graph contracts and adapter conformance. The
-  reconciliation seam is removed in this branch, but the broader contract
-  inventory, logical scope/projection identity, transaction guarantees, and
-  adapter conformance suite remain.
+- **#587** — Increment A (seam removal, #617) is merged. Increments B/C are in
+  progress on this branch: explicit `GraphIdentity`, `GraphCapabilities`, and
+  startup capability checks. The broader port adoption, conformance suite,
+  transaction guarantees, and rule-5 lint remain.
 - **#592** — post-#587 reconciliation migration verification; cannot close until
   #587 is complete.
 - **#589** — full combined consumer/reconciler concurrency/lost-response matrix
@@ -40,8 +41,9 @@ not a feature roadmap.
 
 ## CI state
 
-- PR #616 tightens docs-ru/prometheus triggers, adds PR concurrency cancellation,
-  and records the test matrix in `docs/ci/coverage.md`.
+- PR #616 and #617 are merged. #616 tightens docs-ru/prometheus triggers, adds
+  PR concurrency cancellation, and records the test matrix in
+  `docs/ci/coverage.md`.
 - Explicitly excluded from `buildAll` for runner memory:
   `content-cache-postgres`, `synvault-postgres`, `synquest-postgres`.
 

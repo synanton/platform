@@ -13,6 +13,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionGraphPort;
@@ -127,11 +128,12 @@ public final class ResolutionReconciler {
 
     private void reconcile(ResolutionWorkRow row, ResolutionResultRow result, Instant now) {
         ResolutionKey key = new ResolutionKey(row.tenantId(), row.mentionId());
+        GraphIdentity identity = GraphIdentity.canonical(row.tenantId(), "active");
         Optional<GraphResolutionObservation> active;
         boolean history;
         try {
-            active = graph.activeResolution(key);
-            history = active.isEmpty() && graph.hasResolutionHistory(key);
+            active = graph.activeResolution(identity, key);
+            history = active.isEmpty() && graph.hasResolutionHistory(identity, key);
         } catch (Exception e) {
             errors.increment();
             log.warn("Reconciliation graph observation failed tenant={} mention={}: {}",
@@ -155,7 +157,8 @@ public final class ResolutionReconciler {
 
     private void repairGraph(ResolutionWorkRow row, ReconciliationAction action) {
         try {
-            ResolutionWriteOutcome outcome = graph.ensureResolution(action.resolutionDecision());
+            ResolutionWriteOutcome outcome = graph.ensureResolution(
+                    GraphIdentity.canonical(row.tenantId(), "active"), action.resolutionDecision());
             switch (outcome) {
                 case APPLIED -> {
                     graphRepaired.increment();

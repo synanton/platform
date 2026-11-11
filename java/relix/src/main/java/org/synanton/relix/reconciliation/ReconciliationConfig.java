@@ -25,10 +25,10 @@ public class ReconciliationConfig {
             ObjectProvider<GraphConnector> configuredGraph,
             ReconciliationProperties properties, MeterRegistry registry) {
         GraphConnector graph = configuredGraph.getIfAvailable();
-        if (graph == null || !graph.supportsResolutionReconciliation()) {
+        if (graph == null || !graph.capabilities().supportsResolutionReconciliation()) {
             throw new IllegalStateException(
-                    "relix.reconciliation.enabled=true requires the configured graph adapter to "
-                            + "support resolution reconciliation; see #587/#592");
+                    "relix.reconciliation.enabled=true requires conditional writes, read-after-write, "
+                            + "and idempotent upsert from the configured graph adapter; see #587/#592");
         }
         return new ResolutionReconciler(cache, claims, graph, properties, registry);
     }

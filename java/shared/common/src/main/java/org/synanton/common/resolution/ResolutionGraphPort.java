@@ -18,9 +18,8 @@ public interface ResolutionGraphPort extends ResolutionGraphLookup {
         throw new UnsupportedOperationException("graph connector does not support resolution supersession");
     }
 
-    /** Whether this adapter implements exact-identity reconciliation operations. */
-    default boolean supportsResolutionReconciliation() {
-        return false;
+    default GraphCapabilities capabilities() {
+        return GraphCapabilities.NONE;
     }
 
     default Optional<GraphResolutionObservation> activeResolution(ResolutionKey key) {
@@ -33,5 +32,28 @@ public interface ResolutionGraphPort extends ResolutionGraphLookup {
 
     default ResolutionWriteOutcome ensureResolution(ResolutionDecision decision) {
         throw new UnsupportedOperationException("graph connector does not support reconciliation writes");
+    }
+
+    default Optional<GraphResolutionObservation> activeResolution(GraphIdentity identity, ResolutionKey key) {
+        requireIdentity(identity, key);
+        return activeResolution(key);
+    }
+
+    default boolean hasResolutionHistory(GraphIdentity identity, ResolutionKey key) {
+        requireIdentity(identity, key);
+        return hasResolutionHistory(key);
+    }
+
+    default ResolutionWriteOutcome ensureResolution(GraphIdentity identity, ResolutionDecision decision) {
+        if (identity == null || !identity.tenantId().equals(decision.tenantId())) {
+            throw new IllegalArgumentException("graph identity tenant must match the decision tenant");
+        }
+        return ensureResolution(decision);
+    }
+
+    private static void requireIdentity(GraphIdentity identity, ResolutionKey key) {
+        if (identity == null || key == null || !identity.tenantId().equals(key.tenantId())) {
+            throw new IllegalArgumentException("graph identity tenant must match the resolution key");
+        }
     }
 }

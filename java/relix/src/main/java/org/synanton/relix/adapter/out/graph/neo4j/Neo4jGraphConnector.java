@@ -25,6 +25,8 @@ import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.common.resolution.ContractViolationException;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
+import org.synanton.common.resolution.GraphCapabilities;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionKey;
 import org.synanton.common.resolution.ResolutionWriteOutcome;
@@ -123,8 +125,8 @@ public class Neo4jGraphConnector implements GraphConnector {
     }
 
     @Override
-    public boolean supportsResolutionReconciliation() {
-        return true;
+    public GraphCapabilities capabilities() {
+        return GraphCapabilities.neo4j();
     }
 
     @Override

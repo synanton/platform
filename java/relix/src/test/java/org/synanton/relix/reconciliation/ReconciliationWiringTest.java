@@ -27,8 +27,7 @@ class ReconciliationWiringTest {
                 .run(context -> {
                     assertThat(context).hasFailed();
                     assertThat(context.getStartupFailure())
-                            .hasStackTraceContaining("requires the configured graph adapter")
-                            .hasStackTraceContaining("support resolution reconciliation")
+                            .hasStackTraceContaining("requires conditional writes, read-after-write")
                             .hasStackTraceContaining("#587/#592");
                 });
     }

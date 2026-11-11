@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionGraphPort;
@@ -58,8 +59,8 @@ class ResolutionReconcilerTest {
         ResolutionResultRow result = result("UNRESOLVED");
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
-        when(graph.activeResolution(any())).thenReturn(Optional.of(state(ENTITY, "v1", 2)));
-        when(graph.hasResolutionHistory(any())).thenReturn(true);
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.of(state(ENTITY, "v1", 2)));
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(true);
 
         reconciler.poll();
 
@@ -80,7 +81,7 @@ class ResolutionReconcilerTest {
         ResolutionResultRow result = result("RESOLVED");
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
-        when(graph.activeResolution(any())).thenReturn(Optional.of(multipleActiveState()));
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.of(multipleActiveState()));
 
         reconciler.poll();
 
@@ -104,14 +105,14 @@ class ResolutionReconcilerTest {
         ResolutionResultRow result = result("RESOLVED");
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
-        when(graph.activeResolution(any())).thenReturn(Optional.empty());
-        when(graph.hasResolutionHistory(any())).thenReturn(false);
-        when(graph.ensureResolution(any())).thenReturn(ResolutionWriteOutcome.APPLIED);
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.empty());
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(false);
+        when(graph.ensureResolution(any(GraphIdentity.class), any())).thenReturn(ResolutionWriteOutcome.APPLIED);
 
         reconciler.poll();
 
         ArgumentCaptor<ResolutionDecision> intent = ArgumentCaptor.forClass(ResolutionDecision.class);
-        verify(graph).ensureResolution(intent.capture());
+        verify(graph).ensureResolution(any(GraphIdentity.class), intent.capture());
         assertThat(intent.getValue().mentionId()).isEqualTo(MENTION);
         assertThat(intent.getValue().fencingToken()).isEqualTo(3);
         assertThat(registry.get("reconciliation.graph_repaired").counter().count()).isEqualTo(1);
@@ -123,9 +124,9 @@ class ResolutionReconcilerTest {
         ResolutionResultRow result = result("RESOLVED");
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
-        when(graph.activeResolution(any())).thenReturn(Optional.empty());
-        when(graph.hasResolutionHistory(any())).thenReturn(false);
-        when(graph.ensureResolution(any())).thenReturn(ResolutionWriteOutcome.REJECTED);
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.empty());
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(false);
+        when(graph.ensureResolution(any(GraphIdentity.class), any())).thenReturn(ResolutionWriteOutcome.REJECTED);
 
         reconciler.poll();
 
@@ -139,9 +140,9 @@ class ResolutionReconcilerTest {
         ResolutionResultRow result = result("RESOLVED");
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
-        when(graph.activeResolution(any())).thenReturn(Optional.empty());
-        when(graph.hasResolutionHistory(any())).thenReturn(false);
-        when(graph.ensureResolution(any())).thenThrow(
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.empty());
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(false);
+        when(graph.ensureResolution(any(GraphIdentity.class), any())).thenThrow(
                 new org.synanton.common.resolution.RetryableProcessingException("session unavailable"));
 
         reconciler.poll();
@@ -156,8 +157,8 @@ class ResolutionReconcilerTest {
         ResolutionWorkRow work = work("PROCESSING", 3, NOW.minusSeconds(1));
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of());
-        when(graph.activeResolution(any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
-        when(graph.hasResolutionHistory(any())).thenReturn(true);
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(true);
         when(claims.reclaimResolution(eq(work), any())).thenReturn(true);
         when(claims.claimResolution(eq(work), anyString(), any(), any())).thenReturn(true);
         when(claims.completeResolution(eq(work), anyString(), any(), any())).thenReturn(true);
@@ -175,8 +176,8 @@ class ResolutionReconcilerTest {
         ResolutionWorkRow work = work("PROCESSING", 3, NOW.minusSeconds(1));
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of());
-        when(graph.activeResolution(any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
-        when(graph.hasResolutionHistory(any())).thenReturn(true);
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(true);
         when(claims.reclaimResolution(eq(work), any())).thenReturn(true);
         when(claims.claimResolution(eq(work), anyString(), any(), any())).thenReturn(false);
 
@@ -192,8 +193,8 @@ class ResolutionReconcilerTest {
         ResolutionWorkRow work = work("PROCESSING", 3, NOW.plusSeconds(60));
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of());
-        when(graph.activeResolution(any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
-        when(graph.hasResolutionHistory(any())).thenReturn(true);
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(true);
 
         reconciler.poll();
 
@@ -213,8 +214,8 @@ class ResolutionReconcilerTest {
         ResolutionResultRow result = result("RESOLVED");
         when(claims.resolutionWorkForTenant(TENANT)).thenReturn(List.of(work));
         when(cache.listResolutionResults(TENANT, VERSION)).thenReturn(List.of(result));
-        when(graph.activeResolution(any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
-        when(graph.hasResolutionHistory(any())).thenReturn(true);
+        when(graph.activeResolution(any(GraphIdentity.class), any())).thenReturn(Optional.of(state(ENTITY, "v1", 3)));
+        when(graph.hasResolutionHistory(any(GraphIdentity.class), any())).thenReturn(true);
 
         reconciler.poll();
 
