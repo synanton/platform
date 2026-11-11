@@ -35,7 +35,7 @@ spec:
       containers:
         - name: gateway
           image: local-registry:5000/synanton/extraction-gateway:local-real-demo
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: EXTRACTION_DB_URL
               value: jdbc:postgresql://postgres:5432/synanton

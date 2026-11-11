@@ -40,7 +40,7 @@ spec:
       containers:
         - name: synquest
           image: local-registry:5000/synanton/synquest:local-real-demo
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: tenant-demo-config

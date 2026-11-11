@@ -32,7 +32,7 @@ spec:
       containers:
         - name: synflux
           image: local-registry:5000/synanton/synflux:local-real-demo
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: tenant-demo-config
