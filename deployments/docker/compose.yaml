@@ -22,9 +22,10 @@ services:
     command:
       - sh
       - -c
-      - "mkdir -p /data/ontologies/demo && chown -R 1001:2000 /data/ontologies && chmod 750 /data/ontologies/demo"
+      - "mkdir -p /data/ontologies/demo /data/syntology-tdb2 && chown -R 1001:2000 /data/ontologies /data/syntology-tdb2 && chmod 750 /data/ontologies/demo"
     volumes:
       - ${DATA_ROOT:-./data}/ontologies:/data/ontologies
+      - ${DATA_ROOT:-./data}/syntology-tdb2:/data/syntology-tdb2
     restart: "no"
 
   security:

@@ -9,6 +9,7 @@ allprojects {
 
 subprojects {
     apply(plugin = "java")
+    extra["jackson-bom.version"] = "2.18.11"
 
     repositories {
         mavenCentral()
@@ -30,6 +31,18 @@ subprojects {
     tasks.withType<JavaCompile>().configureEach {
         options.encoding = "UTF-8"
         options.compilerArgs.addAll(listOf("-parameters", "-Xlint:all", "-Xlint:-processing"))
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            force(
+                "com.fasterxml.jackson.core:jackson-core:2.18.11",
+                "com.fasterxml.jackson.core:jackson-databind:2.18.11",
+                "com.fasterxml.jackson.core:jackson-annotations:2.18.11",
+                "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.18.11",
+                "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.11"
+            )
+        }
     }
 }
 

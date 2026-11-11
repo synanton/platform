@@ -23,6 +23,8 @@ public final class HttpRelixResolutionLookup implements ResolutionGraphLookup {
 
     private static final TypeReference<List<ActiveResolution>> ACTIVE =
             new TypeReference<>() {};
+    private static final TypeReference<List<ExtractedRelationView>> EXTRACTED =
+            new TypeReference<>() {};
 
     private final HttpClient client;
     private final String baseUrl;
@@ -40,7 +42,7 @@ public final class HttpRelixResolutionLookup implements ResolutionGraphLookup {
     @Override
     public List<ActiveResolution> getActiveResolutions(String tenantId, List<String> mentionIds) {
         try {
-            String body = mapper.writeValueAsString(Map.of("mentionIds",
+            String body = mapper.writeValueAsString(Map.of("mention_ids",
                     mentionIds == null ? List.of() : mentionIds));
             HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/v1/resolutions/active"))
                     .timeout(Duration.ofSeconds(20))
@@ -95,6 +97,34 @@ public final class HttpRelixResolutionLookup implements ResolutionGraphLookup {
             throw e;
         } catch (Exception e) {
             throw new RetryableProcessingException("Extracted-relation lookup failed", e);
+        }
+    }
+
+    @Override
+    public List<ExtractedRelationView> listExtractedRelations(String tenantId, String sourceVersionId) {
+        try {
+            String query = sourceVersionId == null || sourceVersionId.isBlank()
+                    ? "" : "?sourceVersionId=" + URLEncoder.encode(sourceVersionId, StandardCharsets.UTF_8);
+            HttpRequest request = HttpRequest.newBuilder(
+                            URI.create(baseUrl + "/v1/extracted-relations" + query))
+                    .timeout(Duration.ofSeconds(20))
+                    .header("Authorization", "Bearer " + token(tenantId))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() / 100 != 2) {
+                throw new RetryableProcessingException("Relix extracted-relation list returned HTTP "
+                        + response.statusCode() + ": " + response.body());
+            }
+            return mapper.readValue(response.body(), EXTRACTED);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RetryableProcessingException("Extracted-relation list interrupted", e);
+        } catch (RetryableProcessingException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RetryableProcessingException("Extracted-relation list failed", e);
         }
     }
 

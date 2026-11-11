@@ -215,17 +215,23 @@ build_images() {
     local stage
     printf 'Building host boot jars and demo images...\n'
     "$REPO_ROOT/gradlew" -q -p "$REPO_ROOT" \
-        :java:synflux:bootJar :java:synquest:bootJar :java:security:bootJar -x test
+        :java:synflux:bootJar :java:synquest:bootJar :java:security:bootJar \
+        :java:relix:bootJar -x test
+    "$REPO_ROOT/gradlew" -q -p "$REPO_ROOT" :java:syntology:bootJar -PskipUi -x test
     "$CONTENT_EXTRACTOR_ROOT/gradlew" -q -p "$CONTENT_EXTRACTOR_ROOT" \
         :java:extraction-gateway:bootJar -x test
     stage="$(mktemp -d)"
     mkdir -p "$stage/java/synflux/build/libs" \
         "$stage/java/synquest/build/libs" \
         "$stage/java/security/build/libs" \
+        "$stage/java/relix/build/libs" \
+        "$stage/java/syntology/build/libs" \
         "$stage/java/extraction-gateway/build/libs"
     cp "$REPO_ROOT"/java/synflux/build/libs/synflux*.jar "$stage/java/synflux/build/libs/"
     cp "$REPO_ROOT"/java/synquest/build/libs/synquest*.jar "$stage/java/synquest/build/libs/"
     cp "$REPO_ROOT"/java/security/build/libs/security*.jar "$stage/java/security/build/libs/"
+    cp "$REPO_ROOT"/java/relix/build/libs/relix*.jar "$stage/java/relix/build/libs/"
+    cp "$REPO_ROOT"/java/syntology/build/libs/syntology*.jar "$stage/java/syntology/build/libs/"
     cp "$CONTENT_EXTRACTOR_ROOT"/java/extraction-gateway/build/libs/extraction-gateway*.jar \
         "$stage/java/extraction-gateway/build/libs/"
     # synquest.prebuilt.Dockerfile also packages the demo benchmark data; the
@@ -241,8 +247,12 @@ build_images() {
         -t "$IMAGE_PREFIX/security:$IMAGE_TAG" "$stage" >/dev/null
     docker build -q -f "$COMPOSE_DIR/extraction-gateway.prebuilt.Dockerfile" \
         -t "$IMAGE_PREFIX/extraction-gateway:$IMAGE_TAG" "$stage" >/dev/null
+    docker build -q -f "$COMPOSE_DIR/relix.prebuilt.Dockerfile" \
+        -t "$IMAGE_PREFIX/relix:$IMAGE_TAG" "$stage" >/dev/null
+    docker build -q -f "$COMPOSE_DIR/syntology.prebuilt.Dockerfile" \
+        -t "$IMAGE_PREFIX/syntology:$IMAGE_TAG" "$stage" >/dev/null
     rm -rf "$stage"
-    pass "demo images built ($IMAGE_PREFIX/{synflux,synquest,security,extraction-gateway}:$IMAGE_TAG)"
+    pass "demo images built ($IMAGE_PREFIX/{synflux,synquest,security,relix,syntology,extraction-gateway}:$IMAGE_TAG)"
 }
 
 preflight() {
@@ -534,19 +544,22 @@ case "$action" in
         [ -x "$REPO_ROOT/gradlew" ] || fail "missing executable $REPO_ROOT/gradlew"
         [ -x "$CONTENT_EXTRACTOR_ROOT/gradlew" ] \
             || fail "missing executable $CONTENT_EXTRACTOR_ROOT/gradlew"
-        mkdir -p "$DATA_ROOT/minio" "$DATA_ROOT/postgres" "$DATA_ROOT/cassandra" "$DATA_ROOT/synquest"
-        # MinIO runs as uid 65532 and synquest as uid 100; bind mounts replace
-        # the image's owned directory, so both roots must be writable by them.
-        chmod 0777 "$DATA_ROOT/minio" "$DATA_ROOT/synquest"
+        mkdir -p "$DATA_ROOT/minio" "$DATA_ROOT/postgres" "$DATA_ROOT/cassandra" \
+            "$DATA_ROOT/synquest" "$DATA_ROOT/neo4j" "$DATA_ROOT/syntology-tdb2"
+        # MinIO runs as uid 65532, synquest as uid 100, Neo4j as 7474, and
+        # Syntology as alice; bind mounts replace image-owned directories.
+        chmod 0777 "$DATA_ROOT/minio" "$DATA_ROOT/synquest" "$DATA_ROOT/neo4j" "$DATA_ROOT/syntology-tdb2"
         export DATA_ROOT MINIO_DATA_DIR="$DATA_ROOT/minio"
         export CONTENT_EXTRACTOR_ROOT SYNANTON_JWT_SECRET
+        export NEO4J_PASSWORD="${NEO4J_PASSWORD:-local-real-demo-neo4j}"
         export IMAGE_PREFIX IMAGE_TAG
         build_images
         # Force recreation keeps the app containers from holding stale driver
         # connections when a pinned database image changes underneath them.
         # Named volumes and host data roots still preserve all ingested state.
         compose up -d --no-build --force-recreate postgres cassandra minio minio-init \
-            extraction-gateway security synflux synquest
+            extraction-gateway security synflux synquest init-perms neo4j neo4j-init \
+            relix syntology-db-init syntology mock-extraction
         MODE=up
         run_acceptance
         ;;

@@ -81,6 +81,20 @@ public class InMemoryGraphConnector implements GraphConnector {
     }
 
     @Override
+    public java.util.List<org.synanton.common.resolution.ExtractedRelationView> listExtractedRelations(
+            String tenant, String sourceVersionId) {
+        Map<String, ExtractedRelation> tenantRelations = relations.getOrDefault(tenant, Map.of());
+        return tenantRelations.values().stream()
+                .filter(relation -> sourceVersionId == null || sourceVersionId.equals(relation.sourceVersionId()))
+                .map(relation -> new org.synanton.common.resolution.ExtractedRelationView(
+                        relation.relationId(), tenant, relation.sourceVersionId(),
+                        relation.subjectMentionId(), relation.objectMentionId(), relation.predicate(),
+                        relation.evidenceChunkId(), relation.evidenceChunkOffsetStart(),
+                        relation.evidenceChunkOffsetEnd()))
+                .toList();
+    }
+
+    @Override
     public int upsertMentions(List<ExtractedMention> batch) {
         for (ExtractedMention mention : batch) {
             mentions.computeIfAbsent(mention.tenantId(), ignored -> new ConcurrentHashMap<>())

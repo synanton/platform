@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS syntology.session_pins (
     UNIQUE (tenant_id, subject_id)
 );
 CREATE INDEX IF NOT EXISTS idx_session_pins_active
-    ON syntology.session_pins (tenant_id, subject_id) WHERE expires_at > now();
+    ON syntology.session_pins (tenant_id, subject_id);

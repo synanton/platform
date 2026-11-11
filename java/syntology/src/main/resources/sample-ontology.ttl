@@ -120,3 +120,53 @@ sc:fulfillsOrder a rdf:Property ;
     rdfs:label "fulfills order" ;
     rdfs:domain sc:Shipment ;
     rdfs:range sc:Order .
+
+
+# RAKG local E2E types (halcyon extraction fixture)
+sc:MaintenanceSystem a owl:Class ;
+    rdfs:label "Maintenance System" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Component a owl:Class ;
+    rdfs:label "Component" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Procedure a owl:Class ;
+    rdfs:label "Procedure" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Document a owl:Class ;
+    rdfs:label "Document" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Measurement a owl:Class ;
+    rdfs:label "Measurement" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Time a owl:Class ;
+    rdfs:label "Time" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:Concept a owl:Class ;
+    rdfs:label "Concept" ;
+    rdfs:subClassOf sc:Thing .
+
+sc:tested_every a rdf:Property ;
+    rdfs:label "tested every" ;
+    rdfs:domain sc:Component ;
+    rdfs:range sc:Time .
+
+sc:replaced_every a rdf:Property ;
+    rdfs:label "replaced every" ;
+    rdfs:domain sc:Component ;
+    rdfs:range sc:Time .
+
+sc:records a rdf:Property ;
+    rdfs:label "records" ;
+    rdfs:domain sc:Concept ;
+    rdfs:range sc:Measurement .
+
+sc:requires a rdf:Property ;
+    rdfs:label "requires" ;
+    rdfs:domain sc:MaintenanceSystem ;
+    rdfs:range sc:Component .

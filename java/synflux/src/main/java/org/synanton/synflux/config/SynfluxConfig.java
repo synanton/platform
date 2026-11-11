@@ -136,8 +136,10 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public RelationValidator relationValidator(ExtractionGraphProperties properties) {
-        return new HttpSyntologyRelationValidator(properties.syntologyUrlOrDefault(), graphMapper());
+    public RelationValidator relationValidator(ExtractionGraphProperties properties,
+                                               @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
+        return new HttpSyntologyRelationValidator(properties.syntologyUrlOrDefault(), graphMapper(),
+                new ServiceTokenMinter(jwtSecret));
     }
 
     @Bean
