@@ -1,4 +1,4 @@
-package org.synanton.relix.reconciliation;
+package org.synanton.common.resolution;
 
 /**
  * Mention-scoped identity for one reconciliation observation. The graph read is

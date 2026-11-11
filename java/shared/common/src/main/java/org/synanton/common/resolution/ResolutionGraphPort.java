@@ -1,6 +1,7 @@
 package org.synanton.common.resolution;
 
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Canonical graph write port for resolution (implemented by Relix).
@@ -15,5 +16,22 @@ public interface ResolutionGraphPort extends ResolutionGraphLookup {
     default void supersedeResolution(String tenantId, String sourceVersionId,
                                      String mentionId, Instant supersededAt) {
         throw new UnsupportedOperationException("graph connector does not support resolution supersession");
+    }
+
+    /** Whether this adapter implements exact-identity reconciliation operations. */
+    default boolean supportsResolutionReconciliation() {
+        return false;
+    }
+
+    default Optional<GraphResolutionObservation> activeResolution(ResolutionKey key) {
+        throw new UnsupportedOperationException("graph connector does not support reconciliation reads");
+    }
+
+    default boolean hasResolutionHistory(ResolutionKey key) {
+        throw new UnsupportedOperationException("graph connector does not support reconciliation reads");
+    }
+
+    default ResolutionWriteOutcome ensureResolution(ResolutionDecision decision) {
+        throw new UnsupportedOperationException("graph connector does not support reconciliation writes");
     }
 }

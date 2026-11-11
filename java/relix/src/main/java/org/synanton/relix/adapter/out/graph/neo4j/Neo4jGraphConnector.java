@@ -25,10 +25,9 @@ import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.common.resolution.ContractViolationException;
 import org.synanton.common.resolution.ResolutionDecision;
 import org.synanton.common.resolution.ResolutionOutcome;
-import org.synanton.relix.reconciliation.GraphResolutionObservation;
-import org.synanton.relix.reconciliation.ResolutionKey;
-import org.synanton.relix.reconciliation.ResolutionReconciliationGraph;
-import org.synanton.relix.reconciliation.ResolutionWriteOutcome;
+import org.synanton.common.resolution.GraphResolutionObservation;
+import org.synanton.common.resolution.ResolutionKey;
+import org.synanton.common.resolution.ResolutionWriteOutcome;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -42,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Bolt/Cypher adapter. Relationship type is always {@code REL}; the original verb is a property (avoids Cypher injection).
  */
-public class Neo4jGraphConnector implements GraphConnector, ResolutionReconciliationGraph {
+public class Neo4jGraphConnector implements GraphConnector {
 
     private static final int MAX_HOPS_CAP = 6;
 
@@ -121,6 +120,11 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
 
         long loadTimeMs = System.currentTimeMillis() - start;
         statsByTenant.put(tenant, new GraphStats(tenant, nodes.size(), edges.size(), loadTimeMs, loaded.generation()));
+    }
+
+    @Override
+    public boolean supportsResolutionReconciliation() {
+        return true;
     }
 
     @Override

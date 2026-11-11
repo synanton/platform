@@ -3,11 +3,13 @@ name: Docs-ru Staleness
 on:
   push:
     paths:
+      - 'docs/**'
       - 'docs-ru/**'
       - 'tools/docs-ru/check_staleness.py'
       - '.github/workflows/docs-ru-staleness.yml'
   pull_request:
     paths:
+      - 'docs/**'
       - 'docs-ru/**'
       - 'tools/docs-ru/check_staleness.py'
       - '.github/workflows/docs-ru-staleness.yml'

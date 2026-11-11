@@ -13,7 +13,11 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionDecision;
+import org.synanton.common.resolution.ResolutionGraphPort;
+import org.synanton.common.resolution.ResolutionKey;
+import org.synanton.common.resolution.ResolutionWriteOutcome;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ResolutionResultRow;
@@ -30,8 +34,9 @@ import org.synanton.relix.config.ReconciliationProperties;
  * monotonic fencing, read-after-write consistency for the active resolution edge,
  * deterministic idempotent graph identities, and Cassandra LWT owner/lease
  * ownership. The reconciler uses only single-identity graph observations and
- * intent verbs; all Cypher remains in the Neo4j adapter. Delete this seam when
- * #590 migrates #585 onto #587 contracts; deviation #591.
+ * intent verbs; all Cypher remains in the Neo4j adapter. The transitional seam
+ * was removed in favor of ResolutionGraphPort; capability validation happens in
+ * ReconciliationConfig.
  */
 public final class ResolutionReconciler {
 
@@ -39,7 +44,7 @@ public final class ResolutionReconciler {
 
     private final IngestionCacheClient cache;
     private final ClaimService claims;
-    private final ResolutionReconciliationGraph graph;
+    private final ResolutionGraphPort graph;
     private final ReconciliationProperties properties;
     private final ResolutionReconciliationPolicy policy = new ResolutionReconciliationPolicy();
     private final Clock clock = Clock.systemUTC();
@@ -53,7 +58,7 @@ public final class ResolutionReconciler {
     private final Counter leaseHeld;
 
     public ResolutionReconciler(IngestionCacheClient cache, ClaimService claims,
-                                ResolutionReconciliationGraph graph,
+                                ResolutionGraphPort graph,
                                 ReconciliationProperties properties, MeterRegistry registry) {
         this.cache = cache;
         this.claims = claims;
@@ -78,8 +83,7 @@ public final class ResolutionReconciler {
             log.warn("Reconciliation is enabled without a tenant; skipping poll");
             return;
         }
-        // Transitional: assumes exact-identity read + fencing-conditional write.
-        // Enforced at startup validation in #587. See deviation #591.
+        // ResolutionGraphPort capability is validated at wiring/startup.
         List<ResolutionWorkRow> work;
         try {
             work = claims.resolutionWorkForTenant(tenant);

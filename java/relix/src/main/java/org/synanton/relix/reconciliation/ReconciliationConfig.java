@@ -11,9 +11,9 @@ import org.synanton.relix.config.ReconciliationProperties;
 import org.synanton.relix.graph.GraphConnector;
 
 /**
- * PR #578/#585 wiring: enabling reconciliation makes the configured graph
- * deployment assumption explicit. A missing seam is a startup failure, not a
- * silent idle poller. This is not a capability model; #587 formalizes that.
+ * Reconciliation wiring: enabling reconciliation requires the configured graph
+ * adapter to advertise exact-identity reconciliation support. Missing capability
+ * is a startup failure, not a silent idle poller.
  */
 @Configuration
 @ConditionalOnProperty(name = "relix.reconciliation.enabled", havingValue = "true")
@@ -25,12 +25,11 @@ public class ReconciliationConfig {
             ObjectProvider<GraphConnector> configuredGraph,
             ReconciliationProperties properties, MeterRegistry registry) {
         GraphConnector graph = configuredGraph.getIfAvailable();
-        if (!(graph instanceof ResolutionReconciliationGraph seam)) {
+        if (graph == null || !graph.supportsResolutionReconciliation()) {
             throw new IllegalStateException(
                     "relix.reconciliation.enabled=true requires the configured graph adapter to "
-                            + "provide ResolutionReconciliationGraph; transitional Neo4j assumption "
-                            + "#591, migrated under #587/#590");
+                            + "support resolution reconciliation; see #587/#592");
         }
-        return new ResolutionReconciler(cache, claims, seam, properties, registry);
+        return new ResolutionReconciler(cache, claims, graph, properties, registry);
     }
 }

@@ -14,7 +14,7 @@ import org.synanton.relix.graph.EntityCanonicalizer;
 import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
-import org.synanton.relix.reconciliation.ResolutionWriteOutcome;
+import org.synanton.common.resolution.ResolutionWriteOutcome;
 import org.synanton.relix.index.EntityIndex;
 
 import java.util.LinkedHashMap;
