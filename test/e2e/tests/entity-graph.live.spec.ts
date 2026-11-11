@@ -99,10 +99,32 @@ async function waitForPipeline(request: APIRequestContext): Promise<void> {
   throw new Error(`pipeline did not complete within 300s; last status: ${last}`);
 }
 
+
+async function waitForPromotedEdge(request: APIRequestContext): Promise<void> {
+  const base = process.env.BASE_URL ?? "http://127.0.0.1:5173";
+  const url = `${base}/api/v1/entities/entity-auxiliary-coolant-loop/neighbors`;
+  const deadline = Date.now() + 120_000;
+  while (Date.now() < deadline) {
+    const response = await request.get(url, { headers: authHeaders() });
+    if (response.ok()) {
+      const body = await response.json();
+      const edge = (body.neighbors ?? []).some(
+        (neighbor: { relation?: string; entity?: { id?: string } }) =>
+          neighbor.relation === "tested_every" &&
+          neighbor.entity?.id === "entity-ninety-days",
+      );
+      if (edge && (body.evidence ?? []).length > 0) return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+  throw new Error("promoted tested_every edge with evidence did not appear within 120s");
+}
+
 test("live Entity Graph journey from upload to evidence", async ({ page, request }) => {
   await createSource(request);
   await uploadDocument(request);
   await waitForPipeline(request);
+  await waitForPromotedEdge(request);
 
   const session = {
     username: "entity-graph-live",

@@ -1,5 +1,6 @@
 package org.synanton.relix;
 
+import org.synanton.relix.graph.GraphConnector;
 import org.synanton.relix.service.GraphQueryService;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -19,7 +20,16 @@ public class RelixApplication {
     }
 
     @Bean
-    ApplicationRunner graphInitializer(GraphQueryService graphQueryService) {
-        return args -> graphQueryService.loadTenant("demo");
+    ApplicationRunner graphInitializer(GraphQueryService graphQueryService,
+                                       GraphConnector graphConnector) {
+        return args -> {
+            // Neo4j is the canonical graph store. Its loadTenant implementation
+            // rebuilds from Cassandra and deletes existing :Entity/:REL data,
+            // which is destructive on every pod restart. Only load projection
+            // stores (memory/nebula) at startup; Neo4j must start in place.
+            if (!"neo4j".equals(graphConnector.id())) {
+                graphQueryService.loadTenant("demo");
+            }
+        };
     }
 }
