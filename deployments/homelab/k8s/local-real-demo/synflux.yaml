@@ -29,6 +29,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: local-registry-cred
+      initContainers:
+        - name: content-cache-perms
+          image: local-registry:5000/synanton/synflux:local-real-demo
+          imagePullPolicy: Always
+          command: ["sh", "-c", "chown -R 999:999 /content-cache"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: content-cache
+              mountPath: /content-cache
       containers:
         - name: synflux
           image: local-registry:5000/synanton/synflux:local-real-demo
@@ -124,7 +134,7 @@ spec:
             - name: fixtures
               mountPath: /fixtures
       securityContext:
-        fsGroup: 101
+        fsGroup: 999
       volumes:
         - name: content-cache
           persistentVolumeClaim:

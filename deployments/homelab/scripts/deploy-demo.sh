@@ -44,7 +44,7 @@ kubectl -n "$NAMESPACE" create secret generic synanton-jwt \
 kubectl -n "$NAMESPACE" create secret generic postgres-cred \
     --from-literal=password="$POSTGRES_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "$NAMESPACE" create secret generic neo4j-cred \
-    --from-literal=auth="neo4j:$NEO4J_PASSWORD" \
+    --from-literal=auth="neo4j/$NEO4J_PASSWORD" \
     --from-literal=password="$NEO4J_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "$NAMESPACE" create secret generic minio-cred \
     --from-literal=user="$MINIO_USER" --from-literal=password="$MINIO_PASSWORD" \

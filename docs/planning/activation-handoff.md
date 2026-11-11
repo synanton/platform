@@ -1,8 +1,8 @@
 # RAKG activation handoff
 
-**Status:** locally proven; K8s activation blocked on network reachability.
+**Status:** K8s activation executed; live Entity Graph E2E green.
 **Last updated:** 2026-11-11
-**Current main at authoring:** `de4373f`
+**Activation tree:** recorded in `docs/acceptance/k8s-activation-2026-11-11.md`
 
 ## What is done
 

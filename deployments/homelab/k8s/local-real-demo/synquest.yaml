@@ -37,6 +37,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: local-registry-cred
+      initContainers:
+        - name: index-perms
+          image: local-registry:5000/synanton/synquest:local-real-demo
+          imagePullPolicy: Always
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/synquest"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: index
+              mountPath: /var/lib/synquest
       containers:
         - name: synquest
           image: local-registry:5000/synanton/synquest:local-real-demo
@@ -119,7 +129,7 @@ spec:
             - name: index
               mountPath: /var/lib/synquest
       securityContext:
-        fsGroup: 101
+        fsGroup: 999
       volumes:
         - name: index
           persistentVolumeClaim:
