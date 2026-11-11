@@ -16,8 +16,8 @@ public class PromotionCapabilityConfig {
         return args -> {
             if (!graph.capabilities().supportsRelationPromotion()) {
                 throw new IllegalStateException(
-                        "relix.promotion-consumer.enabled=true requires atomic multi-node writes, "
-                                + "read-after-write, and idempotent upsert; see #587/#592");
+                        "relix.promotion-consumer.enabled=true requires conditional writes, "
+                                + "atomic multi-node writes, and idempotent upsert; see #587/#592");
             }
         };
     }

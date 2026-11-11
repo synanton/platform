@@ -32,6 +32,11 @@ class GraphContractTest {
         assertThat(noAtomic.supportsResolutionReconciliation()).isTrue();
         assertThat(noAtomic.supportsRelationPromotion()).isFalse();
 
+        GraphCapabilities noConditional =
+                new GraphCapabilities(false, true, true, true);
+        assertThat(noConditional.supportsResolutionReconciliation()).isFalse();
+        assertThat(noConditional.supportsRelationPromotion()).isFalse();
+
         assertThat(GraphCapabilities.neo4j().supportsRelationPromotion()).isTrue();
     }
 }
