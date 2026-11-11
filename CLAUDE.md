@@ -14,6 +14,23 @@
 - Pre-change safety: run `./gradlew compileJava` before applying changes; stop if it fails
 - After changing `gradle/libs.versions.toml` (or any dependency), run with `--refresh-dependencies` — Gradle's configuration cache can otherwise serve a stale classpath and fail compilation with "cannot find symbol" for a dependency that resolves in `dependencies`. Add `--no-configuration-cache` when a compile/test discrepancy appears.
 
+## Docker Base Images
+
+- **Native dependencies require glibc.** Do not use `eclipse-temurin:*-jre-alpine`
+  for a service with gRPC/Netty, `netty-tcnative`, epoll, JNI/JNA, or a native
+  JDBC driver. Alpine uses musl libc; the native libraries are glibc-linked and
+  fail at runtime with `UnsatisfiedLinkError`, `SIGSEGV`, or a missing epoll group.
+- **Use `eclipse-temurin:21-jre-jammy`** for the affected gRPC services:
+  `synflux`, `synquest`, `gateway`, and `extraction-gateway` (plus the externally
+  built `gpu-gateway`). Alpine is allowed only for services with zero native
+  dependencies.
+- **When generating or reviewing a Dockerfile**, check the module's
+  `build.gradle.kts` for `grpc-netty*`, `netty-tcnative`, JNI/JNA, or native JDBC.
+  If any are present, the runtime base must be glibc-based; if the service set
+  changes, update `scripts/ci/check-base-images.sh`.
+- `./gradlew checkBaseImages` (also part of `buildAll`) is the enforcement gate.
+  See [ADR-024](docs/architecture/decisions/adr-024-glibc-runtime-images.md).
+
 ## Git Hooks
 
 Runtime-data guard is checked in: run once per clone

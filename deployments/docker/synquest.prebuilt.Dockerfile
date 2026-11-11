@@ -3,9 +3,12 @@
 # (TLS resets observed 2026-10-18 on M70q): the boot jar is built on the
 # HOST (warm Gradle cache) and only packaged here. Requires the host jar
 # from `./gradlew :java:synquest:bootJar -x test` before `docker compose build`.
-FROM eclipse-temurin:21-jre-alpine
-RUN apk add --no-cache wget \
-    && addgroup -S synanton && adduser -S -G synanton synanton
+FROM eclipse-temurin:21-jre-jammy
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system synanton \
+    && useradd --system --gid synanton --create-home synanton
 USER synanton
 WORKDIR /app
 COPY java/synquest/build/libs/synquest*.jar app.jar

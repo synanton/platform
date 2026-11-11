@@ -46,9 +46,17 @@ subprojects {
     }
 }
 
+tasks.register<Exec>("checkBaseImages") {
+    group = "verification"
+    description = "Fail when a native-dependency runtime image uses Alpine/musl (ADR-024)"
+    commandLine("bash", "scripts/ci/check-base-images.sh")
+    isIgnoreExitValue = false
+}
+
 tasks.register("buildAll") {
     group = "synanton"
     description = "Build every active module"
+    dependsOn("checkBaseImages")
     dependsOn(subprojects.map { it.tasks.named("build") })
 }
 
@@ -69,5 +77,5 @@ tasks.register<Exec>("verifyGpuContractMirror") {
 }
 
 tasks.named("check") {
-    dependsOn("verifyContractMirror", "verifyGpuContractMirror")
+    dependsOn("checkBaseImages", "verifyContractMirror", "verifyGpuContractMirror")
 }

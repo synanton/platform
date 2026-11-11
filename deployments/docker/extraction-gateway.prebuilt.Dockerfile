@@ -3,9 +3,12 @@
 # (TLS resets observed 2026-10-18 on M70q): the boot jar is built in the
 # content_extractor repo on the HOST
 # (`./gradlew :java:extraction-gateway:bootJar -x test`) and only packaged here.
-FROM eclipse-temurin:21-jre-alpine
-RUN apk add --no-cache wget \
-    && addgroup -S synanton && adduser -S -G synanton synanton
+FROM eclipse-temurin:21-jre-jammy
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system synanton \
+    && useradd --system --gid synanton --create-home synanton
 USER synanton
 WORKDIR /app
 COPY java/extraction-gateway/build/libs/extraction-gateway*.jar app.jar
