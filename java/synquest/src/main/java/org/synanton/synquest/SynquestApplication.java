@@ -1,5 +1,6 @@
 package org.synanton.synquest;
 
+import org.synanton.common.runtime.NativeTransportProbe;
 import org.synanton.synquest.service.SearchService;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -15,6 +16,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class SynquestApplication {
 
     public static void main(String[] args) {
+        NativeTransportProbe.logStatus();
         SpringApplication.run(SynquestApplication.class, args);
     }
 

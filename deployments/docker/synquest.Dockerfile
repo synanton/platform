@@ -14,9 +14,12 @@ COPY java/synquest ./java/synquest
 RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew :java:synquest:bootJar -x test --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine
-RUN apk add --no-cache wget \
-    && addgroup -S synanton && adduser -S -G synanton synanton \
+FROM eclipse-temurin:21-jre-jammy
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system synanton \
+    && useradd --system --gid synanton --create-home synanton \
     && mkdir -p /var/lib/synquest && chown synanton:synanton /var/lib/synquest
 USER synanton
 WORKDIR /app
