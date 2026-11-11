@@ -14,19 +14,22 @@ demo path (see #508).
   resolved, validated, and committed from ingested chunks (RAKG #560).
 
 The slice is Demo Complete and the search projection is **Architecture Complete**
-(#550/#552). The P0/P1 baseline is complete; the next milestone is **Knowledge
-Construction Complete** (RAKG extraction).
+(#550/#552). The P0/P1 Search + RAKG baseline is complete, and RAKG is now
+**locally proven end-to-end** in Docker Compose (PR #601). The next milestone is
+**Kubernetes activation and demo readiness** (#589/#599).
 
 **Milestone — Vertical Slice: Demo Complete (achieved 2026-11-06).** New PDF upload
 returns `BM25 #1 · Dense #1 · RRF #1`; provenance renders source/chunk SHA-256 plus
 page/section; ontology loads 273 entities with `df` badges. Evidence:
 `docs/acceptance/live-dense-2026-11-06.md`.
 
-**Next milestone — Knowledge Construction Complete (RAKG #560).** A sentence-chunked
-document is extracted by the LLM adapter, resolved against search/ontology, validated,
-and committed as typed knowledge with evidence; acceptance is the frozen gold plus the
-end-to-end ingestion path. Baseline: regex entity F1 **0.182**; Java Qwen3-4B adapter
-entity F1 **0.618** / relationship F1 **0.078** (tuning harness 0.076).
+**Milestone — Knowledge Construction Complete (locally achieved 2026-11-11).** A
+sentence-chunked document is extracted by the LLM adapter, resolved against
+search/ontology, validated, and committed as typed knowledge with evidence. The local
+Compose smoke proves the complete path: upload → extraction → graph commit → resolution →
+validation → promotion → Relix Entity Graph with evidence. Baseline: regex entity F1
+**0.182**; Java Qwen3-4B adapter entity F1 **0.618** / relationship F1 **0.078** (tuning
+harness 0.076).
 
 ## Search engine architecture (post-#552)
 
@@ -119,14 +122,44 @@ api controllers ──► SearchService (facade, no Lucene imports)
 - [x] **Recoverable resolution/promotion consumers (PR #4d.1)** — LWT claims with lease/owner, attempt fencing, explicit failure classes, independent `ResolutionConsumer`/`PromotionConsumer`, V25 claim schema, default-disabled flags, retry/terminal/metrics tests.
 - [x] **Crash reconciliation (PR #4d.2 / #578)** — Cassandra-driven state matrix, exact resolution/entity/fence checks, owner-guarded repair, higher-fence protection, stale-edge detection-only with metrics/identifiers; `relix.reconciliation.enabled=false`. Retraction policy remains #584.
 - [x] **Search-generation propagation (#577)** — Lucene generation → candidate → decision → Cassandra `resolution_results.search_generation` (V26) → Neo4j `:RESOLVES_TO.search_generation`; fixture and real-store assertions added. **Evidence retraction** remains deferred.
+- [x] **Validation producer (#583)** — `RelationPromotionProducer` invokes the 4c.2 validator only after both relation endpoints have exactly one active resolution; existing promotion results are never re-opened. Local activation PR #601.
+
+## Local Runtime Activation (achieved 2026-11-11)
+
+PR #601 is the local activation fix set. It adds Neo4j, Relix, Syntology, mock
+extraction, entity seeding, and the full-pipeline smoke to the isolated
+`local-real-demo` Compose profile.
+
+Evidence:
+
+```text
+PASS: local RAKG pipeline reached a queryable entity graph with evidence
+entity-auxiliary-coolant-loop -> tested_every -> entity-ninety-days
+evidence chunk: 70c5bdc2-1c4e-5109-a10e-2711d1ba978d:0
+```
+
+The activation fixes include Jackson 2.18.11 alignment, Relix/Synflux snake_case
+DTOs, service JWT for Syntology validation, the Synquest resolution-consumer
+property prefix, Syntology's invalid V3 partial index, and the #583 producer. These
+are runtime defects found by connecting the real components; K8s activation should
+now be deployment configuration, not code debugging.
 
 ## P2 — Focused graph exploration (#508)
 
 - [x] **#508 backend** — `GET /v1/entities/{entityId}/neighbors` returns a bounded
   one-hop canonical neighborhood (max 50), outgoing/incoming `:REL` relations, and
   `:RelationEvidence` provenance; string canonical IDs; JWT tenant scope.
-- [ ] **#508 UI** — entity-rooted graph tab wiring; search-result → chunk graph (50-node
-  cap, click-to-re-root) already exists.
+- [x] **#508 UI** — entity-rooted graph tab, directional SVG, evidence panel, and
+  mocked Playwright coverage merged in #598. Live E2E remains #599.
+
+## Phase 3 — K8s Activation & Demo Readiness
+
+1. **#589** — apply the K8s overlay for Neo4j, Relix, and Syntology; run the combined
+   consumer/reconciler gate with the runbook; flags stay false until it passes.
+2. **#599** — run the Entity Graph Playwright suite against live Relix with no route
+   interception.
+3. **#592 post-migration rerun** — if the #585 seam migrates before #589 evidence is
+   collected, rerun the gate on the post-#592 tree before activation.
 
 ## P3 — Operational reality
 
@@ -137,16 +170,25 @@ api controllers ──► SearchService (facade, no Lucene imports)
 
 | Issue / track | Status | P-level |
 |---|---|---|
-| #508 (graph) | Open — search-result graph done; entity root pending | P2 |
+| #508 (graph) | Closed — backend #597, UI #598 | P2 |
+| #599 (live Entity Graph E2E) | Open — blocked on #589 | P2 |
+| #589 (K8s activation) | Open — blocked on K8s overlay + post-#592 rerun | P0 |
+| #578 (crash reconciliation) | Open — implementation landed; operational proof blocked on #589 | P1 |
+| #570 (VALIDATING lease expiry) | Open | P2 |
+| #538 (TEI via gateway/Envoy) | Open — deferred post-activation | P1 |
+| #556 (query-adaptive RRF) | Open — deferred post-activation | P1 |
 | #500 (platform crashloop) | Open — out of demo path | deferred |
-| #538 (TEI via gateway/Envoy) | Open | P1 |
 | #547 (incremental Lucene projection) | Closed (#551/#552) | — |
 | #550 (engine adapter boundary) | Closed (#552, ADR-021) | — |
-| #556 (query-adaptive RRF) | Open — frozen corpus ready; deferred | P1 |
 | #558 (extraction gold + baseline) | Closed (#559) | — |
+| #560 (RAKG epic) | Closed — locally proven end-to-end | — |
+| #583 (validation producer) | Closed — PR #601 | — |
+| #238 (Jackson alignment) | Closed — PR #601 | — |
+| #467/#466 (synthetic pool rebuild + grading) | Closed — superseded by #558 gold | — |
+| #472 (old graph visualization plan) | Closed — superseded by #508 | — |
+| #594/#457/#473 (stale handoff/K8s checkpoints) | Closed — superseded by #589/runbook | — |
 | #506, #528, #536, #537, #539 | Closed | — |
 | ADR-022 (extraction engine) | Accepted — Phase B adapter landed | P2 |
-| RAKG extraction epic (#560) | Open — extraction/graph hardening landed; resolution contracts (4a) landed; 4b–4d pending | P2 |
 
 ## Operation
 
