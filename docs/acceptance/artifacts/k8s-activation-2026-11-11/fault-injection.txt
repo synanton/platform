@@ -1,0 +1,21 @@
+K8s live fault-injection evidence — 2026-11-11
+
+Synquest restart during graph/resolution handoff:
+- source: fault-injection-1794421490
+- graph_status before pod deletion: PARTIAL
+- Synquest pod deleted after graph commit
+- resolution_status after restart: COMPLETED
+- resolution counters: resolved=8, review_required=1, unresolved=1, failed=0
+
+Relix restart after resolution/promotion:
+- Before restart: :Entity count=9, :REL count=2
+- Relix pod deleted; new pod ready
+- After restart: :Entity count=9, :REL count=2
+- /v1/entities/entity-auxiliary-coolant-loop/neighbors still returned the tested_every edge with evidence
+- final E2E after restart: 1 passed (25.7s)
+
+Initial failure exposed by the first Relix restart:
+- Neo4jGraphConnector.loadTenant() deleted all :Entity/:REL data and reloaded from Cassandra
+- RelixApplication called loadTenant("demo") at every startup
+- result: :Entity=0, :REL=0, UI showed "No neighbors for this entity."
+- fixed in commit 8a5a7332 by skipping projection-store loadTenant() for the Neo4j connector

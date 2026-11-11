@@ -33,8 +33,9 @@ accepted and are what #599 verifies.
 
 ## What remains
 
-- **#589** — the live journey is green, but the full combined consumer/reconciler
-  fault-injection bundle and the post-#592 rerun remain.
+- **#589** — the live journey and a live restart fault-injection are green,
+  including the Relix startup data-loss fix in `8a5a7332`; the full combined
+  consumer/reconciler bundle and the post-#592 rerun remain.
 - **#592** — open; the current evidence is for the transitional seam.
 - **#599** — complete; the live Entity Graph E2E passed.
 

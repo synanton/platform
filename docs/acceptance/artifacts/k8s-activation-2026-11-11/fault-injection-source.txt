@@ -1,0 +1,6 @@
+
+ source_id                  | version_id                           | extraction_status | graph_status | resolution_status
+----------------------------+--------------------------------------+-------------------+--------------+-------------------
+ fault-injection-1794421490 | eb222407-519b-56cd-8d86-e60f6dbc5f58 |   KNOWLEDGE_READY |      PARTIAL |         COMPLETED
+
+(1 rows)

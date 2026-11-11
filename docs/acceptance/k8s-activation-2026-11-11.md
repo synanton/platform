@@ -1,7 +1,7 @@
 # K8s RAKG activation — 2026-11-11
 
 **Status:** activated; live Entity Graph E2E green.
-**Activation tree:** `56a2613` plus the evidence-only docs commit.
+**Activation tree:** `56a2613` runtime wiring plus `8a5a7332` Relix restart fix and the evidence-only docs commit.
 **Cluster:** homelab, Kubernetes `v1.37.0`, namespace `synanton`.
 **#592 state:** OPEN — evidence is for the current transitional seam; the post-#592 rerun remains required when #592 merges.
 **Artifacts:** [`artifacts/k8s-activation-2026-11-11/`](artifacts/k8s-activation-2026-11-11/).
@@ -93,9 +93,30 @@ See `artifacts/.../images.txt` for the full list.
 - Rebuilt the UI image with the Entity Graph and fixed its Relix proxy rewrite
   and optional-service upstreams.
 
+## Live fault injection
+
+The live restart scenario was run after activation:
+
+- Synquest was deleted after graph commit while resolution was in flight. After
+  restart, the source reached `resolution_status=COMPLETED` with
+  `resolved=8`, `review_required=1`, `unresolved=1`, `failed=0`.
+- Relix was deleted after resolution/promotion. Before and after restart,
+  Neo4j held `9` canonical `:Entity` nodes and `2` `:REL` edges; the Entity Graph
+  still returned `tested_every` with evidence. The post-restart E2E passed in
+  25.7s.
+
+The first Relix restart exposed a destructive bug: `Neo4jGraphConnector.loadTenant()`
+deleted all canonical `:Entity`/`:REL` data and reloaded from Cassandra (which has
+no canonical entities), and `RelixApplication` called it on every startup. That
+left the graph empty and the UI showed "No neighbors for this entity." Fixed in
+`8a5a7332` by skipping projection-store `loadTenant()` for the Neo4j connector.
+See `artifacts/.../fault-injection.txt`.
+
 ## Evidence files
 
 - `playwright.txt` — passing E2E output.
+- `playwright-post-restart.txt` — E2E output after the fixed Relix restart.
+- `fault-injection.txt`, `fault-injection-source.txt` — restart scenario and source status.
 - `entity-graph.png` — Entity Graph with `tested_every` and evidence panel.
 - `source-status.txt` — Cassandra source status/counters.
 - `images.txt`, `flags.txt`, `pods.txt`, `gpu-plane-pods.txt`.

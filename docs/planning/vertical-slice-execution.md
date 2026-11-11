@@ -157,9 +157,10 @@ now be deployment configuration, not code debugging.
 
 ## Phase 3 — K8s Activation & Demo Readiness
 
-1. **#589** — live journey is green, but the full combined consumer/reconciler
-   evidence bundle and post-#592 rerun remain; flags are currently enabled on the
-   deployed demo stack.
+1. **#589** — live journey and restart fault-injection are green (including the
+   Relix startup data-loss fix in `8a5a7332`), but the full combined
+   consumer/reconciler evidence bundle and post-#592 rerun remain. Flags are
+   currently enabled on the deployed demo stack.
 2. **#599** — complete (live Entity Graph E2E green).
 3. **#592 post-migration rerun** — #592 is still open; rerun the gate on the
    post-#592 tree when it lands.
