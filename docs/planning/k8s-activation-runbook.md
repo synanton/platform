@@ -1,6 +1,6 @@
 # K8s activation runbook — RAKG / #589
 
-**Baseline at authoring:** `main` = `22875f1` (RAKG code-complete).
+**Baseline at authoring:** `main` = `948428a` (local RAKG activation #601 + glibc runtime images #604).
 **Activation head:** record `git rev-parse HEAD` in the acceptance file; if the tree differs from the baseline, use the activation head for every build and evidence run.
 **Gate:** merge != activation != migration. Flags stay false until the evidence below is captured on the exact running tree.
 
