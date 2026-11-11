@@ -105,6 +105,12 @@ The live restart scenario was run after activation:
   still returned `tested_every` with evidence. The post-restart E2E passed in
   25.7s.
 
+A second run deleted **both** Synquest and Relix simultaneously after graph
+commit. Both replacements became Ready; resolution reached `PARTIAL`; Neo4j
+retained `:Entity=9`/`:REL=2`; duplicate-active-resolution and duplicate-REL
+counts were both `0`; and the full E2E passed again in 25.6s. See
+`artifacts/.../combined-fault.txt`.
+
 The first Relix restart exposed a destructive bug: `Neo4jGraphConnector.loadTenant()`
 deleted all canonical `:Entity`/`:REL` data and reloaded from Cassandra (which has
 no canonical entities), and `RelixApplication` called it on every startup. That
@@ -112,11 +118,19 @@ left the graph empty and the UI showed "No neighbors for this entity." Fixed in
 `8a5a7332` by skipping projection-store `loadTenant()` for the Neo4j connector.
 See `artifacts/.../fault-injection.txt`.
 
+The loader was hardened further in PR #612: `Neo4jGraphConnector.loadTenant()` is
+now additive/upsert-only and writes nodes + edges in one transaction. ADR-025
+records the invariant. Testcontainers coverage: repeated load, partial snapshot,
+and interrupted load all preserve existing canonical data; full Relix suite:
+**122 tests green**.
+
 ## Evidence files
 
 - `playwright.txt` — passing E2E output.
 - `playwright-post-restart.txt` — E2E output after the fixed Relix restart.
 - `fault-injection.txt`, `fault-injection-source.txt` — restart scenario and source status.
+- `combined-fault.txt`, `combined-fault-source.txt` — simultaneous Synquest + Relix kill.
+- `playwright-combined-post.txt` — E2E after the combined restart.
 - `entity-graph.png` — Entity Graph with `tested_every` and evidence panel.
 - `source-status.txt` — Cassandra source status/counters.
 - `images.txt`, `flags.txt`, `pods.txt`, `gpu-plane-pods.txt`.

@@ -72,8 +72,10 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
         GraphLoader.LoadResult loaded = graphLoader.load(tenant);
         DirectedMultigraph<GraphNode, GraphEdge> graph = loaded.graph();
 
-        cypher.write("MATCH (n:Entity {tenant: $tenant}) DETACH DELETE n", Map.of("tenant", tenant));
-
+        // Loading a tenant is additive: Cassandra is a projection/staging input,
+        // not authority to delete canonical graph state. Replacing this with a
+        // destructive reload would erase existing :Entity/:REL on every restart.
+        // Explicit deletions belong to tombstone/supersession workflows.
         List<Map<String, Object>> nodes = new ArrayList<>();
         for (GraphNode node : graph.vertexSet()) {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -83,13 +85,6 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
             row.put("confidence", node.confidence());
             row.put("sources", SourceRefCodec.encode(node.sourceRefs()));
             nodes.add(row);
-        }
-        if (!nodes.isEmpty()) {
-            cypher.write("""
-                    UNWIND $nodes AS row
-                    MERGE (n:Entity {id: row.id, tenant: $tenant})
-                    SET n.label = row.label, n.type = row.type, n.confidence = row.confidence, n.sources = row.sources
-                    """, Map.of("tenant", tenant, "nodes", nodes));
         }
 
         List<Map<String, Object>> edges = new ArrayList<>();
@@ -105,14 +100,23 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
             row.put("sources", SourceRefCodec.encode(edge.sourceRefs()));
             edges.add(row);
         }
-        if (!edges.isEmpty()) {
+        if (!nodes.isEmpty() || !edges.isEmpty()) {
+            // One transaction: nodes and edges commit or roll back together.
+            // Existing canonical entities are never deleted by a projection
+            // load; this query is additive/upsert-only.
             cypher.write("""
-                    UNWIND $edges AS row
-                    MATCH (a:Entity {id: row.fromId, tenant: $tenant})
-                    MATCH (b:Entity {id: row.toId, tenant: $tenant})
-                    MERGE (a)-[r:REL {id: row.id}]->(b)
-                    SET r.verb = row.verb, r.confidence = row.confidence, r.sources = row.sources
-                    """, Map.of("tenant", tenant, "edges", edges));
+                    UNWIND $nodes AS node
+                    MERGE (n:Entity {id: node.id, tenant: $tenant})
+                    SET n.label = node.label, n.type = node.type,
+                        n.confidence = node.confidence, n.sources = node.sources
+                    WITH collect(n) AS loadedNodes
+                    UNWIND $edges AS edge
+                    MATCH (a:Entity {id: edge.fromId, tenant: $tenant})
+                    MATCH (b:Entity {id: edge.toId, tenant: $tenant})
+                    MERGE (a)-[r:REL {id: edge.id}]->(b)
+                    SET r.verb = edge.verb, r.confidence = edge.confidence,
+                        r.sources = edge.sources
+                    """, Map.of("tenant", tenant, "nodes", nodes, "edges", edges));
         }
 
         long loadTimeMs = System.currentTimeMillis() - start;

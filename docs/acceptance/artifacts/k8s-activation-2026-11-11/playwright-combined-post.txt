@@ -1,0 +1,15 @@
+
+> test:entity-graph-live
+> playwright test -c playwright.entity-graph.live.config.ts
+
+
+Running 1 test using 1 worker
+
+  ✓  1 tests/entity-graph.live.spec.ts:123:1 › live Entity Graph journey from upload to evidence (24.9s)
+
+  1 passed (25.6s)
+npm notice
+npm notice New minor version of npm available! 11.5.2 -> 11.21.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.2
+npm notice To update run: npm install -g npm@11.21.2
+npm notice

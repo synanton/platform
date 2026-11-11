@@ -41,7 +41,7 @@ class Neo4jGraphConnectorTest {
     private CypherExecutor cypher;
 
     @Test
-    void shouldHydrateTenantWithParameterizedUnwindCypher() {
+    void shouldHydrateTenantAdditivelyWithoutDestructiveDelete() {
         EntityCanonicalizer canonicalizer = new EntityCanonicalizer();
         DirectedMultigraph<GraphNode, GraphEdge> graph = new DirectedMultigraph<>(GraphEdge.class);
         EntityIndex index = new EntityIndex();
@@ -65,10 +65,9 @@ class Neo4jGraphConnectorTest {
         connector.loadTenant("demo");
 
         ArgumentCaptor<String> cypherCaptor = ArgumentCaptor.forClass(String.class);
-        verify(cypher, times(3)).write(cypherCaptor.capture(), anyMap());
-        assertThat(cypherCaptor.getAllValues().getFirst()).contains("DETACH DELETE");
-        assertThat(cypherCaptor.getAllValues().get(1)).contains("UNWIND $nodes");
-        assertThat(cypherCaptor.getAllValues().get(2)).contains("UNWIND $edges");
+        verify(cypher, times(1)).write(cypherCaptor.capture(), anyMap());
+        assertThat(cypherCaptor.getValue()).doesNotContain("DETACH DELETE");
+        assertThat(cypherCaptor.getValue()).contains("UNWIND $nodes", "UNWIND $edges");
         assertThat(connector.stats("demo").entityCount()).isEqualTo(2);
         assertThat(connector.stats("demo").edgeCount()).isEqualTo(1);
         assertThat(connector.id()).isEqualTo("neo4j");

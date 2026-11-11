@@ -1,0 +1,14 @@
+K8s combined consumer fault — 2026-11-11
+
+Source: combined-fault-1794425728
+1. Uploaded halcyon-7-directive.txt; graph_status reached PARTIAL.
+2. Deleted Synquest and Relix pods simultaneously.
+3. Both replacements became Ready.
+4. Resolution reached PARTIAL with graph_status PARTIAL.
+5. Neo4j retained :Entity=9 and :REL=2.
+6. Duplicate checks: duplicate_active=0, duplicate_rel=0.
+7. Entity Graph still returned the tested_every edge with evidence.
+8. Full live E2E after the combined restart: 1 passed (25.6s).
+
+This is targeted combined-restart evidence, not the complete #589
+consumer/reconciler concurrency/lost-response matrix.
