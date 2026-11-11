@@ -34,8 +34,8 @@ spec:
         - name: local-registry-cred
       containers:
         - name: ui
-          image: local-registry:5000/synanton/ui@sha256:509bcd237dfa65abaa38b86a7233219b1a8ff61e6ca4c0d8c05ed42e6e5a60ed
-          imagePullPolicy: IfNotPresent
+          image: local-registry:5000/synanton/ui:local-real-demo
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 80

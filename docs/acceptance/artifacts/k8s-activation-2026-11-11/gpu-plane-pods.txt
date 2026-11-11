@@ -1,0 +1,3 @@
+NAME                               READY   STATUS    RESTARTS   AGE    IP               NODE    NOMINATED NODE   READINESS GATES
+tei-embedding-c6f7f76d9-ll584      1/1     Running   0          103m   172.16.166.182   node1   <none>           <none>
+vllm-extraction-84fb9d65b7-r9mxx   1/1     Running   0          103m   172.16.135.27    node3   <none>           <none>

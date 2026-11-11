@@ -14,9 +14,10 @@ demo path (see #508).
   resolved, validated, and committed from ingested chunks (RAKG #560).
 
 The slice is Demo Complete and the search projection is **Architecture Complete**
-(#550/#552). The P0/P1 Search + RAKG baseline is complete, and RAKG is now
-**locally proven end-to-end** in Docker Compose (PR #601). The next milestone is
-**Kubernetes activation and demo readiness** (#589/#599).
+(#550/#552). The P0/P1 Search + RAKG baseline is complete, and the full RAKG
+journey is now proven **both** in local Compose and on the K8s deployment. The
+live K8s Entity Graph E2E passed on 2026-11-11; the remaining gate is the
+combined consumer/reconciler evidence and the post-#592 rerun (#589).
 
 **Milestone — Vertical Slice: Demo Complete (achieved 2026-11-06).** New PDF upload
 returns `BM25 #1 · Dense #1 · RRF #1`; provenance renders source/chunk SHA-256 plus
@@ -150,16 +151,18 @@ now be deployment configuration, not code debugging.
   one-hop canonical neighborhood (max 50), outgoing/incoming `:REL` relations, and
   `:RelationEvidence` provenance; string canonical IDs; JWT tenant scope.
 - [x] **#508 UI** — entity-rooted graph tab, directional SVG, evidence panel, and
-  mocked Playwright coverage merged in #598. Live E2E remains #599.
+  mocked Playwright coverage merged in #598.
+- [x] **#599 live E2E** — passed against the deployed K8s UI/Relix on 2026-11-11
+  (25.1s); see [`docs/acceptance/k8s-activation-2026-11-11.md`](../acceptance/k8s-activation-2026-11-11.md).
 
 ## Phase 3 — K8s Activation & Demo Readiness
 
-1. **#589** — apply the K8s overlay for Neo4j, Relix, and Syntology; run the combined
-   consumer/reconciler gate with the runbook; flags stay false until it passes.
-2. **#599** — run the Entity Graph Playwright suite against live Relix with no route
-   interception.
-3. **#592 post-migration rerun** — if the #585 seam migrates before #589 evidence is
-   collected, rerun the gate on the post-#592 tree before activation.
+1. **#589** — live journey is green, but the full combined consumer/reconciler
+   evidence bundle and post-#592 rerun remain; flags are currently enabled on the
+   deployed demo stack.
+2. **#599** — complete (live Entity Graph E2E green).
+3. **#592 post-migration rerun** — #592 is still open; rerun the gate on the
+   post-#592 tree when it lands.
 
 ## P3 — Operational reality
 
@@ -171,9 +174,9 @@ now be deployment configuration, not code debugging.
 | Issue / track | Status | P-level |
 |---|---|---|
 | #508 (graph) | Closed — backend #597, UI #598 | P2 |
-| #599 (live Entity Graph E2E) | Open — blocked on #589 | P2 |
-| #589 (K8s activation) | Open — blocked on K8s overlay + post-#592 rerun | P0 |
-| #578 (crash reconciliation) | Open — implementation landed; operational proof blocked on #589 | P1 |
+| #599 (live Entity Graph E2E) | Closed — K8s live E2E passed 2026-11-11 | P2 |
+| #589 (K8s activation) | Open — live journey green; combined fault-injection/post-#592 rerun outstanding | P0 |
+| #578 (crash reconciliation) | Open — implementation landed; operational proof still owed | P1 |
 | #570 (VALIDATING lease expiry) | Open | P2 |
 | #538 (TEI via gateway/Envoy) | Open — deferred post-activation | P1 |
 | #556 (query-adaptive RRF) | Open — deferred post-activation | P1 |

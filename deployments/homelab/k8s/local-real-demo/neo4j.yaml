@@ -31,6 +31,9 @@ spec:
       labels:
         app: neo4j
     spec:
+      # The Service named "neo4j" injects NEO4J_PORT_* service-links, which the
+      # Neo4j strict config parser treats as settings and rejects.
+      enableServiceLinks: false
       imagePullSecrets:
         - name: local-registry-cred
       securityContext:
@@ -69,6 +72,7 @@ spec:
                 - 'cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "RETURN 1"'
             initialDelaySeconds: 20
             periodSeconds: 10
+            timeoutSeconds: 10
           volumeMounts:
             - name: data
               mountPath: /data

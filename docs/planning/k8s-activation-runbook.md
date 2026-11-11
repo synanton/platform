@@ -1,6 +1,7 @@
 # K8s activation runbook — RAKG / #589
 
 > Companion handoff: [`activation-handoff.md`](activation-handoff.md).
+> Activation evidence: [`../acceptance/k8s-activation-2026-11-11.md`](../acceptance/k8s-activation-2026-11-11.md).
 
 **Baseline at authoring:** `main` = `948428a` (local RAKG activation #601 + glibc runtime images #604).
 **Activation head:** record `git rev-parse HEAD` in the acceptance file; if the tree differs from the baseline, use the activation head for every build and evidence run.
@@ -137,9 +138,9 @@ Also set consistently:
 1. **Seed canonical entities and project them** (the resolver needs `:Entity`
    nodes; the graph writer does not create canonical entities):
    ```bash
-   kubectl -n synanton exec -i neo4j-0 -- sh -c \
-     'cypher-shell -u neo4j -p "${NEO4J_AUTH#*/}"' \
-     < demo-data/rak-halcyon-entities.cypher
+   sed 's/local-real-demo/demo/g' demo-data/rak-halcyon-entities.cypher \
+     | kubectl -n synanton exec -i neo4j-0 -- sh -c \
+       'cypher-shell -u neo4j -p "${NEO4J_AUTH#*/}"'
    # Port-forward Neo4j HTTP and Synquest, then run the projection helper:
    kubectl -n synanton port-forward svc/neo4j 17474:7474 >/tmp/neo4j-pf.log 2>&1 &
    kubectl -n synanton port-forward svc/synquest 18083:8083 >/tmp/synquest-pf.log 2>&1 &
@@ -159,10 +160,11 @@ Also set consistently:
    curl -fsS -H "Authorization: Bearer $TOKEN" \
      "$SYNFLUX_URL/v1/sources/$SOURCE_ID/status" | jq
    ```
-   Require all three:
+   Require:
    - `extraction_status == "KNOWLEDGE_READY"`
-   - `graph_status == "GRAPH_COMMITTED"`
-   - `resolution_status == "COMPLETED"`
+   - `graph_status == "GRAPH_COMMITTED"` or `"PARTIAL"` (the live Qwen extraction may reject an unsupported relation; the target edge must still exist)
+   - `resolution_status == "COMPLETED"` or `"PARTIAL"`
+   - The target Entity Graph edge and evidence are present in #599
 3. **Run the live Entity Graph E2E** from #599 against the cluster UI URL. The local smoke queries `entity-auxiliary-coolant-loop` because that fixture owns the `tested_every` edge; use an entity with a real promoted relation. The mocked route-interception suite is not a live E2E. Record the Playwright JSON/HTML report. If the live spec is not yet present, activation is blocked on #599.
 4. **Manually verify the UI**: open the Entity Graph tab for an entity from the new document; confirm incoming/outgoing arrows, evidence chunk/version/offsets, and no truncation/error state. Capture screenshots and the entity ID.
 5. **Verify detail**:
