@@ -1,6 +1,7 @@
 # K8s activation runbook — RAKG / #589
 
 > Companion handoff: [`activation-handoff.md`](activation-handoff.md).
+> Activation evidence: [`../acceptance/k8s-activation-2026-11-11.md`](../acceptance/k8s-activation-2026-11-11.md).
 
 **Baseline at authoring:** `main` = `948428a` (local RAKG activation #601 + glibc runtime images #604).
 **Activation head:** record `git rev-parse HEAD` in the acceptance file; if the tree differs from the baseline, use the activation head for every build and evidence run.

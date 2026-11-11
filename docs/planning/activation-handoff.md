@@ -16,30 +16,27 @@ upload -> extraction -> graph commit -> resolution -> validation -> promotion
 
 Evidence:
 
+- Live K8s Entity Graph E2E: **1 passed in 25.1s** on 2026-11-11
+  (`docs/acceptance/k8s-activation-2026-11-11.md`).
 - Live Compose Entity Graph E2E: **1 passed in 39.7s** (`test/e2e/tests/entity-graph.live.spec.ts`, PR #606).
 - Mocked Entity Graph suite: **5 passed**.
 - K8s manifests render with `kubectl kustomize`; `kubeconform -strict -kubernetes-version 1.30.0` reports **27/27 valid** for the overlay and **2/2 valid** for the gpu-plane policy files.
 - Runtime integration fixes are merged: Jackson alignment, snake_case DTOs, service JWT for Syntology validation, Syntology V3 migration/index fix, Synquest consumer property prefix, and the #583 promotion producer (PRs #601/#604/#605).
 - The RAKG backing services are declared in the `local-real-demo` overlay: Neo4j, Relix (port 8084), Syntology, local NetworkPolicies, and the vLLM extraction ingress exception.
 
-Activation flags remain **false** in the committed manifests. Local Compose
-proves the behavior; it is not K8s activation evidence.
+Activation flags were enabled on the deployed demo stack on 2026-11-11; the
+committed manifests still default them to false. The K8s journey passed with
+`graph_status=PARTIAL` and `resolution_status=PARTIAL` because the live Qwen
+extraction produced a `signs` relation and an `UNKNOWN` subject that the demo
+ontology does not admit. The target `tested_every` edge and evidence were
+accepted and are what #599 verifies.
 
-## What is blocked
+## What remains
 
-Only the live K8s run remains:
-
-- **#589** — K8s activation gate and post-#592 rerun.
-- **#599** — live Entity Graph E2E against the deployed stack.
-
-The cluster is physically unreachable from this machine:
-
-```text
-dial tcp 192.168.10.30:6443: connect: no route to host
-```
-
-Do not treat this as a code or manifest failure. There is no code workaround for
-the missing route.
+- **#589** — the live journey is green, but the full combined consumer/reconciler
+  fault-injection bundle and the post-#592 rerun remain.
+- **#592** — open; the current evidence is for the transitional seam.
+- **#599** — complete; the live Entity Graph E2E passed.
 
 ## Flag consistency check (2026-11-11)
 

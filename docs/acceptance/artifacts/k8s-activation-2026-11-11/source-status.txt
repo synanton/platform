@@ -1,0 +1,6 @@
+
+ source_id                       | version_id                           | extraction_status | graph_status | resolution_status | graph_validation_counters                                                                           | resolution_counters
+---------------------------------+--------------------------------------+-------------------+--------------+-------------------+-----------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------
+ entity-graph-live-1794419350315 | 12788bf2-4721-5a25-ba33-e40a47569eb8 |   KNOWLEDGE_READY |      PARTIAL |           PARTIAL | {'mentions_accepted': 10, 'mentions_rejected': 0, 'relations_accepted': 2, 'relations_rejected': 2} | {'ambiguous': 0, 'failed': 0, 'pending': 0, 'processing': 0, 'resolved': 8, 'review_required': 1, 'superseded': 0, 'unresolved': 1}
+
+(1 rows)

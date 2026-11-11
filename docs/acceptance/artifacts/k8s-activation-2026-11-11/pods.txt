@@ -1,0 +1,16 @@
+NAME                                  READY   STATUS             RESTARTS       AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+cassandra-0                           1/1     Running            0              96m     172.16.104.49    node2   <none>           <none>
+cassandra-1                           1/1     Running            4 (95m ago)    96m     172.16.135.41    node3   <none>           <none>
+cassandra-2                           1/1     Running            4 (95m ago)    96m     172.16.166.167   node1   <none>           <none>
+extraction-gateway-65586b7445-mnmm5   1/1     Running            0              93m     172.16.104.22    node2   <none>           <none>
+minio-55887674fb-x7w9d                1/1     Running            0              93m     172.16.166.151   node1   <none>           <none>
+minio-init-q9kgb                      0/1     Completed          0              70m     172.16.104.21    node2   <none>           <none>
+neo4j-0                               1/1     Running            0              72m     172.16.104.20    node2   <none>           <none>
+platform-6f54ccbb85-dh6cl             0/1     CrashLoopBackOff   23 (46s ago)   93m     172.16.104.25    node2   <none>           <none>
+postgres-0                            1/1     Running            0              96m     172.16.166.137   node1   <none>           <none>
+relix-84c55d5f9d-9zn9x                1/1     Running            0              69m     172.16.104.47    node2   <none>           <none>
+security-69c64c9d7-kzql9              1/1     Running            0              93m     172.16.104.27    node2   <none>           <none>
+synflux-6fcbb8b5d4-f4dnl              1/1     Running            0              62m     172.16.104.45    node2   <none>           <none>
+synquest-f97cc46fd-2rxj5              1/1     Running            0              62m     172.16.104.2     node2   <none>           <none>
+syntology-5b5cd5bb99-g6fv7            1/1     Running            0              93m     172.16.104.52    node2   <none>           <none>
+ui-6899b4749c-5g68d                   1/1     Running            0              5m52s   172.16.104.26    node2   <none>           <none>
