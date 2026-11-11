@@ -4,7 +4,8 @@
   "scripts": {
     "test": "playwright test",
     "test:report": "playwright show-report",
-    "test:entity-graph": "playwright test -c playwright.entity-graph.config.ts"
+    "test:entity-graph": "playwright test -c playwright.entity-graph.config.ts",
+    "test:entity-graph-live": "playwright test -c playwright.entity-graph.live.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0"
