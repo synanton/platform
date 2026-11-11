@@ -1,0 +1,6 @@
+
+ source_id                 | version_id                           | extraction_status | graph_status | resolution_status
+---------------------------+--------------------------------------+-------------------+--------------+-------------------
+ combined-fault-1794425728 | 9701b42a-432f-5adb-ac91-ada459149fc2 |   KNOWLEDGE_READY |      PARTIAL |           PARTIAL
+
+(1 rows)
