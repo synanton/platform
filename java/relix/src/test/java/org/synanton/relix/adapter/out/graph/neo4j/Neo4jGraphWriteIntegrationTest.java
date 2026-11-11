@@ -3,6 +3,7 @@ package org.synanton.relix.adapter.out.graph.neo4j;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+import org.jgrapht.graph.DirectedMultigraph;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,10 @@ import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Session;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
+import org.synanton.relix.index.EntityIndex;
+import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.PromotionIds;
 import org.synanton.relix.graph.ResolutionIds;
 import org.synanton.common.resolution.CanonicalRelation;
@@ -595,6 +600,101 @@ class Neo4jGraphWriteIntegrationTest {
                 + "mention_id: 'mention-concurrent'}) RETURN count(n) AS c", Map.of("tenant", tenant))
                 .getFirst().get("c");
         assertThat(((Number) value).longValue()).isEqualTo(1);
+    }
+
+    @Test
+    void repeatedTenantLoadDoesNotDeleteCanonicalGraph() {
+        String tenant = TENANT + "-load-repeat";
+        seedCanonicalGraph(tenant);
+        GraphLoader loader = mock(GraphLoader.class);
+        when(loader.load(tenant)).thenReturn(emptyLoadResult());
+        Neo4jGraphConnector local = new Neo4jGraphConnector(loader, cypher);
+
+        local.loadTenant(tenant);
+        local.loadTenant(tenant);
+
+        assertThat(countForTenant("MATCH (n:Entity {tenant: $tenant}) RETURN count(n) AS c", tenant))
+                .isEqualTo(2);
+        assertThat(countForTenant("MATCH ()-[r:REL {tenant_id: $tenant}]->() RETURN count(r) AS c", tenant))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void partialTenantSnapshotDoesNotDeleteExistingCanonicalGraph() {
+        String tenant = TENANT + "-load-partial";
+        seedCanonicalGraph(tenant);
+        GraphLoader loader = mock(GraphLoader.class);
+        GraphNode onlyNode = new GraphNode(java.util.UUID.randomUUID(), "Only", "Concept", 0.7);
+        when(loader.load(tenant)).thenReturn(loadResult(onlyNode, null, null));
+        Neo4jGraphConnector local = new Neo4jGraphConnector(loader, cypher);
+
+        local.loadTenant(tenant);
+
+        assertThat(countForTenant("MATCH (n:Entity {tenant: $tenant}) RETURN count(n) AS c", tenant))
+                .isEqualTo(3);
+        assertThat(countForTenant("MATCH ()-[r:REL {tenant_id: $tenant}]->() RETURN count(r) AS c", tenant))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void interruptedTenantLoadLeavesExistingCanonicalGraphIntact() {
+        String tenant = TENANT + "-load-interrupted";
+        seedCanonicalGraph(tenant);
+        GraphLoader loader = mock(GraphLoader.class);
+        GraphNode from = new GraphNode(java.util.UUID.randomUUID(), "From", "Concept", 0.7);
+        GraphNode to = new GraphNode(java.util.UUID.randomUUID(), "To", "Concept", 0.7);
+        when(loader.load(tenant)).thenReturn(loadResult(from, to, "requires"));
+        CypherExecutor failingOnEdgeWrite = new CypherExecutor() {
+            @Override
+            public List<Map<String, Object>> read(String query, Map<String, Object> params) {
+                return cypher.read(query, params);
+            }
+
+            @Override
+            public void write(String query, Map<String, Object> params) {
+                if (query.contains("UNWIND $edges")) {
+                    throw new IllegalStateException("injected reload interruption");
+                }
+                cypher.write(query, params);
+            }
+        };
+        Neo4jGraphConnector local = new Neo4jGraphConnector(loader, failingOnEdgeWrite);
+
+        assertThatThrownBy(() -> local.loadTenant(tenant))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("injected reload interruption");
+
+        assertThat(countForTenant("MATCH (n:Entity {tenant: $tenant}) RETURN count(n) AS c", tenant))
+                .isEqualTo(2);
+        assertThat(countForTenant("MATCH ()-[r:REL {tenant_id: $tenant}]->() RETURN count(r) AS c", tenant))
+                .isEqualTo(1);
+    }
+
+    private void seedCanonicalGraph(String tenant) {
+        cypher.write("""
+                CREATE (a:Entity {tenant: $tenant, id: 'existing-a', label: 'Existing A', type: 'Concept'})
+                CREATE (b:Entity {tenant: $tenant, id: 'existing-b', label: 'Existing B', type: 'Concept'})
+                CREATE (a)-[r:REL {tenant_id: $tenant, id: 'existing-rel'}]->(b)
+                SET r.verb = 'relates_to'
+                """, Map.of("tenant", tenant));
+    }
+
+    private static GraphLoader.LoadResult emptyLoadResult() {
+        DirectedMultigraph<GraphNode, GraphEdge> graph = new DirectedMultigraph<>(GraphEdge.class);
+        return new GraphLoader.LoadResult(graph, new EntityIndex(), Map.of(), 0, 1);
+    }
+
+    private static GraphLoader.LoadResult loadResult(GraphNode from, GraphNode to, String verb) {
+        DirectedMultigraph<GraphNode, GraphEdge> graph = new DirectedMultigraph<>(GraphEdge.class);
+        Map<java.util.UUID, GraphNode> nodes = new java.util.LinkedHashMap<>();
+        graph.addVertex(from);
+        nodes.put(from.entityId(), from);
+        if (to != null) {
+            graph.addVertex(to);
+            nodes.put(to.entityId(), to);
+            graph.addEdge(from, to, new GraphEdge(java.util.UUID.randomUUID(), verb, 0.8));
+        }
+        return new GraphLoader.LoadResult(graph, new EntityIndex(), nodes, 0, 1);
     }
 
     private static long count(String query) {
