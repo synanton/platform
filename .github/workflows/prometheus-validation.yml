@@ -2,7 +2,18 @@ name: Prometheus Validation
 
 on:
   push:
+    paths:
+      - 'deployments/observability/prometheus/rules/**'
+      - 'docs/operations/runbooks/**'
+      - '.github/workflows/prometheus-validation.yml'
   pull_request:
+    paths:
+      - 'deployments/observability/prometheus/rules/**'
+      - 'docs/operations/runbooks/**'
+      - '.github/workflows/prometheus-validation.yml'
+
+permissions:
+  contents: read
 
 jobs:
   promtool:
