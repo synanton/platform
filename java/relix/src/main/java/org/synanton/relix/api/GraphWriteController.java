@@ -93,6 +93,13 @@ public class GraphWriteController {
                 request == null || request.mentionIds() == null ? java.util.List.of() : request.mentionIds());
     }
 
+    @org.springframework.web.bind.annotation.GetMapping("/v1/extracted-relations")
+    public java.util.List<org.synanton.common.resolution.ExtractedRelationView> extractedRelations(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String sourceVersionId) {
+        String tenant = requireVerifiedTenant(java.util.List.of());
+        return graphConnector.listExtractedRelations(tenant, sourceVersionId);
+    }
+
     @org.springframework.web.bind.annotation.GetMapping("/v1/extracted-relations/{relationId}")
     public org.springframework.http.ResponseEntity<?> extractedRelation(
             @org.springframework.web.bind.annotation.PathVariable String relationId) {

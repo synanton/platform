@@ -1,13 +1,15 @@
 package org.synanton.common.resolution;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 /** Persisted extracted relation/provenance read from the Relix projection. */
 public record ExtractedRelationView(
-        String relationId,
-        String tenantId,
-        String sourceVersionId,
-        String subjectMentionId,
-        String objectMentionId,
+        @JsonAlias("relation_id") String relationId,
+        @JsonAlias("tenant_id") String tenantId,
+        @JsonAlias("source_version_id") String sourceVersionId,
+        @JsonAlias("subject_mention_id") String subjectMentionId,
+        @JsonAlias("object_mention_id") String objectMentionId,
         String predicate,
-        String evidenceChunkId,
-        int evidenceChunkOffsetStart,
-        int evidenceChunkOffsetEnd) {}
+        @JsonAlias("evidence_chunk_id") String evidenceChunkId,
+        @JsonAlias("evidence_chunk_offset_start") int evidenceChunkOffsetStart,
+        @JsonAlias("evidence_chunk_offset_end") int evidenceChunkOffsetEnd) {}

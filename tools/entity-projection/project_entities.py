@@ -68,7 +68,7 @@ def normalize(entity: dict) -> dict:
     if isinstance(aliases, str):
         aliases = [part.strip() for part in aliases.split("|") if part.strip()]
     return {
-        "entityId": entity.get("entityId"),
+        "entity_id": entity.get("entityId"),
         "label": entity.get("label") or entity.get("entityId"),
         "aliases": aliases or [],
         "type": entity.get("type") or "",

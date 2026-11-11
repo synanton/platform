@@ -198,14 +198,16 @@ public class JenaTdb2Adapter implements OntologyAdapter {
 
     public EntityType resolveEntity(String tenant, String version, String label) {
         return listEntities(tenant, version).stream()
-                .filter(e -> label.equalsIgnoreCase(e.label()) || label.equalsIgnoreCase(e.uri()))
+                .filter(e -> label.equalsIgnoreCase(e.label()) || label.equalsIgnoreCase(e.uri())
+                        || label.equalsIgnoreCase(localNameOf(e.uri())))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Entity not found: " + label));
     }
 
     public RelationType resolveRelation(String tenant, String version, String label) {
         return listRelations(tenant, version).stream()
-                .filter(r -> label.equalsIgnoreCase(r.label()) || label.equalsIgnoreCase(r.uri()))
+                .filter(r -> label.equalsIgnoreCase(r.label()) || label.equalsIgnoreCase(r.uri())
+                        || label.equalsIgnoreCase(localNameOf(r.uri())))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Relation not found: " + label));
     }
@@ -340,5 +342,12 @@ public class JenaTdb2Adapter implements OntologyAdapter {
             int slash = uri.lastIndexOf('/');
             return slash >= 0 ? uri.substring(slash + 1) : uri;
         }
+    }
+
+    private static String localNameOf(String uri) {
+        int slash = uri.lastIndexOf('/');
+        int hash = uri.lastIndexOf('#');
+        int cut = Math.max(slash, hash);
+        return cut < 0 ? uri : uri.substring(cut + 1);
     }
 }

@@ -14,4 +14,8 @@ public interface ResolutionGraphLookup {
         throw new UnsupportedOperationException("graph connector does not support extracted-relation lookup");
     }
 
+    default List<ExtractedRelationView> listExtractedRelations(String tenantId, String sourceVersionId) {
+        throw new UnsupportedOperationException("graph connector does not support extracted-relation listing");
+    }
+
 }

@@ -260,6 +260,40 @@ public class Neo4jGraphConnector implements GraphConnector, ResolutionReconcilia
                 row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue()));
     }
 
+    private static Map<String, Object> params(String tenant, String sourceVersionId) {
+        Map<String, Object> params = new java.util.HashMap<>();
+        params.put("tenant", tenant);
+        params.put("version", sourceVersionId);
+        return params;
+    }
+
+    @Override
+    public java.util.List<ExtractedRelationView> listExtractedRelations(String tenant, String sourceVersionId) {
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (s:ExtractedMention {tenant_id: $tenant})
+                      -[r:EXTRACTED_RELATION {tenant_id: $tenant}]->
+                      (o:ExtractedMention {tenant_id: $tenant})
+                WHERE $version IS NULL OR r.source_version_id = $version
+                RETURN r.relation_id AS relation_id, r.source_version_id AS source_version_id,
+                       s.mention_id AS subject_mention_id, o.mention_id AS object_mention_id,
+                       r.predicate AS predicate, r.evidence_chunk_id AS evidence_chunk_id,
+                       r.evidence_chunk_offset_start AS offset_start,
+                       r.evidence_chunk_offset_end AS offset_end
+                ORDER BY r.relation_id
+                LIMIT 1000
+                """, params(tenant, sourceVersionId));
+        return rows.stream().map(row -> new ExtractedRelationView(
+                String.valueOf(row.get("relation_id")), tenant,
+                String.valueOf(row.get("source_version_id")),
+                String.valueOf(row.get("subject_mention_id")),
+                String.valueOf(row.get("object_mention_id")),
+                String.valueOf(row.get("predicate")),
+                String.valueOf(row.get("evidence_chunk_id")),
+                row.get("offset_start") == null ? -1 : ((Number) row.get("offset_start")).intValue(),
+                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue()
+        )).toList();
+    }
+
     @Override
     public PromotionResult promoteRelation(CanonicalRelation relation) {
         ensureExtractedSchema();

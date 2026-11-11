@@ -3,7 +3,7 @@ package org.synanton.synquest.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** Resolution consumer tuning (PR #4d.1). Disabled until Relix is deployed. */
-@ConfigurationProperties(prefix = "synquest.resolution.consumer")
+@ConfigurationProperties(prefix = "resolution.consumer")
 public record ResolutionConsumerProperties(
         boolean enabled,
         String tenant,
