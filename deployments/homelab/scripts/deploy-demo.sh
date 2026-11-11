@@ -28,6 +28,7 @@ kubectl cluster-info >/dev/null 2>&1 || die "cluster unreachable"
 : "${REGISTRY_USER:?set REGISTRY_USER in $ENV_FILE}"
 : "${REGISTRY_PASSWORD:?set REGISTRY_PASSWORD in $ENV_FILE}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-changeme}"
+NEO4J_PASSWORD="${NEO4J_PASSWORD:-changeme-neo4j}"
 MINIO_USER="${MINIO_USER:-minioadmin}"
 MINIO_PASSWORD="${MINIO_PASSWORD:-minioadmin}"
 : "${DEMO_USER:?set DEMO_USER in $ENV_FILE}"
@@ -42,6 +43,9 @@ kubectl -n "$NAMESPACE" create secret generic synanton-jwt \
     --from-literal=secret="$SYNANTON_JWT_SECRET" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "$NAMESPACE" create secret generic postgres-cred \
     --from-literal=password="$POSTGRES_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n "$NAMESPACE" create secret generic neo4j-cred \
+    --from-literal=auth="neo4j:$NEO4J_PASSWORD" \
+    --from-literal=password="$NEO4J_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "$NAMESPACE" create secret generic minio-cred \
     --from-literal=user="$MINIO_USER" --from-literal=password="$MINIO_PASSWORD" \
     --dry-run=client -o yaml | kubectl apply -f -
@@ -114,9 +118,15 @@ kubectl -n "$NAMESPACE" wait --for=condition=complete job/minio-init --timeout=1
 log "local-real-demo overlay"
 kubectl apply -k "$ROOT/k8s/local-real-demo/"
 
-# Demo-only: allow synanton -> TEI:8000 (gpu-plane default-deny blocks direct access).
-log "demo network access to TEI embedding (gpu-plane)"
+# Demo-only: allow synanton -> TEI/vLLM (gpu-plane default-deny blocks direct access).
+log "demo network access to gpu-plane inference (TEI + vLLM extraction)"
 kubectl apply -f "$ROOT/k8s/local-real-demo/tei-embedding-access.yaml"
+kubectl apply -f "$ROOT/k8s/local-real-demo/vllm-extraction-access.yaml"
+
+log "waiting for RAKG graph services"
+kubectl -n "$NAMESPACE" rollout status statefulset/neo4j --timeout=300s
+kubectl -n "$NAMESPACE" rollout status deployment/relix --timeout=180s
+kubectl -n "$NAMESPACE" rollout status deployment/syntology --timeout=300s
 
 log "done — pods:"
 kubectl -n "$NAMESPACE" get pods -o wide

@@ -6,16 +6,17 @@
 
 ## 0. Readiness blockers (current manifests)
 
-The `local-real-demo` overlay does **not** currently deploy the full RAKG backend:
+The overlay now declares the RAKG backing services:
 
-- **Relix is absent** (no deployment/service/Dockerfile in `deployments/homelab/k8s/local-real-demo`).
-- **Neo4j is absent** (no StatefulSet/service/PVC).
-- **Syntology is absent** from the overlay, although `SYNTOLOGY_BASE_URL` points at it.
+- **Neo4j** — StatefulSet, Service, and PVC in `local-real-demo/neo4j.yaml`.
+- **Relix** — Deployment and Service in `local-real-demo/relix.yaml`, port **8084**.
+- **Syntology** — Deployment, Service, PVC, and a Postgres DB-init container in `local-real-demo/syntology.yaml`.
+- **NetworkPolicies** — `rak-network-policies.yaml`; the gpu-plane exceptions remain `tei-embedding-access.yaml` and `vllm-extraction-access.yaml`.
+- **Images** — Relix and Syntology are not yet pinned to registry digests in the overlay; build/push and pin them before applying. Neo4j must be mirrored.
 - **vLLM extraction and TEI embedding manifests are not in this repository**; `vllm-extraction` was manually deployed to `gpu-plane` and must be exported/recorded before teardown.
-- `synflux` points at `relix.synanton.svc.cluster.local:8080`, while `platform` and the UI proxy use `relix:8084`. Pick **8084** and make every caller consistent.
 - A live Entity Graph Playwright spec does not exist yet; #599 tracks it. The current Playwright entity-graph spec uses route interception and is not a live E2E.
 
-Close these before following the happy path. Do not flip consumer flags to discover missing services at runtime.
+Do not flip consumer flags to discover missing services at runtime.
 
 ## 1. Pre-flight
 
@@ -26,7 +27,7 @@ Close these before following the happy path. Do not flip consumer flags to disco
 - [ ] vLLM extraction is running in `gpu-plane`; record the deployment spec/image and service endpoint. Health: `kubectl -n gpu-plane get deploy,svc vllm-extraction`.
 - [ ] TEI embedding is running in `gpu-plane`; record deployment/image/service. Health: `kubectl -n gpu-plane get deploy,svc tei-embedding`.
 - [ ] Neo4j is deployed with a persistent volume; record URI, database, and credentials source.
-- [ ] Syntology is deployed; record service URL and ontology version/data digest.
+- [ ] Syntology is deployed; record service URL and ontology version/data digest. The overlay seeds `sample-ontology.ttl` as version `1.0.0` for tenant `demo` when the Syntology DB is empty; if it is not empty, create/activate the intended version explicitly.
 - [ ] Cassandra is running (`synanton` namespace) and the keyspace exists.
 
 ### Build and push at the activation head
@@ -46,11 +47,17 @@ docker build -f deployments/docker/syntology.Dockerfile       -t local-registry:
 docker build -f deployments/docker/syntology-admin.Dockerfile -t local-registry:5000/synanton/ui:$TAG .
 ```
 
-Relix has no Dockerfile in this tree. Add a minimal one that runs
-`:java:relix:bootJar` (or use the approved equivalent) before activation:
+The Relix prebuilt image packages `:java:relix:bootJar`:
 
 ```bash
-docker build -f <relix Dockerfile> -t local-registry:5000/synanton/relix:$TAG .
+docker build -f deployments/docker/relix.prebuilt.Dockerfile \
+  -t local-registry:5000/synanton/relix:$TAG .
+```
+
+Or use the mirror script with the manifest tag:
+
+```bash
+IMAGE_TAG=local-real-demo ./scripts/mirror-images.sh
 ```
 
 Push all images and pin the deployment specs to the resulting digests (not mutable tags):
@@ -73,14 +80,16 @@ Record the digests in the acceptance file.
 | synflux | `EXTRACTION_CONSUMER_ENABLED` | `true` |
 | synflux | `EXTRACTION_GRAPH_ENABLED` | `true` |
 | synquest | `RESOLUTION_CONSUMER_ENABLED` | `true` |
+| synflux | `PROMOTION_PRODUCER_ENABLED` | `true` |
 | relix | `PROMOTION_CONSUMER_ENABLED` | `true` |
 | relix (for #589 reconciliation evidence) | `RECONCILIATION_ENABLED` | `true` |
 
 Also set consistently:
 
 - Tenants: `EXTRACTION_CONSUMER_TENANT`, `RESOLUTION_CONSUMER_TENANT`, `PROMOTION_CONSUMER_TENANT`, `RECONCILIATION_TENANT` (use the same tenant, e.g. `demo`).
-- URLs: `LLM_EXTRACTION_URL` → vLLM service; `RELIX_BASE_URL` → `http://relix.synanton.svc.cluster.local:8084`; `SYNTOLOGY_BASE_URL` → Syntology service.
-- `SYNANTON_JWT_SECRET` in synflux, synquest, and relix from the same Kubernetes Secret. Never place it in a ConfigMap or evidence file.
+- URLs: `LLM_EXTRACTION_URL` → vLLM service; `RELIX_BASE_URL` → `http://relix.synanton.svc.cluster.local:8084`; `SYNTOLOGY_BASE_URL` → Syntology service. The overlay now uses 8084 consistently.
+- `SYNANTON_JWT_SECRET` in synflux, synquest, relix, and Syntology from the same Kubernetes Secret. Never place it in a ConfigMap or evidence file.
+- `NEO4J_PASSWORD`/`neo4j-cred` and `POSTGRES_PASSWORD`/`postgres-cred` are required; `deploy-demo.sh` creates both secrets from `config/.env`.
 - Neo4j/Cassandra connection env for Relix; persistence paths; `RELIX_TENANT`.
 - `EXTRACTION_CONSUMER_ENABLED`/graph writes remain false in the default manifests; activation only via an explicit overlay or `kubectl set env` that is recorded.
 - The UI nginx proxy (`/api/v1/entities/` → Relix) must target the same service/port as the other callers; `X-Tenant-ID` must be stripped and Authorization forwarded.
@@ -105,7 +114,23 @@ Also set consistently:
 
 ## 4. #599 live E2E execution
 
-1. **Upload a known document** through the synflux ingestion API (multipart `/v1/ingestion-runs`, or the existing local-real-demo script as a reference). Use a known source ID, tenant, and document digest.
+1. **Seed canonical entities and project them** (the resolver needs `:Entity`
+   nodes; the graph writer does not create canonical entities):
+   ```bash
+   kubectl -n synanton exec -i neo4j-0 -- sh -c \
+     'cypher-shell -u neo4j -p "${NEO4J_AUTH#*/}"' \
+     < demo-data/rak-halcyon-entities.cypher
+   # Port-forward Neo4j HTTP and Synquest, then run the projection helper:
+   kubectl -n synanton port-forward svc/neo4j 17474:7474 >/tmp/neo4j-pf.log 2>&1 &
+   kubectl -n synanton port-forward svc/synquest 18083:8083 >/tmp/synquest-pf.log 2>&1 &
+   NEO4J_HTTP_URL=http://localhost:17474 NEO4J_USER=neo4j \
+     NEO4J_PASSWORD="$NEO4J_PASSWORD" SYNQUEST_URL=http://localhost:18083 \
+     SYNANTON_JWT_SECRET="$SYNANTON_JWT_SECRET" TENANT=demo \
+     python3 tools/entity-projection/project_entities.py
+   ```
+   Require all nine entities projected. `deployments/docker/rak-halcyon-entities.cypher`
+   is the same fixture used by the local Compose smoke.
+2. **Upload a known document** through the synflux ingestion API (multipart `/v1/ingestion-runs`, or the existing local-real-demo script as a reference). Use a known source ID, tenant, and document digest.
 2. **Poll status** with a tenant token:
    ```bash
    export SYNFLUX_URL="http://<synflux-service>:8090"
@@ -118,7 +143,7 @@ Also set consistently:
    - `extraction_status == "KNOWLEDGE_READY"`
    - `graph_status == "GRAPH_COMMITTED"`
    - `resolution_status == "COMPLETED"`
-3. **Run the live Entity Graph E2E** from #599 against the cluster UI URL. The mocked route-interception suite is not a live E2E. Record the Playwright JSON/HTML report. If the live spec is not yet present, activation is blocked on #599.
+3. **Run the live Entity Graph E2E** from #599 against the cluster UI URL. The local smoke queries `entity-auxiliary-coolant-loop` because that fixture owns the `tested_every` edge; use an entity with a real promoted relation. The mocked route-interception suite is not a live E2E. Record the Playwright JSON/HTML report. If the live spec is not yet present, activation is blocked on #599.
 4. **Manually verify the UI**: open the Entity Graph tab for an entity from the new document; confirm incoming/outgoing arrows, evidence chunk/version/offsets, and no truncation/error state. Capture screenshots and the entity ID.
 5. **Verify detail**:
    - Neo4j has one active `:RESOLVES_TO` per expected mention, `:REL`/`:RelationEvidence` from promotion, and `:RESOLVES_TO.search_generation` is populated.

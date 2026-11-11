@@ -40,17 +40,20 @@ search returns results once that finishes (see Known Limitations).
   hybrid retrieval (`BM25 · Dense · RRF`) through the in-cluster TEI service;
   backfilling the legacy corpus is deferred. See
   `docs/acceptance/live-dense-2026-11-06.md`.
-- **TEI networking is a demo exception:** synquest/synflux reach `tei-embedding`
-  directly across namespaces via the additive `demo-allow-synanton-tei`
-  NetworkPolicy. This bypasses the gpu-plane gateway/Envoy perimeter; route via
-  Envoy before production use (see the manifest TODO and #538).
+- **GPU-plane networking is a demo exception:** synquest/synflux reach
+  `tei-embedding`, and synflux reaches `vllm-extraction`, directly across
+  namespaces via additive NetworkPolicies. This bypasses the gpu-plane
+  gateway/Envoy perimeter; route via Envoy before production use (see the
+  manifest TODO and #538).
+- **RAKG graph services:** the overlay now includes Neo4j, Relix, and Syntology.
+  The Compose pipeline is proven locally; K8s activation evidence remains #589.
 - **Graph UI:** scoped to bounded neighbor expansion (#508), not a full 20k-node
   visualization.
 
 ## Preconditions
 1. Cluster reachable (`kubectl get nodes`).
 2. `config/.env` created from `config/.env.example` (JWT secret, registry
-   credentials, postgres/minio passwords, and `DEMO_USER`/`DEMO_PASSWORD`).
+   credentials, Postgres/Neo4j/MinIO passwords, and `DEMO_USER`/`DEMO_PASSWORD`).
 3. Images mirrored: `./scripts/mirror-images.sh` (build/pull → tag → push to
    `local-registry:5000`). The registry itself: `./scripts/check-registry.sh`.
 4. Node labels applied (once): see `cluster-as-built.md` §Labels — node1
@@ -64,7 +67,7 @@ search returns results once that finishes (see Known Limitations).
 | Component | Nodes | Replicas | Notes |
 |---|---|---|---|
 | Cassandra | node1/2/3 | 3 (NTS RF=3) | local-ssd static PVs, Retain; anti-affinity required |
-| Postgres | node1 | 1 | extraction gateway store |
+| Postgres | node1 | 1 | extraction gateway + Syntology store |
 | MinIO | node1 | 1 | object store + extraction handoff |
 | synflux | node2/3 | 2 | **required** anti-affinity (P1 tests depend on it); shared content cache (Longhorn RWX) and fixtures (NFS) |
 | extraction-gateway | node2 | 1 | CPU |
@@ -76,8 +79,15 @@ The demo overlay (`local-real-demo`) adds:
 | Component | Notes |
 |---|---|
 | security | `/v1/auth/tenant` token mint; `Loaded 1 users` from `security-htpasswd` |
-| ui | NodePort **30080** — `/search`, `/ontology` |
+| ui | NodePort **30080** — `/search`, `/ontology`, Entity Graph |
+| neo4j | RAKG graph store; Longhorn PVC; `neo4j-cred` secret |
+| relix | graph write/read + Entity Graph API; port **8084** |
+| syntology | ontology validation; Postgres DB init and TDB2 PVC |
 | platform | CrashLoopBackOff (#500, out of demo path) |
+
+Build/push the RAKG images with
+`IMAGE_TAG=local-real-demo ./scripts/mirror-images.sh`; the overlay uses matching
+tags until the activation runbook pins digests.
 
 ## Stop / remove
 ```bash

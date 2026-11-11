@@ -1,0 +1,24 @@
+# Demo-only ingress exception for RAKG extraction.
+#
+# The gpu-plane default-deny permits inference backends only from Envoy (§19).
+# The local-real-demo overlay calls vllm-extraction directly over HTTP for the
+# extraction consumer. This is the same narrow exception already used for TEI
+# and must be replaced by gateway/Envoy routing outside the demo.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-allow-synanton-vllm-extraction
+  namespace: gpu-plane
+spec:
+  podSelector:
+    matchLabels:
+      app: vllm-extraction
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: synanton
+      ports:
+        - protocol: TCP
+          port: 8000

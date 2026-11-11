@@ -9,5 +9,9 @@ resources:
   - synquest.yaml
   - synflux.yaml
   - extraction-gateway.yaml
+  - neo4j.yaml
+  - relix.yaml
+  - syntology.yaml
+  - rak-network-policies.yaml
   - platform.yaml
   - ui.yaml

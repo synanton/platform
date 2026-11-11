@@ -34,7 +34,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: gateway
-          image: local-registry:5000/synanton/extraction-gateway@sha256:1f79c5991c395aab24e796e0500a2ed1f7c8dd21cd540ded4198eea29e8f65c2
+          image: local-registry:5000/synanton/extraction-gateway:local-real-demo
           imagePullPolicy: IfNotPresent
           env:
             - name: EXTRACTION_DB_URL

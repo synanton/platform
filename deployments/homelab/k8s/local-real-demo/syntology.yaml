@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: syntology
+  namespace: synanton
+spec:
+  type: ClusterIP
+  selector:
+    app: syntology
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syntology
+  namespace: synanton
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: syntology
+  template:
+    metadata:
+      labels:
+        app: syntology
+    spec:
+      imagePullSecrets:
+        - name: local-registry-cred
+      securityContext:
+        fsGroup: 2000
+      initContainers:
+        - name: syntology-db-init
+          image: local-registry:5000/synanton/postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_USER
+              value: synanton
+            - name: POSTGRES_DB
+              value: synanton
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-cred
+                  key: password
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              until pg_isready -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; do sleep 2; done
+              psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tc "SELECT 1 FROM pg_database WHERE datname='syntology'" | grep -q 1 \
+                || psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE DATABASE syntology"
+              psql -h postgres -U "$POSTGRES_USER" -d syntology -c \
+                "CREATE SCHEMA IF NOT EXISTS syntology; CREATE TABLE IF NOT EXISTS syntology.entity_types (version text); CREATE TABLE IF NOT EXISTS syntology.relation_types (version text);"
+      containers:
+        - name: syntology
+          image: local-registry:5000/synanton/syntology:local-real-demo
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: SYNTOLOGY_DB_URL
+              value: jdbc:postgresql://postgres:5432/syntology
+            - name: SYNTOLOGY_DB_USER
+              value: synanton
+            - name: SYNTOLOGY_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-cred
+                  key: password
+            - name: SPRING_FLYWAY_LOCATIONS
+              value: classpath:db/syntology-migration
+            - name: SYNTOLOGY_JENA_PATH
+              value: /var/lib/syntology/tdb2
+            - name: SYNTOLOGY_ONTOLOGY_DIR
+              value: /data/ontologies
+            - name: SYNANTON_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: synanton-jwt
+                  key: secret
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 2000
+          volumeMounts:
+            - name: tdb2
+              mountPath: /var/lib/syntology/tdb2
+      volumes:
+        - name: tdb2
+          persistentVolumeClaim:
+            claimName: syntology-tdb2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: syntology-tdb2
+  namespace: synanton
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi

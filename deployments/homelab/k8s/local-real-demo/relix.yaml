@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: relix
+  namespace: synanton
+spec:
+  type: ClusterIP
+  selector:
+    app: relix
+  ports:
+    - name: http
+      port: 8084
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: relix
+  namespace: synanton
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: relix
+  template:
+    metadata:
+      labels:
+        app: relix
+    spec:
+      imagePullSecrets:
+        - name: local-registry-cred
+      containers:
+        - name: relix
+          image: local-registry:5000/synanton/relix:local-real-demo
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+            - name: RELIX_GRAPH_CONNECTOR
+              value: neo4j
+            - name: RELIX_TENANT
+              value: demo
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: NEO4J_USERNAME
+              value: neo4j
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-cred
+                  key: password
+            - name: CASSANDRA_HOST
+              value: cassandra
+            - name: CASSANDRA_PORT
+              value: "9042"
+            - name: CASSANDRA_LOCAL_DC
+              value: datacenter1
+            - name: SYNANTON_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: synanton-jwt
+                  key: secret
+            - name: SYNANTON_ENVELOPE_ENABLED
+              value: "false"
+            - name: PROMOTION_CONSUMER_ENABLED
+              value: "false"
+            - name: PROMOTION_CONSUMER_TENANT
+              value: demo
+            - name: RECONCILIATION_ENABLED
+              value: "false"
+            - name: RECONCILIATION_TENANT
+              value: demo
+          ports:
+            - name: http
+              containerPort: 8084
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20

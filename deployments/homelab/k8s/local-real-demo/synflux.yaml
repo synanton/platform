@@ -31,7 +31,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: synflux
-          image: local-registry:5000/synanton/synflux@sha256:07f3ce9732f7d5e4cdb93b2fd5a8e611cd460bbad0820802349062b1f3b3efe1
+          image: local-registry:5000/synanton/synflux:local-real-demo
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -73,7 +73,15 @@ spec:
             - name: SYNTOLOGY_BASE_URL
               value: "http://syntology.synanton.svc.cluster.local:8080"
             - name: RELIX_BASE_URL
-              value: "http://relix.synanton.svc.cluster.local:8080"
+              value: "http://relix.synanton.svc.cluster.local:8084"
+            - name: EXTRACTION_GRAPH_ONTOLOGY_VERSION
+              value: "active"
+            - name: PROMOTION_PRODUCER_ENABLED
+              value: "false"
+            - name: PROMOTION_PRODUCER_TENANT
+              value: "demo"
+            - name: PROMOTION_PRODUCER_ONTOLOGY_VERSION
+              value: "active"
             - name: MINIO_ENDPOINT
               value: http://minio:9000
             - name: MINIO_ACCESS_KEY

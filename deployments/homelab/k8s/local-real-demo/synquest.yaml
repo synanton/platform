@@ -39,7 +39,7 @@ spec:
         - name: local-registry-cred
       containers:
         - name: synquest
-          image: local-registry:5000/synanton/synquest@sha256:5a9e40aa0e4710ef03b3417c321ef9839e46130257b74129ee7b8d5e12bdc45e
+          image: local-registry:5000/synanton/synquest:local-real-demo
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -67,11 +67,25 @@ spec:
                 secretKeyRef:
                   name: minio-cred
                   key: password
+            - name: RELIX_BASE_URL
+              value: http://relix.synanton.svc.cluster.local:8084
             - name: SYNANTON_JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: synanton-jwt
                   key: secret
+            - name: SYNQUEST_PROJECTION_ENABLED
+              value: "true"
+            - name: RESOLUTION_CONSUMER_ENABLED
+              value: "false"
+            - name: RESOLUTION_CONSUMER_TENANT
+              value: demo
+            - name: RESOLUTION_ONTOLOGY_VERSION
+              value: active
+            - name: RESOLUTION_ABSOLUTE_THRESHOLD
+              value: "0.01"
+            - name: RESOLUTION_MARGIN_THRESHOLD
+              value: "0.0001"
             - name: ONTOLOGY_V2_PATH
               value: /app/data/ontology-v2.jsonl
             - name: ONTOLOGY_V2_SHA256

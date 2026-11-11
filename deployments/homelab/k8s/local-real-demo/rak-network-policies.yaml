@@ -1,0 +1,60 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: relix-allow-synanton
+  namespace: synanton
+spec:
+  podSelector:
+    matchLabels:
+      app: relix
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [synflux, synquest, platform, ui]
+      ports:
+        - protocol: TCP
+          port: 8084
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neo4j-allow-relix
+  namespace: synanton
+spec:
+  podSelector:
+    matchLabels:
+      app: neo4j
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: relix
+      ports:
+        - protocol: TCP
+          port: 7687
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: syntology-allow-synflux
+  namespace: synanton
+spec:
+  podSelector:
+    matchLabels:
+      app: syntology
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [synflux, ui]
+      ports:
+        - protocol: TCP
+          port: 8080
