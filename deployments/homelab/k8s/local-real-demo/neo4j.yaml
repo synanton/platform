@@ -5,7 +5,6 @@ metadata:
   namespace: synanton
 spec:
   type: ClusterIP
-  publishNotReadyAddresses: true
   selector:
     app: neo4j
   ports:
@@ -70,13 +69,37 @@ spec:
               command:
                 - sh
                 - -c
-                - 'cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "RETURN 1"'
-            initialDelaySeconds: 20
+                - >-
+                  cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}"
+                  "SHOW CONSTRAINTS YIELD name WHERE name IN ['canonical_relation_anchor_unique','entity_identity_unique','extracted_mention_unique','extracted_relation_unique','relation_evidence_unique','resolution_slot_unique','source_revision_fence_unique'] RETURN count(*) AS c"
+                  | grep -qw 7
+            initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 10
+            timeoutSeconds: 30
           volumeMounts:
             - name: data
               mountPath: /data
+        - name: schema-init
+          image: local-registry:5000/synanton/neo4j:5.26
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NEO4J_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-cred
+                  key: auth
+          command: ["sh", "-c"]
+          args:
+            - |
+              until cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "RETURN 1" >/dev/null 2>&1; do sleep 2; done
+              cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "CREATE CONSTRAINT extracted_mention_unique IF NOT EXISTS FOR (m:ExtractedMention) REQUIRE (m.tenant_id, m.mention_id) IS UNIQUE" >/dev/null
+              cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "CREATE CONSTRAINT resolution_slot_unique IF NOT EXISTS FOR (s:ResolutionSlot) REQUIRE (s.tenant_id, s.mention_id) IS UNIQUE" >/dev/null
+              cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "CREATE CONSTRAINT relation_evidence_unique IF NOT EXISTS FOR (e:RelationEvidence) REQUIRE e.evidence_id IS UNIQUE" >/dev/null
+              cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "CREATE CONSTRAINT canonical_relation_anchor_unique IF NOT EXISTS FOR (r:CanonicalRelationAnchor) REQUIRE r.canonical_relation_id IS UNIQUE" >/dev/null
+              cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS FOR (r:ExtractedRelation) REQUIRE (r.tenant_id, r.relation_id) IS UNIQUE" >/dev/null
+              cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "CREATE CONSTRAINT entity_identity_unique IF NOT EXISTS FOR (e:Entity) REQUIRE (e.tenant, e.id) IS UNIQUE" >/dev/null
+              cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "CREATE CONSTRAINT source_revision_fence_unique IF NOT EXISTS FOR (f:SourceRevisionFence) REQUIRE (f.tenant_id, f.source_id) IS UNIQUE" >/dev/null
+              sleep infinity
   volumeClaimTemplates:
     - metadata:
         name: data

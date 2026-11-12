@@ -15,6 +15,7 @@ import org.synanton.relix.adapter.out.graph.nebula.UnconfiguredNebulaSession;
 import org.synanton.relix.adapter.out.graph.neo4j.CypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
+import org.synanton.relix.adapter.out.graph.neo4j.Neo4jSchemaVerifier;
 import org.synanton.relix.adapter.out.metadata.InMemoryCanonicalGraphMetadataStore;
 import org.synanton.relix.adapter.out.metadata.Neo4jCanonicalGraphMetadataStore;
 import org.synanton.relix.graph.GraphConnector;
@@ -100,6 +101,7 @@ public class RelixConfig {
     @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
     Neo4jGraphConnector neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypherExecutor) {
+        new Neo4jSchemaVerifier(cypherExecutor).verify();
         return new Neo4jGraphConnector(graphLoader, cypherExecutor);
     }
 
