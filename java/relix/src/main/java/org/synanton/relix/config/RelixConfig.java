@@ -17,10 +17,23 @@ import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
 import org.synanton.relix.graph.GraphConnector;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.syntology.HttpSyntologyActiveVersionClient;
+import org.synanton.relix.syntology.SyntologyActiveVersionClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class, ReconciliationProperties.class})
 public class RelixConfig {
+
+    @Bean
+    SyntologyActiveVersionClient syntologyActiveVersionClient(
+            @org.springframework.beans.factory.annotation.Value("${SYNTOLOGY_BASE_URL:http://syntology:8080}")
+            String syntologyBaseUrl,
+            @org.springframework.beans.factory.annotation.Value("${SYNANTON_JWT_SECRET}")
+            String jwtSecret) {
+        return new HttpSyntologyActiveVersionClient(syntologyBaseUrl,
+                new org.synanton.common.jwt.ServiceTokenMinter(jwtSecret), new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule()));
+    }
 
     @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "memory", matchIfMissing = true)
