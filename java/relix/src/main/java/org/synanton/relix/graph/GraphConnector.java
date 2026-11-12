@@ -16,7 +16,7 @@ import java.util.UUID;
  * Outbound port for the graph engine. Domain query shapes never import JGraphT, Cypher, or nGQL.
  * Switch implementations with {@code relix.graph.connector} ({@code memory}, {@code neo4j}, {@code nebula}).
  */
-public interface GraphConnector extends GraphWritePort, ResolutionGraphPort {
+public interface GraphConnector extends ExtractedMentionGraphReadPort, ExtractedMentionGraphWritePort, ResolutionGraphPort {
 
     String id();
 
