@@ -8,7 +8,7 @@ last_reviewed: "2026-11-11"
 
 **Purpose:** Captures significant architectural decisions with their context, rationale, and consequences.
 **Audience:** Architects, module owners
-**Last Updated:** 2026-11-11
+**Last Updated:** 2026-11-12
 
 ## Quick Links
 
@@ -18,6 +18,7 @@ last_reviewed: "2026-11-11"
 | [ADR-024: glibc-based runtime images for native dependencies](./adr-024-glibc-runtime-images.md) | Native gRPC/Netty/JNI services use glibc JRE images; Alpine only with zero native dependencies; CI checks Dockerfiles (Accepted 2026-11-11) |
 | [ADR-025: Canonical graph bootstrap is additive, never destructive](./adr-025-graph-bootstrap-additive.md) | Tenant loads are upsert-only and transactional; restarts/partial snapshots cannot delete canonical graph data (Accepted 2026-11-11) |
 | [ADR-026: One active canonical graph projection per tenant](./adr-026-canonical-graph-projection-scope.md) | Tenant-scoped canonical graph identity with an authoritative projection version; resolver enforces zero-or-multiple-graph failure; no per-node backfill (Accepted 2026-11-11) |
+| [ADR-027: Projection provisioning is a separate lifecycle](./adr-027-projection-provisioning-lifecycle.md) | Runtime graph access consumes `GraphIdentity` and fails closed; provisioning takes an explicit tenant, obtains Syntology authority, and establishes metadata under additive/no-overwrite/concurrency-safe rules (Accepted 2026-11-12) |
 | [ADR-021: Pluggable Search Engine Boundary](./adr-021-pluggable-search-engine.md) | Projection writes go through a domain `SearchEngineAdapter`; streaming rebuild, incremental `updateDocument`, atomic `SearcherManager` refresh; read-path DSL staged (Accepted 2026-11-08) |
 | [ADR-020: Operation Partial Outcome](./adr-020-operation-partial-outcome.md) | Additive `outcome: FULL \| PARTIAL` on the Operation resource; partial extraction success is first-class, design doc stays frozen (Accepted 2026-10-17) |
 | [ADR-019: Downstream Trust Predicate](./adr-019-downstream-trust-predicate.md) | Signed short-lived context for downstream trust (slice); mTLS as target state; Wave 1 interfaces landed (Accepted 2026-10-17) |
