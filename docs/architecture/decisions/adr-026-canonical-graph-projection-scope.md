@@ -21,6 +21,8 @@ Consequences:
 - **Rejected:** backfilling `projection_version` onto every canonical node/relation now; it would lock in an unproven multi-version model and require an expensive migration.
 - **Rejected:** treating `projectionVersion` as an optional hint with a silent default; that recreates implicit graph scope.
 
+**Companion contract:** [`graph-identity-authority-contract.md`](../planning/graph-identity-authority-contract.md) records the Syntology/Relix ownership and bootstrap semantics.
+
 ## Context
 
 The #618 review found three coupled problems: canonical data has no stored `graph_id`/`projection_version`; generic graph call sites have only a tenant; and the `GraphReadPort`/`GraphWritePort` boundary does not yet exist. Option A (backfill per-node version) would strand existing data until migrated. Option C (default the version) would hide unresolved scope.
