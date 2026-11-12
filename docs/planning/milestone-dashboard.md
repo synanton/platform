@@ -18,23 +18,25 @@ not a feature roadmap.
 | Bounded Entity Graph API | #597 | `GET /v1/entities/{id}/neighbors`; 50-cap; evidence | — |
 | Entity Graph UI | #598 | Directional SVG, evidence panel, mocked Playwright | #599 live E2E (closed) |
 | Local RAKG activation | #601 | Compose smoke: upload → promotion → graph + evidence | — |
-| K8s RAKG overlay | #605 | Neo4j/Relix/Syntology/network policies | Post-#592 rerun |
+| K8s RAKG overlay | #605/#643 | Neo4j/Relix/Syntology/network policies; post-#592 live rerun passed | — |
 | Live K8s Entity Graph E2E | #608/#606/#643 | `docs/acceptance/phase2-589-combined-matrix-2026-11-12.md`; live rerun 29.0s on 8c56ea1d | — |
-| Restart-safe graph persistence | #610/#612, ADR-025 | 122 Relix tests; repeated/partial/interrupted load; simultaneous Synquest+Relix restart; no duplicate edges | #592 seam migration |
+| Restart-safe graph persistence | #610/#612, ADR-025 | 122 Relix tests; repeated/partial/interrupted load; simultaneous Synquest+Relix restart; no duplicate edges | #650 readiness follow-up |
 | Reconciliation port migration | #617/#630/#638 | seam removed; capabilities composition; rule-5 boundary; #630 conformance | #587 separate GraphTransactionPort/composite scope |
 
 ## Open gates
 
-- **#587** — full storage-neutral graph contracts and adapter conformance. The
-  reconciliation seam is removed in this branch, but the broader contract
-  inventory, logical scope/projection identity, transaction guarantees, and
-  adapter conformance suite remain.
-- **#592** — post-#587 reconciliation migration verification; cannot close until
-  #587 is complete.
+- **#587** — separate contract scope for `GraphTransactionPort`/composite
+  guarantees; not a Phase 2b blocker.
+- **#592** — closed: reconciliation migration/capability/lint evidence landed.
 - **#589** — closed: combined local real-store matrix + live K8s rerun (#643).
-- **Phase 2b** — source-change lifecycle; ADR-029 locked, identity plumbing (#646) is the next step. Runtime generation fence is not complete.
+- **Phase 2b** — source-change lifecycle. ADR-029 locked; identity plumbing
+  (#646) merged; #647 promotion-row identity is in review. Runtime fence
+  (#644/#648) and the Generation 2/3 race (#649) remain.
+- **2b lifecycle tickets** — staged activation (#654), retirement (#655),
+  search replacement (#656), lifecycle API (#657), maintenance E2E (#658).
+- **#650** — Neo4j readiness/fence-schema prerequisite, in parallel.
 - **#609/#611** — extraction quality and post-activation reliability epic;
-  deferred until the graph lifecycle gate is closed.
+  deferred until the source-change lifecycle is established.
 - **#613–#615** — CI follow-ups (ZWJ/ZWNJ context, job timeouts, contract update
   ordering).
 
