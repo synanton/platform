@@ -1,6 +1,6 @@
 # Milestone dashboard
 
-**Status:** Restart-resilient live demo — achieved. Graph-contract migration and full activation verification — in progress.
+**Status:** Phase 2a complete (live K8s gate passed). Phase 2b source-change lifecycle in progress; runtime generation fence not yet landed.
 
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap.
@@ -13,15 +13,15 @@ not a feature roadmap.
 | Extraction gold + regex/LLM baseline | #558/#559, #562/#563/#567 | Frozen 5-doc gold; entity F1 0.182 regex / 0.618 Qwen; ADR-022 | #593 provider gate |
 | Durable resolution lifecycle | #571–#575, #579–#581 | Resolution fixture; V22–V24 migrations | — |
 | Canonical validation + promotion | #575, #579–#581 | VALID-only promotion; evidence; concurrency fencing | #584 retraction policy |
-| Recoverable consumers + reconciliation | #582/#585/#595 | Testcontainers fault injection; lease/fence matrix | #589 full matrix; #592 migration |
+| Recoverable consumers + reconciliation | #582/#585/#595, #638 | Combined real-store matrix; live K8s rerun; #592/#589 closed | — |
 | Search-generation provenance | #577/#596 | V26; candidate/decision/Cassandra/Neo4j propagation | — |
 | Bounded Entity Graph API | #597 | `GET /v1/entities/{id}/neighbors`; 50-cap; evidence | — |
 | Entity Graph UI | #598 | Directional SVG, evidence panel, mocked Playwright | #599 live E2E (closed) |
 | Local RAKG activation | #601 | Compose smoke: upload → promotion → graph + evidence | — |
 | K8s RAKG overlay | #605 | Neo4j/Relix/Syntology/network policies | Post-#592 rerun |
-| Live K8s Entity Graph E2E | #608/#606 | `docs/acceptance/k8s-activation-2026-11-11.md`; 25.1s | Full #589 matrix |
+| Live K8s Entity Graph E2E | #608/#606/#643 | `docs/acceptance/phase2-589-combined-matrix-2026-11-12.md`; live rerun 29.0s on 8c56ea1d | — |
 | Restart-safe graph persistence | #610/#612, ADR-025 | 122 Relix tests; repeated/partial/interrupted load; simultaneous Synquest+Relix restart; no duplicate edges | #592 seam migration |
-| Reconciliation port migration | this branch | seam removed; `ResolutionGraphPort` capability validation; Relix tests | #587 full capability/conformance |
+| Reconciliation port migration | #617/#630/#638 | seam removed; capabilities composition; rule-5 boundary; #630 conformance | #587 separate GraphTransactionPort/composite scope |
 
 ## Open gates
 
@@ -31,8 +31,8 @@ not a feature roadmap.
   adapter conformance suite remain.
 - **#592** — post-#587 reconciliation migration verification; cannot close until
   #587 is complete.
-- **#589** — full combined consumer/reconciler concurrency/lost-response matrix
-  and post-#592 rerun.
+- **#589** — closed: combined local real-store matrix + live K8s rerun (#643).
+- **Phase 2b** — source-change lifecycle; ADR-029 locked, identity plumbing (#646) is the next step. Runtime generation fence is not complete.
 - **#609/#611** — extraction quality and post-activation reliability epic;
   deferred until the graph lifecycle gate is closed.
 - **#613–#615** — CI follow-ups (ZWJ/ZWNJ context, job timeouts, contract update
@@ -47,6 +47,7 @@ not a feature roadmap.
 
 ## What not to do
 
-Do not start Analytics, Resolutor, UI #25, extraction features, or new connectors
-until #587 → #592 → #589 are closed. Preserve the frozen extraction baseline and
-the restart-safety evidence.
+Phase 2a is closed. Phase 2b (source-change lifecycle) is the active track; do not
+start Analytics, Resolutor, UI #25, extraction features, or new connectors before
+the runtime generation fence and source-change E2E are complete. Preserve the
+frozen extraction baseline and restart-safety evidence.
