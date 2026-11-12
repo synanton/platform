@@ -246,6 +246,37 @@ Implementation order:
 4. **Search revision replacement** — revision-aware indexing, visibility, retry/reconciliation.
 5. **End-to-end failure testing** — concurrent revisions, partial extraction, restarts, cross-system recovery.
 
+### 11. Cross-store fence synchronization (amendment 2026-11-12)
+
+The Neo4j fence alone is insufficient because Cassandra is authoritative for `accepted_generation`. A stale worker could pass a lagging Neo4j fence after Cassandra has already accepted a newer generation.
+
+The promotion request must therefore carry the source identity and both generation observations:
+
+- `sourceId`;
+- immutable `revisionId`;
+- operation `generation`;
+- the `cassandraAcceptedGeneration` observed when the request was validated.
+
+The Neo4j mutation transaction reads the per-source `:SourceRevisionFence` and fails closed unless all agree:
+
+```text
+cassandraAcceptedGeneration == operation.generation
+neo4jFence.generation      == operation.generation
+cassandraAcceptedGeneration == neo4jFence.generation
+```
+
+Any mismatch throws `StaleGenerationException` before any MERGE/SET. In particular:
+
+- Cassandra ahead of the operation → reject (stale worker);
+- Neo4j fence behind the operation → reject; wait for reconciliation to advance it;
+- stores disagree → reject (fence drift), even when the operation matches one store.
+
+**Linearization point:** Cassandra acceptance is authoritative; Neo4j fence advancement is derived and must be current before promotion. A newly accepted generation cannot promote until its Neo4j fence is confirmed. Generation advancement is monotonic and idempotent.
+
+**Propagation and reconciliation:** accepted-generation updates are written to Cassandra and `:SourceRevisionFence` as an idempotent dual-write. If the Neo4j write fails, Cassandra remains authoritative and a reconciliation job repairs the fence. The promotion path is fail-closed while the fence is missing, behind, or divergent. Reconciliation is a prerequisite, not an optional follow-up; best-effort dual-write without drift repair is not acceptable.
+
+**Multi-source boundary:** the fence applies to the source-specific evidence/support mutation, not to the canonical assertion. Source A and Source B each have their own source fence; a legitimate evidence addition from a different source must not be rejected because another source has a different generation.
+
 ## Lifecycle state machine
 
 Per logical source, the lifecycle record exposes the current state and transition history.
