@@ -81,6 +81,11 @@ class DefaultCanonicalRelationValidatorTest {
         assertThat(row.getValue().canonicalSubjectId()).isEqualTo("e-subject");
         assertThat(row.getValue().ontologyVersion()).isEqualTo("1.0.0");
         assertThat(row.getValue().strategyVersion()).isEqualTo(DefaultCanonicalRelationValidator.STRATEGY_VERSION);
+        assertThat(row.getValue().sourceId()).isEqualTo("source-1");
+        assertThat(row.getValue().revisionId()).isEqualTo(VERSION);
+        assertThat(row.getValue().generation()).isEqualTo(7);
+        assertThat(row.getValue().extractionRunId()).isEqualTo("run-646");
+        assertThat(row.getValue().identityStatus()).isEqualTo("CURRENT");
         assertThat(row.getValue().evidenceJson())
                 .contains("\"sourceId\":\"source-1\"")
                 .contains("\"generation\":7")
