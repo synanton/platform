@@ -5,6 +5,7 @@ metadata:
   namespace: synanton
 spec:
   type: ClusterIP
+  publishNotReadyAddresses: true
   selector:
     app: neo4j
   ports:

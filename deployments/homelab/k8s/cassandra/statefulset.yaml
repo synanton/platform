@@ -5,6 +5,7 @@ metadata:
   namespace: synanton
 spec:
   clusterIP: None
+  publishNotReadyAddresses: true
   selector: {app: cassandra}
   ports:
     - {name: cql, port: 9042}
@@ -74,6 +75,7 @@ spec:
               command: ["cqlsh", "-e", "SELECT now() FROM system.local"]
             initialDelaySeconds: 45
             periodSeconds: 15
+            timeoutSeconds: 10
   volumeClaimTemplates:
     - metadata: {name: data}
       spec:
