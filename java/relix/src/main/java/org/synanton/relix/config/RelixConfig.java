@@ -15,7 +15,11 @@ import org.synanton.relix.adapter.out.graph.nebula.UnconfiguredNebulaSession;
 import org.synanton.relix.adapter.out.graph.neo4j.CypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
+import org.synanton.relix.adapter.out.metadata.InMemoryCanonicalGraphMetadataStore;
+import org.synanton.relix.adapter.out.metadata.Neo4jCanonicalGraphMetadataStore;
 import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.identity.CanonicalGraphMetadataBootstrap;
+import org.synanton.relix.identity.CanonicalGraphMetadataStore;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.syntology.HttpSyntologyActiveVersionClient;
 import org.synanton.relix.syntology.SyntologyActiveVersionClient;
@@ -31,8 +35,28 @@ public class RelixConfig {
             String syntologyBaseUrl,
             @org.springframework.beans.factory.annotation.Value("${SYNANTON_JWT_SECRET}")
             String jwtSecret) {
+        ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         return new HttpSyntologyActiveVersionClient(syntologyBaseUrl,
-                new org.synanton.common.jwt.ServiceTokenMinter(jwtSecret), new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule()));
+                new org.synanton.common.jwt.ServiceTokenMinter(jwtSecret), mapper);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    CanonicalGraphMetadataStore neo4jCanonicalGraphMetadataStore(CypherExecutor cypherExecutor) {
+        return new Neo4jCanonicalGraphMetadataStore(cypherExecutor);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(CanonicalGraphMetadataStore.class)
+    CanonicalGraphMetadataStore inMemoryCanonicalGraphMetadataStore(GraphConnector graphConnector) {
+        return new InMemoryCanonicalGraphMetadataStore(graphConnector);
+    }
+
+    @Bean
+    CanonicalGraphMetadataBootstrap canonicalGraphMetadataBootstrap(
+            CanonicalGraphMetadataStore store, SyntologyActiveVersionClient syntology) {
+        return new CanonicalGraphMetadataBootstrap(store, syntology, java.time.Clock.systemUTC());
     }
 
     @Bean
