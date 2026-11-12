@@ -11,6 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -428,6 +433,146 @@ class ConsumerFaultInjectionIntegrationTest {
                         + "-[:SUPPORTS]->(e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
                         + "RETURN count(x) AS c", Map.of("tenant", TENANT, "relationId", relationId)))
                 .isEqualTo(supports);
+    }
+
+    @Test
+    void concurrentPromotionOfWorkersCreatesOneRelationAndEvidence() throws Exception {
+        String subject = mention("concurrent-subject");
+        String object = mention("concurrent-object");
+        String subjectEntity = entity("concurrent-subject");
+        String objectEntity = entity("concurrent-object");
+        createResolvedMention(subject, "Acme", "Organization", subjectEntity);
+        createResolvedMention(object, "Protocol-A", "Protocol", objectEntity);
+        insertWork(subject, "Acme", "Organization");
+        insertWork(object, "Protocol-A", "Protocol");
+        consumer(new TestWriter(Mode.NORMAL), Map.of("Acme", subjectEntity, "Protocol-A", objectEntity), 1)
+                .poll();
+
+        String relationId = "relation-589-concurrent";
+        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+                subjectEntity, objectEntity));
+        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        PromotionConsumerProperties properties = new PromotionConsumerProperties(
+                true, TENANT, 5, 5, 1, 60, 1000L);
+        PromotionConsumer first = new PromotionConsumer(claims, promoter, properties, new SimpleMeterRegistry());
+        PromotionConsumer second = new PromotionConsumer(claims, promoter, properties, new SimpleMeterRegistry());
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> a = pool.submit(() -> { start.await(); first.poll(); return null; });
+            Future<?> b = pool.submit(() -> { start.await(); second.poll(); return null; });
+            start.countDown();
+            a.get(30, TimeUnit.SECONDS);
+            b.get(30, TimeUnit.SECONDS);
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertPromotionGraphCounts(relationId, 1, 1, 1);
+        assertThat(cache.listRelationPromotionWorkRows(TENANT, VERSION))
+                .filteredOn(row -> row.result().relationId().equals(relationId))
+                .singleElement()
+                .satisfies(row -> assertThat(row.claimStatus()).isEqualTo("COMPLETED"));
+        cleanupPromotionRelation(relationId);
+    }
+
+    @Test
+    void sharedEndpointPromotionKeepsEvidenceAttributionIsolated() {
+        String subjectA = mention("shared-subject-a");
+        String subjectB = mention("shared-subject-b");
+        String objectA = mention("shared-object-a");
+        String objectB = mention("shared-object-b");
+        String sharedEntity = entity("shared-endpoint");
+        String objectEntityA = entity("shared-object-a");
+        String objectEntityB = entity("shared-object-b");
+        createResolvedMention(subjectA, "Machine-7", "Machine", sharedEntity);
+        createResolvedMention(subjectB, "Machine-7", "Machine", sharedEntity);
+        createResolvedMention(objectA, "Protocol-A", "Protocol", objectEntityA);
+        createResolvedMention(objectB, "Protocol-B", "Protocol", objectEntityB);
+        insertWork(subjectA, "Machine-7", "Machine");
+        insertWork(subjectB, "Machine-7", "Machine");
+        insertWork(objectA, "Protocol-A", "Protocol");
+        insertWork(objectB, "Protocol-B", "Protocol");
+        consumer(new TestWriter(Mode.NORMAL),
+                Map.of("Machine-7", sharedEntity, "Protocol-A", objectEntityA, "Protocol-B", objectEntityB), 1)
+                .poll();
+
+        String relationA = "relation-589-shared-a";
+        String relationB = "relation-589-shared-b";
+        cache.upsertRelationPromotionResult(validPromotionRow(relationA, subjectA, objectA,
+                sharedEntity, objectEntityA));
+        cache.upsertRelationPromotionResult(validPromotionRow(relationB, subjectB, objectB,
+                sharedEntity, objectEntityB));
+        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        promoter.promoteRelation(canonicalRelation(relationA, subjectA, objectA, sharedEntity, objectEntityA));
+        promoter.promoteRelation(canonicalRelation(relationB, subjectB, objectB, sharedEntity, objectEntityB));
+
+        assertPromotionGraphCounts(relationA, 1, 1, 1);
+        assertPromotionGraphCounts(relationB, 1, 1, 1);
+        String canonicalA = canonicalRelationId(relationA);
+        String canonicalB = canonicalRelationId(relationB);
+        assertThat(canonicalA).isNotEqualTo(canonicalB);
+        assertThat(count("MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $rid}) "
+                        + "RETURN count(e) AS c", Map.of("tenant", TENANT, "rid", relationA))).isEqualTo(1);
+        assertThat(count("MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $rid}) "
+                        + "RETURN count(e) AS c", Map.of("tenant", TENANT, "rid", relationB))).isEqualTo(1);
+
+        // Removing one relation's graph support must not remove the other's.
+        cleanupPromotionRelation(relationA);
+        assertThat(count("MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $rid}) "
+                        + "RETURN count(e) AS c", Map.of("tenant", TENANT, "rid", relationB))).isEqualTo(1);
+        assertPromotionGraphCounts(relationB, 1, 1, 1);
+        cleanupPromotionRelation(relationB);
+    }
+
+    @Test
+    void combinedResolutionPromotionAndReconciliationPreservesInvariants() {
+        String subject = mention("combined-subject");
+        String object = mention("combined-object");
+        String subjectEntity = entity("combined-subject");
+        String objectEntity = entity("combined-object");
+        createResolvedMention(subject, "Acme", "Organization", subjectEntity);
+        createResolvedMention(object, "Protocol-A", "Protocol", objectEntity);
+        insertWork(subject, "Acme", "Organization");
+        insertWork(object, "Protocol-A", "Protocol");
+        consumer(new TestWriter(Mode.NORMAL), Map.of("Acme", subjectEntity, "Protocol-A", objectEntity), 1)
+                .poll();
+
+        String relationId = "relation-589-combined";
+        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+                subjectEntity, objectEntity));
+        new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"))
+                .promoteRelation(canonicalRelation(relationId, subject, object, subjectEntity, objectEntity));
+
+        ResolutionReconciler reconciler = new ResolutionReconciler(cache, claims, graph,
+                new ReconciliationProperties(true, TENANT, 100, 60000L, 60),
+                new SimpleMeterRegistry());
+        reconciler.poll();
+
+        assertPromotionGraphCounts(relationId, 1, 1, 1);
+        assertThat(activeEdgeCount(subject)).isEqualTo(1);
+        assertThat(activeEdgeCount(object)).isEqualTo(1);
+        cleanupPromotionRelation(relationId);
+    }
+
+    private static CanonicalRelation canonicalRelation(String relationId, String subject,
+                                                        String object, String subjectEntity,
+                                                        String objectEntity) {
+        return new CanonicalRelation(TENANT, VERSION.toString(), relationId, subject,
+                subjectEntity, object, objectEntity, "requires", "active", CONTENT_REF + ":0", 0,
+                "Acme requires Protocol-A".length());
+    }
+
+    private static String canonicalRelationId(String relationId) {
+        List<Map<String, Object>> rows = cypher.read(
+                "MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "RETURN e.canonical_relation_id AS id",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        return rows.isEmpty() ? null : String.valueOf(rows.getFirst().get("id"));
     }
 
     private static void cleanupPromotionRelation(String relationId) {
