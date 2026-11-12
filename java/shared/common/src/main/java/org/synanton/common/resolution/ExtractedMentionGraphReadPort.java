@@ -1,6 +1,4 @@
-package org.synanton.relix.graph;
-
-import org.synanton.common.resolution.ExtractedRelationView;
+package org.synanton.common.resolution;
 
 import java.util.List;
 import java.util.Optional;
