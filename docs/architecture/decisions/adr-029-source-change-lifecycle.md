@@ -11,6 +11,8 @@
 
 This deliberately accepts a longer “old knowledge remains visible” window in exchange for never serving an empty or half-replaced revision. A revision with `REVISION_ACCEPTED` but no projection yet is not current.
 
+**Activation is an idempotent `ActivateRevision` step, not part of the search commit transaction.** If the process crashes after search commit but before the current marker flip, the lifecycle state remains `SEARCH_COMMITTED`. A recovery job (or the next lifecycle poll/request) observes that state and safely retries `ActivateRevision`, which is a metadata update guarded by the expected revision/generation. Retrying is a no-op if activation already completed.
+
 ### Q2 — Fencing at commit
 
 The generation check is **inside the canonical graph mutation transaction**, not only before calling a port.
@@ -66,6 +68,7 @@ The chosen search strategy is **query-time revision filtering**, not an alias re
 - After graph commit and search commit succeed, a single current-revision marker update activates the new revision. Graph staged facts become active under the same marker; search queries immediately filter to the new revision.
 - If search commit fails after graph commit, retry; **never roll back the graph**. The old revision stays current, the graph keeps new staged facts inactive, and the source enters `SEARCH_COMMIT_FAILED`. The failure is observable and reconciliable.
 - If activation itself is partially applied, the source enters `ACTIVATION_PARTIAL`; reads remain on the old current revision until the marker mirrors are consistent.
+- **Search workers read the authoritative `SourceLifecycle` record from Cassandra** for `current_generation` when filtering. The lookup may be per query or cached for a bounded TTL (documented in configuration; default 0); it is never cached indefinitely in search nodes. A stale local cache must not make an old revision current.
 
 ## Decision
 
@@ -114,7 +117,17 @@ Treat `:REL` as the canonical assertion, `:RelationEvidence` as evidence, and su
 
 Existing `:RelationEvidence.canonical_relation_id` remains for compatibility; `:SUPPORTED_BY` makes the support relationship explicit. `:ExtractedMention` is version-scoped and retained; Phase 2 does not merge mention identities across revisions.
 
-Assertion states: `ACTIVE`, `UNSUPPORTED`, `CONFLICTED`, `SUPERSEDED`, `REVIEW_REQUIRED`.
+Assertion and support states:
+
+| Term | Definition |
+|---|---|
+| `ACTIVE` | Has at least one current, validated evidence item. |
+| `UNSUPPORTED` | Has zero current evidence; the assertion node remains in the graph as a soft-retired/historical fact. |
+| `SUPERSEDED` | Explicitly replaced by a newer assertion or correction (for example, V2 explicitly corrects V1). This is **not** the same as losing one evidence item. |
+| `CONFLICTED` | Current evidence disagrees; no automatic winner is selected. |
+| `REVIEW_REQUIRED` | A conflict or incomplete evidence set needs an operator/review workflow. |
+
+Evidence losing one of several supports does not by itself change an assertion to `UNSUPPORTED` or `SUPERSEDED`; only losing the last current evidence makes it `UNSUPPORTED`, and only an explicit replacement makes it `SUPERSEDED`.
 
 ### 4. Source-version fencing
 
@@ -246,6 +259,7 @@ CURRENT (old)
   -> GRAPH_COMMITTED
   -> SEARCH_COMMITTING
   -> SEARCH_COMMITTED
+  -> ACTIVATING (idempotent ActivateRevision)
   -> CURRENT (new)
 ```
 
@@ -257,8 +271,30 @@ Failure / terminal-for-attempt states:
 - `SEARCH_COMMIT_FAILED` — graph staged; old remains current; retry/alert; never roll back graph.
 - `STALE_REJECTED` — older generation finished; no side effects.
 - `ACTIVATION_PARTIAL` — current marker mirrors disagree; reads stay on old current until reconciled.
+- `SEARCH_COMMITTED` after a crash — recovery/next poll retries idempotent `ActivateRevision`; no graph/search rewrite.
 
 Every state must be queryable via `GET /v1/sources/{sourceId}/lifecycle`, with the revision/generation and transition history. The state machine is the operator contract; logs are not the authority.
+
+### Lifecycle endpoint schema
+
+```json
+{
+  "source_id": "source-456",
+  "accepted_generation": 3,
+  "current_generation": 2,
+  "active_revision_id": "revision-2",
+  "pending_revision_id": "revision-3",
+  "extraction_manifest_status": "COMPLETE",
+  "graph_commit_status": "COMMITTED",
+  "search_commit_status": "IN_PROGRESS",
+  "lifecycle_state": "SEARCH_COMMITTING",
+  "last_error": null,
+  "retry_eligible": true,
+  "updated_at": "2026-11-12T12:00:00Z"
+}
+```
+
+Required fields: `accepted_generation`, `current_generation`, `active_revision_id`, `pending_revision_id`, `extraction_manifest_status`, `graph_commit_status`, `search_commit_status`, `lifecycle_state`, `last_error`, `retry_eligible`, `updated_at`. Nullable fields (`pending_revision_id`, `last_error`) are explicit; they are not omitted. `active_revision_id` is the currently visible revision; `pending_revision_id` is the accepted but not-yet-current revision.
 
 Consequences:
 - **Correctness:** old revisions cannot overwrite or reactivate newer knowledge; partial extraction never deletes valid knowledge.
