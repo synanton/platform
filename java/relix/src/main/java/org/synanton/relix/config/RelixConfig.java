@@ -76,7 +76,7 @@ public class RelixConfig {
 
     @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "memory", matchIfMissing = true)
-    GraphConnector inMemoryGraphConnector(GraphLoader graphLoader) {
+    InMemoryGraphConnector inMemoryGraphConnector(GraphLoader graphLoader) {
         return new InMemoryGraphConnector(graphLoader);
     }
 
@@ -99,7 +99,7 @@ public class RelixConfig {
 
     @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
-    GraphConnector neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypherExecutor) {
+    Neo4jGraphConnector neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypherExecutor) {
         return new Neo4jGraphConnector(graphLoader, cypherExecutor);
     }
 
@@ -112,7 +112,7 @@ public class RelixConfig {
 
     @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "nebula")
-    GraphConnector nebulaGraphConnector(GraphLoader graphLoader, NebulaSession nebulaSession, RelixProperties props) {
+    NebulaGraphConnector nebulaGraphConnector(GraphLoader graphLoader, NebulaSession nebulaSession, RelixProperties props) {
         return new NebulaGraphConnector(graphLoader, nebulaSession, props.graph().nebula().space());
     }
 
