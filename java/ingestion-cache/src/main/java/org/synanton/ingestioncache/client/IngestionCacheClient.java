@@ -923,7 +923,8 @@ public class IngestionCacheClient {
                         intOrDefault(row, "extraction_event_attempt_count", 0),
                         row.getString("extraction_event_last_error"),
                         row.getInstant("extraction_event_next_attempt_at"),
-                        boolOrDefault(row, "extraction_event_dead_lettered", false)
+                        boolOrDefault(row, "extraction_event_dead_lettered", false),
+                        intOrDefault(row, "generation", 0)
                     ));
                 }
             }

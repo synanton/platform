@@ -53,7 +53,8 @@ class DefaultCanonicalRelationValidatorTest {
     void seed() throws Exception {
         when(extractedReadPort.getExtractedRelation(TENANT, RELATION_ID)).thenReturn(Optional.of(
                 new ExtractedRelationView(RELATION_ID, TENANT, VERSION.toString(),
-                        "m-subject", "m-object", "requires", REF + ":0", 0, 20)));
+                        "m-subject", "m-object", "requires", REF + ":0", 0, 20,
+                        "source-1", VERSION.toString(), 7, "run-646")));
         when(graph.getActiveResolutions(TENANT, List.of("m-subject", "m-object"))).thenReturn(List.of(
                 new ActiveResolution("m-subject", "e-subject", "MaintenanceSystem"),
                 new ActiveResolution("m-object", "e-object", "Protocol")));
@@ -80,6 +81,10 @@ class DefaultCanonicalRelationValidatorTest {
         assertThat(row.getValue().canonicalSubjectId()).isEqualTo("e-subject");
         assertThat(row.getValue().ontologyVersion()).isEqualTo("1.0.0");
         assertThat(row.getValue().strategyVersion()).isEqualTo(DefaultCanonicalRelationValidator.STRATEGY_VERSION);
+        assertThat(row.getValue().evidenceJson())
+                .contains("\"sourceId\":\"source-1\"")
+                .contains("\"generation\":7")
+                .contains("\"extractionRunId\":\"run-646\"");
     }
 
     @Test

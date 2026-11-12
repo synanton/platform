@@ -388,7 +388,9 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                        o.mention_id AS object_mention_id, r.predicate AS predicate,
                        r.source_version_id AS source_version_id, r.evidence_chunk_id AS evidence_chunk_id,
                        r.evidence_chunk_offset_start AS offset_start,
-                       r.evidence_chunk_offset_end AS offset_end
+                       r.evidence_chunk_offset_end AS offset_end,
+                       r.source_id AS source_id, r.extraction_run_id AS extraction_run_id,
+                       r.generation AS generation
                 LIMIT 1
                 """, Map.of("tenant", tenant, "relationId", relationId));
         if (rows.isEmpty()) {
@@ -404,7 +406,11 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 String.valueOf(row.get("predicate")),
                 String.valueOf(row.get("evidence_chunk_id")),
                 row.get("offset_start") == null ? -1 : ((Number) row.get("offset_start")).intValue(),
-                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue()));
+                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue(),
+                row.get("source_id") == null ? null : String.valueOf(row.get("source_id")),
+                String.valueOf(row.get("source_version_id")),
+                row.get("generation") == null ? 0 : ((Number) row.get("generation")).longValue(),
+                row.get("extraction_run_id") == null ? null : String.valueOf(row.get("extraction_run_id"))));
     }
 
     private static Map<String, Object> params(String tenant, String sourceVersionId) {
@@ -425,7 +431,9 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                        s.mention_id AS subject_mention_id, o.mention_id AS object_mention_id,
                        r.predicate AS predicate, r.evidence_chunk_id AS evidence_chunk_id,
                        r.evidence_chunk_offset_start AS offset_start,
-                       r.evidence_chunk_offset_end AS offset_end
+                       r.evidence_chunk_offset_end AS offset_end,
+                       r.source_id AS source_id, r.extraction_run_id AS extraction_run_id,
+                       r.generation AS generation
                 ORDER BY r.relation_id
                 LIMIT 1000
                 """, params(tenant, sourceVersionId));
@@ -437,7 +445,11 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 String.valueOf(row.get("predicate")),
                 String.valueOf(row.get("evidence_chunk_id")),
                 row.get("offset_start") == null ? -1 : ((Number) row.get("offset_start")).intValue(),
-                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue()
+                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue(),
+                row.get("source_id") == null ? null : String.valueOf(row.get("source_id")),
+                String.valueOf(row.get("source_version_id")),
+                row.get("generation") == null ? 0 : ((Number) row.get("generation")).longValue(),
+                row.get("extraction_run_id") == null ? null : String.valueOf(row.get("extraction_run_id"))
         )).toList();
     }
 
@@ -684,6 +696,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             row.put("evidenceDocumentOffsetStart", relation.evidenceDocumentOffsetStart());
             row.put("evidenceDocumentOffsetEnd", relation.evidenceDocumentOffsetEnd());
             row.put("validatedAt", relation.validatedAt() == null ? null : relation.validatedAt().toString());
+            row.put("sourceId", relation.sourceId());
+            row.put("revisionId", relation.revisionId());
+            row.put("generation", relation.generation());
+            row.put("extractionRunId", relation.extractionRunId());
             rows.add(row);
         }
         cypher.write("""
@@ -698,7 +714,11 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                     e.evidence_chunk_offset_end = row.evidenceChunkOffsetEnd,
                     e.evidence_document_offset_start = row.evidenceDocumentOffsetStart,
                     e.evidence_document_offset_end = row.evidenceDocumentOffsetEnd,
-                    e.validated_at = row.validatedAt
+                    e.validated_at = row.validatedAt,
+                    e.source_id = row.sourceId,
+                    e.revision_id = row.revisionId,
+                    e.generation = row.generation,
+                    e.extraction_run_id = row.extractionRunId
                 """, Map.of("tenant", tenant, "rows", rows));
         return countByIds(tenant, rows, "relationId",
                 "MATCH ()-[e:EXTRACTED_RELATION {tenant_id: $tenant, relation_id: id}]->() RETURN count(e) AS c");

@@ -128,7 +128,8 @@ public final class GraphWriter {
                             request.versionId().toString(), relation.predicate(), subject.mentionId(),
                             object.mentionId(), evidenceChunkId,
                             relation.evidenceCharStart(), relation.evidenceCharEnd(),
-                            evidenceDocumentStart, evidenceDocumentEnd, now));
+                            evidenceDocumentStart, evidenceDocumentEnd, now,
+                            request.sourceId(), request.versionId().toString(), request.generation(), null));
                 }
             }
             List<GraphRelation> accepted = new ArrayList<>(acceptedById.values());

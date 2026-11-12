@@ -71,6 +71,9 @@ class GraphWriterTest {
                 mentions.getValue().get(1).mentionId()));
         assertThat(relations.getValue().getFirst().evidenceDocumentOffsetStart()).isEqualTo(100);
         assertThat(relations.getValue().getFirst().evidenceChunkId()).isEqualTo(REF + ":0");
+        assertThat(relations.getValue().getFirst().sourceId()).isEqualTo("source");
+        assertThat(relations.getValue().getFirst().revisionId()).isEqualTo(VERSION.toString());
+        assertThat(relations.getValue().getFirst().generation()).isEqualTo(7);
 
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
         verify(cache).claimGraphCommit(request);
@@ -164,7 +167,7 @@ class GraphWriterTest {
 
     private static ExtractionRequestRow request() {
         return new ExtractionRequestRow(TENANT, "upload", "source", "resource", UUID.randomUUID(),
-                VERSION, REF, "{}", NOW, NOW, "KNOWLEDGE_READY", 0, null, null, false);
+                VERSION, REF, "{}", NOW, NOW, "KNOWLEDGE_READY", 0, null, null, false, 7);
     }
 
     private static ChunkRow chunk() {

@@ -169,6 +169,10 @@ public final class PromotionConsumer {
                 row.objectMentionId(), row.canonicalObjectId(), row.predicate(),
                 row.ontologyVersion(), evidenceChunkId,
                 view.path("evidenceChunkOffsetStart").asInt(-1),
-                view.path("evidenceChunkOffsetEnd").asInt(-1));
+                view.path("evidenceChunkOffsetEnd").asInt(-1),
+                view.path("sourceId").asText(null),
+                view.path("revisionId").asText(row.sourceVersionId().toString()),
+                view.path("generation").asLong(0),
+                view.path("extractionRunId").asText(null));
     }
 }
