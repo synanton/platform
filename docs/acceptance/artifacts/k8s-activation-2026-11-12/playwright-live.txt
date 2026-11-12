@@ -1,0 +1,10 @@
+
+> test:entity-graph-live
+> playwright test -c playwright.entity-graph.live.config.ts
+
+
+Running 1 test using 1 worker
+
+  ✓  1 tests/entity-graph.live.spec.ts:123:1 › live Entity Graph journey from upload to evidence (28.3s)
+
+  1 passed (29.0s)
