@@ -11,6 +11,9 @@ import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.identity.CanonicalGraphMetadata;
 import org.synanton.relix.identity.CanonicalGraphMetadataBootstrap;
 import org.synanton.relix.identity.MissingCanonicalGraphException;
+import org.synanton.relix.identity.ProjectionProvisioner;
+import org.synanton.relix.identity.ProjectionProvisioningOutcome;
+import org.synanton.relix.identity.ProjectionProvisioningResult;
 import org.synanton.relix.syntology.ActiveOntologyVersion;
 import org.synanton.relix.syntology.SyntologyActiveVersionClient;
 import org.testcontainers.containers.Neo4jContainer;
@@ -87,6 +90,47 @@ class Neo4jCanonicalGraphMetadataIntegrationTest {
     }
 
     @Test
+    void concurrentProvisioningCreatesOneMetadataNode() throws Exception {
+        String tenant = "tenant-provision-race";
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Callable<ProjectionProvisioningResult> first = provisionTask(start, tenant, NOW);
+            Callable<ProjectionProvisioningResult> second = provisionTask(start, tenant, NOW.plusMillis(1));
+            Future<ProjectionProvisioningResult> firstResult = executor.submit(first);
+            Future<ProjectionProvisioningResult> secondResult = executor.submit(second);
+            start.countDown();
+
+            ProjectionProvisioningResult a = firstResult.get(30, TimeUnit.SECONDS);
+            ProjectionProvisioningResult b = secondResult.get(30, TimeUnit.SECONDS);
+
+            assertThat(readMetadata(tenant).count()).isEqualTo(1);
+            assertThat(List.of(a.outcome(), b.outcome()))
+                    .containsExactlyInAnyOrder(
+                            ProjectionProvisioningOutcome.NEWLY_PROVISIONED,
+                            ProjectionProvisioningOutcome.ALREADY_INITIALIZED);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void repeatedProvisioningIsIdempotentAndPreservesCreatedAt() {
+        String tenant = "tenant-provision-idempotent";
+        ProjectionProvisioningResult first = new ProjectionProvisioner(
+                store, new FixedClient(tenant, "v1.2.0"), Clock.fixed(NOW, ZoneOffset.UTC))
+                .provision(tenant);
+        ProjectionProvisioningResult second = new ProjectionProvisioner(
+                store, new FixedClient(tenant, "v1.2.0"),
+                Clock.fixed(NOW.plusMillis(1), ZoneOffset.UTC)).provision(tenant);
+
+        assertThat(first.outcome()).isEqualTo(ProjectionProvisioningOutcome.NEWLY_PROVISIONED);
+        assertThat(second.outcome()).isEqualTo(ProjectionProvisioningOutcome.ALREADY_INITIALIZED);
+        assertThat(second.metadata().createdAt()).isEqualTo(first.metadata().createdAt());
+        assertThat(readMetadata(tenant).count()).isEqualTo(1);
+    }
+
+    @Test
     void existingMetadataIsNeverOverwritten() {
         String tenant = "tenant-metadata-existing";
         seedCanonicalEntity(tenant);
@@ -110,6 +154,15 @@ class Neo4jCanonicalGraphMetadataIntegrationTest {
                 store, new FixedClient(tenant, "v1.2.0"), Clock.fixed(NOW, ZoneOffset.UTC))
                 .bootstrap(tenant))
                 .isInstanceOf(MissingCanonicalGraphException.class);
+    }
+
+    private static Callable<ProjectionProvisioningResult> provisionTask(
+            CountDownLatch start, String tenant, Instant createdAt) {
+        return () -> {
+            start.await(10, TimeUnit.SECONDS);
+            return new ProjectionProvisioner(store, new FixedClient(tenant, "v1.2.0"),
+                    Clock.fixed(createdAt, ZoneOffset.UTC)).provision(tenant);
+        };
     }
 
     private static Callable<GraphIdentity> bootstrapTask(

@@ -8,5 +8,9 @@ public interface CanonicalGraphMetadataStore {
 
     CanonicalGraphMetadata bootstrapIfAbsent(CanonicalGraphMetadata candidate);
 
+    default ProvisionResult provision(CanonicalGraphMetadata candidate) {
+        throw new UnsupportedOperationException("graph metadata store does not support provisioning");
+    }
+
     boolean hasCanonicalData(String tenantId);
 }
