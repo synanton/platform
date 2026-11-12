@@ -6,6 +6,7 @@ import org.synanton.relix.identity.AmbiguousCanonicalGraphException;
 import org.synanton.relix.identity.CanonicalGraphMetadata;
 import org.synanton.relix.identity.CanonicalGraphMetadataStore;
 import org.synanton.relix.identity.MetadataWriteConflictException;
+import org.synanton.relix.identity.ProvisionResult;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -77,6 +78,46 @@ public final class Neo4jCanonicalGraphMetadataStore implements CanonicalGraphMet
         }
         return find(candidate.tenantId()).orElseThrow(() -> new AmbiguousCanonicalGraphException(
                 "Metadata bootstrap wrote no readable row for tenant " + candidate.tenantId()));
+    }
+
+    @Override
+    public ProvisionResult provision(CanonicalGraphMetadata candidate) {
+        ensureSchema();
+        try {
+            List<Map<String, Object>> rows = cypher.writeReturning("""
+                    MERGE (m:CanonicalGraphMetadata {tenant_id: $tenantId})
+                    ON CREATE SET m.graph_id = $graphId,
+                                  m.projection_version = $projectionVersion,
+                                  m.synced_at = datetime($syncedAt),
+                                  m.created_at = datetime($createdAt),
+                                  m.updated_at = datetime($updatedAt)
+                    ON MATCH SET m.synced_at = datetime($syncedAt),
+                                 m.updated_at = datetime($updatedAt)
+                    RETURN m.tenant_id AS tenant_id, m.graph_id AS graph_id,
+                           m.projection_version AS projection_version,
+                           toString(m.synced_at) AS synced_at,
+                           toString(m.created_at) AS created_at,
+                           toString(m.updated_at) AS updated_at,
+                           (m.created_at = datetime($createdAt)) AS created
+                    """, Map.of(
+                    "tenantId", candidate.tenantId(),
+                    "graphId", candidate.graphId(),
+                    "projectionVersion", candidate.projectionVersion(),
+                    "syncedAt", candidate.syncedAt().toString(),
+                    "createdAt", candidate.createdAt().toString(),
+                    "updatedAt", candidate.updatedAt().toString()));
+            if (rows.isEmpty()) {
+                throw new AmbiguousCanonicalGraphException(
+                        "Metadata provisioning wrote no readable row for tenant " + candidate.tenantId());
+            }
+            Map<String, Object> row = rows.getFirst();
+            return new ProvisionResult(toMetadata(row), Boolean.TRUE.equals(row.get("created")));
+        } catch (ClientException e) {
+            if (isConstraintConflict(e)) {
+                throw new MetadataWriteConflictException("Metadata provisioning write conflict", e);
+            }
+            throw e;
+        }
     }
 
     @Override

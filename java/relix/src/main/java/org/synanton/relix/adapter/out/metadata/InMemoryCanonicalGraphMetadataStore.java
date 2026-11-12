@@ -3,6 +3,7 @@ package org.synanton.relix.adapter.out.metadata;
 import org.synanton.relix.graph.GraphConnector;
 import org.synanton.relix.identity.CanonicalGraphMetadata;
 import org.synanton.relix.identity.CanonicalGraphMetadataStore;
+import org.synanton.relix.identity.ProvisionResult;
 
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,21 @@ public final class InMemoryCanonicalGraphMetadataStore implements CanonicalGraph
                     current.tenantId(), current.graphId(), current.projectionVersion(),
                     current.syncedAt(), current.createdAt(), candidate.updatedAt());
         });
+    }
+
+    @Override
+    public ProvisionResult provision(CanonicalGraphMetadata candidate) {
+        boolean[] created = {false};
+        CanonicalGraphMetadata result = metadata.compute(candidate.tenantId(), (tenantId, current) -> {
+            if (current == null) {
+                created[0] = true;
+                return candidate;
+            }
+            return new CanonicalGraphMetadata(
+                    current.tenantId(), current.graphId(), current.projectionVersion(),
+                    candidate.syncedAt(), current.createdAt(), candidate.updatedAt());
+        });
+        return new ProvisionResult(result, created[0]);
     }
 
     @Override
