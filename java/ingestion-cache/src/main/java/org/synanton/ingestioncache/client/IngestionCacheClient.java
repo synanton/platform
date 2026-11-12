@@ -1041,11 +1041,15 @@ public class IngestionCacheClient {
             "INSERT INTO ingestion_cache.relation_promotion_results (tenant_id, source_version_id, relation_id, " +
             "subject_mention_id, object_mention_id, predicate, promotion_status, canonical_subject_id, " +
             "canonical_object_id, reason, evidence_json, strategy_version, ontology_version, decided_at, " +
-            "superseded_at, claim_status, attempt_count) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "superseded_at, claim_status, attempt_count, source_id, revision_id, generation, " +
+            "extraction_run_id, identity_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row.tenantId(), row.sourceVersionId(), row.relationId(), row.subjectMentionId(),
             row.objectMentionId(), row.predicate(), row.promotionStatus(), row.canonicalSubjectId(),
             row.canonicalObjectId(), row.reason(), row.evidenceJson(), row.strategyVersion(),
-            row.ontologyVersion(), row.decidedAt(), row.supersededAt(), claimStatus, 0
+            row.ontologyVersion(), row.decidedAt(), row.supersededAt(), claimStatus, 0,
+            row.sourceId(), row.revisionId(),
+            row.identityStatus().equals("CURRENT") ? row.generation() : null,
+            row.extractionRunId(), row.identityStatus()
         ));
     }
 
@@ -1061,7 +1065,11 @@ public class IngestionCacheClient {
                 row.getString("predicate"), row.getString("promotion_status"),
                 row.getString("canonical_subject_id"), row.getString("canonical_object_id"),
                 row.getString("reason"), row.getString("evidence_json"), row.getString("strategy_version"),
-                row.getString("ontology_version"), row.getInstant("decided_at"), row.getInstant("superseded_at")
+                row.getString("ontology_version"), row.getInstant("decided_at"), row.getInstant("superseded_at"),
+                row.getString("source_id"), row.getUuid("revision_id"),
+                row.isNull("generation") ? 0 : row.getLong("generation"),
+                row.getString("extraction_run_id"),
+                row.getString("identity_status") == null ? "LEGACY_UNVERSIONED" : row.getString("identity_status")
             ));
         }
         return rows.stream().sorted(Comparator.comparing(RelationPromotionResultRow::relationId)).toList();

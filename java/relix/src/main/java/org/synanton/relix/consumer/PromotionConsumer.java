@@ -170,9 +170,11 @@ public final class PromotionConsumer {
                 row.ontologyVersion(), evidenceChunkId,
                 view.path("evidenceChunkOffsetStart").asInt(-1),
                 view.path("evidenceChunkOffsetEnd").asInt(-1),
-                view.path("sourceId").asText(null),
-                view.path("revisionId").asText(row.sourceVersionId().toString()),
-                view.path("generation").asLong(0),
-                view.path("extractionRunId").asText(null));
+                row.sourceId() != null ? row.sourceId() : view.path("sourceId").asText(null),
+                row.revisionId() != null ? row.revisionId().toString()
+                        : view.path("revisionId").asText(row.sourceVersionId().toString()),
+                row.generation() > 0 ? row.generation() : view.path("generation").asLong(0),
+                row.extractionRunId() != null ? row.extractionRunId()
+                        : view.path("extractionRunId").asText(null));
     }
 }

@@ -177,12 +177,16 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
             } catch (IllegalArgumentException e) {
                 throw new RetryableProcessingException("Invalid source version on extracted relation", e);
             }
+            UUID revisionId = view.revisionId() == null ? version : UUID.fromString(view.revisionId());
+            String identityStatus = view.sourceId() == null || view.generation() < 1
+                    ? "LEGACY_UNVERSIONED" : "CURRENT";
             cacheClient.upsertRelationPromotionResult(new RelationPromotionResultRow(
                     tenantId, version, view.relationId(), view.subjectMentionId(),
                     view.objectMentionId(), view.predicate(), result.outcome().name(),
                     result.subjectEntityId(), result.objectEntityId(),
                     reason(result), evidenceJson, STRATEGY_VERSION, result.ontologyVersion(),
-                    clock.instant(), null));
+                    clock.instant(), null, view.sourceId(), revisionId, view.generation(),
+                    view.extractionRunId(), identityStatus));
         }
         return result;
     }

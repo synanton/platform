@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -83,6 +84,63 @@ class ManifestVisibilityGateTest {
         assertThat(client.listManifest(tenant, 100))
                 .extracting(ManifestRow::contentRefId)
                 .containsExactly(contentRefId);
+    }
+
+    @Test
+    void relationPromotionIdentitySurvivesTheCassandraRoundTrip() {
+        String tenant = "tenant-promotion-identity-" + UUID.randomUUID();
+        UUID version = UUID.randomUUID();
+        UUID revision = UUID.randomUUID();
+        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+                tenant, version, "relation-a", "m1", "m2", "requires", "VALID",
+                "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null,
+                "source-a", revision, 5L, "run-a", "CURRENT"));
+
+        RelationPromotionResultRow stored = client.listRelationPromotionResults(tenant, version)
+                .getFirst();
+        assertThat(stored.sourceId()).isEqualTo("source-a");
+        assertThat(stored.revisionId()).isEqualTo(revision);
+        assertThat(stored.generation()).isEqualTo(5L);
+        assertThat(stored.extractionRunId()).isEqualTo("run-a");
+        assertThat(stored.identityStatus()).isEqualTo("CURRENT");
+    }
+
+    @Test
+    void legacyPromotionRowStaysExplicitlyUnversioned() {
+        String tenant = "tenant-promotion-legacy-" + UUID.randomUUID();
+        UUID version = UUID.randomUUID();
+        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+                tenant, version, "relation-legacy", "m1", "m2", "requires", "VALID",
+                "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null));
+
+        RelationPromotionResultRow stored = client.listRelationPromotionResults(tenant, version)
+                .getFirst();
+        assertThat(stored.identityStatus()).isEqualTo("LEGACY_UNVERSIONED");
+        assertThat(stored.generation()).isZero();
+        assertThat(stored.sourceId()).isNull();
+    }
+
+    @Test
+    void multiSourceEvidenceKeepsPerSourceGenerations() {
+        String tenant = "tenant-promotion-multi-" + UUID.randomUUID();
+        UUID versionA = UUID.randomUUID();
+        UUID versionB = UUID.randomUUID();
+        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+                tenant, versionA, "relation-a", "m1", "m2", "requires", "VALID",
+                "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null,
+                "source-a", UUID.randomUUID(), 5L, "run-a", "CURRENT"));
+        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+                tenant, versionB, "relation-b", "m1", "m2", "requires", "VALID",
+                "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null,
+                "source-b", UUID.randomUUID(), 2L, "run-b", "CURRENT"));
+
+        RelationPromotionResultRow a = client.listRelationPromotionResults(tenant, versionA).getFirst();
+        RelationPromotionResultRow b = client.listRelationPromotionResults(tenant, versionB).getFirst();
+        assertThat(a.sourceId()).isEqualTo("source-a");
+        assertThat(a.generation()).isEqualTo(5L);
+        assertThat(b.sourceId()).isEqualTo("source-b");
+        assertThat(b.generation()).isEqualTo(2L);
+        assertThat(a.canonicalSubjectId()).isEqualTo(b.canonicalSubjectId());
     }
 
     @Test
