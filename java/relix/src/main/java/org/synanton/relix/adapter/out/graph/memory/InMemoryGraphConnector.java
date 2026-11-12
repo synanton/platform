@@ -1,5 +1,6 @@
 package org.synanton.relix.adapter.out.graph.memory;
 
+import org.synanton.common.resolution.GraphCapabilities;
 import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
@@ -124,6 +125,11 @@ public class InMemoryGraphConnector implements GraphConnector, GraphReadPort, Gr
     @Override
     public EngineDescriptor descriptor() {
         return new EngineDescriptor("memory", "in-memory-jgrapht", "ALL_NATIVE");
+    }
+
+    @Override
+    public GraphCapabilities capabilities() {
+        return new GraphCapabilities(false, false, true, true, false);
     }
 
     @Override
