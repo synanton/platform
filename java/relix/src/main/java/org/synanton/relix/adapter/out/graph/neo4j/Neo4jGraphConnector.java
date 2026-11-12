@@ -7,6 +7,8 @@ import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.relix.api.dto.Path;
 import org.synanton.relix.api.dto.SourceRef;
 import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.graph.GraphReadPort;
+import org.synanton.relix.graph.GraphWritePort;
 import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
@@ -15,6 +17,7 @@ import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.EntityNeighborhood;
 import org.synanton.relix.graph.SourceRefCodec;
 import org.synanton.relix.graph.ResolutionIds;
+import org.synanton.relix.identity.UnsupportedGraphIdException;
 import org.synanton.relix.graph.PromotionIds;
 import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.ExtractedRelationView;
@@ -28,6 +31,7 @@ import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionKey;
 import org.synanton.common.resolution.ResolutionWriteOutcome;
+import org.synanton.common.resolution.GraphIdentity;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -41,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Bolt/Cypher adapter. Relationship type is always {@code REL}; the original verb is a property (avoids Cypher injection).
  */
-public class Neo4jGraphConnector implements GraphConnector {
+public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, GraphWritePort {
 
     private static final int MAX_HOPS_CAP = 6;
 
@@ -53,6 +57,135 @@ public class Neo4jGraphConnector implements GraphConnector {
     public Neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypher) {
         this.graphLoader = graphLoader;
         this.cypher = cypher;
+    }
+
+    @Override
+    public java.util.Optional<Entity> getEntity(GraphIdentity identity, String entityId) {
+        requireCanonical(identity);
+        if (entityId == null || entityId.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (n:Entity {id: $id, tenant: $tenant})
+                RETURN n.id AS id, n.label AS label, n.type AS type,
+                       n.confidence AS confidence, n.sources AS sources
+                LIMIT 1
+                """, Map.of("id", entityId, "tenant", identity.tenantId()));
+        return rows.stream().findFirst().map(Neo4jGraphConnector::toEntity);
+    }
+
+    @Override
+    public EntityLookupResult lookupEntities(GraphIdentity identity, String label, String type, int limit) {
+        requireCanonical(identity);
+        return lookupEntities(identity.tenantId(), label, type, limit);
+    }
+
+    @Override
+    public OneHopResult oneHop(GraphIdentity identity, UUID entityId, List<String> edgeTypes,
+                               String direction, int limit) {
+        requireCanonical(identity);
+        return oneHop(identity.tenantId(), entityId, edgeTypes, direction, limit);
+    }
+
+    @Override
+    public KHopResult kHopPaths(GraphIdentity identity, UUID fromEntityId, UUID toEntityId,
+                                int maxHops, int maxPaths) {
+        requireCanonical(identity);
+        return kHopPaths(identity.tenantId(), fromEntityId, toEntityId, maxHops, maxPaths);
+    }
+
+    @Override
+    public java.util.Optional<String> getActiveEntityType(GraphIdentity identity, String entityId) {
+        requireCanonical(identity);
+        return getActiveEntityType(identity.tenantId(), entityId);
+    }
+
+    @Override
+    public java.util.Optional<EntityNeighborhood> neighborhood(GraphIdentity identity, String entityId, int limit) {
+        requireCanonical(identity);
+        return neighborhood(identity.tenantId(), entityId, limit);
+    }
+
+    @Override
+    public GraphStats stats(GraphIdentity identity) {
+        requireCanonical(identity);
+        return stats(identity.tenantId());
+    }
+
+    @Override
+    public void loadTenant(GraphIdentity identity) {
+        requireCanonical(identity);
+        loadTenant(identity.tenantId());
+    }
+
+    @Override
+    public void upsertEntity(GraphIdentity identity, Entity entity) {
+        requireCanonical(identity);
+        if (entity == null || entity.entityId() == null) {
+            throw new IllegalArgumentException("entity and entity id are required");
+        }
+        cypher.write("""
+                MERGE (n:Entity {id: $id, tenant: $tenant})
+                SET n.label = $label, n.type = $type,
+                    n.confidence = $confidence, n.sources = $sources
+                """, Map.of(
+                "id", entity.entityId().toString(),
+                "tenant", identity.tenantId(),
+                "label", entity.label() == null ? "" : entity.label(),
+                "type", entity.type() == null ? "" : entity.type(),
+                "confidence", entity.confidence(),
+                "sources", encodeSources(entity.sourceRefs())));
+    }
+
+    @Override
+    public void upsertRelation(GraphIdentity identity, Edge relation) {
+        requireCanonical(identity);
+        if (relation == null || relation.edgeId() == null
+                || relation.fromEntityId() == null || relation.toEntityId() == null) {
+            throw new IllegalArgumentException("relation endpoints and id are required");
+        }
+        cypher.write("""
+                MATCH (a:Entity {id: $fromId, tenant: $tenant})
+                MATCH (b:Entity {id: $toId, tenant: $tenant})
+                MERGE (a)-[r:REL {id: $id}]->(b)
+                SET r.verb = $verb, r.confidence = $confidence, r.sources = $sources
+                """, Map.of(
+                "fromId", relation.fromEntityId().toString(),
+                "toId", relation.toEntityId().toString(),
+                "tenant", identity.tenantId(),
+                "id", relation.edgeId().toString(),
+                "verb", relation.verb() == null ? "" : relation.verb(),
+                "confidence", relation.confidence(),
+                "sources", encodeSources(relation.sourceRefs())));
+    }
+
+    @Override
+    public PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation) {
+        requireCanonical(identity);
+        if (relation == null || !identity.tenantId().equals(relation.tenantId())) {
+            throw new IllegalArgumentException("relation tenant must match graph identity tenant");
+        }
+        return promoteRelation(relation);
+    }
+
+    private static String encodeSources(List<SourceRef> refs) {
+        Map<UUID, Set<Integer>> grouped = new LinkedHashMap<>();
+        if (refs != null) {
+            for (SourceRef ref : refs) {
+                if (ref == null || ref.contentRefId() == null) {
+                    continue;
+                }
+                grouped.computeIfAbsent(ref.contentRefId(), ignored -> new LinkedHashSet<>())
+                        .addAll(ref.chunkOrdinals() == null ? List.of() : ref.chunkOrdinals());
+            }
+        }
+        return SourceRefCodec.encode(grouped);
+    }
+
+    private static void requireCanonical(GraphIdentity identity) {
+        if (identity == null || !"canonical".equals(identity.graphId())) {
+            throw new UnsupportedGraphIdException("Canonical graph port supports only graphId='canonical'");
+        }
     }
 
     @Override
