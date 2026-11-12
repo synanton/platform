@@ -5,6 +5,16 @@
 **Scope:** Phase 2 only. This document is an inspection and execution plan, not authorization to implement #592 or #589 yet.
 **Current tree:** `e78255a6` (Phase 1 closed; #618 superseded).
 
+## Phase 2 structure
+
+| Phase | Deliverable | Acceptance |
+|---|---|---|
+| **2a — Reconciliation completion** | Capability composition/startup validation, rule-5 boundary lint, #587 state resolution; #589 harness developed in parallel | #592 merged with green tests; #589 harness exists but final evidence deferred |
+| **2b — Source-change lifecycle** | ADR + implementation: version fencing, assertion retirement, search-index replacement | Stale extractions cannot mutate the graph; old assertions retire without deleting provenance; changed source replaces indexed state; status/retry semantics are explicit |
+| **2c — End-to-end maintenance** | Live maintenance E2E | Change a source document; stale assertions retired, new assertions promoted, retrieval returns current evidence with provenance |
+
+Phase 2 is **not complete after 2a**. 2b is the critical path; 2c is the proof.
+
 ## 1. Inspection: seven questions
 
 ### Q1. What does #592 actually require to close?
@@ -262,10 +272,14 @@ Phase 2 is complete only with all of the following evidence:
 
 ## 8. Work sequence (after this plan is reviewed)
 
-1. **P2-1 (#592 completion, small PR):** `GraphCapabilities` startup validation for reconciliation/promotion; rule-5 boundary test; reconcile #587 issue state; no behavior change.
-2. **P2-2 (#589 harness, parallel PR):** build missing scenarios (promotion lost response, concurrent claims, independent loops) on the current tree; final rerun after P2-1.
-3. **P2-3 (maintenance correctness):** promotion zero-write/stale outcomes, restart/failure matrix gaps, source-change invalidation/retraction.
-4. **P2-4 (source-change E2E):** live/local-real acceptance artifact with modified-document scenario.
-5. **P2-5 (divergence):** operator documentation/decision; no auto-migration.
+1. **P2a-1 (#592 completion, small PR):** `GraphCapabilities` startup validation for reconciliation/promotion; rule-5 boundary test; reconcile #587 issue state; no behavior change.
+2. **P2a-2 (#589 harness, parallel PR):** build missing scenarios (promotion lost response, concurrent claims, independent loops) on the current tree; final rerun after P2a-1.
+3. **P2b-1 (source-change ADR, reviewed before code):** version fencing, assertion lifecycle, search-index replacement, failure semantics; no implementation until approved.
+4. **P2b-2 (source-change correctness):** version fencing before graph mutation; assertion retirement/SUPERSEDED evidence; search-index replacement; STALE status/retry.
+5. **P2b-3 (maintenance correctness):** promotion zero-write/stale outcomes and the remaining restart/failure-matrix gaps.
+6. **P2c (source-change E2E):** live/local-real acceptance artifact with modified-document scenario.
+7. **P2c-2 (divergence):** operator documentation/decision; no auto-migration.
 
-Do not start Phase 3/5 in parallel. Do not close #592/#589 until evidence exists. Do not treat DIVERGENT as a bug to fix in this phase.
+Steps 1 and 2 may run in parallel. Step 3 gates step 4. #589 final evidence remains blocked until P2a-1 is merged.
+
+Do not start Phase 3/5 in parallel. Do not close #592/#589 until evidence exists. Do not treat DIVERGENT as a bug to fix in this phase. Do not merge this plan with the old “2a completes Phase 2” framing.
