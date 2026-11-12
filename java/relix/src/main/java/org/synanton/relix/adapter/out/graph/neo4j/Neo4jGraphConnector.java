@@ -757,6 +757,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                     FOR (r:CanonicalRelationAnchor) REQUIRE r.canonical_relation_id IS UNIQUE
                     """, Map.of());
             cypher.write("""
+                    CREATE CONSTRAINT source_revision_fence_unique IF NOT EXISTS
+                    FOR (f:SourceRevisionFence) REQUIRE (f.tenant_id, f.source_id) IS UNIQUE
+                    """, Map.of());
+            cypher.write("""
                     CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS
                     FOR (r:ExtractedRelation) REQUIRE (r.tenant_id, r.relation_id) IS UNIQUE
                     """, Map.of());
