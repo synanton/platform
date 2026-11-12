@@ -23,6 +23,14 @@ Consequences:
 
 **Companion contract:** [`graph-identity-authority-contract.md`](../planning/graph-identity-authority-contract.md) records the Syntology/Relix ownership and bootstrap semantics.
 
+## Port nomenclature
+
+- `GraphReadPort` / `GraphWritePort` — canonical `:Entity`/`:REL` operations requiring `GraphIdentity`.
+- `ExtractedMentionGraphReadPort` / `ExtractedMentionGraphWritePort` — RAKG extraction-pipeline records (`:ExtractedMention`, `:EXTRACTED_RELATION`, relation evidence).
+- `ResolutionGraphPort` — resolution and promotion operations.
+
+The bare port names refer to the canonical graph because that is what "the graph" means in this ADR. Extracted mentions and resolution are specializations with their own ports; they must not leak into the generic canonical contract.
+
 ## Context
 
 The #618 review found three coupled problems: canonical data has no stored `graph_id`/`projection_version`; generic graph call sites have only a tenant; and the `GraphReadPort`/`GraphWritePort` boundary does not yet exist. Option A (backfill per-node version) would strand existing data until migrated. Option C (default the version) would hide unresolved scope.
