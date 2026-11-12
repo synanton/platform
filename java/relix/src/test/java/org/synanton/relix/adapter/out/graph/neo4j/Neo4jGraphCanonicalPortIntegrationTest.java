@@ -6,7 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
+import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.SourceRevisionIdentity;
+import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.graph.GraphLoader;
@@ -170,6 +173,57 @@ class Neo4jGraphCanonicalPortIntegrationTest {
                 .hasSize(1);
         assertThat(count("MATCH ()-[r:EXTRACTED_RELATION {tenant_id: $tenant}]->() RETURN count(r) AS c", tenant))
                 .isZero();
+    }
+
+    @Test
+    void staleGenerationCannotMutateOrRetireNewerEvidence() {
+        String tenant = "tenant-generation-fence";
+        String sourceId = "source-generation-fence";
+        seedCanonicalResolution(tenant, "subject-3", "entity-subject-3");
+        seedCanonicalResolution(tenant, "object-3", "entity-object-3");
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 3, f.current_generation = 3
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+
+        CanonicalRelation gen3 = relation(tenant, "relation-gen3", "revision-gen3", "subject-3",
+                "entity-subject-3", "object-3", "entity-object-3", "evidence-gen3");
+        connector.promoteRelation(identity, gen3, new SourceRevisionIdentity(tenant, sourceId, 3));
+        assertThat(evidenceCount(tenant, "relation-gen3")).isEqualTo(1);
+
+        CanonicalRelation gen2 = relation(tenant, "relation-gen2", "revision-gen2", "subject-3",
+                "entity-subject-3", "object-3", "entity-object-3", "evidence-gen2");
+        assertThatThrownBy(() -> connector.promoteRelation(identity, gen2,
+                new SourceRevisionIdentity(tenant, sourceId, 2)))
+                .isInstanceOf(StaleGenerationException.class);
+
+        assertThat(evidenceCount(tenant, "relation-gen2")).isZero();
+        assertThat(evidenceCount(tenant, "relation-gen3")).isEqualTo(1);
+    }
+
+    private static void seedCanonicalResolution(String tenant, String mentionId, String entityId) {
+        cypher.write("""
+                MERGE (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
+                MERGE (e:Entity {tenant: $tenant, id: $entityId})
+                MERGE (m)-[r:RESOLVES_TO {active: true}]->(e)
+                SET r.resolution_id = $mentionId, r.fencing_token = 1
+                """, Map.of("tenant", tenant, "mentionId", mentionId, "entityId", entityId));
+    }
+
+    private static long evidenceCount(String tenant, String relationId) {
+        return ((Number) cypher.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "relationId", relationId)).getFirst().get("c")).longValue();
+    }
+
+    private static CanonicalRelation relation(String tenant, String relationId, String revisionId,
+                                              String subjectMentionId, String subjectEntityId,
+                                              String objectMentionId, String objectEntityId,
+                                              String evidenceChunkId) {
+        return new CanonicalRelation(tenant, revisionId, relationId, subjectMentionId, subjectEntityId,
+                objectMentionId, objectEntityId, "requires", "active", evidenceChunkId, 0, 10);
     }
 
     private static Entity entity(UUID id, String label, String type) {

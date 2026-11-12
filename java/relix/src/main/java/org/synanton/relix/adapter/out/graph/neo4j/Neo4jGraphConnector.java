@@ -33,6 +33,9 @@ import org.synanton.common.resolution.ResolutionKey;
 import org.synanton.common.resolution.ResolutionWriteOutcome;
 import org.synanton.common.resolution.GraphCapabilities;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.SourceRevisionIdentity;
+import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.common.resolution.TransientGraphTransactionException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -166,7 +169,20 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
         if (relation == null || !identity.tenantId().equals(relation.tenantId())) {
             throw new IllegalArgumentException("relation tenant must match graph identity tenant");
         }
-        return promoteRelation(relation);
+        return promoteRelationInternal(relation, null);
+    }
+
+    @Override
+    public PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation,
+                                           SourceRevisionIdentity sourceRevision) {
+        requireCanonical(identity);
+        if (relation == null || !identity.tenantId().equals(relation.tenantId())) {
+            throw new IllegalArgumentException("relation tenant must match graph identity tenant");
+        }
+        if (sourceRevision == null || !identity.tenantId().equals(sourceRevision.tenantId())) {
+            throw new IllegalArgumentException("source revision tenant must match graph identity tenant");
+        }
+        return promoteRelationInternal(relation, sourceRevision);
     }
 
     private static String encodeSources(List<SourceRef> refs) {
@@ -443,6 +459,11 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
 
     @Override
     public PromotionResult promoteRelation(CanonicalRelation relation) {
+        return promoteRelationInternal(relation, null);
+    }
+
+    private PromotionResult promoteRelationInternal(CanonicalRelation relation,
+                                                     SourceRevisionIdentity sourceRevision) {
         ensureExtractedSchema();
         String canonicalRelationId = PromotionIds.canonicalRelationId(relation);
         String evidenceId = PromotionIds.evidenceId(relation);
@@ -464,6 +485,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
         params.put("canonicalRelationId", canonicalRelationId);
         params.put("evidenceId", evidenceId);
         params.put("now", now);
+        params.put("sourceId", sourceRevision == null ? null : sourceRevision.sourceId());
+        params.put("expectedGeneration", sourceRevision == null ? null : sourceRevision.generation());
 
         List<Map<String, Object>> rows;
         try {
@@ -475,6 +498,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 MERGE (slot:ResolutionSlot {tenant_id: $tenant, mention_id: mentionId})
                 SET slot.locked_at = $now
                 WITH collect(slot) AS slots
+                OPTIONAL MATCH (fence:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                WITH slots, fence
+                WHERE $expectedGeneration IS NULL
+                   OR (fence IS NOT NULL AND fence.accepted_generation = $expectedGeneration)
                 MATCH (s:ExtractedMention {tenant_id: $tenant, mention_id: $subjectMentionId})
                       -[:RESOLVES_TO {active: true}]->
                       (se:Entity {tenant: $tenant, id: $subjectEntityId})
@@ -512,9 +539,15 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                        1 AS evidence_matched
                 """, params);
         } catch (RuntimeException e) {
-            throw new RetryableProcessingException("Canonical relation promotion transaction failed", e);
+            throw new TransientGraphTransactionException(
+                    "Canonical relation promotion transaction failed", e);
         }
         if (rows.isEmpty()) {
+            if (sourceRevision != null) {
+                throw new StaleGenerationException(
+                        "Source generation " + sourceRevision.generation()
+                                + " is not accepted for source " + sourceRevision.sourceId());
+            }
             return new PromotionResult(0, 0, 0);
         }
         Map<String, Object> row = rows.getFirst();
@@ -735,6 +768,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             cypher.write("""
                     CREATE CONSTRAINT canonical_relation_anchor_unique IF NOT EXISTS
                     FOR (r:CanonicalRelationAnchor) REQUIRE r.canonical_relation_id IS UNIQUE
+                    """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT source_revision_fence_unique IF NOT EXISTS
+                    FOR (f:SourceRevisionFence) REQUIRE (f.tenant_id, f.source_id) IS UNIQUE
                     """, Map.of());
             cypher.write("""
                     CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS
