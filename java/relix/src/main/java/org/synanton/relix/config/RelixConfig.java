@@ -18,8 +18,10 @@ import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
 import org.synanton.relix.adapter.out.metadata.InMemoryCanonicalGraphMetadataStore;
 import org.synanton.relix.adapter.out.metadata.Neo4jCanonicalGraphMetadataStore;
 import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.identity.CanonicalGraphIdentityResolver;
 import org.synanton.relix.identity.CanonicalGraphMetadataBootstrap;
 import org.synanton.relix.identity.CanonicalGraphMetadataStore;
+import org.synanton.relix.identity.GraphIdentityResolver;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.syntology.HttpSyntologyActiveVersionClient;
 import org.synanton.relix.syntology.SyntologyActiveVersionClient;
@@ -57,6 +59,12 @@ public class RelixConfig {
     CanonicalGraphMetadataBootstrap canonicalGraphMetadataBootstrap(
             CanonicalGraphMetadataStore store, SyntologyActiveVersionClient syntology) {
         return new CanonicalGraphMetadataBootstrap(store, syntology, java.time.Clock.systemUTC());
+    }
+
+    @Bean
+    GraphIdentityResolver graphIdentityResolver(CanonicalGraphMetadataStore store,
+                                                CanonicalGraphMetadataBootstrap bootstrap) {
+        return new CanonicalGraphIdentityResolver(store, bootstrap);
     }
 
     @Bean
