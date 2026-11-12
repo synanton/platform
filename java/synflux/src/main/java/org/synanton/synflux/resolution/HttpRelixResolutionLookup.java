@@ -14,12 +14,14 @@ import java.util.Map;
 import java.util.Optional;
 import org.synanton.common.jwt.ServiceTokenMinter;
 import org.synanton.common.resolution.ActiveResolution;
+import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.common.resolution.RetryableProcessingException;
 
 /** HTTP read client for Relix's authoritative resolution/extracted-relation lookups. */
-public final class HttpRelixResolutionLookup implements ResolutionGraphLookup {
+public final class HttpRelixResolutionLookup implements ResolutionGraphLookup,
+        ExtractedMentionGraphReadPort {
 
     private static final TypeReference<List<ActiveResolution>> ACTIVE =
             new TypeReference<>() {};

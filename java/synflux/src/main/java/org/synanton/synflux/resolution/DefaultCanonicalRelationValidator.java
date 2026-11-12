@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.synanton.common.resolution.ActiveResolution;
+import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.RelationValidationOutcome;
 import org.synanton.common.resolution.RelationValidationResult;
@@ -34,16 +35,19 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
     private static final TypeReference<List<RelationCandidate>> RELATIONS = new TypeReference<>() {};
 
     private final ResolutionGraphLookup graphLookup;
+    private final ExtractedMentionGraphReadPort extractedReadPort;
     private final RelationValidator syntology;
     private final IngestionCacheClient cacheClient;
     private final Clock clock;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public DefaultCanonicalRelationValidator(ResolutionGraphLookup graphLookup,
+                                             ExtractedMentionGraphReadPort extractedReadPort,
                                              RelationValidator syntology,
                                              IngestionCacheClient cacheClient,
                                              Clock clock) {
         this.graphLookup = graphLookup;
+        this.extractedReadPort = extractedReadPort;
         this.syntology = syntology;
         this.cacheClient = cacheClient;
         this.clock = clock;
@@ -52,7 +56,7 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
     @Override
     public RelationValidationResult validate(String tenantId, String ontologyVersion,
                                              String extractedRelationId) {
-        Optional<ExtractedRelationView> found = graphLookup.getExtractedRelation(tenantId, extractedRelationId);
+        Optional<ExtractedRelationView> found = extractedReadPort.getExtractedRelation(tenantId, extractedRelationId);
         if (found.isEmpty()) {
             return persist(tenantId, null, null, null, invalid("EXTRACTED_RELATION_NOT_FOUND",
                     "Extracted relation not found in tenant", null, null, null, null, null,

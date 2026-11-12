@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.common.resolution.ActiveResolution;
+import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -28,6 +29,7 @@ public final class RelationPromotionProducer {
     private static final Logger log = LoggerFactory.getLogger(RelationPromotionProducer.class);
 
     private final ResolutionGraphLookup graphLookup;
+    private final ExtractedMentionGraphReadPort extractedReadPort;
     private final CanonicalRelationValidator validator;
     private final IngestionCacheClient cacheClient;
     private final boolean enabled;
@@ -36,12 +38,14 @@ public final class RelationPromotionProducer {
 
     public RelationPromotionProducer(
             ResolutionGraphLookup graphLookup,
+            ExtractedMentionGraphReadPort extractedReadPort,
             CanonicalRelationValidator validator,
             IngestionCacheClient cacheClient,
             @Value("${PROMOTION_PRODUCER_ENABLED:false}") boolean enabled,
             @Value("${PROMOTION_PRODUCER_TENANT:local-real-demo}") String tenant,
             @Value("${PROMOTION_PRODUCER_ONTOLOGY_VERSION:active}") String ontologyVersion) {
         this.graphLookup = graphLookup;
+        this.extractedReadPort = extractedReadPort;
         this.validator = validator;
         this.cacheClient = cacheClient;
         this.enabled = enabled;
@@ -56,7 +60,7 @@ public final class RelationPromotionProducer {
         }
         List<ExtractedRelationView> relations;
         try {
-            relations = graphLookup.listExtractedRelations(tenant, null);
+            relations = extractedReadPort.listExtractedRelations(tenant, null);
         } catch (Exception e) {
             log.warn("Relation promotion producer could not list extracted relations: {}", e.toString());
             return;

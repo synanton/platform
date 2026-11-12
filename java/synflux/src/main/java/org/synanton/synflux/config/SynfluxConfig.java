@@ -32,6 +32,7 @@ import org.synanton.synflux.resolution.CanonicalRelationValidator;
 import org.synanton.synflux.resolution.DefaultCanonicalRelationValidator;
 import org.synanton.synflux.resolution.HttpRelixResolutionLookup;
 import org.synanton.common.jwt.ServiceTokenMinter;
+import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.pipeline.PipelineStage;
@@ -162,7 +163,7 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public ResolutionGraphLookup resolutionGraphLookup(
+    public HttpRelixResolutionLookup resolutionGraphLookup(
             @Value("${RELIX_BASE_URL:http://relix:8080}") String relixBaseUrl,
             @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
         return new HttpRelixResolutionLookup(relixBaseUrl,
@@ -171,10 +172,12 @@ public class SynfluxConfig {
 
     @Bean
     public CanonicalRelationValidator canonicalRelationValidator(
-            ResolutionGraphLookup resolutionGraphLookup, RelationValidator relationValidator,
+            ResolutionGraphLookup resolutionGraphLookup,
+            ExtractedMentionGraphReadPort extractedReadPort,
+            RelationValidator relationValidator,
             IngestionCacheClient cacheClient, Clock clock) {
-        return new DefaultCanonicalRelationValidator(resolutionGraphLookup, relationValidator,
-                cacheClient, clock);
+        return new DefaultCanonicalRelationValidator(resolutionGraphLookup, extractedReadPort,
+                relationValidator, cacheClient, clock);
     }
 
     @Bean
