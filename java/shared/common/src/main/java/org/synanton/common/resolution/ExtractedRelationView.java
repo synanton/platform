@@ -12,4 +12,18 @@ public record ExtractedRelationView(
         String predicate,
         @JsonAlias("evidence_chunk_id") String evidenceChunkId,
         @JsonAlias("evidence_chunk_offset_start") int evidenceChunkOffsetStart,
-        @JsonAlias("evidence_chunk_offset_end") int evidenceChunkOffsetEnd) {}
+        @JsonAlias("evidence_chunk_offset_end") int evidenceChunkOffsetEnd,
+        @JsonAlias("source_id") String sourceId,
+        @JsonAlias("revision_id") String revisionId,
+        @JsonAlias("generation") long generation,
+        @JsonAlias("extraction_run_id") String extractionRunId) {
+
+    public ExtractedRelationView(String relationId, String tenantId, String sourceVersionId,
+                                 String subjectMentionId, String objectMentionId, String predicate,
+                                 String evidenceChunkId, int evidenceChunkOffsetStart,
+                                 int evidenceChunkOffsetEnd) {
+        this(relationId, tenantId, sourceVersionId, subjectMentionId, objectMentionId, predicate,
+                evidenceChunkId, evidenceChunkOffsetStart, evidenceChunkOffsetEnd,
+                null, sourceVersionId, 0, null);
+    }
+}

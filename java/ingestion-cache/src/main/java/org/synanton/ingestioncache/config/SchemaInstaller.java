@@ -40,6 +40,7 @@ public class SchemaInstaller {
         "cql/V24__resolution_reason.cql",
         "cql/V25__consumer_claims.cql",
         "cql/V26__resolution_search_generation.cql",
+        "cql/V27__source_revision_identity.cql",
     };
 
     public static void install(CqlSession session) {

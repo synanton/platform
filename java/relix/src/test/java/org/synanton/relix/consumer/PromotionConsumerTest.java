@@ -54,6 +54,25 @@ class PromotionConsumerTest {
     }
 
     @Test
+    void promotionRequestCarriesSourceRevisionIdentity() {
+        RelationPromotionWorkRow work = work();
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        when(promoter.promoteRelation(any())).thenReturn(new PromotionResult(1, 1, 1));
+        when(claims.completePromotion(eq(work), anyString(), any())).thenReturn(true);
+
+        consumer.poll();
+
+        org.mockito.ArgumentCaptor<CanonicalRelation> relation =
+                org.mockito.ArgumentCaptor.forClass(CanonicalRelation.class);
+        verify(promoter).promoteRelation(relation.capture());
+        assertThat(relation.getValue().sourceId()).isEqualTo("source-a");
+        assertThat(relation.getValue().revisionId()).isEqualTo(work.result().sourceVersionId().toString());
+        assertThat(relation.getValue().generation()).isEqualTo(7);
+        assertThat(relation.getValue().extractionRunId()).isEqualTo("run-646");
+    }
+
+    @Test
     void retryablePromotionFailureReleasesWithoutCompletion() {
         RelationPromotionWorkRow work = work();
         when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
@@ -96,21 +115,23 @@ class PromotionConsumerTest {
     }
 
     private static RelationPromotionWorkRow work() {
+        UUID version = UUID.randomUUID();
         return workWithEvidence("""
                 {"view":{"relationId":"r1","tenantId":"tenant-a","sourceVersionId":"%s",
                 "subjectMentionId":"m1","objectMentionId":"m2","predicate":"requires",
                 "evidenceChunkId":"c:0","evidenceChunkOffsetStart":1,
-                "evidenceChunkOffsetEnd":9}}
-                """.formatted(UUID.randomUUID()));
+                "evidenceChunkOffsetEnd":9,"sourceId":"source-a",
+                "revisionId":"%s","generation":7,"extractionRunId":"run-646"}}
+                """.formatted(version, version), version);
     }
 
     private static RelationPromotionWorkRow workWithoutEvidence() {
-        return workWithEvidence("{}");
+        return workWithEvidence("{}", UUID.randomUUID());
     }
 
-    private static RelationPromotionWorkRow workWithEvidence(String evidenceJson) {
+    private static RelationPromotionWorkRow workWithEvidence(String evidenceJson, UUID version) {
         return new RelationPromotionWorkRow(
-                new RelationPromotionResultRow("tenant-a", UUID.randomUUID(), "r1", "m1", "m2",
+                new RelationPromotionResultRow("tenant-a", version, "r1", "m1", "m2",
                         "requires", "VALID", "entity-1", "entity-2", "VALID", evidenceJson,
                         "relation-validation-v1", "active", Instant.now(), null),
                 "PENDING", null, null, 0, null, null, null, null);
