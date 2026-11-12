@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,9 @@ import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Session;
+import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.ExactTypeCompatibility;
 import org.synanton.common.resolution.ResolutionCandidate;
 import org.synanton.common.resolution.ResolutionCandidateProvider;
@@ -35,9 +38,11 @@ import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.relix.adapter.out.graph.neo4j.CypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
 import org.synanton.relix.config.PromotionConsumerProperties;
+import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.relix.config.ReconciliationProperties;
 import org.synanton.relix.consumer.PromotionConsumer;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.graph.PromotionIds;
 import org.synanton.relix.graph.RelixCanonicalRelationPromoter;
 import org.synanton.relix.reconciliation.ResolutionReconciler;
 import org.synanton.synquest.config.ResolutionConsumerProperties;
@@ -327,6 +332,142 @@ class ConsumerFaultInjectionIntegrationTest {
         assertThat(count("MATCH ()-[s:SUPPORTS {tenant_id: $tenant}]->() RETURN count(s) AS c")).isEqualTo(1);
         assertThat(cache.listRelationPromotionWorkRows(TENANT, VERSION)).singleElement()
                 .satisfies(row -> assertThat(row.claimStatus()).isEqualTo("COMPLETED"));
+    }
+
+    @Test
+    void promotionLostResponseAfterCommitRetriesWithoutDuplicatingEvidence() throws Exception {
+        String subject = mention("promotion-lost-subject");
+        String object = mention("promotion-lost-object");
+        String subjectEntity = entity("promotion-lost-subject");
+        String objectEntity = entity("promotion-lost-object");
+        createResolvedMention(subject, "Acme", "Organization", subjectEntity);
+        createResolvedMention(object, "Protocol-A", "Protocol", objectEntity);
+        insertWork(subject, "Acme", "Organization");
+        insertWork(object, "Protocol-A", "Protocol");
+
+        ResolutionConsumer resolution = consumer(new TestWriter(Mode.NORMAL),
+                Map.of("Acme", subjectEntity, "Protocol-A", objectEntity), 1);
+        resolution.poll();
+        assertThat(work(subject).claimStatus()).isEqualTo("COMPLETED");
+        assertThat(work(object).claimStatus()).isEqualTo("COMPLETED");
+
+        String relationId = "relation-589-promotion-lost";
+        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+                subjectEntity, objectEntity));
+
+        AtomicReference<CanonicalRelation> firstAttempt = new AtomicReference<>();
+        AtomicReference<PromotionResult> firstCommitResult = new AtomicReference<>();
+        CanonicalRelationPromotionPort lostResponse = relation -> {
+            firstAttempt.set(relation);
+            // Deliberately commit first, then lose the response. This is
+            // post-commit failure injection, not rollback testing.
+            firstCommitResult.set(graph.promoteRelation(relation));
+            throw new RetryableProcessingException("promotion response lost after commit", null);
+        };
+        PromotionConsumer first = new PromotionConsumer(claims, lostResponse,
+                new PromotionConsumerProperties(true, TENANT, 5, 5, 1, 60, 1000L),
+                new SimpleMeterRegistry());
+        first.poll();
+
+        // The first call must have committed before the failure was injected.
+        assertPromotionGraphCounts(relationId, 1, 1, 1);
+        assertThat(firstCommitResult.get()).isEqualTo(new PromotionResult(1, 1, 1));
+        assertThat(cache.listRelationPromotionWorkRows(TENANT, VERSION))
+                .filteredOn(row -> row.result().relationId().equals(relationId))
+                .singleElement()
+                .satisfies(row -> assertThat(row.claimStatus()).isEqualTo("PENDING"));
+
+        Thread.sleep(1_200);
+
+        AtomicReference<CanonicalRelation> retryAttempt = new AtomicReference<>();
+        AtomicReference<PromotionResult> retryResult = new AtomicReference<>();
+        RelixCanonicalRelationPromoter normal = new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        CanonicalRelationPromotionPort recordingRetry = relation -> {
+            retryAttempt.set(relation);
+            PromotionResult result = normal.promoteRelation(relation);
+            retryResult.set(result);
+            return result;
+        };
+        PromotionConsumer second = new PromotionConsumer(claims, recordingRetry,
+                new PromotionConsumerProperties(true, TENANT, 5, 5, 1, 60, 1000L),
+                new SimpleMeterRegistry());
+        second.poll();
+
+        // The retry must use the same logical operation identity and return the
+        // existing outcome (no newly created relation/evidence).
+        assertThat(retryAttempt.get().extractedRelationId()).isEqualTo(relationId);
+        assertThat(retryAttempt.get().extractedRelationId())
+                .isEqualTo(firstAttempt.get().extractedRelationId());
+        assertThat(PromotionIds.canonicalRelationId(retryAttempt.get()))
+                .isEqualTo(PromotionIds.canonicalRelationId(firstAttempt.get()));
+        assertThat(retryResult.get()).isEqualTo(new PromotionResult(0, 0, 1));
+        assertPromotionGraphCounts(relationId, 1, 1, 1);
+        assertThat(cache.listRelationPromotionWorkRows(TENANT, VERSION))
+                .filteredOn(row -> row.result().relationId().equals(relationId))
+                .singleElement()
+                .satisfies(row -> assertThat(row.claimStatus()).isEqualTo("COMPLETED"));
+
+        cleanupPromotionRelation(relationId);
+    }
+
+    private static void assertPromotionGraphCounts(String relationId,
+                                                     long relations, long evidence, long supports) {
+        List<Map<String, Object>> rows = cypher.read(
+                "MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "RETURN e.canonical_relation_id AS canonical_relation_id",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        assertThat(rows).hasSize(1);
+        String canonicalId = String.valueOf(rows.getFirst().get("canonical_relation_id"));
+        assertThat(count("MATCH ()-[r:REL {canonical_relation_id: $id}]->() RETURN count(r) AS c",
+                Map.of("id", canonicalId))).isEqualTo(relations);
+        assertThat(count("MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "RETURN count(e) AS c", Map.of("tenant", TENANT, "relationId", relationId)))
+                .isEqualTo(evidence);
+        assertThat(count("MATCH (x:ExtractedRelation {tenant_id: $tenant, relation_id: $relationId})"
+                        + "-[:SUPPORTS]->(e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "RETURN count(x) AS c", Map.of("tenant", TENANT, "relationId", relationId)))
+                .isEqualTo(supports);
+    }
+
+    private static void cleanupPromotionRelation(String relationId) {
+        List<Map<String, Object>> rows = cypher.read(
+                "MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "RETURN e.canonical_relation_id AS canonical_relation_id",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        for (Map<String, Object> row : rows) {
+            String canonicalId = String.valueOf(row.get("canonical_relation_id"));
+            cypher.write("MATCH ()-[r:REL {canonical_relation_id: $id}]->() DELETE r",
+                    Map.of("id", canonicalId));
+            cypher.write("MATCH (a:CanonicalRelationAnchor {canonical_relation_id: $id}) DETACH DELETE a",
+                    Map.of("id", canonicalId));
+        }
+        cypher.write("MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "DETACH DELETE e",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        cypher.write("MATCH (x:ExtractedRelation {tenant_id: $tenant, relation_id: $relationId}) "
+                        + "DETACH DELETE x",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        session.execute(SimpleStatement.newInstance(
+                "DELETE FROM ingestion_cache.relation_promotion_results WHERE tenant_id=? "
+                        + "AND source_version_id=? AND relation_id=?",
+                TENANT, VERSION, relationId));
+    }
+
+    private static RelationPromotionResultRow validPromotionRow(String relationId, String subject,
+                                                                 String object, String subjectEntity,
+                                                                 String objectEntity) {
+        String evidenceJson = """
+                {"view":{"relationId":"%s","tenantId":"%s","sourceVersionId":"%s",
+                "subjectMentionId":"%s","objectMentionId":"%s","predicate":"requires",
+                "evidenceChunkId":"%s:0","evidenceChunkOffsetStart":0,
+                "evidenceChunkOffsetEnd":%d}}
+                """.formatted(relationId, TENANT, VERSION, subject, object, CONTENT_REF,
+                "Acme requires Protocol-A".length());
+        return new RelationPromotionResultRow(
+                TENANT, VERSION, relationId, subject, object, "requires", "VALID",
+                subjectEntity, objectEntity, "VALID", evidenceJson, "relation-validation-v1",
+                "active", Instant.now(), null);
     }
 
     private static ResolutionConsumer consumer(ResolutionWriteClient writer,
