@@ -3,6 +3,70 @@
 **Status:** Proposed for review — 2026-11-12
 **Basis:** Phase 2 inspection found that Synanton can construct a canonical graph but cannot yet maintain it when a source document changes. The source, its revisions, the assertions they support, and the graph/search projections are distinct concepts and must have separate lifecycles.
 
+## Review decisions
+
+### Q1 — Atomicity of acceptance
+
+**Design B is chosen, extended through search commit.** A new revision is *accepted* when its generation is registered, but it becomes **current** only after extraction, graph commit, and search commit succeed. Until then, the previous revision remains current for all reads and retrievals.
+
+This deliberately accepts a longer “old knowledge remains visible” window in exchange for never serving an empty or half-replaced revision. A revision with `REVISION_ACCEPTED` but no projection yet is not current.
+
+### Q2 — Fencing at commit
+
+The generation check is **inside the canonical graph mutation transaction**, not only before calling a port.
+
+- The lifecycle registry in Cassandra owns `accepted_generation` and `current_generation`.
+- A per-source `:SourceRevisionFence` node mirrors `accepted_generation` into Neo4j.
+- The Cypher transaction that writes staged canonical projection facts starts with a `MATCH` on the fence for `(tenant, source, resource)` and requires `fence.accepted_generation = $generation` before any mutation. If it does not match, the transaction writes nothing and returns `STALE_EXTRACTION`.
+- Graph commit checks **accepted** generation because the new revision is not current yet (Design B). A newer accepted revision increments the accepted generation and invalidates older commits.
+- Retirement and search commit carry the same fence/generation guard. A stale worker cannot retire assertions, replace search documents, or flip the current marker.
+- An application-level pre-check is allowed only as an optimization; it is never the safety boundary.
+
+### Q3 — Retirement semantics
+
+`:REL` is retired only when its **last** active `:RelationEvidence` is superseded. Losing the first of multiple supporting evidence nodes never retires the assertion.
+
+- Evidence is marked `SUPERSEDED`; it is never physically deleted during routine updates.
+- A `:REL` with at least one active evidence remains `ACTIVE`.
+- An assertion losing all active support becomes `UNSUPPORTED` (historical facts remain queryable with explicit status).
+- Conflicting active evidence makes the assertion `CONFLICTED` **and** creates a `REVIEW_REQUIRED` item. It is not auto-resolved.
+- Explicit corrections may produce `SUPERSEDED`; that is distinct from loss of support.
+
+### Q4 — Completeness semantics
+
+Absence authorizes retirement only after a **complete, validated** extraction.
+
+“Complete” is defined by the extraction manifest, not by a confidence percentage:
+
+- manifest exists for the revision/generation;
+- `expected_chunks > 0`;
+- `processed_chunks == expected_chunks`;
+- `failed_chunks == 0`;
+- extraction/validation status is `COMPLETE`;
+- no unresolved parse/chunk failures, and the ontology validation outcome is known.
+
+A percentage threshold is only a review trigger, never authority to retire knowledge.
+
+| Outcome | Behavior |
+|---|---|
+| `COMPLETE` + validated | Eligible for staged graph/search replacement and atomic activation |
+| `PARTIAL` | Preserve old current projection; mark `EXTRACTION_PARTIAL`; retry/review |
+| `FAILED` | No graph/search replacement; preserve old current projection |
+| `STALE` | Reject entirely, no side effects |
+| `CONFLICTED` assertions | Do not retire old assertions; record conflict and review requirement |
+| Ontology-invalid | Never commit invalid assertions |
+
+### Q5 — Search visibility
+
+The chosen search strategy is **query-time revision filtering**, not an alias rebuild:
+
+- Every indexed chunk carries `revision_id`/`generation`.
+- Reads filter to `current_revision_id` from the lifecycle registry.
+- Old chunks remain indexed but are not visible as current because the current revision marker still points at the old revision.
+- After graph commit and search commit succeed, a single current-revision marker update activates the new revision. Graph staged facts become active under the same marker; search queries immediately filter to the new revision.
+- If search commit fails after graph commit, retry; **never roll back the graph**. The old revision stays current, the graph keeps new staged facts inactive, and the source enters `SEARCH_COMMIT_FAILED`. The failure is observable and reconciliable.
+- If activation itself is partially applied, the source enters `ACTIVATION_PARTIAL`; reads remain on the old current revision until the marker mirrors are consistent.
+
 ## Decision
 
 ### 1. Immutable source revision model
@@ -20,26 +84,26 @@ A logical source is separate from its immutable revisions.
 | `status` | `CURRENT`, `SUPERSEDED`, `STALE`, `DELETED` | `source_versions` |
 | `created_at` | Revision creation time | `source_versions` |
 
-The **generation counter lives in Cassandra `source_versions`** (new columns alongside today's version row). It is monotonic per `(tenant_id, connector_id, source_id, resource_id)`; timestamps are never used to decide which revision wins. A new revision is registered even when extraction fails, so the fence exists before downstream work starts. A content hash equal to the current revision is a no-op, not a new generation.
+The **generation counter lives in Cassandra `source_versions`** alongside today's version row. It is monotonic per `(tenant_id, connector_id, source_id, resource_id)`; timestamps never decide which revision wins. A new revision is registered even when extraction fails, so the fence exists before downstream work starts. Equal content hash is a no-op, not a new generation.
 
-Mapping: the existing `source_versions` row remains the source/revision registry; `version_id` becomes the immutable `revision_id`, and `generation`/`content_hash`/`previous_revision_id` become required lifecycle fields.
+Mapping: `version_id` becomes the immutable `revision_id`; `generation`, `content_hash`, and `previous_revision_id` become required lifecycle fields.
 
 ### 2. Staged update pipeline
 
-1. revision detected and registered;
-2. extraction produces mentions, candidate assertions, relations and evidence;
-3. validation covers extraction completeness, ontology, evidence and resolution;
-4. staging writes `:ExtractedMention`/`:EXTRACTED_RELATION`/extraction manifest without retiring old knowledge;
-5. conditional projection commit verifies the source generation is still current and activates the new projection;
-6. retirement and propagation retire old-only support, then update search and downstream projections.
+1. revision detected and registered (`REVISION_ACCEPTED`);
+2. extraction produces mentions, candidate assertions, relations, evidence, and manifest;
+3. validation covers extraction completeness, ontology, evidence, and resolution;
+4. staging writes `:ExtractedMention`/`:EXTRACTED_RELATION`/manifest and staged canonical support without retiring old knowledge;
+5. graph commit conditionally stages the new canonical projection against the accepted generation;
+6. search commit indexes the new revision with its `revision_id`;
+7. activation flips `current_revision_id` and makes staged graph support active;
+8. retirement supersedes old-only evidence and propagates.
 
-The previous projection remains available until step 5 succeeds. A failed or partial revision never authorizes retirement. Staging may reuse the existing extracted-mention space; it must not create canonical `:REL` before validation.
+The old projection remains current through steps 1–6. Failure before 7 leaves it current.
 
 ### 3. Provenance-aware assertions
 
-Treat `:REL` as the canonical assertion, `:RelationEvidence` as evidence, and the support relationship as many-to-many.
-
-Recommended representation, extending the existing model:
+Treat `:REL` as the canonical assertion, `:RelationEvidence` as evidence, and support as many-to-many:
 
 ```cypher
 (:Entity)-[:REL {canonical_relation_id, status}]->(:Entity)
@@ -48,32 +112,26 @@ Recommended representation, extending the existing model:
 (:ExtractedMention {source_version_id, assertion_status})
 ```
 
-Existing `:RelationEvidence.canonical_relation_id` remains for compatibility; `:SUPPORTED_BY` makes the assertion→evidence relationship explicit. `:ExtractedMention` is version-scoped today; retain `source_version_id` plus an assertion status. Phase 2 does not merge mention identities across revisions.
+Existing `:RelationEvidence.canonical_relation_id` remains for compatibility; `:SUPPORTED_BY` makes the support relationship explicit. `:ExtractedMention` is version-scoped and retained; Phase 2 does not merge mention identities across revisions.
 
 Assertion states: `ACTIVE`, `UNSUPPORTED`, `CONFLICTED`, `SUPERSEDED`, `REVIEW_REQUIRED`.
 
-- A `:REL` is active only while at least one current-supported evidence exists.
-- Retire evidence before retiring an assertion; never delete historical assertions/evidence in routine updates.
-- Conflicting active sources produce `CONFLICTED`/review, never silent overwrite.
-
 ### 4. Source-version fencing
 
-Every extraction and downstream graph mutation carries `(tenant_id, source_id, revision_id, generation, event_id)`.
+Every extraction/downstream mutation carries `(tenant_id, source_id, revision_id, generation, event_id)`.
 
-Before graph mutation, the writer reads the authoritative current generation from `source_versions` and conditionally commits only if the operation's generation equals it. The comparison and mutation must be protected by one atomic conditional operation or an equivalent fenced transaction. If an older revision finishes after a newer one is accepted, the older revision is rejected in full:
+The mutation transaction checks the Neo4j `:SourceRevisionFence.accepted_generation` for the source. If the operation's generation is not the latest accepted generation:
 
 ```text
-if extraction.generation != source.current_generation:
-    return STALE_EXTRACTION   # no partial graph/search mutation
+if extraction.generation != source.accepted_generation:
+    return STALE_EXTRACTION   # no graph/search/retirement writes
 ```
 
-The same check applies before assertion retirement and search indexing; a worker that lost its fence cannot mutate either projection. Checking at extraction start only is insufficient.
+A V1 extraction finishing after V2 is accepted is discarded in full. A V1 extraction finishing after V2 is *current* is also discarded. The same guard applies to assertion retirement and search replacement. Stale workers cannot flip the current marker.
 
 ### 5. Complete versus partial extraction
 
-Absence of an assertion is not evidence of removal. Only a **complete, validated** revision may authorize retirement.
-
-An extraction manifest is required:
+The extraction manifest is required:
 
 | Field | Purpose |
 |---|---|
@@ -85,55 +143,37 @@ An extraction manifest is required:
 | `completion_status` | `COMPLETE`, `PARTIAL`, `FAILED`, `STALE` |
 | `model_version` / `prompt_version` | Reproducibility |
 
-Policy:
-
-- complete + validated → eligible for projection replacement;
-- partial → preserve old projection, mark review/retry;
-- failed → preserve old projection;
-- ontology-invalid → do not commit invalid assertions;
-- low confidence → review policy;
-- stale generation → reject all mutations.
+Only `COMPLETE` + validated can authorize retirement. A partial extraction preserves the old projection and cannot delete valid knowledge.
 
 ### 6. Explicit replacement and retirement semantics
 
-These are distinct operations:
-
 | Event / operation | Effect |
 |---|---|
-| `SourceRevisionAccepted` | New immutable revision registered |
+| `SourceRevisionAccepted` | New immutable revision registered; old revision still current |
 | `ExtractionCompleted` | Manifest/outcomes available; no retirement yet |
-| `KnowledgeProjectionCommitted` | New revision's knowledge accepted |
+| `KnowledgeProjectionCommitted` | New revision's graph facts staged |
+| `SourceRevisionCurrent` | Activation marker flipped; new revision current |
 | `EvidenceSuperseded` | Old evidence no longer current |
 | `AssertionUnsupported` | No current evidence remains |
 | `SourceDeleted` | Logical source removed |
 
-`SourceRevisionAccepted` **supersedes `SourcePublished` for lifecycle**. During migration, `SourcePublished` may remain as a compatibility projection of the same fact; it must not become a second authority. `SourceSuperseded` cancels an intermediate revision before full processing. `SourceDeleted` remains distinct from both.
+`SourceRevisionAccepted` supersedes `SourcePublished` for lifecycle. During migration `SourcePublished` may remain a compatibility projection of the same fact; it must not become a second authority. `SourceSuperseded` cancels an intermediate revision before full processing. `SourceDeleted` remains deletion-only.
 
 ### 7. Search index replacement
 
-For each logical source revision:
-
-- index the new revision and make it visible only after the new projection is accepted;
-- remove old revision chunks only when no other live revision references the content-addressed chunk;
+- index new revision chunks with `revision_id`/generation;
+- old chunks remain indexed but hidden by the current-revision query filter;
+- replace/delete old chunk attribution only when no other live revision references the content-addressed chunk;
 - preserve revision metadata for provenance;
 - make replacement retryable and idempotent;
 - reject stale indexing using the same generation fence;
-- use revision/generation visibility or an atomic alias/swap (no mixed old/new live document);
-- if new indexing fails, do not present old content as current: mark the source `STALE`, retry with backoff, and surface STALE in API/UI.
+- on failure: keep old as current, mark `STALE`, retry/backoff, surface in API/UI; never present old as current.
 
 ### 8. Graph and search as a distributed workflow
 
 Neo4j, Cassandra, Lucene and downstream services cannot share one ACID transaction. Do not simulate global exactly-once.
 
-Use:
-
-- transactional outbox for reliable event publication;
-- at-least-once delivery;
-- idempotent consumers;
-- per-source ordering and generation fencing;
-- durable processing state;
-- retryable operations;
-- reconciliation for incomplete graph/search projections.
+Use transactional outbox, at-least-once delivery, idempotent consumers, per-source ordering/generation fencing, durable processing state, retries, and reconciliation for incomplete projections.
 
 Event envelope minimum:
 
@@ -150,63 +190,89 @@ Event envelope minimum:
 }
 ```
 
-Consumers must be able to reject stale/duplicate work from the envelope without inferring authority.
+Consumers must reject stale/duplicate work from the envelope without inferring authority.
 
 ### 9. Recommended architecture and boundaries
 
-Organize this as a **Source Change Management capability**, not as update logic inside extraction or graph adapters:
+Organize as a **Source Change Management capability**:
 
-1. **Source Revision Registry** — immutable revisions, current generation, hashes (Synflux/Cassandra).
+1. **Source Revision Registry** — immutable revisions, accepted/current generations, hashes (Synflux/Cassandra).
 2. **Extraction and Validation** — RAKG, mentions, resolution, ontology validation.
-3. **Projection Coordinator** — staging, completeness, generation fencing, conditional commit.
+3. **Projection Coordinator** — staging, completeness, fencing, conditional commit, activation.
 4. **Canonical Graph** — assertions, evidence/support, retirement (Relix).
-5. **Search Projection** — revision replacement, visibility, indexing (Synquest).
+5. **Search Projection** — revision-aware indexing and visibility (Synquest).
 6. **Reconciliation and Observability** — detect/repair incomplete or divergent projections.
 
-Do not create a standalone microservice yet. Establish lifecycle contracts and implement the coordinator inside existing platform boundaries.
+Do not create a standalone microservice yet. Establish lifecycle contracts and implement the coordinator inside existing boundaries.
 
 ### 10. Acceptance tests, metrics and implementation order
 
-Acceptance tests:
+| Scenario | Expected result | States / transition |
+|---|---|---|
+| New revision, complete extraction | New projection committed | REVISION_ACCEPTED → EXTRACTING → EXTRACTION_COMPLETE → GRAPH_COMMITTED → SEARCH_COMMITTED → CURRENT |
+| Same content hash | No unnecessary reprocessing | REVISION_ACCEPTED → CURRENT (no-op) |
+| Old extraction completes late | Rejected by fencing; no partial mutation | EXTRACTING → STALE_REJECTED |
+| Extraction partially fails | Previous projection preserved | EXTRACTING → EXTRACTION_PARTIAL; old CURRENT |
+| Assertion supported by two sources, one changes | Remaining support keeps assertion active | CURRENT → evidence superseded; assertion ACTIVE |
+| Assertion loses all current support | Assertion retired/marked unsupported | CURRENT → assertion UNSUPPORTED |
+| New revision introduces contradiction | Conflict recorded; no silent overwrite | EXTRACTION_COMPLETE → CONFLICTED/REVIEW_REQUIRED |
+| Graph commit succeeds, search update fails | Search repair retryable; STALE observable | GRAPH_COMMITTED → SEARCH_COMMIT_FAILED; old CURRENT |
+| Search update succeeds, graph commit fails | Old current preserved; retry no graph rollback | GRAPH_COMMIT_FAILED; old CURRENT |
+| Duplicate event | No duplicate graph mutation | idempotent fence check |
+| Source deletion | Graph support and search projection both handled | CURRENT → DELETED |
+| Worker restarts during replacement | Workflow resumes safely | any committing state → resume/repair |
+| Ontology version diverges | Explicit migration required; no implicit upgrade | DIVERGENT/manual; no auto-current |
 
-| Scenario | Expected result |
-|---|---|
-| New revision, complete extraction | New projection committed |
-| Same content hash | No unnecessary reprocessing |
-| Old extraction completes late | Rejected by fencing; no partial mutation |
-| Extraction partially fails | Previous projection preserved |
-| Assertion supported by two sources, one changes | Remaining support keeps assertion active |
-| Assertion loses all current support | Assertion retired/marked unsupported |
-| New revision introduces contradiction | Conflict recorded; no silent overwrite |
-| Graph commit succeeds, search update fails | Search repair retryable; STALE observable |
-| Search update succeeds, graph commit fails | Stale search visibility prevented or reconciled |
-| Duplicate event | No duplicate graph mutation |
-| Source deletion | Graph support and search projection handled |
-| Worker restarts during replacement | Workflow resumes safely |
-| Ontology version diverges | Explicit migration required; no implicit upgrade |
-
-Metrics: revision-acceptance→graph-commit time; revision→search-visible time; stale extraction rejections; active unsupported assertions; incomplete graph/search projections; reconciliation repair rate.
+Metrics: revision-acceptance→graph-commit time; revision→search-visible time; stale extraction rejections; active unsupported assertions; incomplete graph/search projections; activation partial count; reconciliation repair rate.
 
 Implementation order:
 
-1. **Revision identity and fencing** — immutable revisions, generation tokens, stale-extraction rejection.
-2. **Assertion support lifecycle** — evidence support, multi-source retention, retirement semantics.
-3. **Staged graph projection** — extraction manifest, completeness, conditional commit, safe replacement.
-4. **Search revision replacement** — update handling, stale visibility, retry/reconciliation.
+1. **Revision identity and fencing** — immutable revisions, generations, stale rejection.
+2. **Assertion support lifecycle** — evidence/support, multi-source retention, retirement.
+3. **Staged graph projection** — manifest, completeness, conditional commit, activation.
+4. **Search revision replacement** — revision-aware indexing, visibility, retry/reconciliation.
 5. **End-to-end failure testing** — concurrent revisions, partial extraction, restarts, cross-system recovery.
+
+## Lifecycle state machine
+
+Per logical source, the lifecycle record exposes the current state and transition history.
+
+```text
+CURRENT (old)
+  -> REVISION_ACCEPTED
+  -> EXTRACTING
+  -> EXTRACTION_COMPLETE
+  -> GRAPH_COMMITTING
+  -> GRAPH_COMMITTED
+  -> SEARCH_COMMITTING
+  -> SEARCH_COMMITTED
+  -> CURRENT (new)
+```
+
+Failure / terminal-for-attempt states:
+
+- `EXTRACTION_FAILED` — retry/manual; old remains current.
+- `EXTRACTION_PARTIAL` — old remains current; review/retry; no retirement.
+- `GRAPH_COMMIT_FAILED` — retry; old remains current.
+- `SEARCH_COMMIT_FAILED` — graph staged; old remains current; retry/alert; never roll back graph.
+- `STALE_REJECTED` — older generation finished; no side effects.
+- `ACTIVATION_PARTIAL` — current marker mirrors disagree; reads stay on old current until reconciled.
+
+Every state must be queryable via `GET /v1/sources/{sourceId}/lifecycle`, with the revision/generation and transition history. The state machine is the operator contract; logs are not the authority.
 
 Consequences:
 - **Correctness:** old revisions cannot overwrite or reactivate newer knowledge; partial extraction never deletes valid knowledge.
-- **Provenance:** evidence and assertions are retained and status-marked, not destroyed.
+- **Provenance:** evidence/assertions are status-marked, not destroyed.
 - **Search:** revision replacement is explicit; stale visibility is observable and retryable.
 - **Review:** conflicting evidence is surfaced rather than auto-merged.
-- **Migration:** projection/ontology divergence remains a separate workflow; this ADR does not auto-migrate it.
+- **Migration:** projection/ontology divergence remains separate; this ADR does not auto-migrate it.
 - **Rejected:** treating a document update as another ingestion append.
 - **Rejected:** using timestamps for ordering or `SourceDeleted` as the update signal.
 - **Rejected:** retiring assertions because one extraction omitted them.
 - **Rejected:** physically deleting evidence/assertions during routine updates.
-- **Rejected:** a partial extraction authorizing retirement.
+- **Rejected:** application-only pre-checks as the fencing boundary.
+- **Rejected:** aliasing/rebuilding search as the first strategy; query-time revision filtering is chosen.
 
 ## Context
 
-Phase 1 made graph identity, ports, and provisioning explicit. The Phase 2 inspection found the missing operational behavior is source-change maintenance: extraction is version-scoped but not commit-fenced; old graph state is not retired; search projection only removes content on `SourceDeleted`. The system can construct a graph but cannot yet answer what knowledge remains valid after a source changes. This ADR defines the lifecycle before implementation because revision identity, assertion support, staged acceptance, and projection replacement are architectural choices.
+Phase 1 made graph identity, ports, and provisioning explicit. The Phase 2 inspection found the missing operational behavior is source-change maintenance: extraction is version-scoped but not commit-fenced; old graph state is not retired; search projection only removes content on `SourceDeleted`. The system can construct a graph but cannot yet answer what knowledge remains valid after a source changes. This ADR defines the lifecycle before implementation because revision identity, assertion support, staged acceptance, activation, and projection replacement are architectural choices.
