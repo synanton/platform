@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.synanton.common.resolution.ActiveResolution;
+import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.RelationValidationOutcome;
 import org.synanton.common.resolution.ResolutionGraphLookup;
@@ -41,14 +42,16 @@ class DefaultCanonicalRelationValidatorTest {
     private static final String RELATION_ID = "relation-1";
 
     private final ResolutionGraphLookup graph = mock(ResolutionGraphLookup.class);
+    private final ExtractedMentionGraphReadPort extractedReadPort =
+            mock(ExtractedMentionGraphReadPort.class);
     private final RelationValidator syntology = mock(RelationValidator.class);
     private final IngestionCacheClient cache = mock(IngestionCacheClient.class);
     private final DefaultCanonicalRelationValidator validator = new DefaultCanonicalRelationValidator(
-            graph, syntology, cache, Clock.fixed(NOW, ZoneOffset.UTC));
+            graph, extractedReadPort, syntology, cache, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @BeforeEach
     void seed() throws Exception {
-        when(graph.getExtractedRelation(TENANT, RELATION_ID)).thenReturn(Optional.of(
+        when(extractedReadPort.getExtractedRelation(TENANT, RELATION_ID)).thenReturn(Optional.of(
                 new ExtractedRelationView(RELATION_ID, TENANT, VERSION.toString(),
                         "m-subject", "m-object", "requires", REF + ":0", 0, 20)));
         when(graph.getActiveResolutions(TENANT, List.of("m-subject", "m-object"))).thenReturn(List.of(
@@ -120,7 +123,7 @@ class DefaultCanonicalRelationValidatorTest {
 
     @Test
     void missingExtractedRelationIsInvalid() {
-        when(graph.getExtractedRelation(TENANT, RELATION_ID)).thenReturn(Optional.empty());
+        when(extractedReadPort.getExtractedRelation(TENANT, RELATION_ID)).thenReturn(Optional.empty());
 
         var result = validator.validate(TENANT, "1.0.0", RELATION_ID);
 
