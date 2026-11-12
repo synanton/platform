@@ -3,7 +3,9 @@ package org.synanton.relix.graph;
 import java.util.Objects;
 import java.util.UUID;
 import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.PromotionResult;
+import org.synanton.relix.identity.GraphIdentityResolver;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.springframework.stereotype.Component;
@@ -16,11 +18,15 @@ import org.springframework.stereotype.Component;
 public final class RelixCanonicalRelationPromoter implements CanonicalRelationPromotionPort {
 
     private final IngestionCacheClient cacheClient;
-    private final GraphConnector connector;
+    private final GraphWritePort writePort;
+    private final GraphIdentityResolver identityResolver;
 
-    public RelixCanonicalRelationPromoter(IngestionCacheClient cacheClient, GraphConnector connector) {
+    public RelixCanonicalRelationPromoter(IngestionCacheClient cacheClient,
+                                           GraphWritePort writePort,
+                                           GraphIdentityResolver identityResolver) {
         this.cacheClient = cacheClient;
-        this.connector = connector;
+        this.writePort = writePort;
+        this.identityResolver = identityResolver;
     }
 
     @Override
@@ -52,6 +58,7 @@ public final class RelixCanonicalRelationPromoter implements CanonicalRelationPr
                 .equals(PromotionIds.normalizePredicate(relation.predicate()))) {
             throw new IllegalStateException("VALID validation row does not match the promotion request");
         }
-        return connector.promoteRelation(relation);
+        GraphIdentity identity = identityResolver.resolveCanonical(relation.tenantId());
+        return writePort.promoteRelation(identity, relation);
     }
 }

@@ -4,8 +4,10 @@ import java.util.List;
 import org.synanton.common.tenant.MissingTenantContextException;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.relix.api.dto.EntityNeighborhoodResponse;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.relix.graph.EntityNeighborhood;
-import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.graph.GraphReadPort;
+import org.synanton.relix.identity.GraphIdentityResolver;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,10 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class EntityNeighborhoodController {
 
-    private final GraphConnector graphConnector;
+    private final GraphReadPort graphReadPort;
+    private final GraphIdentityResolver identityResolver;
 
-    public EntityNeighborhoodController(GraphConnector graphConnector) {
-        this.graphConnector = graphConnector;
+    public EntityNeighborhoodController(GraphReadPort graphReadPort,
+                                        GraphIdentityResolver identityResolver) {
+        this.graphReadPort = graphReadPort;
+        this.identityResolver = identityResolver;
     }
 
     @GetMapping("/v1/entities/{entityId}/neighbors")
@@ -33,7 +38,8 @@ public class EntityNeighborhoodController {
         if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
             throw new MissingTenantContextException();
         }
-        return graphConnector.neighborhood(context.tenantId(), entityId, 50)
+        GraphIdentity identity = identityResolver.resolveCanonical(context.tenantId());
+        return graphReadPort.neighborhood(identity, entityId, 50)
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

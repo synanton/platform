@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.PromotionResult;
+import org.synanton.relix.identity.GraphIdentityResolver;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 
@@ -22,18 +24,21 @@ class RelixCanonicalRelationPromoterTest {
     private static final String TENANT = "tenant-promoter";
     private static final UUID VERSION = UUID.randomUUID();
     private final IngestionCacheClient cache = mock(IngestionCacheClient.class);
-    private final GraphConnector connector = mock(GraphConnector.class);
+    private final GraphWritePort writePort = mock(GraphWritePort.class);
+    private final GraphIdentityResolver resolver = mock(GraphIdentityResolver.class);
+    private final GraphIdentity identity = GraphIdentity.canonical(TENANT, "v1");
     private final RelixCanonicalRelationPromoter promoter =
-            new RelixCanonicalRelationPromoter(cache, connector);
+            new RelixCanonicalRelationPromoter(cache, writePort, resolver);
 
     @Test
     void validRowDelegatesAndInvalidRowFailsClosed() {
         when(cache.listRelationPromotionResults(TENANT, VERSION)).thenReturn(List.of(
                 row("VALID"), row("INVALID")));
-        when(connector.promoteRelation(any())).thenReturn(new PromotionResult(1, 1, 1));
+        when(resolver.resolveCanonical(TENANT)).thenReturn(identity);
+        when(writePort.promoteRelation(any(), any())).thenReturn(new PromotionResult(1, 1, 1));
 
         assertThat(promoter.promoteRelation(relation())).isEqualTo(new PromotionResult(1, 1, 1));
-        verify(connector).promoteRelation(relation());
+        verify(writePort).promoteRelation(identity, relation());
     }
 
     @Test
@@ -41,7 +46,7 @@ class RelixCanonicalRelationPromoterTest {
         when(cache.listRelationPromotionResults(TENANT, VERSION)).thenReturn(List.of(row("INVALID")));
         assertThatThrownBy(() -> promoter.promoteRelation(relation()))
                 .isInstanceOf(IllegalStateException.class);
-        verify(connector, never()).promoteRelation(any());
+        verify(writePort, never()).promoteRelation(any(), any());
     }
 
     @Test
@@ -49,7 +54,7 @@ class RelixCanonicalRelationPromoterTest {
         when(cache.listRelationPromotionResults(TENANT, VERSION)).thenReturn(List.of());
         assertThatThrownBy(() -> promoter.promoteRelation(relation()))
                 .isInstanceOf(IllegalStateException.class);
-        verify(connector, never()).promoteRelation(any());
+        verify(writePort, never()).promoteRelation(any(), any());
     }
 
     private static CanonicalRelation relation() {

@@ -28,7 +28,9 @@ public class RelixApplication {
             // which is destructive on every pod restart. Only load projection
             // stores (memory/nebula) at startup; Neo4j must start in place.
             if (!"neo4j".equals(graphConnector.id())) {
-                graphQueryService.loadTenant("demo");
+                // Projection provisioning is a separate lifecycle from runtime
+                // graph access (ADR-027); this local demo load is not a query path.
+                graphConnector.loadTenant("demo");
             }
         };
     }

@@ -18,6 +18,7 @@ import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Session;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.ExactTypeCompatibility;
 import org.synanton.common.resolution.ResolutionCandidate;
 import org.synanton.common.resolution.ResolutionCandidateProvider;
@@ -313,7 +314,8 @@ class ConsumerFaultInjectionIntegrationTest {
                 subjectEntity, objectEntity, "VALID", evidenceJson, "relation-validation-v1",
                 "active", Instant.now(), null));
 
-        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph);
+        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
         PromotionConsumer promotion = new PromotionConsumer(claims, promoter,
                 new PromotionConsumerProperties(true, TENANT, 5, 5, 1, 60, 1000L),
                 new SimpleMeterRegistry());
