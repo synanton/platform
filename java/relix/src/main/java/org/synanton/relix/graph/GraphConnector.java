@@ -6,6 +6,7 @@ import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ResolutionGraphPort;
 import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.GraphCapabilities;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.relix.api.dto.Path;
 
@@ -22,6 +23,11 @@ public interface GraphConnector extends ExtractedMentionGraphReadPort, Extracted
     String id();
 
     EngineDescriptor descriptor();
+
+    /** Adapter guarantees; port presence alone does not imply any of these. */
+    default GraphCapabilities capabilities() {
+        return GraphCapabilities.NONE;
+    }
 
     void loadTenant(String tenant);
 

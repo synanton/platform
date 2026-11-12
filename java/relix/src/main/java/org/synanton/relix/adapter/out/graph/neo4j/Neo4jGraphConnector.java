@@ -31,6 +31,7 @@ import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionKey;
 import org.synanton.common.resolution.ResolutionWriteOutcome;
+import org.synanton.common.resolution.GraphCapabilities;
 import org.synanton.common.resolution.GraphIdentity;
 
 import java.util.ArrayList;
@@ -196,6 +197,11 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
     @Override
     public EngineDescriptor descriptor() {
         return new EngineDescriptor("neo4j", "neo4j-bolt", "ALL_NATIVE");
+    }
+
+    @Override
+    public GraphCapabilities capabilities() {
+        return GraphCapabilities.neo4j();
     }
 
     @Override
