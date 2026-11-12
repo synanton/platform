@@ -35,6 +35,7 @@ import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.relix.adapter.out.graph.neo4j.CypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
 import org.synanton.relix.config.PromotionConsumerProperties;
+import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.relix.config.ReconciliationProperties;
 import org.synanton.relix.consumer.PromotionConsumer;
 import org.synanton.relix.graph.GraphLoader;
@@ -327,6 +328,93 @@ class ConsumerFaultInjectionIntegrationTest {
         assertThat(count("MATCH ()-[s:SUPPORTS {tenant_id: $tenant}]->() RETURN count(s) AS c")).isEqualTo(1);
         assertThat(cache.listRelationPromotionWorkRows(TENANT, VERSION)).singleElement()
                 .satisfies(row -> assertThat(row.claimStatus()).isEqualTo("COMPLETED"));
+    }
+
+    @Test
+    void promotionLostResponseAfterCommitRetriesWithoutDuplicatingEvidence() throws Exception {
+        String subject = mention("promotion-lost-subject");
+        String object = mention("promotion-lost-object");
+        String subjectEntity = entity("promotion-lost-subject");
+        String objectEntity = entity("promotion-lost-object");
+        createResolvedMention(subject, "Acme", "Organization", subjectEntity);
+        createResolvedMention(object, "Protocol-A", "Protocol", objectEntity);
+        insertWork(subject, "Acme", "Organization");
+        insertWork(object, "Protocol-A", "Protocol");
+
+        ResolutionConsumer resolution = consumer(new TestWriter(Mode.NORMAL),
+                Map.of("Acme", subjectEntity, "Protocol-A", objectEntity), 1);
+        resolution.poll();
+        assertThat(work(subject).claimStatus()).isEqualTo("COMPLETED");
+        assertThat(work(object).claimStatus()).isEqualTo("COMPLETED");
+
+        String relationId = "relation-589-promotion-lost";
+        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+                subjectEntity, objectEntity));
+
+        CanonicalRelationPromotionPort lostResponse = relation -> {
+            graph.promoteRelation(relation);
+            throw new RetryableProcessingException("promotion response lost after commit", null);
+        };
+        PromotionConsumer first = new PromotionConsumer(claims, lostResponse,
+                new PromotionConsumerProperties(true, TENANT, 5, 5, 1, 60, 1000L),
+                new SimpleMeterRegistry());
+        first.poll();
+        Thread.sleep(1_200);
+
+        RelixCanonicalRelationPromoter normal = new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        PromotionConsumer second = new PromotionConsumer(claims, normal,
+                new PromotionConsumerProperties(true, TENANT, 5, 5, 1, 60, 1000L),
+                new SimpleMeterRegistry());
+        second.poll();
+
+        assertThat(count("MATCH ()-[r:REL {tenant_id: $tenant}]->() RETURN count(r) AS c")).isEqualTo(1);
+        assertThat(count("MATCH (e:RelationEvidence {tenant_id: $tenant}) RETURN count(e) AS c")).isEqualTo(1);
+        assertThat(count("MATCH ()-[s:SUPPORTS {tenant_id: $tenant}]->() RETURN count(s) AS c")).isEqualTo(1);
+        assertThat(cache.listRelationPromotionWorkRows(TENANT, VERSION)).singleElement()
+                .satisfies(row -> assertThat(row.claimStatus()).isEqualTo("COMPLETED"));
+
+        cleanupPromotionRelation(relationId);
+    }
+
+    private static void cleanupPromotionRelation(String relationId) {
+        List<Map<String, Object>> rows = cypher.read(
+                "MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "RETURN e.canonical_relation_id AS canonical_relation_id",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        for (Map<String, Object> row : rows) {
+            String canonicalId = String.valueOf(row.get("canonical_relation_id"));
+            cypher.write("MATCH ()-[r:REL {canonical_relation_id: $id}]->() DELETE r",
+                    Map.of("id", canonicalId));
+            cypher.write("MATCH (a:CanonicalRelationAnchor {canonical_relation_id: $id}) DETACH DELETE a",
+                    Map.of("id", canonicalId));
+        }
+        cypher.write("MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId}) "
+                        + "DETACH DELETE e",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        cypher.write("MATCH (x:ExtractedRelation {tenant_id: $tenant, relation_id: $relationId}) "
+                        + "DETACH DELETE x",
+                Map.of("tenant", TENANT, "relationId", relationId));
+        session.execute(SimpleStatement.newInstance(
+                "DELETE FROM ingestion_cache.relation_promotion_results WHERE tenant_id=? "
+                        + "AND source_version_id=? AND relation_id=?",
+                TENANT, VERSION, relationId));
+    }
+
+    private static RelationPromotionResultRow validPromotionRow(String relationId, String subject,
+                                                                 String object, String subjectEntity,
+                                                                 String objectEntity) {
+        String evidenceJson = """
+                {"view":{"relationId":"%s","tenantId":"%s","sourceVersionId":"%s",
+                "subjectMentionId":"%s","objectMentionId":"%s","predicate":"requires",
+                "evidenceChunkId":"%s:0","evidenceChunkOffsetStart":0,
+                "evidenceChunkOffsetEnd":%d}}
+                """.formatted(relationId, TENANT, VERSION, subject, object, CONTENT_REF,
+                "Acme requires Protocol-A".length());
+        return new RelationPromotionResultRow(
+                TENANT, VERSION, relationId, subject, object, "requires", "VALID",
+                subjectEntity, objectEntity, "VALID", evidenceJson, "relation-validation-v1",
+                "active", Instant.now(), null);
     }
 
     private static ResolutionConsumer consumer(ResolutionWriteClient writer,
