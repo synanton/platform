@@ -41,6 +41,8 @@ class SchemaInventoryTest {
                     "manifest_transitions_outbox",
                     "operation_idempotency",
                     "operations",
+                    "source_activation",
+                    "source_current",
                     "source_identities",
                     "source_tombstones",
                     "source_version_manifest_entries",
