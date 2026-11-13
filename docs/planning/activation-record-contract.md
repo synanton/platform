@@ -45,6 +45,11 @@ Status vocabulary: `ENFORCED` = conformance test exists and passes with a test r
 | Interrupted transition recovers to defined state | `CassandraSourceActivationStoreTest::crashAfterCurrentFlipRecoversFromSearchCommitted` | ENFORCED |
 | `ACTIVATION_PARTIAL` is repairable without resetting generation | `CassandraSourceActivationStoreTest::activationPartialCanBeRepairedWithoutResettingGeneration` | ENFORCED |
 | Reads resolve from activation record, not projections | `CassandraSourceActivationStoreTest::stageIsIdempotentAndDoesNotChangeCurrent` | ENFORCED (record only; reader wiring #655/#656) |
+| Activation requires a matching fence | `ActivateRevisionIntegrationTest::activationRequiresSearchCommitThenIsIdempotent` | ENFORCED |
+| Activation of an older generation is rejected after fence advance | `ActivateRevisionIntegrationTest::fenceAdvancedPastGenerationRejectsActivationWithoutChangingCurrent` | ENFORCED |
+| `ActivateRevision` is idempotent | `ActivateRevisionIntegrationTest::activationRequiresSearchCommitThenIsIdempotent` | ENFORCED |
+| Crash after current flip recovers from `SEARCH_COMMITTED` | `ActivateRevisionIntegrationTest::searchCommittedCrashRecoversByRepairingCurrentPointer` | ENFORCED |
+| Activation failure is `ACTIVATION_PARTIAL` and repairable | `ActivateRevisionIntegrationTest::activationFailureIsPartialAndRepairable` | ENFORCED |
 | Failed search replacement cannot expose stale as current | #656 failure-model test | UNENFORCED (#656/#649b) |
 
 ## Change control
@@ -52,4 +57,4 @@ Status vocabulary: `ENFORCED` = conformance test exists and passes with a test r
 Changes require #654–#656 owners; re-run the conformance matrix.
 
 ## Change-control note 2026-11-13
-#669 adopts the ADR-029 state names as canonical and records the coarse contract mapping. #654 still owns fence-guarded `ActivateRevision` wiring into ingestion; #655/#656 own reader enforcement.
+#669 adopts the ADR-029 state names as canonical and records the coarse contract mapping. #654 adds the fence-guarded `ActivateRevision` core; staged ingestion wiring and #655/#656 reader enforcement remain open.
