@@ -46,13 +46,15 @@ Status vocabulary: `ENFORCED` = conformance test exists and passes with a test r
 | Clause | Test | Status |
 |---|---|---|
 | Terminal outcomes are never retried | terminal-outcome-attempt-count test | UNENFORCED (#666) |
+| Abort after fence check and staged writes leaves no graph evidence | `Neo4jGraphCanonicalPortIntegrationTest::abortedPromotionAfterFenceAndStagingLeavesNoEvidenceAndRetryWritesOnce` | ENFORCED |
+| Newer generation during abort recovery rejects the retry as stale | `Neo4jGraphCanonicalPortIntegrationTest::newerGenerationFenceAdvanceDuringRecoveryRejectsGenerationTwoRetry` | ENFORCED |
 | Retryable max attempts are bounded | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
 | Wall-clock retry deadline | none | DEFERRED: rationale=current max-attempt bound is sufficient for Phase 2b; owner=#667; revisit trigger=before #658; exclusion=#658 does not claim wall-clock deadlines |
 | Fixed backoff is the Phase-2b policy; jitter | none | DEFERRED: rationale=fixed backoff avoids changing timing in this PR; owner=#667; revisit trigger=before #658; exclusion=#658 does not claim jitter |
 | Exhausted retry is a distinct metric/outcome | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
 | `promotion.exhausted` increments once per operation | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
 | `FENCE_BEHIND` does not increment exhausted | `PromotionConsumerTest::fenceBehindEmitsRetryableOutcome` | ENFORCED |
-| Idempotency key stable across attempts | same-key-one-write test | UNENFORCED (#666) |
+| Idempotency key stable across attempts | `Neo4jGraphCanonicalPortIntegrationTest::abortedPromotionAfterFenceAndStagingLeavesNoEvidenceAndRetryWritesOnce` | ENFORCED |
 | `ABORT_RECOVERABLE` classification/metric | none | UNENFORCED (#666) |
 
 ## Change control
@@ -62,3 +64,5 @@ Changes require review from owners of #666, #667, and #648; re-run the conforman
 
 ## Change-control note 2026-11-13
 #667 narrows the implemented label set and defers wall-clock deadlines/jitter explicitly; #666 still owns terminal-outcome, idempotency-key, and abort-recovery conformance.
+
+#666 adds the named post-staging/pre-commit abort checkpoint and real-store cleanup/idempotency observables; terminal-outcome attempt counting and ABORT_RECOVERABLE metrics remain UNENFORCED.
