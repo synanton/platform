@@ -116,6 +116,7 @@ class PromotionConsumerTest {
 
         assertThat(registry.get("promotion.outcome").tag("outcome", "FENCE_BEHIND")
                 .counter().count()).isEqualTo(1);
+        assertThat(registry.get("promotion.exhausted").counter().count()).isZero();
     }
 
     @Test
