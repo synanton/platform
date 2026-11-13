@@ -19,6 +19,8 @@ Failure states: `EXTRACTION_FAILED`, `EXTRACTION_PARTIAL`, `GRAPH_COMMIT_FAILED`
 
 Transitions are idempotent and guarded by expected generation/state; no transition may lower a generation or activate an older revision over a newer fence.
 
+Durable boundaries follow ADR-029 §12.2: acceptance writes the revision and extraction event in one LWT; graph commit writes `GRAPH_COMMITTED` and `ActivationRequested` in one LWT; activation writes the current pointer in a Cassandra LWT. Activation reads the Neo4j fence as a precondition only and does not acquire the fence lock. Fence contention is blocking but not FIFO/fair.
+
 ## Projections
 
 Graph and search are projections of the activation record. Each carries an applied-state marker (`applied_generation`, `applied_state`).

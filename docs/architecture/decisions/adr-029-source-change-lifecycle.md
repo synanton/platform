@@ -303,6 +303,44 @@ The serialization point is now the promotion transaction's **fence write-lock he
 
 **Change control:** dependent tickets are #654, #655, and #656. No conformance tests for those tickets exist yet; this amendment is a prerequisite for their implementation. Existing #648/#666 promotion tests were re-run for this text.
 
+### 12.2 Two-authority activation amendment (2026-11-13)
+
+Activation and graph mutation have separate serialization points. The graph mutation is protected by the Neo4j fence; activation is Cassandra-authoritative. Neither acquires the other store's lock.
+
+#### 12.2.1 Durable boundaries
+
+There are three distinct atomic boundaries:
+
+| Boundary | Trigger | Atomic writes | Crash recovery |
+|---|---|---|---|
+| A — Acceptance | Revision received | `source_versions` row, generation mapping, `ExtractionRequested` in one Cassandra LWT | Revision is retryable through extraction; no activation event exists yet. A crash before A leaves no accepted revision. |
+| B — Graph commit | Projection commits successfully | `source_versions.graph_status = GRAPH_COMMITTED` and `ActivationRequested` in one conditional Cassandra LWT on the same row | The activation event is durable; a crash after B is recoverable by the sweep. Repeated B is idempotent and must not emit a second event or replace another revision's event. |
+| C — Activation | `ActivateRevision` completes | Cassandra current-pointer LWT sets the active revision | If C is interrupted, the sweep re-runs activation from the durable B event. The generation mapping is not reassigned. |
+
+**Contract:** a crash between any two boundaries is recoverable through the durable state written by the prior boundary. There is no window where an accepted revision has neither an extraction event nor a recoverable activation state. `ActivationRequested` must not be emitted at A; an activation consumer must never see an event before the graph projection is durable.
+
+#### 12.2.2 Activation lock
+
+`ActivateRevision` may read the Neo4j `:SourceRevisionFence.accepted_generation` as a **precondition**, but it does not acquire the Neo4j fence write-lock. The serialization point for activation is the Cassandra current-pointer LWT.
+
+Consequence: the Neo4j fence lock is held only during graph projection commits (§12.1). Activation has no cross-store lock dependency and cannot block ingestion on lock contention. A stale graph mutation remains impossible because graph writes are fenced inside their own transaction, regardless of the Cassandra activation pointer.
+
+#### 12.2.3 Lock contention semantics
+
+Neo4j fence-lock acquisition blocks on contention. There is **no priority guarantee, no fairness guarantee, and no queue/FIFO ordering**. Contenders retry with bounded backoff. The lock releases on transaction commit, rollback, or session failure. “FIFO” is explicitly not part of the contract.
+
+#### 12.2.4 Residual cross-store race
+
+The Neo4j fence may advance after `ActivateRevision` reads it but before the Cassandra current-pointer LWT commits. This is a documented divergence state, not a stale-write risk:
+
+- detect it with `activation.generation_drift` (`accepted - current`) and promotion fence-drift metrics;
+- repair it through reconciliation (#657);
+- stale graph mutations are still rejected by the Neo4j fence, independent of the Cassandra pointer.
+
+**Named test required by #654:** advance the Neo4j fence after the precondition read but before the Cassandra LWT. Assert that activation completes for the operation generation, drift is recorded, a subsequent stale graph mutation is rejected by the fence, and reconciliation converges the state.
+
+**Change control:** dependent tickets are #654, #655, and #656. This amendment is a prerequisite for the unified #654 PR; no #654–#656 conformance tests exist yet. Existing #648/#666/#685 promotion tests remain green.
+
 ## Lifecycle state machine
 
 Per logical source, the lifecycle record exposes the current state and transition history.
