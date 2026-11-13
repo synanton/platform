@@ -1,9 +1,9 @@
 # Milestone dashboard
 
-**Status:** Phase 2a complete (live K8s gate passed). Phase 2b source-change lifecycle in progress; runtime generation fence not yet landed.
+**Status:** Phase 2a complete (live K8s gate passed). Phase 2b source-change lifecycle in progress; core runtime generation fence merged, lifecycle not complete.
 
 This is the PR-backed view of what is implemented and what is still open. It is
-not a feature roadmap.
+not a feature roadmap. Current main: `f79e7d70`.
 
 ## Implemented and evidenced
 
@@ -30,9 +30,13 @@ not a feature roadmap.
 - **#592** — closed: reconciliation migration/capability/lint evidence landed.
 - **#589** — closed: combined local real-store matrix + live K8s rerun (#643).
 - **Phase 2b** — source-change lifecycle. ADR-029 locked; identity plumbing
-  (#646) and promotion-row identity (#647) merged; #650 fence-schema readiness
-  merged. Cross-store reconciliation (#644) is next; runtime fence (#648) and
-  the Generation 2/3 race (#649) remain.
+  (#646), promotion-row identity (#647), fence readiness (#650), cross-store
+  reconciliation (#644), and runtime promotion fence (#648) are merged.
+  #649a is next; #649b remains after #655/#656.
+- **Known temporary-visibility window** — under the weak invariant, generation 2
+  may be committed and briefly visible as current after generation 3 is
+  accepted. No generation-aware reader/retirement/search filter exists yet;
+  #655 and #656 close this window.
 - **2b lifecycle tickets** — staged activation (#654), retirement (#655),
   search replacement (#656), lifecycle API (#657), maintenance E2E (#658).
 - **#650** — closed: Neo4j readiness now requires Bolt + full fence-schema inventory; Relix startup fails closed.
