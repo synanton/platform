@@ -35,6 +35,9 @@ Retries deduplicate on those identities. A failed Neo4j transaction commits noth
 
 Per source: terminal outcomes by class, retryable outcomes, exhausted retries, last authorized generation, last reconciliation sync/drift. Labels distinguish `STALE`, `UNAUTHORIZED`, `FENCE_BEHIND`, `ABORT_RECOVERABLE`, reconciliation failure, and exhausted retry.
 
+
+Status vocabulary: `ENFORCED` = conformance test exists and passes; `UNENFORCED` = in Phase-2b scope, test owed and must reach zero before #658; `DEFERRED` = outside Phase 2b, requires a tracked Phase 3+ ticket.
+
 ## Conformance
 
 | Clause | Test | Status |
