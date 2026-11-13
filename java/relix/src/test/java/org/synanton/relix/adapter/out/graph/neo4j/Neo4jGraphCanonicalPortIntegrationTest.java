@@ -9,6 +9,7 @@ import org.neo4j.driver.GraphDatabase;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.FenceBehindException;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.relix.api.dto.Edge;
@@ -21,6 +22,11 @@ import org.testcontainers.utility.DockerImageName;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -254,6 +260,50 @@ class Neo4jGraphCanonicalPortIntegrationTest {
         return new CanonicalRelation(tenant, revisionId, relationId, subjectMentionId, subjectEntityId,
                 objectMentionId, objectEntityId, "requires", "active", evidenceChunkId, 0, 10,
                 sourceId, revisionId, generation, null);
+    }
+
+    @Test
+    void concurrentGenerationTwoAndThreePromotionHasDeterministicLoser() throws Exception {
+        String tenant = "tenant-generation-concurrent";
+        String sourceId = "source-generation-concurrent";
+        seedResolution(tenant, "subject-concurrent", "entity-subject-concurrent");
+        seedResolution(tenant, "object-concurrent", "entity-object-concurrent");
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 3
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+        CanonicalRelation gen2 = relation(tenant, "relation-concurrent-gen2", "revision-concurrent-gen2",
+                "subject-concurrent", "entity-subject-concurrent", "object-concurrent",
+                "entity-object-concurrent", "evidence-concurrent-gen2", sourceId, 2);
+        CanonicalRelation gen3 = relation(tenant, "relation-concurrent-gen3", "revision-concurrent-gen3",
+                "subject-concurrent", "entity-subject-concurrent", "object-concurrent",
+                "entity-object-concurrent", "evidence-concurrent-gen3", sourceId, 3);
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<Void> loser = pool.submit(() -> {
+                start.await(10, TimeUnit.SECONDS);
+                assertThatThrownBy(() -> connector.promoteRelation(identity, gen2,
+                        new SourceRevisionIdentity(tenant, sourceId, 2)))
+                        .isInstanceOf(StaleGenerationException.class);
+                return null;
+            });
+            Future<PromotionResult> winner = pool.submit(() -> {
+                start.await(10, TimeUnit.SECONDS);
+                return connector.promoteRelation(identity, gen3,
+                        new SourceRevisionIdentity(tenant, sourceId, 3));
+            });
+            start.countDown();
+            loser.get(30, TimeUnit.SECONDS);
+            winner.get(30, TimeUnit.SECONDS);
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(relationEvidenceCount(tenant, "relation-concurrent-gen2")).isZero();
+        assertThat(relationEvidenceCount(tenant, "relation-concurrent-gen3")).isEqualTo(1);
     }
 
     private static void seedResolution(String tenant, String mentionId, String entityId) {
