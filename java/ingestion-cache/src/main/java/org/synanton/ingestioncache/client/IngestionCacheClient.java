@@ -1584,6 +1584,29 @@ public class IngestionCacheClient {
         return row == null ? Optional.empty() : Optional.of(sourceVersionFrom(row));
     }
 
+    /** Maximum accepted_generation across all resources/revisions for a logical source. */
+    public Optional<Long> readAcceptedGeneration(String tenantId, String sourceId) {
+        long max = Long.MIN_VALUE;
+        for (SourceRow source : listSources(tenantId)) {
+            if (!source.sourceId().equals(sourceId)) {
+                continue;
+            }
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                ResultSet rows = session.execute(SimpleStatement.newInstance(
+                        "SELECT accepted_generation FROM ingestion_cache.source_versions WHERE tenant_id=? "
+                                + "AND connector_id=? AND source_id=? AND resource_id=?",
+                        tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId()));
+                for (Row row : rows) {
+                    if (!row.isNull("accepted_generation")) {
+                        max = Math.max(max, row.getLong("accepted_generation"));
+                    }
+                }
+            }
+        }
+        return max == Long.MIN_VALUE ? Optional.empty() : Optional.of(max);
+    }
+
     public List<SourceVersionRow> listSourceVersions(
             String tenantId, String connectorId, String sourceId, String resourceId) {
         ResultSet result = session.execute(SimpleStatement.newInstance(
