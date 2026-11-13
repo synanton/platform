@@ -515,6 +515,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             String promotionCypher = """
                 OPTIONAL MATCH (fence:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
                 WITH fence
+                FOREACH (ignored IN CASE WHEN fence IS NULL THEN [] ELSE [1] END |
+                    SET fence.accepted_generation = fence.accepted_generation
+                )
+                WITH fence
                 WHERE $expectedGeneration IS NULL
                    OR (fence IS NOT NULL AND fence.accepted_generation = $expectedGeneration)
                 WITH fence, [$subjectMentionId, $objectMentionId] AS mentionIds

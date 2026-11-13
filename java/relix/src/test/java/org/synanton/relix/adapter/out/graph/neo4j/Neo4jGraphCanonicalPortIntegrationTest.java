@@ -13,8 +13,11 @@ import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.relix.identity.SourceFenceAdvance;
+import org.synanton.relix.identity.SourceFenceKey;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
+import org.synanton.relix.adapter.out.metadata.Neo4jSourceFenceStore;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.PromotionIds;
 import org.synanton.relix.identity.UnsupportedGraphIdException;
@@ -355,6 +358,57 @@ class Neo4jGraphCanonicalPortIntegrationTest {
                 .containsOnly(Map.entry("anchors", 0L), Map.entry("relations", 0L),
                         Map.entry("evidence", 0L), Map.entry("extracted_relations", 0L),
                         Map.entry("supports", 0L), Map.entry("slots", 0L));
+    }
+
+    @Test
+    void concurrentFenceAdvanceCannotOutrunInFlightGenerationTwoPromotion() throws Exception {
+        String tenant = "tenant-fence-in-flight";
+        String sourceId = "source-fence-in-flight";
+        seedResolution(tenant, "subject-in-flight", "entity-subject-in-flight");
+        seedResolution(tenant, "object-in-flight", "entity-object-in-flight");
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 2
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+        CanonicalRelation relation = relation(tenant, "relation-in-flight", "revision-in-flight",
+                "subject-in-flight", "entity-subject-in-flight", "object-in-flight",
+                "entity-object-in-flight", "evidence-in-flight", sourceId, 2);
+        CountDownLatch staged = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicBoolean injected = new AtomicBoolean();
+        Neo4jGraphConnector blocking = new Neo4jGraphConnector(mock(GraphLoader.class), cypher, () -> {
+            if (injected.compareAndSet(false, true)) {
+                staged.countDown();
+                try {
+                    if (!release.await(10, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("timed out waiting to release promotion");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }
+        });
+        Neo4jSourceFenceStore fences = new Neo4jSourceFenceStore(cypher);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<PromotionResult> promotion = pool.submit(() -> blocking.promoteRelation(identity, relation,
+                    new SourceRevisionIdentity(tenant, sourceId, 2)));
+            assertThat(staged.await(10, TimeUnit.SECONDS)).isTrue();
+            Future<SourceFenceAdvance> advance = pool.submit(() ->
+                    fences.advance(new SourceFenceKey(tenant, sourceId), 3));
+            Thread.sleep(250);
+            assertThat(advance.isDone()).as("fence advance must wait for the in-flight promotion lock").isFalse();
+            release.countDown();
+            assertThat(promotion.get(30, TimeUnit.SECONDS)).isEqualTo(new PromotionResult(1, 1, 1));
+            assertThat(advance.get(30, TimeUnit.SECONDS).generation()).isEqualTo(3);
+        } finally {
+            release.countDown();
+            pool.shutdownNow();
+        }
+        assertThat(relationEvidenceCount(tenant, "relation-in-flight")).isEqualTo(1);
+        assertThat(fences.read(new SourceFenceKey(tenant, sourceId))).contains(3L);
     }
 
     @Test

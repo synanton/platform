@@ -47,7 +47,8 @@ Status vocabulary: `ENFORCED` = conformance test exists and passes with a test r
 |---|---|---|
 | Terminal outcomes are never retried | terminal-outcome-attempt-count test | UNENFORCED (#666) |
 | Abort after fence check and staged writes leaves no graph evidence | `Neo4jGraphCanonicalPortIntegrationTest::abortedPromotionAfterFenceAndStagingLeavesNoEvidenceAndRetryWritesOnce` | ENFORCED |
-| Newer generation during abort recovery rejects the retry as stale | `Neo4jGraphCanonicalPortIntegrationTest::newerGenerationFenceAdvanceDuringRecoveryRejectsGenerationTwoRetry` | ENFORCED |
+| Newer generation before retry rejects the retry as stale | `Neo4jGraphCanonicalPortIntegrationTest::newerGenerationFenceAdvanceDuringRecoveryRejectsGenerationTwoRetry` | ENFORCED |
+| Concurrent fence advance cannot outrun an in-flight generation-2 promotion | `Neo4jGraphCanonicalPortIntegrationTest::concurrentFenceAdvanceCannotOutrunInFlightGenerationTwoPromotion` | ENFORCED |
 | Retryable max attempts are bounded | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
 | Wall-clock retry deadline | none | DEFERRED: rationale=current max-attempt bound is sufficient for Phase 2b; owner=#667; revisit trigger=before #658; exclusion=#658 does not claim wall-clock deadlines |
 | Fixed backoff is the Phase-2b policy; jitter | none | DEFERRED: rationale=fixed backoff avoids changing timing in this PR; owner=#667; revisit trigger=before #658; exclusion=#658 does not claim jitter |
@@ -66,3 +67,5 @@ Changes require review from owners of #666, #667, and #648; re-run the conforman
 #667 narrows the implemented label set and defers wall-clock deadlines/jitter explicitly; #666 still owns terminal-outcome, idempotency-key, and abort-recovery conformance.
 
 #666 adds the named post-staging/pre-commit abort checkpoint and real-store cleanup/idempotency observables; terminal-outcome attempt counting and ABORT_RECOVERABLE metrics remain UNENFORCED.
+
+#666 concurrency follow-up: the promotion transaction now write-locks the fence before re-checking it, and the test asserts a concurrent generation-3 advance waits for the in-flight generation-2 transaction. The abort injection point is after the fence check and full staging, before commit; cleanup is asserted through real-store counts, not return values.
