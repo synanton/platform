@@ -1,0 +1,34 @@
+name: Dashboard main hash
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-dashboard:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update dashboard hash from merged state
+        run: |
+          set -euo pipefail
+          file="docs/planning/milestone-dashboard.md"
+          test -f "$file"
+          sha="$(git rev-parse --short HEAD)"
+          sed -i -E "s/Current main: \`[0-9a-f]+\`/Current main: \`$sha\`/" "$file"
+          if git diff --quiet -- "$file"; then
+            echo "dashboard hash already current"
+            exit 0
+          fi
+          git config user.name "synanton-dashboard-bot"
+          git config user.email "dashboard-bot@synanton.invalid"
+          git add "$file"
+          git commit -m "docs(#634): sync dashboard main hash [skip ci]"
+          git push
