@@ -3,7 +3,7 @@
 **Status:** Phase 2a complete (live K8s gate passed). Phase 2b source-change lifecycle in progress; core runtime generation fence merged, lifecycle not complete.
 
 This is the PR-backed view of what is implemented and what is still open. It is
-not a feature roadmap. Current main: `f79e7d70`.
+not a feature roadmap. Current main: `61bc6419`.
 
 ## Implemented and evidenced
 
@@ -22,6 +22,9 @@ not a feature roadmap. Current main: `f79e7d70`.
 | Live K8s Entity Graph E2E | #608/#606/#643 | `docs/acceptance/phase2-589-combined-matrix-2026-11-12.md`; live rerun 29.0s on 8c56ea1d | — |
 | Restart-safe graph persistence | #610/#612, ADR-025 | 122 Relix tests; repeated/partial/interrupted load; simultaneous Synquest+Relix restart; no duplicate edges | #650 readiness follow-up |
 | Reconciliation port migration | #617/#630/#638 | seam removed; capabilities composition; rule-5 boundary; #630 conformance | #587 separate GraphTransactionPort/composite scope |
+| Fence readiness | #650/#660 | Bolt + seven constraints; schema-init; Relix fail-closed; maintenance restarts preserve fence | #670 schema-init failure-mode coverage |
+| Cross-store reconciliation | #644/#662 | monotonic/idempotent fence; missing/unavailable/stale-snapshot/divergence outcomes | #657 lifecycle/status supply |
+| Runtime promotion fence | #648/#663 | Cassandra pre-check + fence check in Neo4j mutation transaction; terminal/retryable rejection | #666 concurrency/abort; #667 retry/metrics |
 
 ## Open gates
 
@@ -32,14 +35,19 @@ not a feature roadmap. Current main: `f79e7d70`.
 - **Phase 2b** — source-change lifecycle. ADR-029 locked; identity plumbing
   (#646), promotion-row identity (#647), fence readiness (#650), cross-store
   reconciliation (#644), and runtime promotion fence (#648) are merged.
-  #649a is next; #649b remains after #655/#656.
+  #649a is partial: delayed-generation-2 graph regression merged (#665);
+  concurrency/abort (#666) and retry/metrics (#667) remain. #649b is blocked on
+  #655/#656.
 - **Known temporary-visibility window** — under the weak invariant, generation 2
   may be committed and briefly visible as current after generation 3 is
-  accepted. No generation-aware reader/retirement/search filter exists yet;
-  #655 and #656 close this window.
+  accepted. It is documented but **not operationally closed and has no interim
+  bound**; no generation-aware reader/retirement/search filter exists.
+  #667 adds observability; #655/#656 close it.
+- **Read-path/activation design** — #668 inventory + per-request current-generation
+  resolution; #669 authoritative activation record and projection recovery.
 - **2b lifecycle tickets** — staged activation (#654), retirement (#655),
   search replacement (#656), lifecycle API (#657), maintenance E2E (#658).
-- **#650** — closed: Neo4j readiness now requires Bolt + full fence-schema inventory; Relix startup fails closed.
+- **#650** — closed: Neo4j readiness requires Bolt + full fence-schema inventory; Relix startup fails closed. Two maintenance restarts passed; #670 covers failure-mode schema-init coverage.
 - **#609/#611** — extraction quality and post-activation reliability epic;
   deferred until the source-change lifecycle is established.
 - **#613–#615** — CI follow-ups (ZWJ/ZWNJ context, job timeouts, contract update
@@ -54,7 +62,9 @@ not a feature roadmap. Current main: `f79e7d70`.
 
 ## What not to do
 
-Phase 2a is closed. Phase 2b (source-change lifecycle) is the active track; do not
+Phase 2a is closed. Phase 2b (source-change lifecycle) is the active track. Estimate:
+~50–55% complete, 15–29 engineering days; readiness forecast depends on the
+read-path inventory (#668) and the #655 support-ledger/#656 failure model. Do not
 start Analytics, Resolutor, UI #25, extraction features, or new connectors before
-the runtime generation fence and source-change E2E are complete. Preserve the
+source-change visibility and the maintenance E2E are complete. Preserve the
 frozen extraction baseline and restart-safety evidence.
