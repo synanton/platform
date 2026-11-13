@@ -5,7 +5,7 @@
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap. Current main: see [main commit history](https://github.com/synanton/platform/commits/main); this dashboard intentionally does not pin a merge hash.
 
-**Last updated:** 2026-11-13 by PR #686. Status reflects main at the time of that edit; see commit history for changes since.
+**Last updated:** 2026-11-13 by PR #688. Status reflects main at the time of that edit; see commit history for changes since.
 
 ## Phase 2b status model
 
