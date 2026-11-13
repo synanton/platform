@@ -30,11 +30,12 @@ not a feature roadmap.
 - **#592** — closed: reconciliation migration/capability/lint evidence landed.
 - **#589** — closed: combined local real-store matrix + live K8s rerun (#643).
 - **Phase 2b** — source-change lifecycle. ADR-029 locked; identity plumbing
-  (#646) merged; #647 promotion-row identity is in review. Runtime fence
-  (#644/#648) and the Generation 2/3 race (#649) remain.
+  (#646) and promotion-row identity (#647) merged; #650 fence-schema readiness
+  merged. Cross-store reconciliation (#644) is next; runtime fence (#648) and
+  the Generation 2/3 race (#649) remain.
 - **2b lifecycle tickets** — staged activation (#654), retirement (#655),
   search replacement (#656), lifecycle API (#657), maintenance E2E (#658).
-- **#650** — Neo4j readiness/fence-schema prerequisite, in parallel.
+- **#650** — closed: Neo4j readiness now requires Bolt + full fence-schema inventory; Relix startup fails closed.
 - **#609/#611** — extraction quality and post-activation reliability epic;
   deferred until the source-change lifecycle is established.
 - **#613–#615** — CI follow-ups (ZWJ/ZWNJ context, job timeouts, contract update
