@@ -26,27 +26,39 @@ Retries deduplicate on those identities. A failed Neo4j transaction commits noth
 
 ## Bounds and backoff
 
-- Per-class max attempts/deadline to be set by #667; defaults must be explicit configuration, not infinite.
-- Exponential backoff with jitter.
-- Exhausted retry is its own terminal outcome and metric; it must not look like a retryable `FENCE_BEHIND`.
+- Per-class max attempts are bounded by existing consumer configuration; wall-clock deadlines are DEFERRED (see conformance).
+- Current backoff is fixed exponential; jitter is DEFERRED (see conformance).
+- `promotion.exhausted` increments once per promotion operation when its retryable attempts reach the configured max; it is not incremented on `FENCE_BEHIND` while reconciliation is pending.
+- Exhaustion is a recoverable state, distinguishable from terminal stale rejection.
 - Every attempt carries the same operation identity; a newer generation makes the retry `STALE_GENERATION`, never a silent success.
 
 ## Metrics
 
-Per source: terminal outcomes by class, retryable outcomes, exhausted retries, last authorized generation, last reconciliation sync/drift. Labels distinguish `STALE`, `UNAUTHORIZED`, `FENCE_BEHIND`, `ABORT_RECOVERABLE`, reconciliation failure, and exhausted retry.
+Per source: terminal outcomes by class, retryable outcomes, exhausted retries, last authorized generation, last reconciliation sync/drift.
+
+Implemented `promotion.outcome` labels: `PROMOTED`, `STALE_GENERATION`, `UNAUTHORIZED_GENERATION`, `CONTRACT_VIOLATION`, `FENCE_BEHIND`, `RETRYABLE`, `EXHAUSTED_RETRY`, `FAILED`. `ABORT_RECOVERABLE` remains UNENFORCED pending #666. `promotion.exhausted` is the operation-level exhausted counter.
 
 
-Status vocabulary: `ENFORCED` = conformance test exists and passes; `UNENFORCED` = in Phase-2b scope, test owed and must reach zero before #658; `DEFERRED` = outside Phase 2b, requires a tracked Phase 3+ ticket.
+Status vocabulary: `ENFORCED` = conformance test exists and passes with a test reference; `UNENFORCED` = in Phase-2b scope, test owed and must reach zero before #658; `DEFERRED` = outside Phase 2b, requiring rationale, owner, revisit trigger, and an exclusion acknowledgment; `DROPPED` = deliberately out of scope, with a decision date.
 
 ## Conformance
 
 | Clause | Test | Status |
 |---|---|---|
-| Terminal outcomes are never retried | terminal-outcome-attempt-count test | UNENFORCED (#675) |
-| Retryable outcomes bounded by deadline/max attempts | forced-failure exhaustion test | UNENFORCED (#675) |
-| Exhausted retry is a distinct metric/outcome | metric-label test | UNENFORCED (#675) |
-| Idempotency key stable across attempts | same-key-one-write test | UNENFORCED (#675) |
+| Terminal outcomes are never retried | terminal-outcome-attempt-count test | UNENFORCED (#666) |
+| Retryable max attempts are bounded | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
+| Wall-clock retry deadline | none | DEFERRED: rationale=current max-attempt bound is sufficient for Phase 2b; owner=#667; revisit trigger=before #658; exclusion=#658 does not claim wall-clock deadlines |
+| Fixed backoff is the Phase-2b policy; jitter | none | DEFERRED: rationale=fixed backoff avoids changing timing in this PR; owner=#667; revisit trigger=before #658; exclusion=#658 does not claim jitter |
+| Exhausted retry is a distinct metric/outcome | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
+| `promotion.exhausted` increments once per operation | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
+| `FENCE_BEHIND` does not increment exhausted | `PromotionConsumerTest::fenceBehindEmitsRetryableOutcome` | ENFORCED |
+| Idempotency key stable across attempts | same-key-one-write test | UNENFORCED (#666) |
+| `ABORT_RECOVERABLE` classification/metric | none | UNENFORCED (#666) |
 
 ## Change control
 
 Changes require review from owners of #666, #667, and #648; re-run the conformance matrix. Passing tests against an older contract do not authorize the new contract.
+
+
+## Change-control note 2026-11-13
+#667 narrows the implemented label set and defers wall-clock deadlines/jitter explicitly; #666 still owns terminal-outcome, idempotency-key, and abort-recovery conformance.

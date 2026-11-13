@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.FailureClass;
+import org.synanton.common.resolution.FenceBehindException;
+import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.ingestioncache.claim.ClaimService;
@@ -89,6 +91,50 @@ class PromotionConsumerTest {
     }
 
     @Test
+    void staleGenerationEmitsDistinctOutcome() {
+        RelationPromotionWorkRow work = work();
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        org.mockito.Mockito.doThrow(new StaleGenerationException("newer fence"))
+                .when(promoter).promoteRelation(any());
+
+        consumer.poll();
+
+        assertThat(registry.get("promotion.outcome").tag("outcome", "STALE_GENERATION")
+                .counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void fenceBehindEmitsRetryableOutcome() {
+        RelationPromotionWorkRow work = work();
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        org.mockito.Mockito.doThrow(new FenceBehindException("reconciliation pending"))
+                .when(promoter).promoteRelation(any());
+
+        consumer.poll();
+
+        assertThat(registry.get("promotion.outcome").tag("outcome", "FENCE_BEHIND")
+                .counter().count()).isEqualTo(1);
+        assertThat(registry.get("promotion.exhausted").counter().count()).isZero();
+    }
+
+    @Test
+    void exhaustedRetryEmitsDistinctOutcome() {
+        RelationPromotionWorkRow work = workWithAttempts(4);
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        org.mockito.Mockito.doThrow(new RetryableProcessingException("neo4j down"))
+                .when(promoter).promoteRelation(any());
+
+        consumer.poll();
+
+        assertThat(registry.get("promotion.outcome").tag("outcome", "EXHAUSTED_RETRY")
+                .counter().count()).isEqualTo(1);
+        assertThat(registry.get("promotion.exhausted").counter().count()).isEqualTo(1);
+    }
+
+    @Test
     void disabledPromotionConsumerPollsNothing() {
         PromotionConsumerProperties disabled =
                 new PromotionConsumerProperties(false, "tenant-a", 5, 5, 30, 120, 10000L);
@@ -127,6 +173,13 @@ class PromotionConsumerTest {
 
     private static RelationPromotionWorkRow workWithoutEvidence() {
         return workWithEvidence("{}", UUID.randomUUID());
+    }
+
+    private static RelationPromotionWorkRow workWithAttempts(int attempts) {
+        RelationPromotionWorkRow work = work();
+        return new RelationPromotionWorkRow(work.result(), work.claimStatus(), work.claimOwnerId(),
+                work.leaseExpiresAt(), attempts, work.nextAttemptAt(), work.claimedAt(),
+                work.lastError(), work.failureClass());
     }
 
     private static RelationPromotionWorkRow workWithEvidence(String evidenceJson, UUID version) {
