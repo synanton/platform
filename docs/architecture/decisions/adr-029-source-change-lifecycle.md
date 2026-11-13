@@ -277,6 +277,18 @@ Any mismatch throws `StaleGenerationException` before any MERGE/SET. In particul
 
 **Multi-source boundary:** the fence applies to the source-specific evidence/support mutation, not to the canonical assertion. Source A and Source B each have their own source fence; a legitimate evidence addition from a different source must not be rejected because another source has a different generation.
 
+### 12. Promotion linearization point and the weak invariant (amendment 2026-11-12)
+
+The Neo4j transaction that checks `:SourceRevisionFence.accepted_generation` and commits the graph mutation is the **serialization point for promotion**. The Cassandra accepted-generation pre-check is a fast abort, not authorization. The implementation must not perform a Cassandra round-trip inside the Neo4j transaction.
+
+**Weak fence-arbitrated invariant:** a generation-G graph mutation may commit only if `G == G_Neo4jFence` and `G_Cassandra >= G` at pre-check. It may commit after Cassandra has accepted a higher generation when the Neo4j fence has not yet advanced. That is legal serialization: generation 2 first, generation 3 later; the lifecycle then supersedes generation 2.
+
+This holds only if (a) #655 retirement removes all evidence for the source with generation < current, using generation-aware semantics, and (b) #656 search filtering excludes superseded generations. Until both land, generation 2 may be briefly visible after generation 3 acceptance; that is a permitted intermediate state, bounded by the activation/retirement/search work, not a claim that authority freshness is enforced.
+
+Rejections are distinct: `StaleGenerationException` (fence newer; terminal), `FenceBehindException` (fence behind; retryable after reconciliation), and `UnauthorizedGenerationException` (Cassandra no longer accepts the operation generation; terminal). A CONVERGED reconciliation result is not promotion authorization.
+
+#649 is staged accordingly: #649a proves the graph-level generation race now; #649b proves end-to-end graph/search visibility after #655/#656 land.
+
 ## Lifecycle state machine
 
 Per logical source, the lifecycle record exposes the current state and transition history.

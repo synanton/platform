@@ -1221,7 +1221,12 @@ public class IngestionCacheClient {
                     row.getString("canonical_object_id"), row.getString("reason"),
                     row.getString("evidence_json"), row.getString("strategy_version"),
                     row.getString("ontology_version"), row.getInstant("decided_at"),
-                    row.getInstant("superseded_at")),
+                    row.getInstant("superseded_at"), row.getString("source_id"),
+                    row.getUuid("revision_id"),
+                    row.isNull("generation") ? 0 : row.getLong("generation"),
+                    row.getString("extraction_run_id"),
+                    row.getString("identity_status") == null ? "LEGACY_UNVERSIONED"
+                            : row.getString("identity_status")),
                 row.getString("claim_status"), row.getString("claim_owner_id"),
                 row.getInstant("lease_expires_at"), intOrDefault(row, "attempt_count", 0),
                 row.getInstant("next_attempt_at"), row.getInstant("claimed_at"),

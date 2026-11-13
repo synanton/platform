@@ -6,7 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
+import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.FenceBehindException;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.SourceRevisionIdentity;
+import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.graph.GraphLoader;
@@ -170,6 +174,53 @@ class Neo4jGraphCanonicalPortIntegrationTest {
                 .hasSize(1);
         assertThat(count("MATCH ()-[r:EXTRACTED_RELATION {tenant_id: $tenant}]->() RETURN count(r) AS c", tenant))
                 .isZero();
+    }
+
+    @Test
+    void guardedPromotionRejectsBehindAndStaleFenceWithoutMutation() {
+        String tenant = "tenant-fence-guard";
+        String sourceId = "source-fence-guard";
+        seedResolution(tenant, "subject-guard", "entity-subject-guard");
+        seedResolution(tenant, "object-guard", "entity-object-guard");
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+        CanonicalRelation relation = new CanonicalRelation(tenant, "revision-guard", "relation-guard",
+                "subject-guard", "entity-subject-guard", "object-guard", "entity-object-guard",
+                "requires", "active", "evidence-guard", 0, 10,
+                sourceId, "revision-guard", 2, null);
+
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 1
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        assertThatThrownBy(() -> connector.promoteRelation(identity, relation,
+                new SourceRevisionIdentity(tenant, sourceId, 2)))
+                .isInstanceOf(FenceBehindException.class);
+        assertThat(relationEvidenceCount(tenant, "relation-guard")).isZero();
+
+        cypher.write("""
+                MATCH (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 3
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        assertThatThrownBy(() -> connector.promoteRelation(identity, relation,
+                new SourceRevisionIdentity(tenant, sourceId, 2)))
+                .isInstanceOf(StaleGenerationException.class);
+        assertThat(relationEvidenceCount(tenant, "relation-guard")).isZero();
+    }
+
+    private static void seedResolution(String tenant, String mentionId, String entityId) {
+        cypher.write("""
+                MERGE (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
+                MERGE (e:Entity {tenant: $tenant, id: $entityId})
+                MERGE (m)-[r:RESOLVES_TO {active: true}]->(e)
+                SET r.resolution_id = $mentionId, r.fencing_token = 1
+                """, Map.of("tenant", tenant, "mentionId", mentionId, "entityId", entityId));
+    }
+
+    private static long relationEvidenceCount(String tenant, String relationId) {
+        return ((Number) cypher.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, extracted_relation_id: $relationId})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "relationId", relationId)).getFirst().get("c")).longValue();
     }
 
     private static Entity entity(UUID id, String label, String type) {

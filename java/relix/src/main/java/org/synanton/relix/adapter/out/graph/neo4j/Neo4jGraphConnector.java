@@ -31,8 +31,11 @@ import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionKey;
 import org.synanton.common.resolution.ResolutionWriteOutcome;
+import org.synanton.common.resolution.FenceBehindException;
 import org.synanton.common.resolution.GraphCapabilities;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.SourceRevisionIdentity;
+import org.synanton.common.resolution.StaleGenerationException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -167,6 +170,19 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             throw new IllegalArgumentException("relation tenant must match graph identity tenant");
         }
         return promoteRelation(relation);
+    }
+
+    @Override
+    public PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation,
+                                           SourceRevisionIdentity sourceRevision) {
+        requireCanonical(identity);
+        if (relation == null || !identity.tenantId().equals(relation.tenantId())) {
+            throw new IllegalArgumentException("relation tenant must match graph identity tenant");
+        }
+        if (sourceRevision == null || !identity.tenantId().equals(sourceRevision.tenantId())) {
+            throw new IllegalArgumentException("source revision tenant must match graph identity tenant");
+        }
+        return promoteRelationInternal(relation, sourceRevision);
     }
 
     private static String encodeSources(List<SourceRef> refs) {
@@ -455,6 +471,11 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
 
     @Override
     public PromotionResult promoteRelation(CanonicalRelation relation) {
+        return promoteRelationInternal(relation, null);
+    }
+
+    private PromotionResult promoteRelationInternal(CanonicalRelation relation,
+                                                     SourceRevisionIdentity sourceRevision) {
         ensureExtractedSchema();
         String canonicalRelationId = PromotionIds.canonicalRelationId(relation);
         String evidenceId = PromotionIds.evidenceId(relation);
@@ -476,6 +497,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
         params.put("canonicalRelationId", canonicalRelationId);
         params.put("evidenceId", evidenceId);
         params.put("now", now);
+        params.put("sourceId", sourceRevision == null ? null : sourceRevision.sourceId());
+        params.put("expectedGeneration", sourceRevision == null ? null : sourceRevision.generation());
 
         List<Map<String, Object>> rows;
         try {
@@ -487,6 +510,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 MERGE (slot:ResolutionSlot {tenant_id: $tenant, mention_id: mentionId})
                 SET slot.locked_at = $now
                 WITH collect(slot) AS slots
+                OPTIONAL MATCH (fence:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                WITH slots, fence
+                WHERE $expectedGeneration IS NULL
+                   OR (fence IS NOT NULL AND fence.accepted_generation = $expectedGeneration)
                 MATCH (s:ExtractedMention {tenant_id: $tenant, mention_id: $subjectMentionId})
                       -[:RESOLVES_TO {active: true}]->
                       (se:Entity {tenant: $tenant, id: $subjectEntityId})
@@ -527,6 +554,9 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             throw new RetryableProcessingException("Canonical relation promotion transaction failed", e);
         }
         if (rows.isEmpty()) {
+            if (sourceRevision != null) {
+                classifyFence(relation.tenantId(), sourceRevision);
+            }
             return new PromotionResult(0, 0, 0);
         }
         Map<String, Object> row = rows.getFirst();
@@ -730,6 +760,21 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 "UNWIND $ids AS id " + query, Map.of("tenant", tenant, "ids", ids));
         Object count = countRows.isEmpty() ? 0 : countRows.getFirst().get("c");
         return count instanceof Number number ? number.intValue() : 0;
+    }
+
+    private void classifyFence(String tenant, SourceRevisionIdentity sourceRevision) {
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                RETURN f.accepted_generation AS generation
+                """, Map.of("tenant", tenant, "sourceId", sourceRevision.sourceId()));
+        if (rows.isEmpty() || rows.getFirst().get("generation") == null) {
+            throw new FenceBehindException("Neo4j source fence is missing; reconciliation required");
+        }
+        long fence = ((Number) rows.getFirst().get("generation")).longValue();
+        if (fence > sourceRevision.generation()) {
+            throw new StaleGenerationException("Neo4j fence is newer than operation generation");
+        }
+        throw new FenceBehindException("Neo4j fence has not reached operation generation; reconciliation required");
     }
 
     private void ensureExtractedSchema() {
