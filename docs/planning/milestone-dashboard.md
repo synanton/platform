@@ -5,21 +5,21 @@
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap. Current main: see [main commit history](https://github.com/synanton/platform/commits/main); this dashboard intentionally does not pin a merge hash.
 
-**Last updated:** 2026-11-13 by PR #683. Status reflects main at the time of that edit; see commit history for changes since.
+**Last updated:** 2026-11-13 by PR #684. Status reflects main at the time of that edit; see commit history for changes since.
 
 ## Phase 2b status model
 
 | State | Meaning | Today |
 |---|---|---|
 | **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 abort/retry gate closed (#681); #667 outcome metrics merged (#680); terminal-attempt counting and `ABORT_RECOVERABLE` metrics still UNENFORCED |
-| **Activation correctness** | A durable record identifies the active source revision and supports recovery | Activation record/store implemented (#669); fence-guarded `ActivateRevision` integration still open (#654) |
+| **Activation correctness** | A durable record identifies the active source revision and supports recovery | Activation record/store implemented (#669); fence-guarded `ActivateRevision` core merged (#654 partial); staged ingestion wiring still open |
 | **Read visibility correctness** | Every read path exposes only knowledge valid under that activation state | Not implemented (#668, #655/#656, #649b) |
 
 Write safety is substantially implemented and the activation record/store exists; activation is not yet wired into ingestion, so the temporary-visibility window remains **operationally unbounded** until #655/#656.
 
 **User-visible today:** a recently superseded source revision may still appear as current in search results, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, not a filtering bug, and it is operationally unbounded.
 
-Sequencing: #666 (safety) is closed; #669 activation record/store is merged; #654 now wires fence-guarded `ActivateRevision`; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
+Sequencing: #666 (safety) is closed; #669 activation record/store is merged; #654 activation core is merged but staged ingestion/search wiring remains; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
 
 ## Implemented and evidenced
 

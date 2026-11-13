@@ -28,6 +28,7 @@ import org.synanton.relix.identity.GraphIdentityResolver;
 import org.synanton.relix.identity.ProjectionProvisioner;
 import org.synanton.relix.identity.SourceFenceReconciler;
 import org.synanton.relix.identity.SourceFenceStore;
+import org.synanton.relix.identity.ActivateRevision;
 import org.synanton.relix.identity.SourceGenerationAuthority;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.syntology.HttpSyntologyActiveVersionClient;
@@ -98,6 +99,13 @@ public class RelixConfig {
     SourceFenceReconciler sourceFenceReconciler(SourceGenerationAuthority authority,
                                                 SourceFenceStore store) {
         return new SourceFenceReconciler(authority, store);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    ActivateRevision activateRevision(org.synanton.ingestioncache.activation.SourceActivationStore activations,
+                                      SourceFenceStore fences) {
+        return new ActivateRevision(activations, fences);
     }
 
     @Bean
