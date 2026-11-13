@@ -22,6 +22,9 @@ Recovery replays projections to match the activation record. It does not reconci
 
 For #656 failure semantics, if graph activation commits and search replacement fails, reads must not present stale search content as current; the read boundary serves the graph projection or hides the source's search results until search replay reaches the activation record. The chosen rule must be explicit and observable.
 
+
+Status vocabulary: `ENFORCED` = conformance test exists and passes; `UNENFORCED` = in Phase-2b scope, test owed and must reach zero before #658; `DEFERRED` = outside Phase 2b, requires a tracked Phase 3+ ticket.
+
 ## Conformance
 
 | Clause | Test | Status |

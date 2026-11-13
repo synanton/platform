@@ -16,6 +16,9 @@
 
 Current user-visible state: a recently superseded source revision may still be visible as current in search, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, operationally unbounded until #655/#656.
 
+
+Status vocabulary: `ENFORCED` = conformance test exists and passes; `UNENFORCED` = in Phase-2b scope, test owed and must reach zero before #658; `DEFERRED` = outside Phase 2b, requires a tracked Phase 3+ ticket.
+
 ## Conformance
 
 | Inventory row | Required test | Status |
