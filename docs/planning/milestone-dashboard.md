@@ -1,17 +1,17 @@
 # Milestone dashboard
 
-**Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write safety substantially implemented; activation correctness and read visibility correctness not implemented. Phase 2b planning estimate remains ~50–55% (15–29 engineering days); contract artifacts improved confidence, but remaining lifecycle volume is unchanged.
+**Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write-safety abort/retry gate (#666) closed; activation correctness and read visibility correctness not implemented. Phase 2b planning estimate remains ~50–55% (15–29 engineering days); contract artifacts improved confidence, but remaining lifecycle volume is unchanged.
 
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap. Current main: see [main commit history](https://github.com/synanton/platform/commits/main); this dashboard intentionally does not pin a merge hash.
 
-**Last updated:** 2026-11-13 by PR #677. Status reflects main at the time of that edit; see commit history for changes since.
+**Last updated:** 2026-11-13 by PR #680/#681. Status reflects main at the time of that edit; see commit history for changes since.
 
 ## Phase 2b status model
 
 | State | Meaning | Today |
 |---|---|---|
-| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 open for abort/retry; #667 retry/metrics |
+| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 abort/retry gate closed (#681); #667 outcome metrics merged (#680); terminal-attempt counting and `ABORT_RECOVERABLE` metrics still UNENFORCED |
 | **Activation correctness** | A durable record identifies the active source revision and supports recovery | Not implemented (#669) |
 | **Read visibility correctness** | Every read path exposes only knowledge valid under that activation state | Not implemented (#668, #655/#656, #649b) |
 
@@ -19,7 +19,7 @@ Only write safety is substantially implemented. The temporary-visibility window 
 
 **User-visible today:** a recently superseded source revision may still appear as current in search results, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, not a filtering bug, and it is operationally unbounded.
 
-Sequencing: #666 (safety) precedes #654; #667 can run in parallel with #654; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
+Sequencing: #666 (safety) is closed; #654 is next; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
 
 ## Implemented and evidenced
 
@@ -40,7 +40,7 @@ Sequencing: #666 (safety) precedes #654; #667 can run in parallel with #654; #66
 | Reconciliation port migration | #617/#630/#638 | seam removed; capabilities composition; rule-5 boundary; #630 conformance | #587 separate GraphTransactionPort/composite scope |
 | Fence readiness | #650/#660 | Bolt + seven constraints; schema-init; Relix fail-closed; maintenance restarts preserve fence | #670 schema-init failure-mode coverage |
 | Cross-store reconciliation | #644/#662 | monotonic/idempotent fence; missing/unavailable/stale-snapshot/divergence outcomes | #657 lifecycle/status supply |
-| Runtime promotion fence | #648/#663 | Cassandra pre-check + fence check in Neo4j mutation transaction; terminal/retryable rejection | #666 concurrency/abort; #667 retry/metrics |
+| Runtime promotion fence | #648/#663/#681 | Cassandra pre-check + fence check in Neo4j mutation transaction; post-staging abort rollback and idempotent retry proven on real Neo4j | #655/#656 visibility window |
 
 ## Open gates
 
@@ -51,14 +51,15 @@ Sequencing: #666 (safety) precedes #654; #667 can run in parallel with #654; #66
 - **Phase 2b** — source-change lifecycle. ADR-029 locked; identity plumbing
   (#646), promotion-row identity (#647), fence readiness (#650), cross-store
   reconciliation (#644), and runtime promotion fence (#648) are merged.
-  #649a is partial: delayed-generation-2 (#665) and concurrent-generation (#672)
-  regressions merged; #666 remains open for mid-transaction abort/retry, and
-  #667 for retry/metrics. #649b is blocked on #655/#656.
+  #649a safety work is closed: delayed-generation-2 (#665), concurrent-generation
+  (#672), and abort/retry (#666/#681) regressions merged. #667 outcome metrics
+  merged (#680); terminal-attempt counting and `ABORT_RECOVERABLE` metrics remain
+  UNENFORCED. #649b is blocked on #655/#656.
 - **Known temporary-visibility window** — under the weak invariant, generation 2
   may be committed and briefly visible as current after generation 3 is
   accepted. It is documented but **not operationally closed and has no interim
   bound**; no generation-aware reader/retirement/search filter exists.
-  #667 adds observability; #655/#656 close it.
+  #667 merged and adds observability; #655/#656 close the window.
 - **Read-path/activation design** — #668 inventory + per-request current-generation
   resolution; #669 authoritative activation record and projection recovery.
 - **2b lifecycle tickets** — staged activation (#654), retirement (#655),
