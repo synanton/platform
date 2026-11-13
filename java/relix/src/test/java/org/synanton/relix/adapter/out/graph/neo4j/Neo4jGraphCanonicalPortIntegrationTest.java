@@ -10,11 +10,13 @@ import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.FenceBehindException;
 import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.PromotionResult;
+import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.graph.PromotionIds;
 import org.synanton.relix.identity.UnsupportedGraphIdException;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -27,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -263,6 +266,98 @@ class Neo4jGraphCanonicalPortIntegrationTest {
     }
 
     @Test
+    void abortedPromotionAfterFenceAndStagingLeavesNoEvidenceAndRetryWritesOnce() {
+        String tenant = "tenant-abort-recovery";
+        String sourceId = "source-abort-recovery";
+        seedResolution(tenant, "subject-abort", "entity-subject-abort");
+        seedResolution(tenant, "object-abort", "entity-object-abort");
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 2
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+        CanonicalRelation relation = relation(tenant, "relation-abort", "revision-abort",
+                "subject-abort", "entity-subject-abort", "object-abort", "entity-object-abort",
+                "evidence-abort", sourceId, 2);
+        String canonicalId = PromotionIds.canonicalRelationId(relation);
+        String evidenceId = PromotionIds.evidenceId(relation);
+        AtomicBoolean injected = new AtomicBoolean();
+        Neo4jGraphConnector aborting = new Neo4jGraphConnector(mock(GraphLoader.class), cypher, () -> {
+            if (injected.compareAndSet(false, true)) {
+                throw new InjectedAbort();
+            }
+        });
+
+        assertThatThrownBy(() -> aborting.promoteRelation(identity, relation,
+                new SourceRevisionIdentity(tenant, sourceId, 2)))
+                .isInstanceOf(RetryableProcessingException.class)
+                .hasCauseInstanceOf(InjectedAbort.class);
+
+        // Independent real-store observables before retry, not the exception alone.
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort"))
+                .containsOnly(Map.entry("anchors", 0L), Map.entry("relations", 0L),
+                        Map.entry("evidence", 0L), Map.entry("extracted_relations", 0L),
+                        Map.entry("supports", 0L), Map.entry("slots", 0L));
+
+        PromotionResult retried = connector.promoteRelation(identity, relation,
+                new SourceRevisionIdentity(tenant, sourceId, 2));
+        assertThat(retried).isEqualTo(new PromotionResult(1, 1, 1));
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort"))
+                .containsOnly(Map.entry("anchors", 1L), Map.entry("relations", 1L),
+                        Map.entry("evidence", 1L), Map.entry("extracted_relations", 1L),
+                        Map.entry("supports", 1L), Map.entry("slots", 2L));
+
+        PromotionResult duplicate = connector.promoteRelation(identity, relation,
+                new SourceRevisionIdentity(tenant, sourceId, 2));
+        assertThat(duplicate).isEqualTo(new PromotionResult(0, 0, 1));
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort"))
+                .containsOnly(Map.entry("anchors", 1L), Map.entry("relations", 1L),
+                        Map.entry("evidence", 1L), Map.entry("extracted_relations", 1L),
+                        Map.entry("supports", 1L), Map.entry("slots", 2L));
+    }
+
+    @Test
+    void newerGenerationFenceAdvanceDuringRecoveryRejectsGenerationTwoRetry() {
+        String tenant = "tenant-abort-stale";
+        String sourceId = "source-abort-stale";
+        seedResolution(tenant, "subject-abort-stale", "entity-subject-abort-stale");
+        seedResolution(tenant, "object-abort-stale", "entity-object-abort-stale");
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 2
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+        CanonicalRelation relation = relation(tenant, "relation-abort-stale", "revision-abort-stale",
+                "subject-abort-stale", "entity-subject-abort-stale", "object-abort-stale",
+                "entity-object-abort-stale", "evidence-abort-stale", sourceId, 2);
+        String canonicalId = PromotionIds.canonicalRelationId(relation);
+        String evidenceId = PromotionIds.evidenceId(relation);
+        AtomicBoolean injected = new AtomicBoolean();
+        Neo4jGraphConnector aborting = new Neo4jGraphConnector(mock(GraphLoader.class), cypher, () -> {
+            if (injected.compareAndSet(false, true)) {
+                throw new InjectedAbort();
+            }
+        });
+
+        assertThatThrownBy(() -> aborting.promoteRelation(identity, relation,
+                new SourceRevisionIdentity(tenant, sourceId, 2)))
+                .isInstanceOf(RetryableProcessingException.class);
+
+        cypher.write("""
+                MATCH (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 3
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+
+        assertThatThrownBy(() -> connector.promoteRelation(identity, relation,
+                new SourceRevisionIdentity(tenant, sourceId, 2)))
+                .isInstanceOf(StaleGenerationException.class);
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort-stale"))
+                .containsOnly(Map.entry("anchors", 0L), Map.entry("relations", 0L),
+                        Map.entry("evidence", 0L), Map.entry("extracted_relations", 0L),
+                        Map.entry("supports", 0L), Map.entry("slots", 0L));
+    }
+
+    @Test
     void concurrentGenerationTwoAndThreePromotionHasDeterministicLoser() throws Exception {
         String tenant = "tenant-generation-concurrent";
         String sourceId = "source-generation-concurrent";
@@ -326,7 +421,53 @@ class Neo4jGraphCanonicalPortIntegrationTest {
         return new Entity(id, label, type, 1.0, List.of());
     }
 
+    private static Map<String, Long> promotionArtifacts(String tenant, String canonicalId,
+                                                        String evidenceId, String extractedRelationId) {
+        Map<String, Long> counts = new java.util.LinkedHashMap<>();
+        counts.put("anchors", count("""
+                MATCH (a:CanonicalRelationAnchor {tenant_id: $tenant, canonical_relation_id: $canonicalId})
+                RETURN count(a) AS c
+                """, Map.of("tenant", tenant, "canonicalId", canonicalId)));
+        counts.put("relations", count("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $canonicalId}]->()
+                RETURN count(r) AS c
+                """, Map.of("tenant", tenant, "canonicalId", canonicalId)));
+        counts.put("evidence", count("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "evidenceId", evidenceId)));
+        counts.put("extracted_relations", count("""
+                MATCH (r:ExtractedRelation {tenant_id: $tenant, relation_id: $extractedRelationId})
+                RETURN count(r) AS c
+                """, Map.of("tenant", tenant, "extractedRelationId", extractedRelationId)));
+        counts.put("supports", count("""
+                MATCH (:ExtractedRelation {tenant_id: $tenant, relation_id: $extractedRelationId})
+                      -[s:SUPPORTS]->(:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
+                RETURN count(s) AS c
+                """, Map.of("tenant", tenant, "extractedRelationId", extractedRelationId,
+                "evidenceId", evidenceId)));
+        counts.put("slots", count("""
+                MATCH (s:ResolutionSlot {tenant_id: $tenant})
+                WHERE s.mention_id IN ['subject-abort', 'object-abort',
+                      'subject-abort-stale', 'object-abort-stale']
+                RETURN count(s) AS c
+                """, Map.of("tenant", tenant)));
+        return counts;
+    }
+
+    private static long count(String query, Map<String, Object> params) {
+        return ((Number) cypher.read(query, params).getFirst().get("c")).longValue();
+    }
+
     private static long count(String query, String tenant) {
-        return ((Number) cypher.read(query, Map.of("tenant", tenant)).getFirst().get("c")).longValue();
+        return count(query, Map.of("tenant", tenant));
+    }
+
+    private static final class InjectedAbort extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
+        private InjectedAbort() {
+            super("injected abort after fence check and staged writes");
+        }
     }
 }

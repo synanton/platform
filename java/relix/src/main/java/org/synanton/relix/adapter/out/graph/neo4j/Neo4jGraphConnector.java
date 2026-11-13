@@ -55,12 +55,22 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
 
     private final GraphLoader graphLoader;
     private final CypherExecutor cypher;
+    private final Runnable promotionAbortPoint;
     private final Map<String, GraphStats> statsByTenant = new ConcurrentHashMap<>();
     private volatile boolean extractedSchemaEnsured;
 
     public Neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypher) {
+        this(graphLoader, cypher, null);
+    }
+
+    /**
+     * Test seam: runs after the promotion fence check and staged writes, before commit.
+     * Production construction passes {@code null}.
+     */
+    Neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypher, Runnable promotionAbortPoint) {
         this.graphLoader = graphLoader;
         this.cypher = cypher;
+        this.promotionAbortPoint = promotionAbortPoint;
     }
 
     @Override
@@ -502,18 +512,18 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
 
         List<Map<String, Object>> rows;
         try {
-            rows = cypher.writeReturning("""
-                WITH [$subjectMentionId, $objectMentionId] AS mentionIds
+            String promotionCypher = """
+                OPTIONAL MATCH (fence:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                WITH fence
+                WHERE $expectedGeneration IS NULL
+                   OR (fence IS NOT NULL AND fence.accepted_generation = $expectedGeneration)
+                WITH fence, [$subjectMentionId, $objectMentionId] AS mentionIds
                 UNWIND mentionIds AS mentionId
-                WITH DISTINCT mentionId
+                WITH DISTINCT mentionId, fence
                 ORDER BY mentionId
                 MERGE (slot:ResolutionSlot {tenant_id: $tenant, mention_id: mentionId})
                 SET slot.locked_at = $now
-                WITH collect(slot) AS slots
-                OPTIONAL MATCH (fence:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
-                WITH slots, fence
-                WHERE $expectedGeneration IS NULL
-                   OR (fence IS NOT NULL AND fence.accepted_generation = $expectedGeneration)
+                WITH collect(slot) AS slots, fence
                 MATCH (s:ExtractedMention {tenant_id: $tenant, mention_id: $subjectMentionId})
                       -[:RESOLVES_TO {active: true}]->
                       (se:Entity {tenant: $tenant, id: $subjectEntityId})
@@ -549,7 +559,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 RETURN CASE WHEN existingRel IS NULL THEN 1 ELSE 0 END AS relations_created,
                        CASE WHEN existingEv IS NULL THEN 1 ELSE 0 END AS evidence_created,
                        1 AS evidence_matched
-                """, params);
+                """;
+            rows = promotionAbortPoint == null
+                    ? cypher.writeReturning(promotionCypher, params)
+                    : cypher.writeReturning(promotionCypher, params, promotionAbortPoint);
         } catch (RuntimeException e) {
             throw new RetryableProcessingException("Canonical relation promotion transaction failed", e);
         }
