@@ -1,9 +1,21 @@
 # Milestone dashboard
 
-**Status:** Phase 2a complete (live K8s gate passed). Phase 2b source-change lifecycle in progress; core runtime generation fence merged, lifecycle not complete.
+**Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write safety substantially implemented; activation correctness and read visibility correctness not implemented. Phase 2b planning estimate remains ~50–55% (15–29 engineering days).
 
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap. Current main: `61bc6419`.
+
+## Phase 2b status model
+
+| State | Meaning | Today |
+|---|---|---|
+| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665); #666/#667 finish concurrency, abort, retry/metrics |
+| **Activation correctness** | A durable record identifies the active source revision and supports recovery | Not implemented (#669) |
+| **Read visibility correctness** | Every read path exposes only knowledge valid under that activation state | Not implemented (#668, #655/#656, #649b) |
+
+Only write safety is substantially implemented. The temporary-visibility window is documented but **operationally unbounded** until #655/#656.
+
+Sequencing: #666 (safety) precedes #654; #667 can run in parallel with #654; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
 
 ## Implemented and evidenced
 
