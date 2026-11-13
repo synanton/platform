@@ -207,6 +207,55 @@ class Neo4jGraphCanonicalPortIntegrationTest {
         assertThat(relationEvidenceCount(tenant, "relation-guard")).isZero();
     }
 
+    @Test
+    void delayedGenerationTwoCannotCommitAfterGenerationThreeFenceAdvance() {
+        String tenant = "tenant-generation-race";
+        String sourceId = "source-generation-race";
+        seedResolution(tenant, "subject-race", "entity-subject-race");
+        seedResolution(tenant, "object-race", "entity-object-race");
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 2
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+
+        CanonicalRelation gen2 = relation(tenant, "relation-race-gen2", "revision-race-gen2",
+                "subject-race", "entity-subject-race", "object-race", "entity-object-race",
+                "evidence-race-gen2", sourceId, 2);
+        connector.promoteRelation(identity, gen2, new SourceRevisionIdentity(tenant, sourceId, 2));
+        assertThat(relationEvidenceCount(tenant, "relation-race-gen2")).isEqualTo(1);
+
+        cypher.write("""
+                MATCH (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 3
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        CanonicalRelation gen3 = relation(tenant, "relation-race-gen3", "revision-race-gen3",
+                "subject-race", "entity-subject-race", "object-race", "entity-object-race",
+                "evidence-race-gen3", sourceId, 3);
+        connector.promoteRelation(identity, gen3, new SourceRevisionIdentity(tenant, sourceId, 3));
+        assertThat(relationEvidenceCount(tenant, "relation-race-gen3")).isEqualTo(1);
+
+        CanonicalRelation delayedGen2 = relation(tenant, "relation-race-gen2-late", "revision-race-gen2",
+                "subject-race", "entity-subject-race", "object-race", "entity-object-race",
+                "evidence-race-gen2-late", sourceId, 2);
+        assertThatThrownBy(() -> connector.promoteRelation(identity, delayedGen2,
+                new SourceRevisionIdentity(tenant, sourceId, 2)))
+                .isInstanceOf(StaleGenerationException.class);
+
+        assertThat(relationEvidenceCount(tenant, "relation-race-gen2-late")).isZero();
+        assertThat(relationEvidenceCount(tenant, "relation-race-gen2")).isEqualTo(1);
+        assertThat(relationEvidenceCount(tenant, "relation-race-gen3")).isEqualTo(1);
+    }
+
+    private static CanonicalRelation relation(String tenant, String relationId, String revisionId,
+                                              String subjectMentionId, String subjectEntityId,
+                                              String objectMentionId, String objectEntityId,
+                                              String evidenceChunkId, String sourceId, long generation) {
+        return new CanonicalRelation(tenant, revisionId, relationId, subjectMentionId, subjectEntityId,
+                objectMentionId, objectEntityId, "requires", "active", evidenceChunkId, 0, 10,
+                sourceId, revisionId, generation, null);
+    }
+
     private static void seedResolution(String tenant, String mentionId, String entityId) {
         cypher.write("""
                 MERGE (m:ExtractedMention {tenant_id: $tenant, mention_id: $mentionId})
