@@ -3,7 +3,7 @@
 **Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write safety substantially implemented; activation correctness and read visibility correctness not implemented. Phase 2b planning estimate remains ~50–55% (15–29 engineering days).
 
 This is the PR-backed view of what is implemented and what is still open. It is
-not a feature roadmap. Current main: `b1ea34f7`.
+not a feature roadmap. Current main: `4ca4ca88`.
 
 ## Phase 2b status model
 
