@@ -3,6 +3,7 @@ package org.synanton.relix.graph;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.PromotionResult;
+import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
 
@@ -20,4 +21,10 @@ public interface GraphWritePort {
     void upsertRelation(GraphIdentity identity, Edge relation);
 
     PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation);
+
+    /** Generation-fenced promotion; the check must be inside the graph transaction. */
+    default PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation,
+                                            SourceRevisionIdentity sourceRevision) {
+        throw new UnsupportedOperationException("graph connector does not support generation-fenced promotion");
+    }
 }
