@@ -289,6 +289,20 @@ Rejections are distinct: `StaleGenerationException` (fence newer; terminal), `Fe
 
 #649 is staged accordingly: #649a proves the graph-level generation race now; #649b proves end-to-end graph/search visibility after #655/#656 land.
 
+### 12.1 Write-lock amendment (2026-11-13)
+
+The §12 statement "fence check and mutation are in one Neo4j transaction" was necessary but not sufficient. A generation-2 transaction could read the fence, stage its mutation, and remain open while generation 3 advanced the fence; generation 2 could then commit after the advance. A read inside the transaction did not serialize the commit against the fence advance.
+
+The serialization point is now the promotion transaction's **fence write-lock held through commit**, with the generation re-checked after lock acquisition and before staging:
+
+- Lock scope: the `:SourceRevisionFence` node for the logical `(tenant, source)`. It is acquired by a no-op property write on `accepted_generation`; the generation is re-checked after the lock is acquired, then all promotion writes run under that lock.
+- Contention: Neo4j blocks the contending transaction until the lock holder commits or rolls back. There is no application-level timeout or spin loop in the promotion path.
+- Reconciliation: `Neo4jSourceFenceStore.advance` writes the same fence node, so it contends on the same lock. Reconciliation cannot bypass an in-flight promotion commit.
+- Crash/retry: the lock is transaction-scoped and released on commit, rollback, or session failure. A retry opens a new transaction and cannot deadlock against its own previous lock.
+- Named evidence: `Neo4jGraphCanonicalPortIntegrationTest::concurrentFenceAdvanceCannotOutrunInFlightGenerationTwoPromotion` blocks generation 2 after staging, starts a generation-3 advance, and asserts the advance waits. The sequential stale test remains separate.
+
+**Change control:** dependent tickets are #654, #655, and #656. No conformance tests for those tickets exist yet; this amendment is a prerequisite for their implementation. Existing #648/#666 promotion tests were re-run for this text.
+
 ## Lifecycle state machine
 
 Per logical source, the lifecycle record exposes the current state and transition history.

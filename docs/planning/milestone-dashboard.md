@@ -1,23 +1,25 @@
 # Milestone dashboard
 
-**Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write-safety abort/retry gate (#666) is closed; activation core is implemented but not wired into ingestion; read visibility is not implemented. Estimate remains ~50–55% (15–29 engineering days); implementation cadence resumed, but remaining lifecycle volume is unchanged.
+**Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write-safety abort/retry gate (#666) is closed; activation core is implemented but not wired into ingestion; read visibility is not implemented. Estimate is revised to ~55–60% (12–26 engineering days), assuming #654 wiring stays within its named scope and does not reveal ingestion-pipeline rework; if it does, revert to ~50–55% (15–29 days).
 
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap. Current main: see [main commit history](https://github.com/synanton/platform/commits/main); this dashboard intentionally does not pin a merge hash.
 
-**Last updated:** 2026-11-13 by PR #685. Status reflects main at the time of that edit; see commit history for changes since.
+**Last updated:** 2026-11-13 by PR #686. Status reflects main at the time of that edit; see commit history for changes since.
 
 ## Phase 2b status model
 
 | State | Meaning | Today |
 |---|---|---|
-| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 abort/retry gate closed (#681), with the concurrent fence/abort interaction proven in #685; #667 remains partial: metrics merged (#680), but `RECONCILIATION_FAILURE` and `ABORT_RECOVERABLE` are not emitted |
+| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 abort/retry gate closed (#681), with the concurrent fence/abort interaction proven in #685; #667 remains partial on per-source outcome/drift/authorized-generation metrics, but `ABORT_RECOVERABLE` is now emitted and `RECONCILIATION_FAILURE` is deliberately owned by reconciliation status (#657) |
 | **Activation correctness** | A durable record identifies the active source revision and supports recovery | Activation record/store (#669) and fence-guarded `ActivateRevision` (#684) implemented; no ingestion-originated activation yet (#654 wiring) |
 | **Read visibility correctness** | Every read path exposes only knowledge valid under that activation state | Not implemented (#668, #655/#656, #649b) |
 
 Write safety is substantially implemented. The activation mechanism exists, but no revision is activated through the production ingestion path. That is why the temporary-visibility window remains **operationally unbounded**: the structural unlock is #654 wiring, not #655 alone.
 
 **User-visible today:** a recently superseded source revision may still appear as current in search results, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, not a filtering bug. It remains operationally unbounded because the activation core is not invoked from ingestion and no reader is generation-aware.
+
+**Binding gate today:** #654 — activation is not invoked by ingestion. Once #654 lands, the binding gate becomes #655/#656 — readers are not generation-aware.
 
 Sequencing: #666 and #669 are closed. #654 remains open for generation assignment at revision acceptance, projection-transition wiring, and ingestion-originated `ActivateRevision`; its named observables are pinned in the ticket. #655 and #656 are sequential to merge but must be drafted and reviewed together against the finalized activation/search contracts. No single ticket is an end-to-end lifecycle delivery; #654 + #655 + #656 + #649b are required, and #658 proves them.
 
@@ -53,9 +55,10 @@ Sequencing: #666 and #669 are closed. #654 remains open for generation assignmen
   reconciliation (#644), and runtime promotion fence (#648) are merged.
   #649a safety work is closed: delayed-generation-2 (#665), concurrent-generation
   (#672), abort/retry (#666/#681), and concurrent fence/abort serialization
-  (#685) regressions merged. #667 is partial: `promotion.outcome` and
-  `promotion.exhausted` are live (#680), but `RECONCILIATION_FAILURE` and
-  `ABORT_RECOVERABLE` are not emitted; `UNAUTHORIZED_GENERATION` is live. #649b
+  (#685) regressions merged. #667 is partial: outcome/exhausted metrics are live
+  (#680), `ABORT_RECOVERABLE` is live (#686), and `RECONCILIATION_FAILURE` is
+  deliberately moved to reconciliation status (#657). Per-source outcome
+  counters, last-authorized generation, and read-time drift remain open. #649b
   is blocked on #655/#656.
 - **Known temporary-visibility window** — under the weak invariant, generation 2
   may be committed and briefly visible as current after generation 3 is
@@ -90,10 +93,11 @@ Sequencing: #666 and #669 are closed. #654 remains open for generation assignmen
 ## What not to do
 
 Phase 2a is closed. Phase 2b (source-change lifecycle) is the active track. Estimate:
-~50–55% complete, 15–29 engineering days; implementation cadence resumed, but the
-percentage is unchanged because no ingestion-originated activation or
-generation-aware reader exists. Readiness depends on #654 wiring, the read-path
-inventory (#668), and the #655 support-ledger/#656 failure model. Do not start
-Analytics, Resolutor, UI #25, extraction features, or new connectors before
-source-change visibility and the maintenance E2E are complete. Preserve the
-frozen extraction baseline and restart-safety evidence.
+~55–60% complete, 12–26 engineering days, assuming #654 wiring does not reveal
+ingestion-pipeline rework; otherwise revert to ~50–55% / 15–29 days. The revision
+reflects closed #666/#669 evidence and adopted contract gates, not governance
+progress. Readiness depends on #654 wiring, the read-path inventory (#668), and
+the #655 support-ledger/#656 failure model. Do not start Analytics, Resolutor, UI
+#25, extraction features, or new connectors before source-change visibility and
+the maintenance E2E are complete. Preserve the frozen extraction baseline and
+restart-safety evidence.

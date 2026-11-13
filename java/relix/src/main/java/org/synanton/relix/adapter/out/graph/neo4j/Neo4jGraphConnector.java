@@ -23,6 +23,7 @@ import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
+import org.synanton.common.resolution.RetryReason;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.common.resolution.ContractViolationException;
@@ -572,7 +573,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                     ? cypher.writeReturning(promotionCypher, params)
                     : cypher.writeReturning(promotionCypher, params, promotionAbortPoint);
         } catch (RuntimeException e) {
-            throw new RetryableProcessingException("Canonical relation promotion transaction failed", e);
+            throw new RetryableProcessingException("Canonical relation promotion transaction aborted",
+                    e, RetryReason.TRANSACTION_ABORTED);
         }
         if (rows.isEmpty()) {
             if (sourceRevision != null) {

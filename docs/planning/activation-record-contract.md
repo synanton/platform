@@ -23,7 +23,7 @@ Transitions are idempotent and guarded by expected generation/state; no transiti
 
 Graph and search are projections of the activation record. Each carries an applied-state marker (`applied_generation`, `applied_state`).
 
-Read paths resolve currentness from the activation record, never from projection contents alone.
+Read paths resolve currentness from the activation record, never from projection contents alone. `SourceLifecycleRecord` is the per-request snapshot shape: resolve it once per request and pass the same record to graph and search; do not call `getCurrentGeneration` separately per subsystem.
 
 ## Recovery
 

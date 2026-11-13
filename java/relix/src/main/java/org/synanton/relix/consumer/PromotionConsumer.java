@@ -20,6 +20,8 @@ import org.synanton.common.resolution.ContractViolationException;
 import org.synanton.common.resolution.FailureClass;
 import org.synanton.common.resolution.FailureClassifier;
 import org.synanton.common.resolution.FenceBehindException;
+import org.synanton.common.resolution.RetryReason;
+import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.common.resolution.UnauthorizedGenerationException;
 import org.synanton.relix.config.PromotionConsumerProperties;
@@ -143,6 +145,7 @@ public final class PromotionConsumer {
                     && work.attemptCount() + 1 >= properties.maxAttemptsOrDefault();
             String outcome = e instanceof FenceBehindException ? "FENCE_BEHIND"
                     : attemptExhausted ? "EXHAUSTED_RETRY"
+                    : isAbortRecoverable(e) ? "ABORT_RECOVERABLE"
                     : failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE ? "RETRYABLE"
                     : "FAILED";
             registry.counter("promotion.outcome", "outcome", outcome).increment();
@@ -159,6 +162,11 @@ public final class PromotionConsumer {
         } finally {
             latency.record(Duration.between(claimedAt, clock.instant()));
         }
+    }
+
+    private static boolean isAbortRecoverable(Exception failure) {
+        return failure instanceof RetryableProcessingException retryable
+                && retryable.reason() == RetryReason.TRANSACTION_ABORTED;
     }
 
     private CanonicalRelation canonicalRelation(RelationPromotionResultRow row) {
