@@ -279,11 +279,11 @@ Any mismatch throws `StaleGenerationException` before any MERGE/SET. In particul
 
 ### 12. Promotion linearization point and the weak invariant (amendment 2026-11-12)
 
-The Neo4j transaction that checks `:SourceRevisionFence.accepted_generation` and commits the graph mutation is the **serialization point for promotion**. The Cassandra accepted-generation pre-check is a fast abort, not authorization. The implementation must not perform a Cassandra round-trip inside the Neo4j transaction.
+The Neo4j transaction that checks `:SourceRevisionFence.accepted_generation` and commits the graph mutation is the **serialization point for promotion**; the fence check and mutation are in one transaction. The Cassandra accepted-generation pre-check is a fast abort, not authorization. The implementation must not perform a Cassandra round-trip inside the Neo4j transaction.
 
 **Weak fence-arbitrated invariant:** a generation-G graph mutation may commit only if `G == G_Neo4jFence` and `G_Cassandra >= G` at pre-check. It may commit after Cassandra has accepted a higher generation when the Neo4j fence has not yet advanced. That is legal serialization: generation 2 first, generation 3 later; the lifecycle then supersedes generation 2.
 
-This holds only if (a) #655 retirement removes all evidence for the source with generation < current, using generation-aware semantics, and (b) #656 search filtering excludes superseded generations. Until both land, generation 2 may be briefly visible after generation 3 acceptance; that is a permitted intermediate state, bounded by the activation/retirement/search work, not a claim that authority freshness is enforced.
+This holds only if (a) #655 retirement removes all evidence for the source with generation < current, using generation-aware semantics, and (b) #656 search filtering excludes superseded generations. Until both land, generation 2 may be briefly visible after generation 3 acceptance; that is a permitted intermediate state, **not a claim that authority freshness is enforced**. No generation-aware reader/retirement/search filter exists yet; reconciliation cadence is not a reader guarantee, so the window is operationally bounded only by the arrival of #655/#656.
 
 Rejections are distinct: `StaleGenerationException` (fence newer; terminal), `FenceBehindException` (fence behind; retryable after reconciliation), and `UnauthorizedGenerationException` (Cassandra no longer accepts the operation generation; terminal). A CONVERGED reconciliation result is not promotion authorization.
 

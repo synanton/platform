@@ -1,6 +1,6 @@
 # Phase 2 — Knowledge Maintenance: inspection and plan
 
-**Status:** Historical inspection + current execution plan — updated 2026-11-12.
+**Status:** Historical inspection + current execution plan — updated 2026-11-13; main `f79e7d70`.
 **Epic:** #634 Knowledge Operations Foundation
 **Scope:** Phase 2 only. Phase 2a is complete; this document records the original inspection and the remaining 2b/2c execution path.
 **Current tree at inspection:** `e78255a6`. Phase 2a completed on `b062f843` with live evidence in `docs/acceptance/phase2-589-combined-matrix-2026-11-12.md`.
