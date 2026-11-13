@@ -19,6 +19,9 @@ import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.ContractViolationException;
 import org.synanton.common.resolution.FailureClass;
 import org.synanton.common.resolution.FailureClassifier;
+import org.synanton.common.resolution.FenceBehindException;
+import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.common.resolution.UnauthorizedGenerationException;
 import org.synanton.relix.config.PromotionConsumerProperties;
 import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.ingestioncache.claim.ClaimService;
@@ -46,6 +49,7 @@ public final class PromotionConsumer {
     private final Counter claimed;
     private final Counter completed;
     private final Counter failed;
+    private final Counter exhausted;
     private final Timer latency;
     private final DistributionSummary claimAge;
 
@@ -58,6 +62,7 @@ public final class PromotionConsumer {
         this.claimed = registry.counter("promotion.claimed");
         this.completed = registry.counter("promotion.completed");
         this.failed = registry.counter("promotion.failed");
+        this.exhausted = registry.counter("promotion.exhausted");
         this.latency = Timer.builder("promotion.latency").register(registry);
         this.claimAge = DistributionSummary.builder("promotion.claim_age")
                 .baseUnit("milliseconds").register(registry);
@@ -122,23 +127,35 @@ public final class PromotionConsumer {
             registry.counter("promotion.outcome", "outcome", "PROMOTED").increment();
         } catch (ContractViolationException e) {
             failed.increment();
+            String outcome = e instanceof StaleGenerationException ? "STALE_GENERATION"
+                    : e instanceof UnauthorizedGenerationException ? "UNAUTHORIZED_GENERATION"
+                    : "CONTRACT_VIOLATION";
+            registry.counter("promotion.outcome", "outcome", outcome).increment();
             claims.releasePromotion(work, workerId, FailureClass.CONTRACT_VIOLATION,
                     e.getMessage(), properties.maxAttemptsOrDefault(),
                     properties.retryBackoffSecondsOrDefault(), clock.instant());
-            log.warn("Promotion contract failure relation={}: {}",
-                    work.result().relationId(), e.toString());
+            log.warn("Promotion contract failure relation={} outcome={}: {}",
+                    work.result().relationId(), outcome, e.toString());
         } catch (Exception e) {
             FailureClass failureClass = FailureClassifier.classify(e);
             failed.increment();
-            if (failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE
-                    && work.attemptCount() + 1 < properties.maxAttemptsOrDefault()) {
+            boolean attemptExhausted = failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE
+                    && work.attemptCount() + 1 >= properties.maxAttemptsOrDefault();
+            String outcome = e instanceof FenceBehindException ? "FENCE_BEHIND"
+                    : attemptExhausted ? "EXHAUSTED_RETRY"
+                    : failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE ? "RETRYABLE"
+                    : "FAILED";
+            registry.counter("promotion.outcome", "outcome", outcome).increment();
+            if (attemptExhausted) {
+                exhausted.increment();
+            } else if (failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE) {
                 registry.counter("promotion.retried").increment();
             }
             claims.releasePromotion(work, workerId, failureClass, e.toString(),
                     properties.maxAttemptsOrDefault(),
                     properties.retryBackoffSecondsOrDefault(), clock.instant());
-            log.warn("Promotion failure relation={} class={}: {}",
-                    work.result().relationId(), failureClass, e.toString());
+            log.warn("Promotion failure relation={} class={} outcome={}: {}",
+                    work.result().relationId(), failureClass, outcome, e.toString());
         } finally {
             latency.record(Duration.between(claimedAt, clock.instant()));
         }
