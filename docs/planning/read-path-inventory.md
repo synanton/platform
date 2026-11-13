@@ -15,3 +15,22 @@
 | UI Search → Entity → Graph → Evidence | UI over graph/search APIs | No | No | #649b/#658 |
 
 Current user-visible state: a recently superseded source revision may still be visible as current in search, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, operationally unbounded until #655/#656.
+
+## Conformance
+
+| Inventory row | Required test | Status |
+|---|---|---|
+| Graph evidence/provenance | filters by per-request resolved generation | UNENFORCED (#649b) |
+| Entity/assertion views | filters by per-request resolved generation | UNENFORCED (#649b) |
+| Traversal/neighborhood API | filters by per-request resolved generation | UNENFORCED (#649b) |
+| Evidence/provenance panel | filters by per-request resolved generation | UNENFORCED (#649b) |
+| Search results/snippets | filters by per-request resolved generation | UNENFORCED (#649b) |
+| Cached/materialized views | filters by per-request resolved generation | UNENFORCED (#649b) |
+| Lifecycle/status endpoint | reports activation record, not projection contents | UNENFORCED (#657) |
+| UI Search → Entity → Graph → Evidence | same resolved set across graph/search | UNENFORCED (#649b) |
+
+A meta-test must fail if a new inventory row lacks a conformance test (#675).
+
+## Change control
+
+#655/#656 acceptance requires this inventory; owners must review changes and rerun the matrix.

@@ -34,3 +34,16 @@ Retries deduplicate on those identities. A failed Neo4j transaction commits noth
 ## Metrics
 
 Per source: terminal outcomes by class, retryable outcomes, exhausted retries, last authorized generation, last reconciliation sync/drift. Labels distinguish `STALE`, `UNAUTHORIZED`, `FENCE_BEHIND`, `ABORT_RECOVERABLE`, reconciliation failure, and exhausted retry.
+
+## Conformance
+
+| Clause | Test | Status |
+|---|---|---|
+| Terminal outcomes are never retried | terminal-outcome-attempt-count test | UNENFORCED (#675) |
+| Retryable outcomes bounded by deadline/max attempts | forced-failure exhaustion test | UNENFORCED (#675) |
+| Exhausted retry is a distinct metric/outcome | metric-label test | UNENFORCED (#675) |
+| Idempotency key stable across attempts | same-key-one-write test | UNENFORCED (#675) |
+
+## Change control
+
+Changes require review from owners of #666, #667, and #648; re-run the conformance matrix. Passing tests against an older contract do not authorize the new contract.

@@ -21,3 +21,17 @@ Read paths resolve currentness from the activation record, never from projection
 Recovery replays projections to match the activation record. It does not reconcile two stores that each claim authority.
 
 For #656 failure semantics, if graph activation commits and search replacement fails, reads must not present stale search content as current; the read boundary serves the graph projection or hides the source's search results until search replay reaches the activation record. The chosen rule must be explicit and observable.
+
+## Conformance
+
+| Clause | Test | Status |
+|---|---|---|
+| Allowed transitions are idempotent under replay | transition replay test per state | UNENFORCED (#675) |
+| Disallowed transitions are rejected | negative transition test | UNENFORCED (#675) |
+| Interrupted transition recovers to defined state | injection/recovery test | UNENFORCED (#675) |
+| Reads resolve from activation record, not projections | projection-marker test | UNENFORCED (#675) |
+| Failed search replacement cannot expose stale as current | #656 failure-model test | UNENFORCED (#656/#649b) |
+
+## Change control
+
+Changes require #654–#656 owners; re-run the conformance matrix.
