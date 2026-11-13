@@ -13,8 +13,11 @@ import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.relix.identity.SourceFenceAdvance;
+import org.synanton.relix.identity.SourceFenceKey;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
+import org.synanton.relix.adapter.out.metadata.Neo4jSourceFenceStore;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.PromotionIds;
 import org.synanton.relix.identity.UnsupportedGraphIdException;
@@ -294,24 +297,27 @@ class Neo4jGraphCanonicalPortIntegrationTest {
                 .hasCauseInstanceOf(InjectedAbort.class);
 
         // Independent real-store observables before retry, not the exception alone.
-        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort"))
-                .containsOnly(Map.entry("anchors", 0L), Map.entry("relations", 0L),
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort", relation))
+                .containsOnly(Map.entry("assertions", 0L), Map.entry("provenance_keyed", 0L),
+                        Map.entry("anchors", 0L), Map.entry("relations", 0L),
                         Map.entry("evidence", 0L), Map.entry("extracted_relations", 0L),
                         Map.entry("supports", 0L), Map.entry("slots", 0L));
 
         PromotionResult retried = connector.promoteRelation(identity, relation,
                 new SourceRevisionIdentity(tenant, sourceId, 2));
         assertThat(retried).isEqualTo(new PromotionResult(1, 1, 1));
-        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort"))
-                .containsOnly(Map.entry("anchors", 1L), Map.entry("relations", 1L),
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort", relation))
+                .containsOnly(Map.entry("assertions", 1L), Map.entry("provenance_keyed", 1L),
+                        Map.entry("anchors", 1L), Map.entry("relations", 1L),
                         Map.entry("evidence", 1L), Map.entry("extracted_relations", 1L),
                         Map.entry("supports", 1L), Map.entry("slots", 2L));
 
         PromotionResult duplicate = connector.promoteRelation(identity, relation,
                 new SourceRevisionIdentity(tenant, sourceId, 2));
         assertThat(duplicate).isEqualTo(new PromotionResult(0, 0, 1));
-        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort"))
-                .containsOnly(Map.entry("anchors", 1L), Map.entry("relations", 1L),
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort", relation))
+                .containsOnly(Map.entry("assertions", 1L), Map.entry("provenance_keyed", 1L),
+                        Map.entry("anchors", 1L), Map.entry("relations", 1L),
                         Map.entry("evidence", 1L), Map.entry("extracted_relations", 1L),
                         Map.entry("supports", 1L), Map.entry("slots", 2L));
     }
@@ -351,10 +357,62 @@ class Neo4jGraphCanonicalPortIntegrationTest {
         assertThatThrownBy(() -> connector.promoteRelation(identity, relation,
                 new SourceRevisionIdentity(tenant, sourceId, 2)))
                 .isInstanceOf(StaleGenerationException.class);
-        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort-stale"))
-                .containsOnly(Map.entry("anchors", 0L), Map.entry("relations", 0L),
+        assertThat(promotionArtifacts(tenant, canonicalId, evidenceId, "relation-abort-stale", relation))
+                .containsOnly(Map.entry("assertions", 0L), Map.entry("provenance_keyed", 0L),
+                        Map.entry("anchors", 0L), Map.entry("relations", 0L),
                         Map.entry("evidence", 0L), Map.entry("extracted_relations", 0L),
                         Map.entry("supports", 0L), Map.entry("slots", 0L));
+    }
+
+    @Test
+    void concurrentFenceAdvanceCannotOutrunInFlightGenerationTwoPromotion() throws Exception {
+        String tenant = "tenant-fence-in-flight";
+        String sourceId = "source-fence-in-flight";
+        seedResolution(tenant, "subject-in-flight", "entity-subject-in-flight");
+        seedResolution(tenant, "object-in-flight", "entity-object-in-flight");
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 2
+                """, Map.of("tenant", tenant, "sourceId", sourceId));
+        GraphIdentity identity = GraphIdentity.canonical(tenant, "v1");
+        CanonicalRelation relation = relation(tenant, "relation-in-flight", "revision-in-flight",
+                "subject-in-flight", "entity-subject-in-flight", "object-in-flight",
+                "entity-object-in-flight", "evidence-in-flight", sourceId, 2);
+        CountDownLatch staged = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicBoolean injected = new AtomicBoolean();
+        Neo4jGraphConnector blocking = new Neo4jGraphConnector(mock(GraphLoader.class), cypher, () -> {
+            if (injected.compareAndSet(false, true)) {
+                staged.countDown();
+                try {
+                    if (!release.await(10, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("timed out waiting to release promotion");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }
+        });
+        Neo4jSourceFenceStore fences = new Neo4jSourceFenceStore(cypher);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<PromotionResult> promotion = pool.submit(() -> blocking.promoteRelation(identity, relation,
+                    new SourceRevisionIdentity(tenant, sourceId, 2)));
+            assertThat(staged.await(10, TimeUnit.SECONDS)).isTrue();
+            Future<SourceFenceAdvance> advance = pool.submit(() ->
+                    fences.advance(new SourceFenceKey(tenant, sourceId), 3));
+            Thread.sleep(250);
+            assertThat(advance.isDone()).as("fence advance must wait for the in-flight promotion lock").isFalse();
+            release.countDown();
+            assertThat(promotion.get(30, TimeUnit.SECONDS)).isEqualTo(new PromotionResult(1, 1, 1));
+            assertThat(advance.get(30, TimeUnit.SECONDS).generation()).isEqualTo(3);
+        } finally {
+            release.countDown();
+            pool.shutdownNow();
+        }
+        assertThat(relationEvidenceCount(tenant, "relation-in-flight")).isEqualTo(1);
+        assertThat(fences.read(new SourceFenceKey(tenant, sourceId))).contains(3L);
     }
 
     @Test
@@ -422,8 +480,24 @@ class Neo4jGraphCanonicalPortIntegrationTest {
     }
 
     private static Map<String, Long> promotionArtifacts(String tenant, String canonicalId,
-                                                        String evidenceId, String extractedRelationId) {
+                                                        String evidenceId, String extractedRelationId,
+                                                        CanonicalRelation relation) {
         Map<String, Long> counts = new java.util.LinkedHashMap<>();
+        counts.put("assertions", count("""
+                MATCH (s:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[r:REL {tenant_id: $tenant, canonical_relation_id: $canonicalId, predicate: 'requires'}]->
+                      (o:Entity {tenant: $tenant, id: $objectEntityId})
+                RETURN count(r) AS c
+                """, Map.of("tenant", tenant, "canonicalId", canonicalId,
+                "subjectEntityId", relation.subjectEntityId(), "objectEntityId", relation.objectEntityId())));
+        counts.put("provenance_keyed", count("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId,
+                      source_version_id: $sourceVersionId, source_id: $sourceId,
+                      generation: $generation, extracted_relation_id: $extractedRelationId})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "evidenceId", evidenceId,
+                "sourceVersionId", relation.sourceVersionId(), "sourceId", relation.sourceId(),
+                "generation", relation.generation(), "extractedRelationId", extractedRelationId)));
         counts.put("anchors", count("""
                 MATCH (a:CanonicalRelationAnchor {tenant_id: $tenant, canonical_relation_id: $canonicalId})
                 RETURN count(a) AS c

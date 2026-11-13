@@ -515,6 +515,10 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             String promotionCypher = """
                 OPTIONAL MATCH (fence:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
                 WITH fence
+                FOREACH (ignored IN CASE WHEN fence IS NULL THEN [] ELSE [1] END |
+                    SET fence.accepted_generation = fence.accepted_generation
+                )
+                WITH fence
                 WHERE $expectedGeneration IS NULL
                    OR (fence IS NOT NULL AND fence.accepted_generation = $expectedGeneration)
                 WITH fence, [$subjectMentionId, $objectMentionId] AS mentionIds
@@ -547,6 +551,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 SET ev.canonical_relation_id = $canonicalRelationId,
                     ev.source_version_id = $sourceVersionId,
                     ev.extracted_relation_id = $extractedRelationId,
+                    ev.source_id = $sourceId,
+                    ev.generation = $expectedGeneration,
                     ev.evidence_chunk_id = $evidenceChunkId,
                     ev.evidence_offset_start = $offsetStart,
                     ev.evidence_offset_end = $offsetEnd
@@ -554,6 +560,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 SET xr.source_version_id = $sourceVersionId,
                     xr.subject_mention_id = $subjectMentionId,
                     xr.object_mention_id = $objectMentionId,
+                    xr.source_id = $sourceId,
+                    xr.generation = $expectedGeneration,
                     xr.predicate = $predicate
                 MERGE (xr)-[sup:SUPPORTS {tenant_id: $tenant}]->(ev)
                 RETURN CASE WHEN existingRel IS NULL THEN 1 ELSE 0 END AS relations_created,

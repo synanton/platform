@@ -1,25 +1,25 @@
 # Milestone dashboard
 
-**Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write-safety abort/retry gate (#666) closed; activation correctness and read visibility correctness not implemented. Phase 2b planning estimate remains ~50–55% (15–29 engineering days); contract artifacts improved confidence, but remaining lifecycle volume is unchanged.
+**Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write-safety abort/retry gate (#666) is closed; activation core is implemented but not wired into ingestion; read visibility is not implemented. Estimate remains ~50–55% (15–29 engineering days); implementation cadence resumed, but remaining lifecycle volume is unchanged.
 
 This is the PR-backed view of what is implemented and what is still open. It is
 not a feature roadmap. Current main: see [main commit history](https://github.com/synanton/platform/commits/main); this dashboard intentionally does not pin a merge hash.
 
-**Last updated:** 2026-11-13 by PR #684. Status reflects main at the time of that edit; see commit history for changes since.
+**Last updated:** 2026-11-13 by PR #685. Status reflects main at the time of that edit; see commit history for changes since.
 
 ## Phase 2b status model
 
 | State | Meaning | Today |
 |---|---|---|
-| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 abort/retry gate closed (#681); #667 outcome metrics merged (#680); terminal-attempt counting and `ABORT_RECOVERABLE` metrics still UNENFORCED |
-| **Activation correctness** | A durable record identifies the active source revision and supports recovery | Activation record/store implemented (#669); fence-guarded `ActivateRevision` core merged (#654 partial); staged ingestion wiring still open |
+| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 abort/retry gate closed (#681), with the concurrent fence/abort interaction proven in #685; #667 remains partial: metrics merged (#680), but `RECONCILIATION_FAILURE` and `ABORT_RECOVERABLE` are not emitted |
+| **Activation correctness** | A durable record identifies the active source revision and supports recovery | Activation record/store (#669) and fence-guarded `ActivateRevision` (#684) implemented; no ingestion-originated activation yet (#654 wiring) |
 | **Read visibility correctness** | Every read path exposes only knowledge valid under that activation state | Not implemented (#668, #655/#656, #649b) |
 
-Write safety is substantially implemented and the activation record/store exists; activation is not yet wired into ingestion, so the temporary-visibility window remains **operationally unbounded** until #655/#656.
+Write safety is substantially implemented. The activation mechanism exists, but no revision is activated through the production ingestion path. That is why the temporary-visibility window remains **operationally unbounded**: the structural unlock is #654 wiring, not #655 alone.
 
-**User-visible today:** a recently superseded source revision may still appear as current in search results, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, not a filtering bug, and it is operationally unbounded.
+**User-visible today:** a recently superseded source revision may still appear as current in search results, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, not a filtering bug. It remains operationally unbounded because the activation core is not invoked from ingestion and no reader is generation-aware.
 
-Sequencing: #666 (safety) is closed; #669 activation record/store is merged; #654 activation core is merged but staged ingestion/search wiring remains; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
+Sequencing: #666 and #669 are closed. #654 remains open for generation assignment at revision acceptance, projection-transition wiring, and ingestion-originated `ActivateRevision`; its named observables are pinned in the ticket. #655 and #656 are sequential to merge but must be drafted and reviewed together against the finalized activation/search contracts. No single ticket is an end-to-end lifecycle delivery; #654 + #655 + #656 + #649b are required, and #658 proves them.
 
 ## Implemented and evidenced
 
@@ -52,18 +52,28 @@ Sequencing: #666 (safety) is closed; #669 activation record/store is merged; #65
   (#646), promotion-row identity (#647), fence readiness (#650), cross-store
   reconciliation (#644), and runtime promotion fence (#648) are merged.
   #649a safety work is closed: delayed-generation-2 (#665), concurrent-generation
-  (#672), and abort/retry (#666/#681) regressions merged. #667 outcome metrics
-  merged (#680); terminal-attempt counting and `ABORT_RECOVERABLE` metrics remain
-  UNENFORCED. #649b is blocked on #655/#656.
+  (#672), abort/retry (#666/#681), and concurrent fence/abort serialization
+  (#685) regressions merged. #667 is partial: `promotion.outcome` and
+  `promotion.exhausted` are live (#680), but `RECONCILIATION_FAILURE` and
+  `ABORT_RECOVERABLE` are not emitted; `UNAUTHORIZED_GENERATION` is live. #649b
+  is blocked on #655/#656.
 - **Known temporary-visibility window** — under the weak invariant, generation 2
   may be committed and briefly visible as current after generation 3 is
-  accepted. It is documented but **not operationally closed and has no interim
-  bound**; no generation-aware reader/retirement/search filter exists.
-  #667 merged and adds observability; #655/#656 close the window.
+  accepted. It has no interim bound because the activation core is not invoked
+  by ingestion and no generation-aware reader/retirement/search filter exists.
+  #654 wiring is the structural unlock; #655/#656 enforce visibility; #649b
+  verifies it row by row.
 - **Read-path/activation design** — #668 inventory + per-request current-generation
-  resolution; #669 authoritative activation record and projection recovery.
-- **2b lifecycle tickets** — staged activation (#654), retirement (#655),
+  resolution; #669 activation record is closed. #675 is split: core meta-tests
+  and change control are the serial gate; per-clause tests ride with their
+  owning ticket.
+- **2b lifecycle tickets** — staged activation wiring (#654), retirement (#655),
   search replacement (#656), lifecycle API (#657), maintenance E2E (#658).
+  #655/#656 are coupled: retirement consumes the activation record's currentness;
+  search replacement participates in the activation protocol.
+- **#678** — scope: automation/sidecar write paths, schema-init, scheduler/status
+  emitters against branch protection/RBAC; owner: platform automation; target:
+  before #658. Audit is not complete.
 - **#650** — closed: Neo4j readiness requires Bolt + full fence-schema inventory; Relix startup fails closed. Two maintenance restarts passed; #670 covers failure-mode schema-init coverage.
 - **#609/#611** — extraction quality and post-activation reliability epic;
   deferred until the source-change lifecycle is established.
@@ -80,8 +90,10 @@ Sequencing: #666 (safety) is closed; #669 activation record/store is merged; #65
 ## What not to do
 
 Phase 2a is closed. Phase 2b (source-change lifecycle) is the active track. Estimate:
-~50–55% complete, 15–29 engineering days; readiness forecast depends on the
-read-path inventory (#668) and the #655 support-ledger/#656 failure model. Do not
-start Analytics, Resolutor, UI #25, extraction features, or new connectors before
+~50–55% complete, 15–29 engineering days; implementation cadence resumed, but the
+percentage is unchanged because no ingestion-originated activation or
+generation-aware reader exists. Readiness depends on #654 wiring, the read-path
+inventory (#668), and the #655 support-ledger/#656 failure model. Do not start
+Analytics, Resolutor, UI #25, extraction features, or new connectors before
 source-change visibility and the maintenance E2E are complete. Preserve the
 frozen extraction baseline and restart-safety evidence.

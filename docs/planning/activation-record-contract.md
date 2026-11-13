@@ -52,6 +52,8 @@ Status vocabulary: `ENFORCED` = conformance test exists and passes with a test r
 | Activation failure is `ACTIVATION_PARTIAL` and repairable | `ActivateRevisionIntegrationTest::activationFailureIsPartialAndRepairable` | ENFORCED |
 | Failed search replacement cannot expose stale as current | #656 failure-model test | UNENFORCED (#656/#649b) |
 
+Deferred register: none. Every current activation clause is Phase-2b scope; the only UNENFORCED row is owned by #656/#649b.
+
 ## Change control
 
 Changes require #654–#656 owners; re-run the conformance matrix.
