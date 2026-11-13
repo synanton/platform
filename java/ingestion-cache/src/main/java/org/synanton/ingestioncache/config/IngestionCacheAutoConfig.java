@@ -2,6 +2,8 @@ package org.synanton.ingestioncache.config;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
+import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
+import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,5 +33,11 @@ public class IngestionCacheAutoConfig {
     @ConditionalOnMissingBean
     public IngestionCacheClient ingestionCacheClient(CqlSession session) {
         return new IngestionCacheClient(session);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SourceActivationStore sourceActivationStore(CqlSession session) {
+        return new CassandraSourceActivationStore(session);
     }
 }
