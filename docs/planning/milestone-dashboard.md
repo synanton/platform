@@ -15,6 +15,8 @@ not a feature roadmap. Current main: `4ca4ca88`.
 
 Only write safety is substantially implemented. The temporary-visibility window is documented but **operationally unbounded** until #655/#656.
 
+**User-visible today:** a recently superseded source revision may still appear as current in search results, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, not a filtering bug, and it is operationally unbounded.
+
 Sequencing: #666 (safety) precedes #654; #667 can run in parallel with #654; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
 
 ## Implemented and evidenced
