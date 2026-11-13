@@ -21,8 +21,10 @@ Retries deduplicate on those identities. A failed Neo4j transaction commits noth
 | `STALE_GENERATION` | No | Fence is newer; terminal. |
 | `UNAUTHORIZED_GENERATION` | No | Cassandra no longer accepts the operation generation; terminal. |
 | `FENCE_BEHIND` | Yes, after reconciliation | Do not spin; wait for/trigger reconciliation. |
-| `ABORT_RECOVERABLE` | Yes, immediate | Transaction aborted after fence check with no commit. |
-| infrastructure/unknown | Yes, bounded | Existing `RetryableProcessingException` classification. |
+| `ABORT_RECOVERABLE` | Yes, immediate | Transaction aborted before commit with no committed evidence; distinct from fence-behind waiting. |
+| infrastructure/unknown (`RETRYABLE`) | Yes, bounded | Existing `RetryableProcessingException` classification. |
+| `CONTRACT_VIOLATION` | No | Invariant violation; alert-worthy, expected never to fire in normal production. |
+| `FAILED` | No | Permanent failure not classified as stale, unauthorized, or contract violation. |
 
 ## Bounds and backoff
 
@@ -36,7 +38,7 @@ Retries deduplicate on those identities. A failed Neo4j transaction commits noth
 
 Per source: terminal outcomes by class, retryable outcomes, exhausted retries, last authorized generation, last reconciliation sync/drift.
 
-Implemented `promotion.outcome` labels: `PROMOTED`, `STALE_GENERATION`, `UNAUTHORIZED_GENERATION`, `CONTRACT_VIOLATION`, `FENCE_BEHIND`, `RETRYABLE`, `EXHAUSTED_RETRY`, `FAILED`. `ABORT_RECOVERABLE` remains UNENFORCED pending #666. `promotion.exhausted` is the operation-level exhausted counter.
+Implemented `promotion.outcome` labels: `PROMOTED`, `STALE_GENERATION`, `UNAUTHORIZED_GENERATION`, `CONTRACT_VIOLATION`, `FENCE_BEHIND`, `ABORT_RECOVERABLE`, `RETRYABLE`, `EXHAUSTED_RETRY`, `FAILED`. `promotion.exhausted` is the operation-level exhausted counter. `RECONCILIATION_FAILURE` is not a promotion outcome label; reconciliation status is exposed separately by #657.
 
 
 Status vocabulary: `ENFORCED` = conformance test exists and passes with a test reference; `UNENFORCED` = in Phase-2b scope, test owed and must reach zero before #658; `DEFERRED` = outside Phase 2b, requiring rationale, owner, revisit trigger, and an exclusion acknowledgment; `DROPPED` = deliberately out of scope, with a decision date.
@@ -56,7 +58,9 @@ Status vocabulary: `ENFORCED` = conformance test exists and passes with a test r
 | `promotion.exhausted` increments once per operation | `PromotionConsumerTest::exhaustedRetryEmitsDistinctOutcome` | ENFORCED |
 | `FENCE_BEHIND` does not increment exhausted | `PromotionConsumerTest::fenceBehindEmitsRetryableOutcome` | ENFORCED |
 | Idempotency key stable across attempts | `Neo4jGraphCanonicalPortIntegrationTest::abortedPromotionAfterFenceAndStagingLeavesNoEvidenceAndRetryWritesOnce` | ENFORCED |
-| `ABORT_RECOVERABLE` classification/metric | none | UNENFORCED (#666) |
+| `ABORT_RECOVERABLE` classification/metric | `PromotionConsumerTest::abortedPromotionEmitsAbortRecoverableOutcome` | ENFORCED |
+| `RECONCILIATION_FAILURE` is omitted from promotion outcomes | reconciliation status owned by #657 | DROPPED: decision=2026-11-13; rationale=reconciliation has its own status surface; owner=#657 |
+| Outcome label taxonomy matches the contract | `PromotionConsumerTest` outcome-label tests | ENFORCED |
 
 ## Change control
 
@@ -69,3 +73,5 @@ Changes require review from owners of #666, #667, and #648; re-run the conforman
 #666 adds the named post-staging/pre-commit abort checkpoint and real-store cleanup/idempotency observables; terminal-outcome attempt counting and ABORT_RECOVERABLE metrics remain UNENFORCED.
 
 #666 concurrency follow-up: the promotion transaction now write-locks the fence before re-checking it, and the test asserts a concurrent generation-3 advance waits for the in-flight generation-2 transaction. The abort injection point is after the fence check and full staging, before commit; cleanup is asserted through real-store counts, not return values.
+
+#667 label reconciliation 2026-11-13: `ABORT_RECOVERABLE` is now emitted for `RetryReason.TRANSACTION_ABORTED`; `RETRYABLE` remains infrastructure/unknown; `CONTRACT_VIOLATION` and `FAILED` are explicitly in the taxonomy. `RECONCILIATION_FAILURE` is deliberately dropped from promotion outcomes and moved to reconciliation status (#657).

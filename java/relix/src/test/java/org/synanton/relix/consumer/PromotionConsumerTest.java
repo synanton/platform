@@ -10,6 +10,7 @@ import org.synanton.common.resolution.FailureClass;
 import org.synanton.common.resolution.FenceBehindException;
 import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.common.resolution.PromotionResult;
+import org.synanton.common.resolution.RetryReason;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
@@ -120,6 +121,22 @@ class PromotionConsumerTest {
     }
 
     @Test
+    void abortedPromotionEmitsAbortRecoverableOutcome() {
+        RelationPromotionWorkRow work = work();
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        org.mockito.Mockito.doThrow(new RetryableProcessingException("transaction aborted",
+                        new IllegalStateException("injected"), RetryReason.TRANSACTION_ABORTED))
+                .when(promoter).promoteRelation(any());
+
+        consumer.poll();
+
+        assertThat(registry.get("promotion.outcome").tag("outcome", "ABORT_RECOVERABLE")
+                .counter().count()).isEqualTo(1);
+        assertThat(registry.get("promotion.exhausted").counter().count()).isZero();
+    }
+
+    @Test
     void exhaustedRetryEmitsDistinctOutcome() {
         RelationPromotionWorkRow work = workWithAttempts(4);
         when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
@@ -158,6 +175,22 @@ class PromotionConsumerTest {
                 eq(FailureClass.CONTRACT_VIOLATION), anyString(), eq(5), eq(30L), any());
         verify(claims, never()).completePromotion(any(), anyString(), any());
         verify(promoter, never()).promoteRelation(any());
+        assertThat(registry.get("promotion.outcome").tag("outcome", "CONTRACT_VIOLATION")
+                .counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void unexpectedNonRetryableFailureEmitsFailedOutcome() {
+        RelationPromotionWorkRow work = work();
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("unexpected"))
+                .when(promoter).promoteRelation(any());
+
+        consumer.poll();
+
+        assertThat(registry.get("promotion.outcome").tag("outcome", "FAILED")
+                .counter().count()).isEqualTo(1);
     }
 
     private static RelationPromotionWorkRow work() {
