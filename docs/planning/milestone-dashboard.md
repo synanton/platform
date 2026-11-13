@@ -3,7 +3,7 @@
 **Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write safety substantially implemented; activation correctness and read visibility correctness not implemented. Phase 2b planning estimate remains ~50–55% (15–29 engineering days); contract artifacts improved confidence, but remaining lifecycle volume is unchanged.
 
 This is the PR-backed view of what is implemented and what is still open. It is
-not a feature roadmap. Current main: `c84a1bc2` (updated automatically on merge; see `.github/workflows/dashboard-main-hash.yml`).
+not a feature roadmap. Current main: see [main commit history](https://github.com/synanton/platform/commits/main); this dashboard intentionally does not pin a merge hash.
 
 ## Phase 2b status model
 
