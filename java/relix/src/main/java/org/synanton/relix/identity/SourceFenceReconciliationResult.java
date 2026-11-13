@@ -6,6 +6,7 @@ public record SourceFenceReconciliationResult(
         SourceFenceKey key,
         SourceFenceStatus status,
         Long acceptedGeneration,
+        Long evaluatedGeneration,
         Long neo4jGeneration,
         Instant observedAt,
         String detail) {}

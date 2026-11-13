@@ -64,6 +64,36 @@ class SourceFenceReconcilerTest {
     }
 
     @Test
+    void lostResponseRetryConvergesWithoutDuplicateInitialization() {
+        authority.value = 3L;
+
+        assertThat(reconciler().reconcile(KEY).status()).isEqualTo(SourceFenceStatus.INITIALIZED);
+        assertThat(reconciler().reconcile(KEY).status()).isEqualTo(SourceFenceStatus.CONVERGED);
+        assertThat(store.writes).isEqualTo(1);
+    }
+
+    @Test
+    void staleAuthoritySnapshotIsDistinguishedFromCurrentConvergence() {
+        authority.sequence = new long[]{2, 3};
+
+        SourceFenceReconciliationResult result = reconciler().reconcile(KEY);
+
+        assertThat(result.status()).isEqualTo(SourceFenceStatus.STALE_SNAPSHOT);
+        assertThat(result.evaluatedGeneration()).isEqualTo(2L);
+        assertThat(result.acceptedGeneration()).isEqualTo(3L);
+        assertThat(result.neo4jGeneration()).isEqualTo(2L);
+    }
+
+    @Test
+    void generationSequencesConvergeMonotonically() {
+        for (long generation : new long[]{1, 5, 3, 7}) {
+            authority.value = generation;
+            reconciler().reconcile(KEY);
+        }
+        assertThat(store.generation).isEqualTo(7L);
+    }
+
+    @Test
     void unavailableStoreFailsClosed() {
         authority.value = 3L;
         store.failure = new IllegalStateException("neo4j down");
@@ -79,9 +109,14 @@ class SourceFenceReconcilerTest {
     private static final class FakeAuthority implements SourceGenerationAuthority {
         private boolean present = true;
         private long value = 1L;
+        private long[] sequence;
+        private int calls;
 
         @Override
         public Optional<Long> acceptedGeneration(SourceFenceKey key) {
+            if (sequence != null) {
+                return Optional.of(sequence[Math.min(calls++, sequence.length - 1)]);
+            }
             return present ? Optional.of(value) : Optional.empty();
         }
     }
@@ -100,13 +135,14 @@ class SourceFenceReconcilerTest {
         }
 
         @Override
-        public long advance(SourceFenceKey key, long value) {
+        public SourceFenceAdvance advance(SourceFenceKey key, long value) {
             if (failure != null) {
                 throw failure;
             }
             writes++;
+            boolean created = generation == null;
             generation = generation == null ? value : Math.max(generation, value);
-            return generation;
+            return new SourceFenceAdvance(generation, created);
         }
     }
 }

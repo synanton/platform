@@ -14,6 +14,7 @@ import org.synanton.relix.identity.MissingCanonicalGraphException;
 import org.synanton.relix.identity.ProjectionProvisioner;
 import org.synanton.relix.identity.ProjectionProvisioningOutcome;
 import org.synanton.relix.identity.ProjectionProvisioningResult;
+import org.synanton.relix.identity.SourceFenceAdvance;
 import org.synanton.relix.identity.SourceFenceKey;
 import org.synanton.relix.syntology.ActiveOntologyVersion;
 import org.synanton.relix.syntology.SyntologyActiveVersionClient;
@@ -137,11 +138,44 @@ class Neo4jCanonicalGraphMetadataIntegrationTest {
         Neo4jSourceFenceStore fences = new Neo4jSourceFenceStore(cypher);
 
         assertThat(fences.read(key)).isEmpty();
-        assertThat(fences.advance(key, 3)).isEqualTo(3);
-        assertThat(fences.advance(key, 3)).isEqualTo(3);
-        assertThat(fences.advance(key, 2)).isEqualTo(3);
-        assertThat(fences.advance(key, 5)).isEqualTo(5);
+        assertThat(fences.advance(key, 3).generation()).isEqualTo(3);
+        assertThat(fences.advance(key, 3).generation()).isEqualTo(3);
+        assertThat(fences.advance(key, 2).generation()).isEqualTo(3);
+        assertThat(fences.advance(key, 5).generation()).isEqualTo(5);
         assertThat(fences.read(key)).contains(5L);
+    }
+
+    @Test
+    void concurrentSourceFenceAdvanceHasOneCreatorAndNoDuplicates() throws Exception {
+        SourceFenceKey key = new SourceFenceKey("tenant-fence-concurrent", "source-fence-concurrent");
+        cypher.write("""
+                CREATE CONSTRAINT source_revision_fence_unique IF NOT EXISTS
+                FOR (f:SourceRevisionFence) REQUIRE (f.tenant_id, f.source_id) IS UNIQUE
+                """, Map.of());
+        Neo4jSourceFenceStore fences = new Neo4jSourceFenceStore(cypher);
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<SourceFenceAdvance> first = () -> {
+                start.await(10, TimeUnit.SECONDS);
+                return fences.advance(key, 5);
+            };
+            Callable<SourceFenceAdvance> second = () -> {
+                start.await(10, TimeUnit.SECONDS);
+                return fences.advance(key, 5);
+            };
+            var a = pool.submit(first);
+            var b = pool.submit(second);
+            start.countDown();
+            SourceFenceAdvance one = a.get(30, TimeUnit.SECONDS);
+            SourceFenceAdvance two = b.get(30, TimeUnit.SECONDS);
+            assertThat(List.of(one.created(), two.created())).containsExactlyInAnyOrder(true, false);
+            assertThat(one.generation()).isEqualTo(5);
+            assertThat(two.generation()).isEqualTo(5);
+            assertThat(fences.read(key)).contains(5L);
+        } finally {
+            pool.shutdownNow();
+        }
     }
 
     @Test

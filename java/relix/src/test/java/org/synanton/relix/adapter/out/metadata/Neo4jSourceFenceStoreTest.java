@@ -31,6 +31,6 @@ class Neo4jSourceFenceStoreTest {
         when(cypher.writeReturning(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyMap()))
                 .thenReturn(List.of(Map.of("generation", 3L)));
 
-        assertThat(store.advance(key, 3L)).isEqualTo(3L);
+        assertThat(store.advance(key, 3L).generation()).isEqualTo(3L);
     }
 }
