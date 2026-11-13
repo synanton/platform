@@ -3,17 +3,19 @@
 **Status:** Phase 2a complete (live K8s gate passed). Phase 2b in progress: write safety substantially implemented; activation correctness and read visibility correctness not implemented. Phase 2b planning estimate remains ~50–55% (15–29 engineering days).
 
 This is the PR-backed view of what is implemented and what is still open. It is
-not a feature roadmap. Current main: `61bc6419`.
+not a feature roadmap. Current main: `4ca4ca88`.
 
 ## Phase 2b status model
 
 | State | Meaning | Today |
 |---|---|---|
-| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665); #666/#667 finish concurrency, abort, retry/metrics |
+| **Write safety** | Stale graph mutations rejected after fence advancement | Substantially implemented (#644/#648/#665/#672); #666 open for abort/retry; #667 retry/metrics |
 | **Activation correctness** | A durable record identifies the active source revision and supports recovery | Not implemented (#669) |
 | **Read visibility correctness** | Every read path exposes only knowledge valid under that activation state | Not implemented (#668, #655/#656, #649b) |
 
 Only write safety is substantially implemented. The temporary-visibility window is documented but **operationally unbounded** until #655/#656.
+
+**User-visible today:** a recently superseded source revision may still appear as current in search results, entity/assertion views, and evidence panels. This is the documented temporary-visibility window, not a filtering bug, and it is operationally unbounded.
 
 Sequencing: #666 (safety) precedes #654; #667 can run in parallel with #654; #668/#669 are drafted/reviewed in parallel with #654 and become hard prerequisites for #655/#656 acceptance.
 
@@ -47,9 +49,9 @@ Sequencing: #666 (safety) precedes #654; #667 can run in parallel with #654; #66
 - **Phase 2b** — source-change lifecycle. ADR-029 locked; identity plumbing
   (#646), promotion-row identity (#647), fence readiness (#650), cross-store
   reconciliation (#644), and runtime promotion fence (#648) are merged.
-  #649a is partial: delayed-generation-2 graph regression merged (#665);
-  concurrency/abort (#666) and retry/metrics (#667) remain. #649b is blocked on
-  #655/#656.
+  #649a is partial: delayed-generation-2 (#665) and concurrent-generation (#672)
+  regressions merged; #666 remains open for mid-transaction abort/retry, and
+  #667 for retry/metrics. #649b is blocked on #655/#656.
 - **Known temporary-visibility window** — under the weak invariant, generation 2
   may be committed and briefly visible as current after generation 3 is
   accepted. It is documented but **not operationally closed and has no interim
