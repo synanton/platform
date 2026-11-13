@@ -17,13 +17,18 @@ import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jSchemaVerifier;
 import org.synanton.relix.adapter.out.metadata.InMemoryCanonicalGraphMetadataStore;
+import org.synanton.relix.adapter.out.metadata.CassandraSourceGenerationAuthority;
 import org.synanton.relix.adapter.out.metadata.Neo4jCanonicalGraphMetadataStore;
+import org.synanton.relix.adapter.out.metadata.Neo4jSourceFenceStore;
 import org.synanton.relix.graph.GraphConnector;
 import org.synanton.relix.identity.CanonicalGraphIdentityResolver;
 import org.synanton.relix.identity.CanonicalGraphMetadataBootstrap;
 import org.synanton.relix.identity.CanonicalGraphMetadataStore;
 import org.synanton.relix.identity.GraphIdentityResolver;
 import org.synanton.relix.identity.ProjectionProvisioner;
+import org.synanton.relix.identity.SourceFenceReconciler;
+import org.synanton.relix.identity.SourceFenceStore;
+import org.synanton.relix.identity.SourceGenerationAuthority;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.syntology.HttpSyntologyActiveVersionClient;
 import org.synanton.relix.syntology.SyntologyActiveVersionClient;
@@ -73,6 +78,26 @@ public class RelixConfig {
     ProjectionProvisioner projectionProvisioner(CanonicalGraphMetadataStore store,
                                                 SyntologyActiveVersionClient syntology) {
         return new ProjectionProvisioner(store, syntology);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    SourceGenerationAuthority sourceGenerationAuthority(
+            org.synanton.ingestioncache.client.IngestionCacheClient cache) {
+        return new CassandraSourceGenerationAuthority(cache);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    SourceFenceStore sourceFenceStore(CypherExecutor cypherExecutor) {
+        return new Neo4jSourceFenceStore(cypherExecutor);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    SourceFenceReconciler sourceFenceReconciler(SourceGenerationAuthority authority,
+                                                SourceFenceStore store) {
+        return new SourceFenceReconciler(authority, store);
     }
 
     @Bean

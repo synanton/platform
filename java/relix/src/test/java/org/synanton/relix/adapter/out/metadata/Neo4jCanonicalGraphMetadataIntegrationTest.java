@@ -14,6 +14,7 @@ import org.synanton.relix.identity.MissingCanonicalGraphException;
 import org.synanton.relix.identity.ProjectionProvisioner;
 import org.synanton.relix.identity.ProjectionProvisioningOutcome;
 import org.synanton.relix.identity.ProjectionProvisioningResult;
+import org.synanton.relix.identity.SourceFenceKey;
 import org.synanton.relix.syntology.ActiveOntologyVersion;
 import org.synanton.relix.syntology.SyntologyActiveVersionClient;
 import org.testcontainers.containers.Neo4jContainer;
@@ -128,6 +129,19 @@ class Neo4jCanonicalGraphMetadataIntegrationTest {
         assertThat(second.outcome()).isEqualTo(ProjectionProvisioningOutcome.ALREADY_INITIALIZED);
         assertThat(second.metadata().createdAt()).isEqualTo(first.metadata().createdAt());
         assertThat(readMetadata(tenant).count()).isEqualTo(1);
+    }
+
+    @Test
+    void sourceFenceAdvanceIsMonotonicAndIdempotent() {
+        SourceFenceKey key = new SourceFenceKey("tenant-fence-store", "source-fence-store");
+        Neo4jSourceFenceStore fences = new Neo4jSourceFenceStore(cypher);
+
+        assertThat(fences.read(key)).isEmpty();
+        assertThat(fences.advance(key, 3)).isEqualTo(3);
+        assertThat(fences.advance(key, 3)).isEqualTo(3);
+        assertThat(fences.advance(key, 2)).isEqualTo(3);
+        assertThat(fences.advance(key, 5)).isEqualTo(5);
+        assertThat(fences.read(key)).contains(5L);
     }
 
     @Test
