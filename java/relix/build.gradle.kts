@@ -37,8 +37,11 @@ dependencies {
     testImplementation(project(":java:synquest"))
     testImplementation(project(":java:synvault"))
     testImplementation(project(":java:extraction-engine"))
+    testImplementation(project(":java:extraction-client"))
     testImplementation(project(":java:eventing-contract"))
     testImplementation(project(":java:content-cache-api"))
+    testImplementation(libs.tika.core)
+    testImplementation(libs.tika.parsers)
     testImplementation(files(
         layout.projectDirectory.dir("../synflux/build/classes/java/main"),
         layout.projectDirectory.dir("../synflux/build/resources/main")

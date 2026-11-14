@@ -3,6 +3,8 @@ package org.synanton.relix.integration;
 import com.datastax.oss.driver.api.core.CqlSession;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,12 +15,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import org.springframework.mock.web.MockMultipartFile;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
+import org.synanton.common.jwt.SubjectAssertion;
 import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.ExactTypeCompatibility;
@@ -31,6 +35,12 @@ import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.common.tenant.TenantContext;
+import org.synanton.contentcache.FileSystemContentStore;
+import org.synanton.extraction.client.ExtractionClientMetrics;
+import org.synanton.extraction.client.ExtractionClientProperties;
+import org.synanton.extraction.client.ExtractionPlaneClient;
+import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
@@ -46,7 +56,6 @@ import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ActivationRequestRow;
-import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
@@ -72,8 +81,14 @@ import org.synanton.relix.identity.SourceFenceKey;
 import org.synanton.relix.identity.SourceFenceReconciler;
 import org.synanton.relix.identity.SourceFenceStatus;
 import org.synanton.relix.identity.SourceFenceStore;
+import org.synanton.synflux.api.IngestionRunController;
+import org.synanton.synflux.api.SourceController;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
 import org.synanton.synflux.config.ExtractionGraphProperties;
+import org.synanton.synflux.config.SynfluxConfig;
+import org.synanton.synflux.config.SynfluxProperties;
+import org.synanton.synflux.domain.ChunkedDocument;
+import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.events.IngestionEventConfig;
 import org.synanton.synflux.extraction.ExtractionConsumer;
 import org.synanton.synflux.extraction.graph.GraphMention;
@@ -82,14 +97,24 @@ import org.synanton.synflux.extraction.graph.GraphWriteClient;
 import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.synanton.synflux.extraction.graph.RelationValidation;
 import org.synanton.synflux.extraction.graph.RelationValidator;
-import org.synanton.synflux.lifecycle.FixtureIngestionService;
-import org.synanton.synflux.lifecycle.VerifiedIngestionContext;
+import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
+import org.synanton.synflux.lifecycle.FixtureSourceWorkflow;
+import org.synanton.synflux.lifecycle.OperationService;
+import org.synanton.synflux.pipeline.PipelineStage;
+import org.synanton.synflux.pipeline.stage.AcquireStage;
+import org.synanton.synflux.pipeline.stage.ExtractionStage;
+import org.synanton.synflux.pipeline.stage.NoOpAnnotationStage;
+import org.synanton.synflux.pipeline.stage.NoOpEmbeddingStage;
+import org.synanton.synflux.pipeline.stage.NoOpEnrichmentStage;
+import org.synanton.synflux.pipeline.stage.PersistStage;
+import org.synanton.synflux.pipeline.stage.SentenceChunkStage;
 import org.synanton.synflux.resolution.CanonicalRelationValidator;
 import org.synanton.synflux.resolution.RelationPromotionProducer;
 import org.synanton.synquest.config.ResolutionConsumerProperties;
 import org.synanton.synquest.resolution.DefaultResolutionPolicy;
 import org.synanton.synquest.resolution.ResolutionConsumer;
 import org.synanton.synvault.domain.ContentRef;
+import org.synanton.synvault.port.ContentPullPort;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -112,10 +137,15 @@ class IngestionActivationIntegrationTest {
     private static PromotionOwnershipStore ownership;
     private static Neo4jSourceFenceStore fences;
     private static DriverCypherExecutor executor;
-    private static FixtureIngestionService ingestion;
+    private static FixtureSourceWorkflow workflow;
+    private static SourceController sources;
+    private static IngestionRunController ingestionRuns;
+    private static FileSystemContentStore contentStore;
+    private static Path fixtureRoot;
+    private static Path contentCacheRoot;
 
     @BeforeAll
-    static void startStores() {
+    static void startStores() throws java.io.IOException {
         cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1.12"));
         cassandra.start();
         InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
@@ -130,8 +160,15 @@ class IngestionActivationIntegrationTest {
         cache = new IngestionCacheClient(session);
         activations = new CassandraSourceActivationStore(session);
         ownership = new PromotionOwnershipStore(session);
-        ingestion = new FixtureIngestionService(cache, Clock.systemUTC(),
-                new IngestionEventConfig().ingestionEventTypes());
+
+        fixtureRoot = Files.createTempDirectory("synflux-fixture-654");
+        contentCacheRoot = Files.createTempDirectory("synflux-content-654");
+        contentStore = new FileSystemContentStore(contentCacheRoot);
+        Clock clock = Clock.systemUTC();
+        workflow = productionWorkflow(clock);
+        sources = new SourceController(cache, clock, workflow,
+                new FilesystemFixturePolicy(fixtureRoot));
+        ingestionRuns = new IngestionRunController(workflow, cache, contentStore);
 
         neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.26.32")).withoutAuthentication();
         neo4j.start();
@@ -140,8 +177,47 @@ class IngestionActivationIntegrationTest {
         fences = new Neo4jSourceFenceStore(executor);
     }
 
+    private static FixtureSourceWorkflow productionWorkflow(Clock clock) {
+        ContentPullPort pullPort = new ContentPullPort(List.of());
+        AcquireStage acquire = new AcquireStage(pullPort, contentStore);
+        ExtractionClientProperties extractionProperties = new ExtractionClientProperties(
+                false, "", "sync", 30, 1, "fallback-local-tika", "normal");
+        SimpleMeterRegistry metricsRegistry = new SimpleMeterRegistry();
+        ExtractionClientMetrics metrics = new ExtractionClientMetrics(metricsRegistry);
+        ExtractionStage extraction = new ExtractionStage(
+                new ExtractionPlaneClient(extractionProperties, metrics),
+                new LocalTikaFallbackExtractor(),
+                extractionProperties.fallbackPolicy(),
+                metrics,
+                null,
+                "synanton-hot");
+        PipelineStage<ParsedDocument, ChunkedDocument> chunk = new SentenceChunkStage(400, 0);
+        SynfluxProperties properties = new SynfluxProperties(
+                new SynfluxProperties.Ingest(1, 1_000_000,
+                        new SynfluxProperties.Ingest.Chunk("sentence", 400, 0)),
+                new SynfluxProperties.Pipeline(false, false, false),
+                new SynfluxProperties.Enrichment("http://unused", "unused", 1),
+                new SynfluxProperties.Embedding("http://unused", "unused", 1),
+                new SynfluxProperties.Annotation("http://unused", "unused", "1"),
+                new SynfluxProperties.Kafka(1, 1, 1));
+        return new FixtureSourceWorkflow(
+                cache, pullPort, acquire, extraction, chunk,
+                new NoOpAnnotationStage(), new NoOpEnrichmentStage(), new NoOpEmbeddingStage(),
+                new PersistStage(cache),
+                properties,
+                new SynfluxConfig().fixtureIngestionService(cache, clock,
+                        new IngestionEventConfig().ingestionEventTypes()),
+                new OperationService(cache, clock),
+                Runnable::run,
+                new FilesystemFixturePolicy(fixtureRoot),
+                clock);
+    }
+
     @AfterAll
     static void stopStores() {
+        if (workflow != null) {
+            workflow.stopLeaseRenewer();
+        }
         if (driver != null) {
             driver.close();
         }
@@ -167,14 +243,14 @@ class IngestionActivationIntegrationTest {
         ingest(tenant, source, resource, ref, bytes);
         ingest(tenant, source, resource, ref, bytes);
 
-        List<SourceVersionRow> versions = cache.listSourceVersions(tenant, "file", source, resource);
+        List<SourceVersionRow> versions = cache.listSourceVersions(tenant, "upload", source, resource);
         assertThat(versions).hasSize(1);
         SourceVersionRow version = versions.getFirst();
         assertThat(version.generation()).isPositive();
         assertThat(cache.readRevisionGeneration(tenant, source, version.versionId()))
                 .contains(version.generation());
-        assertThat(cache.listExtractionOutbox(tenant, "file", source, resource)).hasSize(1);
-        assertThat(cache.listSourceVersions(tenant, "file", source, resource).stream()
+        assertThat(cache.listExtractionOutbox(tenant, "upload", source, resource)).hasSize(1);
+        assertThat(cache.listSourceVersions(tenant, "upload", source, resource).stream()
                 .map(SourceVersionRow::generation).distinct()).hasSize(1);
 
         ActivationRecord staged = activations.read(tenant, source, version.generation()).orElseThrow();
@@ -191,14 +267,14 @@ class IngestionActivationIntegrationTest {
         ExtractionRequestRow request = request(tenant, version);
         commitMentions(request, version);
 
-        assertThat(cache.readGraphStatus(tenant, "file", source, resource, version.versionId()))
+        assertThat(cache.readGraphStatus(tenant, version.connectorId(), source, resource, version.versionId()))
                 .contains("MENTIONS_COMMITTED");
         assertThat(activations.read(tenant, source, version.generation())).get()
                 .extracting(ActivationRecord::state).isEqualTo(ActivationState.MENTIONS_COMMITTED);
         assertThat(firstActivationEventIdOrNull(tenant, source, resource)).isNull();
         assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
 
-        sweep(tenant).sweep(new ActivationRequestRow(tenant, "file", source, resource,
+        sweep(tenant).sweep(new ActivationRequestRow(tenant, version.connectorId(), source, resource,
                 UUID.randomUUID(), version.versionId(), version.generation(), version.contentHash(),
                 null, "{}", version.observedAt(), Instant.now(), "MENTIONS_COMMITTED",
                 0, null, null, false));
@@ -211,12 +287,12 @@ class IngestionActivationIntegrationTest {
                 new PromotionCompletionProperties(true, tenant, 100, 30_000L),
                 new SimpleMeterRegistry()).poll();
 
-        assertThat(cache.readGraphStatus(tenant, "file", source, resource, version.versionId()))
+        assertThat(cache.readGraphStatus(tenant, version.connectorId(), source, resource, version.versionId()))
                 .contains("GRAPH_COMMITTED");
         UUID originalEvent = firstActivationEventId(tenant, source, resource);
         assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).hasSize(1);
 
-        boolean repeated = cache.completeCanonicalGraphCommit(tenant, "file", source, resource,
+        boolean repeated = cache.completeCanonicalGraphCommit(tenant, version.connectorId(), source, resource,
                 version.versionId(), UUID.randomUUID(), "ActivationRequested", "{}", Instant.now());
         assertThat(repeated).isFalse();
         assertThat(firstActivationEventId(tenant, source, resource)).isEqualTo(originalEvent);
@@ -243,7 +319,7 @@ class IngestionActivationIntegrationTest {
         ActivationRecord current = activations.read(tenant, source, version.generation()).orElseThrow();
         assertThat(current.state()).isEqualTo(ActivationState.CURRENT);
 
-        sweep.sweep(new ActivationRequestRow(tenant, "file", source, resource,
+        sweep.sweep(new ActivationRequestRow(tenant, version.connectorId(), source, resource,
                 firstActivationEventId(tenant, source, resource), version.versionId(),
                 version.generation(), version.contentHash(), null, "{}", version.observedAt(),
                 Instant.now(), "GRAPH_COMMITTED", 0, null, null, false));
@@ -287,7 +363,7 @@ class IngestionActivationIntegrationTest {
         assertThat(cache.readRevisionGeneration(tenant, source, version.versionId()))
                 .contains(version.generation());
         assertThat(rowCount("source_activation", tenant, source)).isEqualTo(1);
-        assertThat(cache.listSourceVersions(tenant, "file", source, resource)).hasSize(1);
+        assertThat(cache.listSourceVersions(tenant, "upload", source, resource)).hasSize(1);
 
         sweep.poll();
         assertThat(activations.readLifecycle(tenant, source)).get()
@@ -428,7 +504,7 @@ class IngestionActivationIntegrationTest {
         cache.markGraphFailed(request, "FAILED", Map.of("mentions_accepted", 0), 1,
                 Instant.now().plusSeconds(30), Instant.now());
 
-        assertThat(cache.readGraphStatus(tenant, "file", source, resource, version.versionId()))
+        assertThat(cache.readGraphStatus(tenant, version.connectorId(), source, resource, version.versionId()))
                 .contains("FAILED");
         assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
         assertThat(firstActivationEventIdOrNull(tenant, source, resource)).isNull();
@@ -445,8 +521,6 @@ class IngestionActivationIntegrationTest {
         String objectEntity = "entity-654-full-chain-object";
         SourceVersionRow version = ingest(tenant, source, resource, ref(resource, text), bytes(text));
 
-        // Acceptance used the existing FixtureIngestionService entry available to this class.
-        cache.insertChunks(List.of(new ChunkRow(tenant, version.contentRefId(), 0, text, "chunk-full-chain")));
         markSearchProjected(tenant, source, resource, version);
 
         Neo4jGraphConnector graph = new Neo4jGraphConnector(null, executor);
@@ -462,7 +536,8 @@ class IngestionActivationIntegrationTest {
                 graphWriter, Clock.systemUTC());
         await("extraction to MENTIONS_COMMITTED", extraction::poll,
                 () -> "MENTIONS_COMMITTED".equals(cache.readGraphStatus(
-                        tenant, "file", source, resource, version.versionId()).orElse(null)),
+                        tenant, version.connectorId(), source, resource,
+                        version.versionId()).orElse(null)),
                 () -> chainDiagnostics(tenant, source, resource, version));
 
         executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
@@ -525,7 +600,8 @@ class IngestionActivationIntegrationTest {
                 new SimpleMeterRegistry(), completion, ownership);
         await("promotion to GRAPH_COMMITTED", promotion::poll,
                 () -> "GRAPH_COMMITTED".equals(cache.readGraphStatus(
-                        tenant, "file", source, resource, version.versionId()).orElse(null)),
+                        tenant, version.connectorId(), source, resource,
+                        version.versionId()).orElse(null)),
                 () -> chainDiagnostics(tenant, source, resource, version));
 
         ActivationRecoverySweep sweep = sweep(tenant);
@@ -544,7 +620,7 @@ class IngestionActivationIntegrationTest {
         var versionRow = session.execute("SELECT graph_status, generation, accepted_generation "
                 + "FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? "
                 + "AND source_id=? AND resource_id=? AND version_id=?",
-                tenant, "file", source, resource, version.versionId()).one();
+                tenant, version.connectorId(), source, resource, version.versionId()).one();
         assertThat(versionRow).isNotNull();
         assertThat(versionRow.getString("graph_status")).isEqualTo("GRAPH_COMMITTED");
         assertThat((long) versionRow.getInt("generation")).isEqualTo(version.generation());
@@ -679,11 +755,21 @@ class IngestionActivationIntegrationTest {
 
     private static SourceVersionRow ingest(String tenant, String source, String resource,
                                            ContentRef ref, byte[] bytes) {
-        ingestion.ingest(new VerifiedIngestionContext(tenant, "integration", "SERVICE"),
-                UUID.randomUUID(), UUID.randomUUID(), "file", source, resource, ref, bytes,
-                "test-content-reference", (ignored, versionId) ->
-                        new FixtureIngestionService.PublishedContent(UUID.randomUUID()));
-        return cache.listSourceVersions(tenant, "file", source, resource).getFirst();
+        // Drive the same boundary a user does: source registration then the
+        // multipart ingestion-run endpoint, which delegates to the durable workflow.
+        TenantContext.set(new SubjectAssertion("integration", -1, List.of(), tenant,
+                Instant.now().plusSeconds(3600)));
+        try {
+            if (cache.readSource(tenant, source).isEmpty()) {
+                sources.create(new SourceController.CreateSourceRequest(
+                        source, "upload", "upload", "", Set.of()));
+            }
+            ingestionRuns.submitUpload("upload", source, resource,
+                    new MockMultipartFile("file", resource, ref.mimeType(), bytes), null);
+        } finally {
+            TenantContext.clear();
+        }
+        return cache.listSourceVersions(tenant, "upload", source, resource).getFirst();
     }
 
     private static ContentRef ref(String resource, String content) {
@@ -789,9 +875,12 @@ class IngestionActivationIntegrationTest {
     }
 
     private static UUID firstActivationEventIdOrNull(String tenant, String source, String resource) {
+        String connectorId = cache.readSource(tenant, source)
+                .map(SourceRow::connectorId)
+                .orElse("upload");
         var row = session.execute("SELECT activation_event_id FROM source_versions "
                 + "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=?",
-                tenant, "file", source, resource).one();
+                tenant, connectorId, source, resource).one();
         return row == null ? null : row.getUuid("activation_event_id");
     }
 
