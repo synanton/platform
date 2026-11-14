@@ -1,0 +1,33 @@
+# pre-deploy baseline
+Sat Nov 14 07:06:52 PM UTC 2026
+
+kubernetes-admin@kubernetes
+
+NAME        READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                                                   SELECTOR
+relix       1/1     1            1           3d2h   relix        local-registry:5000/synanton/relix:local-real-demo       app=relix
+synflux     2/2     2            2           26d    synflux      local-registry:5000/synanton/synflux:local-real-demo     app=synflux
+synquest    1/1     1            1           26d    synquest     local-registry:5000/synanton/synquest:local-real-demo    app=synquest
+syntology   1/1     1            1           3d2h   syntology    local-registry:5000/synanton/syntology:local-real-demo   app=syntology
+
+NAME                                  READY   STATUS      RESTARTS        AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+cassandra-0                           1/1     Running     0               3h27m   172.16.104.53    node2   <none>           <none>
+cassandra-1                           1/1     Running     0               3h27m   172.16.135.49    node3   <none>           <none>
+cassandra-2                           1/1     Running     0               3h27m   172.16.166.170   node1   <none>           <none>
+extraction-gateway-65586b7445-hzcvn   1/1     Running     2 (3h27m ago)   3h27m   172.16.104.4     node2   <none>           <none>
+minio-55887674fb-ps8ws                1/1     Running     0               3h27m   172.16.166.191   node1   <none>           <none>
+minio-init-pwk5n                      0/1     Completed   0               35h     <none>           node2   <none>           <none>
+neo4j-0                               2/2     Running     0               3h52m   172.16.104.34    node2   <none>           <none>
+platform-ddb794846-b2fpd              1/1     Running     0               3h27m   172.16.104.38    node2   <none>           <none>
+postgres-0                            1/1     Running     0               3h27m   172.16.166.158   node1   <none>           <none>
+relix-c59dc6c75-jx69q                 1/1     Running     0               3h25m   172.16.104.6     node2   <none>           <none>
+security-69c64c9d7-562tq              1/1     Running     2 (3h27m ago)   3h27m   172.16.104.63    node2   <none>           <none>
+synflux-957754655-9crlh               1/1     Running     0               3h27m   172.16.135.42    node3   <none>           <none>
+synflux-957754655-9nkb8               1/1     Running     0               3h27m   172.16.104.14    node2   <none>           <none>
+synquest-7c7895d55f-zcsxk             1/1     Running     3 (3h26m ago)   3h27m   172.16.104.37    node2   <none>           <none>
+syntology-5b5cd5bb99-dqrwh            1/1     Running     0               3h52m   172.16.104.9     node2   <none>           <none>
+ui-6899b4749c-pgs8n                   1/1     Running     0               3h27m   172.16.104.57    node2   <none>           <none>
+--- images ---
+relix: local-registry:5000/synanton/relix:local-real-demo
+synflux: local-registry:5000/synanton/synflux:local-real-demo
+synquest: local-registry:5000/synanton/synquest:local-real-demo
+syntology: local-registry:5000/synanton/syntology:local-real-demo
