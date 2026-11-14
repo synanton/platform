@@ -68,7 +68,7 @@ Changes to inputs or processing rules can invalidate derived knowledge and its p
 
 ## Ontology research status
 
-**Architecture baseline:** [Domain Ontologies and Cross-Domain Semantic Mapping v0.3](docs/architecture/proposals/ontology-domain-mapping-v0.3.md) is approved as an architectural baseline, not a finished specification or implementation claim. Proposal-local ONT-ADR-001–013 map to repository ADR-030–042; see the [ADR index](docs/architecture/decisions/INDEX.md).
+**Ontology status:** v0.3 merged; ADR-030–042 proposed; Phase 1 in progress. The [Domain Ontologies and Cross-Domain Semantic Mapping v0.3](docs/architecture/proposals/ontology-domain-mapping-v0.3.md) baseline is approved, not a finished specification or implementation claim. Proposal-local ONT-ADR-001–013 map to repository ADR-030–042; see the [ADR index](docs/architecture/decisions/INDEX.md).
 
 The baseline separates a stable semantic core from replaceable mapping strategies. Experimental candidates are not canonical knowledge: only an explicit, audited promotion can create a governed mapping. The proposed cross-domain mapping subsystem is **not implemented**. Existing [Syntology ontology management](docs/architecture/syntology/ontology-management.md) and SHACL capabilities are distinct from this proposed subsystem.
 
