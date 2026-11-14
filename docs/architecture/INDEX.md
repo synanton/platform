@@ -55,6 +55,7 @@ last_reviewed: "2026-11-09"
 | [Domain Ontologies and Cross-Domain Semantic Mapping v0.3](./proposals/ontology-domain-mapping-v0.3.md) | **Approved architectural baseline — specification remains open** | Stable semantic core, contextual interpretation, pluggable mapping strategies, candidate/governed-store separation, reproducible experiments; new subsystem implementation is not implied. |
 | [Ontology research ADRs](./decisions/INDEX.md#ontology-and-cross-domain-mapping-adr-register) | **Proposed** — repository ADR-030–ADR-042 | Decision gates for ontology identity, context, mapping semantics/governance, strategy contracts and evaluation. |
 | [Ontology Phase 1 design inputs](./proposals/ontology-domain-mapping/) | **Draft for ADR review** | Concept identity/namespace, context schema/conflicts and registry API contract; none is an accepted contract. |
+| [Architecture baseline changelog](./CHANGELOG.md) | **Current history** | Immutable v0.1–v0.3 ontology research baseline history. |
 
 ## Sub-directories
 
