@@ -40,6 +40,14 @@ relix:
     batch: ${RECONCILIATION_BATCH:100}
     poll-delay-ms: ${RECONCILIATION_POLL_DELAY_MS:60000}
     lease-seconds: ${RECONCILIATION_LEASE_SECONDS:120}
+  activation-recovery:
+    # ADR-029 §12.2: bounded replay of GRAPH_COMMITTED/ActivationRequested rows.
+    enabled: ${ACTIVATION_RECOVERY_ENABLED:false}
+    tenant: ${ACTIVATION_RECOVERY_TENANT:}
+    batch: ${ACTIVATION_RECOVERY_BATCH:100}
+    poll-delay-ms: ${ACTIVATION_RECOVERY_POLL_DELAY_MS:30000}
+    max-attempts: ${ACTIVATION_RECOVERY_MAX_ATTEMPTS:5}
+    retry-backoff-seconds: ${ACTIVATION_RECOVERY_BACKOFF_SECONDS:30}
   promotion-consumer:
     # PR #4d.1: independent of extraction/resolution; disabled by default.
     enabled: ${PROMOTION_CONSUMER_ENABLED:false}

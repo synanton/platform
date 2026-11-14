@@ -88,7 +88,9 @@ public final class CassandraSourceActivationStore implements SourceActivationSto
             return Optional.empty();
         }
         Optional<ActivationRecord> latest = readLatest(tenantId, sourceId);
-        long accepted = latest.map(ActivationRecord::generation).orElse(0L);
+        long accepted = row.isNull("accepted_generation")
+                ? latest.map(ActivationRecord::generation).orElse(0L)
+                : row.getLong("accepted_generation");
         long current = row.isNull("current_generation") ? 0L : row.getLong("current_generation");
         UUID activeRevision = row.getUuid("active_revision_id");
         UUID pendingRevision = row.getUuid("pending_revision_id");

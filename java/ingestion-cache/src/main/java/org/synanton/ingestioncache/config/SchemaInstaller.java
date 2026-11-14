@@ -43,6 +43,7 @@ public class SchemaInstaller {
         "cql/V27__source_revision_identity.cql",
         "cql/V28__relation_promotion_identity.cql",
         "cql/V29__source_activation.cql",
+        "cql/V30__ingestion_activation.cql",
     };
 
     public static void install(CqlSession session) {

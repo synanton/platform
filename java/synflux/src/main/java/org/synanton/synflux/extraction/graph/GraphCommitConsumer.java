@@ -92,6 +92,7 @@ public class GraphCommitConsumer {
         return new ExtractionRequestRow(row.tenantId(), row.connectorId(), row.sourceId(), row.resourceId(),
                 row.eventId(), row.versionId(), row.contentRefId(), row.payloadJson(), row.requestedAt(),
                 row.searchProjectedAt(), row.extractionStatus(), row.extractionAttemptCount(),
-                row.extractionLastError(), row.extractionNextAttemptAt(), row.extractionDeadLettered());
+                row.extractionLastError(), row.extractionNextAttemptAt(), row.extractionDeadLettered(),
+                row.generation());
     }
 }

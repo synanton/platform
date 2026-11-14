@@ -36,7 +36,8 @@ import org.synanton.relix.syntology.SyntologyActiveVersionClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
-@EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class, ReconciliationProperties.class})
+@EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class, ReconciliationProperties.class,
+        ActivationRecoveryProperties.class})
 public class RelixConfig {
 
     @Bean

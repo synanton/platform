@@ -1,11 +1,14 @@
 package org.synanton.synflux.extraction.graph;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionResult;
@@ -25,6 +28,7 @@ import org.synanton.synflux.config.ExtractionGraphProperties;
 public final class GraphWriter {
 
     private static final Logger log = LoggerFactory.getLogger(GraphWriter.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final IngestionCacheClient cacheClient;
     private final RelationValidator validator;
@@ -162,7 +166,12 @@ public final class GraphWriter {
                         "PENDING", null, null, 0, null, null, now, null, null, null));
             }
             String graphStatus = rejected > 0 ? "PARTIAL" : "GRAPH_COMMITTED";
-            cacheClient.markGraphCommitted(request, graphStatus, counters, graphAttempt, clock.instant());
+            boolean committed = "GRAPH_COMMITTED".equals(graphStatus) && request.generation() >= 1;
+            UUID activationEventId = committed ? activationEventId(request) : null;
+            cacheClient.markGraphCommitted(request, graphStatus, counters, graphAttempt,
+                    clock.instant(), activationEventId,
+                    committed ? "ActivationRequested" : null,
+                    committed ? activationPayload(request, activationEventId) : null);
             log.info("Graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
                     request.tenantId(), request.versionId(), graphStatus, mentions.size(),
                     accepted.size(), rejected);
@@ -177,6 +186,30 @@ public final class GraphWriter {
             }
             log.warn("Graph commit failed tenant={} version={}: {}",
                     request.tenantId(), request.versionId(), e.toString());
+        }
+    }
+
+    private static UUID activationEventId(ExtractionRequestRow request) {
+        String identity = request.tenantId() + "|" + request.sourceId() + "|"
+                + request.versionId() + "|" + request.generation();
+        return UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String activationPayload(ExtractionRequestRow request, UUID eventId) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("event_id", eventId);
+        payload.put("event_type", "ActivationRequested");
+        payload.put("tenant_id", request.tenantId());
+        payload.put("source_id", request.sourceId());
+        payload.put("revision_id", request.versionId());
+        payload.put("generation", request.generation());
+        try {
+            return MAPPER.writeValueAsString(payload);
+        } catch (Exception e) {
+            return "{\"event_type\":\"ActivationRequested\",\"tenant_id\":\""
+                    + request.tenantId() + "\",\"source_id\":\"" + request.sourceId()
+                    + "\",\"revision_id\":\"" + request.versionId() + "\",\"generation\":"
+                    + request.generation() + "}";
         }
     }
 
