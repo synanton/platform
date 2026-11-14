@@ -217,7 +217,14 @@ class SchemaInventoryTest {
             "relation_promotion_results.next_attempt_at",
             "relation_promotion_results.claimed_at",
             "relation_promotion_results.last_error",
-            "relation_promotion_results.failure_class"
+            "relation_promotion_results.failure_class",
+            "relation_promotion_results.owner_producer_id",
+            "relation_promotion_results.owner_generation",
+            "relation_promotion_results.owner_closed",
+            "relation_promotion_results.owner_started_at",
+            "relation_promotion_results.owner_closed_at",
+            "relation_promotion_results.owner_takeover_count",
+            "relation_promotion_results.owner_last_write_at"
         );
     }
 }
