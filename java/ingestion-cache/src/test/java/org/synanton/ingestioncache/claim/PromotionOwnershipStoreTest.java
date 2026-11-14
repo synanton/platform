@@ -281,6 +281,29 @@ class PromotionOwnershipStoreTest {
     }
 
     @Test
+    void takeoverSweepAdvancesGenerationAndFencesOldProducer() {
+        String tenant = "tenant-ownership-takeover-sweep";
+        UUID version = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken generationOne =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        session.execute(SimpleStatement.newInstance("""
+                UPDATE ingestion_cache.relation_promotion_results
+                SET owner_started_at=?
+                WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                """, Instant.now().minusSeconds(3600), tenant, version,
+                PromotionOwnershipStore.OWNERSHIP_RELATION_ID));
+
+        assertThat(store.takeoverStale("producer-sweep", Instant.now().minusSeconds(900), 10))
+                .isEqualTo(1);
+        PromotionOwnershipStore.OwnershipRow recovered = store.read(tenant, version).orElseThrow();
+        assertThat(recovered.ownerGeneration()).isEqualTo(2);
+        assertThat(recovered.ownerProducerId()).isEqualTo("producer-sweep");
+        assertThatThrownBy(() -> store.writeFenced(tenant, version,
+                rowInsert(tenant, version, "relation-after-sweep"), generationOne))
+                .isInstanceOf(StaleOwnershipException.class);
+    }
+
+    @Test
     void duplicateClosureHasOneWinnerAndDoesNotReplaceClosedAt() throws Exception {
         String tenant = "tenant-ownership-close";
         UUID version = UUID.randomUUID();

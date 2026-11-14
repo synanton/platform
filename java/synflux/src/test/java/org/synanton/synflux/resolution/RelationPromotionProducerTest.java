@@ -10,6 +10,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -148,6 +149,51 @@ class RelationPromotionProducerTest {
                 row(relation(version, "relation-after-close")), token))
                 .isInstanceOf(StaleOwnershipException.class);
         assertThat(nonSentinelRowCount(version)).isEqualTo(2);
+    }
+
+    @Test
+    void partialInsertFailureDoesNotCloseAndTakeoverCompletesWithoutDuplicates() {
+        UUID version = UUID.randomUUID();
+        var relations = java.util.stream.IntStream.rangeClosed(1, 5)
+                .mapToObj(i -> relation(version, "relation-partial-" + i)).toList();
+        when(cache.listMentionsCommittedSourceVersions(eq(TENANT), anyInt()))
+                .thenReturn(List.of(sourceVersion(version)));
+        when(extracted.listExtractedRelations(eq(TENANT), eq(version.toString())))
+                .thenReturn(relations);
+        when(graph.getActiveResolutions(eq(TENANT), anyList())).thenReturn(List.of(
+                new ActiveResolution("m-subject", "e-subject", "MaintenanceSystem"),
+                new ActiveResolution("m-object", "e-object", "Protocol")));
+        when(cache.listRelationPromotionResults(eq(TENANT), eq(version)))
+                .thenReturn(List.of(), relations.subList(0, 3).stream().map(
+                        RelationPromotionProducerTest::row).toList());
+
+        AtomicInteger calls = new AtomicInteger();
+        DefaultCanonicalRelationValidator failing = mock(DefaultCanonicalRelationValidator.class);
+        when(failing.validate(eq(TENANT), eq(ONTOLOGY_VERSION), any())).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() >= 4) {
+                throw new IllegalStateException("injected validation/insertion failure");
+            }
+            return new RelationValidationResult(RelationValidationOutcome.VALID, "e-subject",
+                    "requires", "e-object", "MaintenanceSystem", "Protocol",
+                    ONTOLOGY_VERSION, List.of(), "VALID");
+        });
+
+        producer(failing, "producer-partial").poll();
+
+        PromotionOwnershipStore.OwnershipRow open = ownership.read(TENANT, version).orElseThrow();
+        assertThat(open.closed()).isFalse();
+        assertThat(open.ownerGeneration()).isEqualTo(1);
+        assertThat(nonSentinelRowCount(version)).isEqualTo(3);
+
+        PromotionOwnershipStore.OwnershipToken takeover =
+                ownership.takeover(TENANT, version, "producer-recovery", 1).orElseThrow();
+        assertThat(takeover.generation()).isEqualTo(2);
+        producer(validator(), "producer-recovery").poll();
+
+        PromotionOwnershipStore.OwnershipRow closed = ownership.read(TENANT, version).orElseThrow();
+        assertThat(closed.closed()).isTrue();
+        assertThat(closed.ownerGeneration()).isEqualTo(2);
+        assertThat(nonSentinelRowCount(version)).isEqualTo(5);
     }
 
     @Test

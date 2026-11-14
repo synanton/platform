@@ -104,6 +104,18 @@ public final class RelationPromotionProducer {
                 enabled, tenant, ontologyVersion);
     }
 
+    @Scheduled(fixedDelayString = "${PROMOTION_TAKEOVER_SWEEP_INTERVAL_MS:60000}")
+    public void recoverStaleOwnership() {
+        if (!enabled || tenant == null || tenant.isBlank() || ownershipStore == null) {
+            return;
+        }
+        int won = ownershipStore.takeoverStale(producerId,
+                clock.instant().minusSeconds(900), 100);
+        if (won > 0) {
+            log.warn("Promotion ownership takeover reclaimed {} stale revisions", won);
+        }
+    }
+
     @Scheduled(fixedDelayString = "${PROMOTION_PRODUCER_POLL_DELAY_MS:5000}")
     public void poll() {
         if (!enabled || tenant == null || tenant.isBlank()) {

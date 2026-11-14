@@ -7,6 +7,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -178,6 +179,33 @@ public final class PromotionOwnershipStore {
         }
     }
 
+    public List<OwnershipRow> findStaleOpen(java.time.Instant olderThan, int limit) {
+        java.util.List<OwnershipRow> stale = new java.util.ArrayList<>();
+        for (Row row : session.execute(SimpleStatement.newInstance("""
+                SELECT * FROM ingestion_cache.relation_promotion_results
+                WHERE relation_id=? AND owner_closed=false AND owner_started_at < ?
+                ALLOW FILTERING
+                """, OWNERSHIP_RELATION_ID, olderThan))) {
+            stale.add(fromRow(row));
+            if (stale.size() >= Math.max(1, limit)) {
+                break;
+            }
+        }
+        return stale;
+    }
+
+    /** Takeover sweep helper: only the winning CAS returns a token. */
+    public int takeoverStale(String newProducerId, java.time.Instant olderThan, int limit) {
+        int won = 0;
+        for (OwnershipRow row : findStaleOpen(olderThan, limit)) {
+            if (takeover(row.tenantId(), row.sourceVersionId(), newProducerId,
+                    row.ownerGeneration()).isPresent()) {
+                won++;
+            }
+        }
+        return won;
+    }
+
     public Optional<OwnershipToken> takeover(String tenantId, UUID sourceVersionId,
                                              String newProducerId, long expectedGeneration) {
         requireKey(tenantId, sourceVersionId);
@@ -212,14 +240,18 @@ public final class PromotionOwnershipStore {
         if (row == null) {
             return Optional.empty();
         }
-        return Optional.of(new OwnershipRow(
+        return Optional.of(fromRow(row));
+    }
+
+    private static OwnershipRow fromRow(Row row) {
+        return new OwnershipRow(
                 row.getString("tenant_id"), row.getUuid("source_version_id"),
                 row.getString("owner_producer_id"),
                 row.isNull("owner_generation") ? 0L : row.getLong("owner_generation"),
                 Boolean.TRUE.equals(row.getBoolean("owner_closed")),
                 row.getInstant("owner_started_at"), row.getInstant("owner_closed_at"),
                 row.isNull("owner_takeover_count") ? 0 : row.getInt("owner_takeover_count"),
-                row.getInstant("owner_last_write_at")));
+                row.getInstant("owner_last_write_at"));
     }
 
     public boolean isClosed(String tenantId, UUID sourceVersionId) {
