@@ -34,11 +34,18 @@ import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.syntology.HttpSyntologyActiveVersionClient;
 import org.synanton.relix.syntology.SyntologyActiveVersionClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Clock;
 
 @Configuration
 @EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class,
         ReconciliationProperties.class, ActivationRecoveryProperties.class, PromotionCompletionProperties.class})
 public class RelixConfig {
+
+    @Bean
+    @ConditionalOnMissingBean(Clock.class)
+    Clock relixClock() {
+        return Clock.systemUTC();
+    }
 
     @Bean
     SyntologyActiveVersionClient syntologyActiveVersionClient(
