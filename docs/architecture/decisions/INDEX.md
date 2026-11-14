@@ -8,11 +8,24 @@ last_reviewed: "2026-11-11"
 
 **Purpose:** Captures significant architectural decisions with their context, rationale, and consequences.
 **Audience:** Architects, module owners
-**Last Updated:** 2026-11-12
+**Last Updated:** 2026-11-14
 
 ## Quick Links
 
 | Document | Decision |
+| [ADR-042: Mapping path composition and provenance](./adr-042-mapping-path-composition.md) | **Proposed** — ONT-ADR-013; before agent reasoning |
+| [ADR-041: Mapping experiment reproducibility](./adr-041-mapping-experiment-reproducibility.md) | **Proposed** — ONT-ADR-012; Phase 2 gate |
+| [ADR-040: Mapping strategy abstraction](./adr-040-mapping-strategy-abstraction.md) | **Proposed** — ONT-ADR-011; Phase 2 gate |
+| [ADR-039: Ontology registry and API contracts](./adr-039-ontology-registry-api-contracts.md) | **Proposed** — ONT-ADR-010; Phase 1 exit / Phase 2 |
+| [ADR-038: Historical concept and instance versioning](./adr-038-historical-concept-instance-versioning.md) | **Proposed** — ONT-ADR-009; Phase 1 exit |
+| [ADR-037: OWL 2 reasoning profile](./adr-037-owl2-reasoning-profile.md) | **Proposed** — ONT-ADR-008; Phase 3 |
+| [ADR-036: Foundational ontology scope](./adr-036-foundational-ontology-scope.md) | **Proposed** — ONT-ADR-007; Phase 3 |
+| [ADR-035: Cross-domain inference policy](./adr-035-cross-domain-inference-policy.md) | **Proposed** — ONT-ADR-006; Phase 4 |
+| [ADR-034: Domain hierarchy and composition](./adr-034-domain-hierarchy-composition.md) | **Proposed** — ONT-ADR-005; Phase 2 |
+| [ADR-033: Mapping governance and promotion policy](./adr-033-mapping-governance-promotion-policy.md) | **Proposed** — ONT-ADR-004; Phase 2 gate |
+| [ADR-032: Mapping semantics and reasoning permissions](./adr-032-mapping-semantics-reasoning-permissions.md) | **Proposed** — ONT-ADR-003; Phase 2 gate |
+| [ADR-031: Context schema and conflict resolution](./adr-031-context-schema-conflict-resolution.md) | **Proposed** — ONT-ADR-002; Phase 1 exit |
+| [ADR-030: Concept identity, namespace and ownership](./adr-030-concept-identity-namespace-ownership.md) | **Proposed** — ONT-ADR-001; Phase 1 exit |
 |----------|---------|
 | [ADR-022: Pluggable Knowledge Extraction Pipeline (RAKG)](./adr-022-extraction-engine-architecture.md) | `ExtractionEngineAdapter` port: regex baseline + out-of-process Qwen3-4B vLLM; sentence-aligned input, surface-form offset recovery, synthetic endpoints, versioned prompt, frozen-gold metrics (Accepted 2026-11-08) |
 | [ADR-024: glibc-based runtime images for native dependencies](./adr-024-glibc-runtime-images.md) | Native gRPC/Netty/JNI services use glibc JRE images; Alpine only with zero native dependencies; CI checks Dockerfiles (Accepted 2026-11-11) |
@@ -41,6 +54,12 @@ last_reviewed: "2026-11-11"
 | [ADR-003: Content Cache Plane](./adr-003-content-cache-plane.md) | Implementation-independent content-artifact storage/retrieval/lifecycle contract, with conformance evidence required for advertised optional capabilities (v1.26 approved 2026-09-07) |
 | [ADR-002: Annotations, Derived Knowledge, Recalculation & Analytics/Reporting Plane](./adr-002-annotations-analytics-plane.md) | First-class annotations with Resolutor/Equalix recalculation, plus a security-consistent Analytics & Reporting Plane (v1.25, consolidates 1.24; approved 2026-09-01) |
 | [ADR-001: Classification-Aware Search & Semantic Chunking](./adr-001-classification-aware-search.md) | Sub-document sensitivity via chunk-level ACLs and masked representations (v1.23 approved 2026-08-30) |
+
+## Ontology and Cross-Domain Mapping ADR Register
+
+The ontology proposal uses stable proposal-local identifiers **ONT-ADR-001–013**. They map to repository-wide **ADR-030–042** because ADR-001–029 are already allocated to platform decisions. The proposal-local IDs remain useful for discussion; repository ADR numbers are canonical for files, links and tracking.
+
+The ontology ADRs are **Proposed**, not accepted. Phase gates are recorded in each ADR and the v0.3 baseline. Owners are intentionally not invented; ADR work tickets must not be created until decision owners are assigned.
 
 ## How to Contribute
 
