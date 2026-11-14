@@ -59,7 +59,25 @@ last_reviewed: "2026-11-14"
 
 The ontology proposal uses stable proposal-local identifiers **ONT-ADR-001–013**. They map to repository-wide **ADR-030–042** because ADR-001–029 are already allocated to platform decisions. The proposal-local IDs remain useful for discussion; repository ADR numbers are canonical for files, links and tracking.
 
-The ontology ADRs are **Proposed**, not accepted. Phase gates are recorded in each ADR and the v0.3 baseline. Owners are intentionally not invented; ADR work tickets must not be created until decision owners are assigned.
+| Proposal ID | Repository ADR | Decision | Status | Phase gate |
+|---|---|---|---|---|
+| ONT-ADR-001 | [ADR-030](./adr-030-concept-identity-namespace-ownership.md) | Concept identity, namespace, ownership and canonical identity authority | Proposed | Phase 1 exit |
+| ONT-ADR-002 | [ADR-031](./adr-031-context-schema-conflict-resolution.md) | Context schema, composition and conflict resolution | Proposed | Phase 1 exit |
+| ONT-ADR-003 | [ADR-032](./adr-032-mapping-semantics-reasoning-permissions.md) | Mapping relation semantics, direction and reasoning permissions | Proposed | Phase 2 gate |
+| ONT-ADR-004 | [ADR-033](./adr-033-mapping-governance-promotion-policy.md) | Mapping governance, risk classification and promotion policy | Proposed | Phase 2 gate |
+| ONT-ADR-005 | [ADR-034](./adr-034-domain-hierarchy-composition.md) | Domain hierarchy and composition | Proposed | Phase 2 |
+| ONT-ADR-006 | [ADR-035](./adr-035-cross-domain-inference-policy.md) | Cross-domain inference policy | Proposed | Phase 4 |
+| ONT-ADR-007 | [ADR-036](./adr-036-foundational-ontology-scope.md) | Foundational ontology scope | Proposed | Phase 3 |
+| ONT-ADR-008 | [ADR-037](./adr-037-owl2-reasoning-profile.md) | OWL 2 reasoning profile | Proposed | Phase 3 |
+| ONT-ADR-009 | [ADR-038](./adr-038-historical-concept-instance-versioning.md) | Historical concept and instance versioning | Proposed | Phase 1 exit |
+| ONT-ADR-010 | [ADR-039](./adr-039-ontology-registry-api-contracts.md) | Ontology registry and API contracts | Proposed | Phase 1 exit / Phase 2 |
+| ONT-ADR-011 | [ADR-040](./adr-040-mapping-strategy-abstraction.md) | Mapping strategy abstraction and capability contract | Proposed | Phase 2 gate |
+| ONT-ADR-012 | [ADR-041](./adr-041-mapping-experiment-reproducibility.md) | Experiment reproducibility and benchmark governance | Proposed | Phase 2 gate |
+| ONT-ADR-013 | [ADR-042](./adr-042-mapping-path-composition.md) | Mapping path composition and provenance | Proposed | Before agent reasoning |
+
+The ontology ADRs are **Proposed**, not accepted. The status and phase-gate columns above are the register's tracking view; each ADR remains the authoritative decision record. Owners are intentionally not invented; ADR work tickets must not be created until decision owners are assigned.
+
+**Blocked — owner needed:** the benchmark dataset workstream, Equalix contract review, and candidate/governed-store separation spike remain unowned. These are explicit ownership blockers, not accepted or silently deferred scope.
 
 ## How to Contribute
 
