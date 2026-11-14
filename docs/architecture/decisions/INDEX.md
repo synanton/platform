@@ -1,7 +1,7 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-11-11"
+last_reviewed: "2026-11-14"
 ---
 
 # Architecture Decision Records (ADRs)
@@ -13,6 +13,7 @@ last_reviewed: "2026-11-11"
 ## Quick Links
 
 | Document | Decision |
+|----------|---------|
 | [ADR-042: Mapping path composition and provenance](./adr-042-mapping-path-composition.md) | **Proposed** — ONT-ADR-013; before agent reasoning |
 | [ADR-041: Mapping experiment reproducibility](./adr-041-mapping-experiment-reproducibility.md) | **Proposed** — ONT-ADR-012; Phase 2 gate |
 | [ADR-040: Mapping strategy abstraction](./adr-040-mapping-strategy-abstraction.md) | **Proposed** — ONT-ADR-011; Phase 2 gate |
@@ -26,7 +27,6 @@ last_reviewed: "2026-11-11"
 | [ADR-032: Mapping semantics and reasoning permissions](./adr-032-mapping-semantics-reasoning-permissions.md) | **Proposed** — ONT-ADR-003; Phase 2 gate |
 | [ADR-031: Context schema and conflict resolution](./adr-031-context-schema-conflict-resolution.md) | **Proposed** — ONT-ADR-002; Phase 1 exit |
 | [ADR-030: Concept identity, namespace and ownership](./adr-030-concept-identity-namespace-ownership.md) | **Proposed** — ONT-ADR-001; Phase 1 exit |
-|----------|---------|
 | [ADR-022: Pluggable Knowledge Extraction Pipeline (RAKG)](./adr-022-extraction-engine-architecture.md) | `ExtractionEngineAdapter` port: regex baseline + out-of-process Qwen3-4B vLLM; sentence-aligned input, surface-form offset recovery, synthetic endpoints, versioned prompt, frozen-gold metrics (Accepted 2026-11-08) |
 | [ADR-024: glibc-based runtime images for native dependencies](./adr-024-glibc-runtime-images.md) | Native gRPC/Netty/JNI services use glibc JRE images; Alpine only with zero native dependencies; CI checks Dockerfiles (Accepted 2026-11-11) |
 | [ADR-025: Canonical graph bootstrap is additive, never destructive](./adr-025-graph-bootstrap-additive.md) | Tenant loads are upsert-only and transactional; restarts/partial snapshots cannot delete canonical graph data (Accepted 2026-11-11) |
