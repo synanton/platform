@@ -86,9 +86,12 @@ public final class ActivationRecoverySweep {
             counter("activation.recovered").increment();
             return;
         }
-        record = advanceToGraphCommitted(record);
-        if (record == null) {
-            fail(request, "activation state could not reach GRAPH_COMMITTED");
+        if (record.state() == ActivationState.REVISION_ACCEPTED
+                || record.state() == ActivationState.EXTRACTING
+                || record.state() == ActivationState.EXTRACTION_COMPLETE
+                || record.state() == ActivationState.GRAPH_COMMITTING) {
+            // The extraction/graph consumers own these transitions. The sweep only
+            // recovers an already-durable GRAPH_COMMITTED activation event.
             return;
         }
         if (request.searchProjectedAt() == null) {
@@ -115,30 +118,6 @@ public final class ActivationRecoverySweep {
             }
             default -> fail(request, result.message());
         }
-    }
-
-    private ActivationRecord advanceToGraphCommitted(ActivationRecord record) {
-        ActivationState state = record.state();
-        if (state == ActivationState.GRAPH_COMMITTED
-                || state == ActivationState.SEARCH_COMMITTING
-                || state == ActivationState.SEARCH_COMMITTED
-                || state == ActivationState.ACTIVATING
-                || state == ActivationState.ACTIVATION_PARTIAL) {
-            return record;
-        }
-        if (state == ActivationState.REVISION_ACCEPTED) {
-            record = transition(record, ActivationState.EXTRACTING, 0L, false);
-        }
-        if (record != null && record.state() == ActivationState.EXTRACTING) {
-            record = transition(record, ActivationState.EXTRACTION_COMPLETE, 0L, false);
-        }
-        if (record != null && record.state() == ActivationState.EXTRACTION_COMPLETE) {
-            record = transition(record, ActivationState.GRAPH_COMMITTING, 0L, false);
-        }
-        if (record != null && record.state() == ActivationState.GRAPH_COMMITTING) {
-            record = transition(record, ActivationState.GRAPH_COMMITTED, record.generation(), false);
-        }
-        return record;
     }
 
     private ActivationRecord advanceToSearchCommitted(ActivationRecord record) {

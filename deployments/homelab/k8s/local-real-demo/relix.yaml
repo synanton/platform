@@ -66,6 +66,12 @@ spec:
               value: "false"
             - name: PROMOTION_CONSUMER_TENANT
               value: demo
+            - name: ACTIVATION_RECOVERY_ENABLED
+              value: "true"
+            - name: ACTIVATION_RECOVERY_TENANT
+              value: demo
+            - name: ACTIVATION_RECOVERY_POLL_DELAY_MS
+              value: "30000"
             - name: RECONCILIATION_ENABLED
               value: "false"
             - name: RECONCILIATION_TENANT

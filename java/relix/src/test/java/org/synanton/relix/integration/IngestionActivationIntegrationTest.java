@@ -244,7 +244,7 @@ class IngestionActivationIntegrationTest {
 
         commitGraph(request(tenant, version), version);
         assertThat(activations.read(tenant, source, version.generation())).get()
-                .extracting(ActivationRecord::state).isEqualTo(ActivationState.REVISION_ACCEPTED);
+                .extracting(ActivationRecord::state).isEqualTo(ActivationState.GRAPH_COMMITTED);
         markSearchProjected(tenant, source, resource, version);
         fences.advance(new SourceFenceKey(tenant, source), version.generation());
 
@@ -401,6 +401,28 @@ class IngestionActivationIntegrationTest {
         assertThat(cache.markGraphCommitted(request, "GRAPH_COMMITTED", Map.of(), 0,
                 Instant.now(), eventId, "ActivationRequested",
                 "{\"generation\":" + version.generation() + "}")).isTrue();
+        advanceActivationToGraphCommitted(request);
+    }
+
+    private static void advanceActivationToGraphCommitted(ExtractionRequestRow request) {
+        ActivationRecord record = activations.read(request.tenantId(), request.sourceId(),
+                request.generation()).orElseThrow();
+        if (record.state() == ActivationState.REVISION_ACCEPTED) {
+            transition(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0);
+            record = activations.read(request.tenantId(), request.sourceId(), request.generation()).orElseThrow();
+        }
+        if (record.state() == ActivationState.EXTRACTING) {
+            transition(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0);
+            record = activations.read(request.tenantId(), request.sourceId(), request.generation()).orElseThrow();
+        }
+        if (record.state() == ActivationState.EXTRACTION_COMPLETE) {
+            transition(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0);
+            record = activations.read(request.tenantId(), request.sourceId(), request.generation()).orElseThrow();
+        }
+        if (record.state() == ActivationState.GRAPH_COMMITTING) {
+            transition(record, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED,
+                    request.generation());
+        }
     }
 
     private static void markSearchProjected(String tenant, String source, String resource,
@@ -425,15 +447,39 @@ class IngestionActivationIntegrationTest {
     }
 
     private static void advanceToSearchCommitted(ActivationRecord record) {
-        transition(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0);
-        transition(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0);
-        transition(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0);
-        transition(record, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED,
-                record.generation());
-        transition(record, ActivationState.GRAPH_COMMITTED, ActivationState.SEARCH_COMMITTING,
-                record.generation());
-        transition(record, ActivationState.SEARCH_COMMITTING, ActivationState.SEARCH_COMMITTED,
-                record.generation());
+        ActivationRecord current = activations.read(record.tenantId(), record.sourceId(),
+                record.generation()).orElse(record);
+        if (current.state() == ActivationState.REVISION_ACCEPTED) {
+            transition(current, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0);
+            current = read(record);
+        }
+        if (current.state() == ActivationState.EXTRACTING) {
+            transition(current, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0);
+            current = read(record);
+        }
+        if (current.state() == ActivationState.EXTRACTION_COMPLETE) {
+            transition(current, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0);
+            current = read(record);
+        }
+        if (current.state() == ActivationState.GRAPH_COMMITTING) {
+            transition(current, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED,
+                    current.generation());
+            current = read(record);
+        }
+        if (current.state() == ActivationState.GRAPH_COMMITTED) {
+            transition(current, ActivationState.GRAPH_COMMITTED, ActivationState.SEARCH_COMMITTING,
+                    current.generation());
+            current = read(record);
+        }
+        if (current.state() == ActivationState.SEARCH_COMMITTING) {
+            transition(current, ActivationState.SEARCH_COMMITTING, ActivationState.SEARCH_COMMITTED,
+                    current.generation());
+        }
+    }
+
+    private static ActivationRecord read(ActivationRecord record) {
+        return activations.read(record.tenantId(), record.sourceId(), record.generation())
+                .orElseThrow();
     }
 
     private static void transition(ActivationRecord record, ActivationState expected,

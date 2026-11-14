@@ -153,8 +153,10 @@ public class SynfluxConfig {
     @Bean
     public GraphWriter graphWriter(IngestionCacheClient cacheClient, RelationValidator validator,
                                    GraphWriteClient graphWriteClient, ExtractionGraphProperties properties,
-                                   Clock clock) {
-        return new GraphWriter(cacheClient, validator, graphWriteClient, properties, clock);
+                                   Clock clock,
+                                   org.springframework.beans.factory.ObjectProvider<org.synanton.ingestioncache.activation.SourceActivationStore> activationStore) {
+        return new GraphWriter(cacheClient, validator, graphWriteClient, properties, clock,
+                activationStore.getIfAvailable());
     }
 
     private static ObjectMapper graphMapper() {
