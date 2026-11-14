@@ -82,7 +82,7 @@ class IngestionActivationIntegrationTest {
 
     @BeforeAll
     static void startStores() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
+        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1.12"));
         cassandra.start();
         InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
         try (CqlSession admin = CqlSession.builder().addContactPoint(contact)
@@ -99,7 +99,7 @@ class IngestionActivationIntegrationTest {
         ingestion = new FixtureIngestionService(cache, Clock.systemUTC(),
                 new IngestionEventConfig().ingestionEventTypes());
 
-        neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.26")).withoutAuthentication();
+        neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.26.32")).withoutAuthentication();
         neo4j.start();
         driver = GraphDatabase.driver(neo4j.getBoltUrl(), AuthTokens.none());
         executor = new DriverCypherExecutor(driver, "neo4j");
