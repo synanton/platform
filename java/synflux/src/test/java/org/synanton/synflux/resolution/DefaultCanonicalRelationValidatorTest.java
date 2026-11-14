@@ -3,23 +3,19 @@ package org.synanton.synflux.resolution;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ExtractedRelationView;
@@ -29,7 +25,6 @@ import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ExtractionResultRow;
-import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.extraction.graph.RelationValidation;
 import org.synanton.synflux.extraction.graph.RelationValidator;
 
@@ -47,7 +42,7 @@ class DefaultCanonicalRelationValidatorTest {
     private final RelationValidator syntology = mock(RelationValidator.class);
     private final IngestionCacheClient cache = mock(IngestionCacheClient.class);
     private final DefaultCanonicalRelationValidator validator = new DefaultCanonicalRelationValidator(
-            graph, extractedReadPort, syntology, cache, Clock.fixed(NOW, ZoneOffset.UTC));
+            graph, extractedReadPort, syntology, cache);
 
     @BeforeEach
     void seed() throws Exception {
@@ -66,7 +61,7 @@ class DefaultCanonicalRelationValidatorTest {
     }
 
     @Test
-    void validTripleIsPersistedWithoutGraphMutation() {
+    void validTripleIsValidatedWithoutPersistence() {
         when(syntology.validate(TENANT, "MaintenanceSystem", "requires", "Protocol", "1.0.0"))
                 .thenReturn(new RelationValidation(true, List.of()));
 
@@ -75,25 +70,13 @@ class DefaultCanonicalRelationValidatorTest {
         assertThat(result.outcome()).isEqualTo(RelationValidationOutcome.VALID);
         assertThat(result.subjectEntityId()).isEqualTo("e-subject");
         assertThat(result.objectEntityId()).isEqualTo("e-object");
-        ArgumentCaptor<RelationPromotionResultRow> row = ArgumentCaptor.forClass(RelationPromotionResultRow.class);
-        verify(cache).upsertRelationPromotionResult(row.capture());
-        assertThat(row.getValue().promotionStatus()).isEqualTo("VALID");
-        assertThat(row.getValue().canonicalSubjectId()).isEqualTo("e-subject");
-        assertThat(row.getValue().ontologyVersion()).isEqualTo("1.0.0");
-        assertThat(row.getValue().strategyVersion()).isEqualTo(DefaultCanonicalRelationValidator.STRATEGY_VERSION);
-        assertThat(row.getValue().sourceId()).isEqualTo("source-1");
-        assertThat(row.getValue().revisionId()).isEqualTo(VERSION);
-        assertThat(row.getValue().generation()).isEqualTo(7);
-        assertThat(row.getValue().extractionRunId()).isEqualTo("run-646");
-        assertThat(row.getValue().identityStatus()).isEqualTo("CURRENT");
-        assertThat(row.getValue().evidenceJson())
-                .contains("\"sourceId\":\"source-1\"")
-                .contains("\"generation\":7")
-                .contains("\"extractionRunId\":\"run-646\"");
+        assertThat(result.reasonCode()).isEqualTo("VALID");
+        verify(cache).listExtractionResults(TENANT, REF);
+        verifyNoMoreInteractions(cache);
     }
 
     @Test
-    void invalidDomainOrPredicateIsInvalid() {
+    void invalidDomainOrPredicateIsInvalidWithoutPersistence() {
         when(syntology.validate(any(), any(), any(), any(), any())).thenReturn(
                 new RelationValidation(false, List.of(new RelationValidation.Violation(
                         "domain_mismatch", "bad domain", "requires"))));
@@ -103,7 +86,8 @@ class DefaultCanonicalRelationValidatorTest {
         assertThat(result.outcome()).isEqualTo(RelationValidationOutcome.INVALID);
         assertThat(result.violations()).anySatisfy(violation ->
                 assertThat(violation.code()).isEqualTo("domain_mismatch"));
-        verify(cache).upsertRelationPromotionResult(any());
+        verify(cache).listExtractionResults(TENANT, REF);
+        verifyNoMoreInteractions(cache);
     }
 
     @Test
@@ -159,6 +143,7 @@ class DefaultCanonicalRelationValidatorTest {
 
         assertThatThrownBy(() -> validator.validate(TENANT, "1.0.0", RELATION_ID))
                 .isInstanceOf(RetryableProcessingException.class);
-        verify(cache, never()).upsertRelationPromotionResult(any());
+        verify(cache).listExtractionResults(TENANT, REF);
+        verifyNoMoreInteractions(cache);
     }
 }

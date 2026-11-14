@@ -3,6 +3,7 @@ package org.synanton.ingestioncache.client;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
@@ -27,6 +28,7 @@ class ManifestVisibilityGateTest {
 
     private static final CassandraContainer cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
     private static IngestionCacheClient client;
+    private static PromotionOwnershipStore ownership;
 
     @BeforeAll
     static void startInfra() {
@@ -47,11 +49,18 @@ class ManifestVisibilityGateTest {
                 .build();
         SchemaInstaller.install(session);
         client = new IngestionCacheClient(session);
+        ownership = new PromotionOwnershipStore(session);
     }
 
     @AfterAll
     static void stopInfra() {
         cassandra.stop();
+    }
+
+    private static void insertPromotionRow(RelationPromotionResultRow row) {
+        PromotionOwnershipStore.OwnershipToken token = ownership.acquire(row.tenantId(),
+                row.sourceVersionId(), "test-seed").orElseThrow();
+        ownership.insertPromotionResult(row, token);
     }
 
     private static ManifestRow manifest(String tenantId, UUID contentRefId, UUID runId) {
@@ -91,7 +100,7 @@ class ManifestVisibilityGateTest {
         String tenant = "tenant-promotion-identity-" + UUID.randomUUID();
         UUID version = UUID.randomUUID();
         UUID revision = UUID.randomUUID();
-        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+        insertPromotionRow(new RelationPromotionResultRow(
                 tenant, version, "relation-a", "m1", "m2", "requires", "VALID",
                 "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null,
                 "source-a", revision, 5L, "run-a", "CURRENT"));
@@ -109,7 +118,7 @@ class ManifestVisibilityGateTest {
     void legacyPromotionRowStaysExplicitlyUnversioned() {
         String tenant = "tenant-promotion-legacy-" + UUID.randomUUID();
         UUID version = UUID.randomUUID();
-        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+        insertPromotionRow(new RelationPromotionResultRow(
                 tenant, version, "relation-legacy", "m1", "m2", "requires", "VALID",
                 "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null));
 
@@ -125,11 +134,11 @@ class ManifestVisibilityGateTest {
         String tenant = "tenant-promotion-multi-" + UUID.randomUUID();
         UUID versionA = UUID.randomUUID();
         UUID versionB = UUID.randomUUID();
-        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+        insertPromotionRow(new RelationPromotionResultRow(
                 tenant, versionA, "relation-a", "m1", "m2", "requires", "VALID",
                 "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null,
                 "source-a", UUID.randomUUID(), 5L, "run-a", "CURRENT"));
-        client.upsertRelationPromotionResult(new RelationPromotionResultRow(
+        insertPromotionRow(new RelationPromotionResultRow(
                 tenant, versionB, "relation-b", "m1", "m2", "requires", "VALID",
                 "entity-1", "entity-2", "VALID", "{}", "v1", "active", Instant.now(), null,
                 "source-b", UUID.randomUUID(), 2L, "run-b", "CURRENT"));

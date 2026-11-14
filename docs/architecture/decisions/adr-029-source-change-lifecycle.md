@@ -314,10 +314,12 @@ There are three distinct atomic boundaries:
 | Boundary | Trigger | Atomic writes | Crash recovery |
 |---|---|---|---|
 | A — Acceptance | Revision received | `source_versions` row, generation mapping, `ExtractionRequested` in one Cassandra LWT | Revision is retryable through extraction; no activation event exists yet. A crash before A leaves no accepted revision. |
-| B — Graph commit | Projection commits successfully | `source_versions.graph_status = GRAPH_COMMITTED` and `ActivationRequested` in one conditional Cassandra LWT on the same row | The activation event is durable; a crash after B is recoverable by the sweep. Repeated B is idempotent and must not emit a second event or replace another revision's event. |
+| B — Canonical graph commit | Every relation-promotion row for the revision is terminal (`COMPLETED`, `FAILED`, `SUPERSEDED`) or the revision has zero promotion rows | `source_versions.graph_status = GRAPH_COMMITTED` and `ActivationRequested` in one conditional Cassandra LWT on the same row | The activation event is durable; a crash after B is recoverable by the sweep. Repeated B is idempotent and must not emit a second event or replace another revision's event. |
 | C — Activation | `ActivateRevision` completes | Cassandra current-pointer LWT sets the active revision | If C is interrupted, the sweep re-runs activation from the durable B event. The generation mapping is not reassigned. |
 
-**Contract:** a crash between any two boundaries is recoverable through the durable state written by the prior boundary. There is no window where an accepted revision has neither an extraction event nor a recoverable activation state. `ActivationRequested` must not be emitted at A; an activation consumer must never see an event before the graph projection is durable.
+`GRAPH_COMMITTED` means **canonical promotion is complete**, not that extracted mentions were persisted. Mention persistence is the earlier `MENTIONS_COMMITTED` graph status/activation state: `GraphWriter` writes it after the isolated mention graph (and its `:ExtractedMention`/`:ExtractedRelation` rows) is durable. `MENTIONS_COMMITTED` is not an activation boundary and must never write `ActivationRequested`.
+
+**Contract:** a crash between any two boundaries is recoverable through the durable state written by the prior boundary. There is no window where an accepted revision has neither an extraction event nor a recoverable activation state. `ActivationRequested` must not be emitted at A or at mention commit; an activation consumer must never see an event before canonical promotion is durable.
 
 #### 12.2.2 Activation lock
 
@@ -339,7 +341,94 @@ The Neo4j fence may advance after `ActivateRevision` reads it but before the Cas
 
 **Named test required by #654:** advance the Neo4j fence after the precondition read but before the Cassandra LWT. Assert that activation completes for the operation generation, drift is recorded, a subsequent stale graph mutation is rejected by the fence, and reconciliation converges the state.
 
-**Change control:** dependent tickets are #654, #655, and #656. This amendment is a prerequisite for the unified #654 PR; no #654–#656 conformance tests exist yet. Existing #648/#666/#685 promotion tests remain green.
+#### 12.2.5 Canonical completion amendment (2026-11-14)
+
+Canonical promotion owns the `MENTIONS_COMMITTED → GRAPH_COMMITTED` transition. Recovery must not synthesize it.
+
+- `PromotionConsumer` checks, after processing a promotion row, whether every `relation_promotion_results` row for that source version is terminal (`COMPLETED`, `FAILED`, `SUPERSEDED`). If so, it completes the canonical graph commit.
+- Revisions with zero promotion rows are already terminal: a bounded `PromotionCompletionSweep` scans only `source_versions` partitions at `graph_status = MENTIONS_COMMITTED`, checks terminal/empty promotion rows, and completes them. The sweep is enabled by property and tenant, is disabled by default, and never scans `source_versions` globally.
+- Completion is a Cassandra LWT on `source_versions`: `IF graph_status='MENTIONS_COMMITTED'` sets `GRAPH_COMMITTED` and the deterministic `ActivationRequested` event fields. Repeated completion is a no-op and cannot replace another revision's event.
+- Connector/resource are resolved from the staged `ActivationRecord` (or an exact `source_versions` lookup), never guessed.
+- After the LWT succeeds, the activation record transitions `MENTIONS_COMMITTED → GRAPH_COMMITTED`. If that transition fails, the event remains durable so recovery can still proceed.
+- `ActivationRecoverySweep` accepts only durable `GRAPH_COMMITTED`/`SEARCH_COMMITTED` boundaries; it does not accept `MENTIONS_COMMITTED` as a readiness signal and does not synthesize activation records or graph state.
+
+**Change control:** dependent tickets are #654, #655, and #656. #654 owns the boundary correction and the mention/canonical split; #655 retirement and #656 search filtering remain dependent on the corrected boundary. Existing #648/#666/#685 promotion tests remain green.
+
+### 12.3 Completion barrier requirements (2026-11-14)
+
+The canonical completion boundary is not yet complete. The following are required before #654 can claim `GRAPH_COMMITTED` is trustworthy:
+
+- **Promotion-set closure:** a durable `promotion_set_closed` marker must be written by the promotion producer after all promotion work for the revision has been emitted. Completion requires `state == PROMOTING/GRAPH_COMMITTING`, `promotion_set_closed == true`, and all rows completion-authorizing.
+- **Terminal taxonomy:** only `SUCCEEDED`, `REJECTED`, and `CONFLICTED_REVIEWED` authorize completion. `CONFLICTED_PENDING`, `FAILED_RETRYABLE`, and `FAILED_TERMINAL` block completion. The current implementation enforces only part of this with a positive allowlist: claim `COMPLETED` and validation outcome `INVALID` authorize; all unknown, failed, and superseded outcomes block.
+- **Post-completion immutability:** promotion writes are accepted only before `GRAPH_COMMITTED`; late writes must be rejected.
+- **Fair sweep progression:** the completion sweep needs a durable `next_sweep_at` cursor and oldest-first processing so bounded batches cannot starve revisions.
+
+Status: closure, immutability, and fair cursor are NOT implemented; the terminal-authorization rule is implemented. #654 remains open until all four clauses are satisfied and tested.
+
+### 12.4 Revision ownership protocol (proposed 2026-11-14)
+
+Canonical promotion completion needs a real fence, not a status field read across partitions. Ownership and closure live in the **same Cassandra partition** as the promotion rows.
+
+#### State model
+
+`UNCLAIMED → CLAIMED(owner_producer_id, owner_generation) → CLOSED`
+
+- Acquisition is an `INSERT ... IF NOT EXISTS` of a sentinel row `relation_id='__OWNERSHIP__'`.
+- Takeover is an optimistic CAS on `(owner_producer_id, owner_generation)` after `owner_started_at` exceeds the timeout; it increments `owner_generation`. Takeover preserves `owner_closed`: closed membership is frozen, but consumer ownership can move to a recovery worker.
+- Only the current `(owner_producer_id, owner_generation)` may write rows or close the set.
+
+#### Ownership row location
+
+The ownership row is in `relation_promotion_results`, whose partition key is `(tenant_id, source_version_id)`, with `relation_id='__OWNERSHIP__'`. This is mandatory: Cassandra cannot enforce a fence whose condition is in another partition. A separate `source_versions` owner field is **rejected** (Design 2) because a producer can pass a read-before-write check, lose ownership, and still commit a row.
+
+#### Write protocol
+
+Each promotion-row insert is a same-partition batch with an ownership update:
+
+```text
+BEGIN BATCH
+  INSERT INTO relation_promotion_results (... relation_id = ? ...);
+  UPDATE relation_promotion_results
+    SET owner_last_write_at = ?
+    WHERE tenant_id=? AND source_version_id=? AND relation_id='__OWNERSHIP__'
+    IF owner_producer_id=? AND owner_generation=? AND owner_closed=false;
+APPLY BATCH;
+```
+
+A stale generation or closed set rejects the whole batch. There is no application-level check that can be bypassed.
+
+**Split protocol:** row creation (`insertFenced`) requires `owner_generation` to match and `owner_closed=false`. Consumer outcome updates (`updateOutcomeFenced`) mutate existing rows only and require `owner_generation` to match, but not `owner_closed=false`; otherwise completion could never be recorded after the producer closes the set. Neither operation changes the row set after closure.
+
+#### Close and completion
+
+Close is an LWT on the sentinel row: `IF owner_producer_id=? AND owner_generation=? AND owner_closed=false`. Completion requires:
+
+1. `owner_closed=true`;
+2. no non-ownership row has an outcome outside the positive allowlist `{COMPLETED, INVALID}`.
+
+Failed, superseded, pending, processing, review-pending, and unknown outcomes block completion. Zero-row revisions close with `owner_closed=true` and complete without promotion rows.
+
+#### Takeover and crash recovery
+
+A crashed or stalled owner is recovered by a sweep that scans ownership sentinels with `owner_closed=false` and `owner_started_at < now-timeout`, then performs the generation-increment CAS. The old owner's subsequent batch fails the ownership condition; the new owner re-emits deterministic rows and closes. Takeover is part of the protocol, not an operational add-on.
+
+#### Rejected alternatives
+
+- **Design 2 on `source_versions`:** cross-partition read-check/write is a TOCTOU hole; Cassandra does not protect it.
+- **Design 3 quiet-period supervisor:** timing heuristic; a paused producer can resume after closure.
+
+#### Required race tests
+
+1. Insert wins: row commits before close; completion sees it.
+2. Close wins: subsequent row batch fails and is rejected.
+3. Concurrent insert and close: one same-partition LWT wins; no partial row.
+4. Duplicate close: second close is a no-op.
+5. Stale producer after takeover: old generation's row batch fails.
+6. Completion sweep mid-emission: sees `owner_closed=false`, does not complete; after close it completes.
+
+Plus: crash/restart takeover, zero-row closure, and the positive-allowlist regression.
+
+**Status:** Proposed. Not implemented. #654 remains open. Dependent tickets: #654, #655, #656. Contract change control applies.
 
 ## Lifecycle state machine
 
@@ -351,6 +440,7 @@ CURRENT (old)
   -> EXTRACTING
   -> EXTRACTION_COMPLETE
   -> GRAPH_COMMITTING
+  -> MENTIONS_COMMITTED
   -> GRAPH_COMMITTED
   -> SEARCH_COMMITTING
   -> SEARCH_COMMITTED

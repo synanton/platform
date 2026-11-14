@@ -1,0 +1,103 @@
+--- pause activation recovery ---
+Waiting for deployment "relix" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+deployment "relix" successfully rolled out
+source=acceptance-654-d-1794687727
+create=201
+submit=202
+{"run_id":"0e46f4f9-dbc7-3abb-bb61-cd16d3bf5b31","operation_id":"1c6b0f11-261d-4bcd-8131-9543d2f6b3e7","status":"SCHEDULED"}
+[28] GRAPH_COMMITTED at 20:22:37
+version=e77cff10-76c9-5a54-9a49-88cc3c6d86b7
+--- before restart ---
+
+ graph_status    | activation_event_published
+-----------------+----------------------------
+ GRAPH_COMMITTED |                      False
+
+(1 rows)
+
+ current_generation | accepted_generation
+--------------------+---------------------
+                  0 |                   1
+
+(1 rows)
+
+ state
+-----------------
+ GRAPH_COMMITTED
+
+(1 rows)
+
+ owner_producer_id                                      | owner_generation | owner_closed | owner_started_at                | owner_last_write_at             | owner_takeover_count
+--------------------------------------------------------+------------------+--------------+---------------------------------+---------------------------------+----------------------
+ synflux-promotion-aa34ecf7-1ee6-426a-997a-2d0d8c910744 |                1 |         True | 2026-11-14 20:22:26.376000+0000 | 2026-11-14 20:22:36.644000+0000 |                    0
+
+(1 rows)
+evidence
+2
+--- rollout restart relix ---
+deployment.apps/relix restarted
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+deployment "relix" successfully rolled out
+--- after restart (activation still paused) ---
+
+ graph_status    | activation_event_published
+-----------------+----------------------------
+ GRAPH_COMMITTED |                      False
+
+(1 rows)
+
+ current_generation | accepted_generation
+--------------------+---------------------
+                  0 |                   1
+
+(1 rows)
+
+ state
+-----------------
+ GRAPH_COMMITTED
+
+(1 rows)
+
+ owner_producer_id                                      | owner_generation | owner_closed | owner_started_at                | owner_last_write_at             | owner_takeover_count
+--------------------------------------------------------+------------------+--------------+---------------------------------+---------------------------------+----------------------
+ synflux-promotion-aa34ecf7-1ee6-426a-997a-2d0d8c910744 |                1 |         True | 2026-11-14 20:22:26.376000+0000 | 2026-11-14 20:22:36.644000+0000 |                    0
+
+(1 rows)
+evidence
+2
+--- resume activation recovery ---
+Waiting for deployment "relix" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+deployment "relix" successfully rolled out
+[1] activation=CURRENT
+--- final ---
+
+ state   | generation | revision_id                          | graph_applied_generation | search_applied_generation
+---------+------------+--------------------------------------+--------------------------+---------------------------
+ CURRENT |          1 | e77cff10-76c9-5a54-9a49-88cc3c6d86b7 |                        1 |                         1
+
+(1 rows)
+
+ current_generation | accepted_generation | active_revision_id
+--------------------+---------------------+--------------------------------------
+                  1 |                   1 | e77cff10-76c9-5a54-9a49-88cc3c6d86b7
+
+(1 rows)
+
+ graph_status    | activation_event_published
+-----------------+----------------------------
+ GRAPH_COMMITTED |                       True
+
+(1 rows)
+
+ owner_producer_id                                      | owner_generation | owner_closed | owner_takeover_count
+--------------------------------------------------------+------------------+--------------+----------------------
+ synflux-promotion-aa34ecf7-1ee6-426a-997a-2d0d8c910744 |                1 |         True |                    0
+
+(1 rows)
+evidence, canonical_relations
+2, 2

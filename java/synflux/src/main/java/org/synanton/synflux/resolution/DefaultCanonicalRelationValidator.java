@@ -2,8 +2,6 @@ package org.synanton.synflux.resolution;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,7 +19,6 @@ import org.synanton.common.resolution.ValidationViolation;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ExtractionResultRow;
-import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.extraction.graph.RelationValidation;
 import org.synanton.synflux.extraction.graph.RelationValidator;
 
@@ -38,19 +35,16 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
     private final ExtractedMentionGraphReadPort extractedReadPort;
     private final RelationValidator syntology;
     private final IngestionCacheClient cacheClient;
-    private final Clock clock;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public DefaultCanonicalRelationValidator(ResolutionGraphLookup graphLookup,
                                              ExtractedMentionGraphReadPort extractedReadPort,
                                              RelationValidator syntology,
-                                             IngestionCacheClient cacheClient,
-                                             Clock clock) {
+                                             IngestionCacheClient cacheClient) {
         this.graphLookup = graphLookup;
         this.extractedReadPort = extractedReadPort;
         this.syntology = syntology;
         this.cacheClient = cacheClient;
-        this.clock = clock;
     }
 
     @Override
@@ -58,9 +52,9 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
                                              String extractedRelationId) {
         Optional<ExtractedRelationView> found = extractedReadPort.getExtractedRelation(tenantId, extractedRelationId);
         if (found.isEmpty()) {
-            return persist(tenantId, null, null, null, invalid("EXTRACTED_RELATION_NOT_FOUND",
+            return invalid("EXTRACTED_RELATION_NOT_FOUND",
                     "Extracted relation not found in tenant", null, null, null, null, null,
-                    ontologyVersion, List.of()));
+                    ontologyVersion, List.of());
         }
         ExtractedRelationView view = found.get();
         List<ActiveResolution> active = graphLookup.getActiveResolutions(tenantId,
@@ -74,14 +68,14 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
         if (subjects.size() != 1 || objects.size() != 1) {
             String reason = subjects.isEmpty() || objects.isEmpty()
                     ? "MISSING_ACTIVE_RESOLUTION" : "MULTIPLE_ACTIVE_RESOLUTIONS";
-            return persist(tenantId, view, null, null, invalid(reason,
+            return invalid(reason,
                     "Both endpoints need exactly one active resolution",
                     subjects.isEmpty() ? null : subjects.getFirst().canonicalEntityId(),
                     view.predicate(),
                     objects.isEmpty() ? null : objects.getFirst().canonicalEntityId(),
                     subjects.isEmpty() ? null : subjects.getFirst().canonicalEntityType(),
                     objects.isEmpty() ? null : objects.getFirst().canonicalEntityType(),
-                    ontologyVersion, List.of()));
+                    ontologyVersion, List.of());
         }
         ActiveResolution subject = subjects.getFirst();
         ActiveResolution object = objects.getFirst();
@@ -89,16 +83,16 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
         // Cassandra evidence must still contain this extracted relation/predicate.
         Optional<ExtractionResultRow> evidence = readEvidence(tenantId, view);
         if (evidence.isEmpty()) {
-            return persist(tenantId, view, subject, object, invalid("EXTRACTED_EVIDENCE_NOT_FOUND",
+            return invalid("EXTRACTED_EVIDENCE_NOT_FOUND",
                     "Extraction evidence for the relation is missing", subject.canonicalEntityId(),
                     view.predicate(), object.canonicalEntityId(), subject.canonicalEntityType(),
-                    object.canonicalEntityType(), ontologyVersion, List.of()));
+                    object.canonicalEntityType(), ontologyVersion, List.of());
         }
         if (!evidenceContains(evidence.get(), view.predicate())) {
-            return persist(tenantId, view, subject, object, invalid("EXTRACTED_RELATION_NOT_FOUND",
+            return invalid("EXTRACTED_RELATION_NOT_FOUND",
                     "Evidence chunk no longer contains this relation", subject.canonicalEntityId(),
                     view.predicate(), object.canonicalEntityId(), subject.canonicalEntityType(),
-                    object.canonicalEntityType(), ontologyVersion, List.of()));
+                    object.canonicalEntityType(), ontologyVersion, List.of());
         }
 
         RelationValidation validation;
@@ -115,7 +109,7 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
                 .map(violation -> new ValidationViolation(violation.code(), violation.message(),
                         violation.path()))
                 .toList();
-        RelationValidationResult result = validation.conformant()
+        return validation.conformant()
                 ? new RelationValidationResult(RelationValidationOutcome.VALID,
                 subject.canonicalEntityId(), view.predicate(), object.canonicalEntityId(),
                 subject.canonicalEntityType(), object.canonicalEntityType(), ontologyVersion,
@@ -124,7 +118,6 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
                 subject.canonicalEntityId(), view.predicate(), object.canonicalEntityId(),
                 subject.canonicalEntityType(), object.canonicalEntityType(), ontologyVersion,
                 violations, "ONTOLOGY_INVALID");
-        return persist(tenantId, view, subject, object, result);
     }
 
     private Optional<ExtractionResultRow> readEvidence(String tenantId, ExtractedRelationView view) {
@@ -156,47 +149,6 @@ public final class DefaultCanonicalRelationValidator implements CanonicalRelatio
         } catch (Exception e) {
             throw new RetryableProcessingException("Could not read extraction evidence", e);
         }
-    }
-
-    private RelationValidationResult persist(String tenantId, ExtractedRelationView view,
-                                             ActiveResolution subject, ActiveResolution object,
-                                             RelationValidationResult result) {
-        if (view != null) {
-            String evidenceJson;
-            try {
-                Map<String, Object> evidence = new LinkedHashMap<>();
-                evidence.put("view", view);
-                evidence.put("violations", result.violations());
-                evidenceJson = mapper.writeValueAsString(evidence);
-            } catch (Exception e) {
-                throw new RetryableProcessingException("Could not serialize validation evidence", e);
-            }
-            UUID version;
-            try {
-                version = UUID.fromString(view.sourceVersionId());
-            } catch (IllegalArgumentException e) {
-                throw new RetryableProcessingException("Invalid source version on extracted relation", e);
-            }
-            UUID revisionId = view.revisionId() == null ? version : UUID.fromString(view.revisionId());
-            String identityStatus = view.sourceId() == null || view.generation() < 1
-                    ? "LEGACY_UNVERSIONED" : "CURRENT";
-            cacheClient.upsertRelationPromotionResult(new RelationPromotionResultRow(
-                    tenantId, version, view.relationId(), view.subjectMentionId(),
-                    view.objectMentionId(), view.predicate(), result.outcome().name(),
-                    result.subjectEntityId(), result.objectEntityId(),
-                    reason(result), evidenceJson, STRATEGY_VERSION, result.ontologyVersion(),
-                    clock.instant(), null, view.sourceId(), revisionId, view.generation(),
-                    view.extractionRunId(), identityStatus));
-        }
-        return result;
-    }
-
-    private static String reason(RelationValidationResult result) {
-        if (result.violations().isEmpty()) {
-            return result.reasonCode();
-        }
-        return result.reasonCode() + ":" + String.join(",",
-                result.violations().stream().map(ValidationViolation::code).toList());
     }
 
     private static RelationValidationResult invalid(String reason, String message,

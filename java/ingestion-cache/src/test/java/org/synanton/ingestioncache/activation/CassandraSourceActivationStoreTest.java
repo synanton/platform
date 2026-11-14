@@ -72,7 +72,8 @@ class CassandraSourceActivationStoreTest {
         advance(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0, 0);
         advance(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0, 0);
         advance(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0, 0);
-        advance(record, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED, 1, 0);
+        advance(record, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED, 1, 0);
+        advance(record, ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED, 1, 0);
         advance(record, ActivationState.GRAPH_COMMITTED, ActivationState.SEARCH_COMMITTING, 1, 0);
         advance(record, ActivationState.SEARCH_COMMITTING, ActivationState.SEARCH_COMMITTED, 1, 1);
 
@@ -112,7 +113,8 @@ class CassandraSourceActivationStoreTest {
         advance(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0, 0);
         advance(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0, 0);
         advance(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0, 0);
-        advance(record, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED, 1, 0);
+        advance(record, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED, 1, 0);
+        advance(record, ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED, 1, 0);
         advance(record, ActivationState.GRAPH_COMMITTED, ActivationState.SEARCH_COMMITTING, 1, 0);
         advance(record, ActivationState.SEARCH_COMMITTING, ActivationState.SEARCH_COMMITTED, 1, 1);
 
@@ -133,7 +135,8 @@ class CassandraSourceActivationStoreTest {
         advance(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0, 0);
         advance(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0, 0);
         advance(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0, 0);
-        advance(record, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED, 1, 0);
+        advance(record, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED, 1, 0);
+        advance(record, ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED, 1, 0);
         advance(record, ActivationState.GRAPH_COMMITTED, ActivationState.SEARCH_COMMITTING, 1, 0);
         advance(record, ActivationState.SEARCH_COMMITTING, ActivationState.SEARCH_COMMITTED, 1, 1);
         advance(record, ActivationState.SEARCH_COMMITTED, ActivationState.ACTIVATION_PARTIAL,
@@ -162,13 +165,15 @@ class CassandraSourceActivationStoreTest {
         advance(gen1, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0, 0);
         advance(gen1, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0, 0);
         advance(gen1, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0, 0);
-        advance(gen1, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED, 1, 0);
+        advance(gen1, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED, 1, 0);
+        advance(gen1, ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED, 1, 0);
         advance(gen1, ActivationState.GRAPH_COMMITTED, ActivationState.SEARCH_COMMITTING, 1, 0);
         advance(gen1, ActivationState.SEARCH_COMMITTING, ActivationState.SEARCH_COMMITTED, 1, 1);
         advance(gen2, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0, 0);
         advance(gen2, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0, 0);
         advance(gen2, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0, 0);
-        advance(gen2, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED, 2, 0);
+        advance(gen2, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED, 2, 0);
+        advance(gen2, ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED, 2, 0);
         advance(gen2, ActivationState.GRAPH_COMMITTED, ActivationState.SEARCH_COMMITTING, 2, 0);
         advance(gen2, ActivationState.SEARCH_COMMITTING, ActivationState.SEARCH_COMMITTED, 2, 2);
 

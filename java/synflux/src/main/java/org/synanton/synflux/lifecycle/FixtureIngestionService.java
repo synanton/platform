@@ -200,10 +200,15 @@ public final class FixtureIngestionService {
                 }
                 throw new ContentPublicationException(publicationFailure);
             }
+            long generation = cache.acceptRevision(tenantId, connectorId, sourceId, resourceId,
+                versionId, digest, observedAt);
+            UUID previousRevisionId = cache.readCurrentRevisionId(tenantId, sourceId)
+                .or(() -> cache.readPendingRevisionId(tenantId, sourceId)).orElse(null);
             SourceVersionRow version = new SourceVersionRow(
                 tenantId, connectorId, sourceId, resourceId, versionId, digest, sourceRevision,
                 observedAt, Objects.requireNonNull(contentRefId, "publisher contentRefId"), incarnationId,
-                contentCacheReference == null ? "" : contentCacheReference
+                contentCacheReference == null ? "" : contentCacheReference,
+                generation, digest, previousRevisionId
             );
             boolean inserted = cache.insertSourceVersionAndOutboxIfAbsent(
                 version,
@@ -215,6 +220,11 @@ public final class FixtureIngestionService {
                 ).orElseThrow(() -> new IllegalStateException("SourceVersion insert lost without a readable row"));
                 ensureSameRevision(concurrent, digest, sourceRevision);
             }
+            cache.stageActivation(new org.synanton.ingestioncache.activation.ActivationRecord(
+                tenantId, sourceId, generation, versionId, connectorId, resourceId,
+                previousRevisionId,
+                org.synanton.ingestioncache.activation.ActivationState.REVISION_ACCEPTED,
+                digest, 0L, null, 0L, null, null, true, observedAt, observedAt, null));
             cache.markSourceSyncSucceeded(tenantId, sourceId, observedAt);
             return finishRun(tenantId, runId, operationId, sourceId, startedAt,
                 inserted ? "COMPLETED" : "UNCHANGED",

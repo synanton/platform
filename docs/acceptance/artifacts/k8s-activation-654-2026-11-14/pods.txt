@@ -1,0 +1,25 @@
+--- deployments ---
+NAME        READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                                                                                                           SELECTOR
+relix       1/1     1            1           3d4h   relix        local-registry:5000/synanton/relix@sha256:ca51ef514b07395b978f67c3520329a2163a0c87fc6bcb1862a20ff42cb456ad       app=relix
+synflux     2/2     2            2           26d    synflux      local-registry:5000/synanton/synflux@sha256:9a9dc03274e56c39444f091820a274e20bbf46b97697f5ba28178a9d0536149f     app=synflux
+synquest    1/1     1            1           26d    synquest     local-registry:5000/synanton/synquest:local-real-demo                                                            app=synquest
+syntology   1/1     1            1           3d4h   syntology    local-registry:5000/synanton/syntology@sha256:fc4b70badb08168585ec4be8c01560a61ce6d2e7862170e994d096cbd0357adc   app=syntology
+
+--- pods ---
+NAME                                  READY   STATUS      RESTARTS        AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+cassandra-0                           1/1     Running     0               4h44m   172.16.104.53    node2   <none>           <none>
+cassandra-1                           1/1     Running     0               4h44m   172.16.135.49    node3   <none>           <none>
+cassandra-2                           1/1     Running     0               4h44m   172.16.166.170   node1   <none>           <none>
+extraction-gateway-65586b7445-hzcvn   1/1     Running     2 (4h44m ago)   4h44m   172.16.104.4     node2   <none>           <none>
+minio-55887674fb-ps8ws                1/1     Running     0               4h44m   172.16.166.191   node1   <none>           <none>
+minio-init-pwk5n                      0/1     Completed   0               36h     <none>           node2   <none>           <none>
+neo4j-0                               2/2     Running     0               5h10m   172.16.104.34    node2   <none>           <none>
+platform-ddb794846-b2fpd              1/1     Running     0               4h44m   172.16.104.38    node2   <none>           <none>
+postgres-0                            1/1     Running     0               4h44m   172.16.166.158   node1   <none>           <none>
+relix-5c58656b49-d2jlj                1/1     Running     0               69s     172.16.104.12    node2   <none>           <none>
+security-69c64c9d7-562tq              1/1     Running     2 (4h44m ago)   4h44m   172.16.104.63    node2   <none>           <none>
+synflux-8699cd7c69-lpf75              1/1     Running     0               9m39s   172.16.135.55    node3   <none>           <none>
+synflux-8699cd7c69-zmc4l              1/1     Running     0               10m     172.16.104.49    node2   <none>           <none>
+synquest-765ddcd564-hwc6q             1/1     Running     0               67m     172.16.104.22    node2   <none>           <none>
+syntology-84c7d78998-gwq8s            1/1     Running     0               10m     172.16.104.17    node2   <none>           <none>
+ui-6899b4749c-pgs8n                   1/1     Running     0               4h44m   172.16.104.57    node2   <none>           <none>

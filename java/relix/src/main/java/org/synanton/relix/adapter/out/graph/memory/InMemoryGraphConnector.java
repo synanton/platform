@@ -181,7 +181,8 @@ public class InMemoryGraphConnector implements GraphConnector, GraphReadPort, Gr
                         relation.relationId(), tenant, relation.sourceVersionId(),
                         relation.subjectMentionId(), relation.objectMentionId(), relation.predicate(),
                         relation.evidenceChunkId(), relation.evidenceChunkOffsetStart(),
-                        relation.evidenceChunkOffsetEnd()))
+                        relation.evidenceChunkOffsetEnd(), relation.sourceId(), relation.revisionId(),
+                        relation.generation(), relation.extractionRunId()))
                 .toList();
     }
 
