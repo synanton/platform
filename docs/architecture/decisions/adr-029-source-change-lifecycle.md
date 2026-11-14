@@ -365,6 +365,69 @@ The canonical completion boundary is not yet complete. The following are require
 
 Status: closure, immutability, and fair cursor are NOT implemented; the terminal-authorization rule is implemented. #654 remains open until all four clauses are satisfied and tested.
 
+### 12.4 Revision ownership protocol (proposed 2026-11-14)
+
+Canonical promotion completion needs a real fence, not a status field read across partitions. Ownership and closure live in the **same Cassandra partition** as the promotion rows.
+
+#### State model
+
+`UNCLAIMED → CLAIMED(owner_producer_id, owner_generation) → CLOSED`
+
+- Acquisition is an `INSERT ... IF NOT EXISTS` of a sentinel row `relation_id='__OWNERSHIP__'`.
+- Takeover is an optimistic CAS on `(owner_producer_id, owner_generation)` after `owner_started_at` exceeds the timeout; it increments `owner_generation`.
+- Only the current `(owner_producer_id, owner_generation)` may write rows or close the set.
+
+#### Ownership row location
+
+The ownership row is in `relation_promotion_results`, whose partition key is `(tenant_id, source_version_id)`, with `relation_id='__OWNERSHIP__'`. This is mandatory: Cassandra cannot enforce a fence whose condition is in another partition. A separate `source_versions` owner field is **rejected** (Design 2) because a producer can pass a read-before-write check, lose ownership, and still commit a row.
+
+#### Write protocol
+
+Each promotion-row insert is a same-partition batch with an ownership update:
+
+```text
+BEGIN BATCH
+  INSERT INTO relation_promotion_results (... relation_id = ? ...);
+  UPDATE relation_promotion_results
+    SET owner_last_write_at = ?
+    WHERE tenant_id=? AND source_version_id=? AND relation_id='__OWNERSHIP__'
+    IF owner_producer_id=? AND owner_generation=? AND owner_closed=false;
+APPLY BATCH;
+```
+
+A stale generation or closed set rejects the whole batch. There is no application-level check that can be bypassed.
+
+#### Close and completion
+
+Close is an LWT on the sentinel row: `IF owner_producer_id=? AND owner_generation=? AND owner_closed=false`. Completion requires:
+
+1. `owner_closed=true`;
+2. no non-ownership row has an outcome outside the positive allowlist `{COMPLETED, INVALID}`.
+
+Failed, superseded, pending, processing, review-pending, and unknown outcomes block completion. Zero-row revisions close with `owner_closed=true` and complete without promotion rows.
+
+#### Takeover and crash recovery
+
+A crashed or stalled owner is recovered by a sweep that scans ownership sentinels with `owner_closed=false` and `owner_started_at < now-timeout`, then performs the generation-increment CAS. The old owner's subsequent batch fails the ownership condition; the new owner re-emits deterministic rows and closes. Takeover is part of the protocol, not an operational add-on.
+
+#### Rejected alternatives
+
+- **Design 2 on `source_versions`:** cross-partition read-check/write is a TOCTOU hole; Cassandra does not protect it.
+- **Design 3 quiet-period supervisor:** timing heuristic; a paused producer can resume after closure.
+
+#### Required race tests
+
+1. Insert wins: row commits before close; completion sees it.
+2. Close wins: subsequent row batch fails and is rejected.
+3. Concurrent insert and close: one same-partition LWT wins; no partial row.
+4. Duplicate close: second close is a no-op.
+5. Stale producer after takeover: old generation's row batch fails.
+6. Completion sweep mid-emission: sees `owner_closed=false`, does not complete; after close it completes.
+
+Plus: crash/restart takeover, zero-row closure, and the positive-allowlist regression.
+
+**Status:** Proposed. Not implemented. #654 remains open. Dependent tickets: #654, #655, #656. Contract change control applies.
+
 ## Lifecycle state machine
 
 Per logical source, the lifecycle record exposes the current state and transition history.
