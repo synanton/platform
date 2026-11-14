@@ -17,6 +17,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.resolution.StaleOwnershipException;
+import org.synanton.common.resolution.TerminalOutcomeImmutableException;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.testcontainers.cassandra.CassandraContainer;
@@ -213,7 +214,7 @@ class PromotionOwnershipStoreTest {
     }
 
     @Test
-    void outcomeUpdateIsAllowedBeforeAndAfterClosure() {
+    void outcomeUpdateIsAllowedBeforeClosureAndRejectedAfterTerminal() {
         String tenant = "tenant-ownership-outcome";
         UUID version = UUID.randomUUID();
         PromotionOwnershipStore.OwnershipToken token =
@@ -226,10 +227,10 @@ class PromotionOwnershipStoreTest {
         assertThat(promotionRow(tenant, version, "relation-outcome")
                 .getString("promotion_status")).isEqualTo("COMPLETED");
         store.closeSet(tenant, version, token);
-        assertThat(store.updateOutcomeFenced(tenant, version, "relation-outcome",
-                "FAILED", token)).isTrue();
+        assertThatThrownBy(() -> store.updateOutcomeFenced(tenant, version, "relation-outcome",
+                "FAILED", token)).isInstanceOf(TerminalOutcomeImmutableException.class);
         assertThat(promotionRow(tenant, version, "relation-outcome")
-                .getString("promotion_status")).isEqualTo("FAILED");
+                .getString("promotion_status")).isEqualTo("COMPLETED");
     }
 
     @Test
@@ -364,6 +365,25 @@ class PromotionOwnershipStoreTest {
 
         assertThat(store.findStaleClosed(Instant.now().minusSeconds(600), 10)).isEmpty();
         assertThat(store.countPendingRows(tenant, version)).isZero();
+    }
+
+    @Test
+    void terminalOutcomeCannotBeOverwrittenInSameGeneration() {
+        String tenant = "tenant-ownership-terminal";
+        UUID version = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken token =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        assertThat(store.writeFenced(tenant, version,
+                rowInsert(tenant, version, "relation-terminal"), token)).isTrue();
+        store.closeSet(tenant, version, token);
+        assertThat(store.updateOutcomeFenced(tenant, version, "relation-terminal",
+                "COMPLETED", token)).isTrue();
+
+        assertThatThrownBy(() -> store.updateOutcomeFenced(tenant, version,
+                "relation-terminal", "INVALID", token))
+                .isInstanceOf(TerminalOutcomeImmutableException.class);
+        assertThat(promotionStatus(tenant, version, "relation-terminal"))
+                .isEqualTo("COMPLETED");
     }
 
     @Test

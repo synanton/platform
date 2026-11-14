@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.synanton.common.resolution.StaleOwnershipException;
+import org.synanton.common.resolution.TerminalOutcomeImmutableException;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 
 /**
@@ -145,6 +146,7 @@ public final class PromotionOwnershipStore {
                         UPDATE ingestion_cache.relation_promotion_results
                         SET promotion_status=?
                         WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                        IF promotion_status IN ('VALID','PENDING','PROCESSING')
                         """, outcome, tenantId, sourceVersionId, relationId))
                 .add(SimpleStatement.newInstance("""
                         UPDATE ingestion_cache.relation_promotion_results
@@ -156,6 +158,14 @@ public final class PromotionOwnershipStore {
                         token.producerId(), token.generation()));
         ResultSet result = session.execute(batch);
         if (!result.wasApplied()) {
+            OwnershipRow owner = read(tenantId, sourceVersionId).orElse(null);
+            boolean generationMatches = owner != null
+                    && owner.ownerGeneration() == token.generation()
+                    && token.producerId().equals(owner.ownerProducerId());
+            if (generationMatches) {
+                throw new TerminalOutcomeImmutableException(
+                        "Promotion outcome is already terminal for relation=" + relationId);
+            }
             throw new StaleOwnershipException("Promotion outcome update rejected for tenant="
                     + tenantId + " version=" + sourceVersionId + " producer="
                     + token.producerId() + " generation=" + token.generation());

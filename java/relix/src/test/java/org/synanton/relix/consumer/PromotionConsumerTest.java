@@ -261,7 +261,7 @@ class PromotionConsumerTest {
     private static PromotionOwnershipStore.OwnershipRow ownerRow(RelationPromotionWorkRow work) {
         return new PromotionOwnershipStore.OwnershipRow("tenant-a",
                 work.result().sourceVersionId(), "producer-a", 1, false,
-                Instant.now(), null, 0, Instant.now());
+                Instant.now(), null, 0, Instant.now(), Instant.now());
     }
 
     private static RelationPromotionWorkRow workForVersion(UUID version, String relationId) {
