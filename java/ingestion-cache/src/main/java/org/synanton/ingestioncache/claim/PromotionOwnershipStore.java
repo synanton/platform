@@ -97,6 +97,38 @@ public final class PromotionOwnershipStore {
         return true;
     }
 
+    /**
+     * Consumer outcome update. It may run before or after producer closure because
+     * it does not add or remove rows; it is fenced only by owner generation.
+     */
+    public boolean updateOutcomeFenced(String tenantId, UUID sourceVersionId,
+                                       String relationId, String outcome, OwnershipToken token) {
+        requireKey(tenantId, sourceVersionId);
+        Objects.requireNonNull(relationId, "relationId");
+        Objects.requireNonNull(outcome, "outcome");
+        Objects.requireNonNull(token, "token");
+        BatchStatement batch = BatchStatement.newInstance(DefaultBatchType.LOGGED)
+                .add(SimpleStatement.newInstance("""
+                        UPDATE ingestion_cache.relation_promotion_results
+                        SET promotion_status=?
+                        WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                        """, outcome, tenantId, sourceVersionId, relationId))
+                .add(SimpleStatement.newInstance("""
+                        UPDATE ingestion_cache.relation_promotion_results
+                        SET owner_last_write_at=toTimestamp(now())
+                        WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                        IF owner_producer_id=? AND owner_generation=?
+                        """, tenantId, sourceVersionId, OWNERSHIP_RELATION_ID,
+                        token.producerId(), token.generation()));
+        ResultSet result = session.execute(batch);
+        if (!result.wasApplied()) {
+            throw new StaleOwnershipException("Promotion outcome update rejected for tenant="
+                    + tenantId + " version=" + sourceVersionId + " producer="
+                    + token.producerId() + " generation=" + token.generation());
+        }
+        return true;
+    }
+
     public void closeSet(String tenantId, UUID sourceVersionId, OwnershipToken token) {
         requireKey(tenantId, sourceVersionId);
         Objects.requireNonNull(token, "token");

@@ -397,6 +397,8 @@ APPLY BATCH;
 
 A stale generation or closed set rejects the whole batch. There is no application-level check that can be bypassed.
 
+**Split protocol:** row creation (`insertFenced`) requires `owner_generation` to match and `owner_closed=false`. Consumer outcome updates (`updateOutcomeFenced`) mutate existing rows only and require `owner_generation` to match, but not `owner_closed=false`; otherwise completion could never be recorded after the producer closes the set. Neither operation changes the row set after closure.
+
 #### Close and completion
 
 Close is an LWT on the sentinel row: `IF owner_producer_id=? AND owner_generation=? AND owner_closed=false`. Completion requires:

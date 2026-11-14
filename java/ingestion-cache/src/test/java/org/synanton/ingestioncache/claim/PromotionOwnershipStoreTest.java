@@ -167,6 +167,40 @@ class PromotionOwnershipStoreTest {
     }
 
     @Test
+    void outcomeUpdateIsAllowedBeforeAndAfterClosure() {
+        String tenant = "tenant-ownership-outcome";
+        UUID version = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken token =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        assertThat(store.writeFenced(tenant, version, rowInsert(tenant, version, "relation-outcome"),
+                token)).isTrue();
+
+        assertThat(store.updateOutcomeFenced(tenant, version, "relation-outcome",
+                "COMPLETED", token)).isTrue();
+        store.closeSet(tenant, version, token);
+        assertThat(store.updateOutcomeFenced(tenant, version, "relation-outcome",
+                "COMPLETED", token)).isTrue();
+    }
+
+    @Test
+    void staleOutcomeUpdateFailsAfterTakeover() {
+        String tenant = "tenant-ownership-outcome-stale";
+        UUID version = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken generationOne =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        assertThat(store.writeFenced(tenant, version, rowInsert(tenant, version, "relation-outcome-stale"),
+                generationOne)).isTrue();
+        PromotionOwnershipStore.OwnershipToken generationTwo =
+                store.takeover(tenant, version, "producer-b", 1).orElseThrow();
+
+        assertThatThrownBy(() -> store.updateOutcomeFenced(tenant, version,
+                "relation-outcome-stale", "COMPLETED", generationOne))
+                .isInstanceOf(StaleOwnershipException.class);
+        assertThat(store.updateOutcomeFenced(tenant, version,
+                "relation-outcome-stale", "COMPLETED", generationTwo)).isTrue();
+    }
+
+    @Test
     void duplicateClosureHasOneWinnerAndDoesNotReplaceClosedAt() throws Exception {
         String tenant = "tenant-ownership-close";
         UUID version = UUID.randomUUID();
