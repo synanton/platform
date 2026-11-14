@@ -1,6 +1,6 @@
 # Platform documentation inventory
 
-**Reviewed:** 2026-10-23
+**Reviewed:** 2026-11-14
 **Scope:** Documents that state current platform architecture, implementation status, Phase 1 demo acceptance, security posture, or the vertical-slice trust state. This is a targeted disposition inventory, not a rewrite or a file-count of the historical design archive.
 
 ## Disposition
@@ -10,6 +10,11 @@
 | [`../README.md`](../README.md) | Current / normative entry point | Updated Phase 1 acceptance and architecture status; distinguishes code presence from validated capability; links canonical indexes and inventory. |
 | [`INDEX.md`](INDEX.md) | Current / navigation | Replaced stale 1.22-only pointers and dead paths with existing entry points; states status vocabulary and sources of truth. |
 | [`architecture/INDEX.md`](architecture/INDEX.md) | Current / architecture navigation | Corrected approved-vs-in-progress wording for 1.23, 1.26, 1.27 and 1.32; date refreshed. |
+| [`architecture/proposals/ontology-domain-mapping-v0.3.md`](architecture/proposals/ontology-domain-mapping-v0.3.md) | Approved research architecture baseline | Immutable v0.3 baseline; implementation not implied; decisions tracked by ADR-030–042. |
+| [`architecture/CHANGELOG.md`](architecture/CHANGELOG.md) | Current / architecture history | v0.1–v0.3 baseline change record; future revisions supersede rather than edit approved baselines. |
+| [`architecture/decisions/INDEX.md`](architecture/decisions/INDEX.md) | Current / ADR status | Global ADR register; proposal-local ONT-ADR-001–013 map to repository ADR-030–042. |
+| [`glossary.md`](glossary.md) | Current / terminology | Shared ontology and semantic mapping terms. |
+| [`architecture/proposals/ontology-domain-mapping/`](architecture/proposals/ontology-domain-mapping/) | Draft design inputs | Phase 1 identity, context and registry API drafts; decisions remain pending ADR-030, ADR-031 and ADR-039. |
 | [`architecture/synanton-platform-architecture-1.0.md`](architecture/synanton-platform-architecture-1.0.md) | Current / normative capstone | Retained as approved architecture; status table now separates design approval, frozen contracts, implementation, and Phase 1 validation. Plane designs remain authoritative within each domain. |
 | [`acceptance/p0-ingestion-search-2026-10-21.md`](acceptance/p0-ingestion-search-2026-10-21.md) | Current evidence + historical run snapshot | Retained the pre-#357 failure transcript as history; added the current five-check pass and BM25 acceptance correction with date and tracker. |
 | [`demo/README.md`](demo/README.md) | Current / demo scope | Current BM25 path, known limitations, and operating notes; five-check status is supported by #357. |

@@ -1,7 +1,7 @@
 ---
 title: "Synanton Documentation"
 status: "current"
-last_reviewed: "2026-10-21"
+last_reviewed: "2026-11-14"
 ---
 
 # Synanton Documentation
@@ -17,6 +17,10 @@ The project uses these status labels: **Proposed**, **Approved (design)**, **Con
 |----------|-------------|
 | [`architecture/INDEX.md`](./architecture/INDEX.md) | Canonical design hierarchy, ADRs, and per-plane status |
 | [`architecture/synanton-platform-architecture-1.0.md`](./architecture/synanton-platform-architecture-1.0.md) | Approved architecture capstone; §15 records design vs implementation status |
+| [`architecture/proposals/ontology-domain-mapping-v0.3.md`](./architecture/proposals/ontology-domain-mapping-v0.3.md) | Approved ontology research architecture baseline; specification and ADR decisions remain open |
+| [`architecture/decisions/INDEX.md`](./architecture/decisions/INDEX.md) | Global ADR register, including ontology ADR-030–042 |
+| [`glossary.md`](./glossary.md) | Shared ontology and semantic mapping terminology |
+| [`architecture/CHANGELOG.md`](./architecture/CHANGELOG.md) | Architecture baseline revision history |
 | [`acceptance/`](./acceptance/) | Dated acceptance records and evidence (including superseded run snapshots) |
 | [`demo/README.md`](./demo/README.md) | Current Phase 1 BM25 demo scope and limitations |
 | [`demo/demo-script.md`](./demo/demo-script.md) | UI upload → BM25 search → provenance walkthrough |

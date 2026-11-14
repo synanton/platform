@@ -1,19 +1,32 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-11-11"
+last_reviewed: "2026-11-14"
 ---
 
 # Architecture Decision Records (ADRs)
 
 **Purpose:** Captures significant architectural decisions with their context, rationale, and consequences.
 **Audience:** Architects, module owners
-**Last Updated:** 2026-11-12
+**Last Updated:** 2026-11-14
 
 ## Quick Links
 
 | Document | Decision |
 |----------|---------|
+| [ADR-042: Mapping path composition and provenance](./adr-042-mapping-path-composition.md) | **Proposed** — ONT-ADR-013; before agent reasoning |
+| [ADR-041: Mapping experiment reproducibility](./adr-041-mapping-experiment-reproducibility.md) | **Proposed** — ONT-ADR-012; Phase 2 gate |
+| [ADR-040: Mapping strategy abstraction](./adr-040-mapping-strategy-abstraction.md) | **Proposed** — ONT-ADR-011; Phase 2 gate |
+| [ADR-039: Ontology registry and API contracts](./adr-039-ontology-registry-api-contracts.md) | **Proposed** — ONT-ADR-010; Phase 1 exit / Phase 2 |
+| [ADR-038: Historical concept and instance versioning](./adr-038-historical-concept-instance-versioning.md) | **Proposed** — ONT-ADR-009; Phase 1 exit |
+| [ADR-037: OWL 2 reasoning profile](./adr-037-owl2-reasoning-profile.md) | **Proposed** — ONT-ADR-008; Phase 3 |
+| [ADR-036: Foundational ontology scope](./adr-036-foundational-ontology-scope.md) | **Proposed** — ONT-ADR-007; Phase 3 |
+| [ADR-035: Cross-domain inference policy](./adr-035-cross-domain-inference-policy.md) | **Proposed** — ONT-ADR-006; Phase 4 |
+| [ADR-034: Domain hierarchy and composition](./adr-034-domain-hierarchy-composition.md) | **Proposed** — ONT-ADR-005; Phase 2 |
+| [ADR-033: Mapping governance and promotion policy](./adr-033-mapping-governance-promotion-policy.md) | **Proposed** — ONT-ADR-004; Phase 2 gate |
+| [ADR-032: Mapping semantics and reasoning permissions](./adr-032-mapping-semantics-reasoning-permissions.md) | **Proposed** — ONT-ADR-003; Phase 2 gate |
+| [ADR-031: Context schema and conflict resolution](./adr-031-context-schema-conflict-resolution.md) | **Proposed** — ONT-ADR-002; Phase 1 exit |
+| [ADR-030: Concept identity, namespace and ownership](./adr-030-concept-identity-namespace-ownership.md) | **Proposed** — ONT-ADR-001; Phase 1 exit |
 | [ADR-022: Pluggable Knowledge Extraction Pipeline (RAKG)](./adr-022-extraction-engine-architecture.md) | `ExtractionEngineAdapter` port: regex baseline + out-of-process Qwen3-4B vLLM; sentence-aligned input, surface-form offset recovery, synthetic endpoints, versioned prompt, frozen-gold metrics (Accepted 2026-11-08) |
 | [ADR-024: glibc-based runtime images for native dependencies](./adr-024-glibc-runtime-images.md) | Native gRPC/Netty/JNI services use glibc JRE images; Alpine only with zero native dependencies; CI checks Dockerfiles (Accepted 2026-11-11) |
 | [ADR-025: Canonical graph bootstrap is additive, never destructive](./adr-025-graph-bootstrap-additive.md) | Tenant loads are upsert-only and transactional; restarts/partial snapshots cannot delete canonical graph data (Accepted 2026-11-11) |
@@ -41,6 +54,30 @@ last_reviewed: "2026-11-11"
 | [ADR-003: Content Cache Plane](./adr-003-content-cache-plane.md) | Implementation-independent content-artifact storage/retrieval/lifecycle contract, with conformance evidence required for advertised optional capabilities (v1.26 approved 2026-09-07) |
 | [ADR-002: Annotations, Derived Knowledge, Recalculation & Analytics/Reporting Plane](./adr-002-annotations-analytics-plane.md) | First-class annotations with Resolutor/Equalix recalculation, plus a security-consistent Analytics & Reporting Plane (v1.25, consolidates 1.24; approved 2026-09-01) |
 | [ADR-001: Classification-Aware Search & Semantic Chunking](./adr-001-classification-aware-search.md) | Sub-document sensitivity via chunk-level ACLs and masked representations (v1.23 approved 2026-08-30) |
+
+## Ontology and Cross-Domain Mapping ADR Register
+
+The ontology proposal uses stable proposal-local identifiers **ONT-ADR-001–013**. They map to repository-wide **ADR-030–042** because ADR-001–029 are already allocated to platform decisions. The proposal-local IDs remain useful for discussion; repository ADR numbers are canonical for files, links and tracking.
+
+| Proposal ID | Repository ADR | Decision | Status | Phase gate |
+|---|---|---|---|---|
+| ONT-ADR-001 | [ADR-030](./adr-030-concept-identity-namespace-ownership.md) | Concept identity, namespace, ownership and canonical identity authority | Proposed | Phase 1 exit |
+| ONT-ADR-002 | [ADR-031](./adr-031-context-schema-conflict-resolution.md) | Context schema, composition and conflict resolution | Proposed | Phase 1 exit |
+| ONT-ADR-003 | [ADR-032](./adr-032-mapping-semantics-reasoning-permissions.md) | Mapping relation semantics, direction and reasoning permissions | Proposed | Phase 2 gate |
+| ONT-ADR-004 | [ADR-033](./adr-033-mapping-governance-promotion-policy.md) | Mapping governance, risk classification and promotion policy | Proposed | Phase 2 gate |
+| ONT-ADR-005 | [ADR-034](./adr-034-domain-hierarchy-composition.md) | Domain hierarchy and composition | Proposed | Phase 2 |
+| ONT-ADR-006 | [ADR-035](./adr-035-cross-domain-inference-policy.md) | Cross-domain inference policy | Proposed | Phase 4 |
+| ONT-ADR-007 | [ADR-036](./adr-036-foundational-ontology-scope.md) | Foundational ontology scope | Proposed | Phase 3 |
+| ONT-ADR-008 | [ADR-037](./adr-037-owl2-reasoning-profile.md) | OWL 2 reasoning profile | Proposed | Phase 3 |
+| ONT-ADR-009 | [ADR-038](./adr-038-historical-concept-instance-versioning.md) | Historical concept and instance versioning | Proposed | Phase 1 exit |
+| ONT-ADR-010 | [ADR-039](./adr-039-ontology-registry-api-contracts.md) | Ontology registry and API contracts | Proposed | Phase 1 exit / Phase 2 |
+| ONT-ADR-011 | [ADR-040](./adr-040-mapping-strategy-abstraction.md) | Mapping strategy abstraction and capability contract | Proposed | Phase 2 gate |
+| ONT-ADR-012 | [ADR-041](./adr-041-mapping-experiment-reproducibility.md) | Experiment reproducibility and benchmark governance | Proposed | Phase 2 gate |
+| ONT-ADR-013 | [ADR-042](./adr-042-mapping-path-composition.md) | Mapping path composition and provenance | Proposed | Before agent reasoning |
+
+The ontology ADRs are **Proposed**, not accepted. The status and phase-gate columns above are the register's tracking view; each ADR remains the authoritative decision record. Owners are intentionally not invented; ADR work tickets must not be created until decision owners are assigned.
+
+**Blocked — owner needed:** the benchmark dataset workstream, Equalix contract review, and candidate/governed-store separation spike remain unowned. These are explicit ownership blockers, not accepted or silently deferred scope.
 
 ## How to Contribute
 
