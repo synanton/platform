@@ -8,7 +8,7 @@ last_reviewed: "2026-11-09"
 
 **Purpose:** Long-lived design decisions, Architecture Decision Records (ADRs), and the current authoritative design document for the Synanton platform.
 **Audience:** Architects, module owners, security engineers
-**Last Updated:** 2026-11-09
+**Last Updated:** 2026-11-14
 
 `docs/VERSION` tracks the highest approved design number registered in this index (not a document-revision counter and not the current baseline pointer). The current baseline remains explicitly identified above; minor design numbers are not required to be contiguous. Designs 1.23–1.34 are registered below, so setting the highest approved design to 1.35 does not imply skipped or unpublished designs.
 
@@ -47,6 +47,14 @@ last_reviewed: "2026-11-09"
 | [`syntology/ontology-management.md`](./syntology/ontology-management.md) | Syntology ontology management |
 | [`decisions/`](./decisions/) | Architecture Decision Records (ADRs) |
 | [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) | **Accepted** - graph storage abstraction and logical projection contracts; implementation tracked by #587 |
+
+## Research Architecture Baselines
+
+| Document | Status | Scope |
+|---|---|---|
+| [Domain Ontologies and Cross-Domain Semantic Mapping v0.3](./proposals/ontology-domain-mapping-v0.3.md) | **Approved architectural baseline — specification remains open** | Stable semantic core, contextual interpretation, pluggable mapping strategies, candidate/governed-store separation, reproducible experiments; new subsystem implementation is not implied. |
+| [Ontology research ADRs](./decisions/INDEX.md#ontology-and-cross-domain-mapping-adr-register) | **Proposed** — repository ADR-030–ADR-042 | Decision gates for ontology identity, context, mapping semantics/governance, strategy contracts and evaluation. |
+| [Ontology Phase 1 design inputs](./proposals/ontology-domain-mapping/) | **Draft for ADR review** | Concept identity/namespace, context schema/conflicts and registry API contract; none is an accepted contract. |
 
 ## Sub-directories
 
