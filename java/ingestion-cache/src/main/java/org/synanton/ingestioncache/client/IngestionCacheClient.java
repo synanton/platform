@@ -1155,25 +1155,6 @@ public class IngestionCacheClient {
         return rows.stream().sorted(Comparator.comparing(ResolutionResultRow::mentionId)).toList();
     }
 
-    public void upsertRelationPromotionResult(RelationPromotionResultRow row) {
-        // VALID rows become claimable promotion work; INVALID rows are terminal.
-        String claimStatus = "VALID".equals(row.promotionStatus()) ? "PENDING" : "COMPLETED";
-        session.execute(SimpleStatement.newInstance(
-            "INSERT INTO ingestion_cache.relation_promotion_results (tenant_id, source_version_id, relation_id, " +
-            "subject_mention_id, object_mention_id, predicate, promotion_status, canonical_subject_id, " +
-            "canonical_object_id, reason, evidence_json, strategy_version, ontology_version, decided_at, " +
-            "superseded_at, claim_status, attempt_count, source_id, revision_id, generation, " +
-            "extraction_run_id, identity_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            row.tenantId(), row.sourceVersionId(), row.relationId(), row.subjectMentionId(),
-            row.objectMentionId(), row.predicate(), row.promotionStatus(), row.canonicalSubjectId(),
-            row.canonicalObjectId(), row.reason(), row.evidenceJson(), row.strategyVersion(),
-            row.ontologyVersion(), row.decidedAt(), row.supersededAt(), claimStatus, 0,
-            row.sourceId(), row.revisionId(),
-            row.identityStatus().equals("CURRENT") ? row.generation() : null,
-            row.extractionRunId(), row.identityStatus()
-        ));
-    }
-
     public List<RelationPromotionResultRow> listRelationPromotionResults(String tenantId, UUID sourceVersionId) {
         List<RelationPromotionResultRow> rows = new ArrayList<>();
         for (Row row : session.execute(SimpleStatement.newInstance(

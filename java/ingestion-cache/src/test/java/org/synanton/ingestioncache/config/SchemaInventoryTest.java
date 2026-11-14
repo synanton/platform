@@ -224,8 +224,7 @@ class SchemaInventoryTest {
             "relation_promotion_results.owner_started_at",
             "relation_promotion_results.owner_closed_at",
             "relation_promotion_results.owner_takeover_count",
-            "relation_promotion_results.owner_last_write_at",
-            "relation_promotion_results.owner_seqno_at_insert"
+            "relation_promotion_results.owner_last_write_at"
         );
     }
 }

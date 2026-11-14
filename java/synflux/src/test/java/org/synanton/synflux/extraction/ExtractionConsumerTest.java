@@ -21,6 +21,7 @@ import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ChunkRow;
@@ -152,10 +153,13 @@ class ExtractionConsumerTest {
         assertThat(resolutions.getFirst().outcome()).isEqualTo("RESOLVED");
         assertThat(resolutions.getFirst().bestScore()).isEqualTo(0.91);
 
-        cache.upsertRelationPromotionResult(new RelationPromotionResultRow(
+        PromotionOwnershipStore ownership = new PromotionOwnershipStore(session);
+        PromotionOwnershipStore.OwnershipToken token = ownership.acquire(tenant,
+                fixture.versionId(), "test-seed").orElseThrow();
+        ownership.insertPromotionResult(new RelationPromotionResultRow(
                 tenant, fixture.versionId(), "relation-1", "mention-1", "mention-2", "requires",
                 "PROMOTED", "entity-halcyon-7", "entity-helium", null, "{\"chunks\":[\"ref:0\"]}",
-                "resolution-v1", "1.0.0", now, null));
+                "resolution-v1", "1.0.0", now, null), token);
         assertThat(cache.listRelationPromotionResults(tenant, fixture.versionId()))
                 .singleElement()
                 .satisfies(row -> assertThat(row.promotionStatus()).isEqualTo("PROMOTED"));

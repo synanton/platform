@@ -177,9 +177,9 @@ public class SynfluxConfig {
             ResolutionGraphLookup resolutionGraphLookup,
             ExtractedMentionGraphReadPort extractedReadPort,
             RelationValidator relationValidator,
-            IngestionCacheClient cacheClient, Clock clock) {
+            IngestionCacheClient cacheClient) {
         return new DefaultCanonicalRelationValidator(resolutionGraphLookup, extractedReadPort,
-                relationValidator, cacheClient, clock);
+                relationValidator, cacheClient);
     }
 
     @Bean

@@ -12,7 +12,9 @@ import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.RetryReason;
 import org.synanton.common.resolution.RetryableProcessingException;
+import org.synanton.common.resolution.StaleOwnershipException;
 import org.synanton.ingestioncache.claim.ClaimService;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionWorkRow;
 import org.synanton.relix.config.PromotionConsumerProperties;
@@ -170,6 +172,51 @@ class PromotionConsumerTest {
     }
 
     @Test
+    void promotionOutcomeIsPersistedWithOwnerToken() {
+        RelationPromotionWorkRow work = work();
+        PromotionOwnershipStore ownership = mock(PromotionOwnershipStore.class);
+        PromotionOwnershipStore.OwnershipRow owner = ownerRow(work);
+        when(ownership.read("tenant-a", work.result().sourceVersionId()))
+                .thenReturn(java.util.Optional.of(owner));
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        when(promoter.promoteRelation(any())).thenReturn(new PromotionResult(1, 1, 1));
+        when(claims.completePromotion(eq(work), anyString(), any())).thenReturn(true);
+        PromotionConsumer withOwnership = new PromotionConsumer(claims, promoter, properties,
+                registry, null, ownership);
+
+        withOwnership.poll();
+
+        verify(ownership).updateOutcomeFenced("tenant-a", work.result().sourceVersionId(),
+                work.result().relationId(), "COMPLETED",
+                new PromotionOwnershipStore.OwnershipToken("producer-a", 1));
+    }
+
+    @Test
+    void staleOutcomeUpdateAbortsThatRevisionBatch() {
+        RelationPromotionWorkRow first = work();
+        RelationPromotionWorkRow second = workForVersion(first.result().sourceVersionId(), "r2");
+        PromotionOwnershipStore ownership = mock(PromotionOwnershipStore.class);
+        when(ownership.read("tenant-a", first.result().sourceVersionId()))
+                .thenReturn(java.util.Optional.of(ownerRow(first)));
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any()))
+                .thenReturn(List.of(first, second));
+        when(claims.claimPromotion(eq(first), anyString(), any(), any())).thenReturn(true);
+        when(claims.claimPromotion(eq(second), anyString(), any(), any())).thenReturn(true);
+        when(promoter.promoteRelation(any())).thenReturn(new PromotionResult(1, 1, 1));
+        when(claims.completePromotion(any(), anyString(), any())).thenReturn(true);
+        when(ownership.updateOutcomeFenced(anyString(), any(), anyString(), anyString(), any()))
+                .thenThrow(new StaleOwnershipException("generation moved"));
+        PromotionConsumer withOwnership = new PromotionConsumer(claims, promoter, properties,
+                registry, null, ownership);
+
+        withOwnership.poll();
+
+        verify(promoter).promoteRelation(any());
+        verify(claims, never()).claimPromotion(eq(second), anyString(), any(), any());
+    }
+
+    @Test
     void disabledPromotionConsumerPollsNothing() {
         PromotionConsumerProperties disabled =
                 new PromotionConsumerProperties(false, "tenant-a", 5, 5, 30, 120, 10000L);
@@ -209,6 +256,27 @@ class PromotionConsumerTest {
 
         assertThat(registry.get("promotion.outcome").tag("outcome", "FAILED")
                 .counter().count()).isEqualTo(1);
+    }
+
+    private static PromotionOwnershipStore.OwnershipRow ownerRow(RelationPromotionWorkRow work) {
+        return new PromotionOwnershipStore.OwnershipRow("tenant-a",
+                work.result().sourceVersionId(), "producer-a", 1, false,
+                Instant.now(), null, 0, Instant.now());
+    }
+
+    private static RelationPromotionWorkRow workForVersion(UUID version, String relationId) {
+        return new RelationPromotionWorkRow(
+                new RelationPromotionResultRow("tenant-a", version, relationId, "m1", "m2",
+                        "requires", "VALID", "entity-1", "entity-2", "VALID",
+                        "{\"view\":{\"relationId\":\"" + relationId + "\","
+                                + "\"tenantId\":\"tenant-a\",\"sourceVersionId\":\"" + version
+                                + "\",\"subjectMentionId\":\"m1\",\"objectMentionId\":\"m2\","
+                                + "\"predicate\":\"requires\",\"evidenceChunkId\":\"c:0\","
+                                + "\"evidenceChunkOffsetStart\":1,\"evidenceChunkOffsetEnd\":9,"
+                                + "\"sourceId\":\"source-a\",\"revisionId\":\"" + version
+                                + "\",\"generation\":7,\"extractionRunId\":\"run-646\"}}",
+                        "relation-validation-v1", "active", Instant.now(), null),
+                "PENDING", null, null, 0, null, null, null, null);
     }
 
     private static RelationPromotionWorkRow work() {

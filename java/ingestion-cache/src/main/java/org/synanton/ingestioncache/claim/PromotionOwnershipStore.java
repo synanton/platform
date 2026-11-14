@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.synanton.common.resolution.StaleOwnershipException;
+import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 
 /**
  * ADR-029 §12.4 revision ownership. The ownership sentinel lives in the same
@@ -95,6 +96,36 @@ public final class PromotionOwnershipStore {
                     + token.producerId() + " generation=" + token.generation());
         }
         return true;
+    }
+
+    /**
+     * The only production writer of promotion result rows. VALID rows become
+     * claimable promotion work; INVALID rows are terminal.
+     */
+    public boolean insertPromotionResult(RelationPromotionResultRow row, OwnershipToken token) {
+        Objects.requireNonNull(row, "row");
+        if (OWNERSHIP_RELATION_ID.equals(row.relationId())) {
+            throw new IllegalArgumentException("ownership sentinel is managed separately");
+        }
+        String claimStatus = "VALID".equals(row.promotionStatus()) ? "PENDING" : "COMPLETED";
+        SimpleStatement insert = SimpleStatement.newInstance("""
+                INSERT INTO ingestion_cache.relation_promotion_results
+                    (tenant_id, source_version_id, relation_id, subject_mention_id,
+                     object_mention_id, predicate, promotion_status, canonical_subject_id,
+                     canonical_object_id, reason, evidence_json, strategy_version,
+                     ontology_version, decided_at, superseded_at, claim_status,
+                     attempt_count, source_id, revision_id, generation,
+                     extraction_run_id, identity_status)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """, row.tenantId(), row.sourceVersionId(), row.relationId(),
+                row.subjectMentionId(), row.objectMentionId(), row.predicate(),
+                row.promotionStatus(), row.canonicalSubjectId(), row.canonicalObjectId(),
+                row.reason(), row.evidenceJson(), row.strategyVersion(),
+                row.ontologyVersion(), row.decidedAt(), row.supersededAt(), claimStatus, 0,
+                row.sourceId(), row.revisionId(),
+                "CURRENT".equals(row.identityStatus()) ? row.generation() : null,
+                row.extractionRunId(), row.identityStatus());
+        return writeFenced(row.tenantId(), row.sourceVersionId(), insert, token);
     }
 
     /**

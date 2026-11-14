@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.resolution.StaleOwnershipException;
 import org.synanton.ingestioncache.config.SchemaInstaller;
+import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -167,6 +168,51 @@ class PromotionOwnershipStoreTest {
     }
 
     @Test
+    void insertPromotionResultWritesAllColumnsAndClaimStatus() {
+        String tenant = "tenant-ownership-insert";
+        UUID version = UUID.randomUUID();
+        UUID revision = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken token =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        RelationPromotionResultRow valid = promotionRow(tenant, version, revision,
+                "relation-insert-valid", "VALID");
+        RelationPromotionResultRow invalid = promotionRow(tenant, version, revision,
+                "relation-insert-invalid", "INVALID");
+
+        assertThat(store.insertPromotionResult(valid, token)).isTrue();
+        assertThat(store.insertPromotionResult(invalid, token)).isTrue();
+
+        Row validRow = promotionRow(tenant, version, "relation-insert-valid");
+        assertThat(validRow.getString("claim_status")).isEqualTo("PENDING");
+        assertThat(validRow.getString("source_id")).isEqualTo("source-a");
+        assertThat(validRow.getUuid("revision_id")).isEqualTo(revision);
+        assertThat(validRow.getLong("generation")).isEqualTo(5L);
+        assertThat(validRow.getString("extraction_run_id")).isEqualTo("run-a");
+        assertThat(validRow.getString("identity_status")).isEqualTo("CURRENT");
+        assertThat(promotionRow(tenant, version, "relation-insert-invalid")
+                .getString("claim_status")).isEqualTo("COMPLETED");
+    }
+
+    @Test
+    void staleInsertPromotionResultAfterTakeoverWritesNoRow() {
+        String tenant = "tenant-ownership-insert-stale";
+        UUID version = UUID.randomUUID();
+        UUID revision = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken generationOne =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        PromotionOwnershipStore.OwnershipToken generationTwo =
+                store.takeover(tenant, version, "producer-b", 1).orElseThrow();
+        RelationPromotionResultRow stale = promotionRow(tenant, version, revision,
+                "relation-insert-stale", "VALID");
+
+        assertThatThrownBy(() -> store.insertPromotionResult(stale, generationOne))
+                .isInstanceOf(StaleOwnershipException.class);
+        assertThat(rowExists(tenant, version, "relation-insert-stale")).isFalse();
+        assertThat(store.insertPromotionResult(stale, generationTwo)).isTrue();
+        assertThat(rowExists(tenant, version, "relation-insert-stale")).isTrue();
+    }
+
+    @Test
     void outcomeUpdateIsAllowedBeforeAndAfterClosure() {
         String tenant = "tenant-ownership-outcome";
         UUID version = UUID.randomUUID();
@@ -177,13 +223,17 @@ class PromotionOwnershipStoreTest {
 
         assertThat(store.updateOutcomeFenced(tenant, version, "relation-outcome",
                 "COMPLETED", token)).isTrue();
+        assertThat(promotionRow(tenant, version, "relation-outcome")
+                .getString("promotion_status")).isEqualTo("COMPLETED");
         store.closeSet(tenant, version, token);
         assertThat(store.updateOutcomeFenced(tenant, version, "relation-outcome",
-                "COMPLETED", token)).isTrue();
+                "FAILED", token)).isTrue();
+        assertThat(promotionRow(tenant, version, "relation-outcome")
+                .getString("promotion_status")).isEqualTo("FAILED");
     }
 
     @Test
-    void staleOutcomeUpdateFailsAfterTakeover() {
+    void staleOutcomeUpdateFailsAfterTakeoverAndLeavesLaterOutcomeUnchanged() {
         String tenant = "tenant-ownership-outcome-stale";
         UUID version = UUID.randomUUID();
         PromotionOwnershipStore.OwnershipToken generationOne =
@@ -196,8 +246,15 @@ class PromotionOwnershipStoreTest {
         assertThatThrownBy(() -> store.updateOutcomeFenced(tenant, version,
                 "relation-outcome-stale", "COMPLETED", generationOne))
                 .isInstanceOf(StaleOwnershipException.class);
+        assertThat(promotionRow(tenant, version, "relation-outcome-stale")
+                .getString("promotion_status")).isEqualTo("VALID");
         assertThat(store.updateOutcomeFenced(tenant, version,
                 "relation-outcome-stale", "COMPLETED", generationTwo)).isTrue();
+        assertThatThrownBy(() -> store.updateOutcomeFenced(tenant, version,
+                "relation-outcome-stale", "FAILED", generationOne))
+                .isInstanceOf(StaleOwnershipException.class);
+        assertThat(promotionRow(tenant, version, "relation-outcome-stale")
+                .getString("promotion_status")).isEqualTo("COMPLETED");
     }
 
     @Test
@@ -286,6 +343,22 @@ class PromotionOwnershipStoreTest {
                     assertThat(row.closedAt()).isNotNull();
                 });
         assertThat(nonSentinelRowCount(tenant, version)).isZero();
+    }
+
+    private static RelationPromotionResultRow promotionRow(String tenant, UUID version,
+                                                           UUID revision, String relationId,
+                                                           String outcome) {
+        return new RelationPromotionResultRow(
+                tenant, version, relationId, "mention-1", "mention-2", "requires",
+                outcome, "entity-1", "entity-2", outcome, "{}", "relation-validation-v1",
+                "active", Instant.now(), null, "source-a", revision, 5L, "run-a", "CURRENT");
+    }
+
+    private static Row promotionRow(String tenant, UUID version, String relationId) {
+        return session.execute(SimpleStatement.newInstance("""
+                SELECT * FROM ingestion_cache.relation_promotion_results
+                WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                """, tenant, version, relationId)).one();
     }
 
     private static SimpleStatement rowInsert(String tenant, UUID version, String relationId) {

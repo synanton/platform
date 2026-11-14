@@ -466,16 +466,16 @@ class IngestionActivationIntegrationTest {
                 "subjectMentionId":"mention-1","objectMentionId":"mention-2","predicate":"requires",
                 "evidenceChunkId":"%s:0","evidenceChunkOffsetStart":0,"evidenceChunkOffsetEnd":1}}
                 """.formatted(relationId, tenant, version.versionId(), version.contentRefId());
-        cache.upsertRelationPromotionResult(new RelationPromotionResultRow(
+        ownership.insertPromotionResult(new RelationPromotionResultRow(
                 tenant, version.versionId(), relationId, "mention-1", "mention-2", "requires",
                 "VALID", "entity-1", "entity-2", "VALID", evidence, "relation-validation-v1",
                 "active", Instant.now(), null, version.sourceId(), version.versionId(),
-                version.generation(), "run-654", "CURRENT"));
+                version.generation(), "run-654", "CURRENT"), token);
         ownership.closeSet(tenant, version.versionId(), token);
         PromotionConsumer consumer = new PromotionConsumer(new ClaimService(cache),
                 relation -> new PromotionResult(1, 1, 1),
                 new PromotionConsumerProperties(true, tenant, 10, 5, 30, 120, 10_000L),
-                new SimpleMeterRegistry(), completion());
+                new SimpleMeterRegistry(), completion(), ownership);
         consumer.poll();
         assertThat(cache.readGraphStatus(tenant, version.connectorId(), version.sourceId(),
                 version.resourceId(), version.versionId())).contains("GRAPH_COMMITTED");
