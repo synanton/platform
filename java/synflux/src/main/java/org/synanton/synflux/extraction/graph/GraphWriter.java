@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
+import org.synanton.ingestioncache.activation.ActivationRecord;
+import org.synanton.ingestioncache.activation.ActivationState;
+import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
@@ -31,14 +34,22 @@ public final class GraphWriter {
     private final GraphWriteClient graphClient;
     private final ExtractionGraphProperties properties;
     private final Clock clock;
+    private final SourceActivationStore activations;
 
     public GraphWriter(IngestionCacheClient cacheClient, RelationValidator validator,
                        GraphWriteClient graphClient, ExtractionGraphProperties properties, Clock clock) {
+        this(cacheClient, validator, graphClient, properties, clock, null);
+    }
+
+    public GraphWriter(IngestionCacheClient cacheClient, RelationValidator validator,
+                       GraphWriteClient graphClient, ExtractionGraphProperties properties, Clock clock,
+                       SourceActivationStore activations) {
         this.cacheClient = cacheClient;
         this.validator = validator;
         this.graphClient = graphClient;
         this.properties = properties;
         this.clock = clock;
+        this.activations = activations;
     }
 
     public void commit(ExtractionRequestRow request, List<ChunkRow> chunks,
@@ -161,9 +172,15 @@ public final class GraphWriter {
                         mention.documentOffsetEnd(), mention.surfaceForm(), mention.proposedType(),
                         "PENDING", null, null, 0, null, null, now, null, null, null));
             }
-            String graphStatus = rejected > 0 ? "PARTIAL" : "GRAPH_COMMITTED";
-            cacheClient.markGraphCommitted(request, graphStatus, counters, graphAttempt, clock.instant());
-            log.info("Graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
+            String graphStatus = rejected > 0 ? "PARTIAL" : "MENTIONS_COMMITTED";
+            boolean mentionsCommitted = "MENTIONS_COMMITTED".equals(graphStatus)
+                    && request.generation() >= 1;
+            boolean statusWritten = cacheClient.markGraphCommitted(request, graphStatus, counters,
+                    graphAttempt, clock.instant(), null, null, null);
+            if (statusWritten && mentionsCommitted) {
+                advanceActivationToMentionsCommitted(request);
+            }
+            log.info("Mention graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
                     request.tenantId(), request.versionId(), graphStatus, mentions.size(),
                     accepted.size(), rejected);
         } catch (Exception e) {
@@ -198,6 +215,36 @@ public final class GraphWriter {
     private static long backoffSeconds(int attempt) {
         long multiplier = 1L << Math.min(Math.max(0, attempt - 1), 5);
         return Math.min(300, 30 * multiplier);
+    }
+
+    private void advanceActivationToMentionsCommitted(ExtractionRequestRow request) {
+        if (activations == null) {
+            return;
+        }
+        ActivationRecord record = activations.read(request.tenantId(), request.sourceId(),
+                request.generation()).orElse(null);
+        record = move(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING);
+        record = move(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE);
+        record = move(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING);
+        if (record != null && record.state() == ActivationState.GRAPH_COMMITTING) {
+            activations.transition(record.tenantId(), record.sourceId(), record.generation(),
+                    ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED,
+                    new SourceActivationStore.ProjectionMarkers(request.generation(), "MENTIONS_COMMITTED",
+                            record.searchAppliedGeneration(), record.searchAppliedState()),
+                    null, true, clock.instant());
+        }
+    }
+
+    private ActivationRecord move(ActivationRecord record, ActivationState expected,
+                                  ActivationState next) {
+        if (record == null || record.state() != expected) {
+            return record;
+        }
+        activations.transition(record.tenantId(), record.sourceId(), record.generation(),
+                expected, next, SourceActivationStore.ProjectionMarkers.none(record),
+                null, true, clock.instant());
+        return activations.read(record.tenantId(), record.sourceId(), record.generation())
+                .orElse(null);
     }
 
     private static Map<String, Integer> counters(int mentionsAccepted, int mentionsRejected,

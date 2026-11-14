@@ -36,6 +36,7 @@ import org.synanton.common.resolution.ResolutionPolicy;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.ingestioncache.claim.ClaimService;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
@@ -76,6 +77,7 @@ class ConsumerFaultInjectionIntegrationTest {
     private static CqlSession session;
     private static IngestionCacheClient cache;
     private static ClaimService claims;
+    private static PromotionOwnershipStore ownership;
     private static Driver driver;
     private static CypherExecutor cypher;
     private static Neo4jGraphConnector graph;
@@ -95,6 +97,7 @@ class ConsumerFaultInjectionIntegrationTest {
         SchemaInstaller.install(session);
         cache = new IngestionCacheClient(session);
         claims = new ClaimService(cache);
+        ownership = new PromotionOwnershipStore(session);
         seedSource();
 
         neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.26")).withoutAuthentication();
@@ -316,7 +319,7 @@ class ConsumerFaultInjectionIntegrationTest {
         assertThat(activeEdgeCount(object)).isEqualTo(1);
 
         String relationId = "relation-589";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
                 subjectEntity, objectEntity));
 
         RelixCanonicalRelationPromoter promoter = promoter();
@@ -351,7 +354,7 @@ class ConsumerFaultInjectionIntegrationTest {
         assertThat(work(object).claimStatus()).isEqualTo("COMPLETED");
 
         String relationId = "relation-589-promotion-lost";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
                 subjectEntity, objectEntity));
 
         AtomicReference<CanonicalRelation> firstAttempt = new AtomicReference<>();
@@ -442,7 +445,7 @@ class ConsumerFaultInjectionIntegrationTest {
                 .poll();
 
         String relationId = "relation-589-concurrent";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
                 subjectEntity, objectEntity));
         RelixCanonicalRelationPromoter promoter = promoter();
         PromotionConsumerProperties properties = new PromotionConsumerProperties(
@@ -493,9 +496,9 @@ class ConsumerFaultInjectionIntegrationTest {
 
         String relationA = "relation-589-shared-a";
         String relationB = "relation-589-shared-b";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationA, subjectA, objectA,
+        insertPromotionRow(validPromotionRow(relationA, subjectA, objectA,
                 sharedEntity, objectEntityA));
-        cache.upsertRelationPromotionResult(validPromotionRow(relationB, subjectB, objectB,
+        insertPromotionRow(validPromotionRow(relationB, subjectB, objectB,
                 sharedEntity, objectEntityB));
         RelixCanonicalRelationPromoter promoter = promoter();
         promoter.promoteRelation(canonicalRelation(relationA, subjectA, objectA, sharedEntity, objectEntityA));
@@ -533,7 +536,7 @@ class ConsumerFaultInjectionIntegrationTest {
                 .poll();
 
         String relationId = "relation-589-combined";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
                 subjectEntity, objectEntity));
         promoter()
                 .promoteRelation(canonicalRelation(relationId, subject, object, subjectEntity, objectEntity));
@@ -588,6 +591,12 @@ class ConsumerFaultInjectionIntegrationTest {
                 "DELETE FROM ingestion_cache.relation_promotion_results WHERE tenant_id=? "
                         + "AND source_version_id=? AND relation_id=?",
                 TENANT, VERSION, relationId));
+    }
+
+    private static void insertPromotionRow(RelationPromotionResultRow row) {
+        PromotionOwnershipStore.OwnershipToken token = ownership.acquire(row.tenantId(),
+                row.sourceVersionId(), "test-seed").orElseThrow();
+        ownership.insertPromotionResult(row, token);
     }
 
     private static RelationPromotionResultRow validPromotionRow(String relationId, String subject,

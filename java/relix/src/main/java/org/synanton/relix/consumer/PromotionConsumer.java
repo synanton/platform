@@ -9,10 +9,14 @@ import io.micrometer.core.instrument.Timer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.common.resolution.CanonicalRelation;
@@ -23,10 +27,12 @@ import org.synanton.common.resolution.FenceBehindException;
 import org.synanton.common.resolution.RetryReason;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.common.resolution.StaleOwnershipException;
 import org.synanton.common.resolution.UnauthorizedGenerationException;
 import org.synanton.relix.config.PromotionConsumerProperties;
 import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.ingestioncache.claim.ClaimService;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionWorkRow;
 
@@ -44,6 +50,8 @@ public final class PromotionConsumer {
     private final CanonicalRelationPromotionPort promotionPort;
     private final PromotionConsumerProperties properties;
     private final MeterRegistry registry;
+    private final CanonicalGraphCompletion completion;
+    private final PromotionOwnershipStore ownership;
     private final ObjectMapper mapper = new ObjectMapper();
     private final String workerId = UUID.randomUUID().toString();
     private final Clock clock = Clock.systemUTC();
@@ -57,10 +65,25 @@ public final class PromotionConsumer {
 
     public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
                              PromotionConsumerProperties properties, MeterRegistry registry) {
+        this(claims, promotionPort, properties, registry, null, null);
+    }
+
+    public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
+                             PromotionConsumerProperties properties, MeterRegistry registry,
+                             CanonicalGraphCompletion completion) {
+        this(claims, promotionPort, properties, registry, completion, null);
+    }
+
+    @Autowired
+    public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
+                             PromotionConsumerProperties properties, MeterRegistry registry,
+                             CanonicalGraphCompletion completion, PromotionOwnershipStore ownership) {
         this.claims = claims;
         this.promotionPort = promotionPort;
         this.properties = properties;
         this.registry = registry;
+        this.completion = completion;
+        this.ownership = ownership;
         this.claimed = registry.counter("promotion.claimed");
         this.completed = registry.counter("promotion.completed");
         this.failed = registry.counter("promotion.failed");
@@ -68,6 +91,23 @@ public final class PromotionConsumer {
         this.latency = Timer.builder("promotion.latency").register(registry);
         this.claimAge = DistributionSummary.builder("promotion.claim_age")
                 .baseUnit("milliseconds").register(registry);
+    }
+
+    @Scheduled(fixedDelayString = "${relix.promotion-consumer.consumer-recovery-interval-ms:60000}")
+    public void recoverStalledConsumers() {
+        if (ownership == null) {
+            return;
+        }
+        long timeoutSeconds = 600L;
+        java.time.Instant staleBefore = clock.instant().minusSeconds(timeoutSeconds);
+        for (PromotionOwnershipStore.OwnershipRow stale
+                : ownership.findStaleClosed(staleBefore, 100)) {
+            if (ownership.countPendingRows(stale.tenantId(), stale.sourceVersionId()) == 0) {
+                continue;
+            }
+            ownership.takeoverClosedSet(stale.tenantId(), stale.sourceVersionId(),
+                    "promotion-recovery-" + UUID.randomUUID(), stale.ownerGeneration());
+        }
     }
 
     @Scheduled(fixedDelayString = "${relix.promotion-consumer.poll-delay-ms:10000}")
@@ -93,17 +133,25 @@ public final class PromotionConsumer {
             log.warn("Promotion poll failed tenant={}: {}", tenant, e.toString());
             return;
         }
+        Set<UUID> abortedVersions = new HashSet<>();
         for (RelationPromotionWorkRow work : pending) {
-            process(work);
+            UUID version = work.result().sourceVersionId();
+            if (abortedVersions.contains(version)) {
+                continue;
+            }
+            if (!process(work)) {
+                abortedVersions.add(version);
+            }
+            completeCanonicalIfTerminal(work);
         }
     }
 
-    private void process(RelationPromotionWorkRow work) {
+    private boolean process(RelationPromotionWorkRow work) {
         Instant now = clock.instant();
         try {
             if (!claims.claimPromotion(work, workerId, now,
                     Duration.ofSeconds(properties.leaseSecondsOrDefault()))) {
-                return;
+                return true;
             }
             claimed.increment();
             if (work.result().decidedAt() != null) {
@@ -113,7 +161,21 @@ public final class PromotionConsumer {
         } catch (Exception e) {
             log.warn("Promotion claim failed relation={}: {}",
                     work.result().relationId(), e.toString());
-            return;
+            return true;
+        }
+
+        PromotionOwnershipStore.OwnershipToken token = null;
+        if (ownership != null) {
+            token = ownerToken(work.result().tenantId(), work.result().sourceVersionId());
+            if (token == null) {
+                log.warn("Promotion consumer found no ownership for relation={} version={}; "
+                                + "releasing claim", work.result().relationId(),
+                        work.result().sourceVersionId());
+                claims.releasePromotion(work, workerId, FailureClass.INFRASTRUCTURE_RETRYABLE,
+                        "Promotion ownership not available", properties.maxAttemptsOrDefault(),
+                        properties.retryBackoffSecondsOrDefault(), clock.instant());
+                return false;
+            }
         }
 
         Instant claimedAt = now;
@@ -123,7 +185,19 @@ public final class PromotionConsumer {
             if (!claims.completePromotion(work, workerId, clock.instant())) {
                 log.warn("Promotion completion lost ownership relation={}",
                         work.result().relationId());
-                return;
+                return true;
+            }
+            if (token != null) {
+                try {
+                    ownership.updateOutcomeFenced(work.result().tenantId(),
+                            work.result().sourceVersionId(), work.result().relationId(),
+                            "COMPLETED", token);
+                } catch (StaleOwnershipException e) {
+                    log.warn("Promotion outcome lost ownership relation={} version={}; "
+                                    + "aborting this revision batch", work.result().relationId(),
+                            work.result().sourceVersionId());
+                    return false;
+                }
             }
             completed.increment();
             registry.counter("promotion.outcome", "outcome", "PROMOTED").increment();
@@ -161,6 +235,31 @@ public final class PromotionConsumer {
                     work.result().relationId(), failureClass, outcome, e.toString());
         } finally {
             latency.record(Duration.between(claimedAt, clock.instant()));
+        }
+        return true;
+    }
+
+    private PromotionOwnershipStore.OwnershipToken ownerToken(String tenantId,
+                                                               UUID sourceVersionId) {
+        Optional<PromotionOwnershipStore.OwnershipRow> owner =
+                ownership.read(tenantId, sourceVersionId);
+        if (owner.isEmpty() || owner.get().ownerProducerId() == null
+                || owner.get().ownerGeneration() < 1) {
+            return null;
+        }
+        return new PromotionOwnershipStore.OwnershipToken(owner.get().ownerProducerId(),
+                owner.get().ownerGeneration());
+    }
+
+    private void completeCanonicalIfTerminal(RelationPromotionWorkRow work) {
+        if (completion == null) {
+            return;
+        }
+        try {
+            completion.completeIfPromotionTerminal(work.result());
+        } catch (Exception e) {
+            log.warn("Canonical graph completion check failed relation={}: {}",
+                    work.result().relationId(), e.toString());
         }
     }
 

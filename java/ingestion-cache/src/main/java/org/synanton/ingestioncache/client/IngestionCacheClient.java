@@ -4,6 +4,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
+import org.synanton.ingestioncache.activation.SourceActivationStore;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.codec.LZ4EmbeddingCodec;
 import org.synanton.ingestioncache.domain.*;
 import org.slf4j.Logger;
@@ -19,6 +22,7 @@ public class IngestionCacheClient {
     private static final int TENANT_REGISTRY_BUCKETS = 32;
     private static final Logger log = LoggerFactory.getLogger(IngestionCacheClient.class);
     private final CqlSession session;
+    private final SourceActivationStore activationStore;
 
     // Caffeine look-aside caches
     private final Cache<String, Optional<String>> analysisInputHashCache = Caffeine.newBuilder()
@@ -28,6 +32,7 @@ public class IngestionCacheClient {
 
     public IngestionCacheClient(CqlSession session) {
         this.session = session;
+        this.activationStore = new CassandraSourceActivationStore(session);
     }
 
     /** Registers a tenant before creating durable work that recovery workers must enumerate. */
@@ -796,16 +801,20 @@ public class IngestionCacheClient {
         ResultSet result = session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.source_versions " +
             "(tenant_id, connector_id, source_id, resource_id, version_id, content_digest, source_revision, " +
-            "observed_at, content_ref_id, incarnation_id, content_cache_reference, event_id, event_type, " +
+            "observed_at, content_ref_id, incarnation_id, content_cache_reference, generation, content_hash, " +
+            "previous_revision_id, accepted_generation, event_id, event_type, " +
             "event_payload_json, event_published, event_published_at, event_attempt_count, event_last_error, " +
             "event_next_attempt_at, event_dead_lettered, extraction_event_id, extraction_event_type, " +
             "extraction_event_payload_json, extraction_event_published, extraction_event_published_at, " +
             "extraction_event_attempt_count, extraction_event_last_error, extraction_event_next_attempt_at, " +
             "extraction_event_dead_lettered, extraction_status, graph_status) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?) IF NOT EXISTS",
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?) IF NOT EXISTS",
             version.tenantId(), version.connectorId(), version.sourceId(), version.resourceId(), version.versionId(),
             version.contentDigest(), version.sourceRevision(), version.observedAt(), version.contentRefId(),
-            version.incarnationId(), version.contentCacheReference(), event.eventId(), event.eventType(), event.payloadJson(),
+            version.incarnationId(), version.contentCacheReference(), (int) version.generation(),
+            version.contentHash() == null ? version.contentDigest() : version.contentHash(),
+            version.previousRevisionId(), (int) version.generation(),
+            event.eventId(), event.eventType(), event.payloadJson(),
             event.publishedAt(), event.attemptCount(), event.lastError(), event.nextAttemptAt(), event.deadLettered(),
             extractionEvent == null ? null : extractionEvent.eventId(),
             extractionEvent == null ? null : extractionEvent.eventType(),
@@ -967,13 +976,125 @@ public class IngestionCacheClient {
                         nextAttempt, intOrDefault(row, "extraction_event_attempt_count", 0),
                         row.getString("extraction_event_last_error"),
                         row.getInstant("extraction_event_next_attempt_at"),
-                        boolOrDefault(row, "extraction_event_dead_lettered", false)
+                        boolOrDefault(row, "extraction_event_dead_lettered", false),
+                        intOrDefault(row, "generation", 0)
                     ));
                 }
             }
         }
         return pending.stream().sorted(Comparator.comparing(GraphCommitRequestRow::requestedAt))
                 .limit(limit).toList();
+    }
+
+    /**
+     * Revisions whose mention graph is durable but canonical promotion has not
+     * completed. Iteration reuses the bounded tenant/source/identity partitions;
+     * it never scans source_versions globally.
+     */
+    public List<SourceVersionRow> listMentionsCommittedSourceVersions(String tenantId, int limit) {
+        List<SourceVersionRow> pending = new ArrayList<>();
+        for (SourceRow source : listSources(tenantId)) {
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                ResultSet rows = session.execute(SimpleStatement.newInstance(
+                    "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+                    "AND source_id=? AND resource_id=?",
+                    tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId()));
+                for (Row row : rows) {
+                    if (!"MENTIONS_COMMITTED".equals(row.getString("graph_status"))) {
+                        continue;
+                    }
+                    pending.add(sourceVersionFrom(row));
+                }
+            }
+        }
+        return pending.stream()
+                .sorted(Comparator.comparing(SourceVersionRow::observedAt)
+                        .thenComparing(SourceVersionRow::versionId))
+                .limit(Math.max(1, limit))
+                .toList();
+    }
+
+    /**
+     * Durable ActivationRequested events whose graph projection is committed but
+     * activation has not completed. Iteration reuses the bounded tenant/source/
+     * identity partitions rather than scanning source_versions globally.
+     */
+    public List<ActivationRequestRow> listPendingActivationRequests(
+            String tenantId, int limit, Instant now) {
+        List<ActivationRequestRow> pending = new ArrayList<>();
+        for (SourceRow source : listSources(tenantId)) {
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                ResultSet rows = session.execute(SimpleStatement.newInstance(
+                    "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+                    "AND source_id=? AND resource_id=?",
+                    tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId()));
+                for (Row row : rows) {
+                    UUID eventId = row.getUuid("activation_event_id");
+                    if (eventId == null
+                            || boolOrDefault(row, "activation_event_published", false)
+                            || boolOrDefault(row, "activation_event_dead_lettered", false)) {
+                        continue;
+                    }
+                    if (!"GRAPH_COMMITTED".equals(row.getString("graph_status"))) {
+                        continue;
+                    }
+                    Instant nextAttempt = row.getInstant("activation_event_next_attempt_at");
+                    if (nextAttempt != null && nextAttempt.isAfter(now)) {
+                        continue;
+                    }
+                    pending.add(new ActivationRequestRow(
+                            row.getString("tenant_id"), row.getString("connector_id"),
+                            row.getString("source_id"), row.getString("resource_id"), eventId,
+                            row.getUuid("version_id"), intOrDefault(row, "generation", 0),
+                            row.getString("content_hash"),
+                            row.getUuid("previous_revision_id"),
+                            row.getString("activation_event_payload_json"),
+                            row.getInstant("graph_commit_at") == null
+                                    ? row.getInstant("observed_at") : row.getInstant("graph_commit_at"),
+                            row.getInstant("search_projected_at"),
+                            row.getString("graph_status"),
+                            intOrDefault(row, "activation_event_attempt_count", 0),
+                            row.getString("activation_event_last_error"),
+                            nextAttempt,
+                            boolOrDefault(row, "activation_event_dead_lettered", false)));
+                }
+            }
+        }
+        return pending.stream().sorted(Comparator.comparing(ActivationRequestRow::requestedAt)
+                .thenComparing(ActivationRequestRow::eventId)).limit(limit).toList();
+    }
+
+    public void markActivationEventPublished(ActivationRequestRow request, Instant publishedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET activation_event_published=true, " +
+            "activation_event_published_at=?, activation_event_last_error=null, " +
+            "activation_event_next_attempt_at=null, activation_event_dead_lettered=false " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? " +
+            "IF activation_event_id=?",
+            publishedAt, request.tenantId(), request.connectorId(), request.sourceId(),
+            request.resourceId(), request.versionId(), request.eventId()));
+    }
+
+    public void markActivationEventFailed(ActivationRequestRow request, int attemptCount,
+                                          String error, Instant nextAttemptAt,
+                                          boolean deadLettered) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET activation_event_published=false, " +
+            "activation_event_attempt_count=?, activation_event_last_error=?, " +
+            "activation_event_next_attempt_at=?, activation_event_dead_lettered=? " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? " +
+            "IF activation_event_id=?",
+            attemptCount, error, nextAttemptAt, deadLettered, request.tenantId(),
+            request.connectorId(), request.sourceId(), request.resourceId(), request.versionId(),
+            request.eventId()));
+    }
+
+    // ---- Activation record ----
+
+    public boolean stageActivation(org.synanton.ingestioncache.activation.ActivationRecord record) {
+        return activationStore.stage(record);
     }
 
     /** Claims a PENDING/FAILED graph commit with an LWT; false means another worker owns it. */
@@ -1034,31 +1155,15 @@ public class IngestionCacheClient {
         return rows.stream().sorted(Comparator.comparing(ResolutionResultRow::mentionId)).toList();
     }
 
-    public void upsertRelationPromotionResult(RelationPromotionResultRow row) {
-        // VALID rows become claimable promotion work; INVALID rows are terminal.
-        String claimStatus = "VALID".equals(row.promotionStatus()) ? "PENDING" : "COMPLETED";
-        session.execute(SimpleStatement.newInstance(
-            "INSERT INTO ingestion_cache.relation_promotion_results (tenant_id, source_version_id, relation_id, " +
-            "subject_mention_id, object_mention_id, predicate, promotion_status, canonical_subject_id, " +
-            "canonical_object_id, reason, evidence_json, strategy_version, ontology_version, decided_at, " +
-            "superseded_at, claim_status, attempt_count, source_id, revision_id, generation, " +
-            "extraction_run_id, identity_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            row.tenantId(), row.sourceVersionId(), row.relationId(), row.subjectMentionId(),
-            row.objectMentionId(), row.predicate(), row.promotionStatus(), row.canonicalSubjectId(),
-            row.canonicalObjectId(), row.reason(), row.evidenceJson(), row.strategyVersion(),
-            row.ontologyVersion(), row.decidedAt(), row.supersededAt(), claimStatus, 0,
-            row.sourceId(), row.revisionId(),
-            row.identityStatus().equals("CURRENT") ? row.generation() : null,
-            row.extractionRunId(), row.identityStatus()
-        ));
-    }
-
     public List<RelationPromotionResultRow> listRelationPromotionResults(String tenantId, UUID sourceVersionId) {
         List<RelationPromotionResultRow> rows = new ArrayList<>();
         for (Row row : session.execute(SimpleStatement.newInstance(
                 "SELECT * FROM ingestion_cache.relation_promotion_results " +
                 "WHERE tenant_id=? AND source_version_id=?",
                 tenantId, sourceVersionId))) {
+            if (PromotionOwnershipStore.OWNERSHIP_RELATION_ID.equals(row.getString("relation_id"))) {
+                continue;
+            }
             rows.add(new RelationPromotionResultRow(
                 row.getString("tenant_id"), row.getUuid("source_version_id"), row.getString("relation_id"),
                 row.getString("subject_mention_id"), row.getString("object_mention_id"),
@@ -1212,6 +1317,9 @@ public class IngestionCacheClient {
                 "SELECT * FROM ingestion_cache.relation_promotion_results " +
                 "WHERE tenant_id=? AND source_version_id=?",
                 tenantId, sourceVersionId))) {
+            if (PromotionOwnershipStore.OWNERSHIP_RELATION_ID.equals(row.getString("relation_id"))) {
+                continue;
+            }
             rows.add(new RelationPromotionWorkRow(
                 new RelationPromotionResultRow(
                     row.getString("tenant_id"), row.getUuid("source_version_id"),
@@ -1326,13 +1434,59 @@ public class IngestionCacheClient {
     public void markGraphCommitted(
             ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters,
             int attemptCount, Instant committedAt) {
-        session.execute(SimpleStatement.newInstance(
+        markGraphCommitted(request, graphStatus, counters, attemptCount, committedAt,
+                null, null, null);
+    }
+
+    /**
+     * Commits the graph marker and, when provided, the durable ActivationRequested
+     * event in one conditional update on the same source_versions row. The update is
+     * conditional on the pre-commit VALIDATING state, so replay is a no-op and cannot
+     * duplicate or replace another revision's activation event.
+     */
+    public boolean markGraphCommitted(
+            ExtractionRequestRow request, String graphStatus, Map<String, Integer> counters,
+            int attemptCount, Instant committedAt, UUID activationEventId,
+            String activationEventType, String activationEventPayloadJson) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
             "UPDATE ingestion_cache.source_versions SET graph_status=?, graph_commit_at=?, " +
-            "graph_validation_counters=?, graph_attempt_count=?, graph_next_attempt_at=null " +
-            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
-            graphStatus, committedAt, counters, attemptCount, request.tenantId(), request.connectorId(),
+            "graph_validation_counters=?, graph_attempt_count=?, graph_next_attempt_at=null, " +
+            "activation_event_id=?, activation_event_type=?, activation_event_payload_json=?, " +
+            "activation_event_published=false, activation_event_published_at=null, " +
+            "activation_event_attempt_count=0, activation_event_last_error=null, " +
+            "activation_event_next_attempt_at=null, activation_event_dead_lettered=false " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? " +
+            "IF graph_status='VALIDATING'",
+            graphStatus, committedAt, counters, attemptCount, activationEventId,
+            activationEventType, activationEventPayloadJson, request.tenantId(), request.connectorId(),
             request.sourceId(), request.resourceId(), request.versionId()
         ));
+        return result.wasApplied();
+    }
+
+    /**
+     * Canonical promotion completion boundary: moves MENTIONS_COMMITTED to
+     * GRAPH_COMMITTED and writes the deterministic ActivationRequested event in
+     * one Cassandra LWT on the same source_versions row. Repeated completion is a
+     * no-op and can never replace another revision's event.
+     */
+    public boolean completeCanonicalGraphCommit(
+            String tenantId, String connectorId, String sourceId, String resourceId,
+            UUID versionId, UUID activationEventId, String activationEventType,
+            String activationEventPayloadJson, Instant committedAt) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET graph_status='GRAPH_COMMITTED', " +
+            "graph_commit_at=?, activation_event_id=?, activation_event_type=?, " +
+            "activation_event_payload_json=?, activation_event_published=false, " +
+            "activation_event_published_at=null, activation_event_attempt_count=0, " +
+            "activation_event_last_error=null, activation_event_next_attempt_at=null, " +
+            "activation_event_dead_lettered=false " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? " +
+            "IF graph_status='MENTIONS_COMMITTED'",
+            committedAt, activationEventId, activationEventType, activationEventPayloadJson,
+            tenantId, connectorId, sourceId, resourceId, versionId
+        ));
+        return result.wasApplied();
     }
 
     public void markGraphFailed(
@@ -1589,8 +1743,102 @@ public class IngestionCacheClient {
         return row == null ? Optional.empty() : Optional.of(sourceVersionFrom(row));
     }
 
+    /**
+     * Allocates a monotonic generation once per accepted revision. The
+     * (tenant, source, revision) mapping is the idempotency key: replaying the
+     * same revision returns the existing generation and never allocates another.
+     */
+    public long acceptRevision(String tenantId, String connectorId, String sourceId,
+                               String resourceId, UUID revisionId, String contentHash,
+                               Instant now) {
+        if (tenantId == null || tenantId.isBlank() || sourceId == null || sourceId.isBlank()
+                || revisionId == null) {
+            throw new IllegalArgumentException("tenant, source, and revision are required");
+        }
+        Objects.requireNonNull(now, "now");
+        Optional<Long> existing = readRevisionGeneration(tenantId, sourceId, revisionId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        for (int attempt = 0; attempt < 32; attempt++) {
+            Row current = session.execute(SimpleStatement.newInstance(
+                "SELECT accepted_generation FROM ingestion_cache.source_current " +
+                "WHERE tenant_id=? AND source_id=?", tenantId, sourceId)).one();
+            boolean missing = current == null;
+            boolean unset = !missing && current.isNull("accepted_generation");
+            long expected = missing || unset ? 0L : current.getLong("accepted_generation");
+            long next = expected + 1;
+            ResultSet allocated;
+            if (missing) {
+                allocated = session.execute(SimpleStatement.newInstance(
+                    "INSERT INTO ingestion_cache.source_current " +
+                    "(tenant_id, source_id, accepted_generation, current_generation, updated_at) " +
+                    "VALUES (?,?,?,?,?) IF NOT EXISTS",
+                    tenantId, sourceId, next, 0L, now));
+            } else if (unset) {
+                allocated = session.execute(SimpleStatement.newInstance(
+                    "UPDATE ingestion_cache.source_current SET accepted_generation=?, updated_at=? " +
+                    "WHERE tenant_id=? AND source_id=? IF accepted_generation=null",
+                    next, now, tenantId, sourceId));
+            } else {
+                allocated = session.execute(SimpleStatement.newInstance(
+                    "UPDATE ingestion_cache.source_current SET accepted_generation=?, updated_at=? " +
+                    "WHERE tenant_id=? AND source_id=? IF accepted_generation=?",
+                    next, now, tenantId, sourceId, expected));
+            }
+            if (allocated.wasApplied()) {
+                ResultSet mapped = session.execute(SimpleStatement.newInstance(
+                    "INSERT INTO ingestion_cache.source_revision_generation " +
+                    "(tenant_id, source_id, revision_id, generation, connector_id, resource_id, created_at) " +
+                    "VALUES (?,?,?,?,?,?,?) IF NOT EXISTS",
+                    tenantId, sourceId, revisionId, next, connectorId, resourceId, now));
+                if (mapped.wasApplied()) {
+                    return next;
+                }
+                Optional<Long> concurrent = readRevisionGeneration(tenantId, sourceId, revisionId);
+                if (concurrent.isPresent()) {
+                    return concurrent.get();
+                }
+                continue;
+            }
+            Optional<Long> concurrent = readRevisionGeneration(tenantId, sourceId, revisionId);
+            if (concurrent.isPresent()) {
+                return concurrent.get();
+            }
+        }
+        throw new IllegalStateException("Could not allocate a source generation for revision " + revisionId);
+    }
+
+    public Optional<Long> readRevisionGeneration(String tenantId, String sourceId, UUID revisionId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT generation FROM ingestion_cache.source_revision_generation " +
+            "WHERE tenant_id=? AND source_id=? AND revision_id=?", tenantId, sourceId, revisionId)).one();
+        return row == null || row.isNull("generation")
+                ? Optional.empty() : Optional.of(row.getLong("generation"));
+    }
+
+    public Optional<UUID> readCurrentRevisionId(String tenantId, String sourceId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT active_revision_id FROM ingestion_cache.source_current " +
+            "WHERE tenant_id=? AND source_id=?", tenantId, sourceId)).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getUuid("active_revision_id"));
+    }
+
+    public Optional<UUID> readPendingRevisionId(String tenantId, String sourceId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT pending_revision_id FROM ingestion_cache.source_current " +
+            "WHERE tenant_id=? AND source_id=?", tenantId, sourceId)).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getUuid("pending_revision_id"));
+    }
+
     /** Maximum accepted_generation across all resources/revisions for a logical source. */
     public Optional<Long> readAcceptedGeneration(String tenantId, String sourceId) {
+        Row current = session.execute(SimpleStatement.newInstance(
+            "SELECT accepted_generation FROM ingestion_cache.source_current " +
+            "WHERE tenant_id=? AND source_id=?", tenantId, sourceId)).one();
+        if (current != null && !current.isNull("accepted_generation")) {
+            return Optional.of(current.getLong("accepted_generation"));
+        }
         long max = Long.MIN_VALUE;
         for (SourceRow source : listSources(tenantId)) {
             if (!source.sourceId().equals(sourceId)) {
@@ -1631,9 +1879,13 @@ public class IngestionCacheClient {
             row.getString("tenant_id"), row.getString("connector_id"), row.getString("source_id"),
             row.getString("resource_id"), row.getUuid("version_id"), row.getString("content_digest"),
             row.getString("source_revision"), row.getInstant("observed_at"), row.getUuid("content_ref_id"),
-            row.getUuid("incarnation_id"), stringOrEmpty(row, "content_cache_reference")
+            row.getUuid("incarnation_id"), stringOrEmpty(row, "content_cache_reference"),
+            intOrDefault(row, "generation", 0),
+            row.getString("content_hash") == null ? row.getString("content_digest") : row.getString("content_hash"),
+            row.getUuid("previous_revision_id")
         );
     }
+
 
     /** Version IDs covered by the latest tombstone of any source identity in the tenant. */
     public Set<UUID> readTombstonedVersionIds(String tenantId) {

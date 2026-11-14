@@ -180,7 +180,9 @@ class ActivateRevisionIntegrationTest {
         transition(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING, 0, 0);
         transition(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE, 0, 0);
         transition(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING, 0, 0);
-        transition(record, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED,
+        transition(record, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED,
+                record.generation(), 0);
+        transition(record, ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED,
                 record.generation(), 0);
     }
 
