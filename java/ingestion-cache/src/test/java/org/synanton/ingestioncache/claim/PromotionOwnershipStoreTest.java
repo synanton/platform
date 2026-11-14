@@ -258,6 +258,29 @@ class PromotionOwnershipStoreTest {
     }
 
     @Test
+    void staleConsumerCannotOverwriteGenerationTwoOutcome() {
+        String tenant = "tenant-ownership-stale-consumer";
+        UUID version = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken generationOne =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        assertThat(store.writeFenced(tenant, version,
+                rowInsert(tenant, version, "relation-stale-consumer"), generationOne)).isTrue();
+        store.closeSet(tenant, version, generationOne);
+
+        PromotionOwnershipStore.OwnershipToken generationTwo =
+                store.takeover(tenant, version, "producer-b", 1).orElseThrow();
+        assertThat(store.updateOutcomeFenced(tenant, version, "relation-stale-consumer",
+                "COMPLETED", generationTwo)).isTrue();
+
+        assertThatThrownBy(() -> store.updateOutcomeFenced(tenant, version,
+                "relation-stale-consumer", "FAILED", generationOne))
+                .isInstanceOf(StaleOwnershipException.class);
+        assertThat(promotionStatus(tenant, version, "relation-stale-consumer"))
+                .isEqualTo("COMPLETED");
+        assertThat(store.read(tenant, version).orElseThrow().ownerGeneration()).isEqualTo(2);
+    }
+
+    @Test
     void duplicateClosureHasOneWinnerAndDoesNotReplaceClosedAt() throws Exception {
         String tenant = "tenant-ownership-close";
         UUID version = UUID.randomUUID();
@@ -311,14 +334,20 @@ class PromotionOwnershipStoreTest {
 
         assertThat(store.acquire(tenant, version, "producer-a")).isEmpty();
         assertThat(store.acquire(tenant, version, "producer-restarted")).isEmpty();
-        assertThat(store.takeover(tenant, version, "producer-restarted", 1)).isEmpty();
+        PromotionOwnershipStore.OwnershipToken recovered =
+                store.takeover(tenant, version, "producer-restarted", 1).orElseThrow();
+        assertThat(recovered.generation()).isEqualTo(2);
         assertThat(store.read(tenant, version).orElseThrow())
                 .satisfies(row -> {
                     assertThat(row.closed()).isTrue();
-                    assertThat(row.ownerProducerId()).isEqualTo("producer-a");
-                    assertThat(row.ownerGeneration()).isEqualTo(1);
+                    assertThat(row.ownerProducerId()).isEqualTo("producer-restarted");
+                    assertThat(row.ownerGeneration()).isEqualTo(2);
                     assertThat(row.closedAt()).isEqualTo(closedAt);
                 });
+        assertThatThrownBy(() -> store.writeFenced(tenant, version,
+                rowInsert(tenant, version, "relation-reopened"), recovered))
+                .isInstanceOf(StaleOwnershipException.class);
+        assertThat(rowExists(tenant, version, "relation-reopened")).isFalse();
     }
 
     @Test
@@ -359,6 +388,14 @@ class PromotionOwnershipStoreTest {
                 SELECT * FROM ingestion_cache.relation_promotion_results
                 WHERE tenant_id=? AND source_version_id=? AND relation_id=?
                 """, tenant, version, relationId)).one();
+    }
+
+    private static String promotionStatus(String tenant, UUID version, String relationId) {
+        Row row = session.execute(SimpleStatement.newInstance("""
+                SELECT promotion_status FROM ingestion_cache.relation_promotion_results
+                WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                """, tenant, version, relationId)).one();
+        return row == null ? null : row.getString("promotion_status");
     }
 
     private static SimpleStatement rowInsert(String tenant, UUID version, String relationId) {

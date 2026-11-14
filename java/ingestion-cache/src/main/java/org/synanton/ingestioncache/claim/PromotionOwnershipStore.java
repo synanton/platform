@@ -183,8 +183,7 @@ public final class PromotionOwnershipStore {
         requireKey(tenantId, sourceVersionId);
         Objects.requireNonNull(newProducerId, "newProducerId");
         OwnershipRow existing = read(tenantId, sourceVersionId).orElse(null);
-        if (existing == null || existing.closed()
-                || existing.ownerGeneration() != expectedGeneration) {
+        if (existing == null || existing.ownerGeneration() != expectedGeneration) {
             return Optional.empty();
         }
         long nextGeneration = expectedGeneration + 1;
@@ -193,10 +192,9 @@ public final class PromotionOwnershipStore {
         ResultSet result = session.execute(SimpleStatement.newInstance("""
                 UPDATE ingestion_cache.relation_promotion_results
                 SET owner_producer_id=?, owner_generation=?, owner_started_at=?,
-                    owner_closed=false, owner_closed_at=null, owner_takeover_count=?,
-                    owner_last_write_at=?
+                    owner_takeover_count=?, owner_last_write_at=?
                 WHERE tenant_id=? AND source_version_id=? AND relation_id=?
-                IF owner_generation=? AND owner_closed=false
+                IF owner_generation=?
                 """, newProducerId, nextGeneration, now, nextTakeoverCount, now,
                 tenantId, sourceVersionId, OWNERSHIP_RELATION_ID, expectedGeneration));
         if (!result.wasApplied()) {

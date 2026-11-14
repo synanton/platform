@@ -374,7 +374,7 @@ Canonical promotion completion needs a real fence, not a status field read acros
 `UNCLAIMED → CLAIMED(owner_producer_id, owner_generation) → CLOSED`
 
 - Acquisition is an `INSERT ... IF NOT EXISTS` of a sentinel row `relation_id='__OWNERSHIP__'`.
-- Takeover is an optimistic CAS on `(owner_producer_id, owner_generation)` after `owner_started_at` exceeds the timeout; it increments `owner_generation`.
+- Takeover is an optimistic CAS on `(owner_producer_id, owner_generation)` after `owner_started_at` exceeds the timeout; it increments `owner_generation`. Takeover preserves `owner_closed`: closed membership is frozen, but consumer ownership can move to a recovery worker.
 - Only the current `(owner_producer_id, owner_generation)` may write rows or close the set.
 
 #### Ownership row location
