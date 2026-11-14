@@ -20,6 +20,7 @@ The project uses these status labels: **Proposed**, **Approved (design)**, **Con
 | [`architecture/proposals/ontology-domain-mapping-v0.3.md`](./architecture/proposals/ontology-domain-mapping-v0.3.md) | Approved ontology research architecture baseline; specification and ADR decisions remain open |
 | [`architecture/decisions/INDEX.md`](./architecture/decisions/INDEX.md) | Global ADR register, including ontology ADR-030–042 |
 | [`glossary.md`](./glossary.md) | Shared ontology and semantic mapping terminology |
+| [`architecture/CHANGELOG.md`](./architecture/CHANGELOG.md) | Architecture baseline revision history |
 | [`acceptance/`](./acceptance/) | Dated acceptance records and evidence (including superseded run snapshots) |
 | [`demo/README.md`](./demo/README.md) | Current Phase 1 BM25 demo scope and limitations |
 | [`demo/demo-script.md`](./demo/demo-script.md) | UI upload → BM25 search → provenance walkthrough |
