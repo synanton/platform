@@ -66,10 +66,16 @@ flowchart TD
 
 Changes to inputs or processing rules can invalidate derived knowledge and its projections. Resolutor plans dependency-aware recalculation; Equalix provides controlled execution. The goal is to recompute the smallest correct portion of state while preserving provenance and security.
 
+## Ontology research status
+
+**Architecture baseline:** [Domain Ontologies and Cross-Domain Semantic Mapping v0.3](docs/architecture/proposals/ontology-domain-mapping-v0.3.md) is approved as an architectural baseline, not a finished specification or implementation claim. Proposal-local ONT-ADR-001–013 map to repository ADR-030–042; see the [ADR index](docs/architecture/decisions/INDEX.md).
+
+The baseline separates a stable semantic core from replaceable mapping strategies. Experimental candidates are not canonical knowledge: only an explicit, audited promotion can create a governed mapping. The proposed cross-domain mapping subsystem is **not implemented**. Existing [Syntology ontology management](docs/architecture/syntology/ontology-management.md) and SHACL capabilities are distinct from this proposed subsystem.
+
 ## Core research areas
 
 - **Structured ingestion:** preserve document structure, semantic chunks, citations, provenance, and security labels.
-- **Hybrid retrieval and reasoning:** combine keyword and vector search with graph reasoning and ontology constraints.
+- **Hybrid retrieval and reasoning:** combine keyword and vector search with graph reasoning and ontology constraints.\n- **Domain ontology research:** preserve domain-owned concepts and context while comparing pluggable cross-domain mapping strategies against independent benchmarks.
 - **Secure derived knowledge:** carry tenant and authorization constraints through transformations and projections.
 - **Annotations and recalculation:** make definitions, dependencies, processing runs, and derived state explicit.
 - **Analytics:** derive protected metrics from platform activity without creating a second source of truth or a security side channel.
