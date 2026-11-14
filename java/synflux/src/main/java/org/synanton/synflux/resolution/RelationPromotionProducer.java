@@ -29,6 +29,7 @@ import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore.OwnershipToken;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 
 /**
  * RAKG #583: after resolution completes, validate each extracted relation and
@@ -108,36 +109,38 @@ public final class RelationPromotionProducer {
         if (!enabled || tenant == null || tenant.isBlank()) {
             return;
         }
-        List<ExtractedRelationView> relations;
+        List<SourceVersionRow> candidates;
         try {
-            relations = extractedReadPort.listExtractedRelations(tenant, null);
+            candidates = cacheClient.listMentionsCommittedSourceVersions(tenant, 100);
         } catch (Exception e) {
-            log.warn("Relation promotion producer could not list extracted relations: {}", e.toString());
+            log.warn("Relation promotion producer could not list MENTIONS_COMMITTED versions: {}",
+                    e.toString());
             return;
         }
-        Map<UUID, List<ExtractedRelationView>> byVersion = new LinkedHashMap<>();
-        for (ExtractedRelationView relation : relations) {
-            UUID version = version(relation);
-            if (version == null) {
-                continue;
-            }
-            byVersion.computeIfAbsent(version, ignored -> new ArrayList<>()).add(relation);
-        }
-        for (Map.Entry<UUID, List<ExtractedRelationView>> entry : byVersion.entrySet()) {
-            processVersion(entry.getKey(), entry.getValue());
+        for (SourceVersionRow candidate : candidates) {
+            processVersion(candidate.versionId());
         }
     }
 
-    private void processVersion(UUID version, List<ExtractedRelationView> relations) {
+    private void processVersion(UUID version) {
         if (ownershipStore == null) {
             log.warn("Relation promotion producer has no ownership store; skipping version={}", version);
             return;
         }
+        // Acquire before scanning so a zero-row decision is serialized against other producers.
         Optional<OwnershipToken> acquired = acquire(version);
         if (acquired.isEmpty()) {
             return;
         }
         OwnershipToken token = acquired.get();
+        List<ExtractedRelationView> relations;
+        try {
+            relations = extractedReadPort.listExtractedRelations(tenant, version.toString());
+        } catch (Exception e) {
+            log.warn("Relation promotion producer could not list relations version={}: {}",
+                    version, e.toString());
+            return;
+        }
         Set<String> existing = existingRelationIds(version);
         if (existing == null) {
             return;

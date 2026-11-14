@@ -26,12 +26,14 @@ import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -85,7 +87,9 @@ class RelationPromotionProducerTest {
         UUID version = UUID.randomUUID();
         List<ExtractedRelationView> relations = List.of(
                 relation(version, "relation-a"), relation(version, "relation-b"));
-        when(extracted.listExtractedRelations(eq(TENANT), isNull())).thenReturn(relations);
+        when(cache.listMentionsCommittedSourceVersions(eq(TENANT), anyInt()))
+                .thenReturn(List.of(sourceVersion(version)));
+        when(extracted.listExtractedRelations(eq(TENANT), eq(version.toString()))).thenReturn(relations);
         when(graph.getActiveResolutions(eq(TENANT), anyList())).thenReturn(List.of(
                 new ActiveResolution("m-subject", "e-subject", "MaintenanceSystem"),
                 new ActiveResolution("m-object", "e-object", "Protocol")));
@@ -126,7 +130,9 @@ class RelationPromotionProducerTest {
         PromotionOwnershipStore.OwnershipToken token =
                 ownership.acquire(TENANT, version, "producer-close").orElseThrow();
         ownership.insertPromotionResult(row(existing), token);
-        when(extracted.listExtractedRelations(eq(TENANT), isNull()))
+        when(cache.listMentionsCommittedSourceVersions(eq(TENANT), anyInt()))
+                .thenReturn(List.of(sourceVersion(version)));
+        when(extracted.listExtractedRelations(eq(TENANT), eq(version.toString())))
                 .thenReturn(List.of(existing, pending));
         when(graph.getActiveResolutions(eq(TENANT), anyList())).thenReturn(List.of(
                 new ActiveResolution("m-subject", "e-subject", "MaintenanceSystem"),
@@ -142,6 +148,31 @@ class RelationPromotionProducerTest {
                 row(relation(version, "relation-after-close")), token))
                 .isInstanceOf(StaleOwnershipException.class);
         assertThat(nonSentinelRowCount(version)).isEqualTo(2);
+    }
+
+    @Test
+    void zeroRowRevisionClosesOnceAndRestartDoesNotAllocateNewGeneration() {
+        UUID version = UUID.randomUUID();
+        when(cache.listMentionsCommittedSourceVersions(eq(TENANT), anyInt()))
+                .thenReturn(List.of(sourceVersion(version)));
+        when(extracted.listExtractedRelations(eq(TENANT), eq(version.toString())))
+                .thenReturn(List.of());
+        when(cache.listRelationPromotionResults(eq(TENANT), eq(version))).thenReturn(List.of());
+
+        RelationPromotionProducer producer = producer(validator(), "producer-zero");
+        producer.poll();
+
+        PromotionOwnershipStore.OwnershipRow closed = ownership.read(TENANT, version).orElseThrow();
+        assertThat(closed.closed()).isTrue();
+        assertThat(closed.ownerGeneration()).isEqualTo(1);
+        Instant closedAt = closed.closedAt();
+        assertThat(nonSentinelRowCount(version)).isZero();
+
+        producer.poll();
+        PromotionOwnershipStore.OwnershipRow afterRestart = ownership.read(TENANT, version).orElseThrow();
+        assertThat(afterRestart.ownerGeneration()).isEqualTo(1);
+        assertThat(afterRestart.closedAt()).isEqualTo(closedAt);
+        assertThat(nonSentinelRowCount(version)).isZero();
     }
 
     private RelationPromotionProducer producer(DefaultCanonicalRelationValidator validator,
@@ -163,6 +194,11 @@ class RelationPromotionProducerTest {
         return Mockito.mockingDetails(validator).getInvocations().stream()
                 .filter(invocation -> invocation.getMethod().getName().equals("validate"))
                 .count();
+    }
+
+    private static SourceVersionRow sourceVersion(UUID version) {
+        return new SourceVersionRow(TENANT, "connector", "source", "resource", version,
+                "sha", "rev", NOW, UUID.randomUUID(), UUID.randomUUID(), "", 5, "hash", null);
     }
 
     private static ExtractedRelationView relation(UUID version, String relationId) {
