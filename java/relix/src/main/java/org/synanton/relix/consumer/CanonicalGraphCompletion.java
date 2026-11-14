@@ -34,8 +34,10 @@ public final class CanonicalGraphCompletion {
 
     private static final Logger log = LoggerFactory.getLogger(CanonicalGraphCompletion.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Set<String> TERMINAL_PROMOTION_STATES =
-            Set.of("COMPLETED", "FAILED", "SUPERSEDED");
+    // Only a successfully promoted row or an expected validation rejection authorizes
+    // canonical completion. FAILED/SUPERSEDED are terminal for the worker but must
+    // block completion; otherwise a regression could retire valid prior knowledge.
+    private static final Set<String> COMPLETION_AUTHORIZING_STATES = Set.of("COMPLETED");
 
     private final IngestionCacheClient cache;
     private final SourceActivationStore activations;
@@ -74,16 +76,16 @@ public final class CanonicalGraphCompletion {
     public boolean promotionsTerminal(String tenantId, UUID sourceVersionId) {
         List<RelationPromotionWorkRow> rows = cache.listRelationPromotionWorkRows(
                 tenantId, sourceVersionId);
-        return rows.stream().allMatch(CanonicalGraphCompletion::terminal);
+        return rows.stream().allMatch(CanonicalGraphCompletion::completionAuthorizing);
     }
 
-    public static boolean terminal(RelationPromotionWorkRow work) {
+    public static boolean completionAuthorizing(RelationPromotionWorkRow work) {
         String claimStatus = work.claimStatus();
         if (claimStatus == null) {
             return work.result().promotionStatus() != null
                     && !"VALID".equals(work.result().promotionStatus());
         }
-        return TERMINAL_PROMOTION_STATES.contains(claimStatus);
+        return COMPLETION_AUTHORIZING_STATES.contains(claimStatus);
     }
 
     private boolean complete(SourceVersionRow version) {

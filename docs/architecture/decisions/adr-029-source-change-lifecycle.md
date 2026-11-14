@@ -354,6 +354,17 @@ Canonical promotion owns the `MENTIONS_COMMITTED → GRAPH_COMMITTED` transition
 
 **Change control:** dependent tickets are #654, #655, and #656. #654 owns the boundary correction and the mention/canonical split; #655 retirement and #656 search filtering remain dependent on the corrected boundary. Existing #648/#666/#685 promotion tests remain green.
 
+### 12.3 Completion barrier requirements (2026-11-14)
+
+The canonical completion boundary is not yet complete. The following are required before #654 can claim `GRAPH_COMMITTED` is trustworthy:
+
+- **Promotion-set closure:** a durable `promotion_set_closed` marker must be written by the promotion producer after all promotion work for the revision has been emitted. Completion requires `state == PROMOTING/GRAPH_COMMITTING`, `promotion_set_closed == true`, and all rows completion-authorizing.
+- **Terminal taxonomy:** only `SUCCEEDED`, `REJECTED`, and `CONFLICTED_REVIEWED` authorize completion. `CONFLICTED_PENDING`, `FAILED_RETRYABLE`, and `FAILED_TERMINAL` block completion. The current implementation enforces only part of this: `COMPLETED` and expected validation rejection authorize; `FAILED`/`SUPERSEDED` block.
+- **Post-completion immutability:** promotion writes are accepted only before `GRAPH_COMMITTED`; late writes must be rejected.
+- **Fair sweep progression:** the completion sweep needs a durable `next_sweep_at` cursor and oldest-first processing so bounded batches cannot starve revisions.
+
+Status: closure, immutability, and fair cursor are NOT implemented; the terminal-authorization rule is implemented. #654 remains open until all four clauses are satisfied and tested.
+
 ## Lifecycle state machine
 
 Per logical source, the lifecycle record exposes the current state and transition history.

@@ -32,11 +32,22 @@ class CanonicalGraphCompletionTest {
     }
 
     @Test
-    void completedFailedAndSupersededPromotionsAreTerminal() {
+    void completedAndRejectedPromotionsAuthorizeCompletion() {
         when(cache.listRelationPromotionWorkRows(TENANT, VERSION)).thenReturn(List.of(
-                work("COMPLETED"), work("FAILED"), work("SUPERSEDED")));
+                work("COMPLETED"), rejected()));
 
         assertThat(completion.promotionsTerminal(TENANT, VERSION)).isTrue();
+    }
+
+    @Test
+    void failedAndSupersededPromotionsBlockCompletion() {
+        when(cache.listRelationPromotionWorkRows(TENANT, VERSION)).thenReturn(List.of(
+                work("COMPLETED"), work("FAILED")));
+        assertThat(completion.promotionsTerminal(TENANT, VERSION)).isFalse();
+
+        when(cache.listRelationPromotionWorkRows(TENANT, VERSION)).thenReturn(List.of(
+                work("SUPERSEDED")));
+        assertThat(completion.promotionsTerminal(TENANT, VERSION)).isFalse();
     }
 
     @Test
@@ -50,6 +61,15 @@ class CanonicalGraphCompletionTest {
                 work("PROCESSING")));
 
         assertThat(completion.promotionsTerminal(TENANT, VERSION)).isFalse();
+    }
+
+    private static RelationPromotionWorkRow rejected() {
+        return new RelationPromotionWorkRow(
+                new RelationPromotionResultRow(TENANT, VERSION, "relation-rejected",
+                        "mention-1", "mention-2", "requires", "INVALID", "entity-1", "entity-2",
+                        "INVALID", "{}", "relation-validation-v1", "active", Instant.now(), null,
+                        "source-a", VERSION, 1, "run-654", "CURRENT"),
+                null, null, null, 0, null, null, null, null);
     }
 
     private static RelationPromotionWorkRow work(String claimStatus) {
