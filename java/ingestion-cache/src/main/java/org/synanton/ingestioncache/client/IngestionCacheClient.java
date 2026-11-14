@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.codec.LZ4EmbeddingCodec;
 import org.synanton.ingestioncache.domain.*;
 import org.slf4j.Logger;
@@ -1179,6 +1180,9 @@ public class IngestionCacheClient {
                 "SELECT * FROM ingestion_cache.relation_promotion_results " +
                 "WHERE tenant_id=? AND source_version_id=?",
                 tenantId, sourceVersionId))) {
+            if (PromotionOwnershipStore.OWNERSHIP_RELATION_ID.equals(row.getString("relation_id"))) {
+                continue;
+            }
             rows.add(new RelationPromotionResultRow(
                 row.getString("tenant_id"), row.getUuid("source_version_id"), row.getString("relation_id"),
                 row.getString("subject_mention_id"), row.getString("object_mention_id"),
@@ -1332,6 +1336,9 @@ public class IngestionCacheClient {
                 "SELECT * FROM ingestion_cache.relation_promotion_results " +
                 "WHERE tenant_id=? AND source_version_id=?",
                 tenantId, sourceVersionId))) {
+            if (PromotionOwnershipStore.OWNERSHIP_RELATION_ID.equals(row.getString("relation_id"))) {
+                continue;
+            }
             rows.add(new RelationPromotionWorkRow(
                 new RelationPromotionResultRow(
                     row.getString("tenant_id"), row.getUuid("source_version_id"),

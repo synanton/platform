@@ -8,3 +8,4 @@ ALTER TABLE ingestion_cache.relation_promotion_results ADD owner_started_at time
 ALTER TABLE ingestion_cache.relation_promotion_results ADD owner_closed_at timestamp;
 ALTER TABLE ingestion_cache.relation_promotion_results ADD owner_takeover_count int;
 ALTER TABLE ingestion_cache.relation_promotion_results ADD owner_last_write_at timestamp;
+ALTER TABLE ingestion_cache.relation_promotion_results ADD owner_seqno_at_insert timestamp;

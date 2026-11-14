@@ -26,6 +26,7 @@ import org.synanton.ingestioncache.activation.ActivationState;
 import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.claim.ClaimService;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ActivationRequestRow;
@@ -74,6 +75,7 @@ class IngestionActivationIntegrationTest {
     private static Driver driver;
     private static IngestionCacheClient cache;
     private static CassandraSourceActivationStore activations;
+    private static PromotionOwnershipStore ownership;
     private static Neo4jSourceFenceStore fences;
     private static DriverCypherExecutor executor;
     private static FixtureIngestionService ingestion;
@@ -93,6 +95,7 @@ class IngestionActivationIntegrationTest {
         SchemaInstaller.install(session);
         cache = new IngestionCacheClient(session);
         activations = new CassandraSourceActivationStore(session);
+        ownership = new PromotionOwnershipStore(session);
         ingestion = new FixtureIngestionService(cache, Clock.systemUTC(),
                 new IngestionEventConfig().ingestionEventTypes());
 
@@ -169,6 +172,7 @@ class IngestionActivationIntegrationTest {
                 .extracting(ActivationRecord::state).isEqualTo(ActivationState.MENTIONS_COMMITTED);
         assertThat(firstActivationEventIdOrNull(tenant, source, resource)).isNull();
 
+        acquireAndCloseOwnership(tenant, version);
         new PromotionCompletionSweep(cache, completion(),
                 new PromotionCompletionProperties(true, tenant, 100, 30_000L),
                 new SimpleMeterRegistry()).poll();
@@ -429,7 +433,17 @@ class IngestionActivationIntegrationTest {
     }
 
     private static CanonicalGraphCompletion completion() {
-        return new CanonicalGraphCompletion(cache, activations, Clock.systemUTC());
+        return new CanonicalGraphCompletion(cache, activations, ownership, Clock.systemUTC());
+    }
+
+    private static PromotionOwnershipStore.OwnershipToken acquireOwnership(
+            String tenant, SourceVersionRow version) {
+        return ownership.acquire(tenant, version.versionId(), "test-producer-" + version.versionId())
+                .orElseThrow();
+    }
+
+    private static void acquireAndCloseOwnership(String tenant, SourceVersionRow version) {
+        ownership.closeSet(tenant, version.versionId(), acquireOwnership(tenant, version));
     }
 
     private static void commitMentions(ExtractionRequestRow request, SourceVersionRow version) {
@@ -440,10 +454,12 @@ class IngestionActivationIntegrationTest {
     }
 
     private static void completeCanonical(SourceVersionRow version) {
+        acquireAndCloseOwnership(version.tenantId(), version);
         assertThat(completion().completeIfPromotionTerminal(version)).isTrue();
     }
 
     private static void completeCanonicalThroughPromotion(String tenant, SourceVersionRow version) {
+        PromotionOwnershipStore.OwnershipToken token = acquireOwnership(tenant, version);
         String relationId = "relation-" + version.versionId();
         String evidence = """
                 {"view":{"relationId":"%s","tenantId":"%s","sourceVersionId":"%s",
@@ -455,6 +471,7 @@ class IngestionActivationIntegrationTest {
                 "VALID", "entity-1", "entity-2", "VALID", evidence, "relation-validation-v1",
                 "active", Instant.now(), null, version.sourceId(), version.versionId(),
                 version.generation(), "run-654", "CURRENT"));
+        ownership.closeSet(tenant, version.versionId(), token);
         PromotionConsumer consumer = new PromotionConsumer(new ClaimService(cache),
                 relation -> new PromotionResult(1, 1, 1),
                 new PromotionConsumerProperties(true, tenant, 10, 5, 30, 120, 10_000L),

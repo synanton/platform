@@ -12,10 +12,12 @@ import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.activation.ActivationRecord;
 import org.synanton.ingestioncache.activation.ActivationState;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionWorkRow;
@@ -42,18 +44,31 @@ public final class CanonicalGraphCompletion {
 
     private final IngestionCacheClient cache;
     private final SourceActivationStore activations;
+    private final PromotionOwnershipStore ownership;
     private final Clock clock;
+
+    @Autowired
+    public CanonicalGraphCompletion(IngestionCacheClient cache,
+                                    SourceActivationStore activations,
+                                    PromotionOwnershipStore ownership,
+                                    Clock clock) {
+        this.cache = cache;
+        this.activations = activations;
+        this.ownership = ownership;
+        this.clock = clock;
+    }
 
     public CanonicalGraphCompletion(IngestionCacheClient cache,
                                     SourceActivationStore activations,
                                     Clock clock) {
-        this.cache = cache;
-        this.activations = activations;
-        this.clock = clock;
+        this(cache, activations, null, clock);
     }
 
-    /** Completes for a promotion row only when every row for its version is terminal. */
+    /** Completes for a promotion row only when its ownership set is closed and terminal. */
     public boolean completeIfPromotionTerminal(RelationPromotionResultRow row) {
+        if (!ownershipClosed(row.tenantId(), row.sourceVersionId())) {
+            return false;
+        }
         if (!promotionsTerminal(row.tenantId(), row.sourceVersionId())) {
             return false;
         }
@@ -66,12 +81,24 @@ public final class CanonicalGraphCompletion {
         return complete(version);
     }
 
-    /** Completes for a scanned source version only when all promotion rows are terminal. */
+    /** Completes for a scanned source version only when its ownership set is closed and terminal. */
     public boolean completeIfPromotionTerminal(SourceVersionRow version) {
+        if (!ownershipClosed(version.tenantId(), version.versionId())) {
+            return false;
+        }
         if (!promotionsTerminal(version.tenantId(), version.versionId())) {
             return false;
         }
         return complete(version);
+    }
+
+    private boolean ownershipClosed(String tenantId, UUID sourceVersionId) {
+        if (ownership == null) {
+            log.warn("Canonical completion has no ownership store; refusing completion tenant={} version={}",
+                    tenantId, sourceVersionId);
+            return false;
+        }
+        return ownership.isClosed(tenantId, sourceVersionId);
     }
 
     public boolean promotionsTerminal(String tenantId, UUID sourceVersionId) {
