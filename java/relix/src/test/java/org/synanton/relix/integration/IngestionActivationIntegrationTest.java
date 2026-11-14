@@ -120,6 +120,7 @@ import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -523,86 +524,7 @@ class IngestionActivationIntegrationTest {
 
         markSearchProjected(tenant, source, resource, version);
 
-        Neo4jGraphConnector graph = new Neo4jGraphConnector(null, executor);
-        GraphWriter graphWriter = new GraphWriter(cache,
-                (tenantId, subjectType, predicate, objectType, ontologyVersion) ->
-                        new RelationValidation(true, List.of()),
-                new Neo4jGraphWriteClient(graph),
-                new ExtractionGraphProperties(true, null, null, "active"),
-                Clock.systemUTC(), activations);
-        ExtractionConsumer extraction = new ExtractionConsumer(cache,
-                new TwoMentionExtractionAdapter(),
-                new ExtractionConsumerProperties(true, tenant, 10, 5, 1, 1000L),
-                graphWriter, Clock.systemUTC());
-        await("extraction to MENTIONS_COMMITTED", extraction::poll,
-                () -> "MENTIONS_COMMITTED".equals(cache.readGraphStatus(
-                        tenant, version.connectorId(), source, resource,
-                        version.versionId()).orElse(null)),
-                () -> chainDiagnostics(tenant, source, resource, version));
-
-        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
-                        + "SET e.label = $label, e.type = $type",
-                Map.of("tenant", tenant, "id", subjectEntity, "label", "Acme",
-                        "type", "Organization"));
-        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
-                        + "SET e.label = $label, e.type = $type",
-                Map.of("tenant", tenant, "id", objectEntity, "label", "Protocol-A",
-                        "type", "Protocol"));
-
-        ResolutionCandidateProvider candidates = context -> switch (context.surfaceForm()) {
-            case "Acme" -> List.of(new ResolutionCandidate(subjectEntity, "Acme",
-                    "Organization", 0.9, "label", "RRF", "gen-654-full-chain"));
-            case "Protocol-A" -> List.of(new ResolutionCandidate(objectEntity, "Protocol-A",
-                    "Protocol", 0.9, "label", "RRF", "gen-654-full-chain"));
-            default -> List.of();
-        };
-        ResolutionConsumer resolution = new ResolutionConsumer(new ClaimService(cache), candidates,
-                new DefaultResolutionPolicy("v1", 0.02, 0.001, new ExactTypeCompatibility()),
-                graph::upsertResolution,
-                new ResolutionConsumerProperties(true, tenant, 10, 5, 1, 60, 1000L, "active"),
-                new SimpleMeterRegistry());
-        await("resolution completion", resolution::poll,
-                () -> {
-                    var rows = cache.listResolutionWorkRows(tenant, version.versionId());
-                    return !rows.isEmpty() && rows.stream()
-                            .allMatch(row -> "COMPLETED".equals(row.claimStatus()));
-                },
-                () -> "resolution_work=" + cache.listResolutionWorkRows(tenant, version.versionId()));
-
-        RelationPromotionProducer producer = new RelationPromotionProducer(
-                new ResolutionGraphLookup() {
-                    @Override
-                    public List<ActiveResolution> getActiveResolutions(
-                            String tenantId, List<String> mentionIds) {
-                        return graph.getActiveResolutions(tenantId, mentionIds);
-                    }
-                },
-                graph,
-                (tenantId, ontologyVersion, extractedRelationId) -> new RelationValidationResult(
-                        RelationValidationOutcome.VALID, subjectEntity, "requires", objectEntity,
-                        "Organization", "Protocol", ontologyVersion, List.of(), "VALID"),
-                cache, ownership, Clock.systemUTC(), true, tenant, "active");
-        fences.advance(new SourceFenceKey(tenant, source), version.generation());
-        await("promotion row production and ownership closure", producer::poll,
-                () -> ownership.isClosed(tenant, version.versionId())
-                        && !cache.listRelationPromotionWorkRows(tenant, version.versionId()).isEmpty(),
-                () -> "ownership=" + ownership.read(tenant, version.versionId())
-                        + ", promotion_rows=" + cache.listRelationPromotionWorkRows(
-                                tenant, version.versionId()));
-
-        CanonicalGraphCompletion completion = new CanonicalGraphCompletion(
-                cache, activations, ownership, Clock.systemUTC());
-        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
-                tenantId -> GraphIdentity.canonical(tenantId, "v1"),
-                new CassandraSourceGenerationAuthority(cache));
-        PromotionConsumer promotion = new PromotionConsumer(new ClaimService(cache), promoter,
-                new PromotionConsumerProperties(true, tenant, 10, 5, 1, 120, 1000L),
-                new SimpleMeterRegistry(), completion, ownership);
-        await("promotion to GRAPH_COMMITTED", promotion::poll,
-                () -> "GRAPH_COMMITTED".equals(cache.readGraphStatus(
-                        tenant, version.connectorId(), source, resource,
-                        version.versionId()).orElse(null)),
-                () -> chainDiagnostics(tenant, source, resource, version));
+        driveToGraphCommitted(tenant, source, resource, version, subjectEntity, objectEntity);
 
         ActivationRecoverySweep sweep = sweep(tenant);
         await("activation recovery to CURRENT", sweep::poll,
@@ -743,7 +665,219 @@ class IngestionActivationIntegrationTest {
                   AND e.source_id = $sourceId
                   AND e.generation = $generation
                 RETURN r.canonical_relation_id AS canonical_relation_id
-                """, isolatedParams)).isEmpty();
+                 """, isolatedParams)).isEmpty();
+    }
+
+    @Test
+    void crashAfterGraphCommit_recoverySweepReachesActive() {
+        String tenant = "tenant-654-crash-recovery";
+        String source = "source-654-crash-recovery";
+        String resource = "crash-recovery.md";
+        String text = "Acme requires Protocol-A";
+        String subjectEntity = "entity-654-crash-subject";
+        String objectEntity = "entity-654-crash-object";
+        SourceVersionRow version = ingest(tenant, source, resource, ref(resource, text), bytes(text));
+        markSearchProjected(tenant, source, resource, version);
+
+        driveToGraphCommitted(tenant, source, resource, version, subjectEntity, objectEntity);
+
+        // Pre-crash boundary: the graph and durable ActivationRequested event exist,
+        // but activation never ran because the process died at this boundary.
+        assertThat(relationCount(tenant, subjectEntity, objectEntity, "requires")).isEqualTo(1L);
+        assertThat(evidenceCount(tenant, version.versionId().toString(), source)).isEqualTo(1L);
+        assertThat(cache.readGraphStatus(tenant, version.connectorId(), source, resource,
+                version.versionId())).contains("GRAPH_COMMITTED");
+        assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now()))
+                .singleElement()
+                .satisfies(request -> {
+                    assertThat(request.versionId()).isEqualTo(version.versionId());
+                    assertThat(request.generation()).isEqualTo(version.generation());
+                    assertThat(request.graphStatus()).isEqualTo("GRAPH_COMMITTED");
+                });
+        assertThat(activations.read(tenant, source, version.generation())).get()
+                .extracting(ActivationRecord::state).isEqualTo(ActivationState.GRAPH_COMMITTED);
+        assertThat(activations.readLifecycle(tenant, source)).get()
+                .extracting(lifecycle -> lifecycle.currentGeneration()).isEqualTo(0L);
+
+        // Recovery uses the scheduled sweep only; no hand-driven projection step.
+        ActivationRecoverySweep sweep = sweep(tenant);
+        await("recovery sweep to CURRENT", sweep::poll,
+                () -> activations.readLifecycle(tenant, source)
+                        .map(lifecycle -> lifecycle.currentGeneration() == version.generation())
+                        .orElse(false),
+                () -> "lifecycle=" + activations.readLifecycle(tenant, source)
+                        + ", activation=" + activations.read(tenant, source, version.generation())
+                        + ", pending=" + cache.listPendingActivationRequests(
+                                tenant, 10, Instant.now()));
+
+        assertThat(activations.readLifecycle(tenant, source)).get()
+                .satisfies(lifecycle -> {
+                    assertThat(lifecycle.currentGeneration()).isEqualTo(version.generation());
+                    assertThat(lifecycle.acceptedGeneration()).isEqualTo(version.generation());
+                    assertThat(lifecycle.activeRevisionId()).isEqualTo(version.versionId());
+                });
+        assertThat(cache.readRevisionGeneration(tenant, source, version.versionId()))
+                .contains(version.generation());
+        assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
+        assertThat(relationCount(tenant, subjectEntity, objectEntity, "requires")).isEqualTo(1L);
+        assertThat(evidenceCount(tenant, version.versionId().toString(), source)).isEqualTo(1L);
+    }
+
+    @Test
+    void duplicateActivationRequested_isNoOp() {
+        String tenant = "tenant-654-duplicate-request";
+        String source = "source-654-duplicate-request";
+        String resource = "duplicate-request.md";
+        String text = "Acme requires Protocol-A";
+        String subjectEntity = "entity-654-duplicate-subject";
+        String objectEntity = "entity-654-duplicate-object";
+        SourceVersionRow version = ingest(tenant, source, resource, ref(resource, text), bytes(text));
+        markSearchProjected(tenant, source, resource, version);
+
+        driveToGraphCommitted(tenant, source, resource, version, subjectEntity, objectEntity);
+
+        ActivationRecoverySweep sweep = sweep(tenant);
+        await("initial activation to CURRENT", sweep::poll,
+                () -> activations.readLifecycle(tenant, source)
+                        .map(lifecycle -> lifecycle.currentGeneration() == version.generation())
+                        .orElse(false),
+                () -> "lifecycle=" + activations.readLifecycle(tenant, source)
+                        + ", activation=" + activations.read(tenant, source, version.generation()));
+
+        long generation = activations.readLifecycle(tenant, source).orElseThrow().currentGeneration();
+        long relations = relationCount(tenant, subjectEntity, objectEntity, "requires");
+        long evidence = evidenceCount(tenant, version.versionId().toString(), source);
+        assertThat(relations).isEqualTo(1L);
+        assertThat(evidence).isEqualTo(1L);
+
+        ActivationRequestRow redelivered = new ActivationRequestRow(
+                tenant, version.connectorId(), source, resource,
+                firstActivationEventId(tenant, source, resource), version.versionId(),
+                version.generation(), version.contentHash(), null, "{}", version.observedAt(),
+                Instant.now(), "GRAPH_COMMITTED", 0, null, null, false);
+
+        assertThatCode(() -> sweep.sweep(redelivered)).doesNotThrowAnyException();
+        sweep.poll();
+
+        assertThat(activations.readLifecycle(tenant, source)).get()
+                .satisfies(lifecycle -> {
+                    assertThat(lifecycle.currentGeneration()).isEqualTo(generation);
+                    assertThat(lifecycle.acceptedGeneration()).isEqualTo(version.generation());
+                    assertThat(lifecycle.activeRevisionId()).isEqualTo(version.versionId());
+                });
+        assertThat(activations.read(tenant, source, version.generation())).get()
+                .extracting(ActivationRecord::state).isEqualTo(ActivationState.CURRENT);
+        assertThat(relationCount(tenant, subjectEntity, objectEntity, "requires")).isEqualTo(relations);
+        assertThat(evidenceCount(tenant, version.versionId().toString(), source)).isEqualTo(evidence);
+        assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
+    }
+
+
+    private static void driveToGraphCommitted(String tenant, String source, String resource,
+                                              SourceVersionRow version,
+                                              String subjectEntity, String objectEntity) {
+        Neo4jGraphConnector graph = new Neo4jGraphConnector(null, executor);
+        GraphWriter graphWriter = new GraphWriter(cache,
+                (tenantId, subjectType, predicate, objectType, ontologyVersion) ->
+                        new RelationValidation(true, List.of()),
+                new Neo4jGraphWriteClient(graph),
+                new ExtractionGraphProperties(true, null, null, "active"),
+                Clock.systemUTC(), activations);
+        ExtractionConsumer extraction = new ExtractionConsumer(cache,
+                new TwoMentionExtractionAdapter(),
+                new ExtractionConsumerProperties(true, tenant, 10, 5, 1, 1000L),
+                graphWriter, Clock.systemUTC());
+        await("extraction to MENTIONS_COMMITTED", extraction::poll,
+                () -> "MENTIONS_COMMITTED".equals(cache.readGraphStatus(
+                        tenant, version.connectorId(), source, resource,
+                        version.versionId()).orElse(null)),
+                () -> chainDiagnostics(tenant, source, resource, version));
+
+        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
+                        + "SET e.label = $label, e.type = $type",
+                Map.of("tenant", tenant, "id", subjectEntity, "label", "Acme",
+                        "type", "Organization"));
+        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
+                        + "SET e.label = $label, e.type = $type",
+                Map.of("tenant", tenant, "id", objectEntity, "label", "Protocol-A",
+                        "type", "Protocol"));
+
+        ResolutionCandidateProvider candidates = context -> switch (context.surfaceForm()) {
+            case "Acme" -> List.of(new ResolutionCandidate(subjectEntity, "Acme",
+                    "Organization", 0.9, "label", "RRF", "gen-" + tenant));
+            case "Protocol-A" -> List.of(new ResolutionCandidate(objectEntity, "Protocol-A",
+                    "Protocol", 0.9, "label", "RRF", "gen-" + tenant));
+            default -> List.of();
+        };
+        ResolutionConsumer resolution = new ResolutionConsumer(new ClaimService(cache), candidates,
+                new DefaultResolutionPolicy("v1", 0.02, 0.001, new ExactTypeCompatibility()),
+                graph::upsertResolution,
+                new ResolutionConsumerProperties(true, tenant, 10, 5, 1, 60, 1000L, "active"),
+                new SimpleMeterRegistry());
+        await("resolution completion", resolution::poll,
+                () -> {
+                    var rows = cache.listResolutionWorkRows(tenant, version.versionId());
+                    return !rows.isEmpty() && rows.stream()
+                            .allMatch(row -> "COMPLETED".equals(row.claimStatus()));
+                },
+                () -> "resolution_work=" + cache.listResolutionWorkRows(tenant, version.versionId()));
+
+        RelationPromotionProducer producer = new RelationPromotionProducer(
+                new ResolutionGraphLookup() {
+                    @Override
+                    public List<ActiveResolution> getActiveResolutions(
+                            String tenantId, List<String> mentionIds) {
+                        return graph.getActiveResolutions(tenantId, mentionIds);
+                    }
+                },
+                graph,
+                (tenantId, ontologyVersion, extractedRelationId) -> new RelationValidationResult(
+                        RelationValidationOutcome.VALID, subjectEntity, "requires", objectEntity,
+                        "Organization", "Protocol", ontologyVersion, List.of(), "VALID"),
+                cache, ownership, Clock.systemUTC(), true, tenant, "active");
+        fences.advance(new SourceFenceKey(tenant, source), version.generation());
+        await("promotion row production and ownership closure", producer::poll,
+                () -> ownership.isClosed(tenant, version.versionId())
+                        && !cache.listRelationPromotionWorkRows(tenant, version.versionId()).isEmpty(),
+                () -> "ownership=" + ownership.read(tenant, version.versionId())
+                        + ", promotion_rows=" + cache.listRelationPromotionWorkRows(
+                                tenant, version.versionId()));
+
+        CanonicalGraphCompletion completion = new CanonicalGraphCompletion(
+                cache, activations, ownership, Clock.systemUTC());
+        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"),
+                new CassandraSourceGenerationAuthority(cache));
+        PromotionConsumer promotion = new PromotionConsumer(new ClaimService(cache), promoter,
+                new PromotionConsumerProperties(true, tenant, 10, 5, 1, 120, 1000L),
+                new SimpleMeterRegistry(), completion, ownership);
+        await("promotion to GRAPH_COMMITTED", promotion::poll,
+                () -> "GRAPH_COMMITTED".equals(cache.readGraphStatus(
+                        tenant, version.connectorId(), source, resource,
+                        version.versionId()).orElse(null)),
+                () -> chainDiagnostics(tenant, source, resource, version));
+    }
+
+    private static long relationCount(String tenant, String subjectEntity, String objectEntity,
+                                      String predicate) {
+        return ((Number) executor.read("""
+                MATCH (s:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[r:REL {tenant_id: $tenant, predicate: $predicate}]->
+                      (o:Entity {tenant: $tenant, id: $objectEntityId})
+                RETURN count(r) AS c
+                """, Map.of("tenant", tenant, "subjectEntityId", subjectEntity,
+                "objectEntityId", objectEntity, "predicate", predicate))
+                .getFirst().get("c")).longValue();
+    }
+
+    private static long evidenceCount(String tenant, String sourceVersionId, String sourceId) {
+        return ((Number) executor.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant})
+                WHERE e.source_version_id = $sourceVersionId
+                  AND e.source_id = $sourceId
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "sourceVersionId", sourceVersionId,
+                "sourceId", sourceId)).getFirst().get("c")).longValue();
     }
 
     private static ActivationRecoverySweep sweep(String tenant) {
