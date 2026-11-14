@@ -57,6 +57,12 @@ relix:
     retry-backoff-seconds: ${PROMOTION_CONSUMER_BACKOFF_SECONDS:30}
     lease-seconds: ${PROMOTION_CONSUMER_LEASE_SECONDS:120}
     poll-delay-ms: ${PROMOTION_CONSUMER_POLL_DELAY_MS:10000}
+  promotion-completion:
+    # ADR-029 §12.2: bounded zero-row/terminal canonical completion; disabled by default.
+    enabled: ${PROMOTION_COMPLETION_ENABLED:false}
+    tenant: ${PROMOTION_COMPLETION_TENANT:}
+    batch: ${PROMOTION_COMPLETION_BATCH:100}
+    poll-delay-ms: ${PROMOTION_COMPLETION_POLL_DELAY_MS:30000}
   query:
     entity-lookup-default-limit: 10
     one-hop-default-limit: 50

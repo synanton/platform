@@ -64,21 +64,15 @@ public final class ActivationRecoverySweep {
 
     /** Public for the ingestion-originated integration path and tests. */
     public void sweep(ActivationRequestRow request) {
+        if (!"GRAPH_COMMITTED".equals(request.graphStatus())) {
+            // MENTIONS_COMMITTED is not an activation boundary. Canonical completion
+            // owns the promotion -> GRAPH_COMMITTED transition.
+            return;
+        }
         ActivationRecord record = activations.read(
                 request.tenantId(), request.sourceId(), request.generation()).orElse(null);
         if (record == null) {
-            activations.stage(new ActivationRecord(
-                    request.tenantId(), request.sourceId(), request.generation(),
-                    request.versionId(), request.connectorId(), request.resourceId(),
-                    request.previousRevisionId(), ActivationState.REVISION_ACCEPTED,
-                    request.contentHash(), 0L, null, 0L, null, null, true,
-                    request.requestedAt() == null ? clock.instant() : request.requestedAt(),
-                    clock.instant(), null));
-            record = activations.read(
-                    request.tenantId(), request.sourceId(), request.generation()).orElse(null);
-        }
-        if (record == null) {
-            fail(request, "activation record could not be staged");
+            fail(request, "activation record is not staged");
             return;
         }
         if (record.state() == ActivationState.CURRENT) {
@@ -86,12 +80,17 @@ public final class ActivationRecoverySweep {
             counter("activation.recovered").increment();
             return;
         }
-        if (record.state() == ActivationState.REVISION_ACCEPTED
-                || record.state() == ActivationState.EXTRACTING
-                || record.state() == ActivationState.EXTRACTION_COMPLETE
-                || record.state() == ActivationState.GRAPH_COMMITTING) {
-            // The extraction/graph consumers own these transitions. The sweep only
-            // recovers an already-durable GRAPH_COMMITTED activation event.
+        if (record.state() == ActivationState.MENTIONS_COMMITTED) {
+            // The durable event proves canonical completion; repair only the lost
+            // activation transition. The sweep never synthesizes GRAPH_COMMITTED
+            // from a MENTIONS_COMMITTED source row.
+            record = transitionToGraphCommitted(record);
+        }
+        if (record == null || (record.state() != ActivationState.GRAPH_COMMITTED
+                && record.state() != ActivationState.SEARCH_COMMITTING
+                && record.state() != ActivationState.SEARCH_COMMITTED
+                && record.state() != ActivationState.ACTIVATION_PARTIAL)) {
+            // Extraction, mention commit, and canonical promotion own earlier states.
             return;
         }
         if (request.searchProjectedAt() == null) {
@@ -118,6 +117,16 @@ public final class ActivationRecoverySweep {
             }
             default -> fail(request, result.message());
         }
+    }
+
+    private ActivationRecord transitionToGraphCommitted(ActivationRecord record) {
+        activations.transition(record.tenantId(), record.sourceId(), record.generation(),
+                ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED,
+                new SourceActivationStore.ProjectionMarkers(record.generation(), "COMMITTED",
+                        record.searchAppliedGeneration(), record.searchAppliedState()),
+                null, true, clock.instant());
+        return activations.read(record.tenantId(), record.sourceId(), record.generation())
+                .orElse(null);
     }
 
     private ActivationRecord advanceToSearchCommitted(ActivationRecord record) {

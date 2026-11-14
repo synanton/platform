@@ -72,6 +72,12 @@ spec:
               value: demo
             - name: ACTIVATION_RECOVERY_POLL_DELAY_MS
               value: "30000"
+            - name: PROMOTION_COMPLETION_ENABLED
+              value: "true"
+            - name: PROMOTION_COMPLETION_TENANT
+              value: demo
+            - name: PROMOTION_COMPLETION_POLL_DELAY_MS
+              value: "30000"
             - name: RECONCILIATION_ENABLED
               value: "false"
             - name: RECONCILIATION_TENANT

@@ -10,7 +10,7 @@ Canonical states follow ADR-029:
 
 ```text
 REVISION_ACCEPTED → EXTRACTING → EXTRACTION_COMPLETE
-  → GRAPH_COMMITTING → GRAPH_COMMITTED
+  → GRAPH_COMMITTING → MENTIONS_COMMITTED → GRAPH_COMMITTED
   → SEARCH_COMMITTING → SEARCH_COMMITTED
   → ACTIVATING → CURRENT → RETIRING → RETIRED
 ```
@@ -19,7 +19,7 @@ Failure states: `EXTRACTION_FAILED`, `EXTRACTION_PARTIAL`, `GRAPH_COMMIT_FAILED`
 
 Transitions are idempotent and guarded by expected generation/state; no transition may lower a generation or activate an older revision over a newer fence.
 
-Durable boundaries follow ADR-029 §12.2: acceptance writes the revision and extraction event in one LWT; graph commit writes `GRAPH_COMMITTED` and `ActivationRequested` in one LWT; activation writes the current pointer in a Cassandra LWT. Activation reads the Neo4j fence as a precondition only and does not acquire the fence lock. Fence contention is blocking but not FIFO/fair.
+Durable boundaries follow ADR-029 §12.2: acceptance writes the revision and extraction event in one LWT; mention persistence writes `MENTIONS_COMMITTED` without an activation event; canonical promotion completion writes `GRAPH_COMMITTED` and `ActivationRequested` in one LWT after all promotion rows are terminal (or zero); activation writes the current pointer in a Cassandra LWT. Activation reads the Neo4j fence as a precondition only and does not acquire the fence lock. Fence contention is blocking but not FIFO/fair.
 
 ## Projections
 
@@ -60,5 +60,5 @@ Deferred register: none. Every current activation clause is Phase-2b scope; the 
 
 Changes require #654–#656 owners; re-run the conformance matrix.
 
-## Change-control note 2026-11-13
-#669 adopts the ADR-029 state names as canonical and records the coarse contract mapping. #654 adds the fence-guarded `ActivateRevision` core; staged ingestion wiring and #655/#656 reader enforcement remain open.
+## Change-control note 2026-11-14
+#654 splits mention persistence (`MENTIONS_COMMITTED`) from canonical completion (`GRAPH_COMMITTED`). `ActivationRequested` is emitted only by the canonical-completion LWT, never by `GraphWriter`. #655/#656 remain dependent on the corrected boundary.

@@ -39,6 +39,24 @@ class PromotionConsumerTest {
     private final PromotionConsumer consumer =
             new PromotionConsumer(claims, promoter, properties, registry);
 
+
+    @Test
+    void processedPromotionChecksCanonicalCompletion() {
+        RelationPromotionWorkRow work = work();
+        CanonicalGraphCompletion completion = mock(CanonicalGraphCompletion.class);
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        when(promoter.promoteRelation(any())).thenReturn(new PromotionResult(1, 1, 1));
+        when(claims.completePromotion(eq(work), anyString(), any())).thenReturn(true);
+        when(completion.completeIfPromotionTerminal(work.result())).thenReturn(true);
+        PromotionConsumer withCompletion = new PromotionConsumer(claims, promoter, properties, registry,
+                completion);
+
+        withCompletion.poll();
+
+        verify(completion).completeIfPromotionTerminal(work.result());
+    }
+
     @Test
     void validPromotionIsClaimedPromotedAndCompleted() {
         RelationPromotionWorkRow work = work();

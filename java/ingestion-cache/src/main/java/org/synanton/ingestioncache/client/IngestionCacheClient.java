@@ -986,6 +986,35 @@ public class IngestionCacheClient {
     }
 
     /**
+     * Revisions whose mention graph is durable but canonical promotion has not
+     * completed. Iteration reuses the bounded tenant/source/identity partitions;
+     * it never scans source_versions globally.
+     */
+    public List<SourceVersionRow> listMentionsCommittedSourceVersions(String tenantId, int limit) {
+        List<SourceVersionRow> pending = new ArrayList<>();
+        for (SourceRow source : listSources(tenantId)) {
+            for (SourceIdentityRow identity : listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId())) {
+                ResultSet rows = session.execute(SimpleStatement.newInstance(
+                    "SELECT * FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? " +
+                    "AND source_id=? AND resource_id=?",
+                    tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId()));
+                for (Row row : rows) {
+                    if (!"MENTIONS_COMMITTED".equals(row.getString("graph_status"))) {
+                        continue;
+                    }
+                    pending.add(sourceVersionFrom(row));
+                }
+            }
+        }
+        return pending.stream()
+                .sorted(Comparator.comparing(SourceVersionRow::observedAt)
+                        .thenComparing(SourceVersionRow::versionId))
+                .limit(Math.max(1, limit))
+                .toList();
+    }
+
+    /**
      * Durable ActivationRequested events whose graph projection is committed but
      * activation has not completed. Iteration reuses the bounded tenant/source/
      * identity partitions rather than scanning source_versions globally.
@@ -1443,6 +1472,31 @@ public class IngestionCacheClient {
             graphStatus, committedAt, counters, attemptCount, activationEventId,
             activationEventType, activationEventPayloadJson, request.tenantId(), request.connectorId(),
             request.sourceId(), request.resourceId(), request.versionId()
+        ));
+        return result.wasApplied();
+    }
+
+    /**
+     * Canonical promotion completion boundary: moves MENTIONS_COMMITTED to
+     * GRAPH_COMMITTED and writes the deterministic ActivationRequested event in
+     * one Cassandra LWT on the same source_versions row. Repeated completion is a
+     * no-op and can never replace another revision's event.
+     */
+    public boolean completeCanonicalGraphCommit(
+            String tenantId, String connectorId, String sourceId, String resourceId,
+            UUID versionId, UUID activationEventId, String activationEventType,
+            String activationEventPayloadJson, Instant committedAt) {
+        ResultSet result = session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET graph_status='GRAPH_COMMITTED', " +
+            "graph_commit_at=?, activation_event_id=?, activation_event_type=?, " +
+            "activation_event_payload_json=?, activation_event_published=false, " +
+            "activation_event_published_at=null, activation_event_attempt_count=0, " +
+            "activation_event_last_error=null, activation_event_next_attempt_at=null, " +
+            "activation_event_dead_lettered=false " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? " +
+            "IF graph_status='MENTIONS_COMMITTED'",
+            committedAt, activationEventId, activationEventType, activationEventPayloadJson,
+            tenantId, connectorId, sourceId, resourceId, versionId
         ));
         return result.wasApplied();
     }

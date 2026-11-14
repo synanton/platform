@@ -132,7 +132,7 @@ class ExtractionConsumerTest {
 
         assertThat(cache.listPendingGraphCommits(tenant, 10, now.plusSeconds(31))).hasSize(1);
         assertThat(cache.claimGraphCommit(request)).isTrue();
-        cache.markGraphCommitted(request, "GRAPH_COMMITTED", java.util.Map.of("relations_accepted", 1),
+        cache.markGraphCommitted(request, "MENTIONS_COMMITTED", java.util.Map.of("relations_accepted", 1),
                 1, now.plusSeconds(32));
         assertThat(cache.listPendingGraphCommits(tenant, 10, now.plusSeconds(60))).isEmpty();
     }

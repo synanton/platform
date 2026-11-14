@@ -78,7 +78,8 @@ class GraphWriterTest {
 
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
         verify(cache).claimGraphCommit(request);
-        verify(cache).markGraphCommitted(eq(request), eq("GRAPH_COMMITTED"), counters.capture(), eq(0), any(), any(java.util.UUID.class), eq("ActivationRequested"), any(String.class));
+        verify(cache).markGraphCommitted(eq(request), eq("MENTIONS_COMMITTED"), counters.capture(), eq(0),
+                any(), isNull(), isNull(), isNull());
         assertThat(counters.getValue()).containsEntry("mentions_accepted", 2)
                 .containsEntry("relations_accepted", 1)
                 .containsEntry("relations_rejected", 0);
@@ -124,7 +125,8 @@ class GraphWriterTest {
         verify(graphClient, never()).upsertRelations(any());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
-        verify(cache).markGraphCommitted(eq(request), eq("PARTIAL"), counters.capture(), eq(0), any(), isNull(), isNull(), isNull());
+        verify(cache).markGraphCommitted(eq(request), eq("PARTIAL"), counters.capture(), eq(0),
+                any(), isNull(), isNull(), isNull());
         assertThat(counters.getValue()).containsEntry("relations_rejected", 1);
     }
 

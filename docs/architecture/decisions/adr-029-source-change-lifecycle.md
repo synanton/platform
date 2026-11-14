@@ -314,10 +314,12 @@ There are three distinct atomic boundaries:
 | Boundary | Trigger | Atomic writes | Crash recovery |
 |---|---|---|---|
 | A — Acceptance | Revision received | `source_versions` row, generation mapping, `ExtractionRequested` in one Cassandra LWT | Revision is retryable through extraction; no activation event exists yet. A crash before A leaves no accepted revision. |
-| B — Graph commit | Projection commits successfully | `source_versions.graph_status = GRAPH_COMMITTED` and `ActivationRequested` in one conditional Cassandra LWT on the same row | The activation event is durable; a crash after B is recoverable by the sweep. Repeated B is idempotent and must not emit a second event or replace another revision's event. |
+| B — Canonical graph commit | Every relation-promotion row for the revision is terminal (`COMPLETED`, `FAILED`, `SUPERSEDED`) or the revision has zero promotion rows | `source_versions.graph_status = GRAPH_COMMITTED` and `ActivationRequested` in one conditional Cassandra LWT on the same row | The activation event is durable; a crash after B is recoverable by the sweep. Repeated B is idempotent and must not emit a second event or replace another revision's event. |
 | C — Activation | `ActivateRevision` completes | Cassandra current-pointer LWT sets the active revision | If C is interrupted, the sweep re-runs activation from the durable B event. The generation mapping is not reassigned. |
 
-**Contract:** a crash between any two boundaries is recoverable through the durable state written by the prior boundary. There is no window where an accepted revision has neither an extraction event nor a recoverable activation state. `ActivationRequested` must not be emitted at A; an activation consumer must never see an event before the graph projection is durable.
+`GRAPH_COMMITTED` means **canonical promotion is complete**, not that extracted mentions were persisted. Mention persistence is the earlier `MENTIONS_COMMITTED` graph status/activation state: `GraphWriter` writes it after the isolated mention graph (and its `:ExtractedMention`/`:ExtractedRelation` rows) is durable. `MENTIONS_COMMITTED` is not an activation boundary and must never write `ActivationRequested`.
+
+**Contract:** a crash between any two boundaries is recoverable through the durable state written by the prior boundary. There is no window where an accepted revision has neither an extraction event nor a recoverable activation state. `ActivationRequested` must not be emitted at A or at mention commit; an activation consumer must never see an event before canonical promotion is durable.
 
 #### 12.2.2 Activation lock
 
@@ -339,7 +341,18 @@ The Neo4j fence may advance after `ActivateRevision` reads it but before the Cas
 
 **Named test required by #654:** advance the Neo4j fence after the precondition read but before the Cassandra LWT. Assert that activation completes for the operation generation, drift is recorded, a subsequent stale graph mutation is rejected by the fence, and reconciliation converges the state.
 
-**Change control:** dependent tickets are #654, #655, and #656. This amendment is a prerequisite for the unified #654 PR; no #654–#656 conformance tests exist yet. Existing #648/#666/#685 promotion tests remain green.
+#### 12.2.5 Canonical completion amendment (2026-11-14)
+
+Canonical promotion owns the `MENTIONS_COMMITTED → GRAPH_COMMITTED` transition. Recovery must not synthesize it.
+
+- `PromotionConsumer` checks, after processing a promotion row, whether every `relation_promotion_results` row for that source version is terminal (`COMPLETED`, `FAILED`, `SUPERSEDED`). If so, it completes the canonical graph commit.
+- Revisions with zero promotion rows are already terminal: a bounded `PromotionCompletionSweep` scans only `source_versions` partitions at `graph_status = MENTIONS_COMMITTED`, checks terminal/empty promotion rows, and completes them. The sweep is enabled by property and tenant, is disabled by default, and never scans `source_versions` globally.
+- Completion is a Cassandra LWT on `source_versions`: `IF graph_status='MENTIONS_COMMITTED'` sets `GRAPH_COMMITTED` and the deterministic `ActivationRequested` event fields. Repeated completion is a no-op and cannot replace another revision's event.
+- Connector/resource are resolved from the staged `ActivationRecord` (or an exact `source_versions` lookup), never guessed.
+- After the LWT succeeds, the activation record transitions `MENTIONS_COMMITTED → GRAPH_COMMITTED`. If that transition fails, the event remains durable so recovery can still proceed.
+- `ActivationRecoverySweep` accepts only durable `GRAPH_COMMITTED`/`SEARCH_COMMITTED` boundaries; it does not accept `MENTIONS_COMMITTED` as a readiness signal and does not synthesize activation records or graph state.
+
+**Change control:** dependent tickets are #654, #655, and #656. #654 owns the boundary correction and the mention/canonical split; #655 retirement and #656 search filtering remain dependent on the corrected boundary. Existing #648/#666/#685 promotion tests remain green.
 
 ## Lifecycle state machine
 
@@ -351,6 +364,7 @@ CURRENT (old)
   -> EXTRACTING
   -> EXTRACTION_COMPLETE
   -> GRAPH_COMMITTING
+  -> MENTIONS_COMMITTED
   -> GRAPH_COMMITTED
   -> SEARCH_COMMITTING
   -> SEARCH_COMMITTED

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.common.resolution.CanonicalRelation;
@@ -44,6 +45,7 @@ public final class PromotionConsumer {
     private final CanonicalRelationPromotionPort promotionPort;
     private final PromotionConsumerProperties properties;
     private final MeterRegistry registry;
+    private final CanonicalGraphCompletion completion;
     private final ObjectMapper mapper = new ObjectMapper();
     private final String workerId = UUID.randomUUID().toString();
     private final Clock clock = Clock.systemUTC();
@@ -57,10 +59,18 @@ public final class PromotionConsumer {
 
     public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
                              PromotionConsumerProperties properties, MeterRegistry registry) {
+        this(claims, promotionPort, properties, registry, null);
+    }
+
+    @Autowired
+    public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
+                             PromotionConsumerProperties properties, MeterRegistry registry,
+                             CanonicalGraphCompletion completion) {
         this.claims = claims;
         this.promotionPort = promotionPort;
         this.properties = properties;
         this.registry = registry;
+        this.completion = completion;
         this.claimed = registry.counter("promotion.claimed");
         this.completed = registry.counter("promotion.completed");
         this.failed = registry.counter("promotion.failed");
@@ -95,6 +105,7 @@ public final class PromotionConsumer {
         }
         for (RelationPromotionWorkRow work : pending) {
             process(work);
+            completeCanonicalIfTerminal(work);
         }
     }
 
@@ -161,6 +172,18 @@ public final class PromotionConsumer {
                     work.result().relationId(), failureClass, outcome, e.toString());
         } finally {
             latency.record(Duration.between(claimedAt, clock.instant()));
+        }
+    }
+
+    private void completeCanonicalIfTerminal(RelationPromotionWorkRow work) {
+        if (completion == null) {
+            return;
+        }
+        try {
+            completion.completeIfPromotionTerminal(work.result());
+        } catch (Exception e) {
+            log.warn("Canonical graph completion check failed relation={}: {}",
+                    work.result().relationId(), e.toString());
         }
     }
 

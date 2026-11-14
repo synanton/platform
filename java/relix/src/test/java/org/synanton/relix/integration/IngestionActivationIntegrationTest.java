@@ -19,15 +19,18 @@ import org.neo4j.driver.GraphDatabase;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.SourceRevisionIdentity;
+import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.ingestioncache.activation.ActivationRecord;
 import org.synanton.ingestioncache.activation.ActivationState;
 import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
+import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ActivationRequestRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
+import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
@@ -36,9 +39,13 @@ import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
 import org.synanton.relix.adapter.out.metadata.CassandraSourceGenerationAuthority;
 import org.synanton.relix.adapter.out.metadata.Neo4jSourceFenceStore;
 import org.synanton.relix.config.ActivationRecoveryProperties;
+import org.synanton.relix.config.PromotionCompletionProperties;
 import org.synanton.relix.config.PromotionConsumerProperties;
 import org.synanton.relix.consumer.ActivationDriftMonitor;
 import org.synanton.relix.consumer.ActivationRecoverySweep;
+import org.synanton.relix.consumer.CanonicalGraphCompletion;
+import org.synanton.relix.consumer.PromotionCompletionSweep;
+import org.synanton.relix.consumer.PromotionConsumer;
 import org.synanton.relix.identity.ActivateRevision;
 import org.synanton.relix.identity.SourceFenceKey;
 import org.synanton.relix.identity.SourceFenceReconciler;
@@ -139,19 +146,40 @@ class IngestionActivationIntegrationTest {
     }
 
     @Test
-    void graphCommitLwtIsConditionalAndDoesNotDuplicateOrReplaceActivationRequested() {
+    void mentionCommitDoesNotEmitActivationRequestedAndCanonicalCompletionIsIdempotent() {
         String tenant = "tenant-654-graph-lwt";
         String source = "source-654-graph-lwt";
         String resource = "graph.md";
         SourceVersionRow version = ingest(tenant, source, resource, ref(resource, "graph"), bytes("graph"));
         ExtractionRequestRow request = request(tenant, version);
-        commitGraph(request, version);
+        commitMentions(request, version);
 
+        assertThat(cache.readGraphStatus(tenant, "file", source, resource, version.versionId()))
+                .contains("MENTIONS_COMMITTED");
+        assertThat(activations.read(tenant, source, version.generation())).get()
+                .extracting(ActivationRecord::state).isEqualTo(ActivationState.MENTIONS_COMMITTED);
+        assertThat(firstActivationEventIdOrNull(tenant, source, resource)).isNull();
+        assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
+
+        sweep(tenant).sweep(new ActivationRequestRow(tenant, "file", source, resource,
+                UUID.randomUUID(), version.versionId(), version.generation(), version.contentHash(),
+                null, "{}", version.observedAt(), Instant.now(), "MENTIONS_COMMITTED",
+                0, null, null, false));
+        assertThat(activations.read(tenant, source, version.generation())).get()
+                .extracting(ActivationRecord::state).isEqualTo(ActivationState.MENTIONS_COMMITTED);
+        assertThat(firstActivationEventIdOrNull(tenant, source, resource)).isNull();
+
+        new PromotionCompletionSweep(cache, completion(),
+                new PromotionCompletionProperties(true, tenant, 100, 30_000L),
+                new SimpleMeterRegistry()).poll();
+
+        assertThat(cache.readGraphStatus(tenant, "file", source, resource, version.versionId()))
+                .contains("GRAPH_COMMITTED");
         UUID originalEvent = firstActivationEventId(tenant, source, resource);
         assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).hasSize(1);
 
-        boolean repeated = cache.markGraphCommitted(request, "GRAPH_COMMITTED", Map.of(),
-                0, Instant.now(), UUID.randomUUID(), "ActivationRequested", "{}");
+        boolean repeated = cache.completeCanonicalGraphCommit(tenant, "file", source, resource,
+                version.versionId(), UUID.randomUUID(), "ActivationRequested", "{}", Instant.now());
         assertThat(repeated).isFalse();
         assertThat(firstActivationEventId(tenant, source, resource)).isEqualTo(originalEvent);
         assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).hasSize(1);
@@ -164,7 +192,8 @@ class IngestionActivationIntegrationTest {
         String resource = "activation.md";
         SourceVersionRow version = ingest(tenant, source, resource, ref(resource, "activation"),
                 bytes("activation"));
-        commitGraph(request(tenant, version), version);
+        commitMentions(request(tenant, version), version);
+        completeCanonicalThroughPromotion(tenant, version);
         markSearchProjected(tenant, source, resource, version);
         fences.advance(new SourceFenceKey(tenant, source), version.generation());
 
@@ -197,7 +226,8 @@ class IngestionActivationIntegrationTest {
         String resource = "interrupted.md";
         SourceVersionRow version = ingest(tenant, source, resource, ref(resource, "interrupted"),
                 bytes("interrupted"));
-        commitGraph(request(tenant, version), version);
+        commitMentions(request(tenant, version), version);
+        completeCanonical(version);
         markSearchProjected(tenant, source, resource, version);
         fences.advance(new SourceFenceKey(tenant, source), version.generation());
 
@@ -242,9 +272,14 @@ class IngestionActivationIntegrationTest {
                     assertThat(lifecycle.lifecycleState()).isEqualTo(ActivationState.REVISION_ACCEPTED);
                 });
 
-        commitGraph(request(tenant, version), version);
+        commitMentions(request(tenant, version), version);
+        assertThat(activations.read(tenant, source, version.generation())).get()
+                .extracting(ActivationRecord::state).isEqualTo(ActivationState.MENTIONS_COMMITTED);
+        assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
+        completeCanonicalThroughPromotion(tenant, version);
         assertThat(activations.read(tenant, source, version.generation())).get()
                 .extracting(ActivationRecord::state).isEqualTo(ActivationState.GRAPH_COMMITTED);
+        assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).hasSize(1);
         markSearchProjected(tenant, source, resource, version);
         fences.advance(new SourceFenceKey(tenant, source), version.generation());
 
@@ -393,18 +428,45 @@ class IngestionActivationIntegrationTest {
                 "KNOWLEDGE_READY", 0, null, null, false, version.generation());
     }
 
-    private static void commitGraph(ExtractionRequestRow request, SourceVersionRow version) {
-        assertThat(cache.claimGraphCommit(request)).isTrue();
-        UUID eventId = UUID.nameUUIDFromBytes((request.tenantId() + "|" + request.sourceId()
-                + "|" + request.versionId() + "|" + request.generation())
-                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        assertThat(cache.markGraphCommitted(request, "GRAPH_COMMITTED", Map.of(), 0,
-                Instant.now(), eventId, "ActivationRequested",
-                "{\"generation\":" + version.generation() + "}")).isTrue();
-        advanceActivationToGraphCommitted(request);
+    private static CanonicalGraphCompletion completion() {
+        return new CanonicalGraphCompletion(cache, activations, Clock.systemUTC());
     }
 
-    private static void advanceActivationToGraphCommitted(ExtractionRequestRow request) {
+    private static void commitMentions(ExtractionRequestRow request, SourceVersionRow version) {
+        assertThat(cache.claimGraphCommit(request)).isTrue();
+        assertThat(cache.markGraphCommitted(request, "MENTIONS_COMMITTED", Map.of(), 0,
+                Instant.now(), null, null, null)).isTrue();
+        advanceActivationToMentionsCommitted(request);
+    }
+
+    private static void completeCanonical(SourceVersionRow version) {
+        assertThat(completion().completeIfPromotionTerminal(version)).isTrue();
+    }
+
+    private static void completeCanonicalThroughPromotion(String tenant, SourceVersionRow version) {
+        String relationId = "relation-" + version.versionId();
+        String evidence = """
+                {"view":{"relationId":"%s","tenantId":"%s","sourceVersionId":"%s",
+                "subjectMentionId":"mention-1","objectMentionId":"mention-2","predicate":"requires",
+                "evidenceChunkId":"%s:0","evidenceChunkOffsetStart":0,"evidenceChunkOffsetEnd":1}}
+                """.formatted(relationId, tenant, version.versionId(), version.contentRefId());
+        cache.upsertRelationPromotionResult(new RelationPromotionResultRow(
+                tenant, version.versionId(), relationId, "mention-1", "mention-2", "requires",
+                "VALID", "entity-1", "entity-2", "VALID", evidence, "relation-validation-v1",
+                "active", Instant.now(), null, version.sourceId(), version.versionId(),
+                version.generation(), "run-654", "CURRENT"));
+        PromotionConsumer consumer = new PromotionConsumer(new ClaimService(cache),
+                relation -> new PromotionResult(1, 1, 1),
+                new PromotionConsumerProperties(true, tenant, 10, 5, 30, 120, 10_000L),
+                new SimpleMeterRegistry(), completion());
+        consumer.poll();
+        assertThat(cache.readGraphStatus(tenant, version.connectorId(), version.sourceId(),
+                version.resourceId(), version.versionId())).contains("GRAPH_COMMITTED");
+        assertThat(activations.read(tenant, version.sourceId(), version.generation())).get()
+                .extracting(ActivationRecord::state).isEqualTo(ActivationState.GRAPH_COMMITTED);
+    }
+
+    private static void advanceActivationToMentionsCommitted(ExtractionRequestRow request) {
         ActivationRecord record = activations.read(request.tenantId(), request.sourceId(),
                 request.generation()).orElseThrow();
         if (record.state() == ActivationState.REVISION_ACCEPTED) {
@@ -420,7 +482,7 @@ class IngestionActivationIntegrationTest {
             record = activations.read(request.tenantId(), request.sourceId(), request.generation()).orElseThrow();
         }
         if (record.state() == ActivationState.GRAPH_COMMITTING) {
-            transition(record, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED,
+            transition(record, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED,
                     request.generation());
         }
     }
@@ -462,7 +524,12 @@ class IngestionActivationIntegrationTest {
             current = read(record);
         }
         if (current.state() == ActivationState.GRAPH_COMMITTING) {
-            transition(current, ActivationState.GRAPH_COMMITTING, ActivationState.GRAPH_COMMITTED,
+            transition(current, ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED,
+                    current.generation());
+            current = read(record);
+        }
+        if (current.state() == ActivationState.MENTIONS_COMMITTED) {
+            transition(current, ActivationState.MENTIONS_COMMITTED, ActivationState.GRAPH_COMMITTED,
                     current.generation());
             current = read(record);
         }
