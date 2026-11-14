@@ -6,7 +6,7 @@
 
 ## Decision
 
-**Pending.** This ADR is a decision record template. No implementation commitment is made until the decision is reviewed and accepted. Decision owner is unassigned; assign an owner before creating the corresponding work ticket.
+**Pending.** This ADR is a decision record template. No implementation commitment is made until the decision is reviewed and accepted. Decision owner is unassigned; assign an owner before creating the corresponding work ticket. Decision owner is unassigned; assign an owner before creating the corresponding work ticket.
 
 ### Required decision scope
 
