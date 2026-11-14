@@ -1,12 +1,12 @@
 # ADR-037: OWL 2 reasoning profile
 
-**Status:** Proposed — decision pending  
+**Status:** Proposed [2026-11-14]  
 **Basis:** Domain Ontologies and Cross-Domain Semantic Mapping v0.3; proposal-local ONT-ADR-008.  
 **Gate:** Before Phase 3
 
 ## Decision
 
-**Pending.** This ADR is a decision record template. No implementation commitment is made until the decision is reviewed and accepted.
+**Pending.** This ADR is a decision record template. No implementation commitment is made until the decision is reviewed and accepted. Decision owner is unassigned; assign an owner before creating the corresponding work ticket.
 
 ### Required decision scope
 
@@ -22,9 +22,3 @@ Select an OWL 2 profile based on required inference patterns, expressivity, grap
 
 This ADR is part of the ontology and cross-domain mapping research architecture. The repository uses a global ADR sequence; proposal-local ONT-ADR identifiers are retained for traceability. See [the ontology mapping baseline](../proposals/ontology-domain-mapping-v0.3.md) and [ADR index](./INDEX.md).
 
-## Review record
-
-- Decision owner: **Unassigned**
-- Reviewers: **TBD**
-- Evidence / code inspection: **Pending**
-- Acceptance criteria: to be completed as part of the decision.
