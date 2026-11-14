@@ -1001,7 +1001,8 @@ public class IngestionCacheClient {
                     "AND source_id=? AND resource_id=?",
                     tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId()));
                 for (Row row : rows) {
-                    if (!"MENTIONS_COMMITTED".equals(row.getString("graph_status"))) {
+                    if (!"MENTIONS_COMMITTED".equals(row.getString("graph_status"))
+                            && !"PARTIAL".equals(row.getString("graph_status"))) {
                         continue;
                     }
                     pending.add(sourceVersionFrom(row));
@@ -1465,10 +1466,10 @@ public class IngestionCacheClient {
     }
 
     /**
-     * Canonical promotion completion boundary: moves MENTIONS_COMMITTED to
-     * GRAPH_COMMITTED and writes the deterministic ActivationRequested event in
-     * one Cassandra LWT on the same source_versions row. Repeated completion is a
-     * no-op and can never replace another revision's event.
+     * Canonical promotion completion boundary: moves MENTIONS_COMMITTED/PARTIAL
+     * to GRAPH_COMMITTED and writes the deterministic ActivationRequested event
+     * in one Cassandra LWT on the same source_versions row. Repeated completion is
+     * a no-op and can never replace another revision's event.
      */
     public boolean completeCanonicalGraphCommit(
             String tenantId, String connectorId, String sourceId, String resourceId,
@@ -1482,7 +1483,7 @@ public class IngestionCacheClient {
             "activation_event_last_error=null, activation_event_next_attempt_at=null, " +
             "activation_event_dead_lettered=false " +
             "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=? " +
-            "IF graph_status='MENTIONS_COMMITTED'",
+            "IF graph_status IN ('MENTIONS_COMMITTED','PARTIAL')",
             committedAt, activationEventId, activationEventType, activationEventPayloadJson,
             tenantId, connectorId, sourceId, resourceId, versionId
         ));

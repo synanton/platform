@@ -173,8 +173,11 @@ public final class GraphWriter {
                         "PENDING", null, null, 0, null, null, now, null, null, null));
             }
             String graphStatus = rejected > 0 ? "PARTIAL" : "MENTIONS_COMMITTED";
-            boolean mentionsCommitted = "MENTIONS_COMMITTED".equals(graphStatus)
-                    && request.generation() >= 1;
+            // A partial validation still commits the mention graph and its accepted
+            // relations. Only retirement is gated on a complete extraction (ADR-029
+            // §5); promotion and activation must continue for the accepted facts.
+            boolean mentionsCommitted = ("MENTIONS_COMMITTED".equals(graphStatus)
+                    || "PARTIAL".equals(graphStatus)) && request.generation() >= 1;
             boolean statusWritten = cacheClient.markGraphCommitted(request, graphStatus, counters,
                     graphAttempt, clock.instant(), null, null, null);
             if (statusWritten && mentionsCommitted) {
