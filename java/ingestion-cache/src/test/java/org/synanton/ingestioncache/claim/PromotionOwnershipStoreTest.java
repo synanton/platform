@@ -304,6 +304,69 @@ class PromotionOwnershipStoreTest {
     }
 
     @Test
+    void stalledConsumerIsRecoveredByClosedSetTakeover() {
+        String tenant = "tenant-ownership-consumer-recovery";
+        UUID version = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken generationOne =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        for (int i = 1; i <= 5; i++) {
+            assertThat(store.insertPromotionResult(rowFor(tenant, version, "relation-" + i,
+                    "PENDING"), generationOne)).isTrue();
+        }
+        store.closeSet(tenant, version, generationOne);
+        assertThat(store.updateOutcomeFenced(tenant, version, "relation-1", "COMPLETED",
+                generationOne)).isTrue();
+        assertThat(store.updateOutcomeFenced(tenant, version, "relation-2", "COMPLETED",
+                generationOne)).isTrue();
+        session.execute(SimpleStatement.newInstance("""
+                UPDATE ingestion_cache.relation_promotion_results
+                SET consumer_last_write_at=?
+                WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                """, Instant.now().minusSeconds(3600), tenant, version,
+                PromotionOwnershipStore.OWNERSHIP_RELATION_ID));
+
+        assertThat(store.findStaleClosed(Instant.now().minusSeconds(600), 10)).anySatisfy(
+                row -> {
+                    assertThat(row.tenantId()).isEqualTo(tenant);
+                    assertThat(row.sourceVersionId()).isEqualTo(version);
+                    assertThat(row.closed()).isTrue();
+                });
+        assertThat(store.countPendingRows(tenant, version)).isEqualTo(3);
+        PromotionOwnershipStore.OwnershipToken generationTwo =
+                store.takeoverClosedSet(tenant, version, "producer-recovery", 1).orElseThrow();
+        assertThat(generationTwo.generation()).isEqualTo(2);
+
+        assertThatThrownBy(() -> store.updateOutcomeFenced(tenant, version, "relation-3",
+                "COMPLETED", generationOne)).isInstanceOf(StaleOwnershipException.class);
+        for (int i = 3; i <= 5; i++) {
+            assertThat(store.updateOutcomeFenced(tenant, version, "relation-" + i,
+                    "COMPLETED", generationTwo)).isTrue();
+        }
+        assertThat(store.countPendingRows(tenant, version)).isZero();
+        assertThat(store.read(tenant, version).orElseThrow())
+                .satisfies(row -> {
+                    assertThat(row.closed()).isTrue();
+                    assertThat(row.ownerGeneration()).isEqualTo(2);
+                });
+    }
+
+    @Test
+    void freshConsumerHeartbeatIsNotTakenOverAndCompleteSetsHaveNoPendingRows() {
+        String tenant = "tenant-ownership-consumer-fresh";
+        UUID version = UUID.randomUUID();
+        PromotionOwnershipStore.OwnershipToken token =
+                store.acquire(tenant, version, "producer-a").orElseThrow();
+        assertThat(store.insertPromotionResult(rowFor(tenant, version, "relation-1",
+                "PENDING"), token)).isTrue();
+        store.closeSet(tenant, version, token);
+        assertThat(store.updateOutcomeFenced(tenant, version, "relation-1", "COMPLETED",
+                token)).isTrue();
+
+        assertThat(store.findStaleClosed(Instant.now().minusSeconds(600), 10)).isEmpty();
+        assertThat(store.countPendingRows(tenant, version)).isZero();
+    }
+
+    @Test
     void duplicateClosureHasOneWinnerAndDoesNotReplaceClosedAt() throws Exception {
         String tenant = "tenant-ownership-close";
         UUID version = UUID.randomUUID();
@@ -411,6 +474,14 @@ class PromotionOwnershipStoreTest {
                 SELECT * FROM ingestion_cache.relation_promotion_results
                 WHERE tenant_id=? AND source_version_id=? AND relation_id=?
                 """, tenant, version, relationId)).one();
+    }
+
+    private static RelationPromotionResultRow rowFor(String tenant, UUID version,
+                                                      String relationId, String claimStatus) {
+        return new RelationPromotionResultRow(tenant, version, relationId, "mention-1",
+                "mention-2", "requires", "VALID", "entity-1", "entity-2", "VALID", "{}",
+                "relation-validation-v1", "active", Instant.now(), null, "source-a", version,
+                1, "run-654", "CURRENT");
     }
 
     private static String promotionStatus(String tenant, UUID version, String relationId) {

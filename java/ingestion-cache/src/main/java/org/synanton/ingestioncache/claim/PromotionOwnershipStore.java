@@ -50,7 +50,8 @@ public final class PromotionOwnershipStore {
             Instant startedAt,
             Instant closedAt,
             int takeoverCount,
-            Instant lastWriteAt) {
+            Instant lastWriteAt,
+            Instant consumerLastWriteAt) {
     }
 
     public Optional<OwnershipToken> acquire(String tenantId, UUID sourceVersionId,
@@ -147,7 +148,8 @@ public final class PromotionOwnershipStore {
                         """, outcome, tenantId, sourceVersionId, relationId))
                 .add(SimpleStatement.newInstance("""
                         UPDATE ingestion_cache.relation_promotion_results
-                        SET owner_last_write_at=toTimestamp(now())
+                        SET owner_last_write_at=toTimestamp(now()),
+                            consumer_last_write_at=toTimestamp(now())
                         WHERE tenant_id=? AND source_version_id=? AND relation_id=?
                         IF owner_producer_id=? AND owner_generation=?
                         """, tenantId, sourceVersionId, OWNERSHIP_RELATION_ID,
@@ -167,10 +169,11 @@ public final class PromotionOwnershipStore {
         Instant now = Instant.now();
         ResultSet result = session.execute(SimpleStatement.newInstance("""
                 UPDATE ingestion_cache.relation_promotion_results
-                SET owner_closed=true, owner_closed_at=?, owner_last_write_at=?
+                SET owner_closed=true, owner_closed_at=?, owner_last_write_at=?,
+                    consumer_last_write_at=?
                 WHERE tenant_id=? AND source_version_id=? AND relation_id=?
                 IF owner_producer_id=? AND owner_generation=? AND owner_closed=false
-                """, now, now, tenantId, sourceVersionId, OWNERSHIP_RELATION_ID,
+                """, now, now, now, tenantId, sourceVersionId, OWNERSHIP_RELATION_ID,
                 token.producerId(), token.generation()));
         if (!result.wasApplied()) {
             throw new StaleOwnershipException("Promotion set close rejected for tenant="
@@ -204,6 +207,57 @@ public final class PromotionOwnershipStore {
             }
         }
         return won;
+    }
+
+    public List<OwnershipRow> findStaleClosed(java.time.Instant olderThan, int limit) {
+        java.util.List<OwnershipRow> stale = new java.util.ArrayList<>();
+        for (Row row : session.execute(SimpleStatement.newInstance("""
+                SELECT * FROM ingestion_cache.relation_promotion_results
+                WHERE relation_id=? AND owner_closed=true AND consumer_last_write_at < ?
+                ALLOW FILTERING
+                """, OWNERSHIP_RELATION_ID, olderThan))) {
+            stale.add(fromRow(row));
+            if (stale.size() >= Math.max(1, limit)) {
+                break;
+            }
+        }
+        return stale;
+    }
+
+    public long countPendingRows(String tenantId, UUID sourceVersionId) {
+        requireKey(tenantId, sourceVersionId);
+        long pending = 0;
+        for (Row row : session.execute(SimpleStatement.newInstance("""
+                SELECT relation_id, promotion_status FROM ingestion_cache.relation_promotion_results
+                WHERE tenant_id=? AND source_version_id=?
+                """, tenantId, sourceVersionId))) {
+            if (OWNERSHIP_RELATION_ID.equals(row.getString("relation_id"))) {
+                continue;
+            }
+            String outcome = row.getString("promotion_status");
+            if (!"COMPLETED".equals(outcome) && !"INVALID".equals(outcome)) {
+                pending++;
+            }
+        }
+        return pending;
+    }
+
+    public Optional<OwnershipToken> takeoverClosedSet(String tenantId, UUID sourceVersionId,
+                                                       String newProducerId, long expectedGeneration) {
+        requireKey(tenantId, sourceVersionId);
+        Objects.requireNonNull(newProducerId, "newProducerId");
+        Instant now = Instant.now();
+        ResultSet result = session.execute(SimpleStatement.newInstance("""
+                UPDATE ingestion_cache.relation_promotion_results
+                SET owner_producer_id=?, owner_generation=?, consumer_last_write_at=?,
+                    owner_takeover_count=owner_takeover_count + 1
+                WHERE tenant_id=? AND source_version_id=? AND relation_id=?
+                IF owner_generation=? AND owner_closed=true
+                """, newProducerId, expectedGeneration + 1, now, tenantId, sourceVersionId,
+                OWNERSHIP_RELATION_ID, expectedGeneration));
+        return result.wasApplied()
+                ? Optional.of(new OwnershipToken(newProducerId, expectedGeneration + 1))
+                : Optional.empty();
     }
 
     public Optional<OwnershipToken> takeover(String tenantId, UUID sourceVersionId,
@@ -251,7 +305,7 @@ public final class PromotionOwnershipStore {
                 Boolean.TRUE.equals(row.getBoolean("owner_closed")),
                 row.getInstant("owner_started_at"), row.getInstant("owner_closed_at"),
                 row.isNull("owner_takeover_count") ? 0 : row.getInt("owner_takeover_count"),
-                row.getInstant("owner_last_write_at"));
+                row.getInstant("owner_last_write_at"), row.getInstant("consumer_last_write_at"));
     }
 
     public boolean isClosed(String tenantId, UUID sourceVersionId) {

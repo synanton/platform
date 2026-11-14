@@ -93,6 +93,23 @@ public final class PromotionConsumer {
                 .baseUnit("milliseconds").register(registry);
     }
 
+    @Scheduled(fixedDelayString = "${relix.promotion-consumer.consumer-recovery-interval-ms:60000}")
+    public void recoverStalledConsumers() {
+        if (ownership == null) {
+            return;
+        }
+        long timeoutSeconds = 600L;
+        java.time.Instant staleBefore = clock.instant().minusSeconds(timeoutSeconds);
+        for (PromotionOwnershipStore.OwnershipRow stale
+                : ownership.findStaleClosed(staleBefore, 100)) {
+            if (ownership.countPendingRows(stale.tenantId(), stale.sourceVersionId()) == 0) {
+                continue;
+            }
+            ownership.takeoverClosedSet(stale.tenantId(), stale.sourceVersionId(),
+                    "promotion-recovery-" + UUID.randomUUID(), stale.ownerGeneration());
+        }
+    }
+
     @Scheduled(fixedDelayString = "${relix.promotion-consumer.poll-delay-ms:10000}")
     public void poll() {
         if (!properties.enabled()) {
