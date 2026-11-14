@@ -36,6 +36,7 @@ dependencies {
     testImplementation(libs.testcontainers.cassandra)
     testImplementation(project(":java:synquest"))
     testImplementation(project(":java:synvault"))
+    testImplementation(project(":java:extraction-engine"))
     testImplementation(project(":java:eventing-contract"))
     testImplementation(project(":java:content-cache-api"))
     testImplementation(files(

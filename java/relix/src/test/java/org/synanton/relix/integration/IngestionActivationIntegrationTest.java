@@ -4,23 +4,39 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.InetSocketAddress;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
+import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.ExactTypeCompatibility;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.RelationValidationOutcome;
+import org.synanton.common.resolution.RelationValidationResult;
+import org.synanton.common.resolution.ResolutionCandidate;
+import org.synanton.common.resolution.ResolutionCandidateProvider;
+import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.extraction.engine.ExtractionContext;
+import org.synanton.extraction.engine.ExtractionEngineAdapter;
+import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.PreEntity;
+import org.synanton.extraction.engine.RelationCandidate;
+import org.synanton.extraction.engine.TextSegment;
 import org.synanton.ingestioncache.activation.ActivationRecord;
 import org.synanton.ingestioncache.activation.ActivationState;
 import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
@@ -30,6 +46,7 @@ import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ActivationRequestRow;
+import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
@@ -47,14 +64,31 @@ import org.synanton.relix.consumer.ActivationRecoverySweep;
 import org.synanton.relix.consumer.CanonicalGraphCompletion;
 import org.synanton.relix.consumer.PromotionCompletionSweep;
 import org.synanton.relix.consumer.PromotionConsumer;
+import org.synanton.relix.graph.ExtractedMention;
+import org.synanton.relix.graph.ExtractedRelation;
+import org.synanton.relix.graph.RelixCanonicalRelationPromoter;
 import org.synanton.relix.identity.ActivateRevision;
 import org.synanton.relix.identity.SourceFenceKey;
 import org.synanton.relix.identity.SourceFenceReconciler;
 import org.synanton.relix.identity.SourceFenceStatus;
 import org.synanton.relix.identity.SourceFenceStore;
+import org.synanton.synflux.config.ExtractionConsumerProperties;
+import org.synanton.synflux.config.ExtractionGraphProperties;
 import org.synanton.synflux.events.IngestionEventConfig;
+import org.synanton.synflux.extraction.ExtractionConsumer;
+import org.synanton.synflux.extraction.graph.GraphMention;
+import org.synanton.synflux.extraction.graph.GraphRelation;
+import org.synanton.synflux.extraction.graph.GraphWriteClient;
+import org.synanton.synflux.extraction.graph.GraphWriter;
+import org.synanton.synflux.extraction.graph.RelationValidation;
+import org.synanton.synflux.extraction.graph.RelationValidator;
 import org.synanton.synflux.lifecycle.FixtureIngestionService;
 import org.synanton.synflux.lifecycle.VerifiedIngestionContext;
+import org.synanton.synflux.resolution.CanonicalRelationValidator;
+import org.synanton.synflux.resolution.RelationPromotionProducer;
+import org.synanton.synquest.config.ResolutionConsumerProperties;
+import org.synanton.synquest.resolution.DefaultResolutionPolicy;
+import org.synanton.synquest.resolution.ResolutionConsumer;
 import org.synanton.synvault.domain.ContentRef;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.containers.Neo4jContainer;
@@ -400,6 +434,242 @@ class IngestionActivationIntegrationTest {
         assertThat(firstActivationEventIdOrNull(tenant, source, resource)).isNull();
     }
 
+    @Test
+    void fullChainFromIngestToActiveProducesCorrectCassandraAndNeo4jState() {
+        String tenant = "tenant-654-full-chain";
+        String tenantB = "tenant-654-full-chain-isolation";
+        String source = "source-654-full-chain";
+        String resource = "full-chain.md";
+        String text = "Acme requires Protocol-A";
+        String subjectEntity = "entity-654-full-chain-subject";
+        String objectEntity = "entity-654-full-chain-object";
+        SourceVersionRow version = ingest(tenant, source, resource, ref(resource, text), bytes(text));
+
+        // Acceptance used the existing FixtureIngestionService entry available to this class.
+        cache.insertChunks(List.of(new ChunkRow(tenant, version.contentRefId(), 0, text, "chunk-full-chain")));
+        markSearchProjected(tenant, source, resource, version);
+
+        Neo4jGraphConnector graph = new Neo4jGraphConnector(null, executor);
+        GraphWriter graphWriter = new GraphWriter(cache,
+                (tenantId, subjectType, predicate, objectType, ontologyVersion) ->
+                        new RelationValidation(true, List.of()),
+                new Neo4jGraphWriteClient(graph),
+                new ExtractionGraphProperties(true, null, null, "active"),
+                Clock.systemUTC(), activations);
+        ExtractionConsumer extraction = new ExtractionConsumer(cache,
+                new TwoMentionExtractionAdapter(),
+                new ExtractionConsumerProperties(true, tenant, 10, 5, 1, 1000L),
+                graphWriter, Clock.systemUTC());
+        await("extraction to MENTIONS_COMMITTED", extraction::poll,
+                () -> "MENTIONS_COMMITTED".equals(cache.readGraphStatus(
+                        tenant, "file", source, resource, version.versionId()).orElse(null)),
+                () -> chainDiagnostics(tenant, source, resource, version));
+
+        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
+                        + "SET e.label = $label, e.type = $type",
+                Map.of("tenant", tenant, "id", subjectEntity, "label", "Acme",
+                        "type", "Organization"));
+        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
+                        + "SET e.label = $label, e.type = $type",
+                Map.of("tenant", tenant, "id", objectEntity, "label", "Protocol-A",
+                        "type", "Protocol"));
+
+        ResolutionCandidateProvider candidates = context -> switch (context.surfaceForm()) {
+            case "Acme" -> List.of(new ResolutionCandidate(subjectEntity, "Acme",
+                    "Organization", 0.9, "label", "RRF", "gen-654-full-chain"));
+            case "Protocol-A" -> List.of(new ResolutionCandidate(objectEntity, "Protocol-A",
+                    "Protocol", 0.9, "label", "RRF", "gen-654-full-chain"));
+            default -> List.of();
+        };
+        ResolutionConsumer resolution = new ResolutionConsumer(new ClaimService(cache), candidates,
+                new DefaultResolutionPolicy("v1", 0.02, 0.001, new ExactTypeCompatibility()),
+                graph::upsertResolution,
+                new ResolutionConsumerProperties(true, tenant, 10, 5, 1, 60, 1000L, "active"),
+                new SimpleMeterRegistry());
+        await("resolution completion", resolution::poll,
+                () -> {
+                    var rows = cache.listResolutionWorkRows(tenant, version.versionId());
+                    return !rows.isEmpty() && rows.stream()
+                            .allMatch(row -> "COMPLETED".equals(row.claimStatus()));
+                },
+                () -> "resolution_work=" + cache.listResolutionWorkRows(tenant, version.versionId()));
+
+        RelationPromotionProducer producer = new RelationPromotionProducer(
+                new ResolutionGraphLookup() {
+                    @Override
+                    public List<ActiveResolution> getActiveResolutions(
+                            String tenantId, List<String> mentionIds) {
+                        return graph.getActiveResolutions(tenantId, mentionIds);
+                    }
+                },
+                graph,
+                (tenantId, ontologyVersion, extractedRelationId) -> new RelationValidationResult(
+                        RelationValidationOutcome.VALID, subjectEntity, "requires", objectEntity,
+                        "Organization", "Protocol", ontologyVersion, List.of(), "VALID"),
+                cache, ownership, Clock.systemUTC(), true, tenant, "active");
+        fences.advance(new SourceFenceKey(tenant, source), version.generation());
+        await("promotion row production and ownership closure", producer::poll,
+                () -> ownership.isClosed(tenant, version.versionId())
+                        && !cache.listRelationPromotionWorkRows(tenant, version.versionId()).isEmpty(),
+                () -> "ownership=" + ownership.read(tenant, version.versionId())
+                        + ", promotion_rows=" + cache.listRelationPromotionWorkRows(
+                                tenant, version.versionId()));
+
+        CanonicalGraphCompletion completion = new CanonicalGraphCompletion(
+                cache, activations, ownership, Clock.systemUTC());
+        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"),
+                new CassandraSourceGenerationAuthority(cache));
+        PromotionConsumer promotion = new PromotionConsumer(new ClaimService(cache), promoter,
+                new PromotionConsumerProperties(true, tenant, 10, 5, 1, 120, 1000L),
+                new SimpleMeterRegistry(), completion, ownership);
+        await("promotion to GRAPH_COMMITTED", promotion::poll,
+                () -> "GRAPH_COMMITTED".equals(cache.readGraphStatus(
+                        tenant, "file", source, resource, version.versionId()).orElse(null)),
+                () -> chainDiagnostics(tenant, source, resource, version));
+
+        ActivationRecoverySweep sweep = sweep(tenant);
+        await("activation recovery to CURRENT", sweep::poll,
+                () -> activations.readLifecycle(tenant, source)
+                        .map(lifecycle -> lifecycle.currentGeneration() == version.generation())
+                        .orElse(false),
+                () -> "lifecycle=" + activations.readLifecycle(tenant, source)
+                        + ", activation=" + activations.read(tenant, source, version.generation()));
+
+        var sourceRow = session.execute("SELECT status FROM ingestion_cache.sources "
+                + "WHERE tenant_id=? AND source_id=?", tenant, source).one();
+        assertThat(sourceRow).isNotNull();
+        assertThat(sourceRow.getString("status")).isEqualTo("ACTIVE");
+
+        var versionRow = session.execute("SELECT graph_status, generation, accepted_generation "
+                + "FROM ingestion_cache.source_versions WHERE tenant_id=? AND connector_id=? "
+                + "AND source_id=? AND resource_id=? AND version_id=?",
+                tenant, "file", source, resource, version.versionId()).one();
+        assertThat(versionRow).isNotNull();
+        assertThat(versionRow.getString("graph_status")).isEqualTo("GRAPH_COMMITTED");
+        assertThat((long) versionRow.getInt("generation")).isEqualTo(version.generation());
+        assertThat((long) versionRow.getInt("accepted_generation")).isEqualTo(version.generation());
+
+        var currentRow = session.execute("SELECT accepted_generation, current_generation, "
+                + "active_revision_id FROM ingestion_cache.source_current "
+                + "WHERE tenant_id=? AND source_id=?", tenant, source).one();
+        assertThat(currentRow).isNotNull();
+        assertThat(currentRow.getLong("accepted_generation")).isEqualTo(version.generation());
+        assertThat(currentRow.getLong("current_generation")).isEqualTo(version.generation());
+        assertThat(currentRow.getUuid("active_revision_id")).isEqualTo(version.versionId());
+
+        var activationRow = session.execute("SELECT state, revision_id, "
+                + "graph_applied_generation, search_applied_generation "
+                + "FROM ingestion_cache.source_activation WHERE tenant_id=? AND source_id=? "
+                + "AND generation=?", tenant, source, version.generation()).one();
+        assertThat(activationRow).isNotNull();
+        assertThat(activationRow.getString("state")).isEqualTo("CURRENT");
+        assertThat(activationRow.getUuid("revision_id")).isEqualTo(version.versionId());
+        assertThat(activationRow.getLong("graph_applied_generation"))
+                .isEqualTo(version.generation());
+        assertThat(activationRow.getLong("search_applied_generation"))
+                .isEqualTo(version.generation());
+
+        var ownershipRow = session.execute("SELECT owner_closed, owner_generation "
+                + "FROM ingestion_cache.relation_promotion_results "
+                + "WHERE tenant_id=? AND source_version_id=? AND relation_id=?",
+                tenant, version.versionId(),
+                PromotionOwnershipStore.OWNERSHIP_RELATION_ID).one();
+        assertThat(ownershipRow).isNotNull();
+        assertThat(ownershipRow.getBoolean("owner_closed")).isTrue();
+        assertThat(ownershipRow.getLong("owner_generation")).isEqualTo(1L);
+
+        assertThat(cache.listRelationPromotionWorkRows(tenant, version.versionId()))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.claimStatus()).isEqualTo("COMPLETED");
+                    assertThat(row.result().promotionStatus()).isEqualTo("COMPLETED");
+                });
+
+        Map<String, Object> relParams = Map.of(
+                "tenant", tenant,
+                "subjectEntityId", subjectEntity,
+                "objectEntityId", objectEntity,
+                "predicate", "requires",
+                "sourceVersionId", version.versionId().toString(),
+                "sourceId", source,
+                "generation", version.generation());
+        assertThat(((Number) executor.read("""
+                MATCH (s:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[r:REL {tenant_id: $tenant, predicate: $predicate}]->
+                      (o:Entity {tenant: $tenant, id: $objectEntityId})
+                RETURN count(r) AS c
+                """, relParams).getFirst().get("c")).longValue()).isEqualTo(1L);
+        List<Map<String, Object>> relRows = executor.read("""
+                MATCH (s:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[r:REL {tenant_id: $tenant, predicate: $predicate}]->
+                      (o:Entity {tenant: $tenant, id: $objectEntityId})
+                MATCH (e:RelationEvidence {tenant_id: $tenant,
+                      canonical_relation_id: r.canonical_relation_id})
+                WHERE e.source_version_id = $sourceVersionId
+                  AND e.source_id = $sourceId
+                  AND e.generation = $generation
+                RETURN r.tenant_id AS tenant_id, e.source_version_id AS source_version_id,
+                       e.source_id AS source_id, e.generation AS generation,
+                       r.predicate AS predicate,
+                       r.canonical_relation_id AS canonical_relation_id
+                """, relParams);
+        assertThat(relRows).hasSize(1);
+        Map<String, Object> rel = relRows.getFirst();
+        assertThat(rel.get("tenant_id")).isEqualTo(tenant);
+        assertThat(rel.get("source_version_id")).isEqualTo(version.versionId().toString());
+        assertThat(rel.get("source_id")).isEqualTo(source);
+        assertThat(((Number) rel.get("generation")).longValue()).isEqualTo(version.generation());
+        assertThat(rel.get("predicate")).isEqualTo("requires");
+        String canonicalRelationId = String.valueOf(rel.get("canonical_relation_id"));
+
+        List<Map<String, Object>> evidenceRows = executor.read("""
+                MATCH (xr:ExtractedRelation {tenant_id: $tenant})
+                      -[:SUPPORTS]->(e:RelationEvidence {tenant_id: $tenant})
+                WHERE e.source_version_id = $sourceVersionId
+                  AND e.source_id = $sourceId
+                  AND e.generation = $generation
+                  AND e.canonical_relation_id = $canonicalRelationId
+                RETURN e.evidence_chunk_id AS chunk_id
+                """, Map.of("tenant", tenant,
+                "sourceVersionId", version.versionId().toString(),
+                "sourceId", source,
+                "generation", version.generation(),
+                "canonicalRelationId", canonicalRelationId));
+        assertThat(evidenceRows).hasSize(1);
+        assertThat(String.valueOf(evidenceRows.getFirst().get("chunk_id")))
+                .isNotBlank()
+                .isEqualTo(version.contentRefId() + ":0");
+
+        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
+                        + "SET e.label = $label, e.type = $type",
+                Map.of("tenant", tenantB, "id", subjectEntity, "label", "Acme",
+                        "type", "Organization"));
+        executor.write("MERGE (e:Entity {tenant: $tenant, id: $id}) "
+                        + "SET e.label = $label, e.type = $type",
+                Map.of("tenant", tenantB, "id", objectEntity, "label", "Protocol-A",
+                        "type", "Protocol"));
+        Map<String, Object> isolatedParams = new java.util.HashMap<>(relParams);
+        isolatedParams.put("tenant", tenantB);
+        assertThat(((Number) executor.read("""
+                MATCH (s:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[r:REL {tenant_id: $tenant, predicate: $predicate}]->
+                      (o:Entity {tenant: $tenant, id: $objectEntityId})
+                RETURN count(r) AS c
+                """, isolatedParams).getFirst().get("c")).longValue()).isZero();
+        assertThat(executor.read("""
+                MATCH (s:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[r:REL {tenant_id: $tenant, predicate: $predicate}]->
+                      (o:Entity {tenant: $tenant, id: $objectEntityId})
+                MATCH (e:RelationEvidence {tenant_id: $tenant,
+                      canonical_relation_id: r.canonical_relation_id})
+                WHERE e.source_version_id = $sourceVersionId
+                  AND e.source_id = $sourceId
+                  AND e.generation = $generation
+                RETURN r.canonical_relation_id AS canonical_relation_id
+                """, isolatedParams)).isEmpty();
+    }
+
     private static ActivationRecoverySweep sweep(String tenant) {
         return new ActivationRecoverySweep(cache, activations,
                 new ActivateRevision(activations, fences),
@@ -580,5 +850,89 @@ class IngestionActivationIntegrationTest {
         var row = session.execute("SELECT COUNT(*) AS c FROM " + table
                 + " WHERE tenant_id=? AND source_id=?", tenant, source).one();
         return row == null ? 0 : row.getLong("c");
+    }
+
+    private static String chainDiagnostics(String tenant, String source, String resource,
+                                           SourceVersionRow version) {
+        return "extraction_status=" + cache.readExtractionStatus(
+                tenant, version.connectorId(), source, resource, version.versionId())
+                + ", graph_status=" + cache.readGraphStatus(
+                        tenant, version.connectorId(), source, resource, version.versionId())
+                + ", activation=" + activations.read(tenant, source, version.generation())
+                + ", pending_activation=" + cache.listPendingActivationRequests(
+                        tenant, 10, Instant.now())
+                + ", resolution_work=" + cache.listResolutionWorkRows(tenant, version.versionId())
+                + ", promotion_rows=" + cache.listRelationPromotionWorkRows(
+                        tenant, version.versionId());
+    }
+
+    private static void await(String description, Runnable poll, BooleanSupplier condition,
+                              Supplier<String> diagnostics) {
+        Instant deadline = Instant.now().plus(Duration.ofSeconds(60));
+        while (Instant.now().isBefore(deadline)) {
+            poll.run();
+            if (condition.getAsBoolean()) {
+                return;
+            }
+            try {
+                Thread.sleep(250L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("Interrupted while waiting for " + description, e);
+            }
+        }
+        throw new AssertionError("Timed out waiting for " + description + "; state: "
+                + diagnostics.get());
+    }
+
+    private static final class TwoMentionExtractionAdapter implements ExtractionEngineAdapter {
+        @Override
+        public ExtractionResult extract(TextSegment segment, ExtractionContext context) {
+            return new ExtractionResult(
+                    List.of(
+                            new PreEntity("subject", "Acme", "Organization", 0, 4, "Acme"),
+                            new PreEntity("object", "Protocol-A", "Protocol", 13, 23,
+                                    "Protocol-A")),
+                    List.of(new RelationCandidate("subject", "requires", "object",
+                            "chunk-full-chain", 0, 23)));
+        }
+    }
+
+    private static final class Neo4jGraphWriteClient implements GraphWriteClient {
+        private final Neo4jGraphConnector graph;
+
+        private Neo4jGraphWriteClient(Neo4jGraphConnector graph) {
+            this.graph = graph;
+        }
+
+        @Override
+        public int upsertMentions(List<GraphMention> mentions) {
+            return graph.upsertMentions(mentions.stream()
+                    .map(mention -> new ExtractedMention(mention.mentionId(),
+                            mention.tenantId(), mention.sourceVersionId(),
+                            mention.contentRefId(), mention.chunkId(),
+                            mention.chunkOffsetStart(), mention.chunkOffsetEnd(),
+                            mention.documentOffsetStart(), mention.documentOffsetEnd(),
+                            mention.surfaceForm(), mention.proposedType(),
+                            mention.extractedAt()))
+                    .toList());
+        }
+
+        @Override
+        public int upsertRelations(List<GraphRelation> relations) {
+            return graph.upsertRelations(relations.stream()
+                    .map(relation -> new ExtractedRelation(relation.relationId(),
+                            relation.tenantId(), relation.sourceVersionId(),
+                            relation.predicate(), relation.subjectMentionId(),
+                            relation.objectMentionId(), relation.evidenceChunkId(),
+                            relation.evidenceChunkOffsetStart(),
+                            relation.evidenceChunkOffsetEnd(),
+                            relation.evidenceDocumentOffsetStart(),
+                            relation.evidenceDocumentOffsetEnd(),
+                            relation.validatedAt(), relation.sourceId(),
+                            relation.revisionId(), relation.generation(),
+                            relation.extractionRunId()))
+                    .toList());
+        }
     }
 }
