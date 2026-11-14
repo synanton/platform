@@ -37,7 +37,8 @@ public final class CanonicalGraphCompletion {
     // Only a successfully promoted row or an expected validation rejection authorizes
     // canonical completion. FAILED/SUPERSEDED are terminal for the worker but must
     // block completion; otherwise a regression could retire valid prior knowledge.
-    private static final Set<String> COMPLETION_AUTHORIZING_STATES = Set.of("COMPLETED");
+    private static final Set<String> COMPLETION_AUTHORIZING_CLAIM_STATES = Set.of("COMPLETED");
+    private static final Set<String> COMPLETION_AUTHORIZING_OUTCOMES = Set.of("INVALID");
 
     private final IngestionCacheClient cache;
     private final SourceActivationStore activations;
@@ -82,10 +83,9 @@ public final class CanonicalGraphCompletion {
     public static boolean completionAuthorizing(RelationPromotionWorkRow work) {
         String claimStatus = work.claimStatus();
         if (claimStatus == null) {
-            return work.result().promotionStatus() != null
-                    && !"VALID".equals(work.result().promotionStatus());
+            return COMPLETION_AUTHORIZING_OUTCOMES.contains(work.result().promotionStatus());
         }
-        return COMPLETION_AUTHORIZING_STATES.contains(claimStatus);
+        return COMPLETION_AUTHORIZING_CLAIM_STATES.contains(claimStatus);
     }
 
     private boolean complete(SourceVersionRow version) {

@@ -359,7 +359,7 @@ Canonical promotion owns the `MENTIONS_COMMITTED → GRAPH_COMMITTED` transition
 The canonical completion boundary is not yet complete. The following are required before #654 can claim `GRAPH_COMMITTED` is trustworthy:
 
 - **Promotion-set closure:** a durable `promotion_set_closed` marker must be written by the promotion producer after all promotion work for the revision has been emitted. Completion requires `state == PROMOTING/GRAPH_COMMITTING`, `promotion_set_closed == true`, and all rows completion-authorizing.
-- **Terminal taxonomy:** only `SUCCEEDED`, `REJECTED`, and `CONFLICTED_REVIEWED` authorize completion. `CONFLICTED_PENDING`, `FAILED_RETRYABLE`, and `FAILED_TERMINAL` block completion. The current implementation enforces only part of this: `COMPLETED` and expected validation rejection authorize; `FAILED`/`SUPERSEDED` block.
+- **Terminal taxonomy:** only `SUCCEEDED`, `REJECTED`, and `CONFLICTED_REVIEWED` authorize completion. `CONFLICTED_PENDING`, `FAILED_RETRYABLE`, and `FAILED_TERMINAL` block completion. The current implementation enforces only part of this with a positive allowlist: claim `COMPLETED` and validation outcome `INVALID` authorize; all unknown, failed, and superseded outcomes block.
 - **Post-completion immutability:** promotion writes are accepted only before `GRAPH_COMMITTED`; late writes must be rejected.
 - **Fair sweep progression:** the completion sweep needs a durable `next_sweep_at` cursor and oldest-first processing so bounded batches cannot starve revisions.
 

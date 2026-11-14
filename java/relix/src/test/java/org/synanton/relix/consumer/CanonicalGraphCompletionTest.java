@@ -40,6 +40,14 @@ class CanonicalGraphCompletionTest {
     }
 
     @Test
+    void unknownPromotionOutcomeBlocksCompletion() {
+        when(cache.listRelationPromotionWorkRows(TENANT, VERSION)).thenReturn(List.of(
+                work("COMPLETED"), unknown()));
+
+        assertThat(completion.promotionsTerminal(TENANT, VERSION)).isFalse();
+    }
+
+    @Test
     void failedAndSupersededPromotionsBlockCompletion() {
         when(cache.listRelationPromotionWorkRows(TENANT, VERSION)).thenReturn(List.of(
                 work("COMPLETED"), work("FAILED")));
@@ -61,6 +69,15 @@ class CanonicalGraphCompletionTest {
                 work("PROCESSING")));
 
         assertThat(completion.promotionsTerminal(TENANT, VERSION)).isFalse();
+    }
+
+    private static RelationPromotionWorkRow unknown() {
+        return new RelationPromotionWorkRow(
+                new RelationPromotionResultRow(TENANT, VERSION, "relation-unknown",
+                        "mention-1", "mention-2", "requires", "UNKNOWN_OUTCOME", "entity-1", "entity-2",
+                        "UNKNOWN_OUTCOME", "{}", "relation-validation-v1", "active", Instant.now(), null,
+                        "source-a", VERSION, 1, "run-654", "CURRENT"),
+                null, null, null, 0, null, null, null, null);
     }
 
     private static RelationPromotionWorkRow rejected() {
