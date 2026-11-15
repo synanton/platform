@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,10 +68,11 @@ public final class SourceVisibilityBackfill {
         return value == null || value.isBlank() ? fallback : value;
     }
 
-    private record Options(String tenant, boolean apply, Path checkpoint) {
+    private record Options(String tenant, boolean apply, boolean audit, Path checkpoint) {
         static Options parse(String[] args) {
             String tenant = "demo";
             boolean apply = false;
+            boolean audit = false;
             Path checkpoint = Path.of("/tmp/synanton-visibility-backfill.checkpoint");
             for (String arg : args) {
                 if (arg.startsWith("--tenant=")) {
@@ -78,11 +81,14 @@ public final class SourceVisibilityBackfill {
                     apply = true;
                 } else if (arg.equals("--dry-run")) {
                     apply = false;
+                } else if (arg.equals("--audit")) {
+                    audit = true;
+                    apply = false;
                 } else if (arg.startsWith("--checkpoint=")) {
                     checkpoint = Path.of(arg.substring("--checkpoint=".length()));
                 }
             }
-            return new Options(tenant, apply, checkpoint);
+            return new Options(tenant, apply, audit, checkpoint);
         }
     }
 
@@ -98,7 +104,13 @@ public final class SourceVisibilityBackfill {
         private final Map<String, UUID> currentBySource = new HashMap<>();
         private final Map<String, SourceVersionRow> repairCandidateBySource = new HashMap<>();
         private final Map<String, Boolean> tombstoned = new HashMap<>();
-        private final Map<UUID, Boolean> versionHasChunks = new HashMap<>();
+        private final Map<UUID, Set<UUID>> versionContentRefs = new HashMap<>();
+        private final Map<String, List<SupersededSample>> supersededSamplesBySource = new HashMap<>();
+
+        private record SupersededSample(
+                String chunkId, String sourceId, UUID indexedRevision, UUID currentRevision,
+                Instant indexedObservedAt, Instant currentObservedAt,
+                long indexedGeneration, long currentGeneration) {}
 
         private final AtomicInteger total = new AtomicInteger();
         private final AtomicInteger visible = new AtomicInteger();
@@ -127,10 +139,14 @@ public final class SourceVisibilityBackfill {
             computeRepairCandidates();
             scanChunks();
             printReport();
-            if (options.apply()) {
+            if (options.audit()) {
+                printAudit();
+            }
+            if (options.apply() && !options.audit()) {
                 applyRepairs();
             } else {
-                System.out.println("\ndry-run only; no source_current rows written");
+                System.out.println("\n" + (options.audit() ? "audit only" : "dry-run only")
+                        + "; no source_current rows written");
             }
         }
 
@@ -176,7 +192,9 @@ public final class SourceVisibilityBackfill {
                         continue;
                     }
                     for (UUID versionId : chunk.sourceVersionIds()) {
-                        versionHasChunks.put(versionId, true);
+                        versionContentRefs
+                                .computeIfAbsent(versionId, ignored -> new java.util.HashSet<>())
+                                .add(manifest.contentRefId());
                     }
                 }
             }
@@ -220,7 +238,7 @@ public final class SourceVisibilityBackfill {
             // revision; otherwise the highest observed indexed revision is the legacy
             // current candidate.
             for (SourceVersionRow version : ordered) {
-                if (versionHasChunks.containsKey(version.versionId())
+                if (versionContentRefs.containsKey(version.versionId())
                         && cache.readGraphStatus(options.tenant(), version.connectorId(), sourceId,
                                 version.resourceId(), version.versionId())
                                 .filter("GRAPH_COMMITTED"::equals)
@@ -229,7 +247,7 @@ public final class SourceVisibilityBackfill {
                 }
             }
             for (SourceVersionRow version : ordered) {
-                if (versionHasChunks.containsKey(version.versionId())) {
+                if (versionContentRefs.containsKey(version.versionId())) {
                     return version;
                 }
             }
@@ -263,6 +281,8 @@ public final class SourceVisibilityBackfill {
             boolean anySuperseded = false;
             String sourceId = null;
             String unmappedReason = null;
+            UUID supersededVersionId = null;
+            UUID supersededCurrentId = null;
             for (UUID versionId : versionIds) {
                 SourceVersionRow version = versionsById.get(versionId);
                 if (version == null) {
@@ -280,6 +300,10 @@ public final class SourceVisibilityBackfill {
                         anyCurrent = true;
                     } else {
                         anySuperseded = true;
+                        if (supersededVersionId == null) {
+                            supersededVersionId = versionId;
+                            supersededCurrentId = current;
+                        }
                     }
                 } else {
                     SourceVersionRow candidate = repairCandidateBySource.get(version.sourceId());
@@ -290,6 +314,10 @@ public final class SourceVisibilityBackfill {
                     } else {
                         // Older than the legacy current candidate: stale, not unmapped.
                         anySuperseded = true;
+                        if (supersededVersionId == null) {
+                            supersededVersionId = versionId;
+                            supersededCurrentId = candidate.versionId();
+                        }
                     }
                 }
             }
@@ -306,10 +334,27 @@ public final class SourceVisibilityBackfill {
             } else if (anyNoCurrent) {
                 hide("no_current", chunkId, sourceId, "source has no current revision pointer");
             } else if (anySuperseded) {
+                recordSupersededSample(chunkId, sourceId, supersededVersionId, supersededCurrentId);
                 hide("superseded", chunkId, sourceId, "supporting revision is not current");
             } else {
                 hide("unmapped", chunkId, sourceId, "no resolvable current support");
             }
+        }
+
+        private void recordSupersededSample(String chunkId, String sourceId,
+                                            UUID indexedRevision, UUID currentRevision) {
+            if (sourceId == null || indexedRevision == null || currentRevision == null) {
+                return;
+            }
+            SourceVersionRow indexed = versionsById.get(indexedRevision);
+            SourceVersionRow current = versionsById.get(currentRevision);
+            if (indexed == null) {
+                return;
+            }
+            supersededSamplesBySource.computeIfAbsent(sourceId, ignored -> new ArrayList<>())
+                    .add(new SupersededSample(chunkId, sourceId, indexedRevision, currentRevision,
+                            indexed.observedAt(), current == null ? null : current.observedAt(),
+                            indexed.generation(), current == null ? 0 : current.generation()));
         }
 
         private boolean isTombstoned(SourceVersionRow version) {
@@ -347,6 +392,129 @@ public final class SourceVisibilityBackfill {
                     System.out.println("  [" + entry.getKey() + "] " + example);
                 }
             }
+        }
+
+        private void printAudit() {
+            System.out.println("\n=== #699 audit table 1: repairable candidates ===");
+            System.out.println("| source_id | selected_revision | observed_at | status | content_ref_id "
+                    + "| latest_completed | is_latest_completed | latest_indexed | is_latest_indexed | safe |");
+            boolean unsafe = false;
+            int legacy = 0;
+            for (String sourceId : repairCandidateBySource.keySet().stream().sorted().toList()) {
+                SourceVersionRow candidate = repairCandidateBySource.get(sourceId);
+                String status = status(candidate);
+                SourceVersionRow latest = latestCompleted(sourceId);
+                SourceVersionRow latestIndexed = latestIndexed(sourceId);
+                UUID contentRef = candidate.contentRefId();
+                if (contentRef == null) {
+                    Set<UUID> refs = versionContentRefs.get(candidate.versionId());
+                    if (refs != null && !refs.isEmpty()) {
+                        contentRef = refs.iterator().next();
+                    }
+                }
+                boolean candidateSafe = !status.contains("FAILED")
+                        && !status.contains("IN_PROGRESS")
+                        && !status.contains("PENDING");
+                String latestId;
+                String isLatest;
+                if (latest == null) {
+                    legacy++;
+                    latestId = "LEGACY/UNKNOWN";
+                    isLatest = "legacy";
+                } else {
+                    latestId = latest.versionId().toString();
+                    isLatest = String.valueOf(latest.versionId().equals(candidate.versionId()));
+                    if (!latest.versionId().equals(candidate.versionId())) {
+                        candidateSafe = false;
+                    }
+                }
+                String latestIndexedId = latestIndexed == null
+                        ? "n/a" : latestIndexed.versionId().toString();
+                String isLatestIndexed = latestIndexed == null
+                        ? "n/a" : String.valueOf(latestIndexed.versionId().equals(candidate.versionId()));
+                if (latestIndexed != null && !latestIndexed.versionId().equals(candidate.versionId())) {
+                    candidateSafe = false;
+                }
+                if (!candidateSafe) {
+                    unsafe = true;
+                }
+                System.out.println("| " + sourceId + " | " + candidate.versionId() + " | "
+                        + candidate.observedAt() + " | " + status + " | " + contentRef + " | "
+                        + latestId + " | " + isLatest + " | " + latestIndexedId + " | "
+                        + isLatestIndexed + " | " + candidateSafe + " |");
+            }
+            if (unsafe) {
+                System.out.println("AUDIT: UNSAFE CANDIDATES PRESENT; DO NOT APPLY");
+            } else if (legacy > 0) {
+                System.out.println("AUDIT: " + legacy
+                        + " legacy candidates have no completed-status row; review required");
+            } else {
+                System.out.println("AUDIT: all candidates safe");
+            }
+
+            System.out.println("\n=== #699 audit table 2: superseded stratified sample ===");
+            System.out.println("| chunk_id | source_id | indexed_revision | current_revision "
+                    + "| indexed_observed_at | current_observed_at | is_older |");
+            List<String> sources = new ArrayList<>(supersededSamplesBySource.keySet());
+            Collections.sort(sources);
+            Collections.shuffle(sources, new Random(699));
+            int chosen = 0;
+            int printed = 0;
+            for (String sourceId : sources) {
+                if (printed >= 10) {
+                    break;
+                }
+                chosen++;
+                List<SupersededSample> samples = new ArrayList<>(supersededSamplesBySource.get(sourceId));
+                samples.sort(Comparator.comparing(SupersededSample::chunkId));
+                Collections.shuffle(samples, new Random(699 + chosen));
+                for (int i = 0; i < Math.min(2, samples.size()) && printed < 10; i++) {
+                    SupersededSample sample = samples.get(i);
+                    System.out.println("| " + sample.chunkId() + " | " + sample.sourceId() + " | "
+                            + sample.indexedRevision() + " | " + sample.currentRevision() + " | "
+                            + sample.indexedObservedAt() + " | " + sample.currentObservedAt() + " | "
+                            + isOlder(sample) + " |");
+                    printed++;
+                }
+            }
+            System.out.println("AUDIT: sampled " + printed + " chunk(s) from " + chosen
+                    + " source(s) of " + supersededSamplesBySource.size() + " with superseded chunks");
+        }
+
+        private String status(SourceVersionRow version) {
+            String extraction = cache.readExtractionStatus(options.tenant(), version.connectorId(),
+                    version.sourceId(), version.resourceId(), version.versionId()).orElse("UNKNOWN");
+            String graph = cache.readGraphStatus(options.tenant(), version.connectorId(),
+                    version.sourceId(), version.resourceId(), version.versionId()).orElse("UNKNOWN");
+            return extraction + "/" + graph;
+        }
+
+        private SourceVersionRow latestCompleted(String sourceId) {
+            return versionsBySource.getOrDefault(sourceId, List.of()).stream()
+                    .filter(version -> "KNOWLEDGE_READY".equals(cache.readExtractionStatus(
+                            options.tenant(), version.connectorId(), version.sourceId(),
+                            version.resourceId(), version.versionId()).orElse(null)))
+                    .max(Comparator.comparing(SourceVersionRow::observedAt,
+                            Comparator.nullsFirst(Comparator.naturalOrder())))
+                    .orElse(null);
+        }
+
+        private SourceVersionRow latestIndexed(String sourceId) {
+            return versionsBySource.getOrDefault(sourceId, List.of()).stream()
+                    .filter(version -> versionContentRefs.containsKey(version.versionId()))
+                    .max(Comparator.comparing(SourceVersionRow::observedAt,
+                            Comparator.nullsFirst(Comparator.naturalOrder())))
+                    .orElse(null);
+        }
+
+        private String isOlder(SupersededSample sample) {
+            if (sample.indexedObservedAt() != null && sample.currentObservedAt() != null) {
+                return String.valueOf(sample.indexedObservedAt().isBefore(sample.currentObservedAt()));
+            }
+            if (sample.indexedGeneration() != sample.currentGeneration()) {
+                return String.valueOf(sample.indexedGeneration() < sample.currentGeneration());
+            }
+            return "unknown";
         }
 
         private void applyRepairs() throws Exception {
