@@ -71,8 +71,9 @@ public final class RelixCanonicalRelationPromoter implements CanonicalRelationPr
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
                         "No relation validation result for " + relation.extractedRelationId()));
-        if (!"VALID".equals(validation.promotionStatus())) {
-            throw new IllegalStateException("Relation validation is not VALID: "
+        boolean contradiction = "INVALID".equals(validation.promotionStatus());
+        if (!"VALID".equals(validation.promotionStatus()) && !contradiction) {
+            throw new IllegalStateException("Relation validation is neither VALID nor INVALID: "
                     + validation.promotionStatus());
         }
         if (!Objects.equals(validation.canonicalSubjectId(), relation.subjectEntityId())
@@ -103,8 +104,14 @@ public final class RelixCanonicalRelationPromoter implements CanonicalRelationPr
                     "Cassandra no longer accepts promotion generation " + relation.generation());
         }
         GraphIdentity identity = identityResolver.resolveCanonical(relation.tenantId());
-        return writePort.promoteRelation(identity, relation,
-                new SourceRevisionIdentity(relation.tenantId(), relation.sourceId(),
-                        relation.generation()));
+        SourceRevisionIdentity sourceRevision = new SourceRevisionIdentity(
+                relation.tenantId(), relation.sourceId(), relation.generation());
+        if (contradiction) {
+            if (relation.subjectEntityId() == null || relation.objectEntityId() == null) {
+                return new PromotionResult(0, 0, 0);
+            }
+            return writePort.recordContradiction(identity, relation, sourceRevision);
+        }
+        return writePort.promoteRelation(identity, relation, sourceRevision);
     }
 }

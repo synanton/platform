@@ -22,6 +22,12 @@ public interface GraphWritePort {
 
     PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation);
 
+    /** Records contradicting evidence when an existing assertion is contradicted. */
+    default PromotionResult recordContradiction(GraphIdentity identity, CanonicalRelation relation,
+                                                SourceRevisionIdentity sourceRevision) {
+        return new PromotionResult(0, 0, 0);
+    }
+
     /** Generation-fenced promotion; the check must be inside the graph transaction. */
     default PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation,
                                             SourceRevisionIdentity sourceRevision) {

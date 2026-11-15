@@ -85,10 +85,16 @@ class RelixCanonicalRelationPromoterTest {
     }
 
     @Test
-    void invalidValidationRowNeverCallsTheGraph() {
+    void invalidValidationRowRecordsContradictionAndNeverPromotes() {
         when(cache.listRelationPromotionResults(TENANT, VERSION)).thenReturn(List.of(row("INVALID")));
-        assertThatThrownBy(() -> promoter.promoteRelation(relation()))
-                .isInstanceOf(IllegalStateException.class);
+        when(resolver.resolveCanonical(TENANT)).thenReturn(identity);
+        when(authority.acceptedGeneration(any())).thenReturn(java.util.Optional.of(1L));
+        when(writePort.recordContradiction(any(), any(), any()))
+                .thenReturn(new PromotionResult(0, 1, 0));
+
+        assertThat(promoter.promoteRelation(relation())).isEqualTo(new PromotionResult(0, 1, 0));
+        verify(writePort).recordContradiction(eq(identity), any(), eq(
+                new SourceRevisionIdentity(TENANT, "source-1", 1)));
         verify(writePort, never()).promoteRelation(any(), any(), any());
     }
 
