@@ -22,6 +22,9 @@ kubectl -n "$NAMESPACE" scale deployment/minio --replicas=1
 kubectl -n "$NAMESPACE" scale deployment/extraction-gateway --replicas=1
 kubectl -n "$NAMESPACE" scale deployment/synquest --replicas=1
 kubectl -n "$NAMESPACE" scale deployment/synflux --replicas="${SYNFLUX_REPLICAS:-2}"
+kubectl -n "$NAMESPACE" scale statefulset/neo4j --replicas=1
+kubectl -n "$NAMESPACE" scale deployment/relix --replicas=1
+kubectl -n "$NAMESPACE" scale deployment/syntology --replicas=1
 for d in security ui platform; do
     kubectl -n "$NAMESPACE" scale deployment/"$d" --replicas=1 2>/dev/null || true
 done
@@ -31,4 +34,7 @@ kubectl -n "$NAMESPACE" rollout status statefulset/cassandra --timeout=600s
 kubectl -n "$NAMESPACE" rollout status statefulset/postgres --timeout=180s
 kubectl -n "$NAMESPACE" rollout status deployment/synflux --timeout=300s
 kubectl -n "$NAMESPACE" rollout status deployment/synquest --timeout=180s
+kubectl -n "$NAMESPACE" rollout status statefulset/neo4j --timeout=300s
+kubectl -n "$NAMESPACE" rollout status deployment/relix --timeout=180s
+kubectl -n "$NAMESPACE" rollout status deployment/syntology --timeout=300s
 log "started"
