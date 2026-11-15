@@ -1,10 +1,15 @@
 package org.synanton.synquest.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -25,6 +30,9 @@ import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.synquest.config.SynquestProperties;
+import org.synanton.synquest.api.dto.Hit;
+import org.synanton.synquest.api.dto.SearchRequest;
+import org.synanton.synquest.api.dto.SearchResponse;
 import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 import org.synanton.synquest.service.KnowledgeSearchBackend.KnowledgeCandidate;
 import org.testcontainers.cassandra.CassandraContainer;
@@ -232,6 +240,99 @@ class SourceReplacementSearchVisibilityTest {
                 .isEmpty();
 
         // Activation flips the pointer; the same index now exposes V2 and hides V1.
+        makeCurrent(h, source, v2, 2, now.plusSeconds(2));
+        assertThat(candidates(h, "beta"))
+                .extracting(KnowledgeCandidate::contentRefId)
+                .contains(contentRef2);
+        assertThat(candidates(h, "alpha"))
+                .extracting(KnowledgeCandidate::contentRefId)
+                .doesNotContain(contentRef1);
+    }
+
+    @Test
+    void searchIndexingFailureKeepsV1CurrentAndV2Unpublished(@TempDir Path indexDir) throws Exception {
+        Harness h = harness(indexDir, "tenant-656-index-failure");
+        String source = "source-index-failure";
+        UUID v1 = UUID.randomUUID();
+        UUID v2 = UUID.randomUUID();
+        UUID contentRef1 = UUID.randomUUID();
+        UUID contentRef2 = UUID.randomUUID();
+        Instant now = Instant.now();
+
+        insertRevision(h, source, v1, contentRef1, 1, "alpha fact before indexing failure", null, now);
+        makeCurrent(h, source, v1, 1, now);
+        project(h);
+        insertRevision(h, source, v2, contentRef2, 2, "beta fact that fails indexing", v1,
+                now.plusSeconds(1));
+
+        SearchService failing = mock(SearchService.class);
+        doThrow(new IOException("simulated lucene indexing failure"))
+                .when(failing).projectContentRefs(eq(h.tenant), anyCollection());
+        SearchProjectionConsumer failingProjection =
+                new SearchProjectionConsumer(cache, failing, h.tenant, 200, true);
+
+        failingProjection.projectNewSourceVersions();
+
+        verify(failing).projectContentRefs(eq(h.tenant), anyCollection());
+        assertThat(cache.readCurrentRevisionId(h.tenant, source))
+                .as("a failed index write must not move the current pointer")
+                .contains(v1);
+        assertThat(candidates(h, "alpha"))
+                .extracting(KnowledgeCandidate::contentRefId)
+                .contains(contentRef1);
+        assertThat(candidates(h, "beta"))
+                .as("V2 must not become visible while its indexing is incomplete")
+                .isEmpty();
+        assertThat(cache.readSearchProjectedAt(h.tenant, CONNECTOR, source, RESOURCE, v2))
+                .as("search readiness must remain unset for the failed version")
+                .isEmpty();
+        assertThat(cache.listUnpublishedSourceOutbox(h.tenant, 100, Instant.now()))
+                .as("the failed projection must remain retryable")
+                .anyMatch(event -> v2.equals(event.sourceVersionId()));
+    }
+
+    @Test
+    void indexedReplacementStaysFilteredUntilActivationFlips(@TempDir Path indexDir) throws Exception {
+        Harness h = harness(indexDir, "tenant-656-activation-window");
+        String source = "source-activation-window";
+        UUID v1 = UUID.randomUUID();
+        UUID v2 = UUID.randomUUID();
+        UUID contentRef1 = UUID.randomUUID();
+        UUID contentRef2 = UUID.randomUUID();
+        Instant now = Instant.now();
+
+        insertRevision(h, source, v1, contentRef1, 1, "alpha fact before replacement", null, now);
+        makeCurrent(h, source, v1, 1, now);
+        project(h);
+        insertRevision(h, source, v2, contentRef2, 2, "beta fact indexed before activation", v1,
+                now.plusSeconds(1));
+        project(h);
+
+        session.execute(SimpleStatement.newInstance(
+                "UPDATE ingestion_cache.source_versions SET graph_status='GRAPH_COMMITTED', "
+                        + "activation_event_published=false "
+                        + "WHERE tenant_id=? AND connector_id=? AND source_id=? "
+                        + "AND resource_id=? AND version_id=?",
+                h.tenant, CONNECTOR, source, RESOURCE, v2));
+
+        SearchResponse raw = h.search.search(new SearchRequest(h.tenant, "beta", 10, 10, 10, 60));
+        assertThat(raw.hits())
+                .as("V2 chunks must be physically indexed before the pointer flip")
+                .extracting(Hit::contentRefId)
+                .contains(contentRef2);
+        assertThat(cache.readCurrentRevisionId(h.tenant, source))
+                .as("activation failed before the pointer flip")
+                .contains(v1);
+        assertThat(cache.readSearchProjectedAt(h.tenant, CONNECTOR, source, RESOURCE, v2))
+                .as("search indexing completed even though activation did not")
+                .isPresent();
+        assertThat(candidates(h, "beta"))
+                .as("indexed V2 chunks must remain filtered while V1 is current")
+                .isEmpty();
+        assertThat(candidates(h, "alpha"))
+                .extracting(KnowledgeCandidate::contentRefId)
+                .contains(contentRef1);
+
         makeCurrent(h, source, v2, 2, now.plusSeconds(2));
         assertThat(candidates(h, "beta"))
                 .extracting(KnowledgeCandidate::contentRefId)
