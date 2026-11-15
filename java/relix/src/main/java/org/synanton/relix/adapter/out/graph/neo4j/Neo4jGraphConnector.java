@@ -12,6 +12,7 @@ import org.synanton.relix.graph.GraphWritePort;
 import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
+import org.synanton.relix.graph.RelationRetirement;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.EntityNeighborhood;
@@ -50,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Bolt/Cypher adapter. Relationship type is always {@code REL}; the original verb is a property (avoids Cypher injection).
  */
-public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, GraphWritePort {
+public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, GraphWritePort, RelationRetirement {
 
     private static final int MAX_HOPS_CAP = 6;
 
@@ -550,6 +551,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 MERGE (ev:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
                   ON CREATE SET ev.created_at = $now
                 SET ev.canonical_relation_id = $canonicalRelationId,
+                    ev.status = coalesce(ev.status, 'CURRENT'),
+                    ev.polarity = coalesce(ev.polarity, 'SUPPORTS'),
                     ev.source_version_id = $sourceVersionId,
                     ev.extracted_relation_id = $extractedRelationId,
                     ev.source_id = $sourceId,
@@ -583,6 +586,7 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             return new PromotionResult(0, 0, 0);
         }
         Map<String, Object> row = rows.getFirst();
+        recomputeAssertionState(relation.tenantId(), canonicalRelationId);
         return new PromotionResult(
                 ((Number) row.get("relations_created")).intValue(),
                 ((Number) row.get("evidence_created")).intValue(),
@@ -666,10 +670,56 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 "at", (supersededAt == null ? java.time.Instant.now() : supersededAt).toString()));
     }
 
+    @Override
     public void retireSupersededEvidence(String tenantId, String sourceId, long currentGeneration) {
+        List<Map<String, Object>> affected = cypher.writeReturning("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, source_id: $source})
+                WHERE coalesce(e.generation, 0) < $generation
+                  AND coalesce(e.status, 'CURRENT') <> 'SUPERSEDED'
+                SET e.status = 'SUPERSEDED', e.superseded_at = $now
+                RETURN DISTINCT e.canonical_relation_id AS relation
+                """, Map.of("tenant", tenantId, "source", sourceId,
+                "generation", currentGeneration,
+                "now", java.time.Instant.now().toString()));
+        for (Map<String, Object> row : affected) {
+            Object relation = row.get("relation");
+            if (relation != null) {
+                recomputeAssertionState(tenantId, String.valueOf(relation));
+            }
+        }
     }
 
+    @Override
     public void recomputeAssertionState(String tenantId, String canonicalRelationId) {
+        List<Map<String, Object>> counts = cypher.read("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $relation}]->()
+                OPTIONAL MATCH (e:RelationEvidence {tenant_id: $tenant,
+                                                    canonical_relation_id: $relation})
+                RETURN sum(CASE WHEN e IS NOT NULL
+                                  AND coalesce(e.status, 'CURRENT') <> 'SUPERSEDED'
+                                  AND coalesce(e.polarity, 'SUPPORTS') = 'SUPPORTS'
+                                 THEN 1 ELSE 0 END) AS support,
+                       sum(CASE WHEN e IS NOT NULL
+                                  AND coalesce(e.status, 'CURRENT') <> 'SUPERSEDED'
+                                  AND coalesce(e.polarity, 'SUPPORTS') = 'CONTRADICTS'
+                                 THEN 1 ELSE 0 END) AS conflict
+                """, Map.of("tenant", tenantId, "relation", canonicalRelationId));
+        if (counts.isEmpty()) {
+            return;
+        }
+        long support = ((Number) counts.getFirst().get("support")).longValue();
+        long conflict = ((Number) counts.getFirst().get("conflict")).longValue();
+        boolean active = support > 0 && conflict == 0;
+        boolean review = support > 0 && conflict > 0;
+        String status = support > 0 && conflict > 0 ? "CONFLICTED"
+                : support > 0 ? "ACTIVE" : "UNSUPPORTED";
+        cypher.write("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $relation}]->()
+                SET r.active = $active, r.status = $status,
+                    r.review_required = $review, r.updated_at = $now
+                """, Map.of("tenant", tenantId, "relation", canonicalRelationId,
+                "active", active, "status", status, "review", review,
+                "now", java.time.Instant.now().toString()));
     }
 
     @Override

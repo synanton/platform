@@ -5,6 +5,8 @@ import java.time.Clock;
 import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,7 @@ import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ActivationRequestRow;
 import org.synanton.relix.config.ActivationRecoveryProperties;
+import org.synanton.relix.graph.RelationRetirement;
 import org.synanton.relix.identity.ActivateRevision;
 
 /**
@@ -34,17 +37,37 @@ public final class ActivationRecoverySweep {
     private final ActivationRecoveryProperties properties;
     private final MeterRegistry registry;
     private final Clock clock;
+    private final RelationRetirement retirement;
 
     public ActivationRecoverySweep(IngestionCacheClient cache, SourceActivationStore activations,
                                    ActivateRevision activateRevision,
                                    ActivationRecoveryProperties properties,
                                    MeterRegistry registry, Clock clock) {
+        this(cache, activations, activateRevision, properties, registry, clock, (RelationRetirement) null);
+    }
+
+    @Autowired
+    public ActivationRecoverySweep(IngestionCacheClient cache, SourceActivationStore activations,
+                                   ActivateRevision activateRevision,
+                                   ActivationRecoveryProperties properties,
+                                   MeterRegistry registry, Clock clock,
+                                   ObjectProvider<RelationRetirement> retirement) {
+        this(cache, activations, activateRevision, properties, registry, clock,
+                retirement.getIfAvailable());
+    }
+
+    private ActivationRecoverySweep(IngestionCacheClient cache, SourceActivationStore activations,
+                                    ActivateRevision activateRevision,
+                                    ActivationRecoveryProperties properties,
+                                    MeterRegistry registry, Clock clock,
+                                    RelationRetirement retirement) {
         this.cache = cache;
         this.activations = activations;
         this.activateRevision = activateRevision;
         this.properties = properties;
         this.registry = registry;
         this.clock = clock;
+        this.retirement = retirement;
     }
 
     @Scheduled(fixedDelayString = "${relix.activation-recovery.poll-delay-ms:30000}")
@@ -76,6 +99,7 @@ public final class ActivationRecoverySweep {
             return;
         }
         if (record.state() == ActivationState.CURRENT) {
+            retireSupersededEvidence(request);
             cache.markActivationEventPublished(request, clock.instant());
             counter("activation.recovered").increment();
             return;
@@ -107,6 +131,7 @@ public final class ActivationRecoverySweep {
                 request.tenantId(), request.sourceId(), request.generation(), request.versionId()));
         switch (result.status()) {
             case ACTIVATED, ALREADY_CURRENT -> {
+                retireSupersededEvidence(request);
                 cache.markActivationEventPublished(request, clock.instant());
                 counter("activation.recovered").increment();
             }
@@ -116,6 +141,13 @@ public final class ActivationRecoverySweep {
                         result.message(), null, true);
             }
             default -> fail(request, result.message());
+        }
+    }
+
+    private void retireSupersededEvidence(ActivationRequestRow request) {
+        if (retirement != null) {
+            retirement.retireSupersededEvidence(
+                    request.tenantId(), request.sourceId(), request.generation());
         }
     }
 

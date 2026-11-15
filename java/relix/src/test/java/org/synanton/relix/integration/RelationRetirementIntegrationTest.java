@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * #655 acceptance matrix for evidence retirement and derived assertion state.
- * The implementation is intentionally absent in the red baseline.
  */
 class RelationRetirementIntegrationTest {
 
@@ -48,7 +47,7 @@ class RelationRetirementIntegrationTest {
     void staleReplacementRetiresEvidenceAndUnsupportedAssertion() {
         String tenant = "tenant-655-stale";
         String relation = "rel-655-stale";
-        seed(tenant, relation, "ev-stale-v1", "source-a", "v1", 1, "SUPPORTING");
+        seed(tenant, relation, "ev-stale-v1", "source-a", "v1", 1, "SUPPORTS", "CURRENT");
 
         graph.retireSupersededEvidence(tenant, "source-a", 2);
 
@@ -66,8 +65,8 @@ class RelationRetirementIntegrationTest {
     void sharedSupportKeepsAssertionActive() {
         String tenant = "tenant-655-shared";
         String relation = "rel-655-shared";
-        seed(tenant, relation, "ev-shared-v1", "source-a", "v1", 1, "SUPPORTING");
-        seed(tenant, relation, "ev-shared-v3", "source-b", "v3", 1, "SUPPORTING");
+        seed(tenant, relation, "ev-shared-v1", "source-a", "v1", 1, "SUPPORTS", "CURRENT");
+        seed(tenant, relation, "ev-shared-v3", "source-b", "v3", 1, "SUPPORTS", "CURRENT");
 
         graph.retireSupersededEvidence(tenant, "source-a", 2);
 
@@ -82,8 +81,8 @@ class RelationRetirementIntegrationTest {
     void conflictingCurrentSourcesProduceConflictedAssertion() {
         String tenant = "tenant-655-conflict";
         String relation = "rel-655-conflict";
-        seed(tenant, relation, "ev-conflict-support", "source-a", "v2", 2, "SUPPORTING");
-        seed(tenant, relation, "ev-conflict-contradict", "source-b", "v1", 1, "CONFLICTING");
+        seed(tenant, relation, "ev-conflict-support", "source-a", "v2", 2, "SUPPORTS", "CURRENT");
+        seed(tenant, relation, "ev-conflict-contradict", "source-b", "v1", 1, "CONTRADICTS", "CONTRADICTING");
 
         graph.recomputeAssertionState(tenant, relation);
 
@@ -94,11 +93,11 @@ class RelationRetirementIntegrationTest {
         assertThat(rel.get("active")).isEqualTo(false);
         assertThat(rel.get("review_required")).isEqualTo(true);
         assertThat(evidenceStatus(tenant, "ev-conflict-support")).isEqualTo("CURRENT");
-        assertThat(evidenceStatus(tenant, "ev-conflict-contradict")).isEqualTo("CURRENT");
+        assertThat(evidenceStatus(tenant, "ev-conflict-contradict")).isEqualTo("CONTRADICTING");
     }
 
     private static void seed(String tenant, String relation, String evidence, String sourceId,
-                             String versionId, long generation, String polarity) {
+                             String versionId, long generation, String polarity, String status) {
         cypher.write("""
                 MERGE (s:Entity {tenant: $tenant, id: 'subject'})
                 MERGE (o:Entity {tenant: $tenant, id: 'object'})
@@ -111,7 +110,7 @@ class RelationRetirementIntegrationTest {
                     e.source_version_id = $versionId,
                     e.generation = $generation,
                     e.polarity = $polarity,
-                    e.status = 'CURRENT',
+                    e.status = $status,
                     e.evidence_chunk_id = $evidence + ':0'
                 """, Map.of(
                 "tenant", tenant,
@@ -120,7 +119,8 @@ class RelationRetirementIntegrationTest {
                 "sourceId", sourceId,
                 "versionId", versionId,
                 "generation", generation,
-                "polarity", polarity));
+                "polarity", polarity,
+                "status", status));
     }
 
     private static String evidenceStatus(String tenant, String evidence) {
