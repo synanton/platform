@@ -1,18 +1,32 @@
 package org.synanton.relix.integration;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
+import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
+import org.synanton.relix.graph.PromotionIds;
+import org.synanton.relix.graph.RelixCanonicalRelationPromoter;
+import org.synanton.relix.identity.GraphIdentityResolver;
+import org.synanton.relix.identity.SourceGenerationAuthority;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * #655 acceptance matrix for evidence retirement and derived assertion state.
@@ -96,8 +110,133 @@ class RelationRetirementIntegrationTest {
         assertThat(evidenceStatus(tenant, "ev-conflict-contradict")).isEqualTo("CONTRADICTING");
     }
 
+    @Test
+    void conflictingSourceProducesContradictingEvidenceThroughRealFlow() {
+        String tenant = "tenant-655-real-conflict";
+        String subject = "subject";
+        String object = "object";
+        String predicate = "requires";
+        UUID v2 = UUID.randomUUID();
+        CanonicalRelation v2Relation = new CanonicalRelation(
+                tenant, v2.toString(), "relation-v2", "mention-v2-subject", subject,
+                "mention-v2-object", object, predicate, "active", "chunk-v2:0", 0, 5,
+                "source-v2", v2.toString(), 1, "run-v2");
+        String canonicalRelationId = PromotionIds.canonicalRelationId(v2Relation);
+        seed(tenant, canonicalRelationId, "ev-v1-support", "source-v1", "v1", 1,
+                "SUPPORTS", "CURRENT");
+
+        String evidenceJson = "{\"view\":{\"evidenceChunkId\":\"chunk-v2:0\","
+                + "\"evidenceChunkOffsetStart\":0,\"evidenceChunkOffsetEnd\":5}}";
+        RelationPromotionResultRow invalidRow = new RelationPromotionResultRow(
+                tenant, v2, "relation-v2", "mention-v2-subject", "mention-v2-object",
+                predicate, "INVALID", subject, object, "ONTOLOGY_INVALID", evidenceJson,
+                "relation-validation-v1", "active", Instant.now(), null,
+                "source-v2", v2, 1, "run-v2", "CURRENT");
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        when(cache.listRelationPromotionResults(tenant, v2)).thenReturn(List.of(invalidRow));
+        GraphIdentityResolver resolver = tenantId -> GraphIdentity.canonical(tenantId, "v1");
+        SourceGenerationAuthority authority = key -> Optional.of(1L);
+        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(
+                cache, graph, resolver, authority);
+
+        promoter.promoteRelation(v2Relation);
+
+        List<Map<String, Object>> contradiction = cypher.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, source_version_id: $version})
+                RETURN e.polarity AS polarity, e.status AS status,
+                       e.canonical_relation_id AS canonical_relation_id
+                """, Map.of("tenant", tenant, "version", v2.toString()));
+        assertThat(contradiction).singleElement().satisfies(row -> {
+            assertThat(row.get("polarity")).isEqualTo("CONTRADICTS");
+            assertThat(row.get("status")).isEqualTo("CONTRADICTING");
+            assertThat(row.get("canonical_relation_id")).isEqualTo(canonicalRelationId);
+        });
+        Map<String, Object> rel = relationState(tenant, canonicalRelationId);
+        assertThat(rel.get("status")).isEqualTo("CONFLICTED");
+        assertThat(rel.get("active")).isEqualTo(false);
+        assertThat(rel.get("review_required")).isEqualTo(true);
+        assertThat(cypher.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, canonical_relation_id: $relation})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "relation", canonicalRelationId))
+                .getFirst().get("c")).isEqualTo(2L);
+    }
+
+    @Test
+    void driftRepairRestoresDerivedRelState() {
+        String activeTenant = "tenant-655-drift-active";
+        String activeRelation = "rel-655-drift-active";
+        seed(activeTenant, activeRelation, "ev-drift-support", "source-a", "v1", 1,
+                "SUPPORTS", "CURRENT");
+        corruptRelation(activeTenant, activeRelation, "CONFLICTED", false, true);
+
+        assertThat(graph.reconcileRetirementState(activeTenant, 500))
+                .as("a corrupted materialized :REL must be repaired from its evidence")
+                .isPositive();
+        Map<String, Object> active = relationState(activeTenant, activeRelation);
+        assertThat(active.get("status")).isEqualTo("ACTIVE");
+        assertThat(active.get("active")).isEqualTo(true);
+        assertThat(evidenceStatus(activeTenant, "ev-drift-support")).isEqualTo("CURRENT");
+        assertThat(graph.reconcileRetirementState(activeTenant, 500))
+                .as("the durable watermark makes the second sweep a no-op")
+                .isZero();
+
+        String conflictTenant = "tenant-655-drift-conflict";
+        String conflictRelation = "rel-655-drift-conflict";
+        seed(conflictTenant, conflictRelation, "ev-drift-conflict-support", "source-a", "v2", 2,
+                "SUPPORTS", "CURRENT");
+        seed(conflictTenant, conflictRelation, "ev-drift-contradict", "source-b", "v1", 1,
+                "CONTRADICTS", "CONTRADICTING");
+        graph.recomputeAssertionState(conflictTenant, conflictRelation);
+        assertThat(relationState(conflictTenant, conflictRelation).get("status"))
+                .isEqualTo("CONFLICTED");
+
+        cypher.write("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, evidence_id: $evidence})
+                SET e.status = 'SUPERSEDED', e.status_changed_at = $now
+                """, Map.of("tenant", conflictTenant, "evidence", "ev-drift-contradict",
+                "now", Instant.now().toString()));
+        assertThat(relationState(conflictTenant, conflictRelation).get("status"))
+                .as("the crash left stale materialized state")
+                .isEqualTo("CONFLICTED");
+        assertThat(graph.reconcileRetirementState(conflictTenant, 500)).isPositive();
+        Map<String, Object> conflict = relationState(conflictTenant, conflictRelation);
+        assertThat(conflict.get("status")).isEqualTo("ACTIVE");
+        assertThat(conflict.get("active")).isEqualTo(true);
+        assertThat(evidenceStatus(conflictTenant, "ev-drift-contradict"))
+                .as("the sweep derives state and never mutates evidence")
+                .isEqualTo("SUPERSEDED");
+        assertThat(graph.reconcileRetirementState(conflictTenant, 500)).isZero();
+
+        String unsupportedTenant = "tenant-655-drift-unsupported";
+        String unsupportedRelation = "rel-655-drift-unsupported";
+        seed(unsupportedTenant, unsupportedRelation, "ev-drift-new-support", "source-c", "v4", 1,
+                "SUPPORTS", "CURRENT");
+        corruptRelation(unsupportedTenant, unsupportedRelation, "UNSUPPORTED", false, false);
+        assertThat(graph.reconcileRetirementState(unsupportedTenant, 500)).isPositive();
+        Map<String, Object> unsupported = relationState(unsupportedTenant, unsupportedRelation);
+        assertThat(unsupported.get("status")).isEqualTo("ACTIVE");
+        assertThat(unsupported.get("active")).isEqualTo(true);
+    }
+
+    private static void corruptRelation(String tenant, String relation, String status,
+                                        boolean active, boolean review) {
+        cypher.write("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $relation}]->()
+                SET r.status = $status, r.active = $active, r.review_required = $review
+                """, Map.of("tenant", tenant, "relation", relation, "status", status,
+                "active", active, "review", review));
+    }
+
     private static void seed(String tenant, String relation, String evidence, String sourceId,
                              String versionId, long generation, String polarity, String status) {
+        seed(tenant, relation, evidence, sourceId, versionId, generation, polarity, status,
+                Instant.now().toString());
+    }
+
+    private static void seed(String tenant, String relation, String evidence, String sourceId,
+                             String versionId, long generation, String polarity, String status,
+                             String changedAt) {
         cypher.write("""
                 MERGE (s:Entity {tenant: $tenant, id: 'subject'})
                 MERGE (o:Entity {tenant: $tenant, id: 'object'})
@@ -111,6 +250,7 @@ class RelationRetirementIntegrationTest {
                     e.generation = $generation,
                     e.polarity = $polarity,
                     e.status = $status,
+                    e.status_changed_at = $changedAt,
                     e.evidence_chunk_id = $evidence + ':0'
                 """, Map.of(
                 "tenant", tenant,
@@ -120,7 +260,8 @@ class RelationRetirementIntegrationTest {
                 "versionId", versionId,
                 "generation", generation,
                 "polarity", polarity,
-                "status", status));
+                "status", status,
+                "changedAt", changedAt));
     }
 
     private static String evidenceStatus(String tenant, String evidence) {

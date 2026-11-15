@@ -15,7 +15,8 @@ public record RelationPromotionWorkRow(
         String failureClass) {
 
     public boolean claimable(Instant now) {
-        return "VALID".equals(result.promotionStatus())
+        return ("VALID".equals(result.promotionStatus())
+                || "INVALID".equals(result.promotionStatus()))
                 && "PENDING".equals(claimStatus)
                 && (nextAttemptAt == null || !nextAttemptAt.isAfter(now));
     }

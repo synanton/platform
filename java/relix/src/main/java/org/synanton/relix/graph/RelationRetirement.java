@@ -6,4 +6,7 @@ public interface RelationRetirement {
     void retireSupersededEvidence(String tenantId, String sourceId, long currentGeneration);
 
     void recomputeAssertionState(String tenantId, String canonicalRelationId);
+
+    /** Derivation-only repair of materialized :REL state for recently changed evidence. */
+    int reconcileRetirementState(String tenantId, int limit);
 }

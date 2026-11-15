@@ -37,9 +37,10 @@ import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionWorkRow;
 
 /**
- * PR #4d.1 promotion orchestration. It claims only VALID validation rows and
- * delegates atomic graph invariants to the existing Relix promotion port. It
- * never re-implements validation and never re-runs extraction.
+ * PR #4d.1 promotion orchestration. It claims VALID and INVALID validation
+ * rows; VALID rows promote assertions, INVALID rows record contradiction
+ * evidence when canonical endpoints were resolved. It never re-implements
+ * validation and never re-runs extraction.
  */
 @Component
 public final class PromotionConsumer {
@@ -180,8 +181,11 @@ public final class PromotionConsumer {
 
         Instant claimedAt = now;
         try {
-            CanonicalRelation relation = canonicalRelation(work.result());
-            promotionPort.promoteRelation(relation);
+            if (!"INVALID".equals(work.result().promotionStatus())
+                    || hasCanonicalTarget(work.result())) {
+                CanonicalRelation relation = canonicalRelation(work.result());
+                promotionPort.promoteRelation(relation);
+            }
             if (!claims.completePromotion(work, workerId, clock.instant())) {
                 log.warn("Promotion completion lost ownership relation={}",
                         work.result().relationId());
@@ -266,6 +270,11 @@ public final class PromotionConsumer {
     private static boolean isAbortRecoverable(Exception failure) {
         return failure instanceof RetryableProcessingException retryable
                 && retryable.reason() == RetryReason.TRANSACTION_ABORTED;
+    }
+
+    private static boolean hasCanonicalTarget(RelationPromotionResultRow row) {
+        return row.canonicalSubjectId() != null && row.canonicalObjectId() != null
+                && row.evidenceJson() != null && !row.evidenceJson().isBlank();
     }
 
     private CanonicalRelation canonicalRelation(RelationPromotionResultRow row) {
