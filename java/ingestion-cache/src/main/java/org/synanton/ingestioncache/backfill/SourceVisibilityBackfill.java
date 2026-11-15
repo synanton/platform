@@ -25,6 +25,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
 import org.synanton.ingestioncache.domain.SourceIdentityRow;
+import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
 
@@ -103,9 +104,19 @@ public final class SourceVisibilityBackfill {
         private final Map<String, List<SourceVersionRow>> versionsBySource = new HashMap<>();
         private final Map<String, UUID> currentBySource = new HashMap<>();
         private final Map<String, SourceVersionRow> repairCandidateBySource = new HashMap<>();
+        private final Map<String, SourceRow> sourcesById = new HashMap<>();
+        private final Map<String, CandidateAudit> candidateAudits = new LinkedHashMap<>();
+        private final Map<String, Set<String>> repairableSourcesByChunk = new HashMap<>();
         private final Map<String, Boolean> tombstoned = new HashMap<>();
         private final Map<UUID, Set<UUID>> versionContentRefs = new HashMap<>();
         private final Map<String, List<SupersededSample>> supersededSamplesBySource = new HashMap<>();
+
+        private record CandidateAudit(
+                SourceVersionRow candidate, String status, int indexedChunks, int outboxRows,
+                int publishedEvents, int failedRevisions, String createdAt,
+                String decision, String reason) {}
+
+        private record OutboxStats(int rows, int published) {}
 
         private record SupersededSample(
                 String chunkId, String sourceId, UUID indexedRevision, UUID currentRevision,
@@ -137,6 +148,7 @@ public final class SourceVisibilityBackfill {
             loadSources();
             collectVersionChunkPresence();
             computeRepairCandidates();
+            computeDispositions();
             scanChunks();
             printReport();
             if (options.audit()) {
@@ -158,6 +170,7 @@ public final class SourceVisibilityBackfill {
             sources.stream()
                     .sorted(Comparator.comparing(SourceRow::sourceId))
                     .forEach(source -> {
+                        sourcesById.put(source.sourceId(), source);
                         List<SourceIdentityRow> identities = cache.listSourceIdentities(
                                 options.tenant(), source.sourceId(), source.connectorId());
                         if (identities == null) {
@@ -254,6 +267,91 @@ public final class SourceVisibilityBackfill {
             return null;
         }
 
+        private void computeDispositions() {
+            for (String sourceId : repairCandidateBySource.keySet().stream().sorted().toList()) {
+                SourceVersionRow candidate = repairCandidateBySource.get(sourceId);
+                String status = status(candidate);
+                int indexed = indexedChunks(candidate.versionId());
+                OutboxStats outbox = outboxStats(sourceId);
+                int failed = failedRevisions(sourceId);
+                String decision;
+                String reason;
+                if (failed > 0 || status.contains("FAILED")) {
+                    decision = "EXCLUDE";
+                    reason = "failed revision/operation evidence";
+                } else if (indexed == 0) {
+                    decision = "EXCLUDE";
+                    reason = "no indexed chunks";
+                } else if (status.contains("KNOWLEDGE_READY") && status.contains("PARTIAL")) {
+                    decision = "APPROVE";
+                    reason = "chunk extraction KNOWLEDGE_READY; graph PARTIAL; indexed chunks";
+                } else if (status.contains("KNOWLEDGE_READY")
+                        || status.contains("GRAPH_COMMITTED")) {
+                    decision = "APPROVE";
+                    reason = "completed lifecycle evidence; indexed chunks";
+                } else if (outbox.published() > 0) {
+                    decision = "APPROVE";
+                    reason = "legacy lifecycle; published event evidence";
+                } else if (outbox.rows() == 0) {
+                    decision = "APPROVE";
+                    reason = "pre-event-tracking legacy; indexed chunks; no failures";
+                } else {
+                    decision = "INVESTIGATE";
+                    reason = "unpublished outbox rows; no completion evidence";
+                }
+                SourceRow source = sourcesById.get(sourceId);
+                String createdAt = source == null || source.createdAt() == null
+                        ? "unknown" : source.createdAt().toString();
+                candidateAudits.put(sourceId, new CandidateAudit(
+                        candidate, status, indexed, outbox.rows(), outbox.published(),
+                        failed, createdAt, decision, reason));
+            }
+        }
+
+        private int indexedChunks(UUID versionId) {
+            Set<UUID> refs = versionContentRefs.get(versionId);
+            if (refs == null || refs.isEmpty()) {
+                return 0;
+            }
+            int count = 0;
+            for (UUID ref : refs) {
+                count += cache.readChunks(options.tenant(), ref).size();
+            }
+            return count;
+        }
+
+        private OutboxStats outboxStats(String sourceId) {
+            int rows = 0;
+            int published = 0;
+            Set<String> identities = new java.util.HashSet<>();
+            for (SourceVersionRow version : versionsBySource.getOrDefault(sourceId, List.of())) {
+                String key = version.connectorId() + "|" + version.sourceId() + "|" + version.resourceId();
+                if (!identities.add(key)) {
+                    continue;
+                }
+                for (SourceOutboxRow event : cache.listSourceOutbox(
+                        options.tenant(), version.connectorId(),
+                        version.sourceId(), version.resourceId())) {
+                    rows++;
+                    if (event.published() && ("SourcePublished".equals(event.eventType())
+                            || "SourceDeleted".equals(event.eventType()))) {
+                        published++;
+                    }
+                }
+            }
+            return new OutboxStats(rows, published);
+        }
+
+        private int failedRevisions(String sourceId) {
+            int failed = 0;
+            for (SourceVersionRow version : versionsBySource.getOrDefault(sourceId, List.of())) {
+                if (status(version).contains("FAILED")) {
+                    failed++;
+                }
+            }
+            return failed;
+        }
+
         private void scanChunks() {
             for (ManifestRow manifest : cache.manifestCursor(options.tenant(), 200_000)) {
                 if (!INDEXABLE_STATES.contains(
@@ -279,6 +377,7 @@ public final class SourceVisibilityBackfill {
             boolean anyDeleted = false;
             boolean anyNoCurrent = false;
             boolean anySuperseded = false;
+            Set<String> repairableSourceIds = new java.util.HashSet<>();
             String sourceId = null;
             String unmappedReason = null;
             UUID supersededVersionId = null;
@@ -311,6 +410,7 @@ public final class SourceVisibilityBackfill {
                         anyNoCurrent = true;
                     } else if (candidate.versionId().equals(versionId)) {
                         anyRepairable = true;
+                        repairableSourceIds.add(version.sourceId());
                     } else {
                         // Older than the legacy current candidate: stale, not unmapped.
                         anySuperseded = true;
@@ -331,6 +431,9 @@ public final class SourceVisibilityBackfill {
                 hide("deleted", chunkId, sourceId, "source/resource has a tombstone");
             } else if (anyRepairable) {
                 repairable.incrementAndGet();
+                repairableSourcesByChunk
+                        .computeIfAbsent(chunkId, ignored -> new java.util.HashSet<>())
+                        .addAll(repairableSourceIds);
             } else if (anyNoCurrent) {
                 hide("no_current", chunkId, sourceId, "source has no current revision pointer");
             } else if (anySuperseded) {
@@ -479,6 +582,46 @@ public final class SourceVisibilityBackfill {
             }
             System.out.println("AUDIT: sampled " + printed + " chunk(s) from " + chosen
                     + " source(s) of " + supersededSamplesBySource.size() + " with superseded chunks");
+
+            System.out.println("\n=== #699 audit table 3: per-source disposition ===");
+            System.out.println("| source_id | revision_id | status | indexed_chunks | outbox_rows "
+                    + "| published_events | failed_revisions | source_created_at | disposition | reason |");
+            int approvedSources = 0;
+            int approvedCandidateChunks = 0;
+            int approvedRepairableChunks = 0;
+            int excludedSources = 0;
+            int investigateSources = 0;
+            Set<String> approvedSourceIds = new java.util.HashSet<>();
+            for (CandidateAudit audit : candidateAudits.values()) {
+                System.out.println("| " + audit.candidate().sourceId() + " | "
+                        + audit.candidate().versionId() + " | " + audit.status() + " | "
+                        + audit.indexedChunks() + " | " + audit.outboxRows() + " | "
+                        + audit.publishedEvents() + " | " + audit.failedRevisions() + " | "
+                        + audit.createdAt() + " | " + audit.decision() + " | " + audit.reason() + " |");
+                if ("APPROVE".equals(audit.decision())) {
+                    approvedSources++;
+                    approvedCandidateChunks += audit.indexedChunks();
+                    approvedSourceIds.add(audit.candidate().sourceId());
+                } else if ("EXCLUDE".equals(audit.decision())) {
+                    excludedSources++;
+                } else {
+                    investigateSources++;
+                }
+            }
+            for (Set<String> supportingSources : repairableSourcesByChunk.values()) {
+                if (supportingSources.stream().anyMatch(approvedSourceIds::contains)) {
+                    approvedRepairableChunks++;
+                }
+            }
+            System.out.println("DISPOSITION: approved_sources=" + approvedSources
+                    + " approved_candidate_attributed_chunks=" + approvedCandidateChunks
+                    + " approved_unique_repairable_chunks=" + approvedRepairableChunks
+                    + " excluded_sources=" + excludedSources
+                    + " investigate_sources=" + investigateSources);
+            System.out.println("EXPECTED: visible_before=" + visible.get()
+                    + " unique_repairable_total=" + repairable.get()
+                    + " expected_visible_after_apply=" + (visible.get() + approvedRepairableChunks)
+                    + " (unique chunks supported by an approved source; candidate-attributed sum may overlap)");
         }
 
         private String status(SourceVersionRow version) {
@@ -518,7 +661,9 @@ public final class SourceVisibilityBackfill {
         }
 
         private void applyRepairs() throws Exception {
-            List<String> sourceIds = repairCandidateBySource.keySet().stream().sorted().toList();
+            List<String> sourceIds = candidateAudits.values().stream()
+                    .filter(audit -> "APPROVE".equals(audit.decision()))
+                    .map(audit -> audit.candidate().sourceId()).sorted().toList();
             String last = readCheckpoint();
             int applied = 0;
             for (String sourceId : sourceIds) {
