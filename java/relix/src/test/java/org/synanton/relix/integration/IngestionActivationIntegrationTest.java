@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -721,6 +722,82 @@ class IngestionActivationIntegrationTest {
         assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
         assertThat(relationCount(tenant, subjectEntity, objectEntity, "requires")).isEqualTo(1L);
         assertThat(evidenceCount(tenant, version.versionId().toString(), source)).isEqualTo(1L);
+    }
+
+    @Test
+    void searchProjectionFailureThenRetryConvergesWithoutManualPointerFlip() {
+        String tenant = "tenant-656-search-retry";
+        String source = "source-656-search-retry";
+        String resource = "search-retry.md";
+        String text = "Acme requires Protocol-A";
+        String subjectEntity = "entity-656-search-retry-subject";
+        String objectEntity = "entity-656-search-retry-object";
+
+        SourceVersionRow v1 = ingest(tenant, source, resource, ref(resource, text), bytes(text));
+        markSearchProjected(tenant, source, resource, v1);
+        driveToGraphCommitted(tenant, source, resource, v1, subjectEntity, objectEntity);
+
+        ActivationRecoverySweep sweep = sweep(tenant);
+        await("V1 activation to CURRENT", sweep::poll,
+                () -> activations.readLifecycle(tenant, source)
+                        .map(lifecycle -> lifecycle.currentGeneration() == v1.generation())
+                        .orElse(false),
+                () -> "lifecycle=" + activations.readLifecycle(tenant, source)
+                        + ", activation=" + activations.read(tenant, source, v1.generation()));
+        assertThat(activations.readLifecycle(tenant, source)).get()
+                .extracting(lifecycle -> lifecycle.activeRevisionId())
+                .isEqualTo(v1.versionId());
+
+        SourceVersionRow v2 = ingest(tenant, source, resource,
+                ref(resource, text + " v2"), bytes(text + " v2"));
+        assertThat(v2.generation()).isGreaterThan(v1.generation());
+
+        // Search projection is the readiness gate for extraction. A failed
+        // projection leaves V2 blocked before any graph write, while V1 remains
+        // current and visible.
+        assertThat(cache.readSearchProjectedAt(tenant, "upload", source, resource, v2.versionId()))
+                .as("search projection failed before marking the revision ready")
+                .isEmpty();
+        assertThat(cache.readGraphStatus(tenant, v2.connectorId(), source, resource,
+                v2.versionId()).orElse("PENDING"))
+                .as("extraction must not start without a durable search projection")
+                .isNotIn("MENTIONS_COMMITTED", "GRAPH_COMMITTED");
+        assertThat(activations.readLifecycle(tenant, source)).get()
+                .extracting(lifecycle -> lifecycle.currentGeneration())
+                .isEqualTo(v1.generation());
+
+        sweep.poll();
+        assertThat(activations.readLifecycle(tenant, source)).get()
+                .as("the sweep must not flip the pointer while the replacement is blocked")
+                .extracting(lifecycle -> lifecycle.currentGeneration())
+                .isEqualTo(v1.generation());
+
+        // The search retry unblocks extraction; the existing pipeline then commits
+        // the graph and the activation sweep flips the pointer. No manual pointer
+        // flip and no index surgery are performed.
+        markSearchProjected(tenant, source, resource, v2);
+        driveToGraphCommitted(tenant, source, resource, v2, subjectEntity, objectEntity);
+        await("V2 activation after the search retry", sweep::poll,
+                () -> activations.readLifecycle(tenant, source)
+                        .map(lifecycle -> lifecycle.currentGeneration() == v2.generation())
+                        .orElse(false),
+                () -> "lifecycle=" + activations.readLifecycle(tenant, source)
+                        + ", activation=" + activations.read(tenant, source, v2.generation())
+                        + ", pending=" + cache.listPendingActivationRequests(
+                                tenant, 10, Instant.now()));
+
+        assertThat(activations.readLifecycle(tenant, source)).get()
+                .satisfies(lifecycle -> {
+                    assertThat(lifecycle.currentGeneration()).isEqualTo(v2.generation());
+                    assertThat(lifecycle.activeRevisionId()).isEqualTo(v2.versionId());
+                });
+        assertThat(cache.listSourceVersions(tenant, "upload", source, resource)).hasSize(2);
+    }
+
+    private static SourceVersionRow latestVersion(String tenant, String source, String resource) {
+        return cache.listSourceVersions(tenant, "upload", source, resource).stream()
+                .max(Comparator.comparingLong(SourceVersionRow::generation))
+                .orElseThrow();
     }
 
     @Test
