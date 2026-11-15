@@ -229,6 +229,34 @@ class PromotionConsumerTest {
     }
 
     @Test
+    void invalidWithCanonicalTargetIsClaimedAndPromoted() {
+        RelationPromotionWorkRow work = workWithStatus("INVALID", "entity-1", "entity-2");
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        when(promoter.promoteRelation(any())).thenReturn(new PromotionResult(0, 1, 0));
+        when(claims.completePromotion(eq(work), anyString(), any())).thenReturn(true);
+
+        consumer.poll();
+
+        verify(promoter).promoteRelation(any(CanonicalRelation.class));
+        verify(claims).completePromotion(eq(work), anyString(), any());
+        assertThat(registry.get("promotion.completed").counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void invalidWithoutCanonicalTargetCompletesWithoutPromotion() {
+        RelationPromotionWorkRow work = workWithStatus("INVALID", null, null);
+        when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
+        when(claims.claimPromotion(eq(work), anyString(), any(), any())).thenReturn(true);
+        when(claims.completePromotion(eq(work), anyString(), any())).thenReturn(true);
+
+        consumer.poll();
+
+        verify(promoter, never()).promoteRelation(any());
+        verify(claims).completePromotion(eq(work), anyString(), any());
+    }
+
+    @Test
     void invalidEvidenceIsContractFailureAndNotRetriedAsInfrastructure() {
         RelationPromotionWorkRow work = workWithoutEvidence();
         when(claims.pendingPromotions(eq("tenant-a"), anyInt(), any())).thenReturn(List.of(work));
@@ -262,6 +290,25 @@ class PromotionConsumerTest {
         return new PromotionOwnershipStore.OwnershipRow("tenant-a",
                 work.result().sourceVersionId(), "producer-a", 1, false,
                 Instant.now(), null, 0, Instant.now(), Instant.now());
+    }
+
+    private static RelationPromotionWorkRow workWithStatus(String status,
+                                                           String canonicalSubject,
+                                                           String canonicalObject) {
+        UUID version = UUID.randomUUID();
+        String evidenceJson = "{\"view\":{\"relationId\":\"r1\",\"tenantId\":\"tenant-a\","
+                + "\"sourceVersionId\":\"" + version + "\",\"subjectMentionId\":\"m1\","
+                + "\"objectMentionId\":\"m2\",\"predicate\":\"requires\","
+                + "\"evidenceChunkId\":\"c:0\",\"evidenceChunkOffsetStart\":1,"
+                + "\"evidenceChunkOffsetEnd\":9,\"sourceId\":\"source-a\","
+                + "\"revisionId\":\"" + version + "\",\"generation\":7,"
+                + "\"extractionRunId\":\"run-646\"}}";
+        return new RelationPromotionWorkRow(
+                new RelationPromotionResultRow("tenant-a", version, "r1", "m1", "m2",
+                        "requires", status, canonicalSubject, canonicalObject, status, evidenceJson,
+                        "relation-validation-v1", "active", Instant.now(), null,
+                        "source-a", version, 7, "run-646", "CURRENT"),
+                "PENDING", null, null, 0, null, null, null, null);
     }
 
     private static RelationPromotionWorkRow workForVersion(UUID version, String relationId) {
