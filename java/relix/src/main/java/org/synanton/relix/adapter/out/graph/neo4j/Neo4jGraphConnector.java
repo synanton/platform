@@ -666,6 +666,12 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                 "at", (supersededAt == null ? java.time.Instant.now() : supersededAt).toString()));
     }
 
+    public void retireSupersededEvidence(String tenantId, String sourceId, long currentGeneration) {
+    }
+
+    public void recomputeAssertionState(String tenantId, String canonicalRelationId) {
+    }
+
     @Override
     public java.util.Optional<String> getActiveEntityType(String tenant, String entityId) {
         if (entityId == null || entityId.isBlank()) {
