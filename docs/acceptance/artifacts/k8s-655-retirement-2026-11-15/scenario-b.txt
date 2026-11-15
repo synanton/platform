@@ -1,0 +1,21 @@
+Scenario B — evidence attribution (fixed image, 2026-11-15T17:11:32Z)
+
+V1 support evidence:
+Defaulted container "neo4j" out of: neo4j, schema-init
+polarity, status, chunk_id, offset_start, offset_end, canonical_relation_id, evidence_id
+"SUPPORTS", "CURRENT", "54ec5884-2df1-52d4-ad00-91636a74e7cf:0", 0, 42, "2195d2931827440e00968ca4a6c7d5520769367486a36f45b6c45e1d52fd2d8b", "dcfa93b3f4210bd4be45425fe0d5eb6f0a20ac24bf3ca5556c4412c07277242a"
+
+V2e contradiction evidence (retained after supersession):
+Defaulted container "neo4j" out of: neo4j, schema-init
+polarity, status, chunk_id, offset_start, offset_end, canonical_relation_id, evidence_id
+"CONTRADICTS", "SUPERSEDED", "5667881f-25a7-5c48-ae89-175c50375ba8:0", 0, 42, "2195d2931827440e00968ca4a6c7d5520769367486a36f45b6c45e1d52fd2d8b", "e333696adcac1c5c4d2014231df479bcdee79770a9510f32660c602ccc984e9f"
+
+SUPPORTS linkage:
+Defaulted container "neo4j" out of: neo4j, schema-init
+extracted_relation, link_tenant, evidence_id, chunk_id
+"relation-655-v1", "demo", "dcfa93b3f4210bd4be45425fe0d5eb6f0a20ac24bf3ca5556c4412c07277242a", "54ec5884-2df1-52d4-ad00-91636a74e7cf:0"
+
+Canonical :REL:
+Defaulted container "neo4j" out of: neo4j, schema-init
+r.canonical_relation_id, r.predicate, r.status, r.active, r.review_required
+"2195d2931827440e00968ca4a6c7d5520769367486a36f45b6c45e1d52fd2d8b", "requires", "ACTIVE", TRUE, FALSE

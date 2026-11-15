@@ -1,0 +1,80 @@
+Scenario A — live INVALID -> CONTRADICTS -> CONFLICTED -> ACTIVE
+Fixed image: relix + synflux commit b0addac6, relix digest
+sha256:616e3599..., synflux digest sha256:e3f2c7ec...
+Environment: fail-closed=false, EXTRACTION_PROVIDER=regex, vllm-extraction 0 ready.
+
+Regex boundary
+--------------
+Regex extraction emits Concept mentions only. Exact type compatibility rejects
+requires(MaintenanceSystem -> Component) before promotion, so regex ingestion
+cannot by itself produce a same-canonical relation for this ontology. The V1
+support row was therefore placed at the Cassandra promotion boundary. V2e is a
+real producer-generated INVALID row: the extracted relation and active
+resolutions were seeded, then the extraction evidence was removed so the real
+validator returned EXTRACTED_EVIDENCE_NOT_FOUND. The deployed synflux producer,
+deployed relix consumer, deployed relix promoter, and Neo4j writes are all live.
+
+V1 support
+----------
+source acceptance-655-probe-1794759429
+source_version fe4061d5-ffe9-5316-8194-e9d46e5ff68b generation 1 accepted 1
+VALID promotion row relation-655-v1 -> consumer COMPLETED
+
+:REL canonical_relation_id=2195d2931827440e00968ca4a6c7d5520769367486a36f45b6c45e1d52fd2d8b
+status=ACTIVE active=true review_required=false
+evidence: SUPPORTS/CURRENT source=acceptance-655-probe-1794759429 generation=1
+chunk=54ec5884-2df1-52d4-ad00-91636a74e7cf:0 offsets=0..42
+
+V2e real producer INVALID
+-------------------------
+source acceptance-655-v2e-1794762467
+source_version 7b1633af-8b46-595c-a2d9-326f8ec7ec2d generation 1 accepted 1
+Seeded: active RESOLVES_TO for the two extracted mentions and one
+EXTRACTED_RELATION relation-655-v2e on chunk 5667881f-25a7-5c48-ae89-175c50375ba8:0.
+Removed: ingestion_cache.extraction_results for content_ref 5667881f...
+Forced: observed_at old and graph_status=PARTIAL so the bounded producer scan
+includes this version.
+
+Producer row after the deployed synflux producer ran:
+
+ relation_id      | promotion_status | reason                                                    | canonical_subject_id | canonical_object_id           | claim_status
+ -----------------+------------------+-----------------------------------------------------------+----------------------+-------------------------------+-------------
+ relation-655-v2e | INVALID          | EXTRACTED_EVIDENCE_NOT_FOUND:EXTRACTED_EVIDENCE_NOT_FOUND |     entity-halcyon-7 | entity-auxiliary-coolant-loop |    COMPLETED
+
+The fixed producer inserted the row claimable; the deployed relix consumer
+claimed it, called recordContradiction, and completed it. Result:
+
+:REL status=CONFLICTED active=false review_required=true
+evidence:
+  SUPPORTS   CURRENT       acceptance-655-probe-1794759429 generation=1
+  CONTRADICTS SUPERSEDED   acceptance-655-v2b-1794759834 generation=1
+  CONTRADICTS CONTRADICTING acceptance-655-v2e-1794762467 generation=1
+
+Note: contradiction evidence is CONTRADICTING, not CURRENT. The derived-state
+computation treats any non-SUPERSEDED CONTRADICTS evidence as a current conflict;
+CONFLICTED, inactive, and review-required are the materialized outcome.
+
+V3e replacement and recovery
+----------------------------
+V3e uploaded to the same source (acceptance-655-v2e-1794762467), generation 2,
+revision 2c99a6b9-bca3-52a9-ae7c-64a1c21ac834.
+source_activation reached CURRENT generation 2; source_current
+accepted_generation=2 current_generation=2 active_revision_id=2c99a6b9...
+
+Final relation:
+
+:REL status=ACTIVE active=true review_required=false
+evidence:
+  SUPPORTS   CURRENT     acceptance-655-probe-1794759429 generation=1
+  CONTRADICTS SUPERSEDED  acceptance-655-v2b-1794759834 generation=1
+  CONTRADICTS SUPERSEDED  acceptance-655-v2e-1794762467 generation=1
+
+Recovery occurred through activation-triggered evidence retirement and
+recompute. The derivation-only sweep is proven independently in Scenario C.
+
+Pre-fix finding
+---------------
+On image d04976d5 the same real producer path wrote the INVALID row with
+claim_status=COMPLETED, so the relix consumer never claimed it and no
+CONTRADICTS evidence appeared. See finding-invalid-terminal.txt. PR #711 fixed
+the producer claim status; this scenario was re-run on b0addac6 and is green.
