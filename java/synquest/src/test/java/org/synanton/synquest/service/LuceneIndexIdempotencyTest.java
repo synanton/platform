@@ -12,7 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.FSDirectory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -144,6 +151,50 @@ class LuceneIndexIdempotencyTest {
         List<String> ids = indexedIds(builder.indexPath(TENANT));
         assertThat(ids).hasSize(CHUNKS);
         assertThat(ids).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void fullRebuildDeletesLegacyChunksWithoutDocType(@TempDir Path indexDir) throws Exception {
+        String tenant = "tenant-legacy-" + UUID.randomUUID();
+        UUID contentRefId = UUID.randomUUID();
+        UUID processingRunId = UUID.randomUUID();
+        Instant now = Instant.now();
+
+        cache.createSourceIfAbsent(new SourceRow(tenant, "legacy-source", CONNECTOR, "upload",
+                "upload://legacy-source", Set.of(), "ACTIVE", now, null));
+        cache.createSourceIdentityIfAbsent(new SourceIdentityRow(
+                tenant, CONNECTOR, "legacy-source", "legacy.txt"));
+        cache.upsertKnowledgeProcessingRun(new KnowledgeProcessingRunRow(
+                tenant, processingRunId, "synflux-knowledge", "semantic-v1:1",
+                "{}", "{}", null, "COMPLETED", now, now, null, null, Set.of()));
+        cache.upsertManifest(new ManifestRow(
+                tenant, contentRefId, now, 1, "semantic-v1", 1, "EMBEDDED", "CONTENT_CACHE",
+                "", "upload://legacy-source/legacy.txt", "sha256:doc", 128, "text/plain",
+                "FULL", null, "", null, processingRunId));
+        cache.insertChunks(List.of(new ChunkRow(
+                tenant, contentRefId, 0, "legacy chunk text", "sha256:chunk")));
+
+        SynquestProperties props = new SynquestProperties(
+                new SynquestProperties.Index(indexDir.toString(), false, 30),
+                null,
+                new SynquestProperties.Embedding(MODEL, DIM, true, 0),
+                null);
+        LuceneIndexBuilder builder = new LuceneIndexBuilder(cache, props);
+        java.nio.file.Files.createDirectories(builder.indexPath(tenant));
+        try (FSDirectory dir = FSDirectory.open(builder.indexPath(tenant));
+             IndexWriter writer = new IndexWriter(dir, new IndexWriterConfig(new StandardAnalyzer()))) {
+            Document legacy = new Document();
+            legacy.add(new StringField("id", "legacy-without-doc-type", Field.Store.YES));
+            legacy.add(new TextField("text", "legacy", Field.Store.YES));
+            writer.addDocument(legacy);
+            writer.commit();
+        }
+
+        builder.build(tenant);
+
+        List<String> ids = indexedIds(builder.indexPath(tenant));
+        assertThat(ids).doesNotContain("legacy-without-doc-type");
+        assertThat(ids).contains(contentRefId + ":0");
     }
 
     private static List<String> indexedIds(Path indexDir) throws Exception {
