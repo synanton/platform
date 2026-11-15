@@ -1,0 +1,50 @@
+Name:      local-registry:5000/synanton/relix:d04976d5d2c69c41e763e56230a2dc40412705c8
+MediaType: application/vnd.docker.distribution.manifest.v2+json
+Digest:    sha256:285c964d0e8577607e895f695aae38310b59683685944eb350a70fb3d45f3966
+--- deploy to immutable digest ---
+deployment.apps/relix image updated
+Waiting for deployment "relix" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+deployment "relix" successfully rolled out
+--- post-deploy deployment image ---
+local-registry:5000/synanton/relix@sha256:285c964d0e8577607e895f695aae38310b59683685944eb350a70fb3d45f3966
+--- post-deploy pod imageID ---
+relix-64f764df48-n2pw8 local-registry:5000/synanton/relix@sha256:285c964d0e8577607e895f695aae38310b59683685944eb350a70fb3d45f3966 ready=true
+--- pod ---
+NAME                     READY   STATUS    RESTARTS   AGE
+relix-64f764df48-n2pw8   1/1     Running   0          30s
+
+--- #711 fixed image 2026-11-15T17:03:01Z ---
+commit=b0addac6a69b4ca053afe187a68045e1ca32bd84
+Name:      local-registry:5000/synanton/relix:b0addac6a69b4ca053afe187a68045e1ca32bd84
+MediaType: application/vnd.docker.distribution.manifest.v2+json
+Digest:    sha256:616e359900ceab8f7f1396286cc9364705e8559fb014f281203ea4e052d3ab05
+--- deploy ---
+deployment.apps/relix image updated
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "relix" rollout to finish: 1 old replicas are pending termination...
+deployment "relix" successfully rolled out
+
+--- fixed pod imageID ---
+relix-64f764df48-n2pw8 local-registry:5000/synanton/relix@sha256:285c964d0e8577607e895f695aae38310b59683685944eb350a70fb3d45f3966 ready=true
+relix-6cdc7b6f4-kp495 local-registry:5000/synanton/relix@sha256:616e359900ceab8f7f1396286cc9364705e8559fb014f281203ea4e052d3ab05 ready=true
+
+--- #711 fixed synflux image 2026-11-15T17:05:46Z ---
+commit=b0addac6a69b4ca053afe187a68045e1ca32bd84
+Name:      local-registry:5000/synanton/synflux:b0addac6a69b4ca053afe187a68045e1ca32bd84
+MediaType: application/vnd.docker.distribution.manifest.v2+json
+Digest:    sha256:e3f2c7ecbe3f13f04f85d20cb91a45b54fe9d291e9f7082ba2c353eaccbad991
+--- deploy ---
+deployment.apps/synflux image updated
+Waiting for deployment "synflux" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "synflux" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "synflux" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "synflux" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "synflux" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "synflux" rollout to finish: 1 old replicas are pending termination...
+deployment "synflux" successfully rolled out
+--- fixed synflux pod imageIDs ---
+synflux-76946765d6-7xt5j local-registry:5000/synanton/synflux@sha256:e3f2c7ecbe3f13f04f85d20cb91a45b54fe9d291e9f7082ba2c353eaccbad991 ready=true
+synflux-76946765d6-nr28r local-registry:5000/synanton/synflux@sha256:e3f2c7ecbe3f13f04f85d20cb91a45b54fe9d291e9f7082ba2c353eaccbad991 ready=true
+synflux-d846d4945-wk7fl local-registry:5000/synanton/synflux@sha256:9a9dc03274e56c39444f091820a274e20bbf46b97697f5ba28178a9d0536149f ready=true

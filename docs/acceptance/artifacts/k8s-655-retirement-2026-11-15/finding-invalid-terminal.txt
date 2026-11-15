@@ -1,0 +1,22 @@
+Live finding on the #710 image (d04976d5, digest 285c964d...)
+
+The deployed synflux producer created a real INVALID promotion row with the
+correct canonical endpoints, but the row was never processed by the deployed
+relix consumer:
+
+  relation_id      | promotion_status | reason                                                    | canonical_subject_id | canonical_object_id           | claim_status
+  -----------------+------------------+-----------------------------------------------------------+----------------------+-------------------------------+-------------
+  relation-655-v2c | INVALID          | EXTRACTED_EVIDENCE_NOT_FOUND:EXTRACTED_EVIDENCE_NOT_FOUND |     entity-halcyon-7 | entity-auxiliary-coolant-loop |    COMPLETED
+
+Cause: PromotionOwnershipStore.insertPromotionResult() wrote INVALID rows with
+claim_status=COMPLETED, so RelationPromotionWorkRow.claimable() was never asked
+to claim them. The consumer only claims PENDING rows. No CONTRADICTS evidence
+was written and the :REL stayed ACTIVE.
+
+Fix: PR #711, commit 1e2f2577:
+  java/ingestion-cache/.../PromotionOwnershipStore.java
+  INVALID rows are inserted with claim_status=PENDING, like VALID rows.
+  Added PromotionOwnershipStoreTest and PromotionConsumerTest coverage.
+
+After redeploying the fixed image, the same pipeline path must be re-run with a
+fresh source and must produce a CONTRADICTS evidence row and CONFLICTED :REL.

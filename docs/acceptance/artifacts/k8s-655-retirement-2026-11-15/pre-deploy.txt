@@ -1,0 +1,24 @@
+date_utc=2026-11-15T16:15:10Z
+git_commit=d04976d5d2c69c41e763e56230a2dc40412705c8
+branch=main
+--- relix deploy image ---
+local-registry:5000/synanton/relix@sha256:ca51ef514b07395b978f67c3520329a2163a0c87fc6bcb1862a20ff42cb456ad
+--- relix pod imageID ---
+relix-5c58656b49-bgmjz local-registry:5000/synanton/relix@sha256:ca51ef514b07395b978f67c3520329a2163a0c87fc6bcb1862a20ff42cb456ad
+--- pods ---
+NAME                                  READY   STATUS    RESTARTS       AGE
+cassandra-0                           1/1     Running   0              3h6m
+cassandra-1                           1/1     Running   0              3h6m
+cassandra-2                           1/1     Running   0              3h6m
+extraction-gateway-65586b7445-n24c5   1/1     Running   2 (3h5m ago)   3h6m
+minio-55887674fb-8lqt5                1/1     Running   0              3h6m
+neo4j-0                               2/2     Running   0              3h5m
+platform-ddb794846-lvkz6              1/1     Running   0              3h6m
+postgres-0                            1/1     Running   0              3h6m
+relix-5c58656b49-bgmjz                1/1     Running   5 (3h6m ago)   7h31m
+security-69c64c9d7-t7gzf              1/1     Running   2 (3h5m ago)   3h6m
+synflux-d846d4945-dx2cz               1/1     Running   0              3h6m
+synflux-d846d4945-wk7fl               1/1     Running   0              3h6m
+synquest-5b5d8cf866-l62w7             1/1     Running   0              98m
+syntology-84c7d78998-959bx            1/1     Running   0              3h5m
+ui-6899b4749c-cl8gw                   1/1     Running   0              3h6m

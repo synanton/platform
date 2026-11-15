@@ -1,0 +1,24 @@
+Scenario D — tenant isolation (fixed image, 2026-11-15T17:11:46Z)
+
+tenant-b evidence for canonical relation 2195d293...:
+Defaulted container "neo4j" out of: neo4j, schema-init
+tenant_b_evidence
+0
+
+tenant-b :REL for canonical relation 2195d293...:
+Defaulted container "neo4j" out of: neo4j, schema-init
+tenant_b_rel
+0
+
+demo evidence count (same canonical relation):
+Defaulted container "neo4j" out of: neo4j, schema-init
+demo_evidence
+3
+
+API tenant-b read (unprovisioned tenant fails closed; no demo data returned):
+HTTP 500 {"status":500,"error":"Internal Server Error","path":"/v1/entities/entity-halcyon-7/type"}
+root cause: MissingCanonicalGraphException: No canonical graph data exists for tenant tenant-b
+
+Only tenant 'demo' has CanonicalGraphMetadata in this environment; tenant-b
+cannot be provisioned without an active tenant-b ontology. The graph-level
+tenant filter is the isolation proof above.
