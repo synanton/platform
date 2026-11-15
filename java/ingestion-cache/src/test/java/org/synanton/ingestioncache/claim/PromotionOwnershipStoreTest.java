@@ -191,7 +191,7 @@ class PromotionOwnershipStoreTest {
         assertThat(validRow.getString("extraction_run_id")).isEqualTo("run-a");
         assertThat(validRow.getString("identity_status")).isEqualTo("CURRENT");
         assertThat(promotionRow(tenant, version, "relation-insert-invalid")
-                .getString("claim_status")).isEqualTo("COMPLETED");
+                .getString("claim_status")).isEqualTo("PENDING");
     }
 
     @Test

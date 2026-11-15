@@ -102,15 +102,17 @@ public final class PromotionOwnershipStore {
     }
 
     /**
-     * The only production writer of promotion result rows. VALID rows become
-     * claimable promotion work; INVALID rows are terminal.
+     * The only production writer of promotion result rows. VALID and INVALID rows
+     * become claimable promotion work; INVALID rows are recorded as contradicting
+     * evidence by the consumer, not silently completed.
      */
     public boolean insertPromotionResult(RelationPromotionResultRow row, OwnershipToken token) {
         Objects.requireNonNull(row, "row");
         if (OWNERSHIP_RELATION_ID.equals(row.relationId())) {
             throw new IllegalArgumentException("ownership sentinel is managed separately");
         }
-        String claimStatus = "VALID".equals(row.promotionStatus()) ? "PENDING" : "COMPLETED";
+        String claimStatus = ("VALID".equals(row.promotionStatus())
+                || "INVALID".equals(row.promotionStatus())) ? "PENDING" : "COMPLETED";
         SimpleStatement insert = SimpleStatement.newInstance("""
                 INSERT INTO ingestion_cache.relation_promotion_results
                     (tenant_id, source_version_id, relation_id, subject_mention_id,
