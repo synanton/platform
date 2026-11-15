@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.SourceIdentityRow;
+import org.synanton.ingestioncache.domain.SourceRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.synquest.api.dto.SearchRequest;
 import org.synanton.synquest.api.dto.SearchResponse;
 import org.synanton.synquest.config.SynquestProperties;
@@ -14,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -89,10 +93,18 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
             tombstoned = Set.of();
         }
 
+        // Query-time visibility (#656/#694): the index is an immutable projection.
+        // A chunk is visible only while at least one of its supporting source
+        // versions is the authoritative current revision. This is orthogonal to the
+        // #654 ownership protocol: it reads the current pointer and takes no locks.
+        Map<UUID, SourceVersionRow> versionsById = tenantVersions(tenantId);
+        Map<String, Optional<UUID>> currentRevisionBySource = new HashMap<>();
+
         int fetch = Math.min(limit + tombstoneOverfetchMargin, MAX_RETRIEVAL_WINDOW);
         while (true) {
             SearchResponse response = searchService.search(new SearchRequest(tenantId, query, fetch, 0, fetch, null));
-            List<KnowledgeCandidate> live = liveCandidates(tenantId, response.hits(), tombstoned, limit);
+            List<KnowledgeCandidate> live = liveCandidates(
+                    tenantId, response.hits(), tombstoned, versionsById, currentRevisionBySource, limit);
             if (live.size() >= limit || response.hits().size() < fetch || fetch >= MAX_RETRIEVAL_WINDOW) {
                 return live;
             }
@@ -114,7 +126,9 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
     }
 
     private List<KnowledgeCandidate> liveCandidates(
-            String tenantId, List<org.synanton.synquest.api.dto.Hit> hits, Set<UUID> tombstoned, int limit) {
+            String tenantId, List<org.synanton.synquest.api.dto.Hit> hits, Set<UUID> tombstoned,
+            Map<UUID, SourceVersionRow> versionsById,
+            Map<String, Optional<UUID>> currentRevisionBySource, int limit) {
         Map<UUID, List<ChunkRow>> chunksByRef = new HashMap<>();
         List<KnowledgeCandidate> candidates = new java.util.ArrayList<>();
         for (var hit : hits) {
@@ -128,7 +142,8 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
                 }
                 matched = row;
                 for (UUID versionId : row.sourceVersionIds()) {
-                    if (!tombstoned.contains(versionId)) {
+                    if (!tombstoned.contains(versionId)
+                            && isCurrentRevision(tenantId, versionId, versionsById, currentRevisionBySource)) {
                         liveVersions.add(versionId);
                     }
                 }
@@ -150,5 +165,55 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
             }
         }
         return candidates;
+    }
+
+    /**
+     * Per-query version index for visibility. The bounded tenant scan is the same
+     * source/identity/version path used by the existing read surfaces; it never
+     * crosses tenant boundaries.
+     */
+    private Map<UUID, SourceVersionRow> tenantVersions(String tenantId) {
+        Map<UUID, SourceVersionRow> versions = new HashMap<>();
+        List<SourceRow> sources = cacheClient.listSources(tenantId);
+        if (sources == null) {
+            return versions;
+        }
+        for (SourceRow source : sources) {
+            List<SourceIdentityRow> identities = cacheClient.listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId());
+            if (identities == null) {
+                continue;
+            }
+            for (SourceIdentityRow identity : identities) {
+                List<SourceVersionRow> rows = cacheClient.listSourceVersions(
+                        tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId());
+                if (rows == null) {
+                    continue;
+                }
+                for (SourceVersionRow row : rows) {
+                    versions.put(row.versionId(), row);
+                }
+            }
+        }
+        return versions;
+    }
+
+    /**
+     * A supporting version is visible while it is the authoritative current
+     * revision for its source. An unmapped version is legacy fail-open: the
+     * projection predates lifecycle metadata, so it remains visible instead of
+     * disappearing. A mapped source with no current pointer is also fail-open for
+     * the same pre-#654 reason.
+     */
+    private boolean isCurrentRevision(String tenantId, UUID versionId,
+                                      Map<UUID, SourceVersionRow> versionsById,
+                                      Map<String, Optional<UUID>> currentRevisionBySource) {
+        SourceVersionRow version = versionsById.get(versionId);
+        if (version == null) {
+            return true;
+        }
+        Optional<UUID> current = currentRevisionBySource.computeIfAbsent(
+                version.sourceId(), sourceId -> cacheClient.readCurrentRevisionId(tenantId, sourceId));
+        return current.isEmpty() || current.get().equals(versionId);
     }
 }
