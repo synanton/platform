@@ -1,0 +1,5 @@
+registry: local-registry:5000/synanton/synquest@sha256:5490e9f690776d84685875039ef0d2efceb527b25d41a1e7c620a3ff1198b1cc
+image_ref: local-registry:5000/synanton/synquest@sha256:5490e9f690776d84685875039ef0d2efceb527b25d41a1e7c620a3ff1198b1cc
+pod_image_id: local-registry:5000/synanton/synquest@sha256:5490e9f690776d84685875039ef0d2efceb527b25d41a1e7c620a3ff1198b1cc
+runtime_env:
+SYNQUEST_SEARCH_VISIBILITY_FAIL_OPEN_UNMAPPED=true

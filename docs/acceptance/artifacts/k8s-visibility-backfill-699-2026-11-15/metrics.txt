@@ -1,0 +1,4 @@
+GET /actuator/metrics/search.visibility.hidden_unmapped
+http_status=404
+No meter exists: zero hidden-unmapped increments (post-apply audit hidden_unmapped=0).
+hidden_superseded (audit total) = 19096; post-apply audit hidden_superseded=19096.

@@ -478,8 +478,16 @@ public final class SourceVisibilityBackfill {
         private void printReport() {
             int wouldHide = hidden.values().stream().mapToInt(Integer::intValue).sum();
             System.out.println("tenant=" + options.tenant());
+            int nonLatestCurrent = 0;
+            for (Map.Entry<String, UUID> current : currentBySource.entrySet()) {
+                SourceVersionRow latest = latestIndexed(current.getKey());
+                if (latest != null && !latest.versionId().equals(current.getValue())) {
+                    nonLatestCurrent++;
+                }
+            }
             System.out.println("sources_total=" + versionsBySource.size());
             System.out.println("sources_with_current=" + currentBySource.size());
+            System.out.println("non_latest_current=" + nonLatestCurrent);
             System.out.println("repairable_sources=" + repairCandidateBySource.size());
             System.out.println("total_indexed_chunks=" + total.get());
             System.out.println("visible_current=" + visible.get());

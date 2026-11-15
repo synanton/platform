@@ -1,0 +1,67 @@
+> Task :java:ingestion-cache:processResources UP-TO-DATE
+> Task :java:shared:common:compileJava UP-TO-DATE
+> Task :java:shared:common:processResources UP-TO-DATE
+> Task :java:shared:common:classes UP-TO-DATE
+> Task :java:shared:common:jar UP-TO-DATE
+> Task :java:ingestion-cache:compileJava UP-TO-DATE
+> Task :java:ingestion-cache:classes UP-TO-DATE
+
+> Task :java:ingestion-cache:runVisibilityBackfill
+14:03:13.446 [main] INFO com.datastax.oss.driver.internal.core.DefaultMavenCoordinates -- DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.17.0
+14:03:13.510 [main] INFO com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor -- Adding handler to invalidate cached prepared statements on type changes
+14:03:13.688 [s0-admin-0] INFO com.datastax.oss.driver.internal.core.time.Clock -- Using native clock for microsecond precision
+14:03:18.874 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=5d764af3-84f4-4fdc-bf2a-ea2681acfc45}): failed to send request (java.nio.channels.NotYetConnectedException))
+14:03:18.874 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=5d764af3-84f4-4fdc-bf2a-ea2681acfc45}): failed to send request (java.nio.channels.NotYetConnectedException))
+tenant=demo
+sources_total=37
+sources_with_current=30
+non_latest_current=0
+repairable_sources=0
+total_indexed_chunks=19127
+visible_current=31
+repairable_by_backfill=0
+would_hide_after_backfill=19096
+  hidden_unmapped=0
+  hidden_deleted=0
+  hidden_no_current=0
+  hidden_superseded=19096
+top_hidden_examples:
+  [superseded] fab654b2-30c5-5e07-a43c-848a3406c2aa:0 source=acceptance-695c-1794731388 reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:0 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:1 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:2 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:3 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:4 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:5 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:6 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:7 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:8 source=ui-upload-browser reason=supporting revision is not current
+
+=== #699 audit table 1: repairable candidates ===
+| source_id | selected_revision | observed_at | status | content_ref_id | latest_completed | is_latest_completed | latest_indexed | is_latest_indexed | safe |
+AUDIT: all candidates safe
+
+=== #699 audit table 2: superseded stratified sample ===
+| chunk_id | source_id | indexed_revision | current_revision | indexed_observed_at | current_observed_at | is_older |
+| 9dc0282d-8998-55f4-9251-896955bf4278:22 | books-demo | 9483267c-8433-5afd-9afe-b3b30e64080b | d93a61b4-8ac9-5138-8f31-154130f325d0 | 2026-10-21T05:15:05.263Z | 2026-10-21T05:30:35.785Z | true |
+| 9dc0282d-8998-55f4-9251-896955bf4278:5 | books-demo | 9483267c-8433-5afd-9afe-b3b30e64080b | d93a61b4-8ac9-5138-8f31-154130f325d0 | 2026-10-21T05:15:05.263Z | 2026-10-21T05:30:35.785Z | true |
+| 90dc581d-e09e-503d-9907-e5522cf179d9:1715 | ui-upload-browser | 9b2b5b31-0097-502b-b21a-19515fb08937 | e8c44869-462a-5ec7-9856-260b2cdd2aa7 | 2026-10-21T14:43:22.024Z | 2026-11-08T14:00:01.609Z | true |
+| ab0b3d11-1da1-5ec7-93b7-5d0d638f3741:196 | ui-upload-browser | d98039cc-49df-58c3-a418-679f4fd6b9b5 | e8c44869-462a-5ec7-9856-260b2cdd2aa7 | 2026-10-21T14:42:41.297Z | 2026-11-08T14:00:01.609Z | true |
+| e8d93492-5773-587c-bc7b-d7f5fc531336:21 | c3b-books | 354aa079-5ffb-5146-89fd-ac5112590852 | 38f43ea1-cdbd-5439-97ef-2d2cd0393469 | 2026-10-21T11:44:06.985Z | 2026-10-21T12:02:42.814Z | true |
+| e8d93492-5773-587c-bc7b-d7f5fc531336:37 | c3b-books | 354aa079-5ffb-5146-89fd-ac5112590852 | 38f43ea1-cdbd-5439-97ef-2d2cd0393469 | 2026-10-21T11:44:06.985Z | 2026-10-21T12:02:42.814Z | true |
+| fab654b2-30c5-5e07-a43c-848a3406c2aa:0 | acceptance-695c-1794731388 | de0eaeae-c0ed-57ba-a9cf-60685fa73260 | b75f917a-66d0-55f5-99e9-3c2541e3b18d | 2026-11-15T08:29:48.965Z | 2026-11-15T08:32:07.622Z | true |
+| 6d7dae1c-c428-52a9-a790-382e4e1f21c0:0 | acceptance-695e-1794732035 | b671fb2a-d9e1-5571-80a3-b39c18aa053e | 1a27bc31-481d-5dd2-987f-458ceae2e13a | 2026-11-15T08:40:36.199Z | 2026-11-15T08:42:14.850Z | true |
+| 553d4667-ba2a-5b9b-9c22-c1a7437d43c0:0 | e650 | c58942c5-1d24-5db6-b6d2-40293e199efc | 513d45be-005b-50de-bb5f-f6cfe4723cbb | 2026-11-06T16:53:58.078Z | 2026-11-06T16:58:25.480Z | true |
+AUDIT: sampled 9 chunk(s) from 6 source(s) of 6 with superseded chunks
+
+=== #699 audit table 3: per-source disposition ===
+| source_id | revision_id | status | indexed_chunks | outbox_rows | published_events | failed_revisions | source_created_at | disposition | reason |
+DISPOSITION: approved_sources=0 approved_candidate_attributed_chunks=0 approved_unique_repairable_chunks=0 excluded_sources=0 investigate_sources=0
+EXPECTED: visible_before=31 unique_repairable_total=0 expected_visible_after_apply=31 (unique chunks supported by an approved source; candidate-attributed sum may overlap)
+
+audit only; no source_current rows written
+14:03:24.149 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=5d764af3-84f4-4fdc-bf2a-ea2681acfc45}): failed to send request (io.netty.channel.StacklessClosedChannelException))
+14:03:24.150 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=5d764af3-84f4-4fdc-bf2a-ea2681acfc45}): failed to send request (io.netty.channel.StacklessClosedChannelException))
+
+BUILD SUCCESSFUL in 14s
+6 actionable tasks: 1 executed, 5 up-to-date
