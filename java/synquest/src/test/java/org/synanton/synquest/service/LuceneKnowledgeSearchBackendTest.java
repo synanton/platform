@@ -12,6 +12,7 @@ import org.synanton.synquest.config.SynquestProperties;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 
@@ -195,6 +198,22 @@ class LuceneKnowledgeSearchBackendTest {
     void wireCacheCursors() {
         CacheCursorStubs.wire(cache);
     }
+    @Test
+    void projectUsesSerializedReindexPath() throws Exception {
+        String tenant = "tenant-reindex-lock-" + UUID.randomUUID();
+        LuceneIndexBuilder builder = mock(LuceneIndexBuilder.class);
+        SearchService search = mock(SearchService.class);
+        when(builder.lastReport(tenant)).thenReturn(Optional.empty());
+        LuceneKnowledgeSearchBackend backend = new LuceneKnowledgeSearchBackend(
+                builder, search, cache, new SynquestProperties(
+                        new SynquestProperties.Index(indexRoot.toString(), false, 30), null, null, null));
+
+        assertThat(backend.project(tenant)).isZero();
+
+        verify(search).reindex(tenant);
+        verify(builder, never()).build(tenant);
+    }
+
     @Test
     void failClosedHidesUnmappedChunksAndCountsThem() throws Exception {
         String tenant = "tenant-fail-closed-" + UUID.randomUUID();

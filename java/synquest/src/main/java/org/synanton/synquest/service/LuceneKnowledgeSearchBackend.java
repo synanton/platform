@@ -94,8 +94,10 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
 
     @Override
     public int project(String tenantId) throws Exception {
-        indexBuilder.build(tenantId);
-        searchService.initTenant(tenantId);
+        // Route through the engine's per-tenant reindex lock. Calling the builder
+        // directly bypassed the lock and allowed concurrent full rebuilds to
+        // interleave deletes/adds, doubling the live Lucene documents (#706).
+        searchService.reindex(tenantId);
         return indexBuilder.lastReport(tenantId)
                 .map(LuceneIndexBuilder.BuildReport::docs)
                 .orElse(0);
