@@ -121,6 +121,27 @@ class LlmExtractionAdapterTest {
     }
 
     @Test
+    void promptUsesOnlyActiveOntologyVocabularyAndRelationContracts() {
+        adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        Map<String, Object> request = Json.parseObject(requestBody);
+        String prompt = Json.string(Json.objectList(request, "messages").getFirst(), "content", "");
+        assertThat(prompt)
+                .contains("Allowed entity types")
+                .contains("MaintenanceSystem")
+                .contains("Component")
+                .contains("Concept")
+                .contains("tested_every")
+                .contains("replaced_every")
+                .contains("records")
+                .contains("requires")
+                .contains("Component --tested_every--> Time")
+                .contains("Concept --records--> Measurement")
+                .doesNotContain("signs")
+                .doesNotContain("Person");
+    }
+
+    @Test
     void failsLoudlyOnHttpErrors() {
         status = 500;
         assertThatThrownBy(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
