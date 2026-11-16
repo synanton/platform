@@ -45,16 +45,28 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     private static final int MAX_TOKENS = 2048;
 
     static final String DEFAULT_TYPES = String.join(", ",
-            "MaintenanceSystem", "Component", "Protocol", "Procedure", "Material", "Organization",
-            "Person", "Role", "Product", "Document", "Standard", "Metric", "Measurement",
-            "Location", "Time", "Algorithm", "DataStructure", "Concept", "Event", "Problem");
+            "Organization", "Supplier", "Customer", "Product", "Warehouse", "Order", "OrderLine",
+            "Shipment", "InventoryItem", "Location", "Address", "Country", "City", "PurchaseOrder",
+            "SalesOrder", "Carrier", "Contract", "Invoice", "Payment", "MaintenanceSystem",
+            "Component", "Procedure", "Document", "Measurement", "Time", "Concept");
 
     static final String DEFAULT_PREDICATES = String.join(", ",
-            "has_component", "part_of", "tested_every", "replaced_every", "signs", "records",
-            "documents", "performed_on", "logs", "verifies", "replaced_at", "requires",
-            "repeats_every", "applied_to", "is_a", "used_in", "improves_over", "discussed_in",
-            "same_as", "seeks", "visits", "combines", "implements", "uses", "has", "related_to",
-            "computes", "measures", "obeys", "matches");
+            "hasSupplier", "hasCustomer", "locatedIn", "containsProduct", "partOfOrder",
+            "shipsVia", "fulfillsOrder", "tested_every", "replaced_every", "records", "requires");
+
+    static final String RELATION_CONTRACT = """
+            Product --hasSupplier--> Supplier
+            Order --hasCustomer--> Customer
+            Warehouse --locatedIn--> Location
+            OrderLine --containsProduct--> Product
+            OrderLine --partOfOrder--> Order
+            Shipment --shipsVia--> Carrier
+            Shipment --fulfillsOrder--> Order
+            Component --tested_every--> Time
+            Component --replaced_every--> Time
+            Concept --records--> Measurement
+            MaintenanceSystem --requires--> Component
+            """.strip();
 
     private final HttpClient client;
     private final String endpoint;
@@ -287,7 +299,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 ? String.join(", ", context.allowedEntityTypes())
                 : DEFAULT_TYPES;
         return promptTemplate.replace("{allowed_types}", types)
-                .replace("{allowed_predicates}", DEFAULT_PREDICATES);
+                .replace("{allowed_predicates}", DEFAULT_PREDICATES)
+                .replace("{relation_contract}", RELATION_CONTRACT);
     }
 
     private static String normalizePredicate(String predicate) {
