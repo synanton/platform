@@ -13,6 +13,7 @@ import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.PromotionResult;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
@@ -129,7 +130,8 @@ class RelationRetirementIntegrationTest {
                 + "\"evidenceChunkOffsetStart\":0,\"evidenceChunkOffsetEnd\":5}}";
         RelationPromotionResultRow invalidRow = new RelationPromotionResultRow(
                 tenant, v2, "relation-v2", "mention-v2-subject", "mention-v2-object",
-                predicate, "INVALID", subject, object, "ONTOLOGY_INVALID", evidenceJson,
+                predicate, "INVALID", subject, object,
+                "ONTOLOGY_INVALID:domain_mismatch", evidenceJson,
                 "relation-validation-v1", "active", Instant.now(), null,
                 "source-v2", v2, 1, "run-v2", "CURRENT");
         IngestionCacheClient cache = mock(IngestionCacheClient.class);
@@ -139,7 +141,7 @@ class RelationRetirementIntegrationTest {
         RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(
                 cache, graph, resolver, authority);
 
-        promoter.promoteRelation(v2Relation);
+        assertThat(promoter.promoteRelation(v2Relation)).isEqualTo(new PromotionResult(0, 1, 0));
 
         List<Map<String, Object>> contradiction = cypher.read("""
                 MATCH (e:RelationEvidence {tenant_id: $tenant, source_version_id: $version})
@@ -160,6 +162,58 @@ class RelationRetirementIntegrationTest {
                 RETURN count(e) AS c
                 """, Map.of("tenant", tenant, "relation", canonicalRelationId))
                 .getFirst().get("c")).isEqualTo(2L);
+    }
+
+    @Test
+    void failedAssertionDoesNotWriteContradictingEvidence() {
+        String tenant = "tenant-713-failed";
+        String subject = "subject";
+        String object = "object";
+        String predicate = "requires";
+        UUID v2 = UUID.randomUUID();
+        CanonicalRelation v2Relation = new CanonicalRelation(
+                tenant, v2.toString(), "relation-713-failed", "mention-713-subject", subject,
+                "mention-713-object", object, predicate, "active", "chunk-713:0", 0, 5,
+                "source-713-v2", v2.toString(), 1, "run-713");
+        String canonicalRelationId = PromotionIds.canonicalRelationId(v2Relation);
+        seed(tenant, canonicalRelationId, "ev-713-v1-support", "source-713-v1", "v1", 1,
+                "SUPPORTS", "CURRENT");
+
+        String evidenceJson = "{\"view\":{\"evidenceChunkId\":\"chunk-713:0\","
+                + "\"evidenceChunkOffsetStart\":0,\"evidenceChunkOffsetEnd\":5}}";
+        RelationPromotionResultRow failedRow = new RelationPromotionResultRow(
+                tenant, v2, "relation-713-failed", "mention-713-subject", "mention-713-object",
+                predicate, "INVALID", subject, object,
+                "EXTRACTED_EVIDENCE_NOT_FOUND:EXTRACTED_EVIDENCE_NOT_FOUND", evidenceJson,
+                "relation-validation-v1", "active", Instant.now(), null,
+                "source-713-v2", v2, 1, "run-713", "CURRENT");
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        when(cache.listRelationPromotionResults(tenant, v2)).thenReturn(List.of(failedRow));
+        GraphIdentityResolver resolver = tenantId -> GraphIdentity.canonical(tenantId, "v1");
+        SourceGenerationAuthority authority = key -> Optional.of(1L);
+        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(
+                cache, graph, resolver, authority);
+
+        assertThat(promoter.promoteRelation(v2Relation)).isEqualTo(new PromotionResult(0, 0, 0));
+
+        assertThat(cypher.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, source_version_id: $version})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "version", v2.toString()))
+                .getFirst().get("c")).isEqualTo(0L);
+        Map<String, Object> rel = relationState(tenant, canonicalRelationId);
+        assertThat(rel.get("status")).isEqualTo("ACTIVE");
+        assertThat(rel.get("active")).isEqualTo(true);
+        assertThat(rel.get("review_required")).isEqualTo(false);
+        assertThat(cypher.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, canonical_relation_id: $relation})
+                RETURN e.polarity AS polarity, e.status AS status
+                """, Map.of("tenant", tenant, "relation", canonicalRelationId)))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.get("polarity")).isEqualTo("SUPPORTS");
+                    assertThat(row.get("status")).isEqualTo("CURRENT");
+                });
     }
 
     @Test
