@@ -7,7 +7,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.Instant;
@@ -18,6 +23,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
@@ -100,6 +106,40 @@ class ExtractionConsumerTest {
                     assertThat(result.relationsJson()).contains("requires");
                 });
         verify(adapter, times(1)).extract(any(), any());
+    }
+
+    @Test
+    void completionLogCarriesBoundedTenantClassAndPerStageDurations() throws Exception {
+        String tenant = "eval-log-schema";
+        seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of()));
+
+        Logger logger = (Logger) LoggerFactory.getLogger(ExtractionConsumer.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            consumer(tenant, adapter).poll();
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        String message = appender.list.stream()
+                .map(ILoggingEvent::getFormattedMessage)
+                .filter(line -> line.contains("\"event\":\"extraction_completed\""))
+                .findFirst()
+                .orElseThrow();
+        JsonNode event = new ObjectMapper().readTree(message.substring(message.indexOf('{')));
+        assertThat(event.path("tenant_class").asText()).isEqualTo("eval");
+        assertThat(event.path("tenant_id").asText()).isEqualTo(tenant);
+        assertThat(event.path("rejection_reason_codes").isArray()).isTrue();
+        JsonNode durations = event.path("durations_ms");
+        for (String stage : List.of("extraction", "indexing", "promotion", "activation")) {
+            assertThat(durations.path(stage).asLong()).isGreaterThanOrEqualTo(0);
+        }
     }
 
     @Test

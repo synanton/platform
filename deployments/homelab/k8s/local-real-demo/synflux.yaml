@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: synflux
   namespace: synanton
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8090"
+    prometheus.io/path: "/actuator/prometheus"
 spec:
   type: ClusterIP
   selector:
@@ -26,6 +30,10 @@ spec:
     metadata:
       labels:
         app: synflux
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8090"
+        prometheus.io/path: "/actuator/prometheus"
     spec:
       imagePullSecrets:
         - name: local-registry-cred

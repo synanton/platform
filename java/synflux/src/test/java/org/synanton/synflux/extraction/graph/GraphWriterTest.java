@@ -120,8 +120,10 @@ class GraphWriterTest {
         GraphWriter writer = writer(true);
         ExtractionRequestRow request = request();
 
-        writer.commit(request, List.of(chunk()), Map.of(0, result()));
+        GraphCommitResult outcome = writer.commit(request, List.of(chunk()), Map.of(0, result()));
 
+        assertThat(outcome.rejected()).isEqualTo(1);
+        assertThat(outcome.rejectionCodes()).contains("range_mismatch");
         verify(graphClient, never()).upsertRelations(any());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
