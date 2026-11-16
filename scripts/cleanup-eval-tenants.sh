@@ -62,21 +62,26 @@ if [ "$CONFIRM" != "$expected" ]; then
 fi
 mkdir -p "$AUDIT_DIR"
 audit="$AUDIT_DIR/cleanup-$(date -u +%Y%m%d-%H%M%S).json"
+provider_table="$(cql "SELECT table_name FROM system_schema.tables WHERE keyspace_name='ingestion_cache' AND table_name='tenant_provider_config';" 2>/dev/null | grep -c tenant_provider_config || true)"
 while IFS=$'\t' read -r tenant count bucket; do
   [ -n "${tenant:-}" ] || continue
   in_scope "$tenant" || { echo "refusing out-of-scope tenant $tenant" >&2; exit 4; }
-  cql "DELETE FROM ingestion_cache.tenant_registry WHERE bucket=$bucket AND tenant_id='$tenant'; DELETE FROM ingestion_cache.tenant_provider_config WHERE tenant_id='$tenant';" >/dev/null
+  cql "DELETE FROM ingestion_cache.tenant_registry WHERE bucket=$bucket AND tenant_id='$tenant';" >/dev/null
+  if [ "${provider_table:-0}" -gt 0 ]; then
+    cql "DELETE FROM ingestion_cache.tenant_provider_config WHERE tenant_id='$tenant';" >/dev/null
+  fi
 done < "$dry"
-python3 - "$audit" "$SCOPE" "$expected" "${USER:-unknown}" "$dry" <<'PY'
+python3 - "$audit" "$SCOPE" "$expected" "${USER:-unknown}" "$dry" "${provider_table:-0}" <<'PY'
 import json, sys, datetime
-audit, scope, confirmed, operator, path = sys.argv[1:6]
+audit, scope, confirmed, operator, path, provider_table = sys.argv[1:7]
 tenants = []
 for line in open(path):
     tenant, count, bucket = line.rstrip('\n').split('\t')
     tenants.append({"tenant_id": tenant, "source_versions": int(count), "bucket": int(bucket)})
 json.dump({"scope": scope, "confirmed": confirmed.split(',') if confirmed else [],
            "operator": operator, "deleted_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-           "tenants": tenants, "note": "ontology/graph orphan cleanup deferred to #732"},
+           "tenants": tenants, "provider_table_deleted": bool(int(provider_table)),
+           "note": "ontology/graph orphan cleanup deferred to #732"},
           open(audit, 'w'), indent=2)
 PY
 echo "cleaned $(wc -l < "$dry") tenant(s); audit=$audit"
