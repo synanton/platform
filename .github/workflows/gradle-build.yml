@@ -51,8 +51,8 @@ jobs:
           wait_healthy
           docker cp ydb-poc:/ydb_certs/ca.pem /tmp/ydb-ca.pem
           docker exec ydb-poc sed -i \
-            -e 's/^table_service_config:/table_service_config:\n  enable_hybrid_search: true/' \
-            -e 's/^feature_flags:/feature_flags:\n  enable_fulltext_index_row_id: true\n  enable_fulltext_index_prefix: true\n  enable_add_unique_index: true\n  enable_online_add_unique_index: true/' \
+            -e 's/^table_service_config:/table_service_config:\\n  enable_hybrid_search: true/' \
+            -e 's/^feature_flags:/feature_flags:\\n  enable_fulltext_index_row_id: true\\n  enable_fulltext_index_prefix: true\\n  enable_add_unique_index: true\\n  enable_online_add_unique_index: true/' \
             /ydb_data/cluster/kikimr_configs/config.yaml
           docker restart ydb-poc
           wait_healthy
@@ -65,8 +65,10 @@ jobs:
         # buildAll (containers were killed with exit code 137). The live suites
         # remain available in their database-enabled environment. Runner OOM
         # (exit 137) can surface as a downstream startup timeout; check memory first (#287).
+        # GitHub runners are fresh workspaces, so clean is unnecessary. Keep
+        # Gradle's build cache enabled; setup-gradle restores/saves it per run.
         run: >-
-          ./gradlew clean buildAll --no-build-cache -PskipUi
+          ./gradlew buildAll --build-cache -PskipUi
           -x :java:content-cache-postgres:test
           -x :java:synvault-postgres:test
           -x :java:synquest-postgres:test
@@ -106,7 +108,7 @@ jobs:
         run: >-
           ./gradlew :java:content-cache-postgres:test
           --tests org.synanton.contentcache.postgres.ReplicaReadParityTest
-          --no-build-cache
+          --build-cache
 
       - name: Stop replica pair
         if: always()
