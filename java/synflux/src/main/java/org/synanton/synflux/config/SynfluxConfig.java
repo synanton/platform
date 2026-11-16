@@ -2,8 +2,8 @@ package org.synanton.synflux.config;
 
 import org.synanton.contentcache.ContentStore;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
-import org.synanton.extraction.engine.llm.LlmExtractionAdapter;
-import org.synanton.extraction.engine.regex.RegexExtractorAdapter;
+import org.synanton.synflux.extraction.provider.ExtractionEngines;
+import org.synanton.synflux.extraction.provider.ExtractionProvider;
 import org.synanton.contentcache.FileSystemContentStore;
 import org.synanton.common.kafka.KafkaClientConfig;
 import org.synanton.extraction.client.ExtractionClientMetrics;
@@ -116,24 +116,8 @@ public class SynfluxConfig {
     @Bean
     @ConditionalOnMissingBean(ExtractionEngineAdapter.class)
     public ExtractionEngineAdapter extractionEngineAdapter(ExtractionEngineProperties properties) {
-        String provider = properties.provider() == null
-                ? "regex"
-                : properties.provider().strip().toLowerCase(Locale.ROOT);
-        return switch (provider) {
-            case "regex" -> new RegexExtractorAdapter();
-            case "llm" -> new LlmExtractionAdapter(
-                    properties.endpoint() == null || properties.endpoint().isBlank()
-                            ? "http://localhost:8000/v1"
-                            : properties.endpoint(),
-                    properties.model() == null || properties.model().isBlank()
-                            ? "qwen3-extraction"
-                            : properties.model(),
-                    Duration.ofSeconds(properties.timeoutSeconds() == null
-                            ? 120
-                            : Math.max(1, properties.timeoutSeconds())));
-            default -> throw new IllegalStateException(
-                    "unknown synflux.extraction-engine.provider: " + provider + " (want regex|llm)");
-        };
+        ExtractionProvider provider = ExtractionProvider.parseOrDefault(properties.provider());
+        return ExtractionEngines.create(provider, properties);
     }
 
     @Bean

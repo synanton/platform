@@ -49,6 +49,7 @@ class SchemaInventoryTest {
                     "source_version_manifest_entries",
                     "source_versions",
                     "sources",
+                    "tenant_provider_config",
                     "tenant_registry",
                     "workflow_states",
                     "workflow_leases",
@@ -131,7 +132,9 @@ class SchemaInventoryTest {
             "chunk_source_versions.processing_run_id",
             "manifest.processing_run_id",
             "knowledge_processing_runs.producer_version",
-            "knowledge_processing_runs.input_source_version_ids"
+            "knowledge_processing_runs.input_source_version_ids",
+            "source_versions.extraction_provider",
+            "tenant_provider_config.provider"
         );
 
         // EWP-2 Migration 3 (V16): typed-envelope metadata on both outbox tables.

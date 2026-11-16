@@ -33,6 +33,10 @@ import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
 import org.synanton.synflux.extraction.graph.GraphWriter;
+import org.synanton.synflux.extraction.provider.ExtractionAdapterResolver;
+import org.synanton.synflux.extraction.provider.ExtractionProvider;
+import org.synanton.synflux.extraction.provider.ProviderConfigInvalidException;
+import org.synanton.synflux.extraction.provider.ResolvedExtractionAdapter;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -115,6 +119,65 @@ class ExtractionConsumerTest {
                     assertThat(event.attemptCount()).isEqualTo(1);
                     assertThat(event.nextAttemptAt()).isNotNull();
                 });
+    }
+
+    @Test
+    void providerInvalidMarksTheDocumentTerminal() {
+        String tenant = "tenant-provider-invalid";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionAdapterResolver resolver = tenantId -> {
+            throw new ProviderConfigInvalidException("bad provider");
+        };
+        ExtractionConsumer consumer = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC());
+
+        consumer.poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("EXTRACTION_FAILED");
+        assertThat(cache.listExtractionOutbox(tenant, CONNECTOR, SOURCE, RESOURCE))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.deadLettered()).isTrue();
+                    assertThat(event.nextAttemptAt()).isNull();
+                    assertThat(event.lastError()).contains("PROVIDER_CONFIG_INVALID");
+                });
+    }
+
+    @Test
+    void resolvedProviderIsPersistedOnTheSourceVersion() {
+        String tenant = "tenant-provider-metadata";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of()));
+        ExtractionAdapterResolver resolver = tenantId -> new ResolvedExtractionAdapter(
+                adapter, ExtractionProvider.LLM, "tenant-override");
+        ExtractionConsumer consumer = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC());
+
+        consumer.poll();
+
+        String provider = session.execute(
+                "SELECT extraction_provider FROM ingestion_cache.source_versions " +
+                        "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? " +
+                        "AND version_id=?",
+                tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId())
+                .one().getString("extraction_provider");
+        assertThat(provider).isEqualTo("llm");
+    }
+
+    @Test
+    void tenantProviderOverrideRoundTripsAndCanBeCleared() {
+        String tenant = "tenant-provider-config";
+        Instant now = Instant.now();
+        cache.setTenantProvider(tenant, "llm", now);
+        assertThat(cache.readTenantProvider(tenant)).contains("llm");
+        cache.clearTenantProvider(tenant);
+        assertThat(cache.readTenantProvider(tenant)).isEmpty();
     }
 
     @Test
