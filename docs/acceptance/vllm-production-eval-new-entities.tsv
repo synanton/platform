@@ -1,0 +1,16 @@
+entity	expected_type	source_document	new_entity_rationale	check
+Acme Corp	Organization	demo-data/documents/acme-corp-profile.md	Not present in the demo canonical graph (current labels: Halcyon-7, auxiliary coolant loop, relief valve, secondary manifold, pressure-test log, ambient dew point, ninety days, two hundred seventy days, every test)	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Globex Manufacturing	Organization	demo-data/documents/globex-manufacturing.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Initech Ltd	Organization	demo-data/documents/initech-ltd.txt	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Northwind Logistics	Organization	demo-data/documents/logistics-network.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Springfield	City	demo-data/documents/acme-corp-profile.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Denver	City	demo-data/documents/acme-corp-profile.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Atlanta	City	demo-data/documents/acme-corp-profile.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Toronto	City	demo-data/documents/acme-corp-profile.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Columbus	City	demo-data/documents/globex-manufacturing.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Ohio	Location	demo-data/documents/globex-manufacturing.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Ontario	Location	demo-data/documents/globex-manufacturing.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Tennessee	Location	demo-data/documents/globex-manufacturing.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+ISO 9001:2015	Standard	demo-data/documents/acme-corp-profile.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+IATF 16949	Standard	demo-data/documents/acme-corp-profile.md	Not present in the demo canonical graph	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
+Widget-X	Product	docs/acceptance/artifacts/vllm-production-eval/corpus/large-final-100p.pdf	Not present in the demo canonical graph; appears in the generated large-PDF corpus	Extract -> resolve -> relation/evidence; no silent canonicalization on failure
