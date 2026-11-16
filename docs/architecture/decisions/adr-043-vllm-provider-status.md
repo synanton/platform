@@ -52,6 +52,22 @@ vLLM is available everywhere but is the default nowhere.
 - GPU utilization and queue depth under concurrent ingestion.
 - Rollback frequency and reasons.
 
+## Production evaluation (step 2)
+
+The production evaluation is **step 2 of this decision**, not a separate initiative. It is tracked by #723 and is the only production-evaluation ticket. #724 and #725 are required sub-checks of #723, not parallel duplicate evaluations.
+
+Initial scope:
+
+- 20–30 documents, then continue to ≥100 documents or one week of telemetry.
+- ≥3 tenants and ≥3 document types.
+- ≥2 large PDFs (≥100 pages), via #724.
+- ≥3 new-entity documents, via #725.
+- ≥3 negative controls.
+- Per-document precision/recall, rejection by layer, latency p50/p95, #720 recurrence, lifecycle regressions, and rollback frequency.
+- Report at `docs/acceptance/vllm-production-eval-YYYY-MM-DD.md`.
+
+The default-switch ADR is blocked until #723 closes and every open row in the evidence matrix is closed or explicitly deferred with a reason.
+
 ## Reassessment criteria for the default switch
 
 The default-switch ADR may be written only after:
@@ -74,9 +90,9 @@ The default-switch ADR may be written only after:
 
 ## Follow-up tickets
 
-- #723 — Second canary on production-representative corpus (closes coverage).
-- #724 — Large-PDF throughput and quality benchmark (closes one Open row).
-- #725 — New-entity resolution coverage (closes the other Open row).
+- #723 — **Production evaluation (step 2 of this decision).** 20–30 documents initially, ≥3 tenants, ≥3 types, ≥3 negative controls, then ≥1 week/≥100 documents. This is the single production-evaluation ticket; do not file a duplicate "real-world extraction evaluation".
+- #724 — Large-PDF throughput/quality benchmark; required sub-check of #723 (closes one Open row).
+- #725 — New-entity resolution coverage; required sub-check of #723 (closes the other Open row).
 - #720 — Attribution/rejection-reason observation and refinement (known limitation).
 
 ## Context
