@@ -28,6 +28,7 @@ import org.synanton.common.resolution.ValidationViolation;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore.OwnershipToken;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
 
@@ -106,7 +107,7 @@ public final class RelationPromotionProducer {
 
     @Scheduled(fixedDelayString = "${PROMOTION_TAKEOVER_SWEEP_INTERVAL_MS:60000}")
     public void recoverStaleOwnership() {
-        if (!enabled || tenant == null || tenant.isBlank() || ownershipStore == null) {
+        if (!enabled || ownershipStore == null) {
             return;
         }
         int won = ownershipStore.takeoverStale(producerId,
@@ -118,9 +119,22 @@ public final class RelationPromotionProducer {
 
     @Scheduled(fixedDelayString = "${PROMOTION_PRODUCER_POLL_DELAY_MS:5000}")
     public void poll() {
-        if (!enabled || tenant == null || tenant.isBlank()) {
+        if (!enabled) {
             return;
         }
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(tenant, cacheClient);
+        } catch (Exception e) {
+            log.warn("Relation promotion tenant discovery failed: {}", e.toString());
+            return;
+        }
+        for (String currentTenant : tenants) {
+            pollTenant(currentTenant);
+        }
+    }
+
+    private void pollTenant(String tenant) {
         List<SourceVersionRow> candidates;
         try {
             candidates = cacheClient.listMentionsCommittedSourceVersions(tenant, 100);
@@ -130,17 +144,17 @@ public final class RelationPromotionProducer {
             return;
         }
         for (SourceVersionRow candidate : candidates) {
-            processVersion(candidate.versionId());
+            processVersion(tenant, candidate.versionId());
         }
     }
 
-    private void processVersion(UUID version) {
+    private void processVersion(String tenant, UUID version) {
         if (ownershipStore == null) {
             log.warn("Relation promotion producer has no ownership store; skipping version={}", version);
             return;
         }
         // Acquire before scanning so a zero-row decision is serialized against other producers.
-        Optional<OwnershipToken> acquired = acquire(version);
+        Optional<OwnershipToken> acquired = acquire(tenant, version);
         if (acquired.isEmpty()) {
             return;
         }
@@ -153,7 +167,7 @@ public final class RelationPromotionProducer {
                     version, e.toString());
             return;
         }
-        Set<String> existing = existingRelationIds(version);
+        Set<String> existing = existingRelationIds(tenant, version);
         if (existing == null) {
             return;
         }
@@ -162,14 +176,14 @@ public final class RelationPromotionProducer {
             if (existing.contains(relation.relationId())) {
                 continue;
             }
-            if (!ready(relation)) {
+            if (!ready(tenant, relation)) {
                 canClose = false;
                 continue;
             }
             try {
                 RelationValidationResult result = validator.validate(tenant,
                         ontologyVersion, relation.relationId());
-                ownershipStore.insertPromotionResult(buildRow(relation, result), token);
+                ownershipStore.insertPromotionResult(buildRow(tenant, relation, result), token);
                 existing.add(relation.relationId());
             } catch (StaleOwnershipException e) {
                 log.warn("Relation promotion ownership lost version={} producer={} generation={}; "
@@ -193,7 +207,7 @@ public final class RelationPromotionProducer {
         }
     }
 
-    private Optional<OwnershipToken> acquire(UUID version) {
+    private Optional<OwnershipToken> acquire(String tenant, UUID version) {
         try {
             return ownershipStore.acquire(tenant, version, producerId);
         } catch (Exception e) {
@@ -203,7 +217,7 @@ public final class RelationPromotionProducer {
         }
     }
 
-    private RelationPromotionResultRow buildRow(ExtractedRelationView view,
+    private RelationPromotionResultRow buildRow(String tenant, ExtractedRelationView view,
                                                 RelationValidationResult result) {
         UUID version = version(view);
         if (version == null) {
@@ -263,7 +277,7 @@ public final class RelationPromotionProducer {
                 result.violations().stream().map(ValidationViolation::code).toList());
     }
 
-    private boolean ready(ExtractedRelationView relation) {
+    private boolean ready(String tenant, ExtractedRelationView relation) {
         List<ActiveResolution> active;
         try {
             active = graphLookup.getActiveResolutions(tenant,
@@ -278,7 +292,7 @@ public final class RelationPromotionProducer {
         return subjects == 1 && objects == 1;
     }
 
-    private Set<String> existingRelationIds(UUID version) {
+    private Set<String> existingRelationIds(String tenant, UUID version) {
         Set<String> ids = new HashSet<>();
         try {
             for (RelationPromotionResultRow row : cacheClient.listRelationPromotionResults(tenant, version)) {

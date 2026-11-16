@@ -3,10 +3,12 @@ package org.synanton.relix.consumer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import org.springframework.scheduling.annotation.Scheduled;
+import java.util.List;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.activation.SourceLifecycleRecord;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.relix.config.PromotionConsumerProperties;
 
@@ -36,12 +38,20 @@ public final class ActivationDriftMonitor {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), cache);
+        } catch (RuntimeException failure) {
             return;
         }
-        for (SourceRow source : cache.listSources(tenant)) {
-            activations.readLifecycle(tenant, source.sourceId()).ifPresent(this::record);
+        for (String tenant : tenants) {
+            try {
+                for (SourceRow source : cache.listSources(tenant)) {
+                    activations.readLifecycle(tenant, source.sourceId()).ifPresent(this::record);
+                }
+            } catch (RuntimeException ignored) {
+                // Drift is observational; one tenant must not block the others.
+            }
         }
     }
 

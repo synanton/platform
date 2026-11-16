@@ -2,10 +2,13 @@ package org.synanton.relix.reconciliation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.relix.config.ReconciliationProperties;
 import org.synanton.relix.graph.RelationRetirement;
 
@@ -21,11 +24,14 @@ public final class RelationRetirementReconciler {
 
     private final ObjectProvider<RelationRetirement> retirement;
     private final ReconciliationProperties properties;
+    private final IngestionCacheClient cache;
 
     public RelationRetirementReconciler(ObjectProvider<RelationRetirement> retirement,
-                                        ReconciliationProperties properties) {
+                                        ReconciliationProperties properties,
+                                        IngestionCacheClient cache) {
         this.retirement = retirement;
         this.properties = properties;
+        this.cache = cache;
     }
 
     @Scheduled(fixedDelayString = "${relix.reconciliation.poll-delay-ms:60000}")
@@ -33,20 +39,24 @@ public final class RelationRetirementReconciler {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Relation retirement reconciliation is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), cache);
+        } catch (RuntimeException failure) {
+            log.warn("Relation retirement tenant discovery failed: {}", failure.toString());
             return;
         }
         RelationRetirement relationRetirement = retirement.getIfAvailable();
         if (relationRetirement == null) {
             return;
         }
-        try {
-            relationRetirement.reconcileRetirementState(tenant, properties.batchOrDefault());
-        } catch (RuntimeException failure) {
-            log.warn("Relation retirement reconciliation failed tenant={}: {}",
-                    tenant, failure.toString());
+        for (String tenant : tenants) {
+            try {
+                relationRetirement.reconcileRetirementState(tenant, properties.batchOrDefault());
+            } catch (RuntimeException failure) {
+                log.warn("Relation retirement reconciliation failed tenant={}: {}",
+                        tenant, failure.toString());
+            }
         }
     }
 }

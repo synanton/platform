@@ -86,10 +86,12 @@ spec:
                   key: secret
             - name: SYNQUEST_PROJECTION_ENABLED
               value: "true"
+            - name: SYNQUEST_PROJECTION_TENANT
+              value: "*"
             - name: RESOLUTION_CONSUMER_ENABLED
               value: "false"
             - name: RESOLUTION_CONSUMER_TENANT
-              value: demo
+              value: "*"
             - name: RESOLUTION_ONTOLOGY_VERSION
               value: active
             - name: RESOLUTION_ABSOLUTE_THRESHOLD

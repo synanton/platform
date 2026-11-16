@@ -2,11 +2,13 @@ package org.synanton.relix.reconciliation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.relix.config.ReconciliationProperties;
 import org.synanton.relix.identity.SourceFenceKey;
@@ -42,24 +44,32 @@ public final class SourceFenceReconciliationSweep {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Source fence reconciliation is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), cache);
+        } catch (RuntimeException failure) {
+            log.warn("Source fence tenant discovery failed: {}", failure.toString());
             return;
         }
         SourceFenceReconciler fenceReconciler = reconciler.getIfAvailable();
         if (fenceReconciler == null) {
             return;
         }
-        for (SourceRow source : cache.listSources(tenant)) {
-            if (cache.readAcceptedGeneration(tenant, source.sourceId()).isEmpty()) {
-                continue;
-            }
-            SourceFenceKey key = new SourceFenceKey(tenant, source.sourceId());
+        for (String tenant : tenants) {
             try {
-                fenceReconciler.reconcile(key);
+                for (SourceRow source : cache.listSources(tenant)) {
+                    if (cache.readAcceptedGeneration(tenant, source.sourceId()).isEmpty()) {
+                        continue;
+                    }
+                    SourceFenceKey key = new SourceFenceKey(tenant, source.sourceId());
+                    try {
+                        fenceReconciler.reconcile(key);
+                    } catch (RuntimeException failure) {
+                        log.warn("Source fence reconciliation failed key={}: {}", key, failure.toString());
+                    }
+                }
             } catch (RuntimeException failure) {
-                log.warn("Source fence reconciliation failed key={}: {}", key, failure.toString());
+                log.warn("Source fence reconciliation scan failed tenant={}: {}", tenant, failure.toString());
             }
         }
     }

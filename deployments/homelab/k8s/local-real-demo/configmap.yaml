@@ -7,6 +7,7 @@ data:
   SECURITY_DEMO_ISSUANCE_ENABLED: "true"
   SYNQUEST_EMBEDDING_REQUIRED: "false"
   SYNQUEST_SEED_DEMO_TENANT: "demo"
+  SYNQUEST_PROJECTION_TENANT: "*"
   SYNFLUX_PIPELINE_EMBEDDING_ENABLED: "true"
   # Query embeddings (synquest, OpenAI-compatible, needs /v1) and ingest embeddings
   # (synflux, EMBED_BASE_URL + /embeddings) both point at the in-cluster TEI service.

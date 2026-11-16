@@ -155,6 +155,22 @@ class ResolutionConsumerTest {
     }
 
     @Test
+    void registryModePollsEveryRegisteredTenant() {
+        when(claims.listTenantIds()).thenReturn(List.of("tenant-a", "tenant-b"));
+        when(claims.pendingResolutions(anyString(), anyInt(), any())).thenReturn(List.of());
+        ResolutionConsumer registryConsumer = new ResolutionConsumer(claims, provider, policy, writer,
+                new ResolutionConsumerProperties(true, "", 10, 5, 30, 300, 5000L, "active"),
+                new SimpleMeterRegistry());
+
+        registryConsumer.poll();
+
+        verify(claims).pendingResolutions(eq("tenant-a"), anyInt(), any());
+        verify(claims).pendingResolutions(eq("tenant-b"), anyInt(), any());
+        verify(claims).reclaimExpiredResolutions(eq("tenant-a"), any(), anyInt());
+        verify(claims).reclaimExpiredResolutions(eq("tenant-b"), any(), anyInt());
+    }
+
+    @Test
     void disabledConsumerPollsNothing() {
         ResolutionConsumerProperties disabled =
                 new ResolutionConsumerProperties(false, "tenant-a", 10, 5, 30, 300, 5000L, "active");

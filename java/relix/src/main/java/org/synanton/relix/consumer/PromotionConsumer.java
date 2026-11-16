@@ -33,6 +33,7 @@ import org.synanton.relix.config.PromotionConsumerProperties;
 import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionWorkRow;
 
@@ -116,11 +117,19 @@ public final class PromotionConsumer {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Promotion consumer is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), claims);
+        } catch (Exception e) {
+            log.warn("Promotion tenant discovery failed: {}", e.toString());
             return;
         }
+        for (String tenant : tenants) {
+            pollTenant(tenant);
+        }
+    }
+
+    private void pollTenant(String tenant) {
         Instant now = clock.instant();
         try {
             claims.reclaimExpiredPromotions(tenant, now, properties.batchRelationsOrDefault());
@@ -136,14 +145,18 @@ public final class PromotionConsumer {
         }
         Set<UUID> abortedVersions = new HashSet<>();
         for (RelationPromotionWorkRow work : pending) {
-            UUID version = work.result().sourceVersionId();
-            if (abortedVersions.contains(version)) {
-                continue;
+            try {
+                UUID version = work.result().sourceVersionId();
+                if (abortedVersions.contains(version)) {
+                    continue;
+                }
+                if (!process(work)) {
+                    abortedVersions.add(version);
+                }
+                completeCanonicalIfTerminal(work);
+            } catch (Exception e) {
+                log.warn("Promotion processing failed tenant={}: {}", tenant, e.toString());
             }
-            if (!process(work)) {
-                abortedVersions.add(version);
-            }
-            completeCanonicalIfTerminal(work);
         }
     }
 

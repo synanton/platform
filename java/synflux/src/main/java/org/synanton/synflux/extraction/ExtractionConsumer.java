@@ -16,6 +16,7 @@ import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.TextSegment;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
@@ -92,11 +93,17 @@ public class ExtractionConsumer {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Extraction consumer is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), cacheClient);
+        } catch (Exception e) {
+            log.warn("Extraction tenant discovery failed: {}", e.toString());
             return;
         }
+        TenantPolling.forEachConcurrent(tenants, this::pollTenant);
+    }
+
+    private void pollTenant(String tenant) {
         List<ExtractionRequestRow> pending;
         try {
             pending = cacheClient.listPendingExtractionRequests(
@@ -106,7 +113,11 @@ public class ExtractionConsumer {
             return;
         }
         for (ExtractionRequestRow request : pending) {
-            process(request);
+            try {
+                process(request);
+            } catch (Exception e) {
+                log.warn("Extraction processing failed for tenant '{}': {}", tenant, e.toString());
+            }
         }
     }
 

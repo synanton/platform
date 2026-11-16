@@ -1,7 +1,7 @@
 # #723 production evaluation — pre-flight record
 
 **Status:** BLOCKED — no ingestion started.
-**Code-complete:** 8/11 (pieces 1–3 implemented; piece 3 pending merge).
+**Code-complete:** 9/11 (pieces 1–4 implemented; piece 4 pending merge).
 **Operationally verified:** 5/11 (deploy, scrape, and eval tenant provisioning still pending).
 **Plan:** [`vllm-production-eval-plan.md`](./vllm-production-eval-plan.md)
 **Manifest:** [`vllm-production-eval-corpus.tsv`](./vllm-production-eval-corpus.tsv)
@@ -23,14 +23,14 @@ verified means the item has been exercised against the deployed environment.
 | 6 | Provider overrides per tenant | ✅ (piece 1) | ❌ | Piece 1 image not deployed |
 | 7 | Retry provider consistency | ✅ (piece 1.5) | ❌ | Piece 1.5 image not deployed |
 | 8 | Tenant-aware metric capture | ✅ (piece 3) | ❌ | No Prometheus consumer (#736) |
-| 9 | Multi-tenant polling | ❌ | ❌ | Piece 4 |
+| 9 | Multi-tenant polling | ✅ (piece 4) | ❌ | Piece 4 not deployed |
 | 10 | Real ≥100-page PDF | ❌ | ❌ | Source procurement (#724) |
 | 11 | Extended observation corpus (30–50 docs) | ❌ | ❌ | Source procurement |
 
 The fifth operationally verified item is the recorded wall-clock budget; it is
 not one of the 11 product/eval gates.
 
-Pieces 1–3 change the code-complete count from 5/11 to 8/11. The operational
+Pieces 1–4 change the code-complete count from 5/11 to 9/11. The operational
 count remains 5/11 until the pieces are deployed, V33 is verified, eval tenants
 are provisioned, and metrics are scraped. The eval cannot start until
 operational is 11/11.
@@ -60,7 +60,7 @@ operational is 11/11.
 
 ## Deploy gates — pieces 1–3 and V33
 
-Pieces 1–3 deploy as one image. V33 adds `tenant_provider_config` and
+Pieces 1–4 deploy as one image (synflux, synquest, relix). V33 adds `tenant_provider_config` and
 `source_versions.extraction_provider`.
 
 Post-deploy order:
@@ -73,6 +73,7 @@ Post-deploy order:
 6. Prometheus discovers synflux with `health=up` (#736; currently unavailable).
 7. Every query in [`vllm-metrics-queries.md`](./vllm-metrics-queries.md) is non-empty.
 8. Demo search still returns existing results.
+9. A newly registered eval tenant is polled by extraction (`EXTRACTION_CONSUMER_TENANT=*`) without a demo tenant restart.
 
 Rollback: redeploy the previous image. V33's new table/column are additive and
 inert to old code, so no destructive schema rollback is required. Existing

@@ -1,7 +1,6 @@
 package org.synanton.synquest.service;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -66,15 +65,19 @@ class SearchProjectionConsumerTest {
     }
 
     @Test
-    void enabledProjectionWithBlankTenantFailsFast() {
+    void enabledProjectionWithBlankTenantUsesTheRegistry() throws Exception {
         var cache = mock(IngestionCacheClient.class);
         var search = mock(SearchService.class);
-
+        when(cache.listTenantIds()).thenReturn(List.of("demo", "eval-a"));
+        when(cache.listUnpublishedSourceOutbox(anyString(), anyInt(), any(Instant.class)))
+                .thenReturn(List.of());
         var consumer = new SearchProjectionConsumer(cache, search, "", 200, true);
 
-        assertThatThrownBy(consumer::validateProjectionConfig)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no tenant is configured");
+        assertThatCode(consumer::validateProjectionConfig).doesNotThrowAnyException();
+        consumer.projectNewSourceVersions();
+
+        verify(cache).listUnpublishedSourceOutbox(eq("demo"), anyInt(), any(Instant.class));
+        verify(cache).listUnpublishedSourceOutbox(eq("eval-a"), anyInt(), any(Instant.class));
     }
 
     @Test

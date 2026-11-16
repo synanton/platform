@@ -49,6 +49,10 @@ synquest:
     # Optional demo projection initialisation after a restart. Set to the demo
     # tenant (demo) so the existing index is loaded without a manual rebuild.
     demo-tenant: ${SYNQUEST_SEED_DEMO_TENANT:}
+  projection:
+    # "*" (or blank) polls every tenant in tenant_registry; a concrete tenant
+    # keeps the single-tenant deployment behaviour.
+    tenant: ${SYNQUEST_PROJECTION_TENANT:*}
   embedding:
     model: ${EMBED_MODEL:bge-base-en-v1.5}
     # Dense index dimension (<= 1024, the Lucene 9.11 KNN cap). Changing it needs a /reindex.
