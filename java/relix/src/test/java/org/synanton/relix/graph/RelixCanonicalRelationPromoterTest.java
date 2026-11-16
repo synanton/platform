@@ -86,7 +86,8 @@ class RelixCanonicalRelationPromoterTest {
 
     @Test
     void invalidValidationRowRecordsContradictionAndNeverPromotes() {
-        when(cache.listRelationPromotionResults(TENANT, VERSION)).thenReturn(List.of(row("INVALID")));
+        when(cache.listRelationPromotionResults(TENANT, VERSION))
+                .thenReturn(List.of(row("INVALID", "ONTOLOGY_INVALID:domain_mismatch")));
         when(resolver.resolveCanonical(TENANT)).thenReturn(identity);
         when(authority.acceptedGeneration(any())).thenReturn(java.util.Optional.of(1L));
         when(writePort.recordContradiction(any(), any(), any()))
@@ -96,6 +97,30 @@ class RelixCanonicalRelationPromoterTest {
         verify(writePort).recordContradiction(eq(identity), any(), eq(
                 new SourceRevisionIdentity(TENANT, "source-1", 1)));
         verify(writePort, never()).promoteRelation(any(), any(), any());
+    }
+
+    @Test
+    void classifiesDomainMismatchAsContradiction() {
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "ONTOLOGY_INVALID:domain_mismatch")).isTrue();
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "ONTOLOGY_INVALID:range_mismatch,domain_mismatch")).isTrue();
+    }
+
+    @Test
+    void classifiesFailedAssertionsWithoutContradictionEvidence() {
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "EXTRACTED_EVIDENCE_NOT_FOUND:EXTRACTED_EVIDENCE_NOT_FOUND")).isFalse();
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "MISSING_ACTIVE_RESOLUTION:MISSING_ACTIVE_RESOLUTION")).isFalse();
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "ONTOLOGY_INVALID:unknown_predicate")).isFalse();
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "ONTOLOGY_INVALID:unknown_subject_type,unknown_predicate")).isFalse();
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "ONTOLOGY_INVALID:domain_mismatch,unknown_object_type")).isFalse();
+        assertThat(RelixCanonicalRelationPromoter.isContradiction(
+                "ONTOLOGY_INVALID")).isFalse();
     }
 
     @Test
@@ -113,8 +138,12 @@ class RelixCanonicalRelationPromoterTest {
     }
 
     private static RelationPromotionResultRow row(String status) {
+        return row(status, status);
+    }
+
+    private static RelationPromotionResultRow row(String status, String reason) {
         return new RelationPromotionResultRow(TENANT, VERSION, "r1", "m1", "m2", "requires",
-                status, "e1", "e2", status, "{}", "relation-validation-v1", "1.0.0",
+                status, "e1", "e2", reason, "{}", "relation-validation-v1", "1.0.0",
                 Instant.now(), null, "source-1", VERSION, 1, null, "CURRENT");
     }
 }
