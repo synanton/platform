@@ -106,8 +106,9 @@ public class ExtractionConsumer {
                 log.warn("Graph writer failed after extraction ref={} version={}: {}",
                         request.contentRefId(), request.versionId(), graphFailure.toString());
             }
-            log.info("Extraction completed ref={} version={} chunks={}",
-                    request.contentRefId(), request.versionId(), processed);
+            log.info("Extraction completed ref={} version={} chunks={} engine={}",
+                    request.contentRefId(), request.versionId(), processed,
+                    adapter.getClass().getSimpleName());
         } catch (Exception e) {
             int attempts = request.attemptCount() + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempts));
