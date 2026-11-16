@@ -1532,13 +1532,19 @@ public class IngestionCacheClient {
     }
 
     public void markExtractionSucceeded(ExtractionRequestRow request, Instant completedAt) {
+        markExtractionSucceeded(request, null, completedAt);
+    }
+
+    public void markExtractionSucceeded(ExtractionRequestRow request, String provider,
+                                        Instant completedAt) {
         session.execute(SimpleStatement.newInstance(
             "UPDATE ingestion_cache.source_versions SET extraction_status='KNOWLEDGE_READY', " +
+            "extraction_provider=?, " +
             "extraction_event_published=true, extraction_event_published_at=?, " +
             "extraction_event_last_error=null, extraction_event_next_attempt_at=null, " +
             "extraction_event_dead_lettered=false WHERE tenant_id=? AND connector_id=? " +
             "AND source_id=? AND resource_id=? AND version_id=?",
-            completedAt, request.tenantId(), request.connectorId(), request.sourceId(),
+            provider, completedAt, request.tenantId(), request.connectorId(), request.sourceId(),
             request.resourceId(), request.versionId()
         ));
     }
@@ -1552,6 +1558,43 @@ public class IngestionCacheClient {
             "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
             attemptCount, error, nextAttemptAt, request.tenantId(), request.connectorId(),
             request.sourceId(), request.resourceId(), request.versionId()
+        ));
+    }
+
+    /** Terminal provider/config failure: no retry, visible to the operator. */
+    public void markExtractionFailedTerminal(
+            ExtractionRequestRow request, int attemptCount, String error) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET extraction_status='EXTRACTION_FAILED', " +
+            "extraction_event_published=false, extraction_event_attempt_count=?, " +
+            "extraction_event_last_error=?, extraction_event_next_attempt_at=null, " +
+            "extraction_event_dead_lettered=true " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            attemptCount, error, request.tenantId(), request.connectorId(),
+            request.sourceId(), request.resourceId(), request.versionId()
+        ));
+    }
+
+    public Optional<String> readTenantProvider(String tenantId) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT provider FROM ingestion_cache.tenant_provider_config WHERE tenant_id=?",
+            tenantId
+        )).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getString("provider"));
+    }
+
+    public void setTenantProvider(String tenantId, String provider, Instant updatedAt) {
+        session.execute(SimpleStatement.newInstance(
+            "INSERT INTO ingestion_cache.tenant_provider_config (tenant_id, provider, updated_at) " +
+            "VALUES (?,?,?)",
+            tenantId, provider, updatedAt
+        ));
+    }
+
+    public void clearTenantProvider(String tenantId) {
+        session.execute(SimpleStatement.newInstance(
+            "DELETE FROM ingestion_cache.tenant_provider_config WHERE tenant_id=?",
+            tenantId
         ));
     }
 
