@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceTombstoneRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
@@ -41,7 +42,7 @@ public class SearchProjectionConsumer {
     public SearchProjectionConsumer(
             IngestionCacheClient cacheClient,
             SearchService searchService,
-            @Value("${synquest.seed.demo-tenant:}") String tenant,
+            @Value("${synquest.projection.tenant:*}") String tenant,
             @Value("${synquest.projection.batch-limit:200}") int batchLimit,
             @Value("${synquest.projection.enabled:true}") boolean projectionEnabled) {
         this.cacheClient = cacheClient;
@@ -52,9 +53,8 @@ public class SearchProjectionConsumer {
     }
 
     /**
-     * Fail-fast (Fix 1 pattern): an enabled projection with no tenant would silently
-     * no-op — ingestion keeps writing to Cassandra while the search index never
-     * updates and the outbox grows unbounded. Refuse to start instead.
+     * Registry mode is explicit: blank or {@code *} serves every registered
+     * tenant. A concrete tenant keeps the original single-tenant behaviour.
      */
     @PostConstruct
     public void validateProjectionConfig() {
@@ -62,19 +62,31 @@ public class SearchProjectionConsumer {
             log.warn("Search projection consumer is DISABLED; the search index will not update automatically");
             return;
         }
-        if (tenant == null || tenant.isBlank()) {
-            throw new IllegalStateException(
-                    "Projection is enabled but no tenant is configured. Set synquest.seed.demo-tenant=<tenant> "
-                            + "or disable with synquest.projection.enabled=false.");
+        if (tenant == null || tenant.isBlank() || TenantPolling.ALL.equals(tenant.trim())) {
+            log.info("Search projection consumer active; polling tenants from the registry");
+            return;
         }
         log.info("Search projection consumer active for tenant '{}'", tenant);
     }
 
     @Scheduled(fixedDelayString = "${synquest.projection.poll-delay-ms:5000}")
     public void projectNewSourceVersions() {
-        if (!projectionEnabled || tenant == null || tenant.isBlank()) {
+        if (!projectionEnabled) {
             return;
         }
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(tenant, cacheClient);
+        } catch (Exception failure) {
+            log.warn("Search projection tenant discovery failed; events stay unpublished for retry", failure);
+            return;
+        }
+        for (String currentTenant : tenants) {
+            projectTenant(currentTenant);
+        }
+    }
+
+    private void projectTenant(String tenant) {
         try {
             List<SourceOutboxRow> pending =
                     cacheClient.listUnpublishedSourceOutbox(tenant, batchLimit, Instant.now());
@@ -86,14 +98,14 @@ public class SearchProjectionConsumer {
             Set<UUID> deletes = new LinkedHashSet<>();
             for (SourceOutboxRow event : pending) {
                 if ("SourcePublished".equals(event.eventType())) {
-                    UUID contentRef = resolveContentRef(event);
+                    UUID contentRef = resolveContentRef(tenant, event);
                     if (contentRef == null) {
                         fullRebuild = true;
                         break;
                     }
                     upserts.add(contentRef);
                 } else if ("SourceDeleted".equals(event.eventType())) {
-                    Set<UUID> deletedRefs = resolveDeletedContentRefs(event);
+                    Set<UUID> deletedRefs = resolveDeletedContentRefs(tenant, event);
                     if (deletedRefs == null) {
                         fullRebuild = true;
                         break;
@@ -140,7 +152,7 @@ public class SearchProjectionConsumer {
      * still used by another source stays indexed. Returns {@code null} when the
      * tombstone/version manifest cannot be resolved (full-rebuild fallback).
      */
-    private Set<UUID> resolveDeletedContentRefs(SourceOutboxRow event) {
+    private Set<UUID> resolveDeletedContentRefs(String tenant, SourceOutboxRow event) {
         if (event.tombstoneId() == null) {
             return null;
         }
@@ -174,7 +186,7 @@ public class SearchProjectionConsumer {
         return deletable;
     }
 
-    private UUID resolveContentRef(SourceOutboxRow event) {
+    private UUID resolveContentRef(String tenant, SourceOutboxRow event) {
         if (event.sourceVersionId() == null) {
             return null;
         }

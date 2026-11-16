@@ -217,6 +217,20 @@ class PromotionConsumerTest {
     }
 
     @Test
+    void registryModePollsEveryRegisteredTenant() {
+        when(claims.listTenantIds()).thenReturn(List.of("tenant-a", "tenant-b"));
+        when(claims.pendingPromotions(anyString(), anyInt(), any())).thenReturn(List.of());
+        PromotionConsumer registryConsumer = new PromotionConsumer(claims, promoter,
+                new PromotionConsumerProperties(true, "", 5, 5, 30, 120, 10000L),
+                new SimpleMeterRegistry());
+
+        registryConsumer.poll();
+
+        verify(claims).pendingPromotions(eq("tenant-a"), anyInt(), any());
+        verify(claims).pendingPromotions(eq("tenant-b"), anyInt(), any());
+    }
+
+    @Test
     void disabledPromotionConsumerPollsNothing() {
         PromotionConsumerProperties disabled =
                 new PromotionConsumerProperties(false, "tenant-a", 5, 5, 30, 120, 10000L);

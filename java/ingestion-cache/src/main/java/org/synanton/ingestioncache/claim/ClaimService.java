@@ -39,6 +39,10 @@ public class ClaimService {
         this.client = client;
     }
 
+    public List<String> listTenantIds() {
+        return client.listTenantIds();
+    }
+
     public List<ResolutionWorkRow> pendingResolutions(String tenantId, int limit, Instant now) {
         List<ResolutionWorkRow> pending = new ArrayList<>();
         for (ResolutionWorkRow row : resolutionWork(tenantId)) {

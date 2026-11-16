@@ -3,6 +3,7 @@ package org.synanton.relix.consumer;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -14,6 +15,7 @@ import org.synanton.ingestioncache.activation.ActivationRecord;
 import org.synanton.ingestioncache.activation.ActivationState;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ActivationRequestRow;
 import org.synanton.relix.config.ActivationRecoveryProperties;
 import org.synanton.relix.graph.RelationRetirement;
@@ -75,13 +77,22 @@ public final class ActivationRecoverySweep {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), cache);
+        } catch (Exception e) {
+            log.warn("Activation recovery tenant discovery failed: {}", e.toString());
             return;
         }
-        for (ActivationRequestRow request : cache.listPendingActivationRequests(
-                tenant, properties.batch(), clock.instant())) {
-            sweep(request);
+        for (String tenant : tenants) {
+            try {
+                for (ActivationRequestRow request : cache.listPendingActivationRequests(
+                        tenant, properties.batch(), clock.instant())) {
+                    sweep(request);
+                }
+            } catch (Exception e) {
+                log.warn("Activation recovery failed tenant={}: {}", tenant, e.toString());
+            }
         }
     }
 

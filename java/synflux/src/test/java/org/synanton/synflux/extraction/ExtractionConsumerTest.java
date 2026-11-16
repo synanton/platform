@@ -20,10 +20,14 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
@@ -140,6 +144,49 @@ class ExtractionConsumerTest {
         for (String stage : List.of("extraction", "indexing", "promotion", "activation")) {
             assertThat(durations.path(stage).asLong()).isGreaterThanOrEqualTo(0);
         }
+    }
+
+    @Test
+    void registryPollProcessesTwoTenantsConcurrentlyWithoutCrossContamination() throws Exception {
+        String tenantA = "tenant-concurrent-a";
+        String tenantB = "tenant-concurrent-b";
+        Fixture a = seed(tenantA, "Halcyon-7 requires a helium leak check.");
+        Fixture b = seed(tenantB, "A second tenant needs an independent extraction.");
+        CountDownLatch entered = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicInteger calls = new AtomicInteger();
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenAnswer(invocation -> {
+            ExtractionContext context = invocation.getArgument(1);
+            assertThat(context.tenantId()).isIn(tenantA, tenantB);
+            calls.incrementAndGet();
+            entered.countDown();
+            if (!release.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("concurrent tenant did not enter");
+            }
+            return new ExtractionResult(List.of(), List.of());
+        });
+        ExtractionConsumer consumer = new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, "", 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC());
+
+        Thread poller = new Thread(consumer::poll, "registry-poll");
+        poller.start();
+        try {
+            assertThat(entered.await(10, TimeUnit.SECONDS))
+                    .as("both tenants must be processed concurrently")
+                    .isTrue();
+        } finally {
+            release.countDown();
+        }
+        poller.join(10_000);
+        assertThat(poller.isAlive()).isFalse();
+
+        assertThat(calls).hasValue(2);
+        assertThat(cache.readExtractionStatus(tenantA, CONNECTOR, SOURCE, RESOURCE,
+                a.versionId())).contains("KNOWLEDGE_READY");
+        assertThat(cache.readExtractionStatus(tenantB, CONNECTOR, SOURCE, RESOURCE,
+                b.versionId())).contains("KNOWLEDGE_READY");
     }
 
     @Test

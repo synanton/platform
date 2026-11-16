@@ -1,12 +1,14 @@
 package org.synanton.relix.consumer;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.relix.config.PromotionCompletionProperties;
 
@@ -42,21 +44,29 @@ public final class PromotionCompletionSweep {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Promotion completion sweep is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), cache);
+        } catch (Exception e) {
+            log.warn("Promotion completion tenant discovery failed: {}", e.toString());
             return;
         }
-        for (SourceVersionRow version : cache.listMentionsCommittedSourceVersions(
-                tenant, properties.batch())) {
+        for (String tenant : tenants) {
             try {
-                if (completion.completeIfPromotionTerminal(version)) {
-                    registry.counter("promotion.completion", "outcome", "COMPLETED").increment();
+                for (SourceVersionRow version : cache.listMentionsCommittedSourceVersions(
+                        tenant, properties.batch())) {
+                    try {
+                        if (completion.completeIfPromotionTerminal(version)) {
+                            registry.counter("promotion.completion", "outcome", "COMPLETED").increment();
+                        }
+                    } catch (Exception e) {
+                        registry.counter("promotion.completion", "outcome", "FAILED").increment();
+                        log.warn("Canonical graph completion failed tenant={} source={} generation={}: {}",
+                                version.tenantId(), version.sourceId(), version.generation(), e.toString());
+                    }
                 }
             } catch (Exception e) {
-                registry.counter("promotion.completion", "outcome", "FAILED").increment();
-                log.warn("Canonical graph completion failed tenant={} source={} generation={}: {}",
-                        version.tenantId(), version.sourceId(), version.generation(), e.toString());
+                log.warn("Promotion completion scan failed tenant={}: {}", tenant, e.toString());
             }
         }
     }

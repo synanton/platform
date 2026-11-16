@@ -17,6 +17,7 @@ case "$TENANT" in
   *) echo "refusing tenant '$TENANT': evaluation tenants must start with eval-" >&2; exit 2 ;;
 esac
 [ -f "$TTL_PATH" ] || { echo "ontology TTL not found: $TTL_PATH" >&2; exit 2; }
+TTL_PATH="$(realpath "$TTL_PATH")"
 
 SECRET="${SYNANTON_JWT_SECRET:-$(kubectl -n "$NAMESPACE" get secret synanton-jwt -o jsonpath='{.data.secret}' | base64 -d)}"
 TOKEN="$(python3 - "$SECRET" "$TENANT" <<'PY'
@@ -49,5 +50,6 @@ for _ in $(seq 1 30); do
 done
 
 mkdir -p "$AUDIT_DIR"
+AUDIT_DIR="$(cd "$AUDIT_DIR" && pwd)"
 export PROVISION_TOKEN="$TOKEN"
 ./gradlew -q :java:relix:provisionEvalTenant --args="--tenant $TENANT --provider $PROVIDER --ontology-version $ONTOLOGY_VERSION --ontology-ttl $TTL_PATH --syntology-url http://127.0.0.1:18080 --relix-url http://127.0.0.1:18084 --cassandra-contact-points 127.0.0.1:19042 --audit-dir $AUDIT_DIR --operator $OPERATOR --git-sha $GIT_SHA"
