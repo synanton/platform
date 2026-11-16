@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
+import org.synanton.synflux.extraction.graph.GraphCommitResult;
 import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.synanton.synflux.extraction.provider.ExtractionAdapterFactory;
 import org.synanton.synflux.extraction.provider.ExtractionAdapterResolver;
@@ -46,6 +48,7 @@ public class ExtractionConsumer {
     private final ExtractionConsumerProperties properties;
     private final GraphWriter graphWriter;
     private final Clock clock;
+    private final ExtractionMetrics metrics;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public ExtractionConsumer(
@@ -54,7 +57,18 @@ public class ExtractionConsumer {
             ExtractionConsumerProperties properties,
             GraphWriter graphWriter,
             Clock clock) {
-        this(cacheClient, ExtractionAdapterFactory.fixed(adapter), properties, graphWriter, clock);
+        this(cacheClient, ExtractionAdapterFactory.fixed(adapter), properties, graphWriter, clock,
+                new ExtractionMetrics(new SimpleMeterRegistry()));
+    }
+
+    public ExtractionConsumer(
+            IngestionCacheClient cacheClient,
+            ExtractionAdapterResolver adapters,
+            ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
+            Clock clock) {
+        this(cacheClient, adapters, properties, graphWriter, clock,
+                new ExtractionMetrics(new SimpleMeterRegistry()));
     }
 
     @Autowired
@@ -63,12 +77,14 @@ public class ExtractionConsumer {
             ExtractionAdapterResolver adapters,
             ExtractionConsumerProperties properties,
             GraphWriter graphWriter,
-            Clock clock) {
+            Clock clock,
+            ExtractionMetrics metrics) {
         this.cacheClient = cacheClient;
         this.adapters = adapters;
         this.properties = properties;
         this.graphWriter = graphWriter;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Scheduled(fixedDelayString = "${synflux.extraction-engine.consumer.poll-delay-ms:5000}")
@@ -125,10 +141,14 @@ public class ExtractionConsumer {
             return;
         }
         ExtractionEngineAdapter adapter = resolved.adapter();
+        long startedNanos = System.nanoTime();
         try {
             cacheClient.markExtractionStarted(request);
             List<ChunkRow> chunks = cacheClient.readChunks(request.tenantId(), request.contentRefId());
             java.util.Map<Integer, ExtractionResult> resultsByOrdinal = new java.util.LinkedHashMap<>();
+            java.util.Set<String> normalizedEntities = new java.util.LinkedHashSet<>();
+            int entityMentions = 0;
+            int relationCandidates = 0;
             int processed = 0;
             for (ChunkRow chunk : chunks) {
                 ExtractionResult result = adapter.extract(
@@ -136,28 +156,49 @@ public class ExtractionConsumer {
                                 chunk.chunkText(), 0),
                         new ExtractionContext(request.tenantId(), request.contentRefId().toString(), Set.of()));
                 resultsByOrdinal.put(chunk.chunkOrdinal(), result);
+                entityMentions += result.preEntities().size();
+                relationCandidates += result.relations().size();
+                for (var entity : result.preEntities()) {
+                    normalizedEntities.add(entity.surfaceForm() + "|" + entity.proposedType());
+                }
                 cacheClient.upsertExtractionResult(
                         request.tenantId(), request.contentRefId(), chunk.chunkOrdinal(), request.versionId(),
                         mapper.writeValueAsString(result.preEntities()),
                         mapper.writeValueAsString(result.relations()), clock.instant());
                 processed++;
             }
+            long extractionEndNanos = System.nanoTime();
             cacheClient.markExtractionSucceeded(
                     request, resolved.provider().canonical(), clock.instant());
             // extraction_status is final here; graph_status tracks the separate
             // validation/persistence stage and must not change extraction state.
+            GraphCommitResult graphResult;
             try {
-                graphWriter.commit(request, chunks, resultsByOrdinal);
+                graphResult = graphWriter.commit(request, chunks, resultsByOrdinal);
             } catch (Exception graphFailure) {
+                graphResult = new GraphCommitResult(0, 0, 0, List.of(), "FAILED");
                 log.warn("Graph writer failed after extraction tenant={} ref={} version={}: {}",
                         request.tenantId(), request.contentRefId(), request.versionId(),
                         graphFailure.toString());
             }
+            if (graphResult == null) {
+                graphResult = new GraphCommitResult(0, 0, 0, List.of(), "NOT_CLAIMED");
+            }
+            long graphEndNanos = System.nanoTime();
+            long durationMs = (graphEndNanos - startedNanos) / 1_000_000;
+            long extractionMs = (extractionEndNanos - startedNanos) / 1_000_000;
+            long graphMs = (graphEndNanos - extractionEndNanos) / 1_000_000;
+            String processingOutcome = processingOutcome(graphResult.status());
+            String provider = resolved.provider().canonical();
+            metrics.recordExtraction(request.tenantId(), provider, processingOutcome, durationMs,
+                    entityMentions, relationCandidates, graphResult.accepted(), graphResult.rejected());
             log.info("Extraction completed tenant={} ref={} version={} chunks={} engine={} "
                             + "provider={} provider_source={}",
                     request.tenantId(), request.contentRefId(), request.versionId(), processed,
-                    adapter.getClass().getSimpleName(), resolved.provider().canonical(),
-                    resolved.providerSource());
+                    adapter.getClass().getSimpleName(), provider, resolved.providerSource());
+            logStructuredEvent(request, resolved, adapter, durationMs, extractionMs, graphMs,
+                    entityMentions, normalizedEntities.size(), relationCandidates, graphResult,
+                    processingOutcome);
         } catch (Exception e) {
             int attempts = request.attemptCount() + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempts));
@@ -170,6 +211,57 @@ public class ExtractionConsumer {
                         request.contentRefId(), request.versionId(), attempts, nextAttemptAt, e.toString());
             }
         }
+    }
+
+    private void logStructuredEvent(ExtractionRequestRow request,
+                                    ResolvedExtractionAdapter resolved,
+                                    ExtractionEngineAdapter adapter,
+                                    long durationMs, long extractionMs, long graphMs,
+                                    int entityMentions, int normalizedEntities,
+                                    int relationCandidates, GraphCommitResult graphResult,
+                                    String processingOutcome) {
+        try {
+            java.util.Map<String, Object> event = new java.util.LinkedHashMap<>();
+            event.put("event", "extraction_completed");
+            event.put("tenant_id", request.tenantId());
+            event.put("tenant_class", ExtractionMetrics.tenantClass(request.tenantId()));
+            event.put("source_version_id", request.versionId().toString());
+            event.put("document_id", request.resourceId());
+            event.put("engine", adapter.getClass().getSimpleName());
+            event.put("provider", resolved.provider().canonical());
+            event.put("provider_source", resolved.providerSource());
+            event.put("duration_ms", durationMs);
+            long indexingMs = request.searchProjectedAt() != null && request.requestedAt() != null
+                    ? Math.max(0, request.searchProjectedAt().toEpochMilli()
+                    - request.requestedAt().toEpochMilli()) : 0;
+            java.util.Map<String, Object> durations = new java.util.LinkedHashMap<>();
+            durations.put("extraction", extractionMs);
+            durations.put("graph", graphMs);
+            durations.put("indexing", indexingMs);
+            durations.put("promotion", 0L);
+            durations.put("activation", 0L);
+            event.put("durations_ms", durations);
+            event.put("entity_mentions", entityMentions);
+            event.put("normalized_entities", normalizedEntities);
+            event.put("relation_candidates", relationCandidates);
+            event.put("relations_accepted", graphResult.accepted());
+            event.put("relations_rejected", graphResult.rejected());
+            event.put("rejection_reason_codes", graphResult.rejectionCodes());
+            event.put("processing_outcome", processingOutcome);
+            log.info("extraction_completed {}", mapper.writeValueAsString(event));
+        } catch (Exception e) {
+            log.warn("Could not serialize extraction completion event", e);
+        }
+    }
+
+    private static String processingOutcome(String graphStatus) {
+        return switch (graphStatus) {
+            case "MENTIONS_COMMITTED" -> "COMPLETED";
+            case "PARTIAL" -> "PARTIAL";
+            case "GRAPH_DISABLED" -> "GRAPH_DISABLED";
+            case "NOT_CLAIMED" -> "NOT_CLAIMED";
+            default -> "GRAPH_FAILED";
+        };
     }
 
     private long backoffSeconds(int attempts) {

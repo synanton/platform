@@ -4,8 +4,10 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionResult;
@@ -52,20 +54,21 @@ public final class GraphWriter {
         this.activations = activations;
     }
 
-    public void commit(ExtractionRequestRow request, List<ChunkRow> chunks,
-                       Map<Integer, ExtractionResult> resultsByOrdinal) {
-        commit(request, chunks, resultsByOrdinal, 0);
+    public GraphCommitResult commit(ExtractionRequestRow request, List<ChunkRow> chunks,
+                                    Map<Integer, ExtractionResult> resultsByOrdinal) {
+        return commit(request, chunks, resultsByOrdinal, 0);
     }
 
-    public void commit(ExtractionRequestRow request, List<ChunkRow> chunks,
-                       Map<Integer, ExtractionResult> resultsByOrdinal, int graphAttempt) {
+    public GraphCommitResult commit(ExtractionRequestRow request, List<ChunkRow> chunks,
+                                    Map<Integer, ExtractionResult> resultsByOrdinal, int graphAttempt) {
         if (!properties.enabled()) {
-            return;
+            return new GraphCommitResult(0, 0, 0, List.of(), "GRAPH_DISABLED");
         }
         if (!cacheClient.claimGraphCommit(request)) {
-            return;
+            return new GraphCommitResult(0, 0, 0, List.of(), "NOT_CLAIMED");
         }
         Map<String, Integer> counters = counters(0, 0, 0, 0);
+        Set<String> rejectionCodes = new LinkedHashSet<>();
         try {
             Map<Integer, ChunkRow> chunkByOrdinal = new LinkedHashMap<>();
             for (ChunkRow chunk : chunks) {
@@ -114,6 +117,7 @@ public final class GraphWriter {
                     GraphMention object = byRawMention.get(ordinal + "|" + relation.objectMentionId());
                     if (subject == null || object == null) {
                         rejected++;
+                        rejectionCodes.add("MISSING_ENDPOINT");
                         continue;
                     }
                     RelationValidation validation = validator.validate(request.tenantId(),
@@ -121,6 +125,12 @@ public final class GraphWriter {
                             properties.ontologyVersionOrDefault());
                     if (!validation.conformant()) {
                         rejected++;
+                        if (validation.violations().isEmpty()) {
+                            rejectionCodes.add("ONTOLOGY_INVALID");
+                        } else {
+                            validation.violations().forEach(violation ->
+                                    rejectionCodes.add(violation.code()));
+                        }
                         log.debug("Relation rejected tenant={} predicate={} violations={}",
                                 request.tenantId(), relation.predicate(), validation.violations());
                         continue;
@@ -186,6 +196,8 @@ public final class GraphWriter {
             log.info("Mention graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
                     request.tenantId(), request.versionId(), graphStatus, mentions.size(),
                     accepted.size(), rejected);
+            return new GraphCommitResult(mentions.size(), accepted.size(), rejected,
+                    List.copyOf(rejectionCodes), graphStatus);
         } catch (Exception e) {
             int attempt = graphAttempt + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempt));
@@ -197,6 +209,11 @@ public final class GraphWriter {
             }
             log.warn("Graph commit failed tenant={} version={}: {}",
                     request.tenantId(), request.versionId(), e.toString());
+            return new GraphCommitResult(
+                    counters.getOrDefault("mentions_accepted", 0),
+                    counters.getOrDefault("relations_accepted", 0),
+                    counters.getOrDefault("relations_rejected", 0),
+                    List.copyOf(rejectionCodes), "FAILED");
         }
     }
 
