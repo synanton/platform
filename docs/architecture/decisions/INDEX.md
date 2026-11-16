@@ -1,19 +1,20 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-11-14"
+last_reviewed: "2026-11-16"
 ---
 
 # Architecture Decision Records (ADRs)
 
 **Purpose:** Captures significant architectural decisions with their context, rationale, and consequences.
 **Audience:** Architects, module owners
-**Last Updated:** 2026-11-14
+**Last Updated:** 2026-11-16
 
 ## Quick Links
 
 | Document | Decision |
 |----------|---------|
+| [ADR-043: vLLM extraction provider status](./adr-043-vllm-provider-status.md) | **Accepted 2026-11-16** — broad rollout permitted; `regex` remains default; default switch deferred |
 | [ADR-042: Mapping path composition and provenance](./adr-042-mapping-path-composition.md) | **Proposed** — ONT-ADR-013; before agent reasoning |
 | [ADR-041: Mapping experiment reproducibility](./adr-041-mapping-experiment-reproducibility.md) | **Proposed** — ONT-ADR-012; Phase 2 gate |
 | [ADR-040: Mapping strategy abstraction](./adr-040-mapping-strategy-abstraction.md) | **Proposed** — ONT-ADR-011; Phase 2 gate |
