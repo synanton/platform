@@ -1,8 +1,8 @@
 # #723 production evaluation — pre-flight record
 
-**Status:** BLOCKED — no ingestion started.
-**Code-complete:** 9/11 (pieces 1–4 implemented; piece 4 pending merge).
-**Operationally verified:** 5/11 (deploy, scrape, and eval tenant provisioning still pending).
+**Status:** BLOCKED — no #723 evaluation ingestion started.
+**Code-complete:** 9/11 (pieces 1–4 merged).
+**Operationally verified:** 8/11 (live deploy, V33, and registry polling verified; scrape and corpus gaps remain).
 **Plan:** [`vllm-production-eval-plan.md`](./vllm-production-eval-plan.md)
 **Manifest:** [`vllm-production-eval-corpus.tsv`](./vllm-production-eval-corpus.tsv)
 **New-entity list:** [`vllm-production-eval-new-entities.tsv`](./vllm-production-eval-new-entities.tsv)
@@ -19,34 +19,31 @@ verified means the item has been exercised against the deployed environment.
 | 2 | 15 new-entity candidates pre-identified | ✅ | ✅ | — |
 | 3 | Large-PDF timeout path checked | ✅ | ✅ | — |
 | 4 | Tenant-configurable architecture (Design A) | ✅ | ✅ (design confirmed) | — |
-| 5 | Eval tenants provisionable | ✅ (CLI) | ❌ | Provision after V33 deploy |
-| 6 | Provider overrides per tenant | ✅ (piece 1) | ❌ | Piece 1 image not deployed |
-| 7 | Retry provider consistency | ✅ (piece 1.5) | ❌ | Piece 1.5 image not deployed |
-| 8 | Tenant-aware metric capture | ✅ (piece 3) | ❌ | No Prometheus consumer (#736) |
-| 9 | Multi-tenant polling | ✅ (piece 4) | ❌ | Piece 4 not deployed |
+| 5 | Eval tenants provisionable | ✅ (CLI) | ✅ (eval-smoke) | Actual eval tenant set not provisioned |
+| 6 | Provider overrides per tenant | ✅ (piece 1) | ✅ (eval-smoke regex) | LLM override not live-tested |
+| 7 | Retry provider consistency | ✅ (piece 1.5) | ❌ | No live retry exercise |
+| 8 | Tenant-aware metric capture | ✅ (piece 3) | ✅ (actuator) | Not scraped (#736) |
+| 9 | Multi-tenant polling | ✅ (piece 4) | ✅ (eval-smoke + demo) | — |
 | 10 | Real ≥100-page PDF | ❌ | ❌ | Source procurement (#724) |
 | 11 | Extended observation corpus (30–50 docs) | ❌ | ❌ | Source procurement |
 
-The fifth operationally verified item is the recorded wall-clock budget; it is
-not one of the 11 product/eval gates.
-
-Pieces 1–4 change the code-complete count from 5/11 to 9/11. The operational
-count remains 5/11 until the pieces are deployed, V33 is verified, eval tenants
-are provisioned, and metrics are scraped. The eval cannot start until
-operational is 11/11.
+Pieces 1–4 change the code-complete count from 5/11 to 9/11 and the operational
+count to 8/11. Remaining operational gates: a live retry-provider exercise,
+Prometheus scraping (#736), the real ≥100-page PDF (#724), and the 30–50
+extended-observation documents. The eval cannot start until operational is
+11/11.
 
 ## Remaining blockers
 
-- **Piece 4 (multi-tenant polling):** consumers still use a single configured
-  tenant. Piece 4 adds authoritative registry polling, true concurrent
-  multi-tenant execution, and contamination tests.
-- **Eval tenant provisioning:** piece 2's CLI exists, but no eval tenant has
-  been provisioned. The live schema predates V33.
-- **Metrics scrape:** piece 3 exposes `/actuator/prometheus`, but the cluster has
-  no Prometheus pod, ServiceMonitor, or monitoring CRD. Follow-up: #736. Until
-  it lands, metrics are exposed but not scraped.
+- **Retry provider consistency:** implemented and unit-tested, but not yet
+  exercised against a live failed extraction and retry.
+- **Metrics scrape:** `/actuator/prometheus` is live and returning bounded
+  tenant-aware metrics, but the cluster has no Prometheus pod, ServiceMonitor,
+  or monitoring CRD. Follow-up: #736.
 - **Corpus gaps:** #724 real PDF and 30–50 extended-observation documents remain
   unsourced.
+- **Actual eval tenants:** `eval-smoke` is provisioned as the step-8 smoke
+  tenant; the planned eval tenant set still needs provisioning.
 
 ## Resolved since the original blocker
 
@@ -57,8 +54,10 @@ operational is 11/11.
   output, and partial-failure tests.
 - Tenant-aware logs and bounded metrics are implemented (piece 3), including
   `demo | eval | other` classes and per-stage durations.
+- Registered-tenant polling is implemented (piece 4); extraction fans out per
+  tenant, and the other consumers poll per tenant.
 
-## Deploy gates — pieces 1–3 and V33
+## Deploy gates — pieces 1–4 and V33
 
 Pieces 1–4 deploy as one image (synflux, synquest, relix). V33 adds `tenant_provider_config` and
 `source_versions.extraction_provider`.
@@ -77,9 +76,22 @@ Post-deploy order:
 
 Rollback: redeploy the previous image. V33's new table/column are additive and
 inert to old code, so no destructive schema rollback is required. Existing
-`source_versions` rows and the `tenant_registry` contents must be preserved;
-verify with `SELECT COUNT(*) FROM source_versions` and
-`SELECT tenant_id FROM tenant_registry` before and after deploy.
+`source_versions` rows and the `tenant_registry` contents must be preserved.
+
+## Live verification — 2026-11-16
+
+- V33 present: `tenant_provider_config` table and
+  `source_versions.extraction_provider` column.
+- Existing data preserved: 153 total `source_versions` (152 demo + 1
+  eval-smoke smoke document); `tenant_registry` = `demo`, `eval-smoke`.
+- Filter still blocks: `/actuator/env` and `/v1/search` without auth return 401.
+- `/actuator/prometheus` returns 200; no `tenant_id`, `source_version_id`, or
+  `document_id` labels.
+- `eval-smoke` ingestion completed through the registry-mode consumer:
+  `extraction_completed` with `tenant_class=eval`; metrics include
+  `extraction_completed_total{tenant_class="eval",provider="regex",outcome="COMPLETED"}`.
+- Demo search still returns 8 results.
+- Prometheus scrape remains pending #736.
 
 ## Extended observation corpus
 
