@@ -60,3 +60,10 @@ tasks.named<BootJar>("bootJar") {
     archiveBaseName.set("relix")
 }
 tasks.named<Jar>("jar") { enabled = false }
+
+tasks.register<JavaExec>("provisionEvalTenant") {
+    group = "provisioning"
+    description = "Provision an isolated evaluation tenant (#728)"
+    mainClass.set("org.synanton.relix.provisioning.ProvisionTenantCli")
+    classpath = sourceSets["main"].runtimeClasspath
+}
