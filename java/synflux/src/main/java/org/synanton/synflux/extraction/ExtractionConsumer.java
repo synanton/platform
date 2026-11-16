@@ -97,13 +97,31 @@ public class ExtractionConsumer {
     private void process(ExtractionRequestRow request) {
         ResolvedExtractionAdapter resolved;
         try {
-            resolved = adapters.forTenant(request.tenantId());
+            String persisted = cacheClient.readExtractionProvider(request).orElse(null);
+            if (persisted != null && !persisted.isBlank()) {
+                resolved = adapters.forProvider(persisted);
+            } else {
+                resolved = adapters.forTenant(request.tenantId());
+                // The provider decision must be durable before extraction runs so a
+                // retry cannot silently switch providers if config changes mid-run.
+                cacheClient.markExtractionProvider(request, resolved.provider().canonical());
+            }
         } catch (ProviderConfigInvalidException invalidConfig) {
             cacheClient.markExtractionFailedTerminal(request, properties.maxAttemptsOrDefault(),
                     "PROVIDER_CONFIG_INVALID: " + invalidConfig.getMessage());
             log.error("Extraction provider configuration invalid tenant={} ref={} version={}: {}",
                     request.tenantId(), request.contentRefId(), request.versionId(),
                     invalidConfig.getMessage());
+            return;
+        } catch (Exception providerFailure) {
+            int attempts = request.attemptCount() + 1;
+            Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempts));
+            cacheClient.markExtractionFailed(request, attempts,
+                    "PROVIDER_RESOLUTION_FAILED: " + truncate(providerFailure.getMessage()),
+                    nextAttemptAt);
+            log.warn("Extraction provider resolution failed tenant={} ref={} version={}: {}",
+                    request.tenantId(), request.contentRefId(), request.versionId(),
+                    providerFailure.toString());
             return;
         }
         ExtractionEngineAdapter adapter = resolved.adapter();

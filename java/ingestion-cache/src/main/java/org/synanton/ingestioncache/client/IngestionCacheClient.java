@@ -1561,6 +1561,25 @@ public class IngestionCacheClient {
         ));
     }
 
+    public Optional<String> readExtractionProvider(ExtractionRequestRow request) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT extraction_provider FROM ingestion_cache.source_versions " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            request.tenantId(), request.connectorId(), request.sourceId(), request.resourceId(),
+            request.versionId()
+        )).one();
+        return row == null ? Optional.empty() : Optional.ofNullable(row.getString("extraction_provider"));
+    }
+
+    public void markExtractionProvider(ExtractionRequestRow request, String provider) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET extraction_provider=? " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            provider, request.tenantId(), request.connectorId(), request.sourceId(),
+            request.resourceId(), request.versionId()
+        ));
+    }
+
     /** Terminal provider/config failure: no retry, visible to the operator. */
     public void markExtractionFailedTerminal(
             ExtractionRequestRow request, int attemptCount, String error) {

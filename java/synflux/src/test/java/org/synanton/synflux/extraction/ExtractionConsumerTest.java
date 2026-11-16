@@ -11,6 +11,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -125,8 +126,16 @@ class ExtractionConsumerTest {
     void providerInvalidMarksTheDocumentTerminal() {
         String tenant = "tenant-provider-invalid";
         Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
-        ExtractionAdapterResolver resolver = tenantId -> {
-            throw new ProviderConfigInvalidException("bad provider");
+        ExtractionAdapterResolver resolver = new ExtractionAdapterResolver() {
+            @Override
+            public ResolvedExtractionAdapter forTenant(String tenantId) {
+                throw new ProviderConfigInvalidException("bad provider");
+            }
+
+            @Override
+            public ResolvedExtractionAdapter forProvider(String provider) {
+                throw new ProviderConfigInvalidException("bad provider");
+            }
         };
         ExtractionConsumer consumer = new ExtractionConsumer(cache, resolver,
                 new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
@@ -153,8 +162,19 @@ class ExtractionConsumerTest {
         when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
                 List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
                 List.of()));
-        ExtractionAdapterResolver resolver = tenantId -> new ResolvedExtractionAdapter(
+        ResolvedExtractionAdapter resolved = new ResolvedExtractionAdapter(
                 adapter, ExtractionProvider.LLM, "tenant-override");
+        ExtractionAdapterResolver resolver = new ExtractionAdapterResolver() {
+            @Override
+            public ResolvedExtractionAdapter forTenant(String tenantId) {
+                return resolved;
+            }
+
+            @Override
+            public ResolvedExtractionAdapter forProvider(String provider) {
+                return resolved;
+            }
+        };
         ExtractionConsumer consumer = new ExtractionConsumer(cache, resolver,
                 new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
                 mock(GraphWriter.class), Clock.systemUTC());
@@ -178,6 +198,85 @@ class ExtractionConsumerTest {
         assertThat(cache.readTenantProvider(tenant)).contains("llm");
         cache.clearTenantProvider(tenant);
         assertThat(cache.readTenantProvider(tenant)).isEmpty();
+    }
+
+    @Test
+    void retryUsesPersistedProviderAfterConfigChange() {
+        String tenant = "tenant-provider-retry";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any()))
+                .thenThrow(new IllegalStateException("first attempt fails"))
+                .thenReturn(new ExtractionResult(List.of(), List.of()));
+        ResolvedExtractionAdapter llm = new ResolvedExtractionAdapter(
+                adapter, ExtractionProvider.LLM, "tenant-override");
+        ExtractionAdapterResolver resolver = mock(ExtractionAdapterResolver.class);
+        when(resolver.forTenant(tenant)).thenReturn(llm);
+        when(resolver.forProvider("llm")).thenReturn(
+                new ResolvedExtractionAdapter(adapter, ExtractionProvider.LLM, "persisted"));
+
+        Instant t0 = Instant.now();
+        ExtractionConsumer first = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.fixed(t0, ZoneOffset.UTC));
+        first.poll();
+        assertThat(cache.readExtractionProvider(new org.synanton.ingestioncache.domain.ExtractionRequestRow(
+                tenant, CONNECTOR, SOURCE, RESOURCE, UUID.randomUUID(), fixture.versionId(),
+                fixture.contentRefId(), "{}", t0, t0, "EXTRACTION_FAILED", 1, null,
+                t0.plusSeconds(30), false))).contains("llm");
+
+        ExtractionConsumer retry = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.fixed(t0.plusSeconds(60), ZoneOffset.UTC));
+        retry.poll();
+
+        org.mockito.Mockito.verify(resolver, times(1)).forTenant(tenant);
+        org.mockito.Mockito.verify(resolver, times(1)).forProvider("llm");
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("KNOWLEDGE_READY");
+        assertThat(session.execute(
+                "SELECT extraction_provider FROM ingestion_cache.source_versions " +
+                        "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? " +
+                        "AND version_id=?",
+                tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId())
+                .one().getString("extraction_provider")).isEqualTo("llm");
+    }
+
+    @Test
+    void firstAttemptPersistsProviderBeforeExtraction() {
+        String tenant = "tenant-provider-before";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenAnswer(invocation -> {
+            String persisted = session.execute(
+                    "SELECT extraction_provider FROM ingestion_cache.source_versions " +
+                            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? " +
+                            "AND version_id=?",
+                    tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId())
+                    .one().getString("extraction_provider");
+            assertThat(persisted).isEqualTo("llm");
+            return new ExtractionResult(List.of(), List.of());
+        });
+        ResolvedExtractionAdapter llm = new ResolvedExtractionAdapter(
+                adapter, ExtractionProvider.LLM, "tenant-override");
+        ExtractionAdapterResolver resolver = new ExtractionAdapterResolver() {
+            @Override
+            public ResolvedExtractionAdapter forTenant(String tenantId) {
+                return llm;
+            }
+
+            @Override
+            public ResolvedExtractionAdapter forProvider(String provider) {
+                return llm;
+            }
+        };
+
+        new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC()).poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("KNOWLEDGE_READY");
     }
 
     @Test
