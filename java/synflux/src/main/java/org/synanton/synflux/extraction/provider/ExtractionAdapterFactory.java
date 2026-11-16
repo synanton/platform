@@ -40,6 +40,15 @@ public final class ExtractionAdapterFactory implements ExtractionAdapterResolver
             provider = ExtractionProvider.REGEX;
             source = "hardcoded-default";
         }
+        return resolve(provider, source);
+    }
+
+    @Override
+    public ResolvedExtractionAdapter forProvider(String provider) {
+        return resolve(ExtractionProvider.parse(provider), "persisted");
+    }
+
+    private ResolvedExtractionAdapter resolve(ExtractionProvider provider, String source) {
         ExtractionEngineAdapter adapter = adapters.computeIfAbsent(
                 provider, p -> ExtractionEngines.create(p, properties));
         return new ResolvedExtractionAdapter(adapter, provider, source);
@@ -51,6 +60,16 @@ public final class ExtractionAdapterFactory implements ExtractionAdapterResolver
                 ? ExtractionProvider.LLM : ExtractionProvider.REGEX;
         ResolvedExtractionAdapter resolved = new ResolvedExtractionAdapter(
                 adapter, provider, "fixed");
-        return tenantId -> resolved;
+        return new ExtractionAdapterResolver() {
+            @Override
+            public ResolvedExtractionAdapter forTenant(String tenantId) {
+                return resolved;
+            }
+
+            @Override
+            public ResolvedExtractionAdapter forProvider(String persistedProvider) {
+                return resolved;
+            }
+        };
     }
 }
