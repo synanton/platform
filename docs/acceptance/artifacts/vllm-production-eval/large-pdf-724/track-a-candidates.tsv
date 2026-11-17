@@ -1,0 +1,565 @@
+candidate_id	source_version_id	chunk_ordinal	predicate	subject_surface	subject_type	object_surface	object_type	evidence_start	evidence_end	subject_mention_id	object_mention_id
+cand-009ad1b46846	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	524	is_a	GHGs	Concept	GHG	Concept	784	939	0e4103fe-d170-39e8-bade-87f95dbaafbb	ae79752e-1dd5-399b-8d30-0745d8d452ef
+cand-00a9fd0a20ff	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	524	is_a	Our	Concept	Climate Action Reserve	Concept	1614	1792	3bf95a1e-21d0-35b4-86b5-0dd7d7322fdf	22934f6c-095b-39bd-b66c-d979b44eed4a
+cand-00dd9da79f14	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	493	is_a	6.6.1	Identifier	Google	Concept	492	801	d36b02ea-780e-35a0-852c-38bf6b95649d	d13b6e8d-d0d0-35b3-870e-9c7aa8641deb
+cand-014867b89e47	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	516	is_a	Our Operational Scope	Concept	Category	Concept	406	510	b07c7794-c90d-38e5-9655-7fe4852386ae	f3a24f26-d728-3ac5-965f-90ef85fec2ca
+cand-018a40197ea3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	527	is_a	PPA	Concept	This	Concept	0	589	f6ab2ae3-69e2-30ce-a901-a1076ce64ba2	8acfcfa6-6c16-371f-b145-11edebfa85ea
+cand-02bf0fee357b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	252	is_a	As	Concept	MWh	Concept	313	479	3131aff7-037c-3ce9-956d-a7ce59b34daa	975ce023-4c4f-3211-953c-b1275c21322e
+cand-02f151b90e6d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	427	is_a	Biophilic Design Toolkit	Concept	Some	Concept	1387	1554	c0257bb8-54bc-3344-b069-2da73482d169	48384172-56fd-341c-82ea-74babdf12250
+cand-03765db61ebe	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	520	is_a	Emissions	Concept	DEFRA U	Concept	873	919	4556b572-be56-3e1d-b1a3-a25d70914014	665fe40b-f72a-389d-b5a6-53824cde50fc
+cand-03ada6456484	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	460	is_a	Sustainability	Concept	To	Concept	751	901	b3bf205c-22c9-3913-bc96-30dc19255357	3c61b988-72af-37e0-b74d-08117319338e
+cand-03b1b7056cd8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	490	has	Ellen MacArthur Foundation	Concept	AI	Concept	0	408	15e27b1b-7f65-3f14-a445-a2fd1e7141e1	853707b0-148e-3348-afed-30cdc2abbd07
+cand-048cca7b50d3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	182	is_a	Incubating	Concept	And	Concept	239	412	5121ffa3-2876-3827-83da-b2e91f49cad7	7ae301f2-2943-395b-98e1-a552cf643fb4
+cand-05898aefbd22	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	23	is_a	These	Concept	The	Concept	211	301	68888ce0-373f-352b-bd45-9fa010c45282	25e0e6b8-dab0-3c8a-b081-680b9c92b0fb
+cand-066922805627	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	490	is_a	Google	Concept	EGDC	Concept	1109	1251	bdef9302-8e43-3f0d-95e0-558591d285f8	d480bef6-004d-3899-a893-8627618366cf
+cand-066c98522e4a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	609	is_a	Certain	Concept	In	Concept	415	672	d68f40f5-dd22-30a8-b069-9c49ce922dd2	7f67204b-08c3-3b39-a1bc-9711abaa5a97
+cand-06fd0f4cc275	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	224	is_a	Our Scope	Concept	The	Concept	0	317	1a045f74-d71f-36a0-8c94-bec763548307	49c6bbfd-e759-3f56-99b8-9dc6953565b2
+cand-077784679afc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	179	has	Google	Concept	Wildlife Insights	Concept	1324	1589	ae9d9ea7-d577-3ff6-9996-d66ec109e37a	806e1094-fdb2-3414-8198-cdbc74705ffe
+cand-07cd34dba1a5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	275	is_a	As	Concept	We	Concept	499	575	17e0952a-584c-38b3-a10e-82ebcd4f8915	b3375111-fd27-393c-8b63-837e69ae7749
+cand-07dd6bbbfbce	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	517	is_a	Data	Concept	LCA	Concept	905	1069	7a592519-4955-337d-bf25-df3198e46304	bef60d12-a723-3772-a61f-6adbc51662fd
+cand-07e6a58a840b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	155	is_a	Now OpenET	Concept	ET	Concept	1681	1787	666d63f0-394c-3e53-b342-04a7edc6c743	6345e2d2-4bfb-3e44-a6db-b39e0725b8c8
+cand-08769e650d6d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	160	is_a	Many	Concept	From	Concept	0	279	99300880-5402-34a9-9aa1-a4c4c93231c5	a28754ab-299a-38a3-a431-a41443fa5db5
+cand-088579aa5f7f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	346	is_a	An	Concept	The	Concept	372	502	f8711f93-0356-3d23-8250-d55e730998ad	fb2a1f7b-cff1-3fd5-be3c-9af2e607a6c8
+cand-08c415e69cef	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	450	includes	Our	Concept	Fitbit	Concept	1080	1181	867a58fd-ce49-398c-a501-3a9bd800d171	9b76c108-46ec-38e2-8c4a-4f19e697c96b
+cand-08d3e234efae	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	182	is_a	Alphabet	Concept	Climate-related	Concept	414	584	ecadbee3-8abe-378b-9ff4-17da8fb83541	ae9aa0f7-58a2-3545-8f86-efbdc5d05de7
+cand-09e322b9aea7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	609	is_a	Google	Concept	Outside	Concept	104	243	df2d2700-657d-3224-9520-800df3da5322	3bd45ed5-ef40-3ba5-bcda-b8f06f041099
+cand-0aca5de0bd78	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	217	is_a	Becausethecarbonremovalssectorisintheearliest	Concept	As	Concept	0	454	6fc599ad-bed4-3dc0-b789-cae7947fddfb	dfe65d62-3d23-3530-b651-bf477a839a66
+cand-0aca5de0bd78	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	217	is_a	Becausethecarbonremovalssectorisintheearliest	Concept	As	Concept	0	454	6fc599ad-bed4-3dc0-b789-cae7947fddfb	dfe65d62-3d23-3530-b651-bf477a839a66
+cand-0ad3ab5d1258	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	423	part_of	London Wildlife Trust	Concept	In	Concept	967	1109	83b118f9-135a-36c7-b096-ecf71686b7c7	43b5e40e-1113-30d0-a786-43043b3ce06d
+cand-0b522418ced6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	453	is_a	ERM	Concept	As	Concept	0	287	21420556-1ade-37de-a2da-2a048edcf379	49af6b6c-f18d-3d37-816a-13216648c04f
+cand-0b993fa5e9a1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	355	is_a	Beyond	Concept	Since	Concept	0	429	461eca39-b173-3826-ae0b-1a38fea62881	8ec3f7eb-0d2b-3733-bd3b-f2ed8f564498
+cand-0b9b4f31f10d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	23	is_a	The	Concept	Our	Concept	1113	1312	4a9da8e7-d510-313a-853d-690f999d0451	b4f61ce5-bcf1-3692-a39e-db3af213a4d0
+cand-0ba15e13b05e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	483	is_a	Glasgow	Concept	Our Business	Concept	0	590	cfa34d7a-3b78-3509-8ca2-25582c19ce2e	636b5a30-9d4b-3d11-84f1-8fe19c81a966
+cand-0bd9f58dd8d5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	242	is_a	Heat	Concept	Our	Concept	623	818	ac0ba851-e490-34f0-8dc9-3f41699ef593	90c0cd33-4b5d-3340-8c00-960bd00064c5
+cand-0c1d4f888326	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	512	is_a	The	Concept	The	Concept	389	558	66a15a10-5251-33fe-a7d8-c579700ed474	da4e1cb9-0ab4-3b48-a34e-c7fadd165fb6
+cand-0d0d0272e191	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	332	is_a	The	Concept	The	Concept	696	852	61143ce8-7e66-3bbb-9793-ac2f19b2621a	b4e89198-e87f-3cde-90db-2fd3509563d7
+cand-0dae651e8ac0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	178	is_a	This	Concept	They	Concept	898	1054	b1cb3096-3c3c-3b72-b4fc-bf7a7793929f	00204f60-23e9-3314-9240-157b382e12d0
+cand-0dfbdb600a71	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	18	has	Google	Concept	AI	Concept	1004	1162	0d6e406b-0eef-3e00-bd49-fc7caea05f04	967cce57-e32d-3236-8e26-f6c18b5fecea
+cand-0e3af772acc0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	442	is_a	Bay View	Concept	LBC	Concept	501	708	de926e64-ec14-32d1-b503-5315fba37c8d	a24d7718-83d9-3569-83e8-ec40fbcd276f
+cand-0e5cb4082f85	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	242	is_a	Google-owned	Concept	1.5	Identifier	847	1392	825c0ac8-dd73-37de-92d8-914902179327	8d383ae5-1030-3897-9484-a9bedaac894e
+cand-0e60fa671cc6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	65	has	Historically	Concept	AI	Concept	1008	1192	07b7266f-5b5c-325f-acd0-a8c3044e10da	bd09b16b-f2a2-3951-b723-484d8703439d
+cand-0e683cba338e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	521	includes	Use	Concept	Google	Concept	0	323	9755df22-ff20-339c-b48c-212f1cf0a77f	5d6f552f-866a-3b87-aa22-6ffdaf4314dc
+cand-106dff43e432	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	395	is_a	50%	Metric	Chromebook	Concept	357	500	1d9a0ea3-ef33-3da0-a326-82262446de18	3f4bf6af-9283-342a-9e92-7b651005fc51
+cand-111e2d4b6530	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	113	is_a	Eco-friendly	Concept	Global	Concept	0	247	31eac818-f6a4-3fd2-8880-0f87447e562c	4b312f50-d441-38a8-8c8c-2f250fe5cd19
+cand-1180d5cdcfc4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	475	is_a	CEDI	Concept	Together	Concept	800	837	af2badd3-8c69-3318-bf2b-f0b6559f5093	020a2a29-cbaa-3041-b4cf-bbf29e460897
+cand-11d430bc0bcc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	125	is_a	They	Concept	In	Concept	799	934	35458254-66e9-3ac2-a37d-43d6d57a234e	323c35ec-7cb1-386d-b765-346b32d92137
+cand-122827d1d1cc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	605	is_a	This	Concept	Actual	Concept	772	1110	aaa22687-efe2-3aa0-bc0c-f0fcbbe8d333	d890130a-2efe-3c62-84fd-6518da08619e
+cand-1274ee823793	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	521	includes	End-of-life	Concept	GHG	Concept	740	1035	4cdd93de-c8c0-3525-970b-55d92bde93a8	27b8344e-866f-3cf1-b8ee-3ee77dd05ebc
+cand-12f519e58de1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	is_a	Recycled	Concept	9%	Metric	2689	2778	6e79c63e-79e2-384a-871c-1efad1e01220	07176d9f-653a-386d-90ce-81ea9ee7f8c9
+cand-130923cdfa25	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	71	is_a	GT	Concept	Environmental Insights Explorer	Concept	739	925	bd7e86f8-f277-3a7b-99f5-1e92d469fdf3	bdd4f772-2ab5-3a9a-8a48-7c3184063394
+cand-131cdc947026	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	is_a	Our	Concept	GRI Disclosure	Concept	0	272	f966be1d-a31f-30c6-993c-8ed28b29770a	0814ca2b-4a35-3630-9d80-e27299c515aa
+cand-131eabdec308	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Alphabet	Concept	Percentage	Concept	1681	1782	8cc8d4b2-65e3-3028-b191-2b85d7ab13b5	bccc8106-4718-34c1-b03c-fa31799bc599
+cand-131eabdec308	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Alphabet	Concept	Percentage	Concept	1681	1782	8cc8d4b2-65e3-3028-b191-2b85d7ab13b5	bccc8106-4718-34c1-b03c-fa31799bc599
+cand-1387e7259766	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	208	is_a	One	Concept	Energy	Concept	1310	1408	92b76336-e9f7-31b0-85df-ccc42c099405	17852f5e-9c20-324a-a984-a0ddf8be74fd
+cand-1431eb9ace9c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	510	is_a	Mandiant	Concept	Our Scope	Concept	640	775	149a33b0-a98e-3ef2-ae3b-0b969e2a2192	872f89f1-46d7-3ebf-b3fd-22e00be4a31d
+cand-14af64641dbc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	520	includes	This	Concept	Teleworking	Concept	978	1137	cf083a98-5a11-3c10-8f98-11510486689c	e833bbc4-c463-3850-ab8c-5687878d17eb
+cand-15b65adee91b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	295	requires	In	Concept	In	Concept	0	453	0aec7b19-8393-3b3b-95d5-4062724a8c0e	2014c003-de68-3bae-a92c-16830eddb11b
+cand-161d34236f00	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	358	is_a	Building	Concept	30%	Metric	0	481	dc3160c9-db07-35ce-b89b-e29fda12a9dd	ebaf5466-61c9-3212-bfe1-08f8b5d745f6
+cand-164dfc6dc5ab	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	296	is_a	Investment	Concept	This	Concept	962	1132	5f3abfb7-137f-3755-b29f-185e39ef4b41	221a546f-bff1-36c2-be7b-d6c54a0e86f7
+cand-16a8c1f1002c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	254	is_a	We	Concept	We	Concept	369	534	76e7fa02-1c9c-31b1-974d-a948bfc85cce	c0ee771b-8ced-3638-8e0f-2c07d474cba8
+cand-1741b42bb72d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	512	is_a	Actual	Concept	Scope	Concept	726	808	e9d1b255-b712-3b2b-95b7-ba2c0dfffff6	b36622b9-4f87-399b-9faa-a2acecf4f326
+cand-17cf4a484b7c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	55	is_a	People	Concept	Features	Concept	792	1006	aa984a09-9f42-34e1-8fdb-c7711c41a179	88da2b87-49cf-3ca5-99ef-34a3a7e73d1a
+cand-17cf4a484b7c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	55	is_a	People	Concept	Features	Concept	792	1006	aa984a09-9f42-34e1-8fdb-c7711c41a179	88da2b87-49cf-3ca5-99ef-34a3a7e73d1a
+cand-182a13c55468	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	66	has	AI	Concept	At Google DeepMind	Concept	920	1022	5d3756a0-3013-30e1-9cb6-f6ca171bc7f7	6e34d699-3dc8-3d3d-ab58-8ef4beeb212d
+cand-1895d8fd4083	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	241	is_a	We	Concept	At	Concept	738	1147	117e1f8e-a79c-36ed-8cbf-82ccb3d5eb83	455f98da-04aa-32f4-b98b-c553c921ce3c
+cand-18bd0ba3a275	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	298	is_a	12%	Metric	RE100	Concept	237	438	55cc6d70-90e4-306a-b93d-e8a7f2728865	0402adae-998f-3bec-8c55-9d164e8e6478
+cand-19e3ab3bd52d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	379	is_a	91%	Metric	Reducing	Concept	385	686	b2eb8ff4-c4c4-3342-90f1-21b041df5901	7f1469db-7779-3251-918c-c4f1ad467884
+cand-1ad29033e91b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Our CFE	Concept	CFE	Concept	2836	2979	d7005233-0464-3d6b-9bd8-a66cdf08c620	125aff60-a946-32a7-9cb8-fb298134f5da
+cand-1b5d5fd9a77a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	167	is_a	Google Earth Engine	Concept	Google	Concept	0	279	082469c2-7e5c-330d-a754-dcdacb7cc724	9632c1cf-0b39-36ef-8f2e-76cc21e09e85
+cand-1c1a79624633	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	253	is_a	Electrification	Concept	CFE	Concept	0	396	a409c1fa-4a29-3637-9c72-4a2f9d803127	21a9a101-1f03-3adc-988f-2894c7400392
+cand-1c5ef78fd7b1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	454	is_a	The	Concept	We	Concept	1297	1491	77007338-8544-3810-ad77-13679fbe25a8	3b761f48-939e-3986-b551-98b624ed42c6
+cand-1ca7a8ac63ad	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	254	is_a	Bay Area	Concept	For	Concept	1027	1176	0507d818-d717-31c0-b4db-d6572b165a74	b7bc3657-debd-3428-bd44-d8a75230e800
+cand-1cecdee28f19	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	432	is_a	Food	Concept	We	Concept	1108	1226	986b0d09-ea5d-36da-a840-f22ca72a6be4	b3701960-b807-3229-9031-2cc0436f2f7f
+cand-1cf8b6778ea4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	241	has	For	Concept	We	Concept	738	1147	428b2379-0924-31bc-a23e-ec15640d567d	117e1f8e-a79c-36ed-8cbf-82ccb3d5eb83
+cand-1d040e66d92a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	231	is_a	Scope	Concept	For	Concept	577	805	0800afe8-c4b5-3dc6-85ee-2a0aee9cb33d	300b7f87-7d5c-3101-9988-1f691c32dd43
+cand-1e54a636374a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	611	is_a	Scope	Concept	In	Concept	1916	1990	036a0996-6436-3b5f-b386-c9a1c0463104	0e682cb9-7b25-3064-895f-1354387188df
+cand-1eb18b1f1164	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	607	is_a	This	Concept	LCA	Concept	2141	2320	7f40aab4-6efe-3a5e-abf5-b0804a936900	215dccd8-ace4-3ae1-b209-b55d29015c4f
+cand-1f1afeb3dc8f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	508	applied_to	Due	Concept	Environmental Report	Concept	427	649	b7616216-6346-3713-b9be-6f76ef32b8a0	0e7edf00-dbe4-3b5e-b02d-989aab8fb960
+cand-1f70c36bd523	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	453	part_of	As	Concept	The	Concept	288	438	49af6b6c-f18d-3d37-816a-13216648c04f	8f2764db-1527-3c7e-8bbf-ec330f3268bd
+cand-1fe9704e6cf8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	174	is_a	Data Commons\n\nData Commons\n\nSustainability	Concept	In	Concept	0	268	50dfc133-f186-3dda-b1bb-a210de7def75	e577a973-2d26-3829-a9a4-b9d4a2996666
+cand-208d84a86a51	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	155	is_a	In	Concept	Together	Concept	1198	1302	3317133d-70c0-321b-a30e-8a105b193340	2c8f55c9-a0a0-3ecd-8c0d-1680551378fa
+cand-20cf797293d3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	150	has	Google	Concept	AI-based	Concept	0	528	bae488bf-929f-3987-be0b-c4c17475b068	d6e9c766-1a3b-3941-96b5-97599668a715
+cand-21db8c125a56	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	MWh	Concept	Purchased	Concept	399	472	2a707d59-a650-3836-b622-0016825e534c	196feaae-5e52-3c09-94b6-a5bc24cb3cff
+cand-21dfaa75777f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	154	is_a	HDOT	Concept	Google Earth Engine	Concept	634	893	5813f3d8-0ae9-36fd-a358-a60b6621c295	c6c9fea4-13b8-3bff-b809-2c0430351e1a
+cand-22d5049cff9a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	433	is_a	Our	Concept	Google Earth Engine	Concept	340	556	752ea03d-7066-362f-b7a1-402c30b30aad	a7cd0c5e-2171-3338-bf8b-ab96f71ad377
+cand-22e7c4547dc2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	405	is_a	CircularNet	Concept	We	Concept	809	1033	d8494535-b116-3d90-8396-11e6b1a6c537	68480fa6-be35-30b3-81a8-df017b129165
+cand-23ad831def6b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	161	is_a	NGIS	Concept	By	Concept	440	617	80cf30e7-289e-306b-8510-91c6c3420f69	e771098a-b8f6-3aee-bc18-2b7b1e596107
+cand-23b07dca01a9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	520	uses	The	Concept	Department	Concept	492	588	48f9b482-07dd-36ff-90ff-e560a440aeaa	6068aa17-b40f-30a3-93db-1568d7ab200d
+cand-23e27fa6d766	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	363	is_a	Moffett Park Drive	Concept	LBC Materials Petal Certified Renovation Typology	Concept	272	425	bbf7ddc5-6ded-34aa-b678-0e41b025ff51	653b33ec-5304-3ae8-aa6a-3746c7fe5f20
+cand-24606921c322	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	is_a	The	Concept	ESD	Concept	1255	1527	f21976d9-f303-30f5-86cb-b50cf19aac36	39eab102-69c3-31bf-8318-012f171e9f45
+cand-24fdab465a2a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	408	is_a	We	Concept	Examples	Concept	280	495	4a259970-1a76-3e92-b712-a52ac0a61414	8ea723ed-1676-3566-8ca8-cc34b6601aa0
+cand-268c5495e2ea	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	includes	GRI Disclosure	Concept	Where	Concept	876	1031	e526d70f-e213-3cb6-85df-39490abbaba7	9070e218-f644-3f64-8876-8b59d986eb03
+cand-273d8fd32091	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	461	is_a	We	Concept	While	Concept	656	761	140791bb-e018-3cb9-9b13-038d5d82569d	4ca89c2a-8395-3f7a-831d-cde91ba2f865
+cand-2829a9bd9a58	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	196	is_a	Startups	Concept	These	Concept	0	347	b6327e20-01fc-3572-970c-55573f667ecd	5e6d3ce2-4150-3f15-9200-a2e52aafdc04
+cand-2829a9bd9a58	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	196	is_a	Startups	Concept	These	Concept	0	347	b6327e20-01fc-3572-970c-55573f667ecd	5e6d3ce2-4150-3f15-9200-a2e52aafdc04
+cand-295df9713fdd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	517	includes	Capital	Concept	This	Concept	0	366	d23597e9-0538-3098-bec8-b072f54fd2b4	1c2b9372-f8fc-3789-bed4-4651e3314f6a
+cand-295e7d821fbd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	395	is_a	Chromebooks	Concept	For	Concept	0	356	3b6e96a1-93c1-3302-9642-44afac230d14	78366d27-7346-36c8-a48d-43a813279ee8
+cand-295e7d821fbd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	395	is_a	Chromebooks	Concept	For	Concept	0	356	3b6e96a1-93c1-3302-9642-44afac230d14	78366d27-7346-36c8-a48d-43a813279ee8
+cand-2a1cf4d10f92	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	512	is_a	GHG	Concept	We	Concept	1236	1304	83519a66-54f2-3ceb-b747-4eb7c5904ba0	15afe4db-e908-3288-a39e-260d71591fcd
+cand-2aa55ac1b644	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	549	includes	This	Concept	GHG	Concept	300	568	12db7383-3f3c-3ab2-a529-a4c5795828f6	cd349a6d-69c1-3de7-9c2b-955958b48174
+cand-2bcdefbcfe83	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	16	has	Thirty	Concept	The	Concept	356	392	c4fd3294-6896-3b0f-b6f1-0494f7c30cce	b21ca199-5a8f-3072-9831-7666d5ae19b0
+cand-2c330b872ed7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	505	is_a	Alphabet Inc	Concept	Google	Concept	284	337	6673987a-8407-395e-9b38-b96e887f8e83	5ac9bb79-acee-35e4-881d-808cb27a9367
+cand-2ceb416108e6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	460	part_of	Sustainability	Concept	To	Concept	751	901	b3bf205c-22c9-3913-bc96-30dc19255357	3c61b988-72af-37e0-b74d-08117319338e
+cand-2d40234185f0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	177	is_a	Technology Madras	Concept	Data Commons	Concept	263	404	23a1c12e-686e-3c56-ab0b-cca8c72c68ec	4bc529f2-f55a-3fff-8b95-7625955b9ae1
+cand-2d5e9d4c7e9d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	385	includes	Scope	Concept	Google	Concept	0	449	b7614ed4-72b7-305b-a8f7-44f8bc2bcf58	fab159d6-a429-3dee-9218-b43316615206
+cand-2d6559a83630	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	607	is_a	February	Concept	Carbon Capture	Concept	1968	2025	73225618-fbee-3b8a-9285-e5f2fa58b087	54dc74b0-1542-314e-842f-d4bc63eecf2a
+cand-2d905d6d53d2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	405	requires	The	Concept	That	Concept	0	200	f0aec98c-029b-37db-8360-d3890ce545b2	dbb1e170-14bb-31bd-8b2e-4ec965c33b25
+cand-2e45977a51a9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	346	is_a	Humans	Concept	We	Concept	0	172	ee8b93af-730f-3855-bcb6-c88bf2574e08	6357a663-ab1c-307a-b053-2d0cd3de14d5
+cand-2ea17f239845	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	442	requires	This	Concept	Bay View	Concept	145	336	eb4ecb57-7e0f-3016-9a5f-a465a6f73c2c	12d8e7e2-fa21-3dac-8d75-e3cfd002253b
+cand-2ecf87ac57dd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	493	has	Google	Concept	WRI	Concept	1090	1171	1f5441f2-66f9-3314-aea1-99defb4a7629	9cf1221f-dea1-3fa3-be35-1268a2b5b57b
+cand-2f585204f6c0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	442	is_a	Predictive	Concept	90%	Metric	709	897	e8304cfe-68d6-3da9-9d81-ba9518ee74fa	4cfcf6ee-2712-3de0-a15d-54bafe36004e
+cand-30a561a3656c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	390	uses	Pro	Concept	99%	Metric	0	304	0e355c6a-bdf5-3a9d-981b-8370aa1bbbb9	30239784-84b5-345a-b947-c273843c9c7d
+cand-30bf1b6e8a11	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	150	is_a	Climate	Concept	To	Concept	0	528	110327ec-df2c-3767-bcfc-7d655e044aad	7e50eef1-3716-3390-be0b-c96998bb744c
+cand-30bf1b6e8a11	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	150	is_a	Climate	Concept	To	Concept	0	528	110327ec-df2c-3767-bcfc-7d655e044aad	7e50eef1-3716-3390-be0b-c96998bb744c
+cand-32cc049e5fcc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	116	is_a	Google Maps	Concept	By	Concept	768	932	f4f28813-d8a5-3307-8dd4-9ea23a7b8fcb	086e50b1-58c6-327d-957c-2b83f5e87d1c
+cand-3398c9a75652	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	369	is_a	There	Concept	With Bolands Mills	Concept	342	442	3a66d5f4-6ec8-31f6-919b-27b449698f98	86c20290-1ac9-3e16-b80c-8673237d7a50
+cand-339d8458edca	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	111	uses	It	Concept	AI	Concept	331	478	2d9fec6c-766c-3c83-9f7b-a3bad911ff8e	4df503e2-a179-3a0d-82c4-4c0fac322188
+cand-35309329603e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	401	includes	Responsible Chemical Management	Concept	Recent	Concept	732	993	f1833767-e1cb-34a3-ae40-aedab21dd543	83ce45e7-c33e-30d3-a5d8-2f94c96b52df
+cand-35852da644f7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Percentage	Concept	PPA	Concept	1783	2197	bccc8106-4718-34c1-b03c-fa31799bc599	38b4430c-a02c-3582-bbc3-b3ad8caedc8b
+cand-35ea2dda8c31	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	488	has	Carbon-Free Energy Compact\n\nGoogle	Concept	BEF	Concept	365	500	b45d58b9-ab9a-36fd-b44c-eaa4fa7d1090	cc1249b0-a4f2-3129-8e2d-3a9308cbd51e
+cand-362498b9a996	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	450	is_a	Our	Concept	Mountain View	Concept	1262	1320	0509d24f-5c6b-377a-bc14-09d5cf4ed5b5	6609e5da-2332-352c-9eb1-187f029d7a19
+cand-366e879cc7e6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	is_a	Due	Concept	To	Concept	3493	3541	95db7865-917c-3eaf-849d-72bbf590d1b2	7c433e3a-9057-35f8-b115-4d05a1df47e7
+cand-36bdcd283275	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	290	is_a	We	Concept	CFE	Concept	586	753	fe49f9f7-3595-3209-90a9-70d7a3c5e64a	8185903f-c6ab-3149-801c-cea13e22f01e
+cand-36de9a9aba22	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	88	is_a	55%	Metric	Yet	Concept	0	423	c9306a5e-80fe-377e-a526-b6c9fae43d0e	81847f1f-d470-3af0-8b41-679ad05821d7
+cand-372e43432a79	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	294	is_a	CFE	Concept	That	Concept	0	443	b8ebb143-0653-3fa4-8b00-9e557cee0118	7abadbc0-5d37-36c3-aa6c-ad9909822b2c
+cand-37d8fa3e1302	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	252	measures	As	Concept	MWh	Concept	313	479	3131aff7-037c-3ce9-956d-a7ce59b34daa	975ce023-4c4f-3211-953c-b1275c21322e
+cand-37f7fbfbaebc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	This	Concept	CFE	Concept	2980	3087	69d5cbe8-495a-34d1-a556-2cdacf56c45f	63bebc5c-01cb-3390-aca0-a6ac6634a1fa
+cand-38704ed442a2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	336	has	Google	Concept	BlueConduit	Concept	800	1101	11455ddd-3041-3060-8ac1-212ce2a2d077	78778769-c033-3840-bcb5-4176565f0708
+cand-387720d51514	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	110	is_a	Europe	Concept	In	Concept	295	525	4034cb4a-b17f-3a0f-ab27-cd6f7b50740a	640d8dcf-591d-3ff3-9dc6-00208b9cdcc0
+cand-387720d51514	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	110	is_a	Europe	Concept	In	Concept	295	525	4034cb4a-b17f-3a0f-ab27-cd6f7b50740a	640d8dcf-591d-3ff3-9dc6-00208b9cdcc0
+cand-38ba7d7464b9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	239	has	Google	Concept	We	Concept	339	507	4fb12712-3382-3ed7-89ab-9ace85f01970	d81d4fc9-3993-3e10-81a4-d9a6e8db558d
+cand-39774bd66c46	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	463	measures	New	Concept	See Figure	Concept	813	950	6cc2d411-41b6-347c-b96e-1bcfe1123b39	3201797a-e77f-3e26-9393-938904b15fc5
+cand-397dadcfecb3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	is_a	Chromecast	Concept	9%	Metric	1026	1254	6d327ee4-b31b-3a5c-b56c-9949afaee71b	3aa432f1-ab2b-3871-8e87-7d8ac380d0de
+cand-39eabdd9af78	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	433	signs	AI	Concept	While	Concept	726	951	9f78e156-0488-36a1-8363-9cf0e71a0a05	87782f87-9de2-39b4-8c42-14cd1250c511
+cand-39f1b69e26e1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	505	includes	This	Concept	January	Concept	0	231	1acbe021-27be-33eb-9e1a-fbbc1616809f	31b876cf-1608-3389-a389-8f5b981ab9d7
+cand-3a0a8393abdd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	492	is_a	Google	Concept	TNC	Concept	1298	1582	599b9f9f-d923-389e-825e-803a69be6a02	1abc1817-8963-3897-85b6-0921ffed6765
+cand-3a6099fab70c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	313	is_a	Understanding	Concept	We	Concept	790	988	7d79e3db-e3c9-3af2-842d-55731c1f7601	1fa9da7f-cd84-303c-8b82-c605ffc65ee1
+cand-3ae35827ec64	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	16	is_a	The	Concept	Search	Concept	393	602	b21ca199-5a8f-3072-9831-7666d5ae19b0	44f656c4-57fa-3aa0-ae47-17fb4c6eaa40
+cand-3ae35827ec64	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	16	is_a	The	Concept	Search	Concept	393	602	b21ca199-5a8f-3072-9831-7666d5ae19b0	44f656c4-57fa-3aa0-ae47-17fb4c6eaa40
+cand-3b8ee5ea692d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	486	is_a	Examples	Concept	Figure	Concept	201	252	aae7945b-2b13-3232-87ba-7172b85a176b	3728ce7d-ec06-3b53-b141-47c34152de90
+cand-3d0133569e89	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	19	is_a	This	Concept	But	Concept	1002	1129	ebf3633a-c2c5-3586-b8a6-4650e1e677c0	40d4da3b-b824-3b52-b697-e31a605342e8
+cand-3ea4c0595b0f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	321	is_a	In	Concept	When	Concept	421	482	8ca402fc-4e5c-388f-865a-70080b468fc5	ce8efe62-f46b-3b8d-a037-739451569374
+cand-3eba7fb7e5f4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	163	is_a	Wind	Concept	Through Google Cloud	Concept	0	268	61891cbd-8dfd-3387-a2c2-8895f00aa476	4bc8a30b-9dd7-3ef9-87ab-74b6a95bdab7
+cand-3f0634b2a987	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	488	has	Google	Concept	BSR	Concept	726	899	31f86021-30f5-3060-ba4e-1e317d64f1bb	54729c4b-9f51-3fdd-bf77-5286faec8522
+cand-3fba0673aa90	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	521	is_a	Environmental	Concept	Other	Concept	740	1035	5744efaf-04bb-3c29-bd7c-5092190c4258	10c0685b-7c87-377c-a2f0-20c68c058ce3
+cand-40085e49958e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	238	part_of	As	Concept	GHG	Concept	186	421	41f05f7c-256e-3727-bb8c-f7c49bd9ba21	7f413684-c0b2-31b0-9628-09e3a9e4cac3
+cand-400b3affbff6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	uses	Google	Concept	See UL Spot Database	Concept	657	752	74df2cd9-b017-3285-b81a-47a8552e4297	762b2953-ca9d-3723-beea-0b4f68cc4e4d
+cand-407ce11c3f36	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	548	has	Alphabet	Concept	CDP	Concept	912	1073	eed984d6-9c3d-3e29-a866-8cb5735f4845	c3ee232a-0e86-3531-a91d-c4ce2aac48d7
+cand-40e193b58881	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	117	is_a	EV	Concept	Google Maps	Concept	177	236	91851389-1b70-324c-b5ed-a5a8be75b872	690c3645-f9ea-31b1-a0b8-ad0bed7de01c
+cand-40e43eaf95aa	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	116	has	People	Concept	Google Maps	Concept	768	932	f4cb63fa-e202-3477-b56b-0aa8aeb5a8ff	f4f28813-d8a5-3307-8dd4-9ea23a7b8fcb
+cand-417c1d021b2f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	377	is_a	Zero	Concept	99%	Metric	416	567	bbdaaacc-f17c-363a-a67c-afd078825948	80c368d8-c810-38bc-bb10-ddb1e51c339f
+cand-424bdd8da613	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Equivalency	Concept	Greenhouse Gas Equivalencies Calculator	Concept	1136	1254	e74deec6-8383-31e7-a45b-68016d5a8b17	61beadea-c3f7-33a4-8610-c5eee963e56c
+cand-4378df7834ae	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	379	requires	Reducing	Concept	At Google	Concept	385	686	7f1469db-7779-3251-918c-c4f1ad467884	2d903f19-19f2-30d4-b310-ea06f36d05c1
+cand-44152776d351	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	All	Concept	In	Concept	2040	2154	bdbfde36-1c15-3905-b116-03a651a5fef8	4a8b830c-82d4-3816-91ab-b1efeb4e194d
+cand-44f69477061f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	24	is_a	Looking	Concept	2030.2	Identifier	399	699	efa6f748-fd68-3249-b3ba-e31f833d5bec	0b221317-9dcd-36ee-bf1a-24bdda89bbc7
+cand-459e9aa8dd87	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	332	is_a	The	Concept	6.4	Identifier	853	941	b4e89198-e87f-3cde-90db-2fd3509563d7	ac445ca7-bded-3b41-8104-f3ea89fa2132
+cand-45a7d2646a98	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	is_a	Chromecast	Concept	9%	Metric	1528	1691	2b167fb6-d67e-3f2b-abe2-2da8d8a44799	ac613d90-b570-35bf-b79e-ca928fec2041
+cand-45db7e6aab12	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	186	is_a	Mineral	Concept	AI	Concept	451	631	b3f69344-0bd3-3a6c-84bf-92edba3568d8	af714048-2c13-3804-a548-45d961742e25
+cand-45f71645233b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	Purchased	Concept	This	Concept	473	600	196feaae-5e52-3c09-94b6-a5bc24cb3cff	5e456d55-da3b-35e3-9964-519662666d51
+cand-465e2f555a87	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	244	has	Historically	Concept	AI	Concept	0	660	0e107e98-6355-3c83-9070-10ac609f66f7	8181c2d3-a39b-3bde-a80b-6b794b0b0c41
+cand-46618e419b27	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	460	includes	Conduct	Concept	Along	Concept	903	1266	60a2b7b2-82e2-3997-b0cb-f0a95b6331dc	8db0fc07-7c64-3bd1-a082-0a95e4a68437
+cand-468cc9a1124c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	143	is_a	EIE	Concept	For	Concept	0	372	bbf87c4d-d413-3518-9775-e2b163d39b35	c159c4c4-511f-3aad-87b6-fc0132571285
+cand-471990a26513	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	516	is_a	Emissions	Concept	Other	Concept	1107	1311	468b7f47-0970-3cae-8f2c-7dd801970f3a	ba140961-f117-3a63-b149-79c1eb822a3d
+cand-4748aabc9b50	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	71	has	Google	Concept	In	Concept	0	492	e4dc786c-13e2-34c9-977f-edda32027fcf	c347f2ee-7b4b-3b19-9b06-8d32d2b3dc75
+cand-480290b4518b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	242	has	PUE	Concept	1.12	Identifier	1393	1483	b92e65eb-a05f-3b0c-bfc6-55fa998bf674	0db757fa-4f10-31ef-a8b4-0d4a956e31fe
+cand-4834c45f94df	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	525	is_a	GHG	Concept	GHG	Concept	422	603	8e02e367-b1f4-3b7e-baa0-1d2c8328145d	77d3ef5e-2982-37fa-8f0f-1d82ea8c6ba4
+cand-48bd7b561dfd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	294	is_a	The Compact	Concept	In Europe	Concept	757	930	b5aded98-eb65-3c42-9185-e03b31540f24	ee48d4e2-3aa2-3c8e-82e1-8d2f1f2f5f7a
+cand-49cd90b54856	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	155	has	Google	Concept	ET	Concept	1303	1501	3cec3d22-bbc6-38dd-a5cd-7fd0cd222eb0	c221c557-874a-3ca3-acd8-54449df1bdb9
+cand-49d99244c886	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	513	is_a	Issuing Bodies European Residual Mixes	Concept	European	Concept	592	719	d4d122c0-c574-3e80-8305-bd72023d7f74	0c66e68b-acf2-33e8-af7e-5bb4e38d23e7
+cand-4a53e17f6bc9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	CCS	Concept	Alphabet	Concept	1512	1680	373a46c4-e7db-31c1-ad15-4f209941952c	8cc8d4b2-65e3-3028-b191-2b85d7ab13b5
+cand-4a53e17f6bc9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	CCS	Concept	Alphabet	Concept	1512	1680	373a46c4-e7db-31c1-ad15-4f209941952c	8cc8d4b2-65e3-3028-b191-2b85d7ab13b5
+cand-4b277cf047c1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	189	includes	This	Concept	Launched	Concept	218	412	937d00ae-2237-35a9-ab25-88594b5faafe	c117153a-aafd-3154-a037-01c190a89a31
+cand-4b36c7d012a8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	441	is_a	Bay View	Concept	Net-zero	Concept	590	840	b61f5348-a460-3ee6-b3e7-60de311666ce	1fd5d084-833c-3c11-b5c7-b37fdf978796
+cand-4bb6ab772682	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	141	is_a	EIE	Concept	Global Covenant	Concept	497	700	af9c1600-059f-3452-8fc5-b683e0f1c1cf	ba50a1ed-bd2b-377c-a2c7-cb3391bd948d
+cand-4c7113851f81	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	390	is_a	Transitioning	Concept	We	Concept	405	554	b4a25fcc-8290-3484-8373-3df151385e85	8e4c1bd1-a449-3f84-ac8b-57af0fcc2898
+cand-4c7113851f81	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	390	is_a	Transitioning	Concept	We	Concept	405	554	b4a25fcc-8290-3484-8373-3df151385e85	8e4c1bd1-a449-3f84-ac8b-57af0fcc2898
+cand-4d2d2fcae444	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	452	includes	The Sustainability Focus Area	Concept	Chief Sustainability Officer	Concept	784	1025	7e9a4004-b6e1-3d6b-95f1-30b027943678	c58ef7b7-48b8-3b70-8b8b-4547656d7c40
+cand-4d56f9d76d16	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	179	uses	TerrAdapt	Concept	Google Earth Engine	Concept	333	485	d727369e-c7e9-3569-a20c-3f47f6249762	8d1a3ad0-4b23-339b-9843-b859995d6ec8
+cand-4da3a2094733	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	164	is_a	This	Concept	Google Cloud Ready	Concept	355	509	19ad507b-0049-31c9-9376-f731b9a0a0c6	14457b87-8a69-368c-b30b-58bf1b56d83a
+cand-4dbec2b83f9f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	75	is_a	Uncertainty	Concept	GHG	Concept	478	733	522e476f-0cfa-3d52-9785-967af988ecb7	536e3e3f-5eca-3a4b-adb9-60b478f95265
+cand-4decf0f5204d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	456	is_a	6.0	Identifier	For	Concept	380	660	27cbe066-6fe7-3cb0-8547-1b060360fccf	537583c4-2de9-3dca-83b7-15cbfb5dfe6b
+cand-4eb7ee67b224	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	237	is_a	Reducing	Concept	Circular	Concept	424	509	a5eac473-cfcb-3fc4-b3a0-0f022d7120e1	45d88dfb-913d-3bf8-8ca7-5f336ccad1b8
+cand-4eb7ee67b224	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	237	is_a	Reducing	Concept	Circular	Concept	424	509	a5eac473-cfcb-3fc4-b3a0-0f022d7120e1	45d88dfb-913d-3bf8-8ca7-5f336ccad1b8
+cand-4ed67f08854b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	54	is_a	AI	Concept	Google	Concept	225	436	93aacd4d-61e9-300c-bf6d-a3d4ca2608b6	7660f003-8a96-3c75-9c61-d0659802f94a
+cand-4eed21b95901	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	459	is_a	One	Concept	Project Sunroof	Concept	902	990	aceb8b66-1b03-3993-b174-68c15a9919c8	fc3777ff-3e3a-3133-b00c-affad6cadc51
+cand-4ef137d4cde9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	126	is_a	People	Concept	In	Concept	0	431	5f4ccfc3-c5e4-376e-8744-0f9ed031d221	c61433f4-a25b-3eb0-adaa-eefb8a24692e
+cand-4f9e92b20a38	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	159	is_a	SAP	Concept	Google Cloud	Concept	573	717	9e75633c-917c-3f27-afdb-6a200beb50be	f5fd9e77-3764-38f2-93dd-28d3a6486f0d
+cand-4f9effe04021	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	517	is_a	Tier	Concept	Category	Concept	1071	1530	d58df7da-6d65-32be-819c-d33e60e0923d	5e9766b0-6b38-3ed1-9f81-1f41d2fbaea0
+cand-50c14041e1a9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	239	is_a	Google	Concept	Gmail	Concept	0	338	54f839c9-86c5-37e0-af57-7da1ab5a3d67	f7e90c69-811c-3399-8905-f424856f52ec
+cand-518bd96cb061	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	527	is_a	Electricity	Concept	PPA	Concept	0	589	dbf86350-a19f-30cb-9e9d-b033a43e87b1	f6ab2ae3-69e2-30ce-a901-a1076ce64ba2
+cand-52dfd5434ffe	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	408	is_a	The	Concept	We	Concept	0	279	850d22de-3026-3c82-aa11-f367a10953ad	4a259970-1a76-3e92-b712-a52ac0a61414
+cand-52dfd5434ffe	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	408	is_a	The	Concept	We	Concept	0	279	850d22de-3026-3c82-aa11-f367a10953ad	4a259970-1a76-3e92-b712-a52ac0a61414
+cand-530fe65637a4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	492	part_of	Climate Accord\n\nGoogle	Concept	Climate Accord	Concept	674	853	0df5a40a-e481-34f4-8584-7a3e0f74a63d	b514d2d9-cdf1-304c-a387-94479cc8e3fe
+cand-53c41b91a95f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	242	requires	Heat	Concept	Our	Concept	623	818	ac0ba851-e490-34f0-8dc9-3f41699ef593	90c0cd33-4b5d-3340-8c00-960bd00064c5
+cand-54afcec3cad0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	CFE	Concept	Electricity Maps	Concept	3088	3214	f7ae61cf-b6b8-378c-98b7-1580405cf908	ba59496d-9005-3d96-a22a-fcfed0eb6a00
+cand-54e29a2029e7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	161	is_a	Companies	Concept	Google Cloud	Concept	279	438	6d701f93-45d2-3169-96ed-ef75785429ce	02121326-f843-3348-9036-f1c92a466959
+cand-550f78c4dea4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	323	is_a	Google	Concept	LEED	Concept	509	677	0f4c4711-e885-3bf8-a785-0229e39f0420	f0f269e1-3fcf-32f1-a92e-33b47d70db87
+cand-5594921331ca	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	413	has	Google	Concept	In	Concept	196	277	f014b245-1530-33fe-aa17-0b4928db7043	1e5981b7-8e97-3083-84c8-5cd077c0aa05
+cand-559fb3122044	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	517	is_a	Data	Concept	Other	Concept	1071	1530	9bc4865a-62f5-321f-8f2f-9be1624bd3ee	bc8c91f7-bb9b-3b8b-9993-29b2b2df6b42
+cand-559fbc532d44	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	609	is_a	Contracted CFE	Concept	Google	Concept	867	1130	d68be76f-6a2f-3ffa-b83e-e6a74a53314e	3b9f7c02-f879-3e7b-810e-f28d9bc98a84
+cand-559fbc532d44	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	609	is_a	Contracted CFE	Concept	Google	Concept	867	1130	d68be76f-6a2f-3ffa-b83e-e6a74a53314e	3b9f7c02-f879-3e7b-810e-f28d9bc98a84
+cand-55d4ba07b042	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	524	is_a	GHG	Concept	One	Concept	940	1040	b53404bb-d2c1-3f18-91b0-bbda05286ef7	67cc14f4-cf05-3c11-918f-cabcef642e48
+cand-55d7d0a384e5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	494	has	Alphabet	Concept	CDP	Concept	296	378	42029c26-f4ce-3d43-9188-d8a1df3a2b5e	67b0c972-89de-33ee-b377-c2cd67ccc181
+cand-5632933dd851	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	measures	Our CFE	Concept	CFE	Concept	2836	2979	d7005233-0464-3d6b-9bd8-a66cdf08c620	125aff60-a946-32a7-9cb8-fb298134f5da
+cand-56dd23fb532e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	392	uses	Pro	Concept	99%	Metric	0	371	ec517712-efd0-3c1f-bb9b-d987c1ebe17c	5fe43b9f-f265-33bd-b085-6a3558c5ed83
+cand-572214812257	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	477	measures	We	Concept	Body	Concept	1338	1513	a3ff94d6-963b-320e-8921-2c7d9e2be292	cbde2b1d-cc48-3a62-a265-6688dbea4757
+cand-574d5265e62b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	472	is_a	CFE	Concept	The	Concept	0	481	8e465d65-cd0d-31b7-8fca-baa50236b746	f096c216-0f01-333c-97bf-37cce42efd36
+cand-580d4fe77fae	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	287	is_a	Both	Concept	NGOs	Concept	794	851	2163ffb3-fac9-3e41-b056-78491a8c84ed	cd71ddf3-db3e-3579-b61f-daf3eba6027f
+cand-589b625ad77d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	441	is_a	LEED Platinum	Concept	LBC Water Petal Certification	Concept	399	589	b1ed0d12-eb68-3c12-a1e3-5f4575b2f25e	228eadd1-964b-3b78-8372-7fdb4686c641
+cand-58b345e15967	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	301	is_a	GHG	Concept	We	Concept	0	293	2e5b2096-8eb3-34d1-a414-21243fc86dbd	76823829-69a7-3c67-93e0-d510753f1d8a
+cand-590c5795f206	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	118	uses	Live View	Concept	HIGHLIGHT\n\nGoogle Maps	Concept	992	1218	3c8e366d-68c6-33d5-8ee2-0317ef103626	ea2ed2cf-60bd-3ddf-b6a4-442649e696ad
+cand-591687543adb	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	433	is_a	While	Concept	That	Concept	953	1090	87782f87-9de2-39b4-8c42-14cd1250c511	67398954-5b04-3680-8c85-b1d80794a60f
+cand-5979d84fb31a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	includes	The	Concept	Additional	Concept	2198	2320	7c4c73d5-d901-3673-be67-1e5b72bc1b0f	9ab65c3d-26e1-3c1e-999b-9b7ad2dfc5e9
+cand-5a31535af915	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	is_a	MWh	Concept	Total	Concept	379	620	62217855-0679-3fba-8c2e-434a969c0244	8b7256b3-cead-3879-a7ad-45d78348507b
+cand-5a6821b66fe8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	327	is_a	Many	Concept	Improving	Concept	0	262	afb45197-4a7b-3eed-acc3-855928ebcbea	bcf4b9aa-5a6c-316a-8999-6c5b698b37cd
+cand-5acf7a776697	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	184	is_a	Tidal	Concept	Its	Concept	0	234	132bd623-d038-3439-b57f-ca0b53979717	aaadc7e8-6b9d-3b83-ab54-c8eb88f08ca7
+cand-5b7a5827f77b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	493	has	Google	Concept	WBCSD	Concept	803	907	d13b6e8d-d0d0-35b3-870e-9c7aa8641deb	1ceeff6e-e2fd-3586-8aae-7eed4fd87494
+cand-5b7c548ca4d8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	422	has	To	Concept	California	Concept	986	1180	bb177e05-3a75-3bc4-9ec3-4eb0f92408e7	170c3f2a-3b13-3d59-86ba-093fbeb8bd22
+cand-5b84d02be5c4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	296	is_a	This	Concept	We	Concept	1133	1257	221a546f-bff1-36c2-be7b-d6c54a0e86f7	6afd727b-5dfa-3c08-a459-9be190cd23d5
+cand-5b84d02be5c4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	296	is_a	This	Concept	We	Concept	1133	1257	221a546f-bff1-36c2-be7b-d6c54a0e86f7	6afd727b-5dfa-3c08-a459-9be190cd23d5
+cand-5cce7eb97c39	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	153	is_a	All	Concept	We	Concept	455	492	5804dd93-1fcc-386a-b992-09082311ce1f	7cca0b52-1c18-30cf-a0ba-f0106c74cbfa
+cand-5d794224194b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	151	uses	Our Flood Forecasting Initiative	Concept	AI	Concept	337	494	97634af5-7fff-3115-ad24-7b3477551f55	5c9d6ea0-a0c9-3612-9e5a-0372a6753529
+cand-5dae10554724	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	75	is_a	These	Concept	Inherent	Concept	359	476	1d3c9655-65a5-3e35-b869-8410d0958730	ff7f427e-7a50-3579-b99b-221cd35577dd
+cand-5e3bc93e4c11	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	396	is_a	While	Concept	That	Concept	651	891	9b1adb68-8718-3693-bf11-2c41ab2e6696	0220a772-9c0d-32a0-907f-932df749d318
+cand-5e9332836078	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	64	is_a	AI	Concept	Prediction	Concept	552	801	443e21ac-b295-3b0b-9d62-845e59fcf5a8	59de2d81-0db5-325e-8054-32893bf85f73
+cand-5eaca9a4cebf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	236	applied_to	Scope	Concept	Had	Concept	0	481	ca7dac1d-fa04-35d6-9401-d1f73b5c2e64	6083d452-3b59-38fc-a7f3-2591182f3223
+cand-5ef288b43390	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	Data	Concept	Our	Concept	2311	2403	4a1de5f4-38b4-3c67-b8f9-fdd84f30bd93	d4ccc4c8-a9df-33f4-97c8-9a1e895b5187
+cand-5f230957f408	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	488	is_a	C40	Concept	Google	Concept	1236	1483	70405a75-7df8-3020-a1ab-e503985183ac	53a9b014-2cb6-390a-8d65-3b9b85e54dc7
+cand-5f41e58a9941	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	159	includes	Carbon Sense Suite	Concept	Carbon Footprint	Concept	0	316	e371afbb-8050-3098-9f01-135c5958f736	866b7192-83b3-3d2a-b47a-3f04f1c0bf36
+cand-606e3fa767ee	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	55	part_of	AI	Concept	Google	Concept	0	228	89e7d93c-8ad9-3dd9-94e0-89a4bd5d76c6	3dc821bc-61cf-37f5-9930-91d4057a82cc
+cand-60e285a9186f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	184	is_a	Its	Concept	Tidal	Concept	235	511	aaadc7e8-6b9d-3b83-ab54-c8eb88f08ca7	5a7d6914-80f1-3d1a-a813-a67adc0601f1
+cand-614a7aef7eb7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	524	is_a	Once	Concept	Google	Concept	1395	1613	917be568-a4d2-3c14-8cd3-123f7b76970a	62281250-7eaa-3fa0-99e0-7eb93c4921e2
+cand-614a7aef7eb7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	524	is_a	Once	Concept	Google	Concept	1395	1613	917be568-a4d2-3c14-8cd3-123f7b76970a	62281250-7eaa-3fa0-99e0-7eb93c4921e2
+cand-623e51b1a839	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	389	uses	Pro	Concept	99%	Metric	236	456	caeefe10-e9dc-32a0-86ff-3c4283c9f2ac	2edcc1b6-575e-3ec8-9442-3de928059a86
+cand-628d78e7ee31	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	475	is_a	In	Concept	Engagement	Concept	217	432	b76ef5e2-c0fc-351f-a748-cb67f7650454	4c52630a-4efa-3b16-9b0b-62f82757ee0a
+cand-62bcac70b56e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	166	is_a	This	Concept	AI	Concept	286	485	0a9e7fd8-b0a3-3c1f-83ff-ea84eb41b8f6	dc62328e-6c64-3491-9aea-f289aa110aee
+cand-63886060ca8e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	328	is_a	We	Concept	We	Concept	358	572	8e492071-92b6-35b5-a6e9-147ce6438ecf	fd434ba8-bdff-344f-a237-b4e03a6f8d01
+cand-63d537839b0e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	467	has	Engagement	Concept	Google	Concept	0	225	d97e665f-eb82-3b0d-9770-e7c2329be8be	911aca1d-6c0f-3d40-a942-60cb2c5f14d2
+cand-63d92d26b8b1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	524	is_a	Our	Concept	GHGs	Concept	597	783	0bb579b7-1b32-3698-b6ca-12ff9e9d278b	0e4103fe-d170-39e8-bade-87f95dbaafbb
+cand-6454b930d951	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	66	is_a	Google	Concept	On	Concept	0	179	ba570091-3e9c-3afb-88eb-593845e8664d	776430f0-eb2e-3cf0-9e70-0867feadea9b
+cand-678786345e76	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	303	is_a	While CDR	Concept	1.5	Identifier	0	357	63f18a8d-28c7-3558-8a77-99986dfd30a3	e1a65236-e474-3ef7-927b-c7ee27a302b7
+cand-67d61fdabe6f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	294	is_a	One	Concept	United Nations	Concept	603	756	faefc76e-dc2b-3165-b032-7bdd9812da62	6dca49dc-34f4-3501-96ce-110ab39e5381
+cand-67e375985b59	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	153	includes	This	Concept	All	Concept	275	454	f489e2f6-653b-3d40-8cdb-d51e3602e5c7	5804dd93-1fcc-386a-b992-09082311ce1f
+cand-68ebe214931f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	313	is_a	The	Concept	40%	Metric	0	341	c68059b9-ed2c-3b82-8588-ee6ce67c4597	ce401293-d991-3f32-becd-610e8283bc06
+cand-68f2236e5850	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	611	is_a	Charleston East	Concept	See	Concept	1383	1561	71995c41-7404-3801-925d-a12203a497f3	2d0212ba-2f6c-3b79-bf5a-264b262b00c8
+cand-694c07782e60	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	241	is_a	Our	Concept	To	Concept	370	516	1831542d-46f0-3b2a-ab80-4ffb45f44eae	59780351-7708-337c-b4ed-9d2e590aa020
+cand-6956a03b0c36	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	96	uses	When	Concept	Google Search	Concept	0	342	88b9a219-948e-38f4-877e-8e7860fc19a4	d086c21f-6e56-30cc-bf2e-21ea65445bcf
+cand-69f5ed30ed49	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	155	requires	Improving	Concept	As	Concept	325	436	f2d53330-530f-3e23-b186-d13df33ac65a	fb60ef76-07b4-3e77-9142-fafa4ae8b653
+cand-69ffd735c949	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	398	is_a	Material	Concept	In	Concept	0	361	c280367e-24a8-320a-83e9-49cfb087197b	0e6aedc7-07c3-32e5-b8c0-43c296f49868
+cand-6a449bf0f720	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	219	is_a	There	Concept	Figure	Concept	259	536	d2f516cc-edf7-3b17-ac54-26f5942c0ed0	b73677cb-82c6-3f56-920b-663268f160fe
+cand-6bf95d927775	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	463	is_a	We	Concept	The United Nations Framework Convention	Concept	0	269	65fd83cc-38e1-3ea0-9ca9-9c72ab99cfac	79ece2e5-991e-313f-aa58-b5116f86b883
+cand-6d34ccc09b6e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	231	is_a	Clean	Concept	Procuring	Concept	351	426	4a0580e5-8313-3991-8c61-849ac71314a0	64982f1b-c2d3-3583-8ef0-f31c5362a3a9
+cand-6ed32b762404	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	197	is_a	All	Concept	Sustainable Development Goals	Concept	348	529	7632528a-689b-3c2f-ab74-712eb1ed9a03	1ef18721-1c1f-3293-b221-dc4b33361f33
+cand-6f5161ce123d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	298	is_a	Our	Concept	We	Concept	614	700	abf018d1-de77-3656-9e19-c2c65056d2dc	31ffb4f2-e38a-307c-8395-b5daeb133d34
+cand-6f929e3893b7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	81	is_a	More	Concept	In	Concept	204	325	ae13f3e1-2ee4-3555-85cb-8f422ca2dfe3	9094870e-3284-3301-bace-c38bde4ff7bc
+cand-6f929e3893b7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	81	is_a	More	Concept	In	Concept	204	325	ae13f3e1-2ee4-3555-85cb-8f422ca2dfe3	9094870e-3284-3301-bace-c38bde4ff7bc
+cand-6faf23fe0928	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	607	is_a	HVAC	Concept	GHGs	Concept	2373	2600	18e0c6de-52f7-35e7-bf9d-fd4610a5405c	d6ece891-f407-33ef-b93e-ff1f1bdf56c3
+cand-6faf23fe0928	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	607	is_a	HVAC	Concept	GHGs	Concept	2373	2600	18e0c6de-52f7-35e7-bf9d-fd4610a5405c	d6ece891-f407-33ef-b93e-ff1f1bdf56c3
+cand-7000537be7d9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	528	is_a	Water	Concept	Water	Concept	293	366	9fc7ff46-68e4-332a-8879-1a5cec5760fd	6a8b9ea8-6eae-3d88-bc19-38536af83f2b
+cand-70555157a841	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	237	is_a	GWP	Concept	We	Concept	697	1239	194829de-8382-341f-9cc5-8f88db0d2d34	e5c56978-017e-34bb-a869-cf72584d3b34
+cand-70c76c742673	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	65	is_a	AI	Concept	Historically	Concept	867	1007	7dee57e0-549d-3416-a874-73d46e9ba582	07b7266f-5b5c-325f-acd0-a8c3044e10da
+cand-70f6cb73796e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	380	is_a	We	Concept	In	Concept	540	791	e191d440-1ba6-36c0-b229-a296eba1fad9	ab2714e0-bfcf-356a-9f68-bd85bdce28dc
+cand-712cf5b36091	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	66	is_a	AI	Concept	At Google DeepMind	Concept	855	919	5d3756a0-3013-30e1-9cb6-f6ca171bc7f7	6e34d699-3dc8-3d3d-ab58-8ef4beeb212d
+cand-713f8a98227d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	528	is_a	Water	Concept	Water	Concept	469	571	bb341d3e-6637-30be-b46a-370fdd275ca6	bc247ca1-f8bc-3dfa-ace4-97df8318c94e
+cand-713f8a98227d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	528	is_a	Water	Concept	Water	Concept	469	571	bb341d3e-6637-30be-b46a-370fdd275ca6	bc247ca1-f8bc-3dfa-ace4-97df8318c94e
+cand-717146c39779	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	185	is_a	EV	Concept	100%	Metric	399	464	2f855aa3-5b8a-3aa3-b243-e3fdf8e7c14b	550cb52e-377f-37f8-aa99-23e7aba9b2c6
+cand-7174daf1e919	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	88	is_a	The	Concept	When	Concept	1071	1156	e4b155bc-7548-301d-a179-87dcc85612d0	692d1b13-a7ae-3843-a698-b6da3b462589
+cand-725f1024ae85	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	511	is_a	Where	Concept	Global Facilities	Concept	603	843	a096a060-4ba6-3861-9ff6-be430c9d38fe	200edf21-3767-3bb5-a5a0-58dfc9f7b659
+cand-72c05c1d6f5d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	390	uses	Pro	Concept	99%	Metric	0	304	9f628c47-44ab-3ebb-a8f9-7e6a39f71514	35061265-0eaf-3d7b-8ce2-0628b5e63d45
+cand-72cb30619ed4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	127	is_a	Buying	Concept	In	Concept	0	627	4fc26d09-b6ff-371c-a820-a090e1ab63f5	78abba17-3ee8-3003-bbc8-2d59b9806859
+cand-72f9216e3cbf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	607	is_a	NDC Synthesis Report	Concept	Published	Concept	1816	1967	fb8f9ca0-242f-3d48-96fb-f4afff7bc546	0a501ca0-96ca-3f09-9058-091d5bf72655
+cand-755fcb92af5e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	527	is_a	100%	Metric	PPA	Concept	816	1114	5d920deb-e57c-3ca3-93d5-1a69e225b564	cbf3b61a-dbaa-331b-93b2-8b6615d69f2f
+cand-7611feba33d6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	381	is_a	Our	Concept	Our	Concept	0	321	3c8c3907-6563-3cf8-8d2d-d43f691080c1	4313f1f4-4e6b-3fc9-97c4-4117faa4a072
+cand-7643c76f7c60	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	327	is_a	Improving	Concept	In	Concept	263	606	bcf4b9aa-5a6c-316a-8999-6c5b698b37cd	1e9edf67-74f9-3a5a-bba6-cc153115bad7
+cand-7643c76f7c60	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	327	is_a	Improving	Concept	In	Concept	263	606	bcf4b9aa-5a6c-316a-8999-6c5b698b37cd	1e9edf67-74f9-3a5a-bba6-cc153115bad7
+cand-769d5d797d88	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	58	is_a	AI	Concept	It	Concept	0	389	a173e9cf-3863-3ba4-9c3c-3977353b30a5	2ffe95b2-e475-32ca-93b1-17a2429da59c
+cand-769ea2687f6f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	412	is_a	Preserving	Concept	We	Concept	334	607	535e2f5b-c4b6-37e2-ad75-e45b2aaaa4f6	12a67a3e-4103-3f1b-aa46-4d162088764c
+cand-7748c1b44038	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	468	measures	We	Concept	EU Renewable Energy Directive	Concept	979	1162	77fc5a77-8a6a-3b57-8129-fd42fc03316b	5f8707d6-7c1d-33ce-badb-ce783aae1bff
+cand-78469e3a2498	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	416	is_a	Google	Concept	Bay Area	Concept	448	815	3850a63f-3c69-335d-becd-4233ded84542	311b0d1b-1b05-3220-8830-9b7fddec3b91
+cand-788bfc472fcd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	425	part_of	We	Concept	In	Concept	0	443	369888e8-9162-3761-be4a-71262eebd738	df966bca-fc90-38ac-8b5c-99e7f8e365dc
+cand-7a2bd6b667dd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	611	is_a	Biodiversity Loss	Concept	Happening Around	Concept	755	858	5b97acca-1553-3c45-b07e-c39b86b1cac2	462491c6-eb98-3f8d-b206-49d1a47c9e5f
+cand-7ad677e985e9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	519	is_a	Distance	Concept	Data	Concept	280	418	9625e138-9d31-3e33-8b5d-9e10405c1f0a	0dd72070-8b2d-36ba-9f3b-02fd79580cc5
+cand-7aed3f4f169a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	367	is_a	For	Concept	Greenpoint	Concept	528	709	31a9d495-6d03-3f6a-94c8-1ba1da798a7d	f4675acb-b5c6-32b5-b5d5-3a43d1925cd3
+cand-7bba32a4aebb	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	140	is_a	Cities	Concept	GHG	Concept	434	610	76edb8d6-e770-340a-86ef-f00931a34eb9	416c16a6-cab5-3f69-8834-143360e795a3
+cand-7c29144bfe3a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	72	has	Google	Concept	ASPIRATION\n\nASPIRATION\n\nWe	Concept	0	382	52e89d74-6229-3b9b-b188-91a2bac5b83d	9cf4480c-985d-393e-84cb-050ca7ebdaff
+cand-7dbfa63a11e0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	88	is_a	Yet	Concept	To	Concept	424	673	81847f1f-d470-3af0-8b41-679ad05821d7	e3b1b2df-b4e1-3c76-ad22-f95402423b62
+cand-7dccc6f6200f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	478	is_a	RE-Source Platform\n\nGoogle	Concept	RE-Source Platform	Concept	505	733	b5c4e593-aa67-35b6-8ba7-b3fcf498107a	1423df25-37f3-3297-86e3-bbed9eb7d68c
+cand-7e0991e957cd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	210	is_a	CFE	Concept	We	Concept	0	412	4769dcad-e595-33b6-83ce-fc2639c7a137	840cbe27-6e8a-338a-88c0-23b8ee2b5460
+cand-7e2c9b1cc284	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	302	is_a	CDR	Concept	That	Concept	0	654	e13a2973-502d-3c52-872d-e827762d1c20	cb882151-2e9e-35ea-bb04-908940bc5fa3
+cand-7e2c9b1cc284	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	302	is_a	CDR	Concept	That	Concept	0	654	e13a2973-502d-3c52-872d-e827762d1c20	cb882151-2e9e-35ea-bb04-908940bc5fa3
+cand-7e421f849bb2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	All	Concept	Treated	Concept	2727	2837	274af640-a9f2-3330-b639-88fa9e3cbf60	81875ad5-48d6-3db2-9567-e39a794d6057
+cand-7f9a391da53b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	333	part_of	These	Concept	Surface	Concept	471	661	491d7e7c-3945-3e76-9544-73b1a784ecf8	a3dd7a37-7a91-3799-af8d-76deea5d002e
+cand-7fc7e21a081c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	58	has	It	Concept	We	Concept	390	707	2ffe95b2-e475-32ca-93b1-17a2429da59c	6a02fe8b-f162-3a9d-85d7-48dd5828c179
+cand-8033a9760c9e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	58	is_a	AI	Concept	As	Concept	1051	1164	37064ab8-a2a8-393e-b62f-cc1d3062ae3c	4a003c37-f7e1-35f7-ad7b-4550771efecf
+cand-814016549906	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	422	is_a	California	Concept	In	Concept	0	360	3eb8e9a2-c113-3aaa-bc66-1d4d0e9f0937	21a6e749-b528-3abd-84a0-f2e4f2313d63
+cand-8151b4f230de	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	66	is_a	TPU	Concept	ML	Concept	180	647	bbec5b46-ab08-3c30-a624-fccce2e55bbc	65cb3d6b-8212-3a39-82e5-d13c239ddb70
+cand-82c53503af54	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	178	is_a	For	Concept	This	Concept	492	621	de7bbd7c-74e0-32e7-a72b-bf025a847500	e3a2d5e8-045c-3c82-bdeb-bb20f755f4ba
+cand-8318e9a17a4d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	124	is_a	Air	Concept	We	Concept	0	237	d02f7cec-9f95-3828-bb43-1738432b316d	3d5c4557-3f84-3e90-a162-7ae86d2ccefb
+cand-83539abd95df	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	159	is_a	The	Concept	Google Cloud	Concept	317	441	cae9a481-b081-374a-b4c9-06ad684cdeb1	eb8a466d-8e72-3afc-a9ad-aeb71c99193b
+cand-835ed097eb5c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	394	is_a	Providing	Concept	In	Concept	0	286	62e48152-98ba-3abd-912f-d937fd6d91dc	989cc464-d833-365f-ad0f-b856ed681a77
+cand-84a08aeeead5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	255	is_a	Conduct	Concept	We	Concept	396	633	31a65cf8-c6b7-3aec-8861-c757aa9a2c86	b9747381-a10e-3a65-9ac2-6976819fe775
+cand-86373ca96b26	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	127	is_a	The	Concept	7%	Metric	0	627	7ade9363-e4d6-3e68-a11a-419cb1b1402b	704f3ccd-56e0-3ec4-8a32-970263711739
+cand-872282fb6f7d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	54	is_a	As	Concept	Artificial	Concept	0	224	2b14e0ad-6110-3126-af28-4da4d84327d0	161e6de8-7cac-3860-81a3-98470fd69d7e
+cand-87593ee86be4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	237	is_a	California	Concept	96%	Metric	697	1239	00002327-b6d4-3ea4-b562-38762df5b19a	6134ae2e-1604-3729-9ec9-e2a45ae75659
+cand-883a6ef6fe4b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	450	is_a	Alphabet	Concept	Google	Concept	776	846	c13612d1-dd57-3c40-b943-99c4391ccf1d	6de85ca7-b2e5-35a4-9011-bcdbe40aaf06
+cand-883a6ef6fe4b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	450	is_a	Alphabet	Concept	Google	Concept	776	846	c13612d1-dd57-3c40-b943-99c4391ccf1d	6de85ca7-b2e5-35a4-9011-bcdbe40aaf06
+cand-887a1334a9bf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	is_a	Recycled	Concept	9%	Metric	865	954	748284f5-a152-3b23-9c3e-9c368d7bc37e	f8c1dd6e-fc50-3274-bf6c-2f744ca25683
+cand-8971151c46c7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	321	is_a	23%	Metric	For	Concept	996	1139	6a0f8c78-288e-3621-a0f4-ad381647a07a	4a0a893d-4a69-3272-be7c-28b9d618b610
+cand-8a28ec5d257e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	452	has	Directors	Concept	Audit	Concept	0	297	2cabf56f-63d1-32f3-be48-bf8c1733adc5	543dafc0-bae1-3fc8-9dcd-4f97852467cb
+cand-8abfa26cee97	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	72	is_a	GT	Concept	Japan	Concept	384	694	d557341d-25f4-3414-be13-9c0b7d56b626	3cbe5cd5-77dd-3de5-bba4-6dc32825519d
+cand-8b30a2ecd6fd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	66	is_a	Google-owned	Concept	1.5	Identifier	180	647	b393d29e-8b99-3376-bb74-fd71c0ed9e90	187330fd-ea38-3b10-983f-49e7b17fca6d
+cand-8b978d99f5f9	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	255	is_a	We	Concept	We	Concept	0	394	28e9eb85-f71b-3d5c-ab06-a175e29f077d	f6dc0469-29f9-3a2e-b004-d4ef0b0b1874
+cand-8c09798f69bf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	611	is_a	Purchased	Concept	Category	Concept	2497	2653	9e366a00-e56b-3fa5-8a6f-4c5a65794802	b4a85e31-c42c-37c9-8efa-09ed75690f46
+cand-8c1c602f5712	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	233	has	Since	Concept	76%	Metric	0	369	8fa55219-e13d-3ed9-a9af-594289d5e378	f4c9d2c5-31da-33e7-b47f-c150cf910f8d
+cand-8c7cc011e485	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	519	includes	Business	Concept	Distance	Concept	0	279	a2801dc2-cd1b-3921-8872-f7b340408cf7	9625e138-9d31-3e33-8b5d-9e10405c1f0a
+cand-8cf5eabaeb9f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	423	is_a	Google	Concept	We	Concept	1111	1481	1426b865-6a29-3c07-bdda-3192dcc46889	0fe237a8-64e2-3124-be85-5da3418fea6f
+cand-8d17c3b5401c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	186	has	Modern	Concept	Mineral	Concept	259	450	bcec131d-3581-3aff-8749-429e838a348c	ce6c8c85-b29e-3625-aacc-472cf7780f40
+cand-8db560e3d5d0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	605	is_a	Chromecast	Concept	9%	Metric	1972	2137	20b4e5bb-7535-38f1-ae7a-d4662ca91a4b	38307928-246d-3244-9fd8-64cab995bb23
+cand-8e00d2195404	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	512	is_a	Where	Concept	Global Facilities	Concept	809	1081	9184fea5-8355-36e3-a73e-44bd1e5482e2	62d5b0c6-813f-3441-ab45-86eb6432d692
+cand-8e4cf1dcb635	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	614	is_a	The	Concept	Data	Concept	747	845	9e8ce7b5-4085-3604-9610-da5147d93ba4	52b2c3a4-6e8a-3acd-81de-d1da5331a226
+cand-8e5ff9a677b8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	488	is_a	BSR	Concept	Spark	Concept	726	899	54729c4b-9f51-3fdd-bf77-5286faec8522	e0079246-cdbe-37d3-82a5-a0649bd89375
+cand-8f12b0a38736	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Metrics	Concept	In	Concept	3215	3510	556fa752-05ce-3be1-8bab-2c1da5f8e983	84bd22c6-8986-3f06-b28d-53cebb32b47b
+cand-8f60c48332b7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	118	is_a	One	Concept	Google Maps	Concept	0	399	a3097b2a-0ebf-358d-9365-31c5cf0a06a9	924af459-31e8-3f12-b653-8af4f71c62de
+cand-8f60c48332b7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	118	is_a	One	Concept	Google Maps	Concept	0	399	a3097b2a-0ebf-358d-9365-31c5cf0a06a9	924af459-31e8-3f12-b653-8af4f71c62de
+cand-8f8b122893bd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	292	is_a	Google	Concept	We	Concept	0	379	e268eed0-6125-3719-bb3b-70e60fea7d1f	6a2916ed-67fb-3352-847b-7f25bfad65ca
+cand-90c3bae87014	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	65	has	ML	Concept	We	Concept	1008	1192	8cd9ea70-4fdb-31ce-8031-e291de866ed7	171a4bde-ace2-3ddb-b16c-a66d3028a049
+cand-90c3bae87014	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	65	has	ML	Concept	We	Concept	1008	1192	8cd9ea70-4fdb-31ce-8031-e291de866ed7	171a4bde-ace2-3ddb-b16c-a66d3028a049
+cand-90cdbd1dab74	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	254	implements	Our	Concept	Googlers	Concept	0	367	3db66ac2-5151-3bbc-866d-c791d377756c	016d241b-bfe5-36ca-a4bd-5f3f9fe32fd8
+cand-91128e6e974c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	548	is_a	TCFD	Concept	TCFD	Concept	533	784	320a26b2-c6f7-3432-ad29-6ad4134af4f0	eb2223b6-6a51-3412-ada9-bd31e64d67b9
+cand-91187dcfacf3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	143	is_a	Izmir	Concept	EIE	Concept	373	734	8cf5fdf0-351c-3055-aae9-e669bb94d135	4a51b535-750c-368b-aa7f-ebdc4f9f764c
+cand-91a028442baf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	259	part_of	But	Concept	We	Concept	410	532	13854313-10c5-319e-a609-7d3a2e8c9b55	2c5fdd05-bb74-399b-9d02-51f4b133425c
+cand-91bf8a8c6ad3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	426	is_a	Wildlife Support	Concept	These	Concept	561	812	ce6f683e-5a53-3727-b227-0f31ff777f33	100a7021-5a3b-3eda-86c4-93f0eecb433c
+cand-91e8d84a5711	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	461	is_a	We	Concept	We	Concept	377	518	5c5fc6b5-24f6-3751-a33b-9580c0682817	5b42cec5-12ef-333f-8fff-35263ce9daf8
+cand-920c23fea647	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	259	has	No	Concept	CFE	Concept	311	409	c2fe6e13-bb91-397f-8aa5-9deb1951787d	cf14376f-4b18-3a3a-abe6-ad70f2ad0e89
+cand-921be14c88d6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	400	is_a	Nest Wifi Pro	Concept	Building	Concept	559	745	3bf8bf8a-88f5-3ea9-9316-8e5ee6a8ec74	32d323de-37e5-3626-91a2-6476ad3d0178
+cand-92dcca5283bc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	494	has	CDP Climate Change A List\n\nAlphabet	Concept	CDP	Concept	0	295	91624e46-1a51-3f64-a435-07cee8432786	dd7b6395-d378-36f4-bd50-b588a32202cd
+cand-92ec2387f2b7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	37	is_a	Operating	Concept	Flood Hub	Concept	0	258	2448b0b1-79f7-372d-ba6c-1d30447a06f1	3e59d160-47b0-39ef-9e2a-cb2ee93dbcfb
+cand-94361c6ba335	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	314	is_a	Our	Concept	We	Concept	551	802	0738e5b7-3310-3229-9285-8273f698a235	c64e5729-7117-3629-bd2c-00308696f4d7
+cand-94b605cc26de	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	259	is_a	CFE	Concept	No	Concept	0	310	7dc7224e-c1e6-35bd-a4ae-3203d230fcd7	c2fe6e13-bb91-397f-8aa5-9deb1951787d
+cand-95a1fb85d6df	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	includes	Total	Concept	Total	Concept	700	875	75b8fd70-85b0-33e8-98e7-f74891233d03	8de43237-425d-3bb4-a9bd-54834533b0a9
+cand-97adc9cb165e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	18	is_a	Data Commons	Concept	Information	Concept	416	589	2fc154a4-b76b-3253-9613-202995aac4fc	60ad4f17-d41c-3afe-9a8d-6039e3214af7
+cand-97e04b01e258	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	315	includes	This	Concept	In	Concept	394	579	aa65b7d8-356f-3c2c-a6a9-e278dc0ee6d4	b02cd563-673b-3c1a-a5b3-ba9a360cc116
+cand-981fff779f3b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	460	is_a	Google	Concept	Google	Concept	903	1266	8dcf9fa8-ead1-30ae-95bb-676fbe5ef4c6	81360bb0-8686-3e90-bb3f-d082ec71fc13
+cand-984825a6fbf8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	516	is_a	Scope	Concept	Category	Concept	511	585	e9dca6c4-7514-3a2e-90cd-bea54a4bbd36	83d57350-640d-3161-a1ea-b0e84a22daff
+cand-98fc11f8678c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	517	is_a	Tier	Concept	Other	Concept	1071	1530	67ed7ae4-dda9-3005-85d1-58bc5ad8c8ba	3b808930-acf4-31f4-bb41-e041b04800a1
+cand-9951cd44fc43	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	510	is_a	All	Concept	We	Concept	1355	1434	5f8459d5-cb05-3ee7-b04e-d57e758c4825	29c81d34-62ac-3d72-ad4e-cfb7b4a74c69
+cand-99580fc9fc24	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	313	is_a	We	Concept	We	Concept	990	1193	1fa9da7f-cd84-303c-8b82-c605ffc65ee1	10c2faf5-4fdb-30f9-bca5-4d21144115d6
+cand-999afdf3f75b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	119	is_a	Lower	Concept	If	Concept	311	422	b873feca-631b-3311-8b40-fb0387bd72ea	890c080a-8a29-3c70-b8f3-da616c9e0d4a
+cand-9a3155ef891d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	324	is_a	Bay View	Concept	Water Petal	Concept	272	542	c23b7acc-94f5-373e-8cd4-075c09376a4b	f2116168-2d82-3d08-acdf-a751099a641c
+cand-9bda58c8dad6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	19	is_a	Google Trends	Concept	And	Concept	501	781	3d92869e-d0b5-3f37-83ca-ae974d3e070b	28e7a45a-2911-3001-b5bb-e896d55f0459
+cand-9bf74dd25249	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	393	includes	Creating	Concept	While	Concept	0	330	548b1ae5-d0f6-3fea-ab7e-ab2893334fbb	4c8dc8f7-dc49-390c-9cf0-047804d8c867
+cand-9c5762555c4b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	313	is_a	This	Concept	Understanding	Concept	635	789	f2031945-9260-3981-bbd8-fc1bf037faf0	7d79e3db-e3c9-3af2-842d-55731c1f7601
+cand-9c58d0a6b888	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	387	contains	Product	Concept	That	Concept	0	337	1f105e75-cb5f-359e-bcbb-2d012e3862cb	99132857-038b-386c-8e97-c7c4ec63a7f2
+cand-9ca048739662	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	IT	Concept	IT	Concept	151	283	10adc07c-31b7-3708-8f6b-f11d29d86f85	f318cdee-91d2-3a89-b95f-024c82d3aee2
+cand-9cb06a6d0273	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	105	matches	It	Concept	We	Concept	255	363	59938264-4caa-3298-a076-33fb816a3508	6b430cbe-5ef6-32ee-9a68-dc5e66eda3d8
+cand-9ce4d1e2aab0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	302	has	Frontier	Concept	Charm Industrial	Concept	1386	1535	542fcdbf-ce32-3414-bff0-15725136cc22	495b305a-6452-3572-83a0-639d81c0f143
+cand-9d5faa83338c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	327	part_of	Improving	Concept	In	Concept	263	606	bcf4b9aa-5a6c-316a-8999-6c5b698b37cd	1e9edf67-74f9-3a5a-bba6-cc153115bad7
+cand-9ddecb185e6e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	297	is_a	Asia Pacific	Concept	Google	Concept	1021	1315	0370b5c5-821b-344b-91bb-62c00e353d30	74dafa19-bb50-3384-9433-feda8680c6ef
+cand-9dee1bb292b6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	Reported	Concept	Landfill	Concept	1167	1238	1b15a6cf-b153-3666-9fd6-0532415d519c	b915d485-2072-36e6-89c4-1e9271f5f3a3
+cand-9e8db5e97507	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	185	is_a	Waymo	Concept	Waymo	Concept	0	229	c6268dd2-1844-3950-86bb-d41daf76437e	575d0b1e-e096-3b17-82da-f1787b16fc3b
+cand-9ef729a85f20	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	132	has	Google	Concept	By	Concept	0	211	0162b6cd-d7c5-3c03-82bf-404bff66f76a	47b7b382-a94b-3aa0-abd0-2df489f946e2
+cand-9f3bab2429bc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	441	is_a	Bay View	Concept	90%	Metric	842	999	fcf9adc9-ff48-351d-baf2-fadfa247f01a	6c107b83-393c-3a64-93c9-ba8057669494
+cand-9f3bab2429bc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	441	is_a	Bay View	Concept	90%	Metric	842	999	fcf9adc9-ff48-351d-baf2-fadfa247f01a	6c107b83-393c-3a64-93c9-ba8057669494
+cand-a03efbf9a002	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	521	is_a	Flagship	Concept	For	Concept	324	453	f4b7f252-850d-30a6-9c9f-f99f7b31be70	f101f499-ef74-32a0-9eb2-3b6a546f88f7
+cand-a21f783eda5b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	is_a	1680.1	Identifier	Google	Concept	505	656	a649e563-fc9e-3a51-a365-723105901c56	74df2cd9-b017-3285-b81a-47a8552e4297
+cand-a22f87e4d594	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	186	uses	Mineral	Concept	AI	Concept	451	631	ce6c8c85-b29e-3625-aacc-472cf7780f40	21b01921-1429-36f5-bed9-a8579a1d69c9
+cand-a28138383dc4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	519	is_a	Emissions	Concept	DEFRA U	Concept	488	534	dba25b27-efbd-31af-bb7d-3bb67771905e	5ab7d897-d60d-36b4-bcd4-4b09e150565b
+cand-a2b4123aa981	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	176	has	Data Commons	Concept	Stanford	Concept	0	420	b77e7a4f-774f-3eb4-88d8-ee9d0ee3be4b	a24ae34b-3f8a-30e9-be63-6e93b5875f7c
+cand-a2ca28c1dbe6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	151	is_a	These	Concept	In May	Concept	631	774	91531ea3-f737-3172-8910-785c615c6536	c7b8cb90-ce33-3b0d-a78f-84915512add7
+cand-a2ea8fb69596	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	43	has	Google	Concept	We	Concept	0	189	55b3760e-3b09-3720-8d57-40f497723a48	32dfdfda-9ae1-3ea0-ae39-f2254776d925
+cand-a321af9415fe	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	16	is_a	The	Concept	Further	Concept	1357	1555	6c914160-a02a-3fa0-98bc-87377b3842da	2a29e48b-27be-352b-9986-686e3c4f834d
+cand-a3c33e884a01	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	313	requires	Understanding	Concept	We	Concept	790	988	7d79e3db-e3c9-3af2-842d-55731c1f7601	1fa9da7f-cd84-303c-8b82-c605ffc65ee1
+cand-a3f9b98dc27c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	396	is_a	We	Concept	For	Concept	392	650	e80a283c-7581-3299-8959-30949dcade68	59f5e5a0-8372-3027-8d1d-b1d23b816c77
+cand-a3f9b98dc27c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	396	is_a	We	Concept	For	Concept	392	650	e80a283c-7581-3299-8959-30949dcade68	59f5e5a0-8372-3027-8d1d-b1d23b816c77
+cand-a400080f4488	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	135	has	Google	Concept	Google Maps	Concept	0	236	5babfb6b-bd60-33ff-ac62-d8dd25268cce	088ae7be-dcf8-3564-8206-6213a25d2067
+cand-a4367aa5446f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	406	is_a	This	Concept	While	Concept	277	427	9260c3ab-2205-31b4-a33b-fb5607d2ffa1	1f6c4c66-3ca1-32b0-bd46-f31c2349b85c
+cand-a52036e4ebb8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	161	is_a	As	Concept	GHG	Concept	0	278	444d8aa3-4d22-33fe-910b-2647da67423f	ef92a7f8-05e2-35b6-924a-8fd9b9ef6678
+cand-a5bb8ee2c062	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	26	is_a	Chief Sustainability Officer\n\nEngine	Concept	Google Cloud	Concept	0	282	8724f702-4c08-306a-9ec6-3df525c17744	e1a8526f-09ac-335c-a9a3-4941477931fb
+cand-a5e641086e40	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	305	has	Google	Concept	As	Concept	859	1042	7e2e95d5-f269-3c50-9aa0-2c50bc6d6078	22bb8e45-7cd3-3a33-9b8c-3fdc3019367e
+cand-a60f7c5aaa20	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	518	is_a	GHG	Concept	Where	Concept	336	472	ff6fee55-b08b-323c-b3e5-f4969457b940	9911dcba-f2b3-3f3a-85d1-add37d7aa9fc
+cand-a636d096b1b5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	517	includes	This	Concept	For	Concept	367	435	1c2b9372-f8fc-3789-bed4-4651e3314f6a	b5d0c496-b3cc-3280-84a2-027b12032990
+cand-a6720d0b1df8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	454	is_a	Google	Concept	Google	Concept	617	942	9050005f-63ee-31fd-a3fd-8030b0624ea3	43fdf609-c0c0-3d35-b5dc-d676125bc0b2
+cand-a6d6ff83cc66	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	521	is_a	Environmental	Concept	Other	Concept	1408	1531	05383003-d211-3f6a-b385-9ec0f77335d6	8675fc00-f5c9-34f8-93b5-4e615eeb50bb
+cand-a6d8ba0630b5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	102	is_a	United States	Concept	Features	Concept	264	663	749e4fa1-159a-3fc3-a7e1-53c5436da08f	46cf1ef7-bfb6-33a7-ab19-115eab553cd2
+cand-a746658a4ec6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	174	is_a	For	Concept	Data Commons	Concept	1152	1248	a93488d4-caaa-33a3-b9d8-227fc7899e8b	70a76ade-ec47-3920-b9b3-ff64cce30866
+cand-a8c61603be5b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	55	has	Eco-friendly	Concept	1.2	Identifier	1179	1372	26a6731f-2425-3645-bd49-a0a07e6367e7	7252bf9d-7d77-33f2-9c94-943626f3a00a
+cand-aa649eab8d64	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	245	measures	As	Concept	HIGHLIGHT	Concept	926	1174	82534331-55df-39e3-8c87-e6be70aac7ec	0c2ce889-bbc5-3716-afc0-2891b901c4f1
+cand-aaa2a6ae3ba3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	is_a	Total	Concept	GRI Disclosure	Concept	622	699	8b7256b3-cead-3879-a7ad-45d78348507b	7335ed4a-0007-3522-bb35-74ed56dfc98c
+cand-ab5c1dfd5fb3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	384	is_a	Pro	Concept	100%	Metric	512	869	55c876bb-1683-3044-b1a3-7858b91e520c	0541b660-3c9b-3824-bbba-d92e80c02c8d
+cand-ac232162d5ed	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	347	includes	It	Concept	Googlers	Concept	175	397	002652bc-3c31-366e-a7a4-841400d5932c	c931882c-df4b-3f26-83b0-fc86a61e2d6d
+cand-ac40ac059028	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	441	has	Bay View	Concept	LEED Platinum	Concept	399	589	22255bbc-5de7-37b0-a47b-651835ab8226	b1ed0d12-eb68-3c12-a1e3-5f4575b2f25e
+cand-ad72d9d2020a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	136	is_a	Cloud\n\nCloud\n\nGoogle Cloud	Concept	We	Concept	0	192	f73dcc59-1855-3d2e-96e3-4037239dd2be	0b8ffec1-ea07-3362-87d8-142db959f77d
+cand-ae9404e7f8bf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	154	is_a	HDOT	Concept	HDOT	Concept	444	633	721ad98c-d223-3b2e-9e83-52155bc4bb89	5813f3d8-0ae9-36fd-a358-a60b6621c295
+cand-af033aec084d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	169	is_a	Google Earth	Concept	Earth	Concept	262	739	e635c4ac-d6d7-3361-9b47-55eb0e4949ad	b0f6ce67-0c05-35f7-b1dd-3b7be2a828c9
+cand-af742173807c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	250	is_a	Peachtree	Concept	LEED	Concept	251	350	65ff0625-9d4d-3b0a-808a-5410c28fa594	22d8dc15-f82c-398d-9fac-c7c8672f16aa
+cand-b0170227839f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	492	part_of	TNC	Concept	Google	Concept	1298	1582	1abc1817-8963-3897-85b6-0921ffed6765	cfed76eb-7045-3280-b99c-941d4e71ce92
+cand-b044d47e66e5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	177	is_a	Data Commons	Concept	For	Concept	0	262	b4d014f7-b72f-3233-96f0-c4527f2a5d56	1358402e-4003-38c6-bd64-ebd6919c19eb
+cand-b091bd39c5d6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	112	is_a	This	Concept	We	Concept	0	442	4e0ed51c-318d-3cd3-acdd-1595c08df3b4	2bf227cd-b2f2-3183-9fde-f18921d7073e
+cand-b091bd39c5d6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	112	is_a	This	Concept	We	Concept	0	442	4e0ed51c-318d-3cd3-acdd-1595c08df3b4	2bf227cd-b2f2-3183-9fde-f18921d7073e
+cand-b25052548b22	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	321	uses	Finland	Concept	Additionally	Concept	1326	1437	93802023-2f58-3034-a107-e74ce2d4d413	88a5c17b-f997-3063-8c2b-0422cc22b4bf
+cand-b2a204b90106	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	525	is_a	All	Concept	Due	Concept	0	273	ca88d723-fbf4-3b4d-9006-7ccb8659c866	3d0c22dd-dc28-3f28-b3dd-2ea6e1fa6b96
+cand-b2a4bc53d830	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	523	is_a	These CO2	Concept	Biogenic	Concept	332	412	acd9087f-59f1-30b3-bfbb-12c89b35c7a9	2b72f683-d81c-3ed1-91b3-02c20beb0b0e
+cand-b310a70f3c7f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	102	has	Energy Shift32	Concept	Nest Renew	Concept	664	860	a1303042-993e-3d91-bdab-16c8b5bb3db3	b8244dc6-3bda-3fca-9b06-d33f13a32d48
+cand-b49826b638ac	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	17	is_a	Sustainability	Concept	Despite	Concept	0	141	81658334-39f3-38f6-8c26-8de0ae7a3785	c450b06c-902f-31f2-b218-7c2ef6f38d47
+cand-b4d32cf68138	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	284	has	Our	Concept	Along	Concept	0	618	c5c9dc5b-aa15-3100-a1d1-f8f758a2e551	e15b5b98-4bad-3082-b195-2d9e53202288
+cand-b5bfd0c42f09	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	186	is_a	Increasing	Concept	Modern	Concept	0	258	6e748bc8-54b5-3b09-a1b8-67f4610308d3	bcec131d-3581-3aff-8749-429e838a348c
+cand-b62a32530b52	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	611	is_a	GHG	Concept	All	Concept	1787	1915	4195e2d0-bcae-3007-9a10-ce34fbf69e71	4088d50e-4c24-3046-b79e-09dfd914bb41
+cand-b6b75f7210b3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Canada	Concept	EV	Concept	601	759	e66e6966-8dcc-363a-b717-6ced6c4c8c2f	3c2a2126-d498-31d6-9256-84c16413e78d
+cand-b6fc581d686c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	527	includes	This	Concept	Google	Concept	590	711	8acfcfa6-6c16-371f-b145-11edebfa85ea	2690426e-af3a-312d-8c46-d01902f0674e
+cand-b71ef7feaa07	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	450	is_a	Google	Concept	As	Concept	0	510	0dcc2c27-6aea-3a88-b3cf-cd026b7608ec	fbf4528d-0e6a-3798-87be-508cdd8a25f2
+cand-b72c783ebb32	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	384	is_a	This	Concept	TARGET	Concept	994	1174	d7dfc40b-7f13-3b5d-9db3-2c63078d0d32	1c42774e-92ed-3f14-896f-eb9396109beb
+cand-b7e13559600f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	178	is_a	Feeding America	Concept	Nonprofit TechSoup	Concept	680	781	faebee1c-b09f-3b6f-9403-6d7cbf2be92d	98da6f73-7f5e-34a2-9f46-bbb5494d843f
+cand-b88314ceffee	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	609	has	This	Concept	Based	Concept	3214	3390	92ae3906-dbbe-391b-946f-1b638c88d724	a473a5ff-2fe9-3f75-8052-6095c2b3f2ab
+cand-b897cd6cfa2b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	509	is_a	GHG	Concept	Greenhouse Gas Protocol	Concept	0	546	eed54470-a540-38a1-abc1-116e4099bba5	6061b011-75f1-3c67-904f-388314edf076
+cand-b903e813550b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	258	is_a	Scope	Concept	Since	Concept	0	678	0c8d38a4-49f5-3bb1-9587-5d596d3cf46e	ebb66638-068d-3798-9740-acbac65ba324
+cand-b92ebc47cbed	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	379	is_a	We	Concept	The	Concept	0	383	f6af609d-ef0b-320a-897e-66e5cb6487e2	aff91d12-7456-3660-9e3c-9834a26f1115
+cand-bacc2661cce6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	359	is_a	One	Concept	LBC	Concept	846	1005	a6340a67-2166-33a8-9ef1-0c34fe706bf3	ec205379-066f-339d-82a1-bea715169c36
+cand-bb22f9ce0d67	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	315	part_of	As	Concept	That	Concept	890	1160	fdb03a59-a465-3fca-a21a-e39dd45efea1	99fb0b39-7886-342d-9928-cafa2089b25f
+cand-bc9573cd6cf2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	416	is_a	Our	Concept	In	Concept	816	990	362b2a8c-465a-3b59-95f3-f6edad220de8	e2b4408c-c8bb-3f71-b5b9-4f70b743d8f5
+cand-bcb1f0ca0bb1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	1.0	Identifier	According	Concept	284	354	ceb95866-9892-3a0c-91ed-59468e3f5270	3f650c55-8ac1-32b4-9708-6b93ba320133
+cand-bdad72899564	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	256	is_a	Our	Concept	In	Concept	433	706	9a4be67c-1d9f-323e-a463-8932f7022365	d150bd91-f337-3094-afd1-d25c27e2065d
+cand-be0d839d92a0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	144	uses	Tree Canopy Insights	Concept	AI	Concept	636	733	37329585-e68a-3a29-978c-cc1884f70a4d	8deac508-45d7-3285-9892-45e4e3751446
+cand-be9ed4a5a2cf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	43	has	Google	Concept	By	Concept	191	327	013e6b66-9e04-38a0-8cac-1f7d76195730	de3c8095-696f-3c65-a29c-5768673d588c
+cand-bef21d3aefa4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	529	is_a	Forwardlooking	Concept	Any	Concept	722	963	178e132d-d41c-3a50-9516-1bc436f1be45	1e5aa570-e686-3a6b-bbeb-1de512017529
+cand-bef21d3aefa4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	529	is_a	Forwardlooking	Concept	Any	Concept	722	963	178e132d-d41c-3a50-9516-1bc436f1be45	1e5aa570-e686-3a6b-bbeb-1de512017529
+cand-c0564b6de9dc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	369	is_a	Ireland\n\nOur Bolands Mills	Concept	Googlers	Concept	0	341	1bee03a6-35d8-3780-9958-a395a0d3a5cd	ab986a96-9df4-3359-82f3-4cb9d825d409
+cand-c09bbda7ec61	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	467	includes	Q4	Concept	Clean Energy	Concept	1205	1321	842f29f9-8428-3820-b6d7-486d434da4a1	7fe3eb57-f1a7-3f8b-b0f8-e82c6b379cd4
+cand-c0faf2d48cb4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	605	is_a	Estimated	Concept	Nest Learning Thermostat	Concept	1311	1476	a5d10a6e-255c-30a1-b9e4-bea414e38329	004459bd-ae96-3ae4-8a88-b9d3eb6f1585
+cand-c151bc0ac3bd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	Carbon-free	Concept	Sustainable	Concept	1328	1511	cea62fce-12d6-37c3-9f1a-116379114f21	d561f229-b848-3e56-8cfc-c106d9a7b474
+cand-c19ad7f98487	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	490	is_a	Organization Details\n\nGoogle	Concept	Ellen MacArthur Foundation	Concept	0	408	1fcc3399-e686-35c8-8875-8b0d957e87bb	15e27b1b-7f65-3f14-a445-a2fd1e7141e1
+cand-c1cb2e3f7a87	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	475	measures	CEDI	Concept	Together	Concept	838	1069	af2badd3-8c69-3318-bf2b-f0b6559f5093	020a2a29-cbaa-3041-b4cf-bbf29e460897
+cand-c27e91f8f081	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	518	is_a	Where	Concept	For	Concept	721	883	b15b42bb-aa42-39a6-8248-f4d82f114afb	a0179c73-6baf-3409-9025-1ddadcbf9f0e
+cand-c32b3064a4e0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	222	is_a	Scope	Concept	For	Concept	263	436	9e81b0b5-a00f-3cfc-976d-a5fbc024e9fe	f1e4cb5d-e7fd-3c00-b409-92d5c114e62d
+cand-c3c902fb2fdd	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	28	part_of	It	Concept	If	Concept	537	625	a1b10e3a-27e2-3841-a764-ee8a47d3b4f2	29312c1a-a940-3b87-b37e-ab28af2bf583
+cand-c3d8d0a05364	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	75	is_a	However	Concept	While	Concept	734	911	5f2c9fc7-1bc6-3ab8-a92d-fb4dee4ad60d	9e94c37a-5467-34cd-b70a-bc065775b93d
+cand-c563d5e933fc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	16	is_a	The	Concept	Thirty	Concept	237	355	4596bf22-d122-324f-b3bc-f6f29158c1de	c4fd3294-6896-3b0f-b6f1-0494f7c30cce
+cand-c591fa59acc7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	is_a	FTE	Concept	MWh	Concept	379	620	b0df7495-89d5-37f1-a3c3-d93f5cb2d69e	62217855-0679-3fba-8c2e-434a969c0244
+cand-c5bdb7e4939a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	325	requires	Addressing	Concept	By	Concept	0	233	02565793-2a1a-35e1-af26-690f9d4c511c	bb43e34c-0b90-3fc0-8dfb-3991497e8f0c
+cand-c5f41d1ebd10	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	516	is_a	Environmental	Concept	Category	Concept	1107	1311	15630276-c7c7-3744-be41-8be4993cf861	f40adc63-d64d-324f-8713-f44be1a4ac85
+cand-c631037b9b16	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	461	is_a	Our	Concept	We	Concept	596	655	690d4754-0348-3b94-a751-11cadee4a6e5	140791bb-e018-3cb9-9b13-038d5d82569d
+cand-c66fcfc6afe6	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	257	is_a	36%	Metric	We	Concept	617	799	8fd96cbd-bf74-375f-ba2d-58e303eb55a9	54491429-55e9-37d3-95fe-5f9d5a00c2f4
+cand-c6b6943e9edf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	232	is_a	These	Concept	Scope	Concept	703	815	3e71def0-78f4-3f00-aabe-cae0d641d416	4dec1ce1-89a9-3d9f-affb-38f23494b362
+cand-c6d7818d58d1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	160	is_a	Google	Concept	For	Concept	280	468	40767475-d6f8-37d7-9248-76e280b7eb5f	4ea195cf-6655-3392-9551-c1655416cb24
+cand-c802da805ff2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	609	is_a	We	Concept	Freshwater	Concept	1585	1746	21b09210-ba91-3c0d-a226-7b44afd2ba31	1a76acef-7c4f-3c7f-bb6b-d5b4114db4f4
+cand-c8a424f7254a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	506	is_a	All	Concept	The	Concept	470	651	a2839870-f52a-3356-b776-5d1f2a1d8c02	5dee7124-8aa7-328c-ab0e-6e11a1a19045
+cand-c8c2f1eaca56	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	492	is_a	Climate Accord\n\nGoogle	Concept	Climate Accord	Concept	674	853	0df5a40a-e481-34f4-8584-7a3e0f74a63d	b514d2d9-cdf1-304c-a387-94479cc8e3fe
+cand-c92ebc8aa951	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	208	is_a	We	Concept	In	Concept	589	758	d8a1fe58-42cb-33f2-80ef-a77f47728f65	92a66a1d-600b-3735-8840-74e5ba5ebde4
+cand-c97507fe5597	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	516	includes	Purchased	Concept	To	Concept	587	717	78361a80-981c-39aa-8949-9df6dc510292	6142f9d1-753b-314b-89ca-5f3d49292ebe
+cand-ca3c740ea5d2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	443	is_a	Bay View	Concept	The	Concept	610	722	f2f37a78-9a5a-3468-8aa4-0132f81b6f9e	e6010d09-1747-3d8f-a007-265f4ca987fd
+cand-ca6f7963014b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	72	is_a	GT	Concept	Our	Concept	384	694	1d717baa-75b9-3cff-a31a-f744c4ac22e0	e4b881ac-31cf-3a44-8fab-c1b00470d4c7
+cand-ca85d1a58d35	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	605	is_a	The	Concept	EPA AVERT	Concept	1661	1809	d258cbcf-44ea-3db0-8f0e-4b8296fd54a3	3fe16a65-8711-3484-be6e-c0c36c22ebac
+cand-cb107f4e101f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	325	includes	This	Concept	To	Concept	766	1241	a470585e-5d90-3495-9ef5-aac48aa115fc	0c21605b-3be4-3e71-8078-215f6847bdc9
+cand-cba8e68a67db	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	381	is_a	This	Concept	We	Concept	888	999	c1ba5cd1-e2c5-39cc-be5c-d084ea0b4b31	af7a6e18-c644-31a2-b83b-4249f8ef77d5
+cand-cc5a933fa419	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	295	is_a	GHG	Concept	That	Concept	991	1187	86634617-a5cc-3045-9a4b-58dd8c32ef98	b20f75ac-8f63-3309-b56f-696066ddd34f
+cand-cd7a66c3c1ec	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	391	uses	Pro	Concept	99%	Metric	0	518	4ccbc207-e0fa-37c2-9090-79f345afaad6	6d96eb7d-52f3-3c5d-bc86-f10e11d67e4f
+cand-ce0e6144802e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	124	measures	Waze	Concept	If	Concept	659	850	861b2264-c1a9-348a-816c-e80ca99e55cb	6f86f2db-2336-3a5b-8305-65a34bf70eac
+cand-cfef6b7b755b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	63	is_a	EIE	Concept	Many	Concept	0	299	d67e9501-971c-34e4-9f0d-14be86fb2b2d	c9d3ef77-bc68-32e9-ba1d-9b4b20c66193
+cand-d024b808d668	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	178	is_a	Meal Gap	Concept	Feeding America Data Commons	Concept	289	491	59605c1d-c75b-3c6d-91e3-883279b144a0	fe955142-63d5-354a-8c6d-3961aa6a70a5
+cand-d06402dc241a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	442	requires	LBC	Concept	Predictive	Concept	501	708	a24d7718-83d9-3569-83e8-ec40fbcd276f	e8304cfe-68d6-3da9-9d81-ba9518ee74fa
+cand-d09c2729aab8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	135	is_a	Google Earth Engine	Concept	NGOs	Concept	237	385	b737950d-3fa6-3356-a8d7-c3ab33c4dd2c	f34036f8-5f1c-3bb6-8e7c-5a609c354e60
+cand-d22eb3e2895a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	607	is_a	Digital Sector	Concept	Supporting Climate Action	Concept	355	471	d4c34d80-5a43-3dd9-a4f4-e30849c5a20d	c7ea2d00-b769-39cc-b4ea-fbaae410efda
+cand-d2f469b85dc0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	396	is_a	Since	Concept	We	Concept	0	390	f613b27f-2510-349e-af94-0b7000fe59d5	e80a283c-7581-3299-8959-30949dcade68
+cand-d332218ab842	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	611	applied_to	To	Concept	See	Concept	300	395	ca769ec0-5ba6-3704-bb5e-f3f736fd7843	1ce6e833-7fe4-396b-b167-d34d41ca6ba4
+cand-d3c607447991	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	244	has	ML	Concept	We	Concept	0	660	99bd015e-2f45-3951-b468-bd74af2f32ef	94c2f235-c5ab-3c47-b422-db82d014b690
+cand-d3c607447991	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	244	has	ML	Concept	We	Concept	0	660	99bd015e-2f45-3951-b468-bd74af2f32ef	94c2f235-c5ab-3c47-b422-db82d014b690
+cand-d50ed7649e3b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	71	is_a	This	Concept	We	Concept	493	650	2652a4bf-3072-3edd-ac0a-8a48628c11d2	e77588b6-f0e0-3352-b7f6-d07cd68f973e
+cand-d5bdf73444a4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	605	uses	Google	Concept	ML	Concept	357	518	46de8bee-4adf-3c97-a5e6-268ff79b0374	3e4b7845-b2cf-3671-88f6-47da5af3b6cb
+cand-d5f2a39b465a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	134	is_a	Currently	Concept	To	Concept	210	308	4f7a8026-7dfd-36dc-bebd-a63096f4f2c9	375c1da7-100b-30d1-bc69-65c9695fde6f
+cand-d5f336003240	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	433	uses	Places	Concept	Additional	Concept	1321	1513	81f99197-7162-3a19-b783-79545aede05b	679bf006-a0ae-33e5-a1c7-f721abcb9f68
+cand-d601ed305b14	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	437	is_a	Our	Concept	Habitatdesignguidelines	Concept	0	285	748401fc-2359-35f4-bed8-81addd356dd3	d70f5b60-d180-3406-a7cb-76707be0099d
+cand-d6a0830e1741	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	62	is_a	Green Light	Concept	AI-based	Concept	209	342	ef66c9ff-360a-3bdd-ab24-59f84a4af73a	b48767f0-85cf-3910-af18-fc4a098261c8
+cand-d6a3525c5435	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	164	is_a	Partner	Concept	ESG	Concept	0	354	2873a20f-17fb-3cdc-97ba-13acf1478a27	a6bc4fb4-dd3f-3c74-b596-0930099f63cc
+cand-d6ddf56e3b83	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	16	part_of	Today	Concept	The	Concept	1132	1356	93caa491-54b2-34a7-b6c0-c09063c57669	6c914160-a02a-3fa0-98bc-87377b3842da
+cand-d77f032a1ebf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	529	discussed_in	While	Concept	The	Concept	345	581	c1664394-c4f7-3d84-a02e-2712c0f04475	340e0f6f-45b4-3327-a137-514a4425c72a
+cand-d81f3e16b613	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	71	has	Google	Concept	We	Concept	0	492	8e36aca6-64c5-32e2-af27-3da0ee47fe1b	338c7f1b-5559-36a7-a4fa-1a3d1c6748b6
+cand-d83f2d4ef800	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	147	measures	AI	Concept	Our	Concept	306	532	0dbe331b-98f6-3714-a12c-4784db18e83d	e7efc631-26d9-338a-b0a5-0b628b881ed4
+cand-d8eea9c536e2	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	463	is_a	Paris\n\nAgreement	Concept	In	Concept	271	812	8c40cff9-aec9-3711-bc56-9171362928ff	eb47c143-cd56-3990-a978-cc58f506a2dc
+cand-d9006ec45e24	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	75	is_a	While	Concept	The Empowering	Concept	913	1167	9e94c37a-5467-34cd-b70a-bc065775b93d	e52807d7-545f-3af6-8928-09a9123502e5
+cand-d9571a2ad98f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	includes	Total	Concept	Scope	Concept	128	398	5715db0d-c729-3b92-b870-6a90a4f5d717	0b443f87-8d2d-3562-b386-952a9eab9c1c
+cand-d9a02e275cea	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	219	is_a	Our	Concept	FIGURE	Concept	0	257	37b96409-294b-3f2f-afb1-7e84638edf32	de511595-6516-36d2-baf7-d7cd6c40b70d
+cand-da2f0216dcb4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	is_a	Total	Concept	GRI Disclosure	Concept	876	1031	8de43237-425d-3bb4-a9bd-54834533b0a9	e526d70f-e213-3cb6-85df-39490abbaba7
+cand-da8cca7dc131	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	301	is_a	We	Concept	As	Concept	294	510	76823829-69a7-3c67-93e0-d510753f1d8a	0cfa7f2d-d0eb-3b36-8350-4f093042ea90
+cand-db420ea6678a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	451	is_a	Google	Concept	Figure	Concept	0	312	31dce084-5e90-30f3-bfb8-507b7ffee3dd	740e0db9-9f02-3b9d-9d16-cc0d44e709c3
+cand-db52dab76778	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	478	seeks	RE-Source	Concept	Europe	Concept	734	932	64285501-ffcb-3683-98ce-940248388859	75353b62-0b81-3f6d-ba8a-70d84981e745
+cand-db9c9d4d7109	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	394	is_a	Pixel	Concept	This	Concept	287	503	750487ab-437b-331f-8049-d45f40214e05	e033dbd5-a755-32bb-bc70-a3bc21fd0077
+cand-dbcfeae0b16a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	516	is_a	Category	Concept	All	Concept	406	510	6ff5ba16-e0fd-3c33-8a2a-96fcb9c644a1	40e00520-e33f-3c92-8fc4-feb28d1b6a5e
+cand-dc220c93c546	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	148	is_a	Cool	Concept	We	Concept	0	355	924e9c6e-bba6-3bb0-8131-e063a12d1418	9bea7e01-8b50-3fa3-ac8f-53e94bb7c3c1
+cand-dc82407fd7d5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	208	is_a	Climate Change	Concept	While	Concept	0	588	5f8fcd5e-e24d-31a1-9fc6-329ff3ef563f	2ced6f5f-2d59-3634-891f-18f050494cf3
+cand-dc82407fd7d5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	208	is_a	Climate Change	Concept	While	Concept	0	588	5f8fcd5e-e24d-31a1-9fc6-329ff3ef563f	2ced6f5f-2d59-3634-891f-18f050494cf3
+cand-dcc370ab8c67	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	178	is_a	Feeding America	Concept	United States	Concept	0	288	ca117443-9986-3f7b-9fa1-c4212c4e5243	5518ebc1-a442-3f6a-b2cb-2c4a9aa5b3fa
+cand-dcd36b5e840e	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	243	is_a	Compared	Concept	1.5	Identifier	0	411	c4ef7e7b-e852-3530-b9e8-cd900dcbd431	35c79de8-493b-31b4-bb74-37fd94e2659d
+cand-dd181f744b90	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	365	is_a	Charleston East	Concept	LEED-NC	Concept	447	733	31168217-6b72-3e16-bd06-edfd35e258cb	67a8b087-0fce-3b58-82de-8a9cd891bb24
+cand-dd1f4461bd1f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	528	is_a	Water	Concept	At	Concept	573	659	bc247ca1-f8bc-3dfa-ace4-97df8318c94e	6ff7a9ff-0155-3d7d-9619-76da3a3253d6
+cand-deaf4bc16863	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	has	TU Berlin	Concept	100%	Metric	2482	2721	ac00b273-c9aa-33aa-9fc9-de98d9aa5d0b	b3a063bc-3fcd-39f8-86f0-d1720f5aa67f
+cand-dee0b429a53c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	144	has	Austin	Concept	EIE Tree Canopy	Concept	473	634	bd3dcc89-290d-3930-b533-265b19ebb91c	92127c06-2e91-3e34-9c2c-9ddde1f5e6a2
+cand-df64a8996ea0	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	314	is_a	Water	Concept	We	Concept	187	316	ddbf525e-ff5d-356a-b7ff-f0e2429246bd	3bcc8fab-276f-37e8-b932-d89580856d18
+cand-dfabb411bc7d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	443	is_a	96%	Metric	FSC	Concept	0	280	ff2ef3e7-2545-33b0-8a92-0d3a0882fcc2	f1a8e47e-4834-3ca2-ada9-801598063d1f
+cand-dfe3a7bd4ea1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	19	is_a	AI	Concept	Over	Concept	783	898	a1f4a7d4-d34b-3594-a67f-a33a8961adef	a36d972c-074f-32bf-bb29-663c8a3d16ea
+cand-dff955e04e7a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	Landfill	Concept	Starting	Concept	1239	1370	b915d485-2072-36e6-89c4-1e9271f5f3a3	bc9d0b81-cb63-3539-9dc1-a625ef50adef
+cand-e027fc7b3705	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	162	is_a	Ecommerce	Concept	90%	Metric	289	358	50b85ee9-b318-3613-9363-7ec3dbe8425d	54e67d87-57e2-3e47-8b74-c51b4f261fab
+cand-e07b3bb2ee85	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	137	is_a	AI	Concept	We	Concept	306	512	3bc7ed53-b54e-3f74-a868-be33acdf71e0	4ddd0845-9d62-3ffd-9f6e-f2aa7ef69989
+cand-e0e9d0e50c50	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	483	is_a	SolarPower Europe	Concept	Still In	Concept	0	590	98111f2b-92d8-3bf6-95a0-62ac62a5ad61	55c0f1cf-e64b-3741-8f8e-94cd265fec78
+cand-e126a3284b23	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	298	is_a	More	Concept	Of	Concept	0	236	8e47fa46-f7b8-342b-9d81-7ed094c0fcf8	1fb22721-7524-3f30-b383-ef6c8e83e909
+cand-e138fdb1301a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	124	is_a	Waze	Concept	If	Concept	659	850	861b2264-c1a9-348a-816c-e80ca99e55cb	6f86f2db-2336-3a5b-8305-65a34bf70eac
+cand-e138fdb1301a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	124	is_a	Waze	Concept	If	Concept	659	850	861b2264-c1a9-348a-816c-e80ca99e55cb	6f86f2db-2336-3a5b-8305-65a34bf70eac
+cand-e2d6d6728011	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	297	is_a	Asia Pacific	Concept	Making	Concept	1021	1315	d2ce7aa1-81a2-32b3-9eea-a6a0eb04c84a	37248280-29f1-3fd6-b74d-a4b04b8c31df
+cand-e382e5b97bad	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	528	is_a	At	Concept	In	Concept	660	880	6ff7a9ff-0155-3d7d-9619-76da3a3253d6	3376d481-40e8-37ee-805c-33896e6aa923
+cand-e49ef7b274d1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	450	has	That	Concept	AI	Concept	511	689	1ad8c2c6-390f-329f-bf15-fe289f53aee2	007eb13d-4a9c-35db-8975-3ac1dd2db819
+cand-e4bc150fa76d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	380	is_a	We	Concept	Looking	Concept	1307	1460	fbe5bb17-b097-38d0-b255-9986fc7b5ef6	48fe165d-d68f-3157-874f-1c6a713f1b7b
+cand-e4df4afbcffe	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	174	is_a	Data Commons	Concept	Anyone	Concept	785	951	156f9d0d-4bdd-3413-b480-33ae178bfd36	6e3e1287-0d70-3a4b-ad8f-a37e50e784e8
+cand-e5c94a38367d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	611	is_a	To	Concept	See	Concept	300	395	ca769ec0-5ba6-3704-bb5e-f3f736fd7843	1ce6e833-7fe4-396b-b167-d34d41ca6ba4
+cand-e612cb7524dc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	231	has	Procuring	Concept	Scope	Concept	427	576	64982f1b-c2d3-3583-8ef0-f31c5362a3a9	b40c657d-342d-39c5-8d68-d23f966d6db9
+cand-e6ecd456e4db	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	468	measures	European Commission	Concept	We	Concept	804	978	611120fd-d61b-3161-9652-fdf2b111020f	77fc5a77-8a6a-3b57-8129-fd42fc03316b
+cand-e7ad30abf360	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	460	is_a	Conduct	Concept	Along	Concept	903	1266	60a2b7b2-82e2-3997-b0cb-f0a95b6331dc	8db0fc07-7c64-3bd1-a082-0a95e4a68437
+cand-e7b4caa3e0df	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	298	part_of	12%	Metric	RE100	Concept	237	438	55cc6d70-90e4-306a-b93d-e8a7f2728865	0402adae-998f-3bec-8c55-9d164e8e6478
+cand-e7c2a784f97f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	205	uses	Google	Concept	At	Concept	0	214	888331ba-8c24-366e-9ec7-bba40570564a	4a183c5c-5f09-365e-8a35-d9fad8ffb745
+cand-e7fe251376d7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	493	uses	FAO	Concept	Google Earth Engine	Concept	308	490	7335d149-2878-3f97-bf2f-cc1b70b35d66	c95dfeec-7e42-3fbd-ad36-3a5eddc58aec
+cand-e855f1d3b529	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	is_a	PPA	Concept	The	Concept	1783	2197	38b4430c-a02c-3582-bbc3-b3ad8caedc8b	7c4c73d5-d901-3673-be67-1e5b72bc1b0f
+cand-e9c2b3059d04	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	379	is_a	The	Concept	91%	Metric	385	686	aff91d12-7456-3660-9e3c-9834a26f1115	b2eb8ff4-c4c4-3342-90f1-21b041df5901
+cand-ea3385bc2bd3	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	is_a	PUE	Concept	See	Concept	976	1036	0f8fc594-5fe0-30d0-aee1-aa02d849e30c	dc6f2280-3299-393d-94ea-6c3dacaf2bc9
+cand-eaabbb3ccc5d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	612	includes	Total	Concept	See	Concept	601	729	b14d4e73-bc4e-3a0c-9c23-474f90cd9ca1	aacd9d11-30c4-35d8-b20d-d56fb73fd5a9
+cand-ebc68915db1d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	196	is_a	These	Concept	Seed	Concept	348	607	5e6d3ce2-4150-3f15-9200-a2e52aafdc04	076d6d0e-5b26-3c03-b8f2-e811f270a958
+cand-ec312171bdd8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	608	has	Electricity Maps	Concept	For	Concept	3088	3214	ba59496d-9005-3d96-a22a-fcfed0eb6a00	bb373885-416f-36d0-b7c9-938fdb2f7162
+cand-ed33548929f4	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	526	is_a	Carbon	Concept	Scope	Concept	273	378	ec376930-f8b1-3156-94c2-ecf39b437bfe	f5baaeb1-aa49-3fc2-ab13-b6f9c551f387
+cand-ed8a6e25c827	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	511	is_a	GHG	Concept	They	Concept	0	340	1f7e7c41-1cba-3a12-894f-ca24734d2717	bdfdcb4a-926e-36c1-9798-0473a2184e8a
+cand-ee813bd465e5	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	242	part_of	Heat	Concept	Our	Concept	623	818	ac0ba851-e490-34f0-8dc9-3f41699ef593	90c0cd33-4b5d-3340-8c00-960bd00064c5
+cand-ee850f686a8c	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	514	is_a	GHG	Concept	We	Concept	0	379	42eb7585-6118-3af3-939e-12fa966f23a1	e271c14b-68a3-3e45-90f1-3d8ebd0e69bc
+cand-ef424b2fc0e8	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	162	is_a	Google Cloud	Concept	Lufthansa Group	Concept	932	997	182a08f9-f672-3087-bb58-3145269b13de	a2b4e7c6-3f7d-3c55-bb29-27217bb47a0a
+cand-ef4ad157c0b7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	18	is_a	But	Concept	Making	Concept	270	334	c2ddf417-2e87-3886-b6e6-6edd8bd5d8f2	4f756919-ddb5-3502-a70d-ae03aee322b9
+cand-f08040f46906	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	64	is_a	Ghana	Concept	FAO	Concept	955	1273	8713690f-bda6-3eb1-8f9f-1cef2ef76301	c0d5158e-8022-3571-a642-37fedbe5c82b
+cand-f08d37dcf4ff	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	144	uses	Tree Canopy Insights	Concept	AI	Concept	0	385	44241ba7-4af2-307c-a907-899095a598fe	c26b9955-95e8-3e85-90d9-8e628ea2d33d
+cand-f0eb8918a645	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	528	is_a	This	Concept	IT	Concept	1171	1391	38f3c7d5-c7ea-386b-bd5f-9b25f4d19d24	7614c3f5-280b-30b8-a942-c9841cef7202
+cand-f1cc57e6cf02	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	141	is_a	Iniciativa Clim	Concept	Mexico City	Concept	938	1184	d68a730b-c98a-3b67-9ff1-8e34faf731b5	df2be606-2087-3519-b58b-be278c38ce3a
+cand-f1ce767a25f7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	523	is_a	Greenhouse Gas Protocol	Concept	Scope	Concept	0	331	de9a0522-af1e-387c-93c4-fbae86d4280b	0256f7ab-73be-3022-9380-8e2a26f19307
+cand-f2228db18c75	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	610	includes	Fitbit	Concept	Pixel	Concept	1857	1870	e6a15ba1-6e64-3b9d-9b34-55f504dd6cfa	0ff09418-a460-3b43-b280-c5cd69c88d61
+cand-f2d31a5408e7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	253	has	California	Concept	Many	Concept	730	862	7f92c575-aa32-39e8-8a53-1b513d66ff86	9aa7eee2-033f-3170-a825-607e94d82261
+cand-f3661b988a4d	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	296	is_a	Our	Concept	And	Concept	481	685	a808ac3c-418f-3185-a754-073cecde2625	1b827a6b-9c18-3195-88f3-073ee114886a
+cand-f57466b08e00	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	150	uses	It	Concept	NOAA	Concept	529	692	fe27089d-0b70-30b0-a12c-57dc79ecb045	3d1106fe-f719-3ed1-b212-d0bd1b718646
+cand-f588aeb48f03	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	356	is_a	90%	Metric	When	Concept	294	379	26530ba4-6119-370a-affb-b8b73f919631	bb0f13fc-ef22-3c9a-8955-dab93f5c17e1
+cand-f5c952e8a109	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	276	is_a	CFE	Concept	PJM	Concept	1374	1682	2c9dda4a-5cf6-38d5-bafb-c549774d0c98	c71f99cf-b65c-3070-a73d-4c2c171f1e5c
+cand-f5db45b23b13	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	435	has	Our	Concept	Protecting	Concept	0	170	11893b22-65de-3f6e-815e-e03e5476c579	a17afae8-9bb1-3525-828d-9a3d4fb63f96
+cand-f67ef0e4f465	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	491	is_a	GCoM	Concept	EIE	Concept	1292	1424	a061007f-f7ec-329f-a108-b7db5de9c5b5	e9dc22a3-46f7-32c7-9eb5-c1f351b49663
+cand-f876c418c174	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	412	is_a	69%	Metric	Roughly	Concept	0	333	58af3ff1-be90-3383-bf0f-d6093c66647a	8c6e7f5c-6de4-3a34-a5de-3acfbec40299
+cand-f8bcdfa0dcba	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	402	is_a	We	Concept	ChemFORWARD	Concept	617	755	aef182de-3852-3c42-b602-25cd46882eb1	5047ce7e-69e1-39f9-b173-a428a2152b60
+cand-f98f2ad45c5f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	524	has	This	Concept	PPAs	Concept	462	595	c433405c-3661-3b9b-9894-3cc54d8140f0	5c66e029-ea00-39b5-bc6f-c3a2e4bcd5c0
+cand-f9aeb8037d28	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	512	is_a	GHG	Concept	The	Concept	0	388	f51158c8-4b95-350d-934e-43eb08679d2e	66a15a10-5251-33fe-a7d8-c579700ed474
+cand-f9c3c611a9bb	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	382	is_a	Pro	Concept	100%	Metric	0	373	3181d3c7-a9fd-306c-99ab-c9e2c0e77047	9e7554b5-f553-368f-9f3a-61f281904f2f
+cand-f9dd565b06cf	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	155	is_a	These	Concept	Now OpenET	Concept	1502	1680	0c5814cb-8976-38f0-8165-ef2393e11db9	666d63f0-394c-3e53-b342-04a7edc6c743
+cand-f9e960db4904	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	65	is_a	AI	Concept	With AI	Concept	709	865	5b3ac353-7059-3c12-95b1-633ffe70c736	4b981bda-9e60-3472-b65d-0a32d155220f
+cand-f9f6ae715c77	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	490	has	Google	Concept	EDF	Concept	410	640	86a4455f-c075-3c76-9706-fa5d560199c7	e85b54c9-f519-350b-8651-90dcf28c40ba
+cand-fa57fa20da9f	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	450	is_a	Google	Concept	We	Concept	0	510	7cdbf4fb-e537-352e-bf71-9cfced8d2f19	7dc2b556-94d9-3420-99c2-eea6af4c72b3
+cand-fa7988bc06fc	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	412	has	The	Concept	69%	Metric	0	333	91592a36-69e9-3624-a3be-3f1cc26ab05f	58af3ff1-be90-3383-bf0f-d6093c66647a
+cand-fabec5bf9fea	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	442	is_a	Bay View	Concept	We	Concept	1429	1643	fef3bc5d-bef9-3e61-912c-677faa387844	a58af7bf-90bf-395e-87a5-117088d16cb8
+cand-fb4788942432	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	237	is_a	Google	Concept	Climate Accord	Concept	1368	1524	991f925a-8823-337a-8c80-96565ea56777	cf559d35-5b32-3344-a5aa-5dbf1bf13ae0
+cand-fb65d42374db	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	169	has	Google Earth\n\nGoogle Earth\n\nOur	Concept	Timelapse	Concept	0	260	1c4ec89a-6d65-3718-8119-bd1100ec6201	a914ad2a-3a2a-3fbe-9463-94c96113e924
+cand-fbedac0e5c6b	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	88	is_a	They	Concept	The	Concept	787	1069	1eddfd2a-f40f-3adc-8e6f-3f25a9503018	e4b155bc-7548-301d-a179-87dcc85612d0
+cand-fce22b45aa2a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	477	measures	Digital Europe	Concept	Renewable Energy Directive\n\nGoogle	Concept	0	466	2f22fc3b-56ef-3f09-ae20-fcd6b8d5e801	f2c2badc-61fb-3b5c-86a8-c9376f38f34c
+cand-fd14a5f64baa	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	146	has	Google	Concept	We	Concept	0	325	b0c9ae6e-48f4-356e-bd30-f3378a63f6ee	f81383f6-6f4f-3348-adb0-bf6fc19b43b6
+cand-fd1727e88ad1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	99	is_a	The	Concept	From	Concept	235	289	dc54d60b-14ac-38ab-b124-8ebac73162b8	d3bfe199-5cc5-3968-a52d-d66c60756e12
+cand-fd53b22d06e1	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	523	is_a	Biogenic	Concept	EPA Center	Concept	413	553	2b72f683-d81c-3ed1-91b3-02c20beb0b0e	4a70dc19-ab2e-3ca8-ab14-7a1ca75b054a
+cand-fe5b6c2b1a80	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	309	requires	The	Concept	Policyrecommendationstoaccelerate	Concept	0	252	1ddf8f8f-aa46-3e0e-a371-fa899219268f	4a36adf0-b646-3fe7-aaf4-e559a7257784
+cand-fec011e0a93a	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	384	is_a	Pro	Concept	100%	Metric	0	511	595844e3-8dec-3824-85b8-150671643391	2bf54005-dc2e-3307-89c3-704e38711db8
+cand-fef0017daa68	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	492	is_a	Organization Details\n\nGoogle	Concept	ICLEI	Concept	0	236	0af4c014-b7a4-3796-8bfc-78cb33654d37	82085d26-d83e-326c-a647-541ab4a696d6
+cand-ff14d35a9e85	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	313	has	Climate	Concept	In	Concept	0	341	9e3cd870-c6a3-3398-8719-d9f4a881d4e7	88c6668d-b51f-3b80-987f-7b03e16c039e
+cand-ffba3fc1b344	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	245	has	27%	Metric	Platinum	Concept	828	924	62a249f7-1bcf-300a-b7e0-f51c04f9b4cb	06fdf9c8-aab2-3654-828e-3c49d7659843
+cand-fff07a3748f7	e8aa6942-9d1a-5568-a9da-5f233d1aa03a	88	is_a	Home	Concept	20%	Metric	787	1069	74248a15-d728-36b1-9306-e1d58bf056e7	6f903280-54a1-3527-a70a-c58a4a521ffb
