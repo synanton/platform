@@ -1,0 +1,63 @@
+{
+  "event": "extraction_completed",
+  "tenant_id": "eval-smoke",
+  "tenant_class": "eval",
+  "source_version_id": "e8aa6942-9d1a-5568-a9da-5f233d1aa03a",
+  "document_id": "google-2023-environmental-report-audit5.pdf",
+  "engine": "RegexExtractorAdapter",
+  "provider": "regex",
+  "provider_source": "tenant-override",
+  "duration_ms": 206578,
+  "durations_ms": {
+    "extraction": 875,
+    "graph": 205703,
+    "indexing": 160835,
+    "promotion": 0,
+    "activation": 0
+  },
+  "entity_mentions": 11799,
+  "normalized_entities": 3105,
+  "relation_candidates": 564,
+  "graph_relation_candidates": 564,
+  "relations_accepted": 0,
+  "relations_rejected": 564,
+  "rejection_reason_codes": [
+    "unknown_predicate",
+    "unknown_object_type",
+    "unknown_subject_type",
+    "domain_mismatch",
+    "range_mismatch"
+  ],
+  "rejection_reason_counts": {
+    "domain_mismatch": 10,
+    "unknown_subject_type": 16,
+    "unknown_predicate": 538
+  },
+  "rejection_predicate_counts": {
+    "includes": 29,
+    "applied_to": 3,
+    "seeks": 1,
+    "part_of": 16,
+    "signs": 1,
+    "implements": 1,
+    "contains": 1,
+    "has": 62,
+    "is_a": 406,
+    "matches": 1,
+    "uses": 21,
+    "discussed_in": 1,
+    "requires": 10,
+    "measures": 11
+  },
+  "rejection_subject_type_counts": {
+    "Identifier": 4,
+    "Metric": 12,
+    "Concept": 548
+  },
+  "rejection_object_type_counts": {
+    "Identifier": 8,
+    "Metric": 28,
+    "Concept": 528
+  },
+  "processing_outcome": "PARTIAL"
+}

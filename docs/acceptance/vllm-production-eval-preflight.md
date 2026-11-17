@@ -103,9 +103,11 @@ inert to old code, so no destructive schema rollback is required. Existing
 - #724 Track B: output truncation confirmed. Same chunk at 2,048 tokens returned
   `finish_reason=length` and invalid JSON; at 4,096 it returned `stop` and valid
   JSON (3,661 completion tokens, 1,328 prompt tokens).
-- #724 Track A: 564 rejections; only 7 debug rows captured (`is_a`,
-  `unknown_predicate`). Taxonomy remains unreconciled; no ontology or promotion
-  change made.
+- #724 Track A: 564 rejections reconcile to 538 `unknown_predicate`,
+  16 `unknown_subject_type`, and 10 `domain_mismatch`; predicate/type aggregates
+  and representative samples are recorded. The dominant `is_a`/`has` cases are
+  extraction candidates dominated by fragments/function words, so no ontology
+  or promotion change was made.
 - Extended corpus: 30 real technical PDFs added; manifest total 56 unique docs.
 
 ## Extended observation corpus
