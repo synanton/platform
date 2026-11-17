@@ -13,10 +13,4 @@ public record ExtractionEngineProperties(
         String endpoint,
         String model,
         Integer timeoutSeconds,
-        Integer maxTokens) {
-
-    public ExtractionEngineProperties(String provider, String endpoint, String model,
-                                      Integer timeoutSeconds) {
-        this(provider, endpoint, model, timeoutSeconds, null);
-    }
-}
+        Integer maxTokens) {}
