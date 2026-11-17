@@ -100,9 +100,12 @@ inert to old code, so no destructive schema rollback is required. Existing
   `4af4c647a6b309c75967590bda80404b15355744d7d678a205facc6901e89b80`.
 - #724 regex timing: 305s end-to-end, 0.8s extraction, 167s indexing, 304s
   graph; peak synflux heap 132 MiB; all 564 relations rejected.
-- #724 LLM: attempts 1–2 failed with malformed JSON (`expected ',' at 7376/7749`);
-  the retry chain was stopped and the version dead-lettered; GPU peak observed
-  12,975/16,311 MiB.
+- #724 Track B: output truncation confirmed. Same chunk at 2,048 tokens returned
+  `finish_reason=length` and invalid JSON; at 4,096 it returned `stop` and valid
+  JSON (3,661 completion tokens, 1,328 prompt tokens).
+- #724 Track A: 564 rejections; only 7 debug rows captured (`is_a`,
+  `unknown_predicate`). Taxonomy remains unreconciled; no ontology or promotion
+  change made.
 - Extended corpus: 30 real technical PDFs added; manifest total 56 unique docs.
 
 ## Extended observation corpus
