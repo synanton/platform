@@ -6,6 +6,9 @@ IDs, predicate, surfaces, proposed types, chunk, and evidence offsets.
 **Sample:** `track-a-gold-sample.tsv` — 30 stratified candidates split into
 development and holdout rows. All labels remain `UNREVIEWED`; no automated
 values are treated as gold.
+**Evidence export:** `track-a-gold-sample-evidence.tsv` — the extracted chunk
+text, page range, token count, candidate fields, and evidence substring for all
+30 sampled chunks. This is the extraction output, not PDF page-text reconstruction.
 
 ## Split policy
 
