@@ -154,6 +154,15 @@ class LlmExtractionAdapterTest {
     }
 
     @Test
+    void usesConfiguredMaxTokensInTheRequest() {
+        new LlmExtractionAdapter("http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
+                "test-model", Duration.ofSeconds(10), 4096)
+                .extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(Json.integer(Json.parseObject(requestBody), "max_tokens", -1)).isEqualTo(4096);
+    }
+
+    @Test
     void lengthResponseIsIncompleteBeforeJsonParsingAndPreservesUsage() {
         responseContent = "{\"preEntities\":[{\"surfaceForm\":\"Halcyon-7\"";
         finishReason = "length";

@@ -45,7 +45,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     public static final String PROMPT_VERSION = "extraction-v1";
     private static final String PROMPT_RESOURCE = "/prompts/extraction-v1.txt";
-    private static final int MAX_TOKENS = 2048;
+    private static final int DEFAULT_MAX_TOKENS = 2048;
 
     static final String DEFAULT_TYPES = String.join(", ",
             "Organization", "Supplier", "Customer", "Product", "Warehouse", "Order", "OrderLine",
@@ -75,19 +75,29 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     private final String endpoint;
     private final String model;
     private final Duration timeout;
+    private final int maxTokens;
     private final String promptTemplate;
 
     public LlmExtractionAdapter(String endpoint, String model) {
-        this(endpoint, model, Duration.ofSeconds(120));
+        this(endpoint, model, Duration.ofSeconds(120), DEFAULT_MAX_TOKENS);
     }
 
     public LlmExtractionAdapter(String endpoint, String model, Duration timeout) {
+        this(endpoint, model, timeout, DEFAULT_MAX_TOKENS);
+    }
+
+    public LlmExtractionAdapter(String endpoint, String model, Duration timeout, int maxTokens) {
         this(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
                         .connectTimeout(Duration.ofSeconds(10)).build(),
-                endpoint, model, timeout);
+                endpoint, model, timeout, maxTokens);
     }
 
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model, Duration timeout) {
+        this(client, endpoint, model, timeout, DEFAULT_MAX_TOKENS);
+    }
+
+    public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
+                                Duration timeout, int maxTokens) {
         if (endpoint == null || endpoint.isBlank()) {
             throw new IllegalArgumentException("LLM extraction endpoint is required");
         }
@@ -95,6 +105,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         this.endpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
         this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
         this.timeout = timeout == null ? Duration.ofSeconds(120) : timeout;
+        this.maxTokens = Math.max(1, maxTokens);
         this.promptTemplate = loadPrompt();
     }
 
@@ -259,7 +270,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     private LlmCallResult call(String prompt, String text) {
         String body = "{\"model\":" + Json.quote(model)
-                + ",\"temperature\":0,\"max_tokens\":" + MAX_TOKENS
+                + ",\"temperature\":0,\"max_tokens\":" + maxTokens
                 + ",\"messages\":[{\"role\":\"system\",\"content\":" + Json.quote(prompt)
                 + "},{\"role\":\"user\",\"content\":" + Json.quote("TEXT:\n" + text) + "}]}";
         HttpRequest request = HttpRequest.newBuilder(URI.create(chatCompletionsUrl()))
