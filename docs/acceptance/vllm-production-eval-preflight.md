@@ -101,7 +101,8 @@ inert to old code, so no destructive schema rollback is required. Existing
 - #724 regex timing: 305s end-to-end, 0.8s extraction, 167s indexing, 304s
   graph; peak synflux heap 132 MiB; all 564 relations rejected.
 - #724 LLM: attempts 1–2 failed with malformed JSON (`expected ',' at 7376/7749`);
-  no completed metrics; GPU peak observed 12,975/16,311 MiB.
+  the retry chain was stopped and the version dead-lettered; GPU peak observed
+  12,975/16,311 MiB.
 - Extended corpus: 30 real technical PDFs added; manifest total 56 unique docs.
 
 ## Extended observation corpus
