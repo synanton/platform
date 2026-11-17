@@ -21,7 +21,7 @@ class ExtractionAdapterFactoryTest {
 
     private static ExtractionEngineProperties props(String provider) {
         return new ExtractionEngineProperties(provider, "http://localhost:8000/v1",
-                "qwen3-extraction", 120);
+                "qwen3-extraction", 120, null);
     }
 
     private static ExtractionAdapterFactory factory(String defaultProvider,

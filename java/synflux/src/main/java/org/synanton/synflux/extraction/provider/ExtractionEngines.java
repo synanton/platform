@@ -24,7 +24,8 @@ public final class ExtractionEngines {
                             : properties.model(),
                     Duration.ofSeconds(properties.timeoutSeconds() == null
                             ? 120
-                            : Math.max(1, properties.timeoutSeconds())));
+                            : Math.max(1, properties.timeoutSeconds())),
+                    properties.maxTokens() == null ? 2048 : Math.max(1, properties.maxTokens()));
         };
     }
 }
