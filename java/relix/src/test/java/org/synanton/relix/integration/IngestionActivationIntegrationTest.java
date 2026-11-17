@@ -14,6 +14,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.springframework.mock.web.MockMultipartFile;
@@ -510,6 +515,66 @@ class IngestionActivationIntegrationTest {
                 .contains("FAILED");
         assertThat(cache.listPendingActivationRequests(tenant, 10, Instant.now())).isEmpty();
         assertThat(firstActivationEventIdOrNull(tenant, source, resource)).isNull();
+    }
+
+    @Test
+    void concurrentTwoTenantFullChainDoesNotCrossContaminate() throws Exception {
+        String tenantA = "tenant-728-concurrent-ingest-a";
+        String tenantB = "tenant-728-concurrent-ingest-b";
+        String sourceA = "source-728-concurrent-a";
+        String sourceB = "source-728-concurrent-b";
+        String resource = "concurrent.md";
+        String text = "Acme requires Protocol-A";
+        SourceVersionRow versionA = ingest(tenantA, sourceA, resource,
+                ref(resource, text), bytes(text));
+        SourceVersionRow versionB = ingest(tenantB, sourceB, resource,
+                ref(resource, text), bytes(text));
+        markSearchProjected(tenantA, sourceA, resource, versionA);
+        markSearchProjected(tenantB, sourceB, resource, versionB);
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        Future<?> a = pool.submit(() -> {
+            start.await();
+            driveToGraphCommitted(tenantA, sourceA, resource, versionA,
+                    "entity-728-concurrent-a-subject", "entity-728-concurrent-a-object");
+            sweep(tenantA).poll();
+            return null;
+        });
+        Future<?> b = pool.submit(() -> {
+            start.await();
+            driveToGraphCommitted(tenantB, sourceB, resource, versionB,
+                    "entity-728-concurrent-b-subject", "entity-728-concurrent-b-object");
+            sweep(tenantB).poll();
+            return null;
+        });
+        start.countDown();
+        a.get(120, TimeUnit.SECONDS);
+        b.get(120, TimeUnit.SECONDS);
+        pool.shutdownNow();
+
+        for (String tenant : List.of(tenantA, tenantB)) {
+            String source = tenant.equals(tenantA) ? sourceA : sourceB;
+            SourceVersionRow version = tenant.equals(tenantA) ? versionA : versionB;
+            await("concurrent activation " + tenant, sweep(tenant)::poll,
+                    () -> activations.readLifecycle(tenant, source)
+                            .map(lifecycle -> lifecycle.currentGeneration() == version.generation())
+                            .orElse(false),
+                    () -> "lifecycle=" + activations.readLifecycle(tenant, source)
+                            + ", activation=" + activations.read(tenant, source, version.generation()));
+            assertThat(activations.readLifecycle(tenant, source)).get()
+                    .satisfies(lifecycle -> {
+                        assertThat(lifecycle.currentGeneration()).isEqualTo(version.generation());
+                        assertThat(lifecycle.acceptedGeneration()).isEqualTo(version.generation());
+                        assertThat(lifecycle.activeRevisionId()).isEqualTo(version.versionId());
+                    });
+        }
+        assertThat(relationCount(tenantA, "entity-728-concurrent-a-subject",
+                "entity-728-concurrent-a-object", "requires")).isEqualTo(1L);
+        assertThat(relationCount(tenantB, "entity-728-concurrent-b-subject",
+                "entity-728-concurrent-b-object", "requires")).isEqualTo(1L);
+        assertThat(evidenceCount(tenantA, versionA.versionId().toString(), sourceA)).isEqualTo(1L);
+        assertThat(evidenceCount(tenantB, versionB.versionId().toString(), sourceB)).isEqualTo(1L);
     }
 
     @Test

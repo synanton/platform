@@ -1,10 +1,12 @@
 package org.synanton.synquest.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,7 +14,13 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
@@ -39,6 +47,49 @@ class SearchProjectionConsumerTest {
         verify(search).reindex("demo");
         verify(cache).markSourceOutboxPublished(eq(event), any(Instant.class));
         verify(cache).markSourceSearchProjected(eq(event), any(Instant.class));
+    }
+
+    @Test
+    void concurrentTenantsProjectIntoTheirOwnIndexesWithoutCrossContamination() throws Exception {
+        var cache = mock(IngestionCacheClient.class);
+        var search = mock(SearchService.class);
+        SourceOutboxRow eventA = published("tenant-a");
+        SourceOutboxRow eventB = published("tenant-b");
+        when(cache.listUnpublishedSourceOutbox(eq("tenant-a"), anyInt(), any(Instant.class)))
+                .thenReturn(List.of(eventA));
+        when(cache.listUnpublishedSourceOutbox(eq("tenant-b"), anyInt(), any(Instant.class)))
+                .thenReturn(List.of(eventB));
+        when(cache.readSourceVersion(anyString(), anyString(), anyString(), anyString(), any()))
+                .thenReturn(Optional.empty());
+        CountDownLatch entered = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            assertThat(invocation.getArgument(0, String.class)).isIn("tenant-a", "tenant-b");
+            entered.countDown();
+            if (!release.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("second tenant did not enter projection");
+            }
+            return null;
+        }).when(search).reindex(anyString());
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        Future<?> a = pool.submit(() ->
+                new SearchProjectionConsumer(cache, search, "tenant-a", 200, true).projectNewSourceVersions());
+        Future<?> b = pool.submit(() ->
+                new SearchProjectionConsumer(cache, search, "tenant-b", 200, true).projectNewSourceVersions());
+        try {
+            assertThat(entered.await(10, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            release.countDown();
+        }
+        a.get(10, TimeUnit.SECONDS);
+        b.get(10, TimeUnit.SECONDS);
+        pool.shutdownNow();
+
+        verify(search).reindex("tenant-a");
+        verify(search).reindex("tenant-b");
+        verify(cache).markSourceOutboxPublished(eq(eventA), any(Instant.class));
+        verify(cache).markSourceOutboxPublished(eq(eventB), any(Instant.class));
     }
 
     @Test
