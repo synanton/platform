@@ -3,6 +3,7 @@ package org.synanton.relix.graph;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -12,6 +13,11 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.GraphIdentity;
@@ -85,6 +91,48 @@ class RelixCanonicalRelationPromoterTest {
     }
 
     @Test
+    void concurrentTenantsPromoteOnlyTheirOwnRelations() throws Exception {
+        String tenantB = "tenant-promoter-b";
+        UUID versionB = UUID.randomUUID();
+        GraphIdentity identityB = GraphIdentity.canonical(tenantB, "v1");
+        CanonicalRelation relationA = relationFor(TENANT, VERSION, "r-a");
+        CanonicalRelation relationB = relationFor(tenantB, versionB, "r-b");
+        when(cache.listRelationPromotionResults(anyString(), any(UUID.class)))
+                .thenAnswer(invocation -> List.of(rowFor(
+                        invocation.getArgument(0), invocation.getArgument(1),
+                        invocation.getArgument(0, String.class).equals(TENANT) ? "r-a" : "r-b")));
+        when(resolver.resolveCanonical(TENANT)).thenReturn(identity);
+        when(resolver.resolveCanonical(tenantB)).thenReturn(identityB);
+        when(authority.acceptedGeneration(any())).thenReturn(java.util.Optional.of(1L));
+        CountDownLatch entered = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        when(writePort.promoteRelation(any(), any(), any())).thenAnswer(invocation -> {
+            assertThat(((GraphIdentity) invocation.getArgument(0)).tenantId())
+                    .isIn(TENANT, tenantB);
+            entered.countDown();
+            if (!release.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("second tenant did not enter promotion");
+            }
+            return new PromotionResult(1, 1, 1);
+        });
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        Future<PromotionResult> a = pool.submit(() -> promoter.promoteRelation(relationA));
+        Future<PromotionResult> b = pool.submit(() -> promoter.promoteRelation(relationB));
+        try {
+            assertThat(entered.await(10, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            release.countDown();
+        }
+        assertThat(a.get(10, TimeUnit.SECONDS)).isEqualTo(new PromotionResult(1, 1, 1));
+        assertThat(b.get(10, TimeUnit.SECONDS)).isEqualTo(new PromotionResult(1, 1, 1));
+        pool.shutdownNow();
+
+        verify(writePort).promoteRelation(eq(identity), eq(relationA), any());
+        verify(writePort).promoteRelation(eq(identityB), eq(relationB), any());
+    }
+
+    @Test
     void invalidValidationRowRecordsContradictionAndNeverPromotes() {
         when(cache.listRelationPromotionResults(TENANT, VERSION))
                 .thenReturn(List.of(row("INVALID", "ONTOLOGY_INVALID:domain_mismatch")));
@@ -132,9 +180,13 @@ class RelixCanonicalRelationPromoterTest {
     }
 
     private static CanonicalRelation relation() {
-        return new CanonicalRelation(TENANT, VERSION.toString(), "r1", "m1", "e1",
+        return relationFor(TENANT, VERSION, "r1");
+    }
+
+    private static CanonicalRelation relationFor(String tenant, UUID version, String relationId) {
+        return new CanonicalRelation(tenant, version.toString(), relationId, "m1", "e1",
                 "m2", "e2", "requires", "1.0.0", "ref:0", 0, 20,
-                "source-1", VERSION.toString(), 1, null);
+                "source-1", version.toString(), 1, null);
     }
 
     private static RelationPromotionResultRow row(String status) {
@@ -145,5 +197,11 @@ class RelixCanonicalRelationPromoterTest {
         return new RelationPromotionResultRow(TENANT, VERSION, "r1", "m1", "m2", "requires",
                 status, "e1", "e2", reason, "{}", "relation-validation-v1", "1.0.0",
                 Instant.now(), null, "source-1", VERSION, 1, null, "CURRENT");
+    }
+
+    private static RelationPromotionResultRow rowFor(String tenant, UUID version, String relationId) {
+        return new RelationPromotionResultRow(tenant, version, relationId, "m1", "m2", "requires",
+                "VALID", "e1", "e2", "VALID", "{}", "relation-validation-v1", "1.0.0",
+                Instant.now(), null, "source-1", version, 1, null, "CURRENT");
     }
 }

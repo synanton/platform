@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -74,6 +79,40 @@ class RelationRetirementIntegrationTest {
                 .as("no current support remains, so the assertion is unsupported")
                 .isEqualTo("UNSUPPORTED");
         assertThat(rel.get("active")).isEqualTo(false);
+    }
+
+    @Test
+    void concurrentTenantsRetireOnlyTheirOwnEvidence() throws Exception {
+        String tenantA = "tenant-728-retirement-a";
+        String tenantB = "tenant-728-retirement-b";
+        String relationA = "rel-728-retirement-a";
+        String relationB = "rel-728-retirement-b";
+        seed(tenantA, relationA, "ev-728-retirement-a", "source-a", "v1", 1,
+                "SUPPORTS", "CURRENT");
+        seed(tenantB, relationB, "ev-728-retirement-b", "source-b", "v1", 1,
+                "SUPPORTS", "CURRENT");
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        Future<?> a = pool.submit(() -> {
+            start.await();
+            graph.retireSupersededEvidence(tenantA, "source-a", 2);
+            return null;
+        });
+        Future<?> b = pool.submit(() -> {
+            start.await();
+            graph.retireSupersededEvidence(tenantB, "source-b", 2);
+            return null;
+        });
+        start.countDown();
+        a.get(20, TimeUnit.SECONDS);
+        b.get(20, TimeUnit.SECONDS);
+        pool.shutdownNow();
+
+        assertThat(evidenceStatus(tenantA, "ev-728-retirement-a")).isEqualTo("SUPERSEDED");
+        assertThat(evidenceStatus(tenantB, "ev-728-retirement-b")).isEqualTo("SUPERSEDED");
+        assertThat(relationState(tenantA, relationA).get("status")).isEqualTo("UNSUPPORTED");
+        assertThat(relationState(tenantB, relationB).get("status")).isEqualTo("UNSUPPORTED");
     }
 
     @Test
