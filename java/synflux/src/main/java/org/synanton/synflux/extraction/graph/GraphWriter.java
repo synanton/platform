@@ -118,6 +118,13 @@ public final class GraphWriter {
                     if (subject == null || object == null) {
                         rejected++;
                         rejectionCodes.add("MISSING_ENDPOINT");
+                        log.debug("Relation rejected tenant={} version={} chunk={} predicate={} "
+                                        + "reason=MISSING_ENDPOINT subjectMention={} objectMention={} "
+                                        + "subjectType={} objectType={}",
+                                request.tenantId(), request.versionId(), ordinal, relation.predicate(),
+                                relation.subjectMentionId(), relation.objectMentionId(),
+                                subject == null ? "missing" : subject.proposedType(),
+                                object == null ? "missing" : object.proposedType());
                         continue;
                     }
                     RelationValidation validation = validator.validate(request.tenantId(),
@@ -131,8 +138,10 @@ public final class GraphWriter {
                             validation.violations().forEach(violation ->
                                     rejectionCodes.add(violation.code()));
                         }
-                        log.debug("Relation rejected tenant={} predicate={} violations={}",
-                                request.tenantId(), relation.predicate(), validation.violations());
+                        log.debug("Relation rejected tenant={} version={} chunk={} predicate={} "
+                                        + "subjectType={} objectType={} violations={}",
+                                request.tenantId(), request.versionId(), ordinal, relation.predicate(),
+                                subject.proposedType(), object.proposedType(), validation.violations());
                         continue;
                     }
                     String relationId = StableIds.relationId(request.tenantId(),
