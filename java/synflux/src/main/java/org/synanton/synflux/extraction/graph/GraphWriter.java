@@ -70,6 +70,9 @@ public final class GraphWriter {
         Map<String, Integer> counters = counters(0, 0, 0, 0);
         Set<String> rejectionCodes = new LinkedHashSet<>();
         Map<String, Integer> rejectionCounts = new LinkedHashMap<>();
+        Map<String, Integer> rejectionPredicateCounts = new LinkedHashMap<>();
+        Map<String, Integer> rejectionSubjectTypeCounts = new LinkedHashMap<>();
+        Map<String, Integer> rejectionObjectTypeCounts = new LinkedHashMap<>();
         int relationCandidates = 0;
         try {
             Map<Integer, ChunkRow> chunkByOrdinal = new LinkedHashMap<>();
@@ -122,6 +125,11 @@ public final class GraphWriter {
                         rejected++;
                         rejectionCodes.add("MISSING_ENDPOINT");
                         rejectionCounts.merge("MISSING_ENDPOINT", 1, Integer::sum);
+                        rejectionPredicateCounts.merge(relation.predicate(), 1, Integer::sum);
+                        rejectionSubjectTypeCounts.merge(
+                                subject == null ? "missing" : subject.proposedType(), 1, Integer::sum);
+                        rejectionObjectTypeCounts.merge(
+                                object == null ? "missing" : object.proposedType(), 1, Integer::sum);
                         log.debug("Relation rejected tenant={} version={} chunk={} predicate={} "
                                         + "reason=MISSING_ENDPOINT subjectMention={} objectMention={} "
                                         + "subjectType={} objectType={}",
@@ -139,6 +147,9 @@ public final class GraphWriter {
                         String terminalReason = validation.violations().isEmpty()
                                 ? "ONTOLOGY_INVALID" : validation.violations().get(0).code();
                         rejectionCounts.merge(terminalReason, 1, Integer::sum);
+                        rejectionPredicateCounts.merge(relation.predicate(), 1, Integer::sum);
+                        rejectionSubjectTypeCounts.merge(subject.proposedType(), 1, Integer::sum);
+                        rejectionObjectTypeCounts.merge(object.proposedType(), 1, Integer::sum);
                         if (validation.violations().isEmpty()) {
                             rejectionCodes.add("ONTOLOGY_INVALID");
                         } else {
@@ -220,7 +231,8 @@ public final class GraphWriter {
                     accepted.size(), rejected);
             return new GraphCommitResult(mentions.size(), accepted.size(), rejected,
                     List.copyOf(rejectionCodes), graphStatus, relationCandidates,
-                    Map.copyOf(rejectionCounts));
+                    Map.copyOf(rejectionCounts), Map.copyOf(rejectionPredicateCounts),
+                    Map.copyOf(rejectionSubjectTypeCounts), Map.copyOf(rejectionObjectTypeCounts));
         } catch (Exception e) {
             int attempt = graphAttempt + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempt));

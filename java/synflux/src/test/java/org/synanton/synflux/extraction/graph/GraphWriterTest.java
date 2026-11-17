@@ -159,6 +159,11 @@ class GraphWriterTest {
         assertThat(outcome.rejectionCounts())
                 .containsEntry("range_mismatch", 1)
                 .containsEntry("MISSING_ENDPOINT", 1);
+        assertThat(outcome.rejectionPredicateCounts()).containsEntry("requires", 2);
+        assertThat(outcome.rejectionSubjectTypeCounts()).containsEntry("MaintenanceSystem", 2);
+        assertThat(outcome.rejectionObjectTypeCounts())
+                .containsEntry("Procedure", 1)
+                .containsEntry("missing", 1);
         assertThat(outcome.accepted() + outcome.rejected()).isEqualTo(outcome.candidates());
     }
 

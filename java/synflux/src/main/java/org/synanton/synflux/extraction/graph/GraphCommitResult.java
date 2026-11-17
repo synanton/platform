@@ -11,11 +11,14 @@ public record GraphCommitResult(
         List<String> rejectionCodes,
         String status,
         int candidates,
-        Map<String, Integer> rejectionCounts) {
+        Map<String, Integer> rejectionCounts,
+        Map<String, Integer> rejectionPredicateCounts,
+        Map<String, Integer> rejectionSubjectTypeCounts,
+        Map<String, Integer> rejectionObjectTypeCounts) {
 
     public GraphCommitResult(int mentions, int accepted, int rejected,
                              List<String> rejectionCodes, String status) {
         this(mentions, accepted, rejected, rejectionCodes, status,
-                accepted + rejected, Map.of());
+                accepted + rejected, Map.of(), Map.of(), Map.of(), Map.of());
     }
 }

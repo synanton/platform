@@ -260,6 +260,9 @@ public class ExtractionConsumer {
             event.put("relations_rejected", graphResult.rejected());
             event.put("rejection_reason_codes", graphResult.rejectionCodes());
             event.put("rejection_reason_counts", graphResult.rejectionCounts());
+            event.put("rejection_predicate_counts", graphResult.rejectionPredicateCounts());
+            event.put("rejection_subject_type_counts", graphResult.rejectionSubjectTypeCounts());
+            event.put("rejection_object_type_counts", graphResult.rejectionObjectTypeCounts());
             event.put("processing_outcome", processingOutcome);
             log.info("extraction_completed {}", mapper.writeValueAsString(event));
         } catch (Exception e) {
