@@ -69,6 +69,8 @@ public final class GraphWriter {
         }
         Map<String, Integer> counters = counters(0, 0, 0, 0);
         Set<String> rejectionCodes = new LinkedHashSet<>();
+        Map<String, Integer> rejectionCounts = new LinkedHashMap<>();
+        int relationCandidates = 0;
         try {
             Map<Integer, ChunkRow> chunkByOrdinal = new LinkedHashMap<>();
             for (ChunkRow chunk : chunks) {
@@ -113,11 +115,13 @@ public final class GraphWriter {
                     continue;
                 }
                 for (RelationCandidate relation : entry.getValue().relations()) {
+                    relationCandidates++;
                     GraphMention subject = byRawMention.get(ordinal + "|" + relation.subjectMentionId());
                     GraphMention object = byRawMention.get(ordinal + "|" + relation.objectMentionId());
                     if (subject == null || object == null) {
                         rejected++;
                         rejectionCodes.add("MISSING_ENDPOINT");
+                        rejectionCounts.merge("MISSING_ENDPOINT", 1, Integer::sum);
                         log.debug("Relation rejected tenant={} version={} chunk={} predicate={} "
                                         + "reason=MISSING_ENDPOINT subjectMention={} objectMention={} "
                                         + "subjectType={} objectType={}",
@@ -132,6 +136,9 @@ public final class GraphWriter {
                             properties.ontologyVersionOrDefault());
                     if (!validation.conformant()) {
                         rejected++;
+                        String terminalReason = validation.violations().isEmpty()
+                                ? "ONTOLOGY_INVALID" : validation.violations().get(0).code();
+                        rejectionCounts.merge(terminalReason, 1, Integer::sum);
                         if (validation.violations().isEmpty()) {
                             rejectionCodes.add("ONTOLOGY_INVALID");
                         } else {
@@ -165,6 +172,12 @@ public final class GraphWriter {
             List<GraphRelation> accepted = new ArrayList<>(acceptedById.values());
             counters.put("relations_accepted", accepted.size());
             counters.put("relations_rejected", rejected);
+            counters.put("relation_candidates", relationCandidates);
+            if (relationCandidates != accepted.size() + rejected) {
+                log.warn("Relation accounting mismatch tenant={} version={} candidates={} accepted={} rejected={} reasons={}",
+                        request.tenantId(), request.versionId(), relationCandidates,
+                        accepted.size(), rejected, rejectionCounts);
+            }
 
             if (!mentions.isEmpty()) {
                 int persistedMentions = graphClient.upsertMentions(mentions);
@@ -206,7 +219,8 @@ public final class GraphWriter {
                     request.tenantId(), request.versionId(), graphStatus, mentions.size(),
                     accepted.size(), rejected);
             return new GraphCommitResult(mentions.size(), accepted.size(), rejected,
-                    List.copyOf(rejectionCodes), graphStatus);
+                    List.copyOf(rejectionCodes), graphStatus, relationCandidates,
+                    Map.copyOf(rejectionCounts));
         } catch (Exception e) {
             int attempt = graphAttempt + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempt));
