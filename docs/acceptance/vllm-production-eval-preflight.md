@@ -22,24 +22,22 @@ verified means the item has been exercised against the deployed environment.
 | 5 | Eval tenants provisionable | ✅ (CLI) | ✅ (eval-smoke) | Actual eval tenant set not provisioned |
 | 6 | Provider overrides per tenant | ✅ (piece 1) | ✅ (eval-smoke regex) | LLM override not live-tested |
 | 7 | Retry provider consistency | ✅ (piece 1.5) | ❌ | No live retry exercise |
-| 8 | Tenant-aware metric capture | ✅ (piece 3) | ✅ (actuator) | Not scraped (#736) |
+| 8 | Tenant-aware metric capture | ✅ (piece 3) | ✅ (actuator + Prometheus) | — |
 | 9 | Multi-tenant polling | ✅ (piece 4) | ✅ (eval-smoke + demo) | — |
 | 10 | Real ≥100-page PDF | ❌ | ❌ | Source procurement (#724) |
 | 11 | Extended observation corpus (30–50 docs) | ❌ | ❌ | Source procurement |
 
 Pieces 1–4 change the code-complete count from 5/11 to 9/11 and the operational
 count to 8/11. Remaining operational gates: a live retry-provider exercise,
-Prometheus scraping (#736), the real ≥100-page PDF (#724), and the 30–50
-extended-observation documents. The eval cannot start until operational is
-11/11.
+the real ≥100-page PDF (#724), and the 30–50 extended-observation documents.
+The eval cannot start until operational is 11/11.
 
 ## Remaining blockers
 
 - **Retry provider consistency:** implemented and unit-tested, but not yet
   exercised against a live failed extraction and retry.
-- **Metrics scrape:** `/actuator/prometheus` is live and returning bounded
-  tenant-aware metrics, but the cluster has no Prometheus pod, ServiceMonitor,
-  or monitoring CRD. Follow-up: #736.
+- **Metrics scrape:** resolved by #736; the minimal Prometheus target is `up`
+  and `extraction_completed_total` is queryable. Historical retention is 15 days.
 - **Corpus gaps:** #724 real PDF and 30–50 extended-observation documents remain
   unsourced.
 - **Actual eval tenants:** `eval-smoke` is provisioned as the step-8 smoke
@@ -91,7 +89,8 @@ inert to old code, so no destructive schema rollback is required. Existing
   `extraction_completed` with `tenant_class=eval`; metrics include
   `extraction_completed_total{tenant_class="eval",provider="regex",outcome="COMPLETED"}`.
 - Demo search still returns 8 results.
-- Prometheus scrape remains pending #736.
+- Prometheus scrape is live (#736): target `synflux` is `up` and
+  `extraction_completed_total` is queryable with 15-day retention.
 
 ## Extended observation corpus
 

@@ -72,9 +72,7 @@ the metrics are for bounded aggregate gates.
 
 ## Scrape status
 
-As of 2026-11-16 the cluster has no Prometheus pod, ServiceMonitor, or
-monitoring CRD. Synflux exposes `GET /actuator/prometheus` and carries scrape
-annotations, but metrics are **exposed, not scraped**. Follow-up: #736.
-
-The queries below become usable only after #736 is deployed and the synflux
-target reports `health=up`.
+As of 2026-11-17, a minimal Prometheus deployment (`prometheus:9090`) scrapes
+`synflux:8090/actuator/prometheus` with a static target. The target is `up` and
+`extraction_completed_total{tenant_class="eval"}` is queryable. See
+[`prometheus-scrape-736.md`](./prometheus-scrape-736.md).
