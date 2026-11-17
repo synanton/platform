@@ -102,7 +102,8 @@ inert to old code, so no destructive schema rollback is required. Existing
   graph; peak synflux heap 132 MiB; all 564 relations rejected.
 - #724 Track B: output truncation confirmed. Same chunk at 2,048 tokens returned
   `finish_reason=length` and invalid JSON; at 4,096 it returned `stop` and valid
-  JSON (3,661 completion tokens, 1,328 prompt tokens).
+  JSON (3,661 completion tokens, 1,328 prompt tokens). Stage 1 deployed path now
+  classifies `length` as terminal `INCOMPLETE_LLM_OUTPUT` and dead-letters it.
 - #724 Track A: 564 rejections reconcile to 538 `unknown_predicate`,
   16 `unknown_subject_type`, and 10 `domain_mismatch`; predicate/type aggregates
   and representative samples are recorded. The dominant `is_a`/`has` cases are
