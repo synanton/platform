@@ -24,3 +24,4 @@ acme-corp-profile.epub	eval-vllm-b	epub	corpus/acme-corp-profile.epub	f184c179f4
 large-final-100p.pdf	eval-vllm-b	pdf	corpus/large-final-100p.pdf	a4beb9671821acae79e159fe644bc719093d6c7cbb2cd7cbc16608f6bda67d99	260021	102	yes	no	n/a	#724 large PDF (102 pages)
 large-final-120p.pdf	eval-vllm-b	pdf	corpus/large-final-120p.pdf	88b5d7b337212ce6c987d04da1032c6f481854f159c2e9d27025dbbbb2401bf3	283466	120	yes	no	n/a	#724 large PDF (120 pages)
 reference-index-negative.txt	eval-vllm-b	txt	corpus/reference-index-negative.txt	079eaa721d016cbe1bf43fc4e07f244e5d002db992516712e887f7bec1a46e1b	224	0	no	yes	0	negative control
+google-2023-environmental-report.pdf	eval-vllm-b	pdf	corpus/google-2023-environmental-report.pdf	4af4c647a6b309c75967590bda80404b15355744d7d678a205facc6901e89b80	6637276	104	no	no	n/a	#724 real public 104-page PDF (Google 2023 Environmental Report); 53,119 extracted words

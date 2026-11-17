@@ -2,7 +2,7 @@
 
 **Status:** BLOCKED — no #723 evaluation ingestion started.
 **Code-complete:** 9/11 (pieces 1–4 merged).
-**Operationally verified:** 8/11 (live deploy, V33, and registry polling verified; scrape and corpus gaps remain).
+**Operationally verified:** 10/11 (live deploy, V33, scrape, retry attribution, and real large-PDF source verified; extended corpus remains).
 **Plan:** [`vllm-production-eval-plan.md`](./vllm-production-eval-plan.md)
 **Manifest:** [`vllm-production-eval-corpus.tsv`](./vllm-production-eval-corpus.tsv)
 **New-entity list:** [`vllm-production-eval-new-entities.tsv`](./vllm-production-eval-new-entities.tsv)
@@ -21,25 +21,24 @@ verified means the item has been exercised against the deployed environment.
 | 4 | Tenant-configurable architecture (Design A) | ✅ | ✅ (design confirmed) | — |
 | 5 | Eval tenants provisionable | ✅ (CLI) | ✅ (eval-smoke) | Actual eval tenant set not provisioned |
 | 6 | Provider overrides per tenant | ✅ (piece 1) | ✅ (eval-smoke regex) | LLM override not live-tested |
-| 7 | Retry provider consistency | ✅ (piece 1.5) | ❌ | No live retry exercise |
+| 7 | Retry provider consistency | ✅ (piece 1.5) | ✅ (live llm→regex flip) | — |
 | 8 | Tenant-aware metric capture | ✅ (piece 3) | ✅ (actuator + Prometheus) | — |
 | 9 | Multi-tenant polling | ✅ (piece 4) | ✅ (eval-smoke + demo) | — |
-| 10 | Real ≥100-page PDF | ❌ | ❌ | Source procurement (#724) |
+| 10 | Real ≥100-page PDF | ✅ (staged) | ✅ (source verified) | #724 benchmark still pending |
 | 11 | Extended observation corpus (30–50 docs) | ❌ | ❌ | Source procurement |
 
 Pieces 1–4 change the code-complete count from 5/11 to 9/11 and the operational
-count to 8/11. Remaining operational gates: a live retry-provider exercise,
-the real ≥100-page PDF (#724), and the 30–50 extended-observation documents.
+count to 10/11. The remaining operational gate is the 30–50
+extended-observation documents; #724's throughput/quality benchmark also remains.
 The eval cannot start until operational is 11/11.
 
 ## Remaining blockers
 
-- **Retry provider consistency:** implemented and unit-tested, but not yet
-  exercised against a live failed extraction and retry.
 - **Metrics scrape:** resolved by #736; the minimal Prometheus target is `up`
   and `extraction_completed_total` is queryable. Historical retention is 15 days.
-- **Corpus gaps:** #724 real PDF and 30–50 extended-observation documents remain
-  unsourced.
+- **Extended corpus:** 30–50 additional real-world documents remain unsourced.
+- **#724 benchmark:** a real 104-page PDF is staged and hashed; the throughput
+  and pipeline-stage timing run remains.
 - **Actual eval tenants:** `eval-smoke` is provisioned as the step-8 smoke
   tenant; the planned eval tenant set still needs provisioning.
 
@@ -91,6 +90,11 @@ inert to old code, so no destructive schema rollback is required. Existing
 - Demo search still returns 8 results.
 - Prometheus scrape is live (#736): target `synflux` is `up` and
   `extraction_completed_total` is queryable with 15-day retention.
+- Retry attribution is live (#731): after flipping `eval-smoke` from `llm` to
+  `regex`, the forced retry remained `llm` with `provider_source=persisted`.
+- #724 source staged: public Google 2023 Environmental Report, 104 pages,
+  53,119 extracted words, SHA-256
+  `4af4c647a6b309c75967590bda80404b15355744d7d678a205facc6901e89b80`.
 
 ## Extended observation corpus
 
