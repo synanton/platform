@@ -1,8 +1,8 @@
 # #723 production evaluation — pre-flight record
 
-**Status:** BLOCKED — no #723 evaluation ingestion started.
+**Status:** BLOCKED — #724 large-document finding; no #723 evaluation ingestion started.
 **Code-complete:** 9/11 (pieces 1–4 merged).
-**Operationally verified:** 10/11 (live deploy, V33, scrape, retry attribution, and real large-PDF source verified; extended corpus remains).
+**Operationally verified:** 10/11 (extended corpus assembled; #724 benchmark has a quality/LLM finding).
 **Plan:** [`vllm-production-eval-plan.md`](./vllm-production-eval-plan.md)
 **Manifest:** [`vllm-production-eval-corpus.tsv`](./vllm-production-eval-corpus.tsv)
 **New-entity list:** [`vllm-production-eval-new-entities.tsv`](./vllm-production-eval-new-entities.tsv)
@@ -24,21 +24,24 @@ verified means the item has been exercised against the deployed environment.
 | 7 | Retry provider consistency | ✅ (piece 1.5) | ✅ (live llm→regex flip) | — |
 | 8 | Tenant-aware metric capture | ✅ (piece 3) | ✅ (actuator + Prometheus) | — |
 | 9 | Multi-tenant polling | ✅ (piece 4) | ✅ (eval-smoke + demo) | — |
-| 10 | Real ≥100-page PDF | ✅ (staged) | ✅ (source verified) | #724 benchmark still pending |
-| 11 | Extended observation corpus (30–50 docs) | ❌ | ❌ | Source procurement |
+| 10 | Real ≥100-page PDF | ✅ (staged) | ⚠️ benchmark finding | 0/564 relation acceptance; LLM JSON parse failures |
+| 11 | Extended observation corpus (30–50 docs) | ✅ (30 added) | ✅ (56 unique) | Local-library provenance caveat |
 
 Pieces 1–4 change the code-complete count from 5/11 to 9/11 and the operational
-count to 10/11. The remaining operational gate is the 30–50
-extended-observation documents; #724's throughput/quality benchmark also remains.
-The eval cannot start until operational is 11/11.
+count to 10/11. The extended corpus is assembled (56 unique documents), but the
+#724 large-document benchmark has a quality cliff and an LLM parse failure.
+The eval cannot start until that finding is resolved or explicitly accepted as a
+documented caveat.
 
 ## Remaining blockers
 
 - **Metrics scrape:** resolved by #736; the minimal Prometheus target is `up`
   and `extraction_completed_total` is queryable. Historical retention is 15 days.
-- **Extended corpus:** 30–50 additional real-world documents remain unsourced.
-- **#724 benchmark:** a real 104-page PDF is staged and hashed; the throughput
-  and pipeline-stage timing run remains.
+- **#724 large-document finding:** the 104-page report accepted 0/564 regex
+  relations versus 8/12 on the short-doc canary, and the LLM pass failed JSON
+  parsing on repeated attempts. Resolve or document as a large-document caveat.
+- **Extended corpus provenance:** 30 local technical-library PDFs are staged and
+  manifest-ued; they are not public URLs.
 - **Actual eval tenants:** `eval-smoke` is provisioned as the step-8 smoke
   tenant; the planned eval tenant set still needs provisioning.
 
@@ -95,6 +98,11 @@ inert to old code, so no destructive schema rollback is required. Existing
 - #724 source staged: public Google 2023 Environmental Report, 104 pages,
   53,119 extracted words, SHA-256
   `4af4c647a6b309c75967590bda80404b15355744d7d678a205facc6901e89b80`.
+- #724 regex timing: 305s end-to-end, 0.8s extraction, 167s indexing, 304s
+  graph; peak synflux heap 132 MiB; all 564 relations rejected.
+- #724 LLM: attempts 1–2 failed with malformed JSON (`expected ',' at 7376/7749`);
+  no completed metrics; GPU peak observed 12,975/16,311 MiB.
+- Extended corpus: 30 real technical PDFs added; manifest total 56 unique docs.
 
 ## Extended observation corpus
 
