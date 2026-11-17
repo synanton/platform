@@ -30,7 +30,9 @@ import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
+import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -187,6 +189,28 @@ class ExtractionConsumerTest {
                 a.versionId())).contains("KNOWLEDGE_READY");
         assertThat(cache.readExtractionStatus(tenantB, CONNECTOR, SOURCE, RESOURCE,
                 b.versionId())).contains("KNOWLEDGE_READY");
+    }
+
+    @Test
+    void incompleteLlmOutputIsTerminalAndDeadLettered() {
+        String tenant = "tenant-incomplete-llm";
+        seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenThrow(new LlmIncompleteOutputException(
+                new LlmUsage("length", 1328, 2048, 3376), 6736, "a".repeat(64)));
+
+        consumer(tenant, adapter).poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                latestVersion(tenant))).contains("EXTRACTION_FAILED");
+        assertThat(cache.listExtractionOutbox(tenant, CONNECTOR, SOURCE, RESOURCE))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.deadLettered()).isTrue();
+                    assertThat(event.nextAttemptAt()).isNull();
+                    assertThat(event.lastError()).contains("INCOMPLETE_LLM_OUTPUT")
+                            .contains("finish_reason=length");
+                });
     }
 
     @Test

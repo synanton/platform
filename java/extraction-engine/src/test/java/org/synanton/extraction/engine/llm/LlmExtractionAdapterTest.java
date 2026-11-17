@@ -40,6 +40,11 @@ class LlmExtractionAdapterTest {
     private volatile String requestBody;
     private volatile int status = 200;
     private volatile String responseContent = MODEL_OUTPUT;
+    private volatile String finishReason = "stop";
+    private volatile boolean includeUsage = true;
+    private volatile int promptTokens = 12;
+    private volatile int completionTokens = 34;
+    private volatile int totalTokens = 46;
 
     @BeforeEach
     void startServer() throws IOException {
@@ -48,7 +53,14 @@ class LlmExtractionAdapterTest {
             requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             String body;
             if (status == 200) {
-                body = "{\"choices\":[{\"message\":{\"content\":" + Json.quote(responseContent) + "}}]}";
+                String choice = "{\"message\":{\"content\":" + Json.quote(responseContent)
+                        + "},\"finish_reason\":" + Json.quote(finishReason) + "}";
+                String usage = includeUsage
+                        ? ",\"usage\":{\"prompt_tokens\":" + promptTokens
+                        + ",\"completion_tokens\":" + completionTokens
+                        + ",\"total_tokens\":" + totalTokens + "}"
+                        : "";
+                body = "{\"choices\":[" + choice + "]" + usage + "}";
             } else {
                 body = "{\"error\":\"boom\"}";
             }
@@ -139,6 +151,59 @@ class LlmExtractionAdapterTest {
                 .contains("Concept --records--> Measurement")
                 .doesNotContain("signs")
                 .doesNotContain("Person");
+    }
+
+    @Test
+    void lengthResponseIsIncompleteBeforeJsonParsingAndPreservesUsage() {
+        responseContent = "{\"preEntities\":[{\"surfaceForm\":\"Halcyon-7\"";
+        finishReason = "length";
+        promptTokens = 1328;
+        completionTokens = 2048;
+        totalTokens = 3376;
+
+        assertThatThrownBy(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .isInstanceOf(LlmIncompleteOutputException.class)
+                .satisfies(error -> {
+                    LlmIncompleteOutputException incomplete = (LlmIncompleteOutputException) error;
+                    assertThat(incomplete.classification()).isEqualTo("INCOMPLETE_LLM_OUTPUT");
+                    assertThat(incomplete.usage().finishReason()).isEqualTo("length");
+                    assertThat(incomplete.usage().promptTokens()).isEqualTo(1328);
+                    assertThat(incomplete.usage().completionTokens()).isEqualTo(2048);
+                    assertThat(incomplete.responseSha256()).hasSize(64);
+                });
+    }
+
+    @Test
+    void successfulResponsePreservesFinishReasonAndUsage() {
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.llmUsage().finishReason()).isEqualTo("stop");
+        assertThat(result.llmUsage().promptTokens()).isEqualTo(12);
+        assertThat(result.llmUsage().completionTokens()).isEqualTo(34);
+        assertThat(result.llmUsage().totalTokens()).isEqualTo(46);
+    }
+
+    @Test
+    void stopWithMalformedJsonRemainsAParsingFailure() {
+        responseContent = "{\"preEntities\":[";
+        finishReason = "stop";
+
+        assertThatThrownBy(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .isInstanceOf(IllegalArgumentException.class)
+                .isNotInstanceOf(LlmIncompleteOutputException.class);
+    }
+
+    @Test
+    void missingUsageIsDiagnosableWithoutFabricatingTokenCounts() {
+        includeUsage = false;
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.llmUsage().finishReason()).isEqualTo("stop");
+        assertThat(result.llmUsage().hasTokenCounts()).isFalse();
+        assertThat(result.llmUsage().promptTokens()).isEqualTo(-1);
+        assertThat(result.llmUsage().completionTokens()).isEqualTo(-1);
+        assertThat(result.llmUsage().totalTokens()).isEqualTo(-1);
     }
 
     @Test

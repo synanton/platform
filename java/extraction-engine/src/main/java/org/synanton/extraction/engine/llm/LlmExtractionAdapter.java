@@ -7,6 +7,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,6 +22,7 @@ import java.util.UUID;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.extraction.engine.TextSegment;
@@ -102,7 +105,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             return ExtractionResult.empty();
         }
         int base = segment.charOffsetStart();
-        String content = call(buildPrompt(context), text);
+        LlmCallResult call = call(buildPrompt(context), text);
+        String content = call.content();
         Map<String, Object> raw = Json.parseObject(Json.extractObject(content));
 
         List<PreEntity> entities = new ArrayList<>();
@@ -170,7 +174,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             relations.add(new RelationCandidate(subject.mentionId(), predicate, object.mentionId(),
                     segment.chunkId(), evidenceStart, evidenceEnd));
         }
-        return new ExtractionResult(List.copyOf(entities), List.copyOf(relations));
+        return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage());
     }
 
     private PreEntity resolve(String surface, String quote, String text, int base, TextSegment segment,
@@ -253,7 +257,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         return out;
     }
 
-    private String call(String prompt, String text) {
+    private LlmCallResult call(String prompt, String text) {
         String body = "{\"model\":" + Json.quote(model)
                 + ",\"temperature\":0,\"max_tokens\":" + MAX_TOKENS
                 + ",\"messages\":[{\"role\":\"system\",\"content\":" + Json.quote(prompt)
@@ -270,22 +274,52 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 throw new IllegalStateException("LLM extraction returned HTTP " + response.statusCode()
                         + ": " + truncate(response.body()));
             }
-            Map<String, Object> envelope = Json.parseObject(response.body());
+            String responseBody = response.body();
+            Map<String, Object> envelope = Json.parseObject(responseBody);
             List<Map<String, Object>> choices = Json.objectList(envelope, "choices");
             if (choices.isEmpty()) {
                 throw new IllegalStateException("LLM extraction response has no choices");
             }
-            String content = Json.string(Json.object(choices.get(0), "message"), "content", "");
+            Map<String, Object> choice = choices.get(0);
+            String finishReason = Json.string(choice, "finish_reason", "unknown");
+            Map<String, Object> usage = Json.object(envelope, "usage");
+            LlmUsage llmUsage = new LlmUsage(
+                    finishReason,
+                    Json.integer(usage, "prompt_tokens", -1),
+                    Json.integer(usage, "completion_tokens", -1),
+                    Json.integer(usage, "total_tokens", -1));
+            String content = Json.string(Json.object(choice, "message"), "content", "");
+            if (llmUsage.isIncomplete()) {
+                throw new LlmIncompleteOutputException(llmUsage, responseBody.length(),
+                        sha256(responseBody));
+            }
             if (content.isBlank()) {
                 throw new IllegalStateException("LLM extraction response has empty content");
             }
-            return content;
+            return new LlmCallResult(content, llmUsage);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("LLM extraction interrupted", e);
         } catch (IOException e) {
             throw new IllegalStateException("LLM extraction request failed: " + endpoint, e);
         }
+    }
+
+    private static String sha256(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder out = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                out.append(String.format("%02x", b));
+            }
+            return out.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable", e);
+        }
+    }
+
+    private record LlmCallResult(String content, LlmUsage usage) {
     }
 
     private String chatCompletionsUrl() {

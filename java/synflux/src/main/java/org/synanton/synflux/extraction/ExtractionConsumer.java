@@ -14,7 +14,9 @@ import org.springframework.stereotype.Component;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.TextSegment;
+import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ChunkRow;
@@ -161,12 +163,25 @@ public class ExtractionConsumer {
             int entityMentions = 0;
             int relationCandidates = 0;
             int processed = 0;
+            long promptTokens = 0;
+            long completionTokens = 0;
+            long totalTokens = 0;
+            boolean usageObserved = false;
+            String finishReason = null;
             for (ChunkRow chunk : chunks) {
                 ExtractionResult result = adapter.extract(
                         new TextSegment(request.contentRefId() + ":" + chunk.chunkOrdinal(),
                                 chunk.chunkText(), 0),
                         new ExtractionContext(request.tenantId(), request.contentRefId().toString(), Set.of()));
                 resultsByOrdinal.put(chunk.chunkOrdinal(), result);
+                LlmUsage usage = result.llmUsage();
+                if (usage != null && usage.hasTokenCounts()) {
+                    usageObserved = true;
+                    promptTokens += usage.promptTokens();
+                    completionTokens += usage.completionTokens();
+                    totalTokens += usage.totalTokens();
+                    finishReason = usage.finishReason();
+                }
                 entityMentions += result.preEntities().size();
                 relationCandidates += result.relations().size();
                 for (var entity : result.preEntities()) {
@@ -207,9 +222,19 @@ public class ExtractionConsumer {
                             + "provider={} provider_source={}",
                     request.tenantId(), request.contentRefId(), request.versionId(), processed,
                     adapter.getClass().getSimpleName(), provider, resolved.providerSource());
+            LlmUsage aggregateUsage = usageObserved
+                    ? new LlmUsage(finishReason == null ? "unknown" : finishReason,
+                            (int) promptTokens, (int) completionTokens, (int) totalTokens)
+                    : LlmUsage.NONE;
             logStructuredEvent(request, resolved, adapter, durationMs, extractionMs, graphMs,
                     entityMentions, normalizedEntities.size(), relationCandidates, graphResult,
-                    processingOutcome);
+                    processingOutcome, aggregateUsage);
+        } catch (LlmIncompleteOutputException incomplete) {
+            int attempts = request.attemptCount() + 1;
+            cacheClient.markExtractionFailedTerminal(request, attempts, incomplete.getMessage());
+            log.error("Extraction output incomplete tenant={} ref={} version={}: {}",
+                    request.tenantId(), request.contentRefId(), request.versionId(),
+                    incomplete.getMessage());
         } catch (Exception e) {
             int attempts = request.attemptCount() + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempts));
@@ -230,7 +255,7 @@ public class ExtractionConsumer {
                                     long durationMs, long extractionMs, long graphMs,
                                     int entityMentions, int normalizedEntities,
                                     int relationCandidates, GraphCommitResult graphResult,
-                                    String processingOutcome) {
+                                    String processingOutcome, LlmUsage llmUsage) {
         try {
             java.util.Map<String, Object> event = new java.util.LinkedHashMap<>();
             event.put("event", "extraction_completed");
@@ -264,6 +289,14 @@ public class ExtractionConsumer {
             event.put("rejection_subject_type_counts", graphResult.rejectionSubjectTypeCounts());
             event.put("rejection_object_type_counts", graphResult.rejectionObjectTypeCounts());
             event.put("processing_outcome", processingOutcome);
+            if (llmUsage != null && llmUsage.hasTokenCounts()) {
+                java.util.Map<String, Object> usage = new java.util.LinkedHashMap<>();
+                usage.put("finish_reason", llmUsage.finishReason());
+                usage.put("prompt_tokens", llmUsage.promptTokens());
+                usage.put("completion_tokens", llmUsage.completionTokens());
+                usage.put("total_tokens", llmUsage.totalTokens());
+                event.put("llm_usage", usage);
+            }
             log.info("extraction_completed {}", mapper.writeValueAsString(event));
         } catch (Exception e) {
             log.warn("Could not serialize extraction completion event", e);
