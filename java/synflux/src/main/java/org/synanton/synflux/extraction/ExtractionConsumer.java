@@ -255,9 +255,11 @@ public class ExtractionConsumer {
             event.put("entity_mentions", entityMentions);
             event.put("normalized_entities", normalizedEntities);
             event.put("relation_candidates", relationCandidates);
+            event.put("graph_relation_candidates", graphResult.candidates());
             event.put("relations_accepted", graphResult.accepted());
             event.put("relations_rejected", graphResult.rejected());
             event.put("rejection_reason_codes", graphResult.rejectionCodes());
+            event.put("rejection_reason_counts", graphResult.rejectionCounts());
             event.put("processing_outcome", processingOutcome);
             log.info("extraction_completed {}", mapper.writeValueAsString(event));
         } catch (Exception e) {
