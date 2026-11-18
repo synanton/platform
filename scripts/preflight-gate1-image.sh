@@ -33,7 +33,7 @@ if ! printf '%s' "$image_ref" | grep -q 'local-registry:5000/vllm-openai'; then
 fi
 
 APPROVED_IMAGE="local-registry:5000/vllm-openai@${EXPECTED_DIGEST}"
-printf 'PASS: approved image digest is present in the running node3 runtime\n'
+printf 'PROVENANCE: approved digest matches the running node3 container\n'
 printf 'image=%s\nnode=%s\ndigest=%s\n' "$APPROVED_IMAGE" "$node" "$EXPECTED_DIGEST"
 if [ -n "${POD_MANIFEST:-}" ]; then
   [ -f "$POD_MANIFEST" ] || fail "POD_MANIFEST not found: $POD_MANIFEST"
@@ -46,4 +46,11 @@ if [ -n "${POD_MANIFEST:-}" ]; then
   printf 'PASS: manifest pins node3, approved digest, IfNotPresent, and no pull secret\n'
 fi
 
-printf 'Use this digest reference with nodeName: node3 and imagePullPolicy: IfNotPresent; do not create a namespace pull secret.\n'
+if [ "${CACHE_PROBE_VERIFIED:-0}" != "1" ]; then
+  fail "digest provenance is confirmed, but cache/no-secret startup is unverified; Gate 1 remains blocked (see docs/acceptance/artifacts/fp8-gate1/image-cache-probe-2026-11-18.txt)"
+fi
+[ -n "${CACHE_PROBE_EVIDENCE:-}" ] || fail "CACHE_PROBE_EVIDENCE must point to a recorded no-GPU probe result"
+[ -f "$CACHE_PROBE_EVIDENCE" ] || fail "CACHE_PROBE_EVIDENCE not found: $CACHE_PROBE_EVIDENCE"
+grep -Eq '^Result:[[:space:]]*PASS' "$CACHE_PROBE_EVIDENCE" || fail "cache probe evidence does not record PASS"
+
+printf 'PASS: cache probe evidence accepted; use this digest with nodeName: node3 and imagePullPolicy: IfNotPresent; do not create a namespace pull secret.\n'

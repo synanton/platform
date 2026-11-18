@@ -1,0 +1,25 @@
+Gate 1 image-cache probe — 2026-11-18T15:29Z
+Target node: node3
+Image: local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
+Scheduling: nodeName: node3; runtimeClassName: nvidia
+Pull policy: IfNotPresent
+imagePullSecrets: none
+GPU request: none
+
+Result: BLOCKED
+Pod phase: ErrImagePull / ImagePullBackOff
+
+Kubelet event:
+Failed to pull image "local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b":
+failed to resolve image: pull access denied, repository does not exist or may require authorization:
+authorization failed: no basic auth credentials
+
+Interpretation:
+The running production vLLM image digest does not prove that a new Pod can
+start from the node-local cache. The approved digest is either not retained in
+the image store or requires registry authentication. Explicit node pinning is
+necessary but not sufficient. Gate 1 remains blocked pending a dedicated scoped
+pull credential or an operator-approved pre-pull of the exact digest.
+
+No benchmark, model load, HOLDOUT access, or production change occurred.
+The temporary probe namespace was deleted.

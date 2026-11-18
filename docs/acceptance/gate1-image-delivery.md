@@ -1,12 +1,20 @@
 # Gate 1 image-delivery preflight
 
-**Status:** infrastructure proposal; no benchmark execution.
+**Status:** BLOCKED — image cache/no-secret startup is not verified.
+**Latest probe:** `docs/acceptance/artifacts/fp8-gate1/image-cache-probe-2026-11-18.txt`
+— `ErrImagePull`, `no basic auth credentials`, on node3 with the exact digest.
 **Approved target:** node3, `GPU-2270a494...`, Gate 1 performance packet.
 **Approved image:** `local-registry:5000/vllm-openai:v0.29.0`
 **Approved digest:** `sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b`
-**Delivery mode:** digest-pinned image already present in the running node3
-container runtime, with `imagePullPolicy: IfNotPresent` and an explicit
-`nodeName: node3` scheduling pin.
+**Intended delivery mode:** digest-pinned image with
+`imagePullPolicy: IfNotPresent` and an explicit `nodeName: node3` scheduling
+pin. This is not yet proven usable for a new Pod.
+
+**Important correction:** the production Pod’s `imageID` proves only the
+running container provenance. It does **not** prove that a new Pod can start
+from node3’s image store. A no-GPU probe on node3 failed with
+`ErrImagePull: no basic auth credentials`. Gate 1 remains blocked until the
+exact digest is either scoped-credential pullable or pre-pulled and verified.
 
 ## Scheduling guarantee
 
@@ -32,10 +40,11 @@ be explicit. The template is
 
 The failed Gate 1 baseline Pod used a tag reference in a namespace with no
 `imagePullSecret`; kubelet attempted a registry pull and entered
-`ImagePullBackOff`. The running production vLLM pod on node3 already proves the
-same image digest is present in the node runtime. Gate 1 should reference the
-digest directly and must not copy `local-registry-cred` or any production pull
-secret into the benchmark namespace.
+`ImagePullBackOff`. Pinning to the digest and node3 is still required, but the
+follow-up no-GPU probe showed the digest is not available to a new Pod without
+registry credentials. Gate 1 must not copy `local-registry-cred` or any
+production pull secret; it needs a dedicated scoped credential or approved
+pre-pull.
 
 ## Mandatory preflight
 
@@ -65,7 +74,10 @@ EXPECTED_DIGEST=sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08
 The manifest must contain `nodeName: node3`, the exact digest, and
 `imagePullPolicy: IfNotPresent`; it must not contain `imagePullSecrets`.
 
-Only a `PASS` result authorizes using the digest reference for a Gate 1 Pod.
+Only a `PASS` result after a no-GPU cache probe authorizes using the digest
+reference for a Gate 1 Pod. Provenance checks alone are insufficient. Set
+`CACHE_PROBE_VERIFIED=1` only with `CACHE_PROBE_EVIDENCE` pointing to a probe
+record whose `Result:` line is `PASS`; the current probe evidence is `BLOCKED`.
 The Pod must use:
 
 ```yaml
