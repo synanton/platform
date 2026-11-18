@@ -1,10 +1,11 @@
 # Qwen3-8B-FP8 isolated Blackwell probe — preflight
 
 **Status:** `ISOLATED_WINDOW_APPROVAL_REQUIRED` — no execution approved.
-**Related:** #770, #771, #772.
+**Related:** #770, #771, #772; execution record: #773.
 **Collected:** 2026-11-18 09:28 UTC, read-only.
 **No pod was created, no model was loaded, and no production state was changed
-for this preflight.**
+for this preflight.** This report precedes the actual probe recorded in #773;
+the credential and window execution details are in that execution record.
 
 ## Frozen experiment contract
 
@@ -84,7 +85,8 @@ the production vLLM GPU. The proposal:
 4. Create a disposable probe in an isolated namespace with:
    - exactly one GPU allocation, pinned by node/UUID verification;
    - read-only hostPath for the pinned artifact;
-   - CPU/RAM limits, no service, no ingress, no production credentials;
+   - CPU/RAM limits, no service, no ingress, no production service-account/data
+     credentials; any registry pull credential must be scoped or disclosed;
    - a bounded active deadline and explicit cleanup.
 5. Launch vLLM 0.29.0 with the recorded FP8 artifact and a single-request
    configuration (no benchmark).
@@ -97,7 +99,9 @@ the production vLLM GPU. The proposal:
    device, artifact revision, stack, and settings.
 
 No second GPU is allocated, no node2/Ada fallback is used, and no production
-change is made before approval.
+change is made before approval. The actual #773 probe used a copied production
+registry pull secret solely for image pulling; that deviation is documented in
+the execution report.
 
 ## Approval questions
 
