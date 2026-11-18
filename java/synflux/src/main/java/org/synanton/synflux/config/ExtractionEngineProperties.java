@@ -13,4 +13,5 @@ public record ExtractionEngineProperties(
         String endpoint,
         String model,
         Integer timeoutSeconds,
-        Integer maxTokens) {}
+        Integer maxTokens,
+        String captureDir) {}

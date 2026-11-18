@@ -7,6 +7,8 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
@@ -151,6 +154,30 @@ class LlmExtractionAdapterTest {
                 .contains("Concept --records--> Measurement")
                 .doesNotContain("signs")
                 .doesNotContain("Person");
+    }
+
+    @Test
+    void capturesRawBodyAndParserInputOnParseFailure(@TempDir Path captureDir) throws Exception {
+        ExtractionContext context = new ExtractionContext("tenant", "doc", Set.of(), "version-1");
+        responseContent = "{\"preEntities\":[{\"surfaceForm\":\"Halcyon-7\"";
+        finishReason = "stop";
+
+        assertThatThrownBy(() -> new LlmExtractionAdapter(
+                "http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
+                "test-model", Duration.ofSeconds(10), 2048, captureDir)
+                .extract(new TextSegment("c1", TEXT, 0), context))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        try (var files = Files.list(captureDir)) {
+            Path captured = files.findFirst().orElseThrow();
+            Map<String, Object> event = Json.parseObject(Files.readString(captured));
+            assertThat(event.get("raw_response")).asString().contains("preEntities");
+            assertThat(event.get("parser_input")).asString().isEmpty();
+            assertThat(event.get("parser_exception")).asString().contains("model output");
+            assertThat(event.get("source_version_id")).isEqualTo("version-1");
+            assertThat(event.get("chunk_id")).isEqualTo("c1");
+            assertThat(event.get("raw_response_sha256")).asString().hasSize(64);
+        }
     }
 
     @Test

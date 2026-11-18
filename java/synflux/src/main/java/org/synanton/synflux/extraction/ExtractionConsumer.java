@@ -172,7 +172,8 @@ public class ExtractionConsumer {
                 ExtractionResult result = adapter.extract(
                         new TextSegment(request.contentRefId() + ":" + chunk.chunkOrdinal(),
                                 chunk.chunkText(), 0),
-                        new ExtractionContext(request.tenantId(), request.contentRefId().toString(), Set.of()));
+                        new ExtractionContext(request.tenantId(), request.contentRefId().toString(), Set.of(),
+                                request.versionId().toString()));
                 resultsByOrdinal.put(chunk.chunkOrdinal(), result);
                 LlmUsage usage = result.llmUsage();
                 if (usage != null && usage.hasTokenCounts()) {

@@ -59,6 +59,8 @@ synflux:
     timeout-seconds: ${LLM_EXTRACTION_TIMEOUT_SECONDS:120}
     # Diagnostic/experimental override; production default remains 2048.
     max-tokens: ${LLM_EXTRACTION_MAX_TOKENS:2048}
+    # Optional diagnostic directory; blank disables raw parse-failure capture.
+    capture-dir: ${LLM_EXTRACTION_CAPTURE_DIR:}
     consumer:
       # Safe default: disabled until the GPU plane and model are reachable.
       enabled: ${EXTRACTION_CONSUMER_ENABLED:false}
