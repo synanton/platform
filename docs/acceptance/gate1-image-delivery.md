@@ -1,31 +1,31 @@
 # Gate 1 image-delivery preflight
 
-**Status:** BLOCKED — image cache/no-secret startup is not verified.
-**Latest probe:** `docs/acceptance/artifacts/fp8-gate1/image-cache-probe-2026-11-18.txt`
-— `ErrImagePull`, `no basic auth credentials`, on node3 with the exact digest.
+**Status:** image pull validated with scoped credential; no-secret path rejected.
+**Probe evidence:** `docs/acceptance/artifacts/fp8-gate1/image-cache-probe-2026-11-18T1609Z.txt`
+— credential pull PASS on node3; no-secret `IfNotPresent` FAIL/ImagePullBackOff.
 **Approved target:** node3, `GPU-2270a494...`, Gate 1 performance packet.
 **Approved image:** `local-registry:5000/vllm-openai:v0.29.0`
 **Approved digest:** `sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b`
-**Intended delivery mode:** digest-pinned image with
-`imagePullPolicy: IfNotPresent` and an explicit `nodeName: node3` scheduling
-pin. This is not yet proven usable for a new Pod.
+**Delivery mode:** digest-pinned image with an explicit `nodeName: node3`
+scheduling pin and the dedicated scoped secret `gate1-registry-cred`.
+`IfNotPresent` is retained, but the secret is present in case kubelet needs to
+resolve/pull the image.
 
-**Important correction:** the production Pod’s `imageID` proves only the
-running container provenance. It does **not** prove that a new Pod can start
-from node3’s image store. A no-GPU probe on node3 failed with
-`ErrImagePull: no basic auth credentials`. Gate 1 remains blocked until the
-exact digest is either scoped-credential pullable or pre-pulled and verified.
+**Validated path:** a no-GPU probe on node3 pulled the exact digest with
+`gate1-registry-cred`, completed with exit 0, and reported the approved image
+ID. A follow-up no-secret probe failed; do not use the no-secret template for
+Gate 1. Do not copy `local-registry-cred`.
 
 ## Scheduling guarantee
 
-The image cache is node-local. `IfNotPresent` is safe only when the Pod runs on
-the node whose CRI cache contains the approved digest. The Gate 1 Pod therefore
-uses the same explicit pin as the GPU runtime blueprint
-(`gpu-runtime/deployments/homelab/blueprints/vllm/extraction-llm.yaml`):
+The Gate 1 Pod uses an explicit `nodeName: node3`, matching the GPU runtime
+blueprint (`gpu-runtime/deployments/homelab/blueprints/vllm/extraction-llm.yaml`):
 
 ```yaml
 spec:
   nodeName: node3
+  imagePullSecrets:
+    - name: gate1-registry-cred
   containers:
     - image: local-registry:5000/vllm-openai@sha256:082ca6f...
       imagePullPolicy: IfNotPresent
@@ -71,8 +71,9 @@ EXPECTED_DIGEST=sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08
 ./scripts/preflight-gate1-image.sh
 ```
 
-The manifest must contain `nodeName: node3`, the exact digest, and
-`imagePullPolicy: IfNotPresent`; it must not contain `imagePullSecrets`.
+The manifest must contain `nodeName: node3`, the exact digest,
+`imagePullPolicy: IfNotPresent`, and exactly `imagePullSecrets: [gate1-registry-cred]`.
+No other pull secret is permitted.
 
 Only a `PASS` result after a no-GPU cache probe authorizes using the digest
 reference for a Gate 1 Pod. Provenance checks alone are insufficient. Set
@@ -83,10 +84,11 @@ The Pod must use:
 ```yaml
 image: local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
 imagePullPolicy: IfNotPresent
-# no imagePullSecrets
+imagePullSecrets:
+  - name: gate1-registry-cred
 ```
 
-## Fallback: scoped pull credential
+## Scoped pull credential (required)
 
 If the approved image is not present on the target node, a dedicated
 least-privilege registry credential scoped to the required repository/image may
@@ -97,15 +99,16 @@ be provisioned in the benchmark namespace. It must be:
 - short-lived, rotated, and deleted with the namespace;
 - never a copy of `local-registry-cred` or another production pull secret.
 
-Pre-pulling with an approved credential outside the namespace is also
-acceptable, followed by the same digest-pinned no-secret Pod.
+Pre-pulling with an approved credential outside the namespace does not make the
+no-secret path safe; the no-secret probe already failed. Gate 1 must reference
+`gate1-registry-cred`.
 
 ## Ownership and cleanup
 
 | Item | Requirement |
 |---|---|
-| Image provenance | Production vLLM digest on node3 + approved digest |
-| Namespace secret | None for the approved path |
+| Image provenance | Approved digest + successful credential pull |
+| Namespace secret | `gate1-registry-cred`, scoped read-only |
 | Fallback secret owner | Production service owner |
 | Rotation/cleanup | Short TTL; delete with namespace; no production secret copy |
 | Failure mode | Fail fast before Pod creation; no ImagePullBackOff retry loop |

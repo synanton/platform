@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Read-only Gate 1 image-delivery preflight.
 # The approved image must already be the running production vLLM image on node3.
-# No namespace pull secret, registry request, GPU allocation, or pod creation.
+# Uses the scoped gate1-registry-cred; no production secret, registry request, GPU allocation, or pod creation.
 set -euo pipefail
 
 NAMESPACE="${NAMESPACE:-gpu-plane}"
@@ -40,17 +40,19 @@ if [ -n "${POD_MANIFEST:-}" ]; then
   grep -q "nodeName: $EXPECTED_NODE" "$POD_MANIFEST" || fail "manifest must pin nodeName: $EXPECTED_NODE"
   grep -q "imagePullPolicy: IfNotPresent" "$POD_MANIFEST" || fail "manifest must use imagePullPolicy: IfNotPresent"
   grep -q "$EXPECTED_DIGEST" "$POD_MANIFEST" || fail "manifest is missing approved image digest"
-  if grep -Eq '^[[:space:]]*imagePullSecrets:' "$POD_MANIFEST"; then
-    fail "manifest must not contain imagePullSecrets"
+  grep -Eq '^[[:space:]]*imagePullSecrets:' "$POD_MANIFEST" || fail "manifest must reference gate1-registry-cred"
+  grep -Eq '^[[:space:]]*-[[:space:]]*name:[[:space:]]*gate1-registry-cred[[:space:]]*$' "$POD_MANIFEST" || fail "manifest must use gate1-registry-cred"
+  if grep -Eq '^[[:space:]]*name:[[:space:]]*local-registry-cred[[:space:]]*$' "$POD_MANIFEST"; then
+    fail "manifest must not reference local-registry-cred"
   fi
-  printf 'PASS: manifest pins node3, approved digest, IfNotPresent, and no pull secret\n'
+  printf 'PASS: manifest pins node3, approved digest, IfNotPresent, and gate1-registry-cred\n'
 fi
 
 if [ "${CACHE_PROBE_VERIFIED:-0}" != "1" ]; then
-  fail "digest provenance is confirmed, but cache/no-secret startup is unverified; Gate 1 remains blocked (see docs/acceptance/artifacts/fp8-gate1/image-cache-probe-2026-11-18.txt)"
+  fail "digest provenance is confirmed, but scoped image startup is unverified; Gate 1 remains blocked (see docs/acceptance/artifacts/fp8-gate1/image-cache-probe-2026-11-18T1609Z.txt)"
 fi
 [ -n "${CACHE_PROBE_EVIDENCE:-}" ] || fail "CACHE_PROBE_EVIDENCE must point to a recorded no-GPU probe result"
 [ -f "$CACHE_PROBE_EVIDENCE" ] || fail "CACHE_PROBE_EVIDENCE not found: $CACHE_PROBE_EVIDENCE"
-grep -Eq '^Result:[[:space:]]*PASS' "$CACHE_PROBE_EVIDENCE" || fail "cache probe evidence does not record PASS"
+grep -Eq '^[[:space:]]*Result:[[:space:]]*PASS' "$CACHE_PROBE_EVIDENCE" || fail "cache probe evidence does not record PASS"
 
-printf 'PASS: cache probe evidence accepted; use this digest with nodeName: node3 and imagePullPolicy: IfNotPresent; do not create a namespace pull secret.\n'
+printf 'PASS: cache probe evidence accepted; use gate1-registry-cred with nodeName: node3 and imagePullPolicy: IfNotPresent; never copy the production secret.\n'

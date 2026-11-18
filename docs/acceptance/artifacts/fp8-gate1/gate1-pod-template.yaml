@@ -1,6 +1,6 @@
 # Gate 1 isolated vLLM Pod template.
-# REQUIRED: nodeName must remain node3; the approved digest is cached there.
-# Do NOT add imagePullSecrets or copy local-registry-cred.
+# REQUIRED: nodeName must remain node3; use the scoped Gate 1 pull secret.
+# Do NOT copy or reference local-registry-cred.
 apiVersion: v1
 kind: Pod
 metadata:
@@ -11,6 +11,8 @@ spec:
   runtimeClassName: nvidia
   restartPolicy: Never
   automountServiceAccountToken: false
+  imagePullSecrets:
+    - name: gate1-registry-cred
   containers:
     - name: vllm
       image: local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
