@@ -1,0 +1,15 @@
+Production restoration verification — 2026-11-18T18:40:38Z
+vllm_spec_replicas=1
+vllm_ready=1
+vllm_pod=vllm-extraction-84fb9d65b7-bsg2d 1/1 Running node3
+production_health=200
+inference_model=qwen3-extraction
+inference_finish_reason=stop
+inference_completion_tokens=6
+synflux_spec=2
+synflux_ready=2
+gate1_pods=none
+candidate_tunnel=none (only the verification shell matched pgrep)
+production_spec_sha256_before=4be845ae273974d5a66bc2efba6a8c102bc99837691ae9ccc625804770e4e800
+production_spec_equal_after=true
+candidate_pods_remaining=0
