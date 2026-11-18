@@ -1,0 +1,472 @@
+{
+  "model": "gate1-fp8-8b",
+  "endpoint": "http://127.0.0.1:18002",
+  "workload_sha256": "31b472b1f5129658c3357afa0f018eb14cfcf0ff6dca21cf191feae4f35a787d",
+  "prompt_template_sha256": "8a1a610cddc5e1ed21a54330ce95d5c1e07bddf2a06cfe9a271819c44b443f1e",
+  "rendered_prompt_sha256": "6901b657abe50ad9994a6df294bb322834f93186c524c117183dbc8c670e159f",
+  "max_tokens": 8192,
+  "temperature": 0,
+  "reps": 3,
+  "scheduled": 54,
+  "completed": 0,
+  "fatal_failures": 54,
+  "json_valid": 0,
+  "finish_reasons": {},
+  "latency_p50_s": null,
+  "latency_p95_s": null,
+  "latency_max_s": null,
+  "completion_tokens": 0,
+  "prompt_tokens": 0,
+  "completion_tokens_per_s": null,
+  "total_request_seconds": 0,
+  "warmup": {
+    "chunk_ordinal": 252,
+    "repetition": 0,
+    "warmup": true,
+    "attempt": 2,
+    "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+    "latency_s": null
+  },
+  "records": [
+    {
+      "chunk_ordinal": 252,
+      "repetition": 0,
+      "warmup": true,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 252,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 387,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 423,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 442,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 453,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 508,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 520,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 524,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 18,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 150,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 179,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 427,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 450,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 475,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 492,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 493,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 516,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 526,
+      "repetition": 1,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 252,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 387,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 423,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 442,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 453,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 508,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 520,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 524,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 18,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 150,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 179,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 427,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 450,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 475,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 492,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 493,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 516,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 526,
+      "repetition": 2,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 252,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 387,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 423,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 442,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 453,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 508,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 520,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 524,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 18,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 150,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 179,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 427,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 450,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 475,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 492,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 493,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 516,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    },
+    {
+      "chunk_ordinal": 526,
+      "repetition": 3,
+      "warmup": false,
+      "attempt": 2,
+      "fatal_error": "HTTPError: HTTP Error 400: Bad Request",
+      "latency_s": null
+    }
+  ]
+}
