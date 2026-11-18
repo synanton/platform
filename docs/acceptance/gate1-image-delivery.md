@@ -5,7 +5,28 @@
 **Approved image:** `local-registry:5000/vllm-openai:v0.29.0`
 **Approved digest:** `sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b`
 **Delivery mode:** digest-pinned image already present in the running node3
-container runtime, with `imagePullPolicy: IfNotPresent`.
+container runtime, with `imagePullPolicy: IfNotPresent` and an explicit
+`nodeName: node3` scheduling pin.
+
+## Scheduling guarantee
+
+The image cache is node-local. `IfNotPresent` is safe only when the Pod runs on
+the node whose CRI cache contains the approved digest. The Gate 1 Pod therefore
+uses the same explicit pin as the GPU runtime blueprint
+(`gpu-runtime/deployments/homelab/blueprints/vllm/extraction-llm.yaml`):
+
+```yaml
+spec:
+  nodeName: node3
+  containers:
+    - image: local-registry:5000/vllm-openai@sha256:082ca6f...
+      imagePullPolicy: IfNotPresent
+```
+
+Do not rely on the scheduler, a Service, or a nodeSelector. Node3 is the only
+node with the approved Blackwell target and the model artifact; scheduling must
+be explicit. The template is
+`docs/acceptance/artifacts/fp8-gate1/gate1-pod-template.yaml`.
 
 ## Why this avoids the failed pull
 
@@ -30,8 +51,19 @@ The script is read-only and fails with `BLOCKED` if:
 
 - no running production vLLM pod exists on the expected node;
 - the production image digest differs from the approved digest;
-- the production reference is not digest-pinned;
 - the image does not come from the approved registry repository.
+
+Run the manifest check before creating a Gate 1 Pod:
+
+```bash
+POD_MANIFEST=docs/acceptance/artifacts/fp8-gate1/gate1-pod-template.yaml \
+EXPECTED_NODE=node3 \
+EXPECTED_DIGEST=sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b \
+./scripts/preflight-gate1-image.sh
+```
+
+The manifest must contain `nodeName: node3`, the exact digest, and
+`imagePullPolicy: IfNotPresent`; it must not contain `imagePullSecrets`.
 
 Only a `PASS` result authorizes using the digest reference for a Gate 1 Pod.
 The Pod must use:

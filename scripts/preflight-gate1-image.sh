@@ -35,4 +35,15 @@ fi
 APPROVED_IMAGE="local-registry:5000/vllm-openai@${EXPECTED_DIGEST}"
 printf 'PASS: approved image digest is present in the running node3 runtime\n'
 printf 'image=%s\nnode=%s\ndigest=%s\n' "$APPROVED_IMAGE" "$node" "$EXPECTED_DIGEST"
-printf 'Use this digest reference with imagePullPolicy=IfNotPresent; do not create a namespace pull secret.\n'
+if [ -n "${POD_MANIFEST:-}" ]; then
+  [ -f "$POD_MANIFEST" ] || fail "POD_MANIFEST not found: $POD_MANIFEST"
+  grep -q "nodeName: $EXPECTED_NODE" "$POD_MANIFEST" || fail "manifest must pin nodeName: $EXPECTED_NODE"
+  grep -q "imagePullPolicy: IfNotPresent" "$POD_MANIFEST" || fail "manifest must use imagePullPolicy: IfNotPresent"
+  grep -q "$EXPECTED_DIGEST" "$POD_MANIFEST" || fail "manifest is missing approved image digest"
+  if grep -Eq '^[[:space:]]*imagePullSecrets:' "$POD_MANIFEST"; then
+    fail "manifest must not contain imagePullSecrets"
+  fi
+  printf 'PASS: manifest pins node3, approved digest, IfNotPresent, and no pull secret\n'
+fi
+
+printf 'Use this digest reference with nodeName: node3 and imagePullPolicy: IfNotPresent; do not create a namespace pull secret.\n'
