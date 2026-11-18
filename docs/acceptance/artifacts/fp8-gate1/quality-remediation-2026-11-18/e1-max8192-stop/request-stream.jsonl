@@ -1,0 +1,77 @@
+{"event": "warmup", "record": {"chunk_ordinal": 252, "repetition": 0, "warmup": true, "attempt": 2, "fatal_error": "HTTPError: HTTP Error 400: Bad Request", "latency_s": null}}
+{"event": "request", "ordinal": 252, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 387, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 423, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 442, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 453, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 508, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 520, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 524, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 18, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 150, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 179, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 427, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 450, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 475, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 492, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 493, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 516, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 526, "rep": 1, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 252, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 387, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 423, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 442, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 453, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 508, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 520, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 524, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 18, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 150, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 179, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 427, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 450, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 475, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 492, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 493, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 516, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 526, "rep": 2, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 252, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 387, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 423, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 442, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 453, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 508, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 520, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 524, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 18, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 150, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 179, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 427, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 450, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 475, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 492, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 493, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 516, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{"event": "request", "ordinal": 526, "rep": 3, "latency_s": null, "finish": null, "json_valid": null, "fatal": "HTTPError: HTTP Error 400: Bad Request"}
+{
+  "model": "gate1-fp8-8b",
+  "endpoint": "http://127.0.0.1:18002",
+  "workload_sha256": "31b472b1f5129658c3357afa0f018eb14cfcf0ff6dca21cf191feae4f35a787d",
+  "prompt_template_sha256": "8a1a610cddc5e1ed21a54330ce95d5c1e07bddf2a06cfe9a271819c44b443f1e",
+  "rendered_prompt_sha256": "6901b657abe50ad9994a6df294bb322834f93186c524c117183dbc8c670e159f",
+  "max_tokens": 8192,
+  "temperature": 0,
+  "reps": 3,
+  "scheduled": 54,
+  "completed": 0,
+  "fatal_failures": 54,
+  "json_valid": 0,
+  "finish_reasons": {},
+  "latency_p50_s": null,
+  "latency_p95_s": null,
+  "latency_max_s": null,
+  "completion_tokens": 0,
+  "prompt_tokens": 0,
+  "completion_tokens_per_s": null,
+  "total_request_seconds": 0
+}

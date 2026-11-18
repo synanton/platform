@@ -82,9 +82,9 @@ No retry is registered by this evidence record. E2/E3 remain unstarted.
 
 `docs/acceptance/artifacts/fp8-gate1/quality-remediation-2026-11-18/` contains:
 
-- `control-retry-01/` — summary, request stream, GPU samples, invariants.
-- `attempt-01-infrastructure-abort/` — preserved aborted attempt.
-- `e1-max8192-stop/` — summary, request stream, server logs, HTTP 400 evidence.
+- `control-retry-01/` — summary, `request-stream.jsonl`, GPU samples, invariants.
+- `attempt-01-infrastructure-abort/` — preserved aborted attempt, `request-stream.jsonl`.
+- `e1-max8192-stop/` — summary, `request-stream.jsonl`, server startup/400 logs, HTTP 400 evidence.
 - `production-deploy-before-e1.yaml` — pre-scale production spec.
 - `restoration-verification.txt` — restoration checks.
 - `comparison-summary.json` — control/E1 aggregate accounting.
