@@ -135,6 +135,101 @@ The benchmark produces a comparison report at
 recommendation: keep 4B, adopt constrained decoding only, evaluate 8B further,
 or stop. No production switch follows automatically from any result.
 
+## Manual model download on node2/node3
+
+These commands are for an operator preparing the experiment on a GPU/host node.
+They do not change the running deployment or provider. Downloading a model is
+not the same as serving it.
+
+### Preconditions
+
+- Run on the node that has the target GPU and the `/mnt/local-fast/models`
+  host directory used by the vLLM hostPath.
+- Confirm free disk and VRAM first:
+
+```bash
+nvidia-smi --query-gpu=name,memory.total,memory.used,memory.free --format=csv
+df -h /mnt/local-fast
+```
+
+- The current vLLM pod is pinned to `node3`; node2 is only relevant if the
+  experimental deployment is placed there. Do not move the production pod.
+- Obtain a Hugging Face read token through the normal operator credential
+  channel. Do not commit tokens, put them in manifests, or paste them into
+  shell history.
+
+### Install the Hugging Face CLI
+
+Use an isolated tool environment, for example:
+
+```bash
+python3 -m venv /tmp/hf-download-venv
+. /tmp/hf-download-venv/bin/activate
+python -m pip install --upgrade "huggingface_hub[cli]" hf_transfer
+```
+
+### Authenticate
+
+Prefer the non-echoing environment form:
+
+```bash
+export HF_TOKEN="$(read -r -s -p 'HF token: ' token; printf '%s' "$token")"
+export HF_HOME=/mnt/local-fast/hf-cache
+export HF_HUB_ENABLE_HF_TRANSFER=1
+```
+
+Do not write the token to a checked-in file. If the host policy requires
+`hf auth login`, use its interactive prompt; never pass the token on the
+command line.
+
+### Download and pin the artifact
+
+Use the exact official Qwen3-8B instruct repository selected by the benchmark
+owner. The model card and repository revision must be recorded before download.
+The example below uses the official Qwen3-8B repository name; substitute the
+verified 2507-instruct artifact if that is the chosen candidate:
+
+```bash
+export MODEL_REPO="Qwen/Qwen3-8B"
+export MODEL_REVISION="<commit-sha-from-the-model-card>"
+export MODEL_DIR="/mnt/local-fast/models/qwen3-8b"
+
+mkdir -p "$MODEL_DIR"
+hf download "$MODEL_REPO" \
+  --revision "$MODEL_REVISION" \
+  --local-dir "$MODEL_DIR" \
+  --max-workers 4
+```
+
+For the 16GB GPU, a full-precision 8B artifact may not fit with the required KV
+cache. If a quantized artifact is used, select a vetted official/approved
+quantization, pin its revision, and record the quantization in the benchmark
+metadata. Do not silently substitute a community quantized model.
+
+### Verify the download
+
+```bash
+test -s "$MODEL_DIR/config.json"
+test -s "$MODEL_DIR/tokenizer_config.json"
+find "$MODEL_DIR" -maxdepth 1 -type f -printf '%f %s\n' | sort
+python - <<'PY'
+import json, pathlib
+config = json.loads(pathlib.Path("'"$MODEL_DIR"'/config.json").read_text())
+print(config.get("model_type"), config.get("architectures"))
+PY
+```
+
+Record the repository, revision, file list, total bytes, and a checksum manifest
+as experiment metadata. Do not commit model weights.
+
+### Reference vLLM launch for an experiment
+
+Use a separate experimental deployment/pod; do not edit the production
+vLLM/provider configuration. The launch must record the model path, revision,
+quantization, `--max-model-len`, `--max-num-seqs`, GPU memory utilization, and
+served model name. Use a distinct experimental port/service and keep the
+production endpoint untouched.
+
 ## Deliverables for this proposal
 
 - This design note only.
