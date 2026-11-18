@@ -2,19 +2,20 @@
 
 **Mode:** review-only. No merge, benchmark, GPU probe, or runtime change.
 **Reviewed:** PR #772 (preflight), PR #773 (runtime probe), issues #770/#771.
-**Conclusion:** Runtime compatibility is credible for the exact tested stack;
-the evidence should be clarified before it is used as the basis for any
-evaluation or production decision.
+**Conclusion:** Runtime compatibility is credible for the exact tested stack.
+The review findings were resolved in follow-up documentation; evidence is now
+consistent across #772/#773. This remains an evidence review, not approval for
+benchmarking or production adoption.
 
 ## Findings by severity
 
 | Severity | Finding | Required disposition |
 |---|---|---|
-| Medium | #773 says “no production credentials,” but the probe namespace received a copy of the production `local-registry-cred` image-pull secret. The pod needed it to pull vLLM. | Disclose the exception, or use a scoped pull credential in any future probe. The namespace was deleted, limiting persistence, but the report must not imply zero production credentials. |
-| Medium | #773 does not explicitly link the authorization/window evidence: who approved it, the start/end time, or the outage duration. | Add the #771 approval reference and the recorded window/outage timestamps before treating the report as a complete audit record. |
-| Low | #772 and #773 are separate records with a chronological transition from `ISOLATED_WINDOW_APPROVAL_REQUIRED` to execution. | Keep both; add a cross-reference so the preflight is not read as contradictory. |
-| Low | #773 references 12/12 checksum verification from the preflight but does not repeat the checksum manifest or artifact revision in its own evidence block. | Add the pinned revision and a manifest/checksum reference; no need to duplicate 9.45GB. |
-| Low | Production restoration evidence in #773 lacks exact timestamped post-restore `vLLM` args, Synflux cap, and health output. | Add sanitized command outputs and a post-restore timestamp. |
+| Medium | #773 said “no production credentials,” but the probe namespace received a copy of the production `local-registry-cred` image-pull secret. | **Resolved** in #773 `e855d837`: discloses the copy, its image-pull-only use, namespace/secret deletion, and mandatory scoped credentials for future probes. |
+| Medium | #773 did not explicitly link the authorization/window evidence. | **Resolved with limitation** in #773 `e855d837`: links #771/@andreminin, records approved/actual start/restore/available times and outage, and explicitly states no separate production-service-owner identity was recorded. |
+| Low | #772/#773 cross-reference | **Resolved**: both records now cross-link preflight and execution. |
+| Low | Artifact revision repetition | **Resolved**: #773 repeats the pinned revision in the model-load evidence and references the preflight checksum set. |
+| Low | Timestamped post-restoration evidence | **Resolved**: #773 records the restore/available times, post-check time, GPU return, vLLM health, Synflux cap/replicas, and eval-smoke provider. |
 | Low | KV-cache/concurrency figures (19,536 tokens, 2.38× at 8K) are clearly labeled configuration observations, not benchmark results. | No correction needed beyond preserving that qualification. |
 | None | Inference: 16/64-token attempts hit `length`; 256-token attempt reached `stop`. The report correctly does not infer incompatibility from the short caps. | Keep. |
 
@@ -29,6 +30,15 @@ evaluation or production decision.
 - Inference reached `finish_reason=stop`; 91 completion tokens.
 - The probe namespace was deleted and production vLLM was restored to 1/1 with
   `/health=200`; Synflux 2/2, cap 2048 default, `eval-smoke=regex`, INFO.
+
+## Re-review status
+
+- #772 preflight cross-link/credential-control language updated in `cbdd1635`.
+- #773 execution evidence corrected in `e855d837`.
+- All review findings are resolved; the approval traceability limitation is now
+  explicit rather than inferred.
+- No PR has been merged; no benchmark, GPU probe, or runtime change followed
+  from this review.
 
 The compatibility claim should remain strictly:
 
