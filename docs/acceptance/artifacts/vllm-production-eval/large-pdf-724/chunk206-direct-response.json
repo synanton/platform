@@ -1,0 +1,40 @@
+{
+  "id": "chatcmpl-94181281957e1d3e",
+  "object": "chat.completion",
+  "created": 1794982181,
+  "model": "qwen3-extraction",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"preEntities\":[],\"relations\":[]}",
+        "refusal": null,
+        "annotations": null,
+        "audio": null,
+        "function_call": null,
+        "reasoning": null
+      },
+      "logprobs": null,
+      "finish_reason": "stop",
+      "stop_reason": null,
+      "token_ids": null,
+      "routed_experts": null
+    }
+  ],
+  "service_tier": null,
+  "system_fingerprint": "vllm-0.29.0-81b7cf30",
+  "usage": {
+    "prompt_tokens": 527,
+    "total_tokens": 536,
+    "completion_tokens": 9,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": null
+  },
+  "prompt_logprobs": null,
+  "prompt_token_ids": null,
+  "prompt_text": null,
+  "kv_transfer_params": null,
+  "ec_transfer_params": null,
+  "metrics": null
+}
