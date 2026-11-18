@@ -4,6 +4,8 @@
 vLLM stack, and settings below.
 **Not a benchmark:** one model load and one plain deterministic inference only.
 **Production restored and verified.**
+**Preflight:** #772. This execution record corrects the credential statement and
+adds approval/outage traceability.
 
 ## Probe contract
 
@@ -17,11 +19,39 @@ vLLM stack, and settings below.
 | Local artifact | `/mnt/local-fast/models/qwen3-8b-fp8` (12 files; checksums verified before probe) |
 | FP8 config | `e4m3`, block size `128` |
 | Server settings | port 8001, `--max-model-len 8192`, `--max-num-seqs 1`, `--gpu-memory-utilization 0.90` |
-| Isolation | dedicated `synanton-probe` namespace; one GPU; no service; no production credentials |
+| Isolation | dedicated `synanton-probe` namespace; one GPU; no service; no production service-account/data access; registry pull exception below |
 
-A bounded production-vLLM maintenance window was approved before execution.
-Production vLLM was scaled to zero to release the only physical target GPU;
-PID 8558 exited and the GPU reported 15,929 MiB free before the probe.
+### Approval and outage traceability
+
+| Item | Evidence |
+|---|---|
+| Authorization source | #771, author `@andreminin` |
+| Approver | `@andreminin` (repository owner); the repository contains no separate named production-service-owner approval |
+| Approved window | 45 minutes on 2026-11-18 |
+| Production scale-down | 2026-11-18T09:32:53Z |
+| Probe first startup log | 2026-11-18T09:33:31Z |
+| vLLM API startup complete | 2026-11-18T09:39:14Z |
+| Experimental namespace deletion | completed before production restart; exact deletion timestamp was not captured |
+| Production vLLM pod start | 2026-11-18T09:40:46Z |
+| Production vLLM Available | 2026-11-18T09:45:26Z |
+| Observed outage | ~7m53s to process restoration; ~12m33s to endpoint availability |
+| Post-restore verification | 2026-11-18T10:23:55Z |
+
+The approved 45-minute window was not exceeded. The probe did not start until
+production vLLM had released the target UUID; PID 8558 exited and the GPU
+reported 15,929 MiB free before startup.
+
+### Registry credential exception
+
+The isolated `synanton-probe` namespace received a copy of the production
+`local-registry-cred` image-pull secret. It was used only through
+`imagePullSecrets` to pull the pinned vLLM image; the probe had no production
+service account, API credential, or data access. The namespace and copied
+secret were deleted during cleanup.
+
+This corrects the earlier “no production credentials” wording. Future probes
+must use a scoped registry pull credential or explicitly document this exception
+before execution.
 
 ## Model load
 
@@ -36,8 +66,9 @@ Maximum concurrency for 8,192 tokens per request: 2.38x
 Application startup complete.
 ```
 
-vLLM recognized the FP8 format and selected its FP8 block-scaled DeepGEMM
-kernel. The service reached `/health=200`.
+vLLM recognized the FP8 format for pinned revision
+`220b46e3b2180893580a4454f21f22d3ebb187d3` and selected its FP8 block-scaled
+DeepGEMM kernel. The service reached `/health=200`.
 
 ## Minimal inference
 
@@ -58,6 +89,11 @@ metadata is committed as
 
 - Experimental namespace `synanton-probe` deleted.
 - Target GPU returned to 13 MiB used / 15,929 MiB free before production restart.
+- Post-restore verification at **2026-11-18T10:23:55Z** confirmed:
+  - production vLLM pod start `2026-11-18T09:40:46Z`, Available
+    `2026-11-18T09:45:26Z`, `/health=200`, served model `qwen3-extraction`;
+  - GPU returned to production vLLM (`12952 MiB` used by PID 259095);
+  - Synflux 2/2, cap `2048` default, `eval-smoke=regex`.
 - Production vLLM restored to 1/1 with the original image and settings:
   - image `local-registry:5000/vllm-openai:v0.29.0`
   - `--max-model-len 8192`, `--max-num-seqs 4`
