@@ -1,0 +1,9 @@
+chunk_ordinal	invalid_count	repetitions	finish_reasons	classifications	parse_errors
+252	3	1,2,3	stop	reasoning_preface_placeholder_tokens	JSONDecodeError: Expecting value: line 1 column 74 (char 73)
+387	3	1,2,3	stop	reasoning_preface_multi_object	JSONDecodeError: Extra data: line 1 column 99 (char 98)
+423	3	1,2,3	stop	reasoning_preface_multi_object	JSONDecodeError: Extra data: line 1 column 109 (char 108)
+442	3	1,2,3	length	truncation_at_max_tokens	JSONDecodeError: Extra data: line 1 column 86 (char 85)
+453	3	1,2,3	stop	reasoning_preface_multi_object	JSONDecodeError: Extra data: line 1 column 88 (char 87)
+508	3	1,2,3	stop	reasoning_preface_multi_object	JSONDecodeError: Extra data: line 1 column 88 (char 87)
+520	3	1,2,3	length	truncation_at_max_tokens	JSONDecodeError: Extra data: line 1 column 99 (char 98)
+524	3	1,2,3	stop	reasoning_preface_placeholder_tokens	JSONDecodeError: Expecting value: line 1 column 85 (char 84)
