@@ -43,12 +43,42 @@ this hardware tier.
 | Immutable revision | `220b46e3b2180893580a4454f21f22d3ebb187d3` |
 | Quantization | Official FP8, block size 128 |
 | Runtime | vLLM; verify the deployed vLLM version supports this checkpoint before launch |
-| Status | Selected for the proposal; not downloaded or served |
+| Status | Downloaded and checksum-verified on node3; not served |
 
 Do not reuse the BF16 repository revision. Do not silently substitute a
 community conversion. Verify the installed vLLM version and actual GPU
 footprint before the benchmark; a 16GB card is a measurement point, not a
 guarantee.
+
+### Artifact verification on node3
+
+The FP8 artifact was downloaded on `node3` to
+`/mnt/local-fast/models/qwen3-8b-fp8` at the pinned revision above.
+
+```text
+hf cache verify Qwen/Qwen3-8B-FP8 \
+  --revision 220b46e3b2180893580a4454f21f22d3ebb187d3 \
+  --local-dir /mnt/local-fast/models/qwen3-8b-fp8 \
+  --fail-on-missing-files
+=> Verified 12 file(s); all checksums match
+=> 9.45 GB downloaded
+```
+
+`hf cache verify` also warned about local auxiliary/cache files not present on
+the remote repository; the 12 model files were the verified set. Do not delete
+or mutate the pinned artifact while the compatibility check is pending.
+
+Status after verification:
+
+| Item | State |
+|---|---|
+| FP8 repository selected | Complete |
+| Immutable revision pinned | Complete (`220b46e...`) |
+| Download on node3 | Complete |
+| Model-file checksums | Passed (12/12) |
+| vLLM FP8 compatibility | Pending |
+| Isolated experimental deployment | Pending |
+| Benchmark | Not started |
 
 ## Input set
 
