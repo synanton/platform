@@ -13,6 +13,27 @@ The compatibility probe proved only that the pinned artifact can load and
 complete one plain inference on the exact Node3 stack. It did not measure
 performance, extraction quality, or operational fitness.
 
+## Decision semantics (pre-registered)
+
+Every gate has exactly one terminal result: `PASS`, `FAIL`, `BLOCKED`, or
+`INCONCLUSIVE`.
+
+| Result | Meaning |
+|---|---|
+| `PASS` | All required criteria were observed, evidence is complete, and the gate's scope was respected. |
+| `FAIL` | A criterion was violated, including OOM, timeout, crash, silent data loss, invalid output, or an unapproved configuration change. |
+| `BLOCKED` | Prerequisites (GPU/window/approval/artifact/owner) were unavailable; no experiment result exists. |
+| `INCONCLUSIVE` | The experiment ran but infrastructure invalidity prevents a decision; failures must still be reported. |
+
+A classified failure is **not** a pass. OOM, timeout, crash, and infrastructure
+failure are terminal failures for the run. Retries are allowed only under a
+pre-declared bounded policy; every attempt and failure remains in the report.
+No failed attempt may be silently discarded.
+
+Gate ordering is sequential for execution (`performance` → `quality` →
+`operational`), but authorization is independent. A PASS in one gate never
+authorizes the next gate.
+
 ## Gate 1 — Controlled performance
 
 **Question:** What are the throughput, latency, memory, and concurrency costs of
@@ -28,12 +49,19 @@ the FP8 candidate relative to the current production 4B baseline?
 - Repeat a fixed subset to expose variance; no prompt or sampling changes
   between configurations.
 
-**Acceptance for this gate**
+**Pre-registered decision rule**
 
-- Every scheduled call completes or is classified by an explicit failure.
-- No OOM, crash, or timeout; GPU occupancy and restore are recorded.
-- A reviewable report compares the candidate and baseline with raw counts and
-  uncertainty.
+- `PASS` only if every scheduled call either completes or is an explicitly
+  declared retry, and the final run has **zero** OOM, crash, timeout, or
+  unclassified failure.
+- Proposed performance thresholds, measured against the frozen 4B baseline:
+  p95 latency no worse than **2.0×** baseline; throughput at least **0.5×**
+  baseline; peak GPU allocated ≤ **95%** of the documented device capacity.
+  Any threshold change must be pre-registered and reviewed before execution.
+- Any OOM/timeout/crash or unapproved configuration change => `FAIL`, not
+  `INCONCLUSIVE`/`PASS`. Missing window/owner/device => `BLOCKED`.
+- A reviewable report includes every attempt, raw counts, variance, and GPU
+  occupancy/restore evidence.
 - No production capacity or rollout claim follows from the numbers.
 
 **Approval required:** benchmark authorization, production service-owner
@@ -56,11 +84,17 @@ relation quality versus the current baseline?
 - Compare against the frozen 4B baseline; do not change thresholds after
   results are seen.
 
-**Acceptance for this gate**
+**Pre-registered decision rule**
 
-- A reviewable comparison with raw TP/FP/FN counts and uncertainty.
-- Explicit disposition for every parse/incomplete failure.
-- No ontology, promotion, or threshold changes during the evaluation.
+- `PASS` only if the final run has zero unclassified parse failures or
+  incomplete outputs, and on DEV-only reviewed inputs the candidate is
+  non-inferior to the frozen 4B baseline by a pre-registered margin of at most
+  **5 percentage points** for relation precision and recall.
+- Parse/schema validity must be no lower than the baseline; every
+  parse/incomplete failure has an explicit disposition.
+- Any regression beyond the margin, any threshold change during the run, or any
+  unapproved ontology/promotion change => `FAIL`.
+- Missing DEV scope/approval => `BLOCKED`; invalid infrastructure => `INCONCLUSIVE`.
 - Quality claims are limited to the tested corpus and model revision.
 
 **Approval required:** evaluation authorization; explicit HOLDOUT approval only
@@ -82,11 +116,16 @@ under an approved window?
   independent post-restore verifier.
 - No production provider/default switch in this gate.
 
-**Acceptance for this gate**
+**Pre-registered decision rule**
 
-- Isolation and credential scope demonstrated.
-- Monitoring and rollback evidence captured.
-- Production baseline verified unchanged before/after.
+- `PASS` requires demonstrated isolation and scoped credentials, no production
+  service-account/data access, readiness within **60 seconds** of process start,
+  rollback completion within **15 minutes**, GPU/resource cleanup confirmed, and
+  the exact production baseline restored and independently verified.
+- Any production credential/secret exposure, missed rollback deadline, or
+  unverified restoration => `FAIL`.
+- Missing window/owner/service approval => `BLOCKED`; infrastructure invalidity
+  => `INCONCLUSIVE`.
 - A separate production-change decision is required; this gate cannot promote
   FP8 by itself.
 
@@ -100,11 +139,28 @@ approval, named execution/restoration owners, and a rollback/verification plan.
 | GPU | Confirmed free target-class device UUID; exclusive allocation |
 | Window | Explicit start/end and hard stop; production owner approval |
 | Artifact | Revision-pinned; checksums re-verified before execution |
-| Credentials | Scoped registry credential; any exception disclosed |
+| Credentials | Dedicated scoped registry credential; production `local-registry-cred` and other production pull secrets are prohibited; any exception requires explicit approval and disclosure |
 | Data | DEV only; HOLDOUT sealed unless separately approved |
 | Evidence | Raw responses/usage via #766; sanitized logs |
 | Rollback | Restore exact image/args/replicas and verify baseline |
 | Merge | No automatic merge; review each report separately |
+
+## Approval record template
+
+No gate may start without a completed record:
+
+| Field | Required content |
+|---|---|
+| Gate | Performance / extraction quality / operational readiness |
+| Execution owner | Named individual |
+| Restoration owner | Named individual (may be the same only if separately accepted) |
+| Independent verifier | Named individual different from execution owner |
+| Service owner approval | Named approver and evidence reference |
+| GPU/window | Device UUID, approved start/end, hard stop, outage duration |
+| Scope | Dataset, chunk/prompt hash, model revision, settings |
+| Retry policy | Pre-declared bounded attempts and terminal disposition |
+| Rollback deadline | Concrete timestamp and restoration checklist |
+| Approval date | ISO-8601 date and link to approval record |
 
 ## Explicitly excluded
 
