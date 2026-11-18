@@ -1,0 +1,25 @@
+chunk_ordinal	repetition	finish_reason	parse_error	completion_tokens	latency_s	content_sha256
+252	1	stop	JSONDecodeError: Expecting value: line 1 column 74 (char 73)	3095	68.05413174999558	05984eaf97ea56b7991d9454ba74e06847fe25be48d83ff37bcda1be6447da82
+387	1	stop	JSONDecodeError: Extra data: line 1 column 99 (char 98)	1318	28.532666829996742	7c54e4141ad6c121ddab7b887a5d98ac7a25a8e785b5d316115530da2924cff1
+423	1	stop	JSONDecodeError: Extra data: line 1 column 109 (char 108)	3086	68.14329206800176	809342851e8deeb21ef6d27ba07f30e1e289bdfcb9214264228a740c565176a0
+442	1	length	JSONDecodeError: Extra data: line 1 column 86 (char 85)	4096	91.20959620699432	537c84b27f297b035f8c013eaa721dcefa5d068e7af8749c139485263dbaff8b
+453	1	stop	JSONDecodeError: Extra data: line 1 column 88 (char 87)	3628	80.18833834000543	d9a3eaa757bb87b663c1b30c62624c98b0667961789192b483b32a1c2886e3f9
+508	1	stop	JSONDecodeError: Extra data: line 1 column 88 (char 87)	3276	72.17589290400065	1892c7d7435f7d531cc62192452f8e993bf9eba3d8fc02e4221dbbb885811409
+520	1	length	JSONDecodeError: Extra data: line 1 column 99 (char 98)	4096	91.12428362499486	ed66d63d07aebd7cbc35aa4140a0f2eec7fd3deb3ecc72a6c66204748f2ff0dc
+524	1	stop	JSONDecodeError: Expecting value: line 1 column 85 (char 84)	2046	44.772838788005174	58c90265017ccde546655633cc958a496e50d918059ff040ccdf9dbd948acc1a
+252	2	stop	JSONDecodeError: Expecting value: line 1 column 74 (char 73)	3095	68.0454897189993	05984eaf97ea56b7991d9454ba74e06847fe25be48d83ff37bcda1be6447da82
+387	2	stop	JSONDecodeError: Extra data: line 1 column 99 (char 98)	1318	28.521010118995036	7c54e4141ad6c121ddab7b887a5d98ac7a25a8e785b5d316115530da2924cff1
+423	2	stop	JSONDecodeError: Extra data: line 1 column 109 (char 108)	3086	68.1555041879983	809342851e8deeb21ef6d27ba07f30e1e289bdfcb9214264228a740c565176a0
+442	2	length	JSONDecodeError: Extra data: line 1 column 86 (char 85)	4096	91.19071781299863	537c84b27f297b035f8c013eaa721dcefa5d068e7af8749c139485263dbaff8b
+453	2	stop	JSONDecodeError: Extra data: line 1 column 88 (char 87)	3628	80.18103162400075	d9a3eaa757bb87b663c1b30c62624c98b0667961789192b483b32a1c2886e3f9
+508	2	stop	JSONDecodeError: Extra data: line 1 column 88 (char 87)	3276	72.17744652999681	1892c7d7435f7d531cc62192452f8e993bf9eba3d8fc02e4221dbbb885811409
+520	2	length	JSONDecodeError: Extra data: line 1 column 99 (char 98)	4096	91.14017012899421	ed66d63d07aebd7cbc35aa4140a0f2eec7fd3deb3ecc72a6c66204748f2ff0dc
+524	2	stop	JSONDecodeError: Expecting value: line 1 column 85 (char 84)	2046	44.78926917199715	58c90265017ccde546655633cc958a496e50d918059ff040ccdf9dbd948acc1a
+252	3	stop	JSONDecodeError: Expecting value: line 1 column 74 (char 73)	3095	68.04707102399698	05984eaf97ea56b7991d9454ba74e06847fe25be48d83ff37bcda1be6447da82
+387	3	stop	JSONDecodeError: Extra data: line 1 column 99 (char 98)	1318	28.521526920994802	7c54e4141ad6c121ddab7b887a5d98ac7a25a8e785b5d316115530da2924cff1
+423	3	stop	JSONDecodeError: Extra data: line 1 column 109 (char 108)	3086	68.15178705900325	809342851e8deeb21ef6d27ba07f30e1e289bdfcb9214264228a740c565176a0
+442	3	length	JSONDecodeError: Extra data: line 1 column 86 (char 85)	4096	91.20143456000369	537c84b27f297b035f8c013eaa721dcefa5d068e7af8749c139485263dbaff8b
+453	3	stop	JSONDecodeError: Extra data: line 1 column 88 (char 87)	3628	80.18529406000016	d9a3eaa757bb87b663c1b30c62624c98b0667961789192b483b32a1c2886e3f9
+508	3	stop	JSONDecodeError: Extra data: line 1 column 88 (char 87)	3276	72.18164253199939	1892c7d7435f7d531cc62192452f8e993bf9eba3d8fc02e4221dbbb885811409
+520	3	length	JSONDecodeError: Extra data: line 1 column 99 (char 98)	4096	91.12737788900267	ed66d63d07aebd7cbc35aa4140a0f2eec7fd3deb3ecc72a6c66204748f2ff0dc
+524	3	stop	JSONDecodeError: Expecting value: line 1 column 85 (char 84)	2046	44.77439508899988	58c90265017ccde546655633cc958a496e50d918059ff040ccdf9dbd948acc1a
