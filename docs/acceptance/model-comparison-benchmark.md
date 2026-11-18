@@ -26,12 +26,29 @@ measure.
 |---|---|---|---|
 | A | Qwen3-4B-Instruct-2507 | Current prompting | Baseline |
 | B | Qwen3-4B-Instruct-2507 | JSON Schema constrained | Isolate constrained decoding |
-| C | Qwen3-8B (quantized if required) | JSON Schema constrained | Test larger-model capability |
-| D | Qwen3-8B, optional | Current prompting | Separate model from decoding mode |
+| C | Qwen3-8B-FP8 | JSON Schema constrained | Test larger-model capability with an official FP8 artifact |
+| D | Qwen3-8B-FP8, optional | Current prompting | Separate model from decoding mode |
 
-The current GPU is a 16GB RTX 5060 Ti. The 8B candidates are contingent on a
-quantized artifact fitting the GPU at the chosen context/concurrency. No 14B
-candidate is proposed for this hardware tier.
+The current GPU is a 16GB RTX 5060 Ti. The 8B candidate is the official
+**`Qwen/Qwen3-8B-FP8`** checkpoint, not a community quantization. FP8 reduces
+weight memory versus BF16, but KV cache and runtime overhead still must be
+measured at the chosen context/concurrency. No 14B candidate is proposed for
+this hardware tier.
+
+### Selected 8B artifact
+
+| Field | Value |
+|---|---|
+| Repository | `Qwen/Qwen3-8B-FP8` |
+| Immutable revision | `220b46e3b2180893580a4454f21f22d3ebb187d3` |
+| Quantization | Official FP8, block size 128 |
+| Runtime | vLLM; verify the deployed vLLM version supports this checkpoint before launch |
+| Status | Selected for the proposal; not downloaded or served |
+
+Do not reuse the BF16 repository revision. Do not silently substitute a
+community conversion. Verify the installed vLLM version and actual GPU
+footprint before the benchmark; a 16GB card is a measurement point, not a
+guarantee.
 
 ## Input set
 
@@ -191,9 +208,9 @@ The example below uses the official Qwen3-8B repository name; substitute the
 verified 2507-instruct artifact if that is the chosen candidate:
 
 ```bash
-export MODEL_REPO="Qwen/Qwen3-8B"
-export MODEL_REVISION="<commit-sha-from-the-model-card>"
-export MODEL_DIR="/mnt/local-fast/models/qwen3-8b"
+export MODEL_REPO="Qwen/Qwen3-8B-FP8"
+export MODEL_REVISION="220b46e3b2180893580a4454f21f22d3ebb187d3"
+export MODEL_DIR="/mnt/local-fast/models/qwen3-8b-fp8"
 
 mkdir -p "$MODEL_DIR"
 hf download "$MODEL_REPO" \
@@ -202,10 +219,11 @@ hf download "$MODEL_REPO" \
   --max-workers 4
 ```
 
-For the 16GB GPU, a full-precision 8B artifact may not fit with the required KV
-cache. If a quantized artifact is used, select a vetted official/approved
-quantization, pin its revision, and record the quantization in the benchmark
-metadata. Do not silently substitute a community quantized model.
+The selected artifact is already an official FP8 checkpoint. Do not substitute
+the BF16 repository or an unverified community quantization. On the 16GB GPU,
+measure weights, KV cache, and runtime overhead at the intended context and
+concurrency; if FP8 does not fit, reduce scope or stop rather than silently
+changing precision.
 
 ### Verify the download
 
