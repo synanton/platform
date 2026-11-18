@@ -77,17 +77,17 @@ Terminal result:
 | Field | Value |
 |---|---|
 | Gate | Performance |
-| Execution owner | TBD — named individual |
-| Restoration owner | TBD — named individual |
-| Independent verifier | TBD — named individual, not execution owner |
-| Service-owner approval | TBD — named approver + evidence link |
-| Approved GPU/window | TBD — device UUID, start/end, hard stop |
-| Outage duration | TBD — production vLLM downtime |
+| Execution owner | OpenCode agent (executing operator) |
+| Restoration owner | OpenCode agent (executing operator) |
+| Independent verifier | Andrei Minin (`@andreminin`) |
+| Service-owner approval | Andrei Minin (`@andreminin`), explicit execution authorization in the task thread, 2026-11-18; evidence: this packet/PR #777 |
+| Approved GPU/window | `node3` / `GPU-2270a494-7456-1a7a-a974-eb76d94b9b1c`; 2026-11-18T11:20:00Z–12:05:00Z UTC hard stop |
+| Outage duration | Production vLLM unavailable from scale-down until verified restoration; hard stop 12:05:00Z |
 | Workload hash | `9af1938a...` (above) |
 | Model revisions | 4B deployed; 8B FP8 `220b46e...` |
 | Retry policy | One bounded infrastructure retry |
-| Rollback deadline | TBD — restore image/args/replicas and verify baseline |
-| Approval date | TBD |
+| Rollback deadline | 2026-11-18T12:05:00Z — restore image/args/replicas and verify baseline |
+| Approval date | 2026-11-18 |
 
 ## Pre-execution checks
 
