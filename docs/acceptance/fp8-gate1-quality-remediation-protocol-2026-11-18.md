@@ -94,6 +94,22 @@ effects remain attributable.
   - Any fatal runtime failure.
   - New invalid-output class appears on controls.
 
+## Protocol correction after E1 stop
+
+E1 (`max_tokens=8192`) was stopped because vLLM rejects requests when
+`prompt_tokens + max_tokens` exceeds the 8192-token model context. This is an
+API validation constraint, not a model-quality result.
+
+Before any E1 retry:
+
+- measure the rendered prompt token count for every diagnostic request;
+- choose a registered output budget satisfying
+  `max_prompt_tokens + max_tokens <= 8192` with a stated safety margin;
+- keep all other parameters frozen.
+
+The corrected retry registration is separate:
+`docs/acceptance/fp8-gate1-e1-retry-registration-2026-11-18.md`.
+
 ## Execution protocol (for future run)
 
 1. Re-confirm frozen hashes and runtime identity.
