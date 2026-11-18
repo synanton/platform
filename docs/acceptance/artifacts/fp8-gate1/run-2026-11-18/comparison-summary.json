@@ -1,0 +1,42 @@
+{
+  "baseline": {
+    "completed": 54,
+    "fatal_failures": 0,
+    "p95_latency_s": 52.920604728999024,
+    "completion_tokens_per_s": 47.15356497421475,
+    "json_valid": 54,
+    "json_invalid": 0,
+    "peak_gpu_used_mib": 12979,
+    "finish_reasons": {
+      "stop": 54
+    }
+  },
+  "candidate": {
+    "completed": 54,
+    "fatal_failures": 0,
+    "p95_latency_s": 91.19071781299863,
+    "completion_tokens_per_s": 45.41177604420445,
+    "json_valid": 30,
+    "json_invalid": 24,
+    "peak_gpu_used_mib": 12521,
+    "finish_reasons": {
+      "length": 6,
+      "stop": 48
+    }
+  },
+  "thresholds": {
+    "completion_required": 54,
+    "fatal_failures_max": 0,
+    "p95_latency_s_max": 105.84120945799805,
+    "completion_tokens_per_s_min": 23.576782487107376,
+    "peak_gpu_used_mib_max": 15495
+  },
+  "gate1_performance": {
+    "completion_pass": true,
+    "fatal_failures_pass": true,
+    "p95_latency_pass": true,
+    "throughput_pass": true,
+    "gpu_memory_pass": true,
+    "overall_pass": true
+  }
+}
