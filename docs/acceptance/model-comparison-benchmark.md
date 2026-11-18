@@ -173,7 +173,8 @@ python -m pip install --upgrade "huggingface_hub[cli]" hf_transfer
 Prefer the non-echoing environment form:
 
 ```bash
-export HF_TOKEN="$(read -r -s -p 'HF token: ' token; printf '%s' "$token")"
+read -r -s -p 'HF token: ' HF_TOKEN
+export HF_TOKEN
 export HF_HOME=/mnt/local-fast/hf-cache
 export HF_HUB_ENABLE_HF_TRANSFER=1
 ```
@@ -212,9 +213,9 @@ metadata. Do not silently substitute a community quantized model.
 test -s "$MODEL_DIR/config.json"
 test -s "$MODEL_DIR/tokenizer_config.json"
 find "$MODEL_DIR" -maxdepth 1 -type f -printf '%f %s\n' | sort
-python - <<'PY'
-import json, pathlib
-config = json.loads(pathlib.Path("'"$MODEL_DIR"'/config.json").read_text())
+python - "$MODEL_DIR/config.json" <<'PY'
+import json, pathlib, sys
+config = json.loads(pathlib.Path(sys.argv[1]).read_text())
 print(config.get("model_type"), config.get("architectures"))
 PY
 ```
