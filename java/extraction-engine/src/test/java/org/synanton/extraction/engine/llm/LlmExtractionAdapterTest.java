@@ -1,6 +1,7 @@
 package org.synanton.extraction.engine.llm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.sun.net.httpserver.HttpServer;
@@ -154,6 +155,105 @@ class LlmExtractionAdapterTest {
                 .contains("Concept --records--> Measurement")
                 .doesNotContain("signs")
                 .doesNotContain("Person");
+    }
+
+    @Test
+    void capturesMissingColonAtReportedOffset(@TempDir Path captureDir) throws Exception {
+        String malformed = missingColonAt436();
+        responseContent = malformed;
+        ExtractionContext context = new ExtractionContext(
+                "tenant", "doc", Set.of(), "version-structural");
+        promptTokens = 527;
+        completionTokens = 9;
+        totalTokens = 536;
+
+        assertThatThrownBy(() -> new LlmExtractionAdapter(
+                "http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
+                "test-model", Duration.ofSeconds(10), 8192, captureDir)
+                .extract(new TextSegment("c1", TEXT, 0), context))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("expected ':' at 436");
+
+        Map<String, Object> event = onlyCapture(captureDir);
+        assertThat(event.get("raw_response")).asString().contains("choices");
+        assertThat(event.get("content")).isEqualTo(malformed);
+        assertThat(event.get("parser_input")).isEqualTo(malformed);
+        assertThat(event.get("parser_exception")).asString().contains("expected ':' at 436");
+        assertThat(event.get("raw_response_sha256")).asString().hasSize(64);
+        assertThat(event.get("content_sha256")).asString().hasSize(64);
+        assertThat(event.get("parser_input_sha256")).asString().hasSize(64);
+        assertThat(((Number) event.get("content_chars")).intValue()).isEqualTo(malformed.length());
+        assertThat(event.get("finish_reason")).isEqualTo("stop");
+        assertThat(((Number) event.get("prompt_tokens")).intValue()).isEqualTo(527);
+        assertThat(event.get("source_version_id")).isEqualTo("version-structural");
+        assertThat(event.get("chunk_id")).isEqualTo("c1");
+    }
+
+    @Test
+    void unescapedQuoteInValueFailsBeforeCapture(@TempDir Path captureDir) {
+        responseContent = "{\"preEntities\":[{\"surfaceForm\":\"Halcyon\"7\","
+                + "\"proposedType\":\"Concept\"}],\"relations\":[]}";
+
+        assertThatThrownBy(() -> new LlmExtractionAdapter(
+                "http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
+                "test-model", Duration.ofSeconds(10), 2048, captureDir)
+                .extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rawNewlineInValueRemainsPermissive() {
+        responseContent = "{\"preEntities\":[{\"surfaceForm\":\"line1\nline2\","
+                + "\"proposedType\":\"Concept\"}],\"relations\":[]}";
+
+        assertThatCode(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void invalidUnicodeEscapeRemainsPermissive() {
+        responseContent = "{\"preEntities\":[{\"surfaceForm\":\"A\\uZZZZ\","
+                + "\"proposedType\":\"Concept\"}],\"relations\":[]}";
+
+        assertThatCode(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void truncatedBodyCapturesRawBodyWhenObjectExtractionFails(@TempDir Path captureDir) {
+        responseContent = "{\"preEntities\":[{\"surfaceForm\":\"Halcyon-7\"";
+
+        assertThatThrownBy(() -> new LlmExtractionAdapter(
+                "http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
+                "test-model", Duration.ofSeconds(10), 2048, captureDir)
+                .extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        try {
+            Map<String, Object> event = onlyCapture(captureDir);
+            assertThat(event.get("raw_response")).asString().contains("choices");
+            assertThat(event.get("content")).isEqualTo(responseContent);
+            assertThat(event.get("parser_input")).asString().isEmpty();
+            assertThat(event.get("parser_exception")).asString().contains("model output");
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static Map<String, Object> onlyCapture(Path captureDir) throws Exception {
+        try (var files = Files.list(captureDir)) {
+            Path captured = files.findFirst().orElseThrow();
+            return Json.parseObject(Files.readString(captured));
+        }
+    }
+
+    private static String missingColonAt436() {
+        String head = "{\"pad\":\"";
+        String tail = "\",\"preEntities\" ";
+        int padding = 436 - head.length() - tail.length();
+        String prefix = head + "x".repeat(padding) + tail;
+        assert prefix.length() == 436;
+        return prefix + "\"relations\":[]}";
     }
 
     @Test
