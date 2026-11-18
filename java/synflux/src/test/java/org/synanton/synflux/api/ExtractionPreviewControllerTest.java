@@ -54,7 +54,7 @@ class ExtractionPreviewControllerTest {
         TenantContextFilter filter = new TenantContextFilter(new JwtVerifier(SECRET), "", "/health");
         mvc = MockMvcBuilders.standaloneSetup(new ExtractionPreviewController(
                         adapter, new ExtractionEngineProperties("llm", "http://localhost:8000/v1",
-                                "qwen3-extraction", 30, null)))
+                                "qwen3-extraction", 30, null, null)))
                 .addFilters(filter)
                 .build();
     }

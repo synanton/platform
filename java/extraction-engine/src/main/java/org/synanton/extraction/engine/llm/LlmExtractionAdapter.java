@@ -7,9 +7,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -76,28 +80,39 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     private final String model;
     private final Duration timeout;
     private final int maxTokens;
+    private final Path captureDir;
     private final String promptTemplate;
 
     public LlmExtractionAdapter(String endpoint, String model) {
-        this(endpoint, model, Duration.ofSeconds(120), DEFAULT_MAX_TOKENS);
+        this(endpoint, model, Duration.ofSeconds(120), DEFAULT_MAX_TOKENS, null);
     }
 
     public LlmExtractionAdapter(String endpoint, String model, Duration timeout) {
-        this(endpoint, model, timeout, DEFAULT_MAX_TOKENS);
+        this(endpoint, model, timeout, DEFAULT_MAX_TOKENS, null);
     }
 
     public LlmExtractionAdapter(String endpoint, String model, Duration timeout, int maxTokens) {
+        this(endpoint, model, timeout, maxTokens, null);
+    }
+
+    public LlmExtractionAdapter(String endpoint, String model, Duration timeout, int maxTokens,
+                                Path captureDir) {
         this(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
                         .connectTimeout(Duration.ofSeconds(10)).build(),
-                endpoint, model, timeout, maxTokens);
+                endpoint, model, timeout, maxTokens, captureDir);
     }
 
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model, Duration timeout) {
-        this(client, endpoint, model, timeout, DEFAULT_MAX_TOKENS);
+        this(client, endpoint, model, timeout, DEFAULT_MAX_TOKENS, null);
     }
 
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
                                 Duration timeout, int maxTokens) {
+        this(client, endpoint, model, timeout, maxTokens, null);
+    }
+
+    public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
+                                Duration timeout, int maxTokens, Path captureDir) {
         if (endpoint == null || endpoint.isBlank()) {
             throw new IllegalArgumentException("LLM extraction endpoint is required");
         }
@@ -106,6 +121,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
         this.timeout = timeout == null ? Duration.ofSeconds(120) : timeout;
         this.maxTokens = Math.max(1, maxTokens);
+        this.captureDir = captureDir;
         this.promptTemplate = loadPrompt();
     }
 
@@ -118,7 +134,15 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         int base = segment.charOffsetStart();
         LlmCallResult call = call(buildPrompt(context), text);
         String content = call.content();
-        Map<String, Object> raw = Json.parseObject(Json.extractObject(content));
+        String parserInput = null;
+        Map<String, Object> raw;
+        try {
+            parserInput = Json.extractObject(content);
+            raw = Json.parseObject(parserInput);
+        } catch (RuntimeException parseFailure) {
+            captureParseFailure(segment, context, call, content, parserInput, parseFailure);
+            throw parseFailure;
+        }
 
         List<PreEntity> entities = new ArrayList<>();
         Map<String, PreEntity> bySurface = new LinkedHashMap<>();
@@ -307,7 +331,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             if (content.isBlank()) {
                 throw new IllegalStateException("LLM extraction response has empty content");
             }
-            return new LlmCallResult(content, llmUsage);
+            return new LlmCallResult(content, llmUsage, responseBody);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("LLM extraction interrupted", e);
@@ -330,7 +354,58 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         }
     }
 
-    private record LlmCallResult(String content, LlmUsage usage) {
+    private void captureParseFailure(TextSegment segment, ExtractionContext context,
+                                     LlmCallResult call, String content, String parserInput,
+                                     RuntimeException failure) {
+        if (captureDir == null) {
+            return;
+        }
+        try {
+            Files.createDirectories(captureDir);
+            String raw = call.rawBody();
+            String input = parserInput == null ? "" : parserInput;
+            StringBuilder json = new StringBuilder(256 + raw.length() + content.length());
+            json.append('{');
+            appendField(json, "timestamp", Instant.now().toString()).append(',');
+            appendField(json, "tenant_id", context == null ? null : context.tenantId()).append(',');
+            appendField(json, "source_version_id", context == null ? null : context.sourceVersionId()).append(',');
+            appendField(json, "document_id", context == null ? null : context.documentId()).append(',');
+            appendField(json, "chunk_id", segment == null ? null : segment.chunkId()).append(',');
+            appendField(json, "finish_reason", call.usage().finishReason()).append(',');
+            json.append("\"prompt_tokens\":").append(call.usage().promptTokens()).append(',');
+            json.append("\"completion_tokens\":").append(call.usage().completionTokens()).append(',');
+            json.append("\"total_tokens\":").append(call.usage().totalTokens()).append(',');
+            appendField(json, "raw_response_sha256", sha256(raw)).append(',');
+            json.append("\"raw_response_chars\":").append(raw.length()).append(',');
+            appendField(json, "content_sha256", sha256(content)).append(',');
+            json.append("\"content_chars\":").append(content.length()).append(',');
+            appendField(json, "parser_input_sha256", sha256(input)).append(',');
+            json.append("\"parser_input_chars\":").append(input.length()).append(',');
+            appendField(json, "parser_exception", failure.toString()).append(',');
+            appendField(json, "raw_response", raw).append(',');
+            appendField(json, "content", content).append(',');
+            appendField(json, "parser_input", input);
+            json.append('}');
+            Path target = captureDir.resolve("parse-failure-" + UUID.randomUUID() + ".json");
+            Files.writeString(target, json.toString(), StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+            try {
+                Files.setPosixFilePermissions(target,
+                        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+            } catch (UnsupportedOperationException ignored) {
+                // Non-POSIX filesystems still rely on the capture directory ACL.
+            }
+        } catch (Exception ignored) {
+            // Capture must never mask the parser failure.
+        }
+    }
+
+    private static StringBuilder appendField(StringBuilder json, String key, String value) {
+        return json.append(Json.quote(key)).append(':')
+                .append(value == null ? "null" : Json.quote(value));
+    }
+
+    private record LlmCallResult(String content, LlmUsage usage, String rawBody) {
     }
 
     private String chatCompletionsUrl() {

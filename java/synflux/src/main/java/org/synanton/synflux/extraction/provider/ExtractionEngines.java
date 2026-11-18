@@ -25,7 +25,9 @@ public final class ExtractionEngines {
                     Duration.ofSeconds(properties.timeoutSeconds() == null
                             ? 120
                             : Math.max(1, properties.timeoutSeconds())),
-                    properties.maxTokens() == null ? 2048 : Math.max(1, properties.maxTokens()));
+                    properties.maxTokens() == null ? 2048 : Math.max(1, properties.maxTokens()),
+                    properties.captureDir() == null || properties.captureDir().isBlank()
+                            ? null : java.nio.file.Path.of(properties.captureDir()));
         };
     }
 }
