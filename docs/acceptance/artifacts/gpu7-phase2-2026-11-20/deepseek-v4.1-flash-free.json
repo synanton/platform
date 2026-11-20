@@ -1,0 +1,73 @@
+{
+  "model": "deepseek-v4.1-flash-free",
+  "documents": 5,
+  "no_thinking": true,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "deepseek-v4.1-flash-free",
+      "latency_s": 1.3521656720004103,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "provider_rate_limited",
+      "error_message": "provider rate limited the request"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "deepseek-v4.1-flash-free",
+      "latency_s": 0.7868804280005861,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "provider_rate_limited",
+      "error_message": "provider rate limited the request"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "deepseek-v4.1-flash-free",
+      "latency_s": 0.38163226200049394,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "deepseek-v4.1-flash-free",
+      "latency_s": 0.026390205001007416,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "deepseek-v4.1-flash-free",
+      "latency_s": 0.026438085000336287,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    }
+  ]
+}

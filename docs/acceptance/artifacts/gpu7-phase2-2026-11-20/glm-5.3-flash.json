@@ -1,0 +1,131 @@
+{
+  "model": "glm-5.3-flash",
+  "documents": 5,
+  "no_thinking": true,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "glm-5.3-flash",
+      "latency_s": 6.871677093000471,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 562,
+        "output": 550
+      },
+      "upstream_request_id": "chatcmpl-99c8bb6042ff6c7f86ace6061b5a88e2",
+      "finish_reason": "stop",
+      "content_chars": 2286,
+      "json_valid": true,
+      "pred_entities": 13,
+      "gold_entities": 12,
+      "entity_tp": 0,
+      "entity_p": 0.0,
+      "entity_r": 0.0,
+      "entity_f1": 0.0,
+      "pred_relations": 6,
+      "gold_relations": 7,
+      "relation_tp": 2,
+      "relation_p": 0.3333333333333333,
+      "relation_r": 0.2857142857142857,
+      "relation_f1": 0.30769230769230765,
+      "content_sha256": "6a00033a8da2fba035afabbf2d1fcf61d3df173cb1d9f3b3f5d9bef360115ce6"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "glm-5.3-flash",
+      "latency_s": 14.278027139998812,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 552,
+        "output": 1329
+      },
+      "upstream_request_id": "chatcmpl-ec548c0b89ce31dba264c56861122259",
+      "finish_reason": "stop",
+      "content_chars": 1980,
+      "json_valid": true,
+      "pred_entities": 11,
+      "gold_entities": 10,
+      "entity_tp": 6,
+      "entity_p": 0.5454545454545454,
+      "entity_r": 0.6,
+      "entity_f1": 0.5714285714285713,
+      "pred_relations": 6,
+      "gold_relations": 7,
+      "relation_tp": 4,
+      "relation_p": 0.6666666666666666,
+      "relation_r": 0.5714285714285714,
+      "relation_f1": 0.6153846153846153,
+      "content_sha256": "ac6bc02d653c595711985e8dc7e943e3401e3ea903e8c8e725f4edadbbaa6541"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "glm-5.3-flash",
+      "latency_s": 9.424229476999244,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1019,
+        "output": 918
+      },
+      "upstream_request_id": "chatcmpl-e25c0cd0d9c386110a684901c722f7dd",
+      "finish_reason": "stop",
+      "content_chars": 3408,
+      "json_valid": true,
+      "pred_entities": 21,
+      "gold_entities": 15,
+      "entity_tp": 1,
+      "entity_p": 0.047619047619047616,
+      "entity_r": 0.06666666666666667,
+      "entity_f1": 0.05555555555555555,
+      "pred_relations": 9,
+      "gold_relations": 10,
+      "relation_tp": 3,
+      "relation_p": 0.3333333333333333,
+      "relation_r": 0.3,
+      "relation_f1": 0.3157894736842105,
+      "content_sha256": "d21268c92a857b374fd7de5f748274de100a5f903032c6700e3665675a97972d"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "glm-5.3-flash",
+      "latency_s": 20.283165429998917,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 920,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-3a3a194f81dec040e2e8a8b66a34415d",
+      "finish_reason": "length",
+      "content_chars": 6544,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "glm-5.3-flash",
+      "latency_s": 12.684887200000958,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1233,
+        "output": 1249
+      },
+      "upstream_request_id": "chatcmpl-dde194ea8cbed25c0d46a72ffe5a4ea7",
+      "finish_reason": "stop",
+      "content_chars": 4881,
+      "json_valid": true,
+      "pred_entities": 30,
+      "gold_entities": 18,
+      "entity_tp": 0,
+      "entity_p": 0.0,
+      "entity_r": 0.0,
+      "entity_f1": 0.0,
+      "pred_relations": 11,
+      "gold_relations": 10,
+      "relation_tp": 0,
+      "relation_p": 0.0,
+      "relation_r": 0.0,
+      "relation_f1": 0.0,
+      "content_sha256": "8574ee8cd689d20f58220fc6c2afb5a4dddd2e87e76aeb0b54038a3aec685230"
+    }
+  ]
+}

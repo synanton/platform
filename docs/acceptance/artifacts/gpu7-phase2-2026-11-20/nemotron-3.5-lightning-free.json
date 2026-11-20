@@ -1,0 +1,73 @@
+{
+  "model": "nemotron-3.5-lightning-free",
+  "documents": 5,
+  "no_thinking": false,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "nemotron-3.5-lightning-free",
+      "latency_s": 1.7606718430015462,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "provider_rate_limited",
+      "error_message": "provider rate limited the request"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "nemotron-3.5-lightning-free",
+      "latency_s": 0.5162567810002656,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "provider_rate_limited",
+      "error_message": "provider rate limited the request"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "nemotron-3.5-lightning-free",
+      "latency_s": 0.40687875199910195,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "nemotron-3.5-lightning-free",
+      "latency_s": 0.026069597999594407,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "nemotron-3.5-lightning-free",
+      "latency_s": 0.02786659299999883,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    }
+  ]
+}

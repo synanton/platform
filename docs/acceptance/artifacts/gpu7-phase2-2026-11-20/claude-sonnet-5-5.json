@@ -1,0 +1,83 @@
+{
+  "model": "claude-sonnet-5-5",
+  "documents": 5,
+  "no_thinking": false,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "claude-sonnet-5-5",
+      "latency_s": 14.075994557999365,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 959,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-b501dc587f9344a383e593427558b4cd",
+      "finish_reason": "length",
+      "content_chars": 2207,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Expecting ',' delimiter: line 1 column 1408 (char 1407)"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "claude-sonnet-5-5",
+      "latency_s": 12.953329128000405,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 930,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-895aa4ea53e24a4b8e826c632ea63a4f",
+      "finish_reason": "length",
+      "content_chars": 1848,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Expecting ',' delimiter: line 1 column 979 (char 978)"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "claude-sonnet-5-5",
+      "latency_s": 14.620521524000651,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1653,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-b42f467b28a047a49144aaea00fb91ba",
+      "finish_reason": "length",
+      "content_chars": 595,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "claude-sonnet-5-5",
+      "latency_s": 15.155574878001062,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1480,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-109bedd19aab47f78b2b6de1c97b2afe",
+      "finish_reason": "length",
+      "content_chars": 593,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "claude-sonnet-5-5",
+      "latency_s": 8.38789544500105,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1898,
+        "output": 787
+      },
+      "upstream_request_id": "chatcmpl-3bdbd9181081428d91a649a7004a6cf5",
+      "finish_reason": "content_filter",
+      "content_chars": 995,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    }
+  ]
+}

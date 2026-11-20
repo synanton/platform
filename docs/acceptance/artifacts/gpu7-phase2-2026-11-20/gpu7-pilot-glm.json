@@ -1,0 +1,13 @@
+{
+  "provider_model": "glm-5.3-flash",
+  "tenant": "smoke-tenant",
+  "state": "SUCCESS",
+  "latency_s": 3.971921027999997,
+  "usage": {
+    "input": 562,
+    "output": 512
+  },
+  "upstream_request_id": "chatcmpl-53450215",
+  "result_chars": 2277,
+  "result": "{\"id\":\"chatcmpl-53450215\",\"object\":\"chat.completion\",\"created\":1795199917,\"model\":\"synanton-external-chat\",\"choices\":[{\"index\":0,\"finish_reason\":\"length\",\"logprobs\":null,\"message\":{\"role\":\"assistant\",\"content\":null,\"reasoning_content\":\"Let me analyze the text carefully.\\n\\nTEXT:\\n\\\"Zephyr-9 Calibration Protocol (Revision B)\\n\\nQuarterly torque audits of the auxiliary coolant manifold are mandatory for the\\nZephyr-9 platform. Technicians must log manifold pressure drift, verify the\\ntitanium retaining fasteners, and replace any fastener whose audit tolerance\\nexceeds two percent. The Zephyr-9 protocol uniquely requires a helium leak\\ncheck after every fifth audit cycle.\\\"\\n\\nLet me identify entities:\\n\\n1. \\\"Zephyr-9 Calibration Protocol\\\" - Document (title). Position: starts at 0, ends at 30. Let me count: \\\"Zephyr-9 Calibration Protocol\\\" - Z-e-p-h-y-r---9 = 8 chars (0-7), space (8), \\\"Calibration\\\" = 11 chars (9-19), space (20), \\\"Protocol\\\" = 8 chars (21-28). So ends at 29. Let me recount.\\n\\n\\\"Zephyr-9 Calibration Protocol (Revision B)\\\"\\n- \\\"Zephyr-9\\\" = 8 characters: Z(0), e(1), p(2), h(3), y(4), r(5), -(6), 9(7)\\n- space (8)\\n- \\\"Calibration\\\" = 11 characters: C(9), a(10), l(11), i(12), b(13), r(14), a(15), t(16), i(17), o(18), n(19)\\n- space (20)\\n- \\\"Protocol\\\" = 8 characters: P(21), r(22), o(23), t(24), o(25), c(26), o(27), l(28)\\n- space (29)\\n- \\\"(Revision B)\\\" = 12 characters: ((30), R(31), e(32), v(33), i(34), s(35), i(36), o(37), n(38), space(39), B(40), )(41)\\n\\nSo \\\"Zephyr-9 Calibration Protocol\\\" spans 0-29.\\n\\\"(Revision B)\\\" spans 30-42.\\n\\nShould I include \\\"(Revision B)\\\" as part of the document title? It could be a separate entity or part of the title. I'll include the full title \\\"Zephyr-9 Calibration Protocol\\\" as Document. Maybe \\\"Revision B\\\" as a separate entity? It's a version identifier. Hmm\"}}],\"usage\":{\"prompt_tokens\":562,\"completion_tokens\":512,\"total_tokens\":1074,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"accepted_prediction_tokens\":null,\"reasoning_tokens\":512,\"rejected_prediction_tokens\":null},\"cost\":3.403E-4,\"opencode\":{\"billing_source\":\"balance\",\"list_cost\":3.403E-4,\"tokens\":{\"input\":562,\"output\":512,\"reasoning\":512,\"cache_read\":0,\"cache_write_5m\":0,\"cache_write_1h\":0}}}}"
+}
