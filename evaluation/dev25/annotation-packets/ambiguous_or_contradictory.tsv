@@ -1,0 +1,4 @@
+doc_id	document_id	category	sha256	annotation_status	annotator_1	annotator_2	adjudicator	entity_count	relation_count	ambiguous_count	unresolvable_count	review_status	notes
+g7-dev-020	mental-health-report-2010.pdf	ambiguous_or_contradictory	d60e114c25f8bf7d69df2bdddead567b2958c8df326f30ccfb8800c3ebdb191f	UNLABELED									baseline PDF
+g7-dev-021	outsourcing-agreement.pdf	ambiguous_or_contradictory	efdc607a19a80f5dd4d5a385baf876a08c5e51fdbaa08bc8332f16c422d4ae7e	UNLABELED									baseline PDF
+g7-dev-022	ext-11-Suri-N.---Cracking-The-Machine-Learning-Interview---2018.pdf	ambiguous_or_contradictory	4e5df64675360da07cd19070837529c0d9381a2d4bf23d17db6cd0e02d76664c	UNLABELED									extended observation; technical library copy; ~1377 entities

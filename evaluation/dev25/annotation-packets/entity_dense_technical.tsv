@@ -1,0 +1,6 @@
+doc_id	document_id	category	sha256	annotation_status	annotator_1	annotator_2	adjudicator	entity_count	relation_count	ambiguous_count	unresolvable_count	review_status	notes
+g7-dev-006	ext-01-Complex-Logical-Query-Answering.pdf	entity_dense_technical	751ff06434309b8c058412081e6043d478a32b37e21be941ad92482c81bb125a	UNLABELED									extended observation; technical library copy; ~2060 entities
+g7-dev-007	ext-03-Cespedes----Gradle-Build-Automation-Handbook----2016.pdf	entity_dense_technical	04077ebdf2d9d19cbc3197d78dec6eb2c377e710752b3fa2a4fde2f857643aa6	UNLABELED									extended observation; technical library copy; ~805 entities
+g7-dev-008	ext-05-Neill-L.---Python-Machine-Learning-for-Beginners---2024.pdf	entity_dense_technical	d43c724d54dc5312ac0d95fde9bec183aa485385be791750cc2a7603beab1f9d	UNLABELED									extended observation; technical library copy; ~797 entities
+g7-dev-009	ext-08-Java_21_to_java_25_upgrade.pdf	entity_dense_technical	46527561c6dc18a59ceffca6b353762b271be0be0898f2f0bcb68b245609d5c2	UNLABELED									extended observation; technical library copy; ~1040 entities
+g7-dev-010	ext-12-Morgan_introduction_to_graph_neural_networks.pdf	entity_dense_technical	65096866cee7cd172c85e46c45b873828f4528485b0c3a0d84f52d28a159a3fc	UNLABELED									extended observation; technical library copy; ~1874 entities

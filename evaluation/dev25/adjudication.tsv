@@ -1,0 +1,26 @@
+doc_id	category	annotator_1	annotator_2	disagreement_type	resolution	adjudicator	adjudication_date	notes
+g7-dev-001	ontology_definition							
+g7-dev-002	ontology_definition							
+g7-dev-003	ontology_definition							
+g7-dev-004	ontology_definition							
+g7-dev-005	ontology_definition							
+g7-dev-006	entity_dense_technical							
+g7-dev-007	entity_dense_technical							
+g7-dev-008	entity_dense_technical							
+g7-dev-009	entity_dense_technical							
+g7-dev-010	entity_dense_technical							
+g7-dev-011	relationship_heavy							
+g7-dev-012	relationship_heavy							
+g7-dev-013	relationship_heavy							
+g7-dev-014	relationship_heavy							
+g7-dev-015	relationship_heavy							
+g7-dev-016	cross_document_references							
+g7-dev-017	cross_document_references							
+g7-dev-018	cross_document_references							
+g7-dev-019	cross_document_references							
+g7-dev-020	ambiguous_or_contradictory							
+g7-dev-021	ambiguous_or_contradictory							
+g7-dev-022	ambiguous_or_contradictory							
+g7-dev-023	tables_structured							
+g7-dev-024	tables_structured							
+g7-dev-025	tables_structured							

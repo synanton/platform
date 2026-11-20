@@ -1,0 +1,4 @@
+doc_id	document_id	category	sha256	annotation_status	annotator_1	annotator_2	adjudicator	entity_count	relation_count	ambiguous_count	unresolvable_count	review_status	notes
+g7-dev-023	structured-supply-chain.md	tables_structured	e135c0c1a794e44393de434963aa820211a7e3592f1c2533fe11f88b07951ace	UNLABELED									new-entity candidate; markdown
+g7-dev-024	large-final-100p.pdf	tables_structured	a4beb9671821acae79e159fe644bc719093d6c7cbb2cd7cbc16608f6bda67d99	UNLABELED									#724 large PDF (102 pages)
+g7-dev-025	ext-17-Rao----Spring-Batch-Essentials----2015.pdf	tables_structured	fa5114901b7ff211d84ee1238a5e1fa99c40a48991ae55e1d45af8bed7522466	UNLABELED									extended observation; technical library copy; ~1255 entities

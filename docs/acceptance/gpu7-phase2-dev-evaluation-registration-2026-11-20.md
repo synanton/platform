@@ -1,9 +1,9 @@
 # GPU-7 Phase 2 — DEV evaluation registration
 
 **Status:** REGISTERED, NOT EXECUTED.
-**Reason for hold:** the required 40–50 gold-labeled DEV documents do not yet
-exist; current frozen DEV gold has 5 documents. No paid calls are authorized
-until the label set and budget are approved.
+**Reason for hold:** the 25-document DEV set is selected, but only 5 documents
+are currently validated gold; 20 are unlabeled. No paid calls are authorized
+until all 25 labels are human-reviewed/adjudicated and the spent cap is approved.
 
 ## Candidates (only two)
 
@@ -33,11 +33,15 @@ Phase 2. No implicit fallback is allowed.
 
 ## Required DEV data
 
-- Target: **40–50 DEV documents per model**.
-- Current frozen gold: **5 documents**.
-- **Execution is BLOCKED**: the 40–50-document versioned gold set, ambiguity
-  adjudication rules, and budget must be created and reviewed first.
-- The additional documents must be public/DEV only; HOLDOUT remains sealed.
+- Target: **25 DEV documents per model**.
+- Selection manifest: `evaluation/dev25/manifest.tsv`
+  (`sha256 e01f01d54fb8361cd60749f526dcb4b20c06b235509b886fbd818812497cc8ca`).
+- Current validated gold: **5 documents**.
+- Current unlabeled preparation set: **20 documents**.
+- **Execution is BLOCKED**: all 20 remaining documents need two independent
+  annotations plus adjudication, a versioned gold checksum, and separate
+  budget/run approval.
+- The documents must be public/DEV only; HOLDOUT remains sealed.
 - Semantic P/R/F1 must use adjudicated labels. Unlabeled documents may be used
   only for structural/cost/reliability metrics and must be labeled as such.
 
@@ -67,7 +71,7 @@ failure classification.
 - Relationship direction accuracy: **≥95%**
 
 With only five current gold documents, these thresholds cannot be claimed;
-Phase 2 requires the expanded label set.
+Phase 2 requires the remaining 20 documents to be annotated and adjudicated.
 
 ## Cost and reliability metrics
 
@@ -86,8 +90,9 @@ JSON validity alone is not an acceptance criterion.
 ## Approval gates
 
 No execution until:
-1. 40–50 DEV documents are selected and hash-pinned.
-2. Gold/adjudication labels are versioned and reviewed.
+1. The 25 selected DEV documents are present and hash-pinned.
+2. All 20 unlabeled documents have completed, adjudicated labels, and the full
+   25-document gold set is versioned.
 3. A monetary cap and execution window are approved.
 4. GPU-7 external-only/no-fallback configuration is re-verified.
 5. The pilot artifacts remain unchanged.
