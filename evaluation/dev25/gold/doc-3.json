@@ -1,0 +1,213 @@
+{
+  "document_id": "skiena-sorting",
+  "text_sha256": "e63c177cb6a125386893e2b58ea22f338b943ceb557a92b9f8c48abd32ed565f",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Sorting",
+      "char_start": 11,
+      "char_end": 18,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-sorting"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "sorting algorithms",
+      "char_start": 70,
+      "char_end": 88,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-sorting"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "data structures",
+      "char_start": 174,
+      "char_end": 189,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-data-structures"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "algorithms",
+      "char_start": 211,
+      "char_end": 221,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "concept-algorithms"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "divide-and-conquer",
+      "char_start": 603,
+      "char_end": 621,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-divide-and-conquer"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "randomized algorithms",
+      "char_start": 650,
+      "char_end": 671,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-randomized"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "heapsort",
+      "char_start": 1175,
+      "char_end": 1183,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-heapsort"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "mergesort",
+      "char_start": 1185,
+      "char_end": 1194,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-mergesort"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "quicksort",
+      "char_start": 1196,
+      "char_end": 1205,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-quicksort"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "distribution sort",
+      "char_start": 1211,
+      "char_end": 1228,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "algorithm-distribution-sort"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "O(n log n)",
+      "char_start": 1566,
+      "char_end": 1576,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "metric-onlogn"
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "O(n2 )",
+      "char_start": 1615,
+      "char_end": 1621,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "metric-on2"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "Section 17.1 (page 506)",
+      "char_start": 1313,
+      "char_end": 1336,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "section-17-1"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "problem catalog",
+      "char_start": 1344,
+      "char_end": 1359,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "doc-problem-catalog"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Chapter 4",
+      "char_start": 0,
+      "char_end": 9,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "doc-chapter-4"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "applied_to",
+      "object_id": "m4",
+      "evidence_span_start": 964,
+      "evidence_span_end": 989
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "is_a",
+      "object_id": "m2",
+      "evidence_span_start": 1151,
+      "evidence_span_end": 1228
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "is_a",
+      "object_id": "m2",
+      "evidence_span_start": 1151,
+      "evidence_span_end": 1228
+    },
+    {
+      "subject_id": "m9",
+      "predicate": "is_a",
+      "object_id": "m2",
+      "evidence_span_start": 1151,
+      "evidence_span_end": 1228
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "is_a",
+      "object_id": "m2",
+      "evidence_span_start": 1151,
+      "evidence_span_end": 1228
+    },
+    {
+      "subject_id": "m5",
+      "predicate": "used_in",
+      "object_id": "m1",
+      "evidence_span_start": 571,
+      "evidence_span_end": 621
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "used_in",
+      "object_id": "m1",
+      "evidence_span_start": 650,
+      "evidence_span_end": 671
+    },
+    {
+      "subject_id": "m11",
+      "predicate": "improves_over",
+      "object_id": "m12",
+      "evidence_span_start": 1578,
+      "evidence_span_end": 1640
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "discussed_in",
+      "object_id": "m13",
+      "evidence_span_start": 1310,
+      "evidence_span_end": 1360
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "documents",
+      "object_id": "m1",
+      "evidence_span_start": 0,
+      "evidence_span_end": 9
+    }
+  ]
+}

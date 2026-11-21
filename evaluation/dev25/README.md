@@ -6,8 +6,15 @@ evaluation. It is not a completed gold dataset.
 - `manifest.tsv` — exactly 25 selected DEV documents, stable IDs, categories,
   source provenance and SHA-256 checksums.
 - `annotation-packets/` — master and per-category empty annotation packets.
-- `adjudication.tsv` — disagreement/adjudication template.
-- `ANNOTATION_GUIDELINES.md` — labeling and ambiguity rules.
+- `annotation-status.tsv` — per-document annotation/review/adjudication status.
+- `annotation-provenance.tsv` — annotator/evidence/AI-assistance provenance.
+- `gold/` — preserved 5 validated gold documents + pending list.
+- `gold-release.md` — release record (NOT RELEASED).
+- `ai-assistance-registration.md` — annotator model/estimate (preparation only).
+- `validate.py` — read-only manifest/gold validation script.
+- `checksums.sha256` — artifact checksums.
+- `adjudication/` — disagreement/adjudication records template.
+- `annotation-guidelines.md` — labeling and ambiguity rules.
 
 Only the five documents with `annotation_status=VALIDATED_GOLD` are currently
 validated. The other 20 are `UNLABELED`; no model-generated labels may be

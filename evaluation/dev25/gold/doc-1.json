@@ -1,0 +1,147 @@
+{
+  "document_id": "halcyon-7-directive",
+  "text_sha256": "d0cb872596836115c7b78b83c87857325f2fbddd59f36a2ed2d72280e8f058ec",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Halcyon-7",
+      "char_start": 8,
+      "char_end": 17,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-halcyon-7"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Maintenance Directive",
+      "char_start": 18,
+      "char_end": 39,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "doc-halcyon-7-directive"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 54,
+      "char_end": 76,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "component-halcyon7-coolant-loop"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "relief valve",
+      "char_start": 124,
+      "char_end": 136,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "component-relief-valve"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "secondary manifold",
+      "char_start": 144,
+      "char_end": 162,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "component-secondary-manifold"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "technicians",
+      "char_start": 237,
+      "char_end": 248,
+      "proposed_type": "Role",
+      "resolution_status": "resolved",
+      "canonical_id": "role-halcyon7-technician"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "pressure-test log",
+      "char_start": 262,
+      "char_end": 279,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "doc-pressure-test-log"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "ambient dew point",
+      "char_start": 312,
+      "char_end": 329,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "measurement-ambient-dew-point"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "ninety days",
+      "char_start": 107,
+      "char_end": 118,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "time-ninety-days"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "seventy days",
+      "char_start": 198,
+      "char_end": 210,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "time-seventy-days"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "has_component",
+      "object_id": "m3",
+      "evidence_span_start": 40,
+      "evidence_span_end": 119
+    },
+    {
+      "subject_id": "m4",
+      "predicate": "part_of",
+      "object_id": "m5",
+      "evidence_span_start": 124,
+      "evidence_span_end": 139
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "tested_every",
+      "object_id": "m9",
+      "evidence_span_start": 77,
+      "evidence_span_end": 118
+    },
+    {
+      "subject_id": "m4",
+      "predicate": "replaced_every",
+      "object_id": "m10",
+      "evidence_span_start": 163,
+      "evidence_span_end": 197
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "signs",
+      "object_id": "m7",
+      "evidence_span_start": 237,
+      "evidence_span_end": 279
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "records",
+      "object_id": "m8",
+      "evidence_span_start": 285,
+      "evidence_span_end": 329
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "documents",
+      "object_id": "m1",
+      "evidence_span_start": 0,
+      "evidence_span_end": 39
+    }
+  ]
+}
