@@ -16,9 +16,13 @@
   (`output_char_ratio`) for observability.
 - Oversized chunks return diagnostics with chunk ID, required tokens and provider
   cap.
+- `surface_anchoring.py` resolves exact surfaces deterministically; repeated
+  surfaces require unique contextual evidence or are rejected as
+  `AMBIGUOUS_SURFACE`; model offsets are retained only for diagnostics.
 - Tests cover chunk coverage/budget, 32K/64K caps, provider-capability rejection,
   bad spans/types, wrong predicates, missing endpoints, direction reversal,
-  chunk provenance and all 25 DEV gold v1.0 docs.
+  unique/repeated/missing/Unicode surfaces, BERT offset regression, chunk
+  provenance and all 25 DEV gold v1.0 docs.
 
 Run:
 ```bash

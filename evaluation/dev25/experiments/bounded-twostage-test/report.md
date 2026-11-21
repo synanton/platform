@@ -2,7 +2,8 @@
 
 **Status:** STOPPED on first subchunk; schema/offset failure.
 **Calls:** 1 (stage 1 only). Stage 2 and the other two chunks were not run.
-**Spend:** $0.00702786 (gateway ledger).
+**Spend:** $0.00702786 (gateway ledger; provider response reports the same
+amount, so no observed duplicate charge).
 
 ## Result
 
@@ -19,9 +20,10 @@ The offset failure is not a JSON failure. The model emitted syntactically valid
 entities but unreliable character offsets. The deterministic gate correctly
 rejected them.
 
-The next engineering fix should be surface anchoring: locate the emitted surface
-form in the source text, use the located span, and reject/flag ambiguous or
-missing surfaces. This must be tested offline before another model run.
+The offline fix is now implemented in `surface_anchoring.py`: exact surface
+search, unique-context disambiguation, ambiguity/missing rejection, preserved
+model offsets for diagnostics, and chunk/document offset reconstruction. It is
+tested offline only; no model rerun has occurred.
 
 ## Decision
 
