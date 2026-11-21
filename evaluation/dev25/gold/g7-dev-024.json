@@ -1,0 +1,915 @@
+{
+  "document_id": "large-final-100p.pdf",
+  "text_sha256": "a4beb9671821acae79e159fe644bc719093d6c7cbb2cd7cbc16608f6bda67d99",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Acme Corp",
+      "char_start": 36037,
+      "char_end": 36046,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Widget-43",
+      "char_start": 36056,
+      "char_end": 36065,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 36069,
+      "char_end": 36089,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Initech Ltd",
+      "char_start": 36091,
+      "char_end": 36102,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "ambient dew point",
+      "char_start": 36115,
+      "char_end": 36132,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Halcyon-7",
+      "char_start": 36149,
+      "char_end": 36158,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 36172,
+      "char_end": 36194,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Relief valve",
+      "char_start": 36196,
+      "char_end": 36208,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "ninety days",
+      "char_start": 36232,
+      "char_end": 36243,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Acme Corp",
+      "char_start": 48213,
+      "char_end": 48222,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Widget-91",
+      "char_start": 48232,
+      "char_end": 48241,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 48245,
+      "char_end": 48265,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "Initech Ltd",
+      "char_start": 48013,
+      "char_end": 48024,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "ambient dew point",
+      "char_start": 48037,
+      "char_end": 48054,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Halcyon-7",
+      "char_start": 48071,
+      "char_end": 48080,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 48094,
+      "char_end": 48116,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "Relief valve",
+      "char_start": 48118,
+      "char_end": 48130,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "ninety days",
+      "char_start": 48154,
+      "char_end": 48165,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "Acme Corp",
+      "char_start": 60122,
+      "char_end": 60131,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "Widget-38",
+      "char_start": 60141,
+      "char_end": 60150,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 60154,
+      "char_end": 60174,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "Initech Ltd",
+      "char_start": 60176,
+      "char_end": 60187,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "ambient dew point",
+      "char_start": 60200,
+      "char_end": 60217,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "Halcyon-7",
+      "char_start": 60234,
+      "char_end": 60243,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 60003,
+      "char_end": 60025,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "Relief valve",
+      "char_start": 60027,
+      "char_end": 60039,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "ninety days",
+      "char_start": 60063,
+      "char_end": 60074,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "Acme Corp",
+      "char_start": 84205,
+      "char_end": 84214,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "Widget-33",
+      "char_start": 84224,
+      "char_end": 84233,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 84237,
+      "char_end": 84257,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "Initech Ltd",
+      "char_start": 84007,
+      "char_end": 84018,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "ambient dew point",
+      "char_start": 84031,
+      "char_end": 84048,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "Halcyon-7",
+      "char_start": 84065,
+      "char_end": 84074,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 84088,
+      "char_end": 84110,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "Relief valve",
+      "char_start": 84112,
+      "char_end": 84124,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "ninety days",
+      "char_start": 84148,
+      "char_end": 84159,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "Acme Corp",
+      "char_start": 96129,
+      "char_end": 96138,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "Widget-80",
+      "char_start": 96148,
+      "char_end": 96157,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 96161,
+      "char_end": 96181,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m40",
+      "surface_form": "Initech Ltd",
+      "char_start": 96183,
+      "char_end": 96194,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m41",
+      "surface_form": "ambient dew point",
+      "char_start": 96207,
+      "char_end": 96224,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m42",
+      "surface_form": "Halcyon-7",
+      "char_start": 96241,
+      "char_end": 96250,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m43",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 96010,
+      "char_end": 96032,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m44",
+      "surface_form": "Relief valve",
+      "char_start": 96034,
+      "char_end": 96046,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m45",
+      "surface_form": "ninety days",
+      "char_start": 96070,
+      "char_end": 96081,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m46",
+      "surface_form": "Acme Corp",
+      "char_start": 108036,
+      "char_end": 108045,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m47",
+      "surface_form": "Widget-27",
+      "char_start": 108055,
+      "char_end": 108064,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m48",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 108068,
+      "char_end": 108088,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m49",
+      "surface_form": "Initech Ltd",
+      "char_start": 108090,
+      "char_end": 108101,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m50",
+      "surface_form": "ambient dew point",
+      "char_start": 108114,
+      "char_end": 108131,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m51",
+      "surface_form": "Halcyon-7",
+      "char_start": 108148,
+      "char_end": 108157,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m52",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 108171,
+      "char_end": 108193,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m53",
+      "surface_form": "Relief valve",
+      "char_start": 108195,
+      "char_end": 108207,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m54",
+      "surface_form": "ninety days",
+      "char_start": 108231,
+      "char_end": 108242,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m55",
+      "surface_form": "Acme Corp",
+      "char_start": 120212,
+      "char_end": 120221,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m56",
+      "surface_form": "Widget-75",
+      "char_start": 120231,
+      "char_end": 120240,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m57",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 120244,
+      "char_end": 120264,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m58",
+      "surface_form": "Initech Ltd",
+      "char_start": 120014,
+      "char_end": 120025,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m59",
+      "surface_form": "ambient dew point",
+      "char_start": 120038,
+      "char_end": 120055,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m60",
+      "surface_form": "Halcyon-7",
+      "char_start": 120072,
+      "char_end": 120081,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m61",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 120095,
+      "char_end": 120117,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m62",
+      "surface_form": "Relief valve",
+      "char_start": 120119,
+      "char_end": 120131,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m63",
+      "surface_form": "ninety days",
+      "char_start": 120155,
+      "char_end": 120166,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m64",
+      "surface_form": "Acme Corp",
+      "char_start": 132121,
+      "char_end": 132130,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m65",
+      "surface_form": "Widget-22",
+      "char_start": 132140,
+      "char_end": 132149,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m66",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 132153,
+      "char_end": 132173,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m67",
+      "surface_form": "Initech Ltd",
+      "char_start": 132175,
+      "char_end": 132186,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m68",
+      "surface_form": "ambient dew point",
+      "char_start": 132199,
+      "char_end": 132216,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m69",
+      "surface_form": "Halcyon-7",
+      "char_start": 132233,
+      "char_end": 132242,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m70",
+      "surface_form": "auxiliary coolant loop",
+      "char_start": 132002,
+      "char_end": 132024,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m71",
+      "surface_form": "Relief valve",
+      "char_start": 132026,
+      "char_end": 132038,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m72",
+      "surface_form": "ninety days",
+      "char_start": 132062,
+      "char_end": 132073,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "has",
+      "object_id": "m2",
+      "evidence_span_start": 36000,
+      "evidence_span_end": 36050
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "related_to",
+      "object_id": "m3",
+      "evidence_span_start": 36000,
+      "evidence_span_end": 36050
+    },
+    {
+      "subject_id": "m4",
+      "predicate": "records",
+      "object_id": "m5",
+      "evidence_span_start": 36052,
+      "evidence_span_end": 36105
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "requires",
+      "object_id": "m7",
+      "evidence_span_start": 36110,
+      "evidence_span_end": 36150
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "tested_every",
+      "object_id": "m9",
+      "evidence_span_start": 36152,
+      "evidence_span_end": 36197
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "has",
+      "object_id": "m11",
+      "evidence_span_start": 48000,
+      "evidence_span_end": 48052
+    },
+    {
+      "subject_id": "m13",
+      "predicate": "records",
+      "object_id": "m14",
+      "evidence_span_start": 48054,
+      "evidence_span_end": 48112
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "requires",
+      "object_id": "m16",
+      "evidence_span_start": 48117,
+      "evidence_span_end": 48158
+    },
+    {
+      "subject_id": "m17",
+      "predicate": "tested_every",
+      "object_id": "m18",
+      "evidence_span_start": 48160,
+      "evidence_span_end": 48207
+    },
+    {
+      "subject_id": "m19",
+      "predicate": "has",
+      "object_id": "m20",
+      "evidence_span_start": 60000,
+      "evidence_span_end": 60050
+    },
+    {
+      "subject_id": "m22",
+      "predicate": "records",
+      "object_id": "m23",
+      "evidence_span_start": 60052,
+      "evidence_span_end": 60105
+    },
+    {
+      "subject_id": "m24",
+      "predicate": "requires",
+      "object_id": "m25",
+      "evidence_span_start": 60110,
+      "evidence_span_end": 60151
+    },
+    {
+      "subject_id": "m26",
+      "predicate": "tested_every",
+      "object_id": "m27",
+      "evidence_span_start": 60153,
+      "evidence_span_end": 60199
+    },
+    {
+      "subject_id": "m28",
+      "predicate": "has",
+      "object_id": "m29",
+      "evidence_span_start": 84000,
+      "evidence_span_end": 84050
+    },
+    {
+      "subject_id": "m29",
+      "predicate": "related_to",
+      "object_id": "m30",
+      "evidence_span_start": 84000,
+      "evidence_span_end": 84050
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "records",
+      "object_id": "m32",
+      "evidence_span_start": 84052,
+      "evidence_span_end": 84101
+    },
+    {
+      "subject_id": "m33",
+      "predicate": "requires",
+      "object_id": "m34",
+      "evidence_span_start": 84110,
+      "evidence_span_end": 84151
+    },
+    {
+      "subject_id": "m35",
+      "predicate": "tested_every",
+      "object_id": "m36",
+      "evidence_span_start": 84153,
+      "evidence_span_end": 84199
+    },
+    {
+      "subject_id": "m37",
+      "predicate": "has",
+      "object_id": "m38",
+      "evidence_span_start": 96000,
+      "evidence_span_end": 96051
+    },
+    {
+      "subject_id": "m38",
+      "predicate": "related_to",
+      "object_id": "m39",
+      "evidence_span_start": 96000,
+      "evidence_span_end": 96051
+    },
+    {
+      "subject_id": "m40",
+      "predicate": "records",
+      "object_id": "m41",
+      "evidence_span_start": 96053,
+      "evidence_span_end": 96107
+    },
+    {
+      "subject_id": "m42",
+      "predicate": "requires",
+      "object_id": "m43",
+      "evidence_span_start": 96110,
+      "evidence_span_end": 96151
+    },
+    {
+      "subject_id": "m44",
+      "predicate": "tested_every",
+      "object_id": "m45",
+      "evidence_span_start": 96153,
+      "evidence_span_end": 96199
+    },
+    {
+      "subject_id": "m46",
+      "predicate": "has",
+      "object_id": "m47",
+      "evidence_span_start": 108000,
+      "evidence_span_end": 108028
+    },
+    {
+      "subject_id": "m47",
+      "predicate": "used_in",
+      "object_id": "m48",
+      "evidence_span_start": 108010,
+      "evidence_span_end": 108050
+    },
+    {
+      "subject_id": "m49",
+      "predicate": "records",
+      "object_id": "m50",
+      "evidence_span_start": 108052,
+      "evidence_span_end": 108089
+    },
+    {
+      "subject_id": "m51",
+      "predicate": "requires",
+      "object_id": "m52",
+      "evidence_span_start": 108110,
+      "evidence_span_end": 108151
+    },
+    {
+      "subject_id": "m53",
+      "predicate": "tested_every",
+      "object_id": "m54",
+      "evidence_span_start": 108153,
+      "evidence_span_end": 108199
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "has",
+      "object_id": "m56",
+      "evidence_span_start": 120000,
+      "evidence_span_end": 120050
+    },
+    {
+      "subject_id": "m56",
+      "predicate": "related_to",
+      "object_id": "m57",
+      "evidence_span_start": 120000,
+      "evidence_span_end": 120050
+    },
+    {
+      "subject_id": "m58",
+      "predicate": "records",
+      "object_id": "m59",
+      "evidence_span_start": 120052,
+      "evidence_span_end": 120101
+    },
+    {
+      "subject_id": "m60",
+      "predicate": "requires",
+      "object_id": "m61",
+      "evidence_span_start": 120110,
+      "evidence_span_end": 120152
+    },
+    {
+      "subject_id": "m62",
+      "predicate": "tested_every",
+      "object_id": "m63",
+      "evidence_span_start": 120154,
+      "evidence_span_end": 120201
+    },
+    {
+      "subject_id": "m64",
+      "predicate": "has",
+      "object_id": "m65",
+      "evidence_span_start": 132000,
+      "evidence_span_end": 132009
+    },
+    {
+      "subject_id": "m69",
+      "predicate": "requires",
+      "object_id": "m70",
+      "evidence_span_start": 132000,
+      "evidence_span_end": 132009
+    },
+    {
+      "subject_id": "m67",
+      "predicate": "records",
+      "object_id": "m68",
+      "evidence_span_start": 132000,
+      "evidence_span_end": 132009
+    },
+    {
+      "subject_id": "m71",
+      "predicate": "tested_every",
+      "object_id": "m72",
+      "evidence_span_start": 132000,
+      "evidence_span_end": 132009
+    }
+  ]
+}

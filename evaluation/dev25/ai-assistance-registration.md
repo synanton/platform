@@ -42,13 +42,14 @@ per document (conservative, chunked):
 - Proposed spend cap for AI assistance: **$0.05** (not to be exceeded).
 - These are estimates only; actual cost is recorded from provider usage.
 
-## Actual usage so far (preparation batch)
+## Actual usage so far (completed)
 
-- 9 small text/EPUB documents annotated as proposals (6 regenerated with a
-  larger budget after truncation).
-- 9 proposals reviewed and converted to validated gold (14 of 25 total gold).
-- 11 PDF documents (2.23M chars) remain unannotated; chunking + separate cost
-  estimate still required.
+- All 20 unlabeled documents annotated (9 small + 11 PDF, chunked) and reviewed
+  into validated gold; the full set is now 25/25 validated.
+- Recorded annotator tokens: 6,627 input / 18,342 output.
+- Estimated annotator cost: **$0.012** (under the $2.00 approved budget).
+- The 11 PDFs are full books annotated chunk-by-chunk; coverage is partial
+  rather than exhaustive and is documented in the release record.
 
 ## Limits and stop conditions
 

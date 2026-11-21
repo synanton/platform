@@ -1,0 +1,5179 @@
+{
+  "document_id": "outsourcing-agreement.pdf",
+  "text_sha256": "efdc607a19a80f5dd4d5a385baf876a08c5e51fdbaa08bc8332f16c422d4ae7e",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Paratek Pharmaceuticals, Inc.",
+      "char_start": 621,
+      "char_end": 650,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "CARBOGEN AMCIS AG",
+      "char_start": 765,
+      "char_end": 782,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Outsourcing Agreement",
+      "char_start": 486,
+      "char_end": 507,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "30 December 2016",
+      "char_start": 899,
+      "char_end": 915,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-30-december-2016"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "SEC",
+      "char_start": 288,
+      "char_end": 291,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Supplier",
+      "char_start": 10361,
+      "char_end": 10369,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "Customer",
+      "char_start": 2752,
+      "char_end": 2760,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Product",
+      "char_start": 2403,
+      "char_end": 2410,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Purchase Orders",
+      "char_start": 2305,
+      "char_end": 2320,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Steering Committee",
+      "char_start": 6586,
+      "char_end": 6604,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Release Testing",
+      "char_start": 4684,
+      "char_end": 4699,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "Stability Testing",
+      "char_start": 5020,
+      "char_end": 5037,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "Retention Samples",
+      "char_start": 4908,
+      "char_end": 4925,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "Reference Standards",
+      "char_start": 5132,
+      "char_end": 5151,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Process Qualification",
+      "char_start": 5259,
+      "char_end": 5280,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "Manufacturing Services",
+      "char_start": 2616,
+      "char_end": 2638,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "Invoices",
+      "char_start": 8112,
+      "char_end": 8120,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "Intellectual Property",
+      "char_start": 8557,
+      "char_end": 8578,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "Confidentiality",
+      "char_start": 9460,
+      "char_end": 9475,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "Insurance",
+      "char_start": 11775,
+      "char_end": 11784,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "Indemnification",
+      "char_start": 10818,
+      "char_end": 10833,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "Term",
+      "char_start": 2058,
+      "char_end": 2062,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "Forecasts",
+      "char_start": 3848,
+      "char_end": 3857,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "Territory Expansion",
+      "char_start": 3511,
+      "char_end": 3530,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "Alternative Supply",
+      "char_start": 3735,
+      "char_end": 3753,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "Subcontracting",
+      "char_start": 3176,
+      "char_end": 3190,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "Applicable Law",
+      "char_start": 1946,
+      "char_end": 1960,
+      "proposed_type": "Standard",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "[* * *]",
+      "char_start": 241,
+      "char_end": 248,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "Paratek Pharmaceuticals, Inc.",
+      "char_start": 16703,
+      "char_end": 16732,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "CARBOGEN AMCIS AG",
+      "char_start": 16843,
+      "char_end": 16860,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "Customer",
+      "char_start": 13355,
+      "char_end": 13363,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "Supplier",
+      "char_start": 13243,
+      "char_end": 13251,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "Parties",
+      "char_start": 17001,
+      "char_end": 17008,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "Agreement",
+      "char_start": 15894,
+      "char_end": 15903,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "Effective Date",
+      "char_start": 16671,
+      "char_end": 16685,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "December 30, 2016",
+      "char_start": 16647,
+      "char_end": 16664,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-december-30-2016"
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "Product",
+      "char_start": 17122,
+      "char_end": 17129,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "Exhibit B",
+      "char_start": 17223,
+      "char_end": 17232,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "Chemical Synthesis",
+      "char_start": 17234,
+      "char_end": 17252,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m40",
+      "surface_form": "United States Food and Drug Administration",
+      "char_start": 17318,
+      "char_end": 17360,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m41",
+      "surface_form": "FDA",
+      "char_start": 19793,
+      "char_end": 19796,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m42",
+      "surface_form": "EMEA",
+      "char_start": 19798,
+      "char_end": 19802,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m43",
+      "surface_form": "Investigational New Drug Application",
+      "char_start": 17396,
+      "char_end": 17432,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-investigational-new-drug-application"
+    },
+    {
+      "mention_id": "m44",
+      "surface_form": "IND",
+      "char_start": 17435,
+      "char_end": 17438,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m45",
+      "surface_form": "New Drug Application",
+      "char_start": 17412,
+      "char_end": 17432,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m46",
+      "surface_form": "NDA",
+      "char_start": 17470,
+      "char_end": 17473,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-nda"
+    },
+    {
+      "mention_id": "m47",
+      "surface_form": "APIs",
+      "char_start": 17725,
+      "char_end": 17729,
+      "proposed_type": "Material",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-apis"
+    },
+    {
+      "mention_id": "m48",
+      "surface_form": "Manufacturing",
+      "char_start": 17652,
+      "char_end": 17665,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m49",
+      "surface_form": "Affiliate",
+      "char_start": 18385,
+      "char_end": 18394,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m50",
+      "surface_form": "Applicable Law",
+      "char_start": 19596,
+      "char_end": 19610,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m51",
+      "surface_form": "Applicable Regulatory Authority",
+      "char_start": 19754,
+      "char_end": 19785,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m52",
+      "surface_form": "Business Day",
+      "char_start": 19911,
+      "char_end": 19923,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m53",
+      "surface_form": "Campaign",
+      "char_start": 20049,
+      "char_end": 20057,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m54",
+      "surface_form": "cGMP Requirements",
+      "char_start": 20229,
+      "char_end": 20246,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m55",
+      "surface_form": "ICH Q7A guideline",
+      "char_start": 20320,
+      "char_end": 20337,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ich-q7a-guideline"
+    },
+    {
+      "mention_id": "m56",
+      "surface_form": "Quality Agreement",
+      "char_start": 20442,
+      "char_end": 20459,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m57",
+      "surface_form": "Change of Control",
+      "char_start": 14878,
+      "char_end": 14895,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m58",
+      "surface_form": "Third Party",
+      "char_start": 21013,
+      "char_end": 21024,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m59",
+      "surface_form": "Confidential Information",
+      "char_start": 14044,
+      "char_end": 14068,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m60",
+      "surface_form": "Master Batch Record",
+      "char_start": 23382,
+      "char_end": 23401,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m61",
+      "surface_form": "Product Specifications",
+      "char_start": 23467,
+      "char_end": 23489,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m62",
+      "surface_form": "Customer Licensee",
+      "char_start": 23553,
+      "char_end": 23570,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m63",
+      "surface_form": "Customer Material",
+      "char_start": 23772,
+      "char_end": 23789,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m64",
+      "surface_form": "Customer Material Specifications",
+      "char_start": 23863,
+      "char_end": 23895,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m65",
+      "surface_form": "Boston, MA 02116, USA",
+      "char_start": 16801,
+      "char_end": 16822,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-boston-ma-02116-usa"
+    },
+    {
+      "mention_id": "m66",
+      "surface_form": "Hauptstrasse 171, CH 4416 Bubendorf, Switzerland",
+      "char_start": 16902,
+      "char_end": 16950,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-hauptstrasse-171-ch-4416-bubendorf-switzerland"
+    },
+    {
+      "mention_id": "m67",
+      "surface_form": "Boston, Massachusetts",
+      "char_start": 19972,
+      "char_end": 19993,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-boston-massachusetts"
+    },
+    {
+      "mention_id": "m68",
+      "surface_form": "Bubendorf, Switzerland",
+      "char_start": 16928,
+      "char_end": 16950,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m69",
+      "surface_form": "SEC",
+      "char_start": 14833,
+      "char_end": 14836,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m70",
+      "surface_form": "10-K/A",
+      "char_start": 14639,
+      "char_end": 14645,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m71",
+      "surface_form": "5/5/2017",
+      "char_start": 14647,
+      "char_end": 14655,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m72",
+      "surface_form": "Customer Product",
+      "char_start": 24060,
+      "char_end": 24076,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m73",
+      "surface_form": "Customer",
+      "char_start": 24060,
+      "char_end": 24068,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m74",
+      "surface_form": "Affiliates",
+      "char_start": 24154,
+      "char_end": 24164,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m75",
+      "surface_form": "Customer Licensees",
+      "char_start": 24168,
+      "char_end": 24186,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m76",
+      "surface_form": "Product",
+      "char_start": 24069,
+      "char_end": 24076,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m77",
+      "surface_form": "Customer Technology",
+      "char_start": 24240,
+      "char_end": 24259,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m78",
+      "surface_form": "Drug Master File",
+      "char_start": 24295,
+      "char_end": 24311,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m79",
+      "surface_form": "DMF",
+      "char_start": 24317,
+      "char_end": 24320,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dmf"
+    },
+    {
+      "mention_id": "m80",
+      "surface_form": "Applicable Regulatory Authority",
+      "char_start": 24348,
+      "char_end": 24379,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m81",
+      "surface_form": "Manufacture",
+      "char_start": 24467,
+      "char_end": 24478,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m82",
+      "surface_form": "EMEA",
+      "char_start": 24663,
+      "char_end": 24667,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m83",
+      "surface_form": "European Medicines Agency",
+      "char_start": 24679,
+      "char_end": 24704,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-european-medicines-agency"
+    },
+    {
+      "mention_id": "m84",
+      "surface_form": "FDA",
+      "char_start": 24738,
+      "char_end": 24741,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m85",
+      "surface_form": "United States Food and Drug Administration",
+      "char_start": 24753,
+      "char_end": 24795,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m86",
+      "surface_form": "FD&C Act",
+      "char_start": 24829,
+      "char_end": 24837,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m87",
+      "surface_form": "Federal Food, Drug and Cosmetic Act",
+      "char_start": 24849,
+      "char_end": 24884,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-federal-food-drug-and-cosmetic-act"
+    },
+    {
+      "mention_id": "m88",
+      "surface_form": "Fees",
+      "char_start": 24953,
+      "char_end": 24957,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m89",
+      "surface_form": "Exhibit C",
+      "char_start": 24987,
+      "char_end": 24996,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m90",
+      "surface_form": "Parties",
+      "char_start": 25023,
+      "char_end": 25030,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m91",
+      "surface_form": "Improvements",
+      "char_start": 25501,
+      "char_end": 25513,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m92",
+      "surface_form": "Intellectual Property",
+      "char_start": 25541,
+      "char_end": 25562,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m93",
+      "surface_form": "Rights",
+      "char_start": 25851,
+      "char_end": 25857,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m94",
+      "surface_form": "Confidential Information",
+      "char_start": 25934,
+      "char_end": 25958,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m95",
+      "surface_form": "Manufactured",
+      "char_start": 26191,
+      "char_end": 26203,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m96",
+      "surface_form": "Manufacturing",
+      "char_start": 26209,
+      "char_end": 26222,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m97",
+      "surface_form": "Products",
+      "char_start": 26275,
+      "char_end": 26283,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m98",
+      "surface_form": "Manufacturing Process",
+      "char_start": 26536,
+      "char_end": 26557,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m99",
+      "surface_form": "Master Batch Record",
+      "char_start": 26619,
+      "char_end": 26638,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m100",
+      "surface_form": "Supplier",
+      "char_start": 26647,
+      "char_end": 26655,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m101",
+      "surface_form": "cGMP Requirements",
+      "char_start": 27000,
+      "char_end": 27017,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m102",
+      "surface_form": "Materials",
+      "char_start": 27153,
+      "char_end": 27162,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m103",
+      "surface_form": "Customer Materials",
+      "char_start": 27362,
+      "char_end": 27380,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m104",
+      "surface_form": "Exhibit A",
+      "char_start": 27539,
+      "char_end": 27548,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m105",
+      "surface_form": "Product Specifications",
+      "char_start": 27564,
+      "char_end": 27586,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m106",
+      "surface_form": "Quality Agreement",
+      "char_start": 27676,
+      "char_end": 27693,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m107",
+      "surface_form": "Recall",
+      "char_start": 27936,
+      "char_end": 27942,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m108",
+      "surface_form": "Third Parties",
+      "char_start": 28114,
+      "char_end": 28127,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m109",
+      "surface_form": "Seizure",
+      "char_start": 28860,
+      "char_end": 28867,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m110",
+      "surface_form": "Services",
+      "char_start": 27868,
+      "char_end": 27876,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m111",
+      "surface_form": "Section 6.6 (Services)",
+      "char_start": 29282,
+      "char_end": 29304,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-6-6-services"
+    },
+    {
+      "mention_id": "m112",
+      "surface_form": "Supplier Technology",
+      "char_start": 29312,
+      "char_end": 29331,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m113",
+      "surface_form": "Term",
+      "char_start": 29402,
+      "char_end": 29406,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m114",
+      "surface_form": "Initial Term",
+      "char_start": 29418,
+      "char_end": 29430,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m115",
+      "surface_form": "Renewal Term",
+      "char_start": 29439,
+      "char_end": 29451,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m116",
+      "surface_form": "Territory",
+      "char_start": 29474,
+      "char_end": 29483,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m117",
+      "surface_form": "United States of America",
+      "char_start": 29495,
+      "char_end": 29519,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-united-states-of-america"
+    },
+    {
+      "mention_id": "m118",
+      "surface_form": "Section 3.10",
+      "char_start": 29644,
+      "char_end": 29656,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-3-10"
+    },
+    {
+      "mention_id": "m119",
+      "surface_form": "Third Party",
+      "char_start": 29664,
+      "char_end": 29675,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m120",
+      "surface_form": "Party",
+      "char_start": 29670,
+      "char_end": 29675,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m121",
+      "surface_form": "Affiliate",
+      "char_start": 24154,
+      "char_end": 24163,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m122",
+      "surface_form": "Yield",
+      "char_start": 29786,
+      "char_end": 29791,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-yield"
+    },
+    {
+      "mention_id": "m123",
+      "surface_form": "Customer Material",
+      "char_start": 27362,
+      "char_end": 27379,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m124",
+      "surface_form": "Agreement",
+      "char_start": 25055,
+      "char_end": 25064,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m125",
+      "surface_form": "U.S. Dollars",
+      "char_start": 30335,
+      "char_end": 30347,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m126",
+      "surface_form": "Exhibits",
+      "char_start": 30592,
+      "char_end": 30600,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m127",
+      "surface_form": "Exhibit",
+      "char_start": 24987,
+      "char_end": 24994,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m128",
+      "surface_form": "Laws",
+      "char_start": 31435,
+      "char_end": 31439,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m129",
+      "surface_form": "Effective Date",
+      "char_start": 31634,
+      "char_end": 31648,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m130",
+      "surface_form": "Purchase Order",
+      "char_start": 32379,
+      "char_end": 32393,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m131",
+      "surface_form": "Section 6.4",
+      "char_start": 32561,
+      "char_end": 32572,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-6-4"
+    },
+    {
+      "mention_id": "m132",
+      "surface_form": "Article 18",
+      "char_start": 32576,
+      "char_end": 32586,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m133",
+      "surface_form": "Bubendorf, Switzerland",
+      "char_start": 32913,
+      "char_end": 32935,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m134",
+      "surface_form": "Neuland, Switzerland",
+      "char_start": 32943,
+      "char_end": 32963,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-neuland-switzerland"
+    },
+    {
+      "mention_id": "m135",
+      "surface_form": "Facilities",
+      "char_start": 32987,
+      "char_end": 32997,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m136",
+      "surface_form": "Facility",
+      "char_start": 33012,
+      "char_end": 33020,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m137",
+      "surface_form": "Section 3.1(b)",
+      "char_start": 33283,
+      "char_end": 33297,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-3-1-b"
+    },
+    {
+      "mention_id": "m138",
+      "surface_form": "Purchase Orders",
+      "char_start": 32379,
+      "char_end": 32394,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m139",
+      "surface_form": "Section 6.1",
+      "char_start": 33382,
+      "char_end": 33393,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m140",
+      "surface_form": "Section 6.2",
+      "char_start": 33419,
+      "char_end": 33430,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m141",
+      "surface_form": "Section 3.1",
+      "char_start": 29644,
+      "char_end": 29655,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m142",
+      "surface_form": "Customer",
+      "char_start": 36128,
+      "char_end": 36136,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m143",
+      "surface_form": "Supplier",
+      "char_start": 37120,
+      "char_end": 37128,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m144",
+      "surface_form": "Product",
+      "char_start": 36047,
+      "char_end": 36054,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m145",
+      "surface_form": "Services",
+      "char_start": 36087,
+      "char_end": 36095,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m146",
+      "surface_form": "Purchase Orders",
+      "char_start": 36111,
+      "char_end": 36126,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m147",
+      "surface_form": "Customer Materials",
+      "char_start": 36159,
+      "char_end": 36177,
+      "proposed_type": "Material",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m148",
+      "surface_form": "Customer Material Specifications",
+      "char_start": 39156,
+      "char_end": 39188,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m149",
+      "surface_form": "Quality Agreement",
+      "char_start": 37089,
+      "char_end": 37106,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m150",
+      "surface_form": "Manufacturing Process",
+      "char_start": 42420,
+      "char_end": 42441,
+      "proposed_type": "Procedure",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m151",
+      "surface_form": "Master Batch Record",
+      "char_start": 43241,
+      "char_end": 43260,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m152",
+      "surface_form": "Product Specifications",
+      "char_start": 43690,
+      "char_end": 43712,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m153",
+      "surface_form": "Facility",
+      "char_start": 42689,
+      "char_end": 42697,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m154",
+      "surface_form": "Certificate of Analysis",
+      "char_start": 40302,
+      "char_end": 40325,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m155",
+      "surface_form": "BSE/TSE statement",
+      "char_start": 40329,
+      "char_end": 40346,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m156",
+      "surface_form": "Certificate of Compliance",
+      "char_start": 40353,
+      "char_end": 40378,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m157",
+      "surface_form": "MSDS",
+      "char_start": 40522,
+      "char_end": 40526,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m158",
+      "surface_form": "independent laboratory",
+      "char_start": 39060,
+      "char_end": 39082,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m159",
+      "surface_form": "Steering Committee",
+      "char_start": 47889,
+      "char_end": 47907,
+      "proposed_type": "Role",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m160",
+      "surface_form": "Short Term Rolling Forecast",
+      "char_start": 42520,
+      "char_end": 42547,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m161",
+      "surface_form": "Schedule 4 of the Quality Agreement",
+      "char_start": 46480,
+      "char_end": 46515,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m162",
+      "surface_form": "Third Party suppliers",
+      "char_start": 46445,
+      "char_end": 46466,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m163",
+      "surface_form": "cGMP documentation system",
+      "char_start": 44319,
+      "char_end": 44344,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m164",
+      "surface_form": "standard operating procedures",
+      "char_start": 44349,
+      "char_end": 44378,
+      "proposed_type": "Procedure",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m165",
+      "surface_form": "German language",
+      "char_start": 45020,
+      "char_end": 45035,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m166",
+      "surface_form": "Territory",
+      "char_start": 47631,
+      "char_end": 47640,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m167",
+      "surface_form": "Term",
+      "char_start": 42526,
+      "char_end": 42530,
+      "proposed_type": "Time",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m168",
+      "surface_form": "Affiliates",
+      "char_start": 42153,
+      "char_end": 42163,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m169",
+      "surface_form": "Applicable Law",
+      "char_start": 43584,
+      "char_end": 43598,
+      "proposed_type": "Standard",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m170",
+      "surface_form": "Campaign",
+      "char_start": 38034,
+      "char_end": 38042,
+      "proposed_type": "Event",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m171",
+      "surface_form": "Section 7.4",
+      "char_start": 48068,
+      "char_end": 48079,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-7-4"
+    },
+    {
+      "mention_id": "m172",
+      "surface_form": "Parties",
+      "char_start": 48088,
+      "char_end": 48095,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m173",
+      "surface_form": "Territory",
+      "char_start": 48158,
+      "char_end": 48167,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m174",
+      "surface_form": "Section 1.1",
+      "char_start": 48189,
+      "char_end": 48200,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-1-1"
+    },
+    {
+      "mention_id": "m175",
+      "surface_form": "Agreement",
+      "char_start": 48293,
+      "char_end": 48302,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m176",
+      "surface_form": "Term",
+      "char_start": 48516,
+      "char_end": 48520,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m177",
+      "surface_form": "Customer",
+      "char_start": 48539,
+      "char_end": 48547,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m178",
+      "surface_form": "Supplier",
+      "char_start": 48610,
+      "char_end": 48618,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m179",
+      "surface_form": "Customer Licensee",
+      "char_start": 48539,
+      "char_end": 48556,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m180",
+      "surface_form": "Product",
+      "char_start": 48787,
+      "char_end": 48794,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m181",
+      "surface_form": "Backup Supplier",
+      "char_start": 49371,
+      "char_end": 49386,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m182",
+      "surface_form": "Third Party",
+      "char_start": 49275,
+      "char_end": 49286,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m183",
+      "surface_form": "Affiliates",
+      "char_start": 49321,
+      "char_end": 49331,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m184",
+      "surface_form": "Supplier Technology",
+      "char_start": 49640,
+      "char_end": 49659,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m185",
+      "surface_form": "Confidential Information",
+      "char_start": 49792,
+      "char_end": 49816,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m186",
+      "surface_form": "Article 12",
+      "char_start": 49871,
+      "char_end": 49881,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m187",
+      "surface_form": "Services",
+      "char_start": 50317,
+      "char_end": 50325,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m188",
+      "surface_form": "Section 6.6",
+      "char_start": 50363,
+      "char_end": 50374,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m189",
+      "surface_form": "Scope of Work",
+      "char_start": 50444,
+      "char_end": 50457,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m190",
+      "surface_form": "Purchase Order",
+      "char_start": 51171,
+      "char_end": 51185,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m191",
+      "surface_form": "Article 4",
+      "char_start": 51490,
+      "char_end": 51499,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m192",
+      "surface_form": "Short Term Rolling Forecast",
+      "char_start": 51514,
+      "char_end": 51541,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m193",
+      "surface_form": "Effective Date",
+      "char_start": 51561,
+      "char_end": 51575,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m194",
+      "surface_form": "Business Day",
+      "char_start": 51664,
+      "char_end": 51676,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m195",
+      "surface_form": "Long Term Forecast",
+      "char_start": 53206,
+      "char_end": 53224,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m196",
+      "surface_form": "Article 5",
+      "char_start": 54452,
+      "char_end": 54461,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m197",
+      "surface_form": "Release Testing",
+      "char_start": 54486,
+      "char_end": 54501,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m198",
+      "surface_form": "Product Specifications",
+      "char_start": 54623,
+      "char_end": 54645,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m199",
+      "surface_form": "Master Batch Record",
+      "char_start": 54654,
+      "char_end": 54673,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m200",
+      "surface_form": "Certificate of Analysis",
+      "char_start": 55393,
+      "char_end": 55416,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m201",
+      "surface_form": "Certificate of Conformance",
+      "char_start": 55421,
+      "char_end": 55447,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-certificate-of-conformance"
+    },
+    {
+      "mention_id": "m202",
+      "surface_form": "Quality Agreement",
+      "char_start": 55685,
+      "char_end": 55702,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m203",
+      "surface_form": "cGMP Requirements",
+      "char_start": 55941,
+      "char_end": 55958,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m204",
+      "surface_form": "Applicable Law",
+      "char_start": 55960,
+      "char_end": 55974,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m205",
+      "surface_form": "Stability Testing",
+      "char_start": 56552,
+      "char_end": 56569,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m206",
+      "surface_form": "ICH regulations",
+      "char_start": 56767,
+      "char_end": 56782,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ich-regulations"
+    },
+    {
+      "mention_id": "m207",
+      "surface_form": "Reference Standards",
+      "char_start": 57007,
+      "char_end": 57026,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m208",
+      "surface_form": "Process Qualification",
+      "char_start": 57350,
+      "char_end": 57371,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m209",
+      "surface_form": "Article 6",
+      "char_start": 57976,
+      "char_end": 57985,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m210",
+      "surface_form": "Fee Schedule",
+      "char_start": 58286,
+      "char_end": 58298,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m211",
+      "surface_form": "Exhibit C",
+      "char_start": 58310,
+      "char_end": 58319,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m212",
+      "surface_form": "Agreement",
+      "char_start": 60015,
+      "char_end": 60024,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m213",
+      "surface_form": "Parties",
+      "char_start": 60083,
+      "char_end": 60090,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m214",
+      "surface_form": "Supplier",
+      "char_start": 60147,
+      "char_end": 60155,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m215",
+      "surface_form": "Purchase Order",
+      "char_start": 60131,
+      "char_end": 60145,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m216",
+      "surface_form": "Product",
+      "char_start": 60209,
+      "char_end": 60216,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m217",
+      "surface_form": "Customer",
+      "char_start": 60266,
+      "char_end": 60274,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m218",
+      "surface_form": "Section 6.1",
+      "char_start": 60281,
+      "char_end": 60292,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m219",
+      "surface_form": "Manufacture",
+      "char_start": 60650,
+      "char_end": 60661,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m220",
+      "surface_form": "Section 3.4",
+      "char_start": 61161,
+      "char_end": 61172,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-3-4"
+    },
+    {
+      "mention_id": "m221",
+      "surface_form": "Section 6.2",
+      "char_start": 61174,
+      "char_end": 61185,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m222",
+      "surface_form": "Section 6.3",
+      "char_start": 61187,
+      "char_end": 61198,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-6-3"
+    },
+    {
+      "mention_id": "m223",
+      "surface_form": "Section 6.5",
+      "char_start": 61203,
+      "char_end": 61214,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-6-5"
+    },
+    {
+      "mention_id": "m224",
+      "surface_form": "Services",
+      "char_start": 61615,
+      "char_end": 61623,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m225",
+      "surface_form": "Term",
+      "char_start": 61653,
+      "char_end": 61657,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m226",
+      "surface_form": "Scope of Work",
+      "char_start": 62485,
+      "char_end": 62498,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m227",
+      "surface_form": "Product Specifications",
+      "char_start": 63259,
+      "char_end": 63281,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m228",
+      "surface_form": "cGMP Requirements",
+      "char_start": 63361,
+      "char_end": 63378,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m229",
+      "surface_form": "Certificate of Analysis",
+      "char_start": 65858,
+      "char_end": 65881,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m230",
+      "surface_form": "Certificate of Compliance",
+      "char_start": 65886,
+      "char_end": 65911,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m231",
+      "surface_form": "Exhibit D",
+      "char_start": 65999,
+      "char_end": 66008,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m232",
+      "surface_form": "Steering Committee",
+      "char_start": 66195,
+      "char_end": 66213,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m233",
+      "surface_form": "Out Of Specification",
+      "char_start": 68346,
+      "char_end": 68366,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m234",
+      "surface_form": "Notice of Rejection",
+      "char_start": 68686,
+      "char_end": 68705,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m235",
+      "surface_form": "independent laboratory",
+      "char_start": 69776,
+      "char_end": 69798,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m236",
+      "surface_form": "Fees",
+      "char_start": 71751,
+      "char_end": 71755,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m237",
+      "surface_form": "Supplier",
+      "char_start": 72109,
+      "char_end": 72117,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m238",
+      "surface_form": "Customer",
+      "char_start": 72233,
+      "char_end": 72241,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m239",
+      "surface_form": "Agreement",
+      "char_start": 72044,
+      "char_end": 72053,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m240",
+      "surface_form": "Fees",
+      "char_start": 72059,
+      "char_end": 72063,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m241",
+      "surface_form": "Purchase Order",
+      "char_start": 72082,
+      "char_end": 72096,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m242",
+      "surface_form": "Manufacturing",
+      "char_start": 72153,
+      "char_end": 72166,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m243",
+      "surface_form": "characterization activities",
+      "char_start": 72171,
+      "char_end": 72198,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-characterization-activities"
+    },
+    {
+      "mention_id": "m244",
+      "surface_form": "Materials",
+      "char_start": 72203,
+      "char_end": 72212,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m245",
+      "surface_form": "Section 3.5",
+      "char_start": 72343,
+      "char_end": 72354,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m246",
+      "surface_form": "cost estimate",
+      "char_start": 72393,
+      "char_end": 72406,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-cost-estimate"
+    },
+    {
+      "mention_id": "m247",
+      "surface_form": "Term",
+      "char_start": 72459,
+      "char_end": 72463,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m248",
+      "surface_form": "Exhibit C",
+      "char_start": 72557,
+      "char_end": 72566,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m249",
+      "surface_form": "Steering Committee",
+      "char_start": 72866,
+      "char_end": 72884,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m250",
+      "surface_form": "Product",
+      "char_start": 72983,
+      "char_end": 72990,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m251",
+      "surface_form": "Confidential Information",
+      "char_start": 73183,
+      "char_end": 73207,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m252",
+      "surface_form": "Taxes",
+      "char_start": 74488,
+      "char_end": 74493,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m253",
+      "surface_form": "Article 10",
+      "char_start": 75278,
+      "char_end": 75288,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-article-10"
+    },
+    {
+      "mention_id": "m254",
+      "surface_form": "Section 10.2",
+      "char_start": 75372,
+      "char_end": 75384,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m255",
+      "surface_form": "Section 6.2",
+      "char_start": 75442,
+      "char_end": 75453,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m256",
+      "surface_form": "invoice",
+      "char_start": 75386,
+      "char_end": 75393,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m257",
+      "surface_form": "lot number",
+      "char_start": 75605,
+      "char_end": 75615,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-lot-number"
+    },
+    {
+      "mention_id": "m258",
+      "surface_form": "batch",
+      "char_start": 75624,
+      "char_end": 75629,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m259",
+      "surface_form": "U.S. Dollars",
+      "char_start": 77309,
+      "char_end": 77321,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m260",
+      "surface_form": "SWIFT bank transfer",
+      "char_start": 77325,
+      "char_end": 77344,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-swift-bank-transfer"
+    },
+    {
+      "mention_id": "m261",
+      "surface_form": "Article 11",
+      "char_start": 77428,
+      "char_end": 77438,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m262",
+      "surface_form": "Customer Technology",
+      "char_start": 77629,
+      "char_end": 77648,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m263",
+      "surface_form": "Chemical Synthesis",
+      "char_start": 77673,
+      "char_end": 77691,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m264",
+      "surface_form": "Supplier Technology",
+      "char_start": 77731,
+      "char_end": 77750,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m265",
+      "surface_form": "Manufacturing Process",
+      "char_start": 77796,
+      "char_end": 77817,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m266",
+      "surface_form": "Intellectual Property",
+      "char_start": 77439,
+      "char_end": 77460,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m267",
+      "surface_form": "patent",
+      "char_start": 77861,
+      "char_end": 77867,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m268",
+      "surface_form": "Third Party",
+      "char_start": 77918,
+      "char_end": 77929,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m269",
+      "surface_form": "Section 11.3",
+      "char_start": 79085,
+      "char_end": 79097,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m270",
+      "surface_form": "license",
+      "char_start": 77890,
+      "char_end": 77897,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m271",
+      "surface_form": "subcontractors",
+      "char_start": 79484,
+      "char_end": 79498,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m272",
+      "surface_form": "Inventions",
+      "char_start": 79680,
+      "char_end": 79690,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m273",
+      "surface_form": "Improvements",
+      "char_start": 79731,
+      "char_end": 79743,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m274",
+      "surface_form": "trademark",
+      "char_start": 80573,
+      "char_end": 80582,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m275",
+      "surface_form": "Article 12",
+      "char_start": 81191,
+      "char_end": 81201,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m276",
+      "surface_form": "Section 18.4",
+      "char_start": 83232,
+      "char_end": 83244,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-18-4"
+    },
+    {
+      "mention_id": "m277",
+      "surface_form": "corporate counsel",
+      "char_start": 81809,
+      "char_end": 81826,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m278",
+      "surface_form": "employees",
+      "char_start": 80174,
+      "char_end": 80183,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m279",
+      "surface_form": "contractors",
+      "char_start": 79487,
+      "char_end": 79498,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m280",
+      "surface_form": "Services",
+      "char_start": 82380,
+      "char_end": 82388,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m281",
+      "surface_form": "PARATEK PHARMACEUTICALS, INC.",
+      "char_start": 74220,
+      "char_end": 74249,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m282",
+      "surface_form": "10-K/A",
+      "char_start": 74251,
+      "char_end": 74257,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m283",
+      "surface_form": "SEC",
+      "char_start": 74447,
+      "char_end": 74450,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m284",
+      "surface_form": "PARATEK PHARMACEUTICALS, INC.",
+      "char_start": 84113,
+      "char_end": 84142,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m285",
+      "surface_form": "SECURITIES AND EXCHANGE COMMISSION",
+      "char_start": 84340,
+      "char_end": 84374,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m286",
+      "surface_form": "Agreement",
+      "char_start": 84430,
+      "char_end": 84439,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m287",
+      "surface_form": "Confidential Information",
+      "char_start": 84496,
+      "char_end": 84520,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m288",
+      "surface_form": "Party",
+      "char_start": 84534,
+      "char_end": 84539,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m289",
+      "surface_form": "governmental agency",
+      "char_start": 84611,
+      "char_end": 84630,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m290",
+      "surface_form": "regulatory approval",
+      "char_start": 84648,
+      "char_end": 84667,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m291",
+      "surface_form": "license",
+      "char_start": 84671,
+      "char_end": 84678,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m292",
+      "surface_form": "legal process",
+      "char_start": 84706,
+      "char_end": 84719,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m293",
+      "surface_form": "subpoena",
+      "char_start": 84721,
+      "char_end": 84729,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m294",
+      "surface_form": "warrant",
+      "char_start": 84731,
+      "char_end": 84738,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m295",
+      "surface_form": "court order",
+      "char_start": 84743,
+      "char_end": 84754,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m296",
+      "surface_form": "Supplier",
+      "char_start": 85164,
+      "char_end": 85172,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m297",
+      "surface_form": "Supplier Employees",
+      "char_start": 85469,
+      "char_end": 85487,
+      "proposed_type": "Role",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supplier-employees"
+    },
+    {
+      "mention_id": "m298",
+      "surface_form": "Affiliates",
+      "char_start": 85316,
+      "char_end": 85326,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m299",
+      "surface_form": "Products",
+      "char_start": 85421,
+      "char_end": 85429,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m300",
+      "surface_form": "Customer",
+      "char_start": 85440,
+      "char_end": 85448,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m301",
+      "surface_form": "inventions",
+      "char_start": 85950,
+      "char_end": 85960,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m302",
+      "surface_form": "intellectual property rights",
+      "char_start": 86070,
+      "char_end": 86098,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m303",
+      "surface_form": "Applicable Law",
+      "char_start": 86690,
+      "char_end": 86704,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m304",
+      "surface_form": "Article 12",
+      "char_start": 86917,
+      "char_end": 86927,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m305",
+      "surface_form": "termination of this Agreement",
+      "char_start": 86946,
+      "char_end": 86975,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m306",
+      "surface_form": "Article 13",
+      "char_start": 87435,
+      "char_end": 87445,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-article-13"
+    },
+    {
+      "mention_id": "m307",
+      "surface_form": "Master Batch Record",
+      "char_start": 89364,
+      "char_end": 89383,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m308",
+      "surface_form": "Product Specifications",
+      "char_start": 89389,
+      "char_end": 89411,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m309",
+      "surface_form": "Quality Agreement",
+      "char_start": 89433,
+      "char_end": 89450,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m310",
+      "surface_form": "cGMP Requirements",
+      "char_start": 89471,
+      "char_end": 89488,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m311",
+      "surface_form": "Facilities",
+      "char_start": 89577,
+      "char_end": 89587,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m312",
+      "surface_form": "21 U.S.C. \u00a7 335a",
+      "char_start": 90103,
+      "char_end": 90119,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-21-u-s-c-335a"
+    },
+    {
+      "mention_id": "m313",
+      "surface_form": "FD&C Act",
+      "char_start": 90194,
+      "char_end": 90202,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m314",
+      "surface_form": "Out of Specification Product",
+      "char_start": 91278,
+      "char_end": 91306,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m315",
+      "surface_form": "Article 8",
+      "char_start": 91384,
+      "char_end": 91393,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m316",
+      "surface_form": "Article 14",
+      "char_start": 95407,
+      "char_end": 95417,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m317",
+      "surface_form": "Claims",
+      "char_start": 95762,
+      "char_end": 95768,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m318",
+      "surface_form": "Third Parties",
+      "char_start": 88294,
+      "char_end": 88307,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m319",
+      "surface_form": "Supplier",
+      "char_start": 96099,
+      "char_end": 96107,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m320",
+      "surface_form": "Customer",
+      "char_start": 96139,
+      "char_end": 96147,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m321",
+      "surface_form": "Section 14.2",
+      "char_start": 96160,
+      "char_end": 96172,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-14-2"
+    },
+    {
+      "mention_id": "m322",
+      "surface_form": "Indemnification of Customer",
+      "char_start": 96189,
+      "char_end": 96216,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m323",
+      "surface_form": "Affiliates",
+      "char_start": 96285,
+      "char_end": 96295,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m324",
+      "surface_form": "Customer Licensees",
+      "char_start": 96300,
+      "char_end": 96318,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m325",
+      "surface_form": "Claims",
+      "char_start": 96426,
+      "char_end": 96432,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m326",
+      "surface_form": "Supplier Representatives",
+      "char_start": 97115,
+      "char_end": 97139,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m327",
+      "surface_form": "Intellectual Property Indemnity",
+      "char_start": 97387,
+      "char_end": 97418,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m328",
+      "surface_form": "Indemnifier",
+      "char_start": 97433,
+      "char_end": 97444,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m329",
+      "surface_form": "Indemnified Party",
+      "char_start": 97542,
+      "char_end": 97559,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m330",
+      "surface_form": "Third Party",
+      "char_start": 97593,
+      "char_end": 97604,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m331",
+      "surface_form": "Intellectual Property",
+      "char_start": 97387,
+      "char_end": 97408,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m332",
+      "surface_form": "Customer Materials",
+      "char_start": 97668,
+      "char_end": 97686,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m333",
+      "surface_form": "Product Information",
+      "char_start": 97688,
+      "char_end": 97707,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m334",
+      "surface_form": "Product Specifications",
+      "char_start": 97709,
+      "char_end": 97731,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m335",
+      "surface_form": "Customer Technology",
+      "char_start": 97733,
+      "char_end": 97752,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m336",
+      "surface_form": "Tufts Technology",
+      "char_start": 97756,
+      "char_end": 97772,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m337",
+      "surface_form": "Intellectual Property Rights",
+      "char_start": 97845,
+      "char_end": 97873,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-intellectual-property-rights"
+    },
+    {
+      "mention_id": "m338",
+      "surface_form": "Improvements",
+      "char_start": 98856,
+      "char_end": 98868,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m339",
+      "surface_form": "Article 14",
+      "char_start": 99044,
+      "char_end": 99054,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m340",
+      "surface_form": "Section 14.4",
+      "char_start": 99136,
+      "char_end": 99148,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-14-4"
+    },
+    {
+      "mention_id": "m341",
+      "surface_form": "Indemnification Procedure",
+      "char_start": 98984,
+      "char_end": 99009,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m342",
+      "surface_form": "Indemnitee",
+      "char_start": 99342,
+      "char_end": 99352,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m343",
+      "surface_form": "Article 15 Insurance",
+      "char_start": 101131,
+      "char_end": 101151,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-article-15-insurance"
+    },
+    {
+      "mention_id": "m344",
+      "surface_form": "Insurance Coverage",
+      "char_start": 101157,
+      "char_end": 101175,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m345",
+      "surface_form": "Article 15",
+      "char_start": 101131,
+      "char_end": 101141,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m346",
+      "surface_form": "Evidence of Insurance",
+      "char_start": 101360,
+      "char_end": 101381,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m347",
+      "surface_form": "Manufacture of the Product",
+      "char_start": 101557,
+      "char_end": 101583,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m348",
+      "surface_form": "Product",
+      "char_start": 97688,
+      "char_end": 97695,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m349",
+      "surface_form": "30 days",
+      "char_start": 101684,
+      "char_end": 101691,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-30-days"
+    },
+    {
+      "mention_id": "m350",
+      "surface_form": "Article 16 Legal and Regulatory",
+      "char_start": 102049,
+      "char_end": 102080,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-article-16-legal-and-regulatory"
+    },
+    {
+      "mention_id": "m351",
+      "surface_form": "Compliance with Laws",
+      "char_start": 102086,
+      "char_end": 102106,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m352",
+      "surface_form": "Applicable Law",
+      "char_start": 102360,
+      "char_end": 102374,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m353",
+      "surface_form": "local governmental authorities",
+      "char_start": 102614,
+      "char_end": 102644,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m354",
+      "surface_form": "import and/or export licenses or permits",
+      "char_start": 102875,
+      "char_end": 102915,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m355",
+      "surface_form": "Maintenance of Records",
+      "char_start": 103643,
+      "char_end": 103665,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m356",
+      "surface_form": "cGMP Requirements",
+      "char_start": 103755,
+      "char_end": 103772,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m357",
+      "surface_form": "test records",
+      "char_start": 103887,
+      "char_end": 103899,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-test-records"
+    },
+    {
+      "mention_id": "m358",
+      "surface_form": "samples",
+      "char_start": 103731,
+      "char_end": 103738,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m359",
+      "surface_form": "expiration date",
+      "char_start": 104103,
+      "char_end": 104118,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m360",
+      "surface_form": "Notice of Reports",
+      "char_start": 104159,
+      "char_end": 104176,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m361",
+      "surface_form": "FDA Form 483 observations",
+      "char_start": 104483,
+      "char_end": 104508,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-fda-form-483-observations"
+    },
+    {
+      "mention_id": "m362",
+      "surface_form": "FDA warning letters",
+      "char_start": 104510,
+      "char_end": 104529,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-fda-warning-letters"
+    },
+    {
+      "mention_id": "m363",
+      "surface_form": "FDA",
+      "char_start": 104483,
+      "char_end": 104486,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m364",
+      "surface_form": "Applicable Regulatory Authority",
+      "char_start": 104609,
+      "char_end": 104640,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m365",
+      "surface_form": "Drug Master Files",
+      "char_start": 104788,
+      "char_end": 104805,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m366",
+      "surface_form": "production site of Supplier",
+      "char_start": 104964,
+      "char_end": 104991,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m367",
+      "surface_form": "Compliance with Regulatory Standards",
+      "char_start": 105186,
+      "char_end": 105222,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m368",
+      "surface_form": "audits",
+      "char_start": 105517,
+      "char_end": 105523,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m369",
+      "surface_form": "inspections",
+      "char_start": 105525,
+      "char_end": 105536,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m370",
+      "surface_form": "Facility",
+      "char_start": 104384,
+      "char_end": 104392,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m371",
+      "surface_form": "Inspection",
+      "char_start": 106212,
+      "char_end": 106222,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m372",
+      "surface_form": "Section 3.6",
+      "char_start": 106289,
+      "char_end": 106300,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-3-6"
+    },
+    {
+      "mention_id": "m373",
+      "surface_form": "Quality Agreement",
+      "char_start": 106350,
+      "char_end": 106367,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m374",
+      "surface_form": "Article 17 Recalls",
+      "char_start": 107092,
+      "char_end": 107110,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-article-17-recalls"
+    },
+    {
+      "mention_id": "m375",
+      "surface_form": "Safety",
+      "char_start": 107116,
+      "char_end": 107122,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m376",
+      "surface_form": "adverse events",
+      "char_start": 107213,
+      "char_end": 107227,
+      "proposed_type": "Event",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-adverse-events"
+    },
+    {
+      "mention_id": "m377",
+      "surface_form": "product complaints",
+      "char_start": 107231,
+      "char_end": 107249,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-product-complaints"
+    },
+    {
+      "mention_id": "m378",
+      "surface_form": "Recall",
+      "char_start": 107103,
+      "char_end": 107109,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m379",
+      "surface_form": "notification",
+      "char_start": 107484,
+      "char_end": 107496,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m380",
+      "surface_form": "Recall",
+      "char_start": 108036,
+      "char_end": 108042,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m381",
+      "surface_form": "Customer",
+      "char_start": 108047,
+      "char_end": 108055,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m382",
+      "surface_form": "Supplier",
+      "char_start": 108074,
+      "char_end": 108082,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m383",
+      "surface_form": "Seizure",
+      "char_start": 108134,
+      "char_end": 108141,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m384",
+      "surface_form": "Product",
+      "char_start": 108746,
+      "char_end": 108753,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m385",
+      "surface_form": "Term",
+      "char_start": 108765,
+      "char_end": 108769,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m386",
+      "surface_form": "Purchase Order",
+      "char_start": 109124,
+      "char_end": 109138,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m387",
+      "surface_form": "Agreement",
+      "char_start": 108446,
+      "char_end": 108455,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m388",
+      "surface_form": "Effective Date",
+      "char_start": 109848,
+      "char_end": 109862,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m389",
+      "surface_form": "Section 2.1",
+      "char_start": 109898,
+      "char_end": 109909,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-2-1"
+    },
+    {
+      "mention_id": "m390",
+      "surface_form": "Initial Term",
+      "char_start": 110163,
+      "char_end": 110175,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m391",
+      "surface_form": "Renewal Term",
+      "char_start": 110389,
+      "char_end": 110401,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m392",
+      "surface_form": "Section 14.3",
+      "char_start": 111869,
+      "char_end": 111881,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-14-3"
+    },
+    {
+      "mention_id": "m393",
+      "surface_form": "Section 11.3",
+      "char_start": 112908,
+      "char_end": 112920,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m394",
+      "surface_form": "Section 18.5",
+      "char_start": 113069,
+      "char_end": 113081,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m395",
+      "surface_form": "Manufacturing batch records",
+      "char_start": 113215,
+      "char_end": 113242,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-manufacturing-batch-records"
+    },
+    {
+      "mention_id": "m396",
+      "surface_form": "analytical reports",
+      "char_start": 113247,
+      "char_end": 113265,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-analytical-reports"
+    },
+    {
+      "mention_id": "m397",
+      "surface_form": "Section 18.1(d)",
+      "char_start": 113496,
+      "char_end": 113511,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m398",
+      "surface_form": "Scopes of Work",
+      "char_start": 113543,
+      "char_end": 113557,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m399",
+      "surface_form": "Sections 6.4 and 6.6",
+      "char_start": 113898,
+      "char_end": 113918,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sections-6-4-and-6-6"
+    },
+    {
+      "mention_id": "m400",
+      "surface_form": "Section 7.2(d)",
+      "char_start": 114154,
+      "char_end": 114168,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-7-2-d"
+    },
+    {
+      "mention_id": "m401",
+      "surface_form": "Third Party supplier",
+      "char_start": 114596,
+      "char_end": 114616,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m402",
+      "surface_form": "Facilities",
+      "char_start": 114877,
+      "char_end": 114887,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m403",
+      "surface_form": "Applicable Law",
+      "char_start": 115867,
+      "char_end": 115881,
+      "proposed_type": "Standard",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m404",
+      "surface_form": "Confidential Information",
+      "char_start": 115955,
+      "char_end": 115979,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m405",
+      "surface_form": "Article 1",
+      "char_start": 109770,
+      "char_end": 109779,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m406",
+      "surface_form": "Section 2.2",
+      "char_start": 117825,
+      "char_end": 117836,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-2-2"
+    },
+    {
+      "mention_id": "m407",
+      "surface_form": "Section 5.3",
+      "char_start": 117880,
+      "char_end": 117891,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-5-3"
+    },
+    {
+      "mention_id": "m408",
+      "surface_form": "Article 9",
+      "char_start": 117913,
+      "char_end": 117922,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m409",
+      "surface_form": "Article 11",
+      "char_start": 117999,
+      "char_end": 118009,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m410",
+      "surface_form": "Section 13.3",
+      "char_start": 118134,
+      "char_end": 118146,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-13-3"
+    },
+    {
+      "mention_id": "m411",
+      "surface_form": "Section 13.4",
+      "char_start": 118168,
+      "char_end": 118180,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-13-4"
+    },
+    {
+      "mention_id": "m412",
+      "surface_form": "Article 14",
+      "char_start": 118237,
+      "char_end": 118247,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m413",
+      "surface_form": "Article 15",
+      "char_start": 118267,
+      "char_end": 118277,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m414",
+      "surface_form": "Section 16.2",
+      "char_start": 118291,
+      "char_end": 118303,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-16-2"
+    },
+    {
+      "mention_id": "m415",
+      "surface_form": "Section 16.4",
+      "char_start": 118330,
+      "char_end": 118342,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-16-4"
+    },
+    {
+      "mention_id": "m416",
+      "surface_form": "Section 16.6",
+      "char_start": 118364,
+      "char_end": 118376,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-section-16-6"
+    },
+    {
+      "mention_id": "m417",
+      "surface_form": "Sections 17.2",
+      "char_start": 118391,
+      "char_end": 118404,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sections-17-2"
+    },
+    {
+      "mention_id": "m418",
+      "surface_form": "Article 19",
+      "char_start": 119085,
+      "char_end": 119095,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m419",
+      "surface_form": "Article 8",
+      "char_start": 119146,
+      "char_end": 119155,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m420",
+      "surface_form": "Supplier",
+      "char_start": 120209,
+      "char_end": 120217,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m421",
+      "surface_form": "Customer",
+      "char_start": 120126,
+      "char_end": 120134,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m422",
+      "surface_form": "Product",
+      "char_start": 120044,
+      "char_end": 120051,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m423",
+      "surface_form": "Affiliate",
+      "char_start": 120113,
+      "char_end": 120122,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m424",
+      "surface_form": "Customer Licensee",
+      "char_start": 120140,
+      "char_end": 120157,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m425",
+      "surface_form": "Agreement",
+      "char_start": 120255,
+      "char_end": 120264,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m426",
+      "surface_form": "Change of Control",
+      "char_start": 120460,
+      "char_end": 120477,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m427",
+      "surface_form": "Term",
+      "char_start": 120489,
+      "char_end": 120493,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m428",
+      "surface_form": "ICC Rules of Arbitration",
+      "char_start": 121740,
+      "char_end": 121764,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-icc-rules-of-arbitration"
+    },
+    {
+      "mention_id": "m429",
+      "surface_form": "Delaware",
+      "char_start": 121905,
+      "char_end": 121913,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-delaware"
+    },
+    {
+      "mention_id": "m430",
+      "surface_form": "Force Majeure",
+      "char_start": 122421,
+      "char_end": 122434,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m431",
+      "surface_form": "Scope of Work",
+      "char_start": 123767,
+      "char_end": 123780,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m432",
+      "surface_form": "Services",
+      "char_start": 123972,
+      "char_end": 123980,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m433",
+      "surface_form": "highest industry standards",
+      "char_start": 124046,
+      "char_end": 124072,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-highest-industry-standards"
+    },
+    {
+      "mention_id": "m434",
+      "surface_form": "Correspondence",
+      "char_start": 125901,
+      "char_end": 125915,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m435",
+      "surface_form": "Business Day",
+      "char_start": 126364,
+      "char_end": 126376,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m436",
+      "surface_form": "CARBOGEN AMCIS AG",
+      "char_start": 126495,
+      "char_end": 126512,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m437",
+      "surface_form": "CEO",
+      "char_start": 126575,
+      "char_end": 126578,
+      "proposed_type": "Role",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ceo"
+    },
+    {
+      "mention_id": "m438",
+      "surface_form": "Paratek Pharmaceuticals, Inc.",
+      "char_start": 126653,
+      "char_end": 126682,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m439",
+      "surface_form": "General Counsel",
+      "char_start": 126741,
+      "char_end": 126756,
+      "proposed_type": "Role",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-general-counsel"
+    },
+    {
+      "mention_id": "m440",
+      "surface_form": "Quality Agreement",
+      "char_start": 127428,
+      "char_end": 127445,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m441",
+      "surface_form": "Exhibits",
+      "char_start": 127454,
+      "char_end": 127462,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m442",
+      "surface_form": "William M. Haskel",
+      "char_start": 129585,
+      "char_end": 129602,
+      "proposed_type": "Person",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m443",
+      "surface_form": "Sr. Vice President",
+      "char_start": 129637,
+      "char_end": 129655,
+      "proposed_type": "Role",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sr-vice-president"
+    },
+    {
+      "mention_id": "m444",
+      "surface_form": "January 9, 2017",
+      "char_start": 129665,
+      "char_end": 129680,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-january-9-2017"
+    },
+    {
+      "mention_id": "m445",
+      "surface_form": "Silke Erbeck",
+      "char_start": 129735,
+      "char_end": 129747,
+      "proposed_type": "Person",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m446",
+      "surface_form": "Senior Head of Commercial Products",
+      "char_start": 129777,
+      "char_end": 129811,
+      "proposed_type": "Role",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-senior-head-of-commercial-products"
+    },
+    {
+      "mention_id": "m447",
+      "surface_form": "10.Jan.2017",
+      "char_start": 129821,
+      "char_end": 129832,
+      "proposed_type": "Time",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m448",
+      "surface_form": "Dr. Stephan Fritschi",
+      "char_start": 129838,
+      "char_end": 129858,
+      "proposed_type": "Person",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dr-stephan-fritschi"
+    },
+    {
+      "mention_id": "m449",
+      "surface_form": "VP Operations",
+      "char_start": 129876,
+      "char_end": 129889,
+      "proposed_type": "Role",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-vp-operations"
+    },
+    {
+      "mention_id": "m450",
+      "surface_form": "Exhibit A \u2013 Description of Product",
+      "char_start": 130339,
+      "char_end": 130373,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-exhibit-a-description-of-product"
+    },
+    {
+      "mention_id": "m451",
+      "surface_form": "Exhibit B \u2013 Chemical Synthesis",
+      "char_start": 130703,
+      "char_end": 130733,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-exhibit-b-chemical-synthesis"
+    },
+    {
+      "mention_id": "m452",
+      "surface_form": "Exhibit C \u2013 Fee Schedule",
+      "char_start": 131128,
+      "char_end": 131152,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-exhibit-c-fee-schedule"
+    },
+    {
+      "mention_id": "m453",
+      "surface_form": "Exhibit D \u2013 Certificate of Analysis and Certificate of Compliance",
+      "char_start": 131567,
+      "char_end": 131632,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-exhibit-d-certificate-of-analysis-and-certificate-of-compliance"
+    },
+    {
+      "mention_id": "m454",
+      "surface_form": "Outsourcing Agreement",
+      "char_start": 129990,
+      "char_end": 130011,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m2",
+      "evidence_span_start": 621,
+      "evidence_span_end": 782
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "discussed_in",
+      "object_id": "m3",
+      "evidence_span_start": 486,
+      "evidence_span_end": 650
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "discussed_in",
+      "object_id": "m3",
+      "evidence_span_start": 486,
+      "evidence_span_end": 782
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m4",
+      "evidence_span_start": 486,
+      "evidence_span_end": 915
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "performed_on",
+      "object_id": "m16",
+      "evidence_span_start": 34338,
+      "evidence_span_end": 34364
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has",
+      "object_id": "m8",
+      "evidence_span_start": 32778,
+      "evidence_span_end": 32799
+    },
+    {
+      "subject_id": "m11",
+      "predicate": "applied_to",
+      "object_id": "m8",
+      "evidence_span_start": 54482,
+      "evidence_span_end": 54501
+    },
+    {
+      "subject_id": "m12",
+      "predicate": "applied_to",
+      "object_id": "m8",
+      "evidence_span_start": 56548,
+      "evidence_span_end": 56569
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has",
+      "object_id": "m13",
+      "evidence_span_start": 55868,
+      "evidence_span_end": 55889
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has",
+      "object_id": "m14",
+      "evidence_span_start": 57003,
+      "evidence_span_end": 57026
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "applied_to",
+      "object_id": "m8",
+      "evidence_span_start": 57331,
+      "evidence_span_end": 57371
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "signs",
+      "object_id": "m9",
+      "evidence_span_start": 58002,
+      "evidence_span_end": 58034
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "records",
+      "object_id": "m9",
+      "evidence_span_start": 58694,
+      "evidence_span_end": 58718
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "documents",
+      "object_id": "m17",
+      "evidence_span_start": 8095,
+      "evidence_span_end": 8120
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "verifies",
+      "object_id": "m17",
+      "evidence_span_start": 8431,
+      "evidence_span_end": 8455
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "part_of",
+      "object_id": "m3",
+      "evidence_span_start": 66191,
+      "evidence_span_end": 66213
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has",
+      "object_id": "m20",
+      "evidence_span_start": 11880,
+      "evidence_span_end": 11903
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "obeys",
+      "object_id": "m27",
+      "evidence_span_start": 31331,
+      "evidence_span_end": 31349
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "requires",
+      "object_id": "m19",
+      "evidence_span_start": 9565,
+      "evidence_span_end": 9599
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m18",
+      "evidence_span_start": 77428,
+      "evidence_span_end": 77460
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m21",
+      "evidence_span_start": 95407,
+      "evidence_span_end": 95433
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m22",
+      "evidence_span_start": 2048,
+      "evidence_span_end": 2062
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "requires",
+      "object_id": "m23",
+      "evidence_span_start": 3838,
+      "evidence_span_end": 3857
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m26",
+      "evidence_span_start": 45956,
+      "evidence_span_end": 45974
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m24",
+      "evidence_span_start": 3506,
+      "evidence_span_end": 3530
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m25",
+      "evidence_span_start": 3730,
+      "evidence_span_end": 3753
+    },
+    {
+      "subject_id": "m29",
+      "predicate": "is_a",
+      "object_id": "m31",
+      "evidence_span_start": 13355,
+      "evidence_span_end": 16732
+    },
+    {
+      "subject_id": "m30",
+      "predicate": "is_a",
+      "object_id": "m32",
+      "evidence_span_start": 13243,
+      "evidence_span_end": 16860
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "has",
+      "object_id": "m37",
+      "evidence_span_start": 17046,
+      "evidence_span_end": 17129
+    },
+    {
+      "subject_id": "m32",
+      "predicate": "performed_on",
+      "object_id": "m37",
+      "evidence_span_start": 17759,
+      "evidence_span_end": 17832
+    },
+    {
+      "subject_id": "m32",
+      "predicate": "related_to",
+      "object_id": "m47",
+      "evidence_span_start": 13243,
+      "evidence_span_end": 17729
+    },
+    {
+      "subject_id": "m54",
+      "predicate": "uses",
+      "object_id": "m55",
+      "evidence_span_start": 20229,
+      "evidence_span_end": 20337
+    },
+    {
+      "subject_id": "m54",
+      "predicate": "discussed_in",
+      "object_id": "m56",
+      "evidence_span_start": 20424,
+      "evidence_span_end": 20459
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "part_of",
+      "object_id": "m60",
+      "evidence_span_start": 13355,
+      "evidence_span_end": 23401
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "part_of",
+      "object_id": "m61",
+      "evidence_span_start": 23463,
+      "evidence_span_end": 23546
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "seeks",
+      "object_id": "m44",
+      "evidence_span_start": 13355,
+      "evidence_span_end": 17438
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "seeks",
+      "object_id": "m46",
+      "evidence_span_start": 13355,
+      "evidence_span_end": 17473
+    },
+    {
+      "subject_id": "m51",
+      "predicate": "has_component",
+      "object_id": "m41",
+      "evidence_span_start": 19754,
+      "evidence_span_end": 19796
+    },
+    {
+      "subject_id": "m51",
+      "predicate": "has_component",
+      "object_id": "m42",
+      "evidence_span_start": 19754,
+      "evidence_span_end": 19802
+    },
+    {
+      "subject_id": "m34",
+      "predicate": "has_component",
+      "object_id": "m38",
+      "evidence_span_start": 19512,
+      "evidence_span_end": 19589
+    },
+    {
+      "subject_id": "m37",
+      "predicate": "related_to",
+      "object_id": "m39",
+      "evidence_span_start": 17122,
+      "evidence_span_end": 17252
+    },
+    {
+      "subject_id": "m63",
+      "predicate": "obeys",
+      "object_id": "m64",
+      "evidence_span_start": 23772,
+      "evidence_span_end": 23895
+    },
+    {
+      "subject_id": "m72",
+      "predicate": "related_to",
+      "object_id": "m76",
+      "evidence_span_start": 24044,
+      "evidence_span_end": 24179
+    },
+    {
+      "subject_id": "m78",
+      "predicate": "same_as",
+      "object_id": "m79",
+      "evidence_span_start": 24252,
+      "evidence_span_end": 24276
+    },
+    {
+      "subject_id": "m82",
+      "predicate": "same_as",
+      "object_id": "m83",
+      "evidence_span_start": 24551,
+      "evidence_span_end": 24588
+    },
+    {
+      "subject_id": "m84",
+      "predicate": "same_as",
+      "object_id": "m85",
+      "evidence_span_start": 24633,
+      "evidence_span_end": 24689
+    },
+    {
+      "subject_id": "m86",
+      "predicate": "same_as",
+      "object_id": "m87",
+      "evidence_span_start": 24714,
+      "evidence_span_end": 24768
+    },
+    {
+      "subject_id": "m88",
+      "predicate": "discussed_in",
+      "object_id": "m89",
+      "evidence_span_start": 24812,
+      "evidence_span_end": 24845
+    },
+    {
+      "subject_id": "m99",
+      "predicate": "documents",
+      "object_id": "m98",
+      "evidence_span_start": 26255,
+      "evidence_span_end": 26351
+    },
+    {
+      "subject_id": "m99",
+      "predicate": "obeys",
+      "object_id": "m101",
+      "evidence_span_start": 26370,
+      "evidence_span_end": 26417
+    },
+    {
+      "subject_id": "m100",
+      "predicate": "has_component",
+      "object_id": "m76",
+      "evidence_span_start": 30820,
+      "evidence_span_end": 30852
+    },
+    {
+      "subject_id": "m100",
+      "predicate": "uses",
+      "object_id": "m135",
+      "evidence_span_start": 30820,
+      "evidence_span_end": 30990
+    },
+    {
+      "subject_id": "m135",
+      "predicate": "part_of",
+      "object_id": "m133",
+      "evidence_span_start": 30910,
+      "evidence_span_end": 30960
+    },
+    {
+      "subject_id": "m76",
+      "predicate": "obeys",
+      "object_id": "m99",
+      "evidence_span_start": 31070,
+      "evidence_span_end": 31242
+    },
+    {
+      "subject_id": "m76",
+      "predicate": "obeys",
+      "object_id": "m105",
+      "evidence_span_start": 31070,
+      "evidence_span_end": 31197
+    },
+    {
+      "subject_id": "m76",
+      "predicate": "obeys",
+      "object_id": "m106",
+      "evidence_span_start": 31070,
+      "evidence_span_end": 31220
+    },
+    {
+      "subject_id": "m76",
+      "predicate": "obeys",
+      "object_id": "m101",
+      "evidence_span_start": 31070,
+      "evidence_span_end": 31242
+    },
+    {
+      "subject_id": "m100",
+      "predicate": "requires",
+      "object_id": "m102",
+      "evidence_span_start": 32160,
+      "evidence_span_end": 32209
+    },
+    {
+      "subject_id": "m102",
+      "predicate": "obeys",
+      "object_id": "m106",
+      "evidence_span_start": 32390,
+      "evidence_span_end": 32677
+    },
+    {
+      "subject_id": "m100",
+      "predicate": "verifies",
+      "object_id": "m102",
+      "evidence_span_start": 32600,
+      "evidence_span_end": 32698
+    },
+    {
+      "subject_id": "m122",
+      "predicate": "measures",
+      "object_id": "m76",
+      "evidence_span_start": 28505,
+      "evidence_span_end": 28807
+    },
+    {
+      "subject_id": "m122",
+      "predicate": "computes",
+      "object_id": "m123",
+      "evidence_span_start": 28505,
+      "evidence_span_end": 28807
+    },
+    {
+      "subject_id": "m124",
+      "predicate": "has_component",
+      "object_id": "m126",
+      "evidence_span_start": 29250,
+      "evidence_span_end": 29309
+    },
+    {
+      "subject_id": "m124",
+      "predicate": "obeys",
+      "object_id": "m128",
+      "evidence_span_start": 29600,
+      "evidence_span_end": 29664
+    },
+    {
+      "subject_id": "m124",
+      "predicate": "related_to",
+      "object_id": "m129",
+      "evidence_span_start": 29600,
+      "evidence_span_end": 29914
+    },
+    {
+      "subject_id": "m124",
+      "predicate": "related_to",
+      "object_id": "m115",
+      "evidence_span_start": 29600,
+      "evidence_span_end": 30452
+    },
+    {
+      "subject_id": "m112",
+      "predicate": "related_to",
+      "object_id": "m77",
+      "evidence_span_start": 28070,
+      "evidence_span_end": 28137
+    },
+    {
+      "subject_id": "m91",
+      "predicate": "related_to",
+      "object_id": "m92",
+      "evidence_span_start": 25100,
+      "evidence_span_end": 25421
+    },
+    {
+      "subject_id": "m107",
+      "predicate": "related_to",
+      "object_id": "m76",
+      "evidence_span_start": 27180,
+      "evidence_span_end": 27297
+    },
+    {
+      "subject_id": "m109",
+      "predicate": "related_to",
+      "object_id": "m76",
+      "evidence_span_start": 27690,
+      "evidence_span_end": 27797
+    },
+    {
+      "subject_id": "m109",
+      "predicate": "performed_on",
+      "object_id": "m80",
+      "evidence_span_start": 27690,
+      "evidence_span_end": 27749
+    },
+    {
+      "subject_id": "m142",
+      "predicate": "has",
+      "object_id": "m147",
+      "evidence_span_start": 36128,
+      "evidence_span_end": 36177
+    },
+    {
+      "subject_id": "m143",
+      "predicate": "implements",
+      "object_id": "m150",
+      "evidence_span_start": 42321,
+      "evidence_span_end": 42441
+    },
+    {
+      "subject_id": "m143",
+      "predicate": "uses",
+      "object_id": "m151",
+      "evidence_span_start": 44917,
+      "evidence_span_end": 45035
+    },
+    {
+      "subject_id": "m142",
+      "predicate": "visits",
+      "object_id": "m153",
+      "evidence_span_start": 45152,
+      "evidence_span_end": 45287
+    },
+    {
+      "subject_id": "m143",
+      "predicate": "uses",
+      "object_id": "m162",
+      "evidence_span_start": 46424,
+      "evidence_span_end": 46515
+    },
+    {
+      "subject_id": "m142",
+      "predicate": "requires",
+      "object_id": "m154",
+      "evidence_span_start": 40264,
+      "evidence_span_end": 40378
+    },
+    {
+      "subject_id": "m142",
+      "predicate": "obeys",
+      "object_id": "m148",
+      "evidence_span_start": 36128,
+      "evidence_span_end": 39188
+    },
+    {
+      "subject_id": "m149",
+      "predicate": "related_to",
+      "object_id": "m147",
+      "evidence_span_start": 36159,
+      "evidence_span_end": 37106
+    },
+    {
+      "subject_id": "m159",
+      "predicate": "discussed_in",
+      "object_id": "m166",
+      "evidence_span_start": 47631,
+      "evidence_span_end": 47907
+    },
+    {
+      "subject_id": "m172",
+      "predicate": "documents",
+      "object_id": "m175",
+      "evidence_span_start": 48104,
+      "evidence_span_end": 48205
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "has_component",
+      "object_id": "m180",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 48797
+    },
+    {
+      "subject_id": "m177",
+      "predicate": "seeks",
+      "object_id": "m181",
+      "evidence_span_start": 48551,
+      "evidence_span_end": 49131
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "requires",
+      "object_id": "m181",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 49225
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "uses",
+      "object_id": "m184",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 49459
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "performed_on",
+      "object_id": "m187",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 49938
+    },
+    {
+      "subject_id": "m177",
+      "predicate": "documents",
+      "object_id": "m192",
+      "evidence_span_start": 48551,
+      "evidence_span_end": 50726
+    },
+    {
+      "subject_id": "m177",
+      "predicate": "documents",
+      "object_id": "m195",
+      "evidence_span_start": 48551,
+      "evidence_span_end": 51617
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "performed_on",
+      "object_id": "m197",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 52145
+    },
+    {
+      "subject_id": "m197",
+      "predicate": "verifies",
+      "object_id": "m198",
+      "evidence_span_start": 52145,
+      "evidence_span_end": 52321
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "documents",
+      "object_id": "m200",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 52822
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "performed_on",
+      "object_id": "m205",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 53517
+    },
+    {
+      "subject_id": "m205",
+      "predicate": "obeys",
+      "object_id": "m206",
+      "evidence_span_start": 53517,
+      "evidence_span_end": 53666
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "has",
+      "object_id": "m207",
+      "evidence_span_start": 48600,
+      "evidence_span_end": 53818
+    },
+    {
+      "subject_id": "m177",
+      "predicate": "documents",
+      "object_id": "m190",
+      "evidence_span_start": 48551,
+      "evidence_span_end": 50334
+    },
+    {
+      "subject_id": "m190",
+      "predicate": "obeys",
+      "object_id": "m210",
+      "evidence_span_start": 50334,
+      "evidence_span_end": 54912
+    },
+    {
+      "subject_id": "m214",
+      "predicate": "has",
+      "object_id": "m216",
+      "evidence_span_start": 60160,
+      "evidence_span_end": 60262
+    },
+    {
+      "subject_id": "m214",
+      "predicate": "related_to",
+      "object_id": "m217",
+      "evidence_span_start": 60160,
+      "evidence_span_end": 60303
+    },
+    {
+      "subject_id": "m214",
+      "predicate": "performed_on",
+      "object_id": "m219",
+      "evidence_span_start": 60700,
+      "evidence_span_end": 60711
+    },
+    {
+      "subject_id": "m217",
+      "predicate": "seeks",
+      "object_id": "m215",
+      "evidence_span_start": 60303,
+      "evidence_span_end": 60326
+    },
+    {
+      "subject_id": "m214",
+      "predicate": "obeys",
+      "object_id": "m227",
+      "evidence_span_start": 62010,
+      "evidence_span_end": 62031
+    },
+    {
+      "subject_id": "m214",
+      "predicate": "obeys",
+      "object_id": "m228",
+      "evidence_span_start": 62075,
+      "evidence_span_end": 62092
+    },
+    {
+      "subject_id": "m214",
+      "predicate": "documents",
+      "object_id": "m229",
+      "evidence_span_start": 62900,
+      "evidence_span_end": 62951
+    },
+    {
+      "subject_id": "m232",
+      "predicate": "related_to",
+      "object_id": "m212",
+      "evidence_span_start": 63200,
+      "evidence_span_end": 63218
+    },
+    {
+      "subject_id": "m217",
+      "predicate": "signs",
+      "object_id": "m234",
+      "evidence_span_start": 64800,
+      "evidence_span_end": 64819
+    },
+    {
+      "subject_id": "m235",
+      "predicate": "verifies",
+      "object_id": "m227",
+      "evidence_span_start": 65300,
+      "evidence_span_end": 65322
+    },
+    {
+      "subject_id": "m217",
+      "predicate": "has",
+      "object_id": "m236",
+      "evidence_span_start": 66200,
+      "evidence_span_end": 66204
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "signs",
+      "object_id": "m238",
+      "evidence_span_start": 72359,
+      "evidence_span_end": 72421
+    },
+    {
+      "subject_id": "m238",
+      "predicate": "seeks",
+      "object_id": "m237",
+      "evidence_span_start": 72109,
+      "evidence_span_end": 72241
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "documents",
+      "object_id": "m240",
+      "evidence_span_start": 72887,
+      "evidence_span_end": 73011
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "signs",
+      "object_id": "m238",
+      "evidence_span_start": 72109,
+      "evidence_span_end": 72241
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "signs",
+      "object_id": "m238",
+      "evidence_span_start": 75337,
+      "evidence_span_end": 75453
+    },
+    {
+      "subject_id": "m256",
+      "predicate": "documents",
+      "object_id": "m250",
+      "evidence_span_start": 72983,
+      "evidence_span_end": 75393
+    },
+    {
+      "subject_id": "m238",
+      "predicate": "signs",
+      "object_id": "m237",
+      "evidence_span_start": 72109,
+      "evidence_span_end": 72241
+    },
+    {
+      "subject_id": "m238",
+      "predicate": "uses",
+      "object_id": "m237",
+      "evidence_span_start": 77280,
+      "evidence_span_end": 77425
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "documents",
+      "object_id": "m272",
+      "evidence_span_start": 72109,
+      "evidence_span_end": 79690
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "uses",
+      "object_id": "m251",
+      "evidence_span_start": 72109,
+      "evidence_span_end": 73207
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "documents",
+      "object_id": "m251",
+      "evidence_span_start": 81446,
+      "evidence_span_end": 81530
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "obeys",
+      "object_id": "m251",
+      "evidence_span_start": 72109,
+      "evidence_span_end": 73207
+    },
+    {
+      "subject_id": "m237",
+      "predicate": "uses",
+      "object_id": "m250",
+      "evidence_span_start": 72109,
+      "evidence_span_end": 72990
+    },
+    {
+      "subject_id": "m296",
+      "predicate": "requires",
+      "object_id": "m297",
+      "evidence_span_start": 85300,
+      "evidence_span_end": 85420
+    },
+    {
+      "subject_id": "m297",
+      "predicate": "has",
+      "object_id": "m287",
+      "evidence_span_start": 85470,
+      "evidence_span_end": 85560
+    },
+    {
+      "subject_id": "m296",
+      "predicate": "obeys",
+      "object_id": "m303",
+      "evidence_span_start": 88200,
+      "evidence_span_end": 88290
+    },
+    {
+      "subject_id": "m311",
+      "predicate": "obeys",
+      "object_id": "m310",
+      "evidence_span_start": 88850,
+      "evidence_span_end": 88950
+    },
+    {
+      "subject_id": "m304",
+      "predicate": "documents",
+      "object_id": "m287",
+      "evidence_span_start": 86560,
+      "evidence_span_end": 86640
+    },
+    {
+      "subject_id": "m319",
+      "predicate": "has",
+      "object_id": "m320",
+      "evidence_span_start": 96217,
+      "evidence_span_end": 96276
+    },
+    {
+      "subject_id": "m319",
+      "predicate": "related_to",
+      "object_id": "m325",
+      "evidence_span_start": 96099,
+      "evidence_span_end": 96432
+    },
+    {
+      "subject_id": "m320",
+      "predicate": "has",
+      "object_id": "m319",
+      "evidence_span_start": 97419,
+      "evidence_span_end": 97497
+    },
+    {
+      "subject_id": "m319",
+      "predicate": "uses",
+      "object_id": "m331",
+      "evidence_span_start": 96099,
+      "evidence_span_end": 97408
+    },
+    {
+      "subject_id": "m319",
+      "predicate": "obeys",
+      "object_id": "m356",
+      "evidence_span_start": 103666,
+      "evidence_span_end": 103772
+    },
+    {
+      "subject_id": "m319",
+      "predicate": "documents",
+      "object_id": "m365",
+      "evidence_span_start": 104806,
+      "evidence_span_end": 104913
+    },
+    {
+      "subject_id": "m319",
+      "predicate": "performed_on",
+      "object_id": "m348",
+      "evidence_span_start": 105223,
+      "evidence_span_end": 105316
+    },
+    {
+      "subject_id": "m319",
+      "predicate": "related_to",
+      "object_id": "m320",
+      "evidence_span_start": 107123,
+      "evidence_span_end": 107227
+    },
+    {
+      "subject_id": "m320",
+      "predicate": "implements",
+      "object_id": "m378",
+      "evidence_span_start": 107705,
+      "evidence_span_end": 107805
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "related_to",
+      "object_id": "m380",
+      "evidence_span_start": 108150,
+      "evidence_span_end": 108280
+    },
+    {
+      "subject_id": "m381",
+      "predicate": "related_to",
+      "object_id": "m380",
+      "evidence_span_start": 108700,
+      "evidence_span_end": 108720
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "has",
+      "object_id": "m384",
+      "evidence_span_start": 109100,
+      "evidence_span_end": 109140
+    },
+    {
+      "subject_id": "m381",
+      "predicate": "signs",
+      "object_id": "m386",
+      "evidence_span_start": 109250,
+      "evidence_span_end": 109300
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "requires",
+      "object_id": "m386",
+      "evidence_span_start": 109315,
+      "evidence_span_end": 109350
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "documents",
+      "object_id": "m395",
+      "evidence_span_start": 111050,
+      "evidence_span_end": 111128
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "part_of",
+      "object_id": "m384",
+      "evidence_span_start": 111100,
+      "evidence_span_end": 111151
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "uses",
+      "object_id": "m402",
+      "evidence_span_start": 112250,
+      "evidence_span_end": 112320
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "related_to",
+      "object_id": "m404",
+      "evidence_span_start": 112750,
+      "evidence_span_end": 112850
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "obeys",
+      "object_id": "m403",
+      "evidence_span_start": 113400,
+      "evidence_span_end": 113420
+    },
+    {
+      "subject_id": "m420",
+      "predicate": "related_to",
+      "object_id": "m421",
+      "evidence_span_start": 120126,
+      "evidence_span_end": 120217
+    },
+    {
+      "subject_id": "m420",
+      "predicate": "related_to",
+      "object_id": "m426",
+      "evidence_span_start": 120209,
+      "evidence_span_end": 120477
+    },
+    {
+      "subject_id": "m425",
+      "predicate": "requires",
+      "object_id": "m428",
+      "evidence_span_start": 120255,
+      "evidence_span_end": 121764
+    },
+    {
+      "subject_id": "m425",
+      "predicate": "has_component",
+      "object_id": "m440",
+      "evidence_span_start": 120255,
+      "evidence_span_end": 127445
+    },
+    {
+      "subject_id": "m425",
+      "predicate": "has_component",
+      "object_id": "m441",
+      "evidence_span_start": 120255,
+      "evidence_span_end": 127462
+    },
+    {
+      "subject_id": "m442",
+      "predicate": "signs",
+      "object_id": "m438",
+      "evidence_span_start": 126653,
+      "evidence_span_end": 129602
+    },
+    {
+      "subject_id": "m445",
+      "predicate": "signs",
+      "object_id": "m436",
+      "evidence_span_start": 126495,
+      "evidence_span_end": 129747
+    },
+    {
+      "subject_id": "m442",
+      "predicate": "has",
+      "object_id": "m443",
+      "evidence_span_start": 129585,
+      "evidence_span_end": 129655
+    },
+    {
+      "subject_id": "m445",
+      "predicate": "has",
+      "object_id": "m446",
+      "evidence_span_start": 129735,
+      "evidence_span_end": 129811
+    },
+    {
+      "subject_id": "m425",
+      "predicate": "related_to",
+      "object_id": "m429",
+      "evidence_span_start": 120255,
+      "evidence_span_end": 121913
+    },
+    {
+      "subject_id": "m425",
+      "predicate": "same_as",
+      "object_id": "m454",
+      "evidence_span_start": 120255,
+      "evidence_span_end": 130011
+    }
+  ]
+}

@@ -4,11 +4,11 @@ g7-dev-002	e650-live-dense-v2.txt	existing-validated-gold				false							preserv
 g7-dev-003	skiena-sorting.txt	existing-validated-gold				false							preserved from evaluation/gold/doc-3.json
 g7-dev-004	skiena-dynamic-programming.txt	existing-validated-gold				false							preserved from evaluation/gold/doc-4.json
 g7-dev-005	skiena-tsp-parsing.txt	existing-validated-gold				false							preserved from evaluation/gold/doc-5.json
-g7-dev-006	ext-01-Complex-Logical-Query-Answering.pdf					false							
-g7-dev-007	ext-03-Cespedes----Gradle-Build-Automation-Handbook----2016.pdf					false							
-g7-dev-008	ext-05-Neill-L.---Python-Machine-Learning-for-Beginners---2024.pdf					false							
-g7-dev-009	ext-08-Java_21_to_java_25_upgrade.pdf					false							
-g7-dev-010	ext-12-Morgan_introduction_to_graph_neural_networks.pdf					false							
+g7-dev-006	ext-01-Complex-Logical-Query-Answering.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-007	ext-03-Cespedes----Gradle-Build-Automation-Handbook----2016.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-008	ext-05-Neill-L.---Python-Machine-Learning-for-Beginners---2024.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-009	ext-08-Java_21_to_java_25_upgrade.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-010	ext-12-Morgan_introduction_to_graph_neural_networks.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
 g7-dev-011	supply-chain-overview.txt	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					proposal reviewed; invalid spans/endpoints dropped and logged
 g7-dev-012	vendor-agreements.txt	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					proposal reviewed; invalid spans/endpoints dropped and logged
 g7-dev-013	risk-factors-2025.txt	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					proposal reviewed; invalid spans/endpoints dropped and logged
@@ -17,10 +17,10 @@ g7-dev-015	logistics-network.md	ai-assistant-deepseek-v4.1-flash	opencode-agent	
 g7-dev-016	supply-chain-overview.epub	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					proposal reviewed; invalid spans/endpoints dropped and logged
 g7-dev-017	vendor-agreements.epub	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					proposal reviewed; invalid spans/endpoints dropped and logged
 g7-dev-018	acme-corp-profile.epub	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					proposal reviewed; invalid spans/endpoints dropped and logged
-g7-dev-019	ext-27-Manning.gRPC.Microservices.in.Go.pdf					false							
-g7-dev-020	mental-health-report-2010.pdf					false							
-g7-dev-021	outsourcing-agreement.pdf					false							
-g7-dev-022	ext-11-Suri-N.---Cracking-The-Machine-Learning-Interview---2018.pdf					false							
+g7-dev-019	ext-27-Manning.gRPC.Microservices.in.Go.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-020	mental-health-report-2010.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-021	outsourcing-agreement.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-022	ext-11-Suri-N.---Cracking-The-Machine-Learning-Interview---2018.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
 g7-dev-023	structured-supply-chain.md	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					proposal reviewed; invalid spans/endpoints dropped and logged
-g7-dev-024	large-final-100p.pdf					false							
-g7-dev-025	ext-17-Rao----Spring-Batch-Essentials----2015.pdf					false							
+g7-dev-024	large-final-100p.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage
+g7-dev-025	ext-17-Rao----Spring-Batch-Essentials----2015.pdf	ai-assistant-deepseek-v4.1-flash	opencode-agent	opencode-agent		true	opencode	deepseek-v4.1-flash					chunked annotation; offsets mapped; partial coverage

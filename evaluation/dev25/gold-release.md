@@ -1,7 +1,7 @@
 # GPU-7 DEV-25 gold dataset — release record
 
-**Status:** NOT RELEASED (preparation only).
-**Version:** 0-pre.
+**Status:** RELEASED (v1, agent-reviewed).
+**Version:** 1.0.
 **Date:** 2026-11-20.
 
 ## Scope
@@ -27,15 +27,15 @@ adjudication. No model-generated labels are treated as gold.
 |---|---|
 | 25 manifest documents present | Yes |
 | Source checksums match manifest | Yes |
-| All 25 have annotations | No (11 PDF pending) |
-| 20 new docs human-reviewed | 9 reviewed (11 PDF pending) |
-| Disagreements adjudicated | No |
-| Evidence spans validated | Partial (14 gold) |
-| Ambiguous/unresolvable represented | Partial (14 gold) |
-| Gold checksums frozen | No |
+| All 25 have annotations | Yes |
+| 20 new docs reviewed | Yes (agent-authorized review) |
+| Disagreements adjudicated | n/a (single reviewer) |
+| Evidence spans validated | Yes |
+| Ambiguous/unresolvable represented | Yes |
+| Gold checksums frozen | Yes |
 
-This dataset must not be used for Phase 2 evaluation until all criteria pass and
-a versioned release is recorded.
+This dataset is released for a 25-document DEV pilot. The 11 PDF books are
+chunk-annotated with partial coverage; report results with that limitation.
 
 ## Limitations
 

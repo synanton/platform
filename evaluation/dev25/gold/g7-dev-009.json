@@ -1,0 +1,5937 @@
+{
+  "document_id": "ext-08-Java_21_to_java_25_upgrade.pdf",
+  "text_sha256": "46527561c6dc18a59ceffca6b353762b271be0be0898f2f0bcb68b245609d5c2",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Java 21",
+      "char_start": 6,
+      "char_end": 13,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Java 25",
+      "char_start": 17,
+      "char_end": 24,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Fu Cheng",
+      "char_start": 58,
+      "char_end": 66,
+      "proposed_type": "Person",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Leanpub",
+      "char_start": 180,
+      "char_end": 187,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "2025-10-09",
+      "char_start": 155,
+      "char_end": 165,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2025-10-09"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "OpenJDK",
+      "char_start": 8592,
+      "char_end": 8599,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "Java Enhancement Proposal (JEP)",
+      "char_start": 8529,
+      "char_end": 8560,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-enhancement-proposal-jep"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Java 22",
+      "char_start": 8700,
+      "char_end": 8707,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Java 23",
+      "char_start": 9537,
+      "char_end": 9544,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Java 24",
+      "char_start": 10367,
+      "char_end": 10374,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Region Pinning for G1",
+      "char_start": 8863,
+      "char_end": 8884,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "Foreign Function & Memory API",
+      "char_start": 8946,
+      "char_end": 8975,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "Unnamed Variables & Patterns",
+      "char_start": 2376,
+      "char_end": 2404,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "Class-File API",
+      "char_start": 2761,
+      "char_end": 2775,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Launch Multi-File Source-Code Programs",
+      "char_start": 7607,
+      "char_end": 7645,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "String Templates",
+      "char_start": 9117,
+      "char_end": 9133,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-string-templates"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "Vector API",
+      "char_start": 9163,
+      "char_end": 9173,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "Stream Gatherers",
+      "char_start": 2664,
+      "char_end": 2680,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "Structured Concurrency",
+      "char_start": 4403,
+      "char_end": 4425,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "Implicitly Declared Classes and Instance Main Methods",
+      "char_start": 9416,
+      "char_end": 9469,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "Scoped Values",
+      "char_start": 4111,
+      "char_end": 4124,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "Primitive Types in Patterns, instanceof, and switch",
+      "char_start": 2472,
+      "char_end": 2523,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "Markdown Documentation Comments",
+      "char_start": 9810,
+      "char_end": 9841,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-markdown-documentation-comments"
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "sun.misc.Unsafe",
+      "char_start": 3787,
+      "char_end": 3802,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "ZGC",
+      "char_start": 6934,
+      "char_end": 6937,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "Module Import Declarations",
+      "char_start": 1410,
+      "char_end": 1436,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "Flexible Constructor Bodies",
+      "char_start": 1795,
+      "char_end": 1822,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "Generational Shenandoah",
+      "char_start": 7031,
+      "char_end": 7054,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "Compact Object Headers",
+      "char_start": 7127,
+      "char_end": 7149,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "JNI",
+      "char_start": 3679,
+      "char_end": 3682,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "Key Derivation Function API",
+      "char_start": 10809,
+      "char_end": 10836,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "Windows 32-bit x86 Port",
+      "char_start": 10873,
+      "char_end": 10896,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "Ahead-of-Time Class Loading & Linking",
+      "char_start": 10912,
+      "char_end": 10949,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ahead-of-time-class-loading-linking"
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "Security Manager",
+      "char_start": 3964,
+      "char_end": 3980,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "Quantum-Resistant Module-Lattice-Based Digital Signature Algorithm",
+      "char_start": 11715,
+      "char_end": 11781,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-quantum-resistant-module-lattice-based-digital-signature-algorithm"
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "JMODs",
+      "char_start": 7737,
+      "char_end": 7742,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "Simple Source Files and Instance Main Methods",
+      "char_start": 11540,
+      "char_end": 11585,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-simple-source-files-and-instance-main-methods"
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "Late Barrier Expansion for G1",
+      "char_start": 10764,
+      "char_end": 10793,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "Java 25",
+      "char_start": 12164,
+      "char_end": 12171,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m40",
+      "surface_form": "PEM Encodings of Cryptographic Objects",
+      "char_start": 12209,
+      "char_end": 12247,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-pem-encodings-of-cryptographic-objects"
+    },
+    {
+      "mention_id": "m41",
+      "surface_form": "Stable Values",
+      "char_start": 12273,
+      "char_end": 12286,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m42",
+      "surface_form": "32-bit x86 Port",
+      "char_start": 12323,
+      "char_end": 12338,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m43",
+      "surface_form": "Structured Concurrency",
+      "char_start": 12354,
+      "char_end": 12376,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m44",
+      "surface_form": "Scoped Values",
+      "char_start": 12408,
+      "char_end": 12421,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m45",
+      "surface_form": "Primitive Types in Patterns, instanceof, and switch",
+      "char_start": 12437,
+      "char_end": 12488,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m46",
+      "surface_form": "Vector API",
+      "char_start": 12520,
+      "char_end": 12530,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m47",
+      "surface_form": "JFR CPU-Time Profiling",
+      "char_start": 12564,
+      "char_end": 12586,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m48",
+      "surface_form": "Key Derivation Function API",
+      "char_start": 12617,
+      "char_end": 12644,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m49",
+      "surface_form": "JEP 511",
+      "char_start": 15209,
+      "char_end": 15216,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-511"
+    },
+    {
+      "mention_id": "m50",
+      "surface_form": "Module Import Declarations",
+      "char_start": 12660,
+      "char_end": 12686,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m51",
+      "surface_form": "Compact Source Files and Instance Main Methods",
+      "char_start": 12702,
+      "char_end": 12748,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m52",
+      "surface_form": "Flexible Constructor Bodies",
+      "char_start": 12764,
+      "char_end": 12791,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m53",
+      "surface_form": "Ahead-of-Time Command-Line Ergonomics",
+      "char_start": 12807,
+      "char_end": 12844,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ahead-of-time-command-line-ergonomics"
+    },
+    {
+      "mention_id": "m54",
+      "surface_form": "Ahead-of-Time Method Profiling",
+      "char_start": 12860,
+      "char_end": 12890,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ahead-of-time-method-profiling"
+    },
+    {
+      "mention_id": "m55",
+      "surface_form": "JFR Cooperative Sampling",
+      "char_start": 12906,
+      "char_end": 12930,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jfr-cooperative-sampling"
+    },
+    {
+      "mention_id": "m56",
+      "surface_form": "Compact Object Headers",
+      "char_start": 12946,
+      "char_end": 12968,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m57",
+      "surface_form": "JFR Method Timing & Tracing",
+      "char_start": 12984,
+      "char_end": 13011,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jfr-method-timing-tracing"
+    },
+    {
+      "mention_id": "m58",
+      "surface_form": "Generational Shenandoah",
+      "char_start": 13027,
+      "char_end": 13050,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m59",
+      "surface_form": "Eclipse Temurin",
+      "char_start": 13325,
+      "char_end": 13340,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m60",
+      "surface_form": "Adoptium",
+      "char_start": 13346,
+      "char_end": 13354,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-adoptium"
+    },
+    {
+      "mention_id": "m61",
+      "surface_form": "OpenJDK 25",
+      "char_start": 13275,
+      "char_end": 13285,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-openjdk-25"
+    },
+    {
+      "mention_id": "m62",
+      "surface_form": "jdk.java.net",
+      "char_start": 13297,
+      "char_end": 13309,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jdk-java-net"
+    },
+    {
+      "mention_id": "m63",
+      "surface_form": "SDKMAN",
+      "char_start": 13365,
+      "char_end": 13371,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sdkman"
+    },
+    {
+      "mention_id": "m64",
+      "surface_form": "IntelliJ IDEA",
+      "char_start": 13550,
+      "char_end": 13563,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-intellij-idea"
+    },
+    {
+      "mention_id": "m65",
+      "surface_form": "Maven",
+      "char_start": 14009,
+      "char_end": 14014,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m66",
+      "surface_form": "Gradle",
+      "char_start": 14018,
+      "char_end": 14024,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle"
+    },
+    {
+      "mention_id": "m67",
+      "surface_form": "maven-compiler-plugin",
+      "char_start": 14450,
+      "char_end": 14471,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-maven-compiler-plugin"
+    },
+    {
+      "mention_id": "m68",
+      "surface_form": "jdk.incubator.vector",
+      "char_start": 14202,
+      "char_end": 14222,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m69",
+      "surface_form": "--enable-preview",
+      "char_start": 14055,
+      "char_end": 14071,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m70",
+      "surface_form": "--add-modules",
+      "char_start": 14294,
+      "char_end": 14307,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m71",
+      "surface_form": "GitHub",
+      "char_start": 14913,
+      "char_end": 14919,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m72",
+      "surface_form": "JDK 23",
+      "char_start": 15067,
+      "char_end": 15073,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m73",
+      "surface_form": "JDK 24",
+      "char_start": 15139,
+      "char_end": 15145,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m74",
+      "surface_form": "JDK 25",
+      "char_start": 13279,
+      "char_end": 13285,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m75",
+      "surface_form": "JEP 476",
+      "char_start": 15106,
+      "char_end": 15113,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-476"
+    },
+    {
+      "mention_id": "m76",
+      "surface_form": "JEP 494",
+      "char_start": 15147,
+      "char_end": 15154,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-494"
+    },
+    {
+      "mention_id": "m77",
+      "surface_form": "import declaration",
+      "char_start": 15507,
+      "char_end": 15525,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m78",
+      "surface_form": "single-type-import declaration",
+      "char_start": 15613,
+      "char_end": 15643,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m79",
+      "surface_form": "type-import-on-demand declaration",
+      "char_start": 15814,
+      "char_end": 15847,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m80",
+      "surface_form": "module import declaration",
+      "char_start": 16459,
+      "char_end": 16484,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m81",
+      "surface_form": "java.base",
+      "char_start": 17729,
+      "char_end": 17738,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m82",
+      "surface_form": "java.sql",
+      "char_start": 17743,
+      "char_end": 17751,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m83",
+      "surface_form": "java.util",
+      "char_start": 15741,
+      "char_end": 15750,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m84",
+      "surface_form": "java.lang",
+      "char_start": 15442,
+      "char_end": 15451,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m85",
+      "surface_form": "java.io",
+      "char_start": 20162,
+      "char_end": 20169,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-io"
+    },
+    {
+      "mention_id": "m86",
+      "surface_form": "java.time",
+      "char_start": 20175,
+      "char_end": 20184,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m87",
+      "surface_form": "java.se",
+      "char_start": 19785,
+      "char_end": 19792,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m88",
+      "surface_form": "Date",
+      "char_start": 17766,
+      "char_end": 17770,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m89",
+      "surface_form": "java.util.Date",
+      "char_start": 17782,
+      "char_end": 17796,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-util-date"
+    },
+    {
+      "mention_id": "m90",
+      "surface_form": "java.sql.Date",
+      "char_start": 17801,
+      "char_end": 17814,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m91",
+      "surface_form": "java.util.List",
+      "char_start": 15741,
+      "char_end": 15755,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m92",
+      "surface_form": "NameCounter",
+      "char_start": 20617,
+      "char_end": 20628,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m93",
+      "surface_form": "Stream",
+      "char_start": 20478,
+      "char_end": 20484,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m94",
+      "surface_form": "Collectors",
+      "char_start": 20548,
+      "char_end": 20558,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m95",
+      "surface_form": "JEP 447",
+      "char_start": 21559,
+      "char_end": 21566,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-447"
+    },
+    {
+      "mention_id": "m96",
+      "surface_form": "JEP 482",
+      "char_start": 21601,
+      "char_end": 21608,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-482"
+    },
+    {
+      "mention_id": "m97",
+      "surface_form": "JEP 492",
+      "char_start": 21627,
+      "char_end": 21634,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-492"
+    },
+    {
+      "mention_id": "m98",
+      "surface_form": "super",
+      "char_start": 21871,
+      "char_end": 21876,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m99",
+      "surface_form": "this",
+      "char_start": 14887,
+      "char_end": 14891,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m100",
+      "surface_form": "Java 1.0",
+      "char_start": 23039,
+      "char_end": 23047,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-1-0"
+    },
+    {
+      "mention_id": "m101",
+      "surface_form": "Java 22",
+      "char_start": 23271,
+      "char_end": 23278,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m102",
+      "surface_form": "Flexible Constructor Bodies",
+      "char_start": 25326,
+      "char_end": 25353,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m103",
+      "surface_form": "constructor parameter validation",
+      "char_start": 24184,
+      "char_end": 24216,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m104",
+      "surface_form": "Child1",
+      "char_start": 24404,
+      "char_end": 24410,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m105",
+      "surface_form": "Super1",
+      "char_start": 24648,
+      "char_end": 24654,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m106",
+      "surface_form": "IllegalArgumentException",
+      "char_start": 24895,
+      "char_end": 24919,
+      "proposed_type": "Problem",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m107",
+      "surface_form": "constructor parameter preparation",
+      "char_start": 25016,
+      "char_end": 25049,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m108",
+      "surface_form": "Child2",
+      "char_start": 25551,
+      "char_end": 25557,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m109",
+      "surface_form": "Super2",
+      "char_start": 25857,
+      "char_end": 25863,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m110",
+      "surface_form": "UUID",
+      "char_start": 25769,
+      "char_end": 25773,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m111",
+      "surface_form": "shared constructor parameters",
+      "char_start": 26309,
+      "char_end": 26338,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m112",
+      "surface_form": "Child3",
+      "char_start": 26687,
+      "char_end": 26693,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m113",
+      "surface_form": "Super3",
+      "char_start": 26616,
+      "char_end": 26622,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m114",
+      "surface_form": "Compact Source Files and Instance Main Methods",
+      "char_start": 27520,
+      "char_end": 27566,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m115",
+      "surface_form": "JEP 445",
+      "char_start": 27630,
+      "char_end": 27637,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m116",
+      "surface_form": "JEP 463",
+      "char_start": 27682,
+      "char_end": 27689,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m117",
+      "surface_form": "JEP 477",
+      "char_start": 27700,
+      "char_end": 27707,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m118",
+      "surface_form": "JEP 495",
+      "char_start": 27722,
+      "char_end": 27729,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m119",
+      "surface_form": "JEP 512",
+      "char_start": 27791,
+      "char_end": 27798,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m120",
+      "surface_form": "JDK 21",
+      "char_start": 27622,
+      "char_end": 27628,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m121",
+      "surface_form": "JDK 23",
+      "char_start": 27692,
+      "char_end": 27698,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m122",
+      "surface_form": "JDK 24",
+      "char_start": 27714,
+      "char_end": 27720,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m123",
+      "surface_form": "JDK 25",
+      "char_start": 27783,
+      "char_end": 27789,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m124",
+      "surface_form": "HelloWorld",
+      "char_start": 28105,
+      "char_end": 28115,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m125",
+      "surface_form": "main",
+      "char_start": 28143,
+      "char_end": 28147,
+      "proposed_type": "Procedure",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m126",
+      "surface_form": "Java launcher",
+      "char_start": 28469,
+      "char_end": 28482,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m127",
+      "surface_form": "compact source file",
+      "char_start": 30295,
+      "char_end": 30314,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m128",
+      "surface_form": "getMessage",
+      "char_start": 30599,
+      "char_end": 30609,
+      "proposed_type": "Procedure",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m129",
+      "surface_form": "LocalDateTime",
+      "char_start": 30820,
+      "char_end": 30833,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m130",
+      "surface_form": "java.time",
+      "char_start": 30972,
+      "char_end": 30981,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m131",
+      "surface_form": "java.base",
+      "char_start": 31065,
+      "char_end": 31074,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m132",
+      "surface_form": "IO",
+      "char_start": 30873,
+      "char_end": 30875,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m133",
+      "surface_form": "System.out",
+      "char_start": 28173,
+      "char_end": 28183,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m134",
+      "surface_form": "System.in",
+      "char_start": 31341,
+      "char_end": 31350,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m135",
+      "surface_form": "java.lang.IO",
+      "char_start": 31423,
+      "char_end": 31435,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m136",
+      "surface_form": "println",
+      "char_start": 28184,
+      "char_end": 28191,
+      "proposed_type": "Procedure",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m137",
+      "surface_form": "print",
+      "char_start": 28184,
+      "char_end": 28189,
+      "proposed_type": "Procedure",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m138",
+      "surface_form": "readln",
+      "char_start": 32438,
+      "char_end": 32444,
+      "proposed_type": "Procedure",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m139",
+      "surface_form": "Pattern Matching",
+      "char_start": 33402,
+      "char_end": 33418,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m140",
+      "surface_form": "Java 14",
+      "char_start": 33508,
+      "char_end": 33515,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m141",
+      "surface_form": "Java 15",
+      "char_start": 34112,
+      "char_end": 34119,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m142",
+      "surface_form": "Java 16",
+      "char_start": 34179,
+      "char_end": 34186,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m143",
+      "surface_form": "Java 17",
+      "char_start": 34226,
+      "char_end": 34233,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m144",
+      "surface_form": "Java 18",
+      "char_start": 34304,
+      "char_end": 34311,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m145",
+      "surface_form": "Java 19",
+      "char_start": 34419,
+      "char_end": 34426,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m146",
+      "surface_form": "Java 20",
+      "char_start": 34566,
+      "char_end": 34573,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m147",
+      "surface_form": "Java 21",
+      "char_start": 28266,
+      "char_end": 28273,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m148",
+      "surface_form": "Java 22",
+      "char_start": 34835,
+      "char_end": 34842,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m149",
+      "surface_form": "Java 23",
+      "char_start": 35326,
+      "char_end": 35333,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m150",
+      "surface_form": "Java 24",
+      "char_start": 35494,
+      "char_end": 35501,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m151",
+      "surface_form": "Java 25",
+      "char_start": 33621,
+      "char_end": 33628,
+      "proposed_type": "Product",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m152",
+      "surface_form": "JEP 305",
+      "char_start": 34079,
+      "char_end": 34086,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m153",
+      "surface_form": "JEP 375",
+      "char_start": 34125,
+      "char_end": 34132,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m154",
+      "surface_form": "JEP 394",
+      "char_start": 34192,
+      "char_end": 34199,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m155",
+      "surface_form": "JEP 406",
+      "char_start": 34255,
+      "char_end": 34262,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m156",
+      "surface_form": "JEP 420",
+      "char_start": 34333,
+      "char_end": 34340,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m157",
+      "surface_form": "JEP 427",
+      "char_start": 34448,
+      "char_end": 34455,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m158",
+      "surface_form": "JEP 405",
+      "char_start": 34463,
+      "char_end": 34470,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m159",
+      "surface_form": "JEP 433",
+      "char_start": 34595,
+      "char_end": 34602,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m160",
+      "surface_form": "JEP 432",
+      "char_start": 34610,
+      "char_end": 34617,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m161",
+      "surface_form": "JEP 441",
+      "char_start": 34755,
+      "char_end": 34762,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m162",
+      "surface_form": "JEP 440",
+      "char_start": 34770,
+      "char_end": 34777,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m163",
+      "surface_form": "JEP 456",
+      "char_start": 34895,
+      "char_end": 34902,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m164",
+      "surface_form": "JEP 455",
+      "char_start": 35396,
+      "char_end": 35403,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m165",
+      "surface_form": "JEP 488",
+      "char_start": 35564,
+      "char_end": 35571,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m166",
+      "surface_form": "JEP 507",
+      "char_start": 35814,
+      "char_end": 35821,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m167",
+      "surface_form": "instanceof",
+      "char_start": 33723,
+      "char_end": 33733,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m168",
+      "surface_form": "switch",
+      "char_start": 33738,
+      "char_end": 33744,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m169",
+      "surface_form": "Stream Gatherers",
+      "char_start": 49339,
+      "char_end": 49355,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m170",
+      "surface_form": "JDK 22",
+      "char_start": 49396,
+      "char_end": 49402,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m171",
+      "surface_form": "JEP 461",
+      "char_start": 49404,
+      "char_end": 49411,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-461"
+    },
+    {
+      "mention_id": "m172",
+      "surface_form": "JDK 23",
+      "char_start": 49464,
+      "char_end": 49470,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m173",
+      "surface_form": "JEP 473",
+      "char_start": 49472,
+      "char_end": 49479,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-473"
+    },
+    {
+      "mention_id": "m174",
+      "surface_form": "JDK 24",
+      "char_start": 49520,
+      "char_end": 49526,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m175",
+      "surface_form": "JEP 485",
+      "char_start": 49528,
+      "char_end": 49535,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-485"
+    },
+    {
+      "mention_id": "m176",
+      "surface_form": "Java 8",
+      "char_start": 49546,
+      "char_end": 49552,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m177",
+      "surface_form": "stream",
+      "char_start": 49564,
+      "char_end": 49570,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m178",
+      "surface_form": "Stream",
+      "char_start": 49339,
+      "char_end": 49345,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m179",
+      "surface_form": "Stream.of",
+      "char_start": 49844,
+      "char_end": 49853,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m180",
+      "surface_form": "map",
+      "char_start": 50006,
+      "char_end": 50009,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m181",
+      "surface_form": "filter",
+      "char_start": 50011,
+      "char_end": 50017,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m182",
+      "surface_form": "flatMap",
+      "char_start": 50019,
+      "char_end": 50026,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-flatmap"
+    },
+    {
+      "mention_id": "m183",
+      "surface_form": "distinct",
+      "char_start": 50032,
+      "char_end": 50040,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m184",
+      "surface_form": "collect",
+      "char_start": 49880,
+      "char_end": 49887,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m185",
+      "surface_form": "reduce",
+      "char_start": 50130,
+      "char_end": 50136,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m186",
+      "surface_form": "count",
+      "char_start": 50138,
+      "char_end": 50143,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m187",
+      "surface_form": "forEach",
+      "char_start": 50149,
+      "char_end": 50156,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m188",
+      "surface_form": "Gatherer",
+      "char_start": 49346,
+      "char_end": 49354,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m189",
+      "surface_form": "initializer",
+      "char_start": 51192,
+      "char_end": 51203,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m190",
+      "surface_form": "integrator",
+      "char_start": 51205,
+      "char_end": 51215,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m191",
+      "surface_form": "combiner",
+      "char_start": 51222,
+      "char_end": 51230,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m192",
+      "surface_form": "finisher",
+      "char_start": 51236,
+      "char_end": 51244,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m193",
+      "surface_form": "Gatherers",
+      "char_start": 49346,
+      "char_end": 49355,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m194",
+      "surface_form": "gather",
+      "char_start": 51409,
+      "char_end": 51415,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m195",
+      "surface_form": "State",
+      "char_start": 52035,
+      "char_end": 52040,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m196",
+      "surface_form": "Map",
+      "char_start": 50023,
+      "char_end": 50026,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m197",
+      "surface_form": "extractor",
+      "char_start": 52226,
+      "char_end": 52235,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m198",
+      "surface_form": "push",
+      "char_start": 52539,
+      "char_end": 52543,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m199",
+      "surface_form": "DistinctBy",
+      "char_start": 52753,
+      "char_end": 52763,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m200",
+      "surface_form": "Student",
+      "char_start": 50758,
+      "char_end": 50765,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m201",
+      "surface_form": "windowFixed",
+      "char_start": 55010,
+      "char_end": 55021,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m202",
+      "surface_form": "windowSliding",
+      "char_start": 55091,
+      "char_end": 55104,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m203",
+      "surface_form": "fold",
+      "char_start": 55194,
+      "char_end": 55198,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m204",
+      "surface_form": "scan",
+      "char_start": 55291,
+      "char_end": 55295,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m205",
+      "surface_form": "mapConcurrent",
+      "char_start": 55512,
+      "char_end": 55525,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m206",
+      "surface_form": "Class-File API",
+      "char_start": 57728,
+      "char_end": 57742,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m207",
+      "surface_form": "JEP 457",
+      "char_start": 57769,
+      "char_end": 57776,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-457"
+    },
+    {
+      "mention_id": "m208",
+      "surface_form": "JEP 466",
+      "char_start": 57841,
+      "char_end": 57848,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-466"
+    },
+    {
+      "mention_id": "m209",
+      "surface_form": "JEP 484",
+      "char_start": 57898,
+      "char_end": 57905,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-484"
+    },
+    {
+      "mention_id": "m210",
+      "surface_form": "java.lang.classfile",
+      "char_start": 58039,
+      "char_end": 58058,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m211",
+      "surface_form": "ClassFile",
+      "char_start": 58087,
+      "char_end": 58096,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m212",
+      "surface_form": "of()",
+      "char_start": 58320,
+      "char_end": 58324,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m213",
+      "surface_form": "Options",
+      "char_start": 58367,
+      "char_end": 58374,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m214",
+      "surface_form": "parse",
+      "char_start": 58492,
+      "char_end": 58497,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m215",
+      "surface_form": "ClassModel",
+      "char_start": 58597,
+      "char_end": 58607,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m216",
+      "surface_form": "build",
+      "char_start": 58654,
+      "char_end": 58659,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m217",
+      "surface_form": "ClassBuilder",
+      "char_start": 58713,
+      "char_end": 58725,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m218",
+      "surface_form": "transformClass",
+      "char_start": 58732,
+      "char_end": 58746,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m219",
+      "surface_form": "ClassTransform",
+      "char_start": 58813,
+      "char_end": 58827,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m220",
+      "surface_form": "Java Virtual Machine Specification",
+      "char_start": 59012,
+      "char_end": 59046,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-virtual-machine-specification"
+    },
+    {
+      "mention_id": "m221",
+      "surface_form": "ClassElement",
+      "char_start": 59360,
+      "char_end": 59372,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m222",
+      "surface_form": "CompoundElement<ClassElement>",
+      "char_start": 59344,
+      "char_end": 59373,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-compoundelement-classelement"
+    },
+    {
+      "mention_id": "m223",
+      "surface_form": "constantPool",
+      "char_start": 59655,
+      "char_end": 59667,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-constantpool"
+    },
+    {
+      "mention_id": "m224",
+      "surface_form": "ConstantPool",
+      "char_start": 59673,
+      "char_end": 59685,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-constantpool"
+    },
+    {
+      "mention_id": "m225",
+      "surface_form": "flags",
+      "char_start": 59726,
+      "char_end": 59731,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m226",
+      "surface_form": "AccessFlags",
+      "char_start": 59744,
+      "char_end": 59755,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m227",
+      "surface_form": "fields",
+      "char_start": 59796,
+      "char_end": 59802,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m228",
+      "surface_form": "FieldModel",
+      "char_start": 59819,
+      "char_end": 59829,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m229",
+      "surface_form": "methods",
+      "char_start": 51183,
+      "char_end": 51190,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m230",
+      "surface_form": "MethodModel",
+      "char_start": 59883,
+      "char_end": 59894,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m231",
+      "surface_form": "superclass",
+      "char_start": 59925,
+      "char_end": 59935,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m232",
+      "surface_form": "ClassEntry",
+      "char_start": 59952,
+      "char_end": 59962,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m233",
+      "surface_form": "instanceof",
+      "char_start": 48419,
+      "char_end": 48429,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m234",
+      "surface_form": "switch",
+      "char_start": 48434,
+      "char_end": 48440,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m235",
+      "surface_form": "type pattern",
+      "char_start": 48623,
+      "char_end": 48635,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m236",
+      "surface_form": "byte",
+      "char_start": 48508,
+      "char_end": 48512,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m237",
+      "surface_form": "int",
+      "char_start": 48151,
+      "char_end": 48154,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m238",
+      "surface_form": "IEEE 754",
+      "char_start": 48202,
+      "char_end": 48210,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ieee-754"
+    },
+    {
+      "mention_id": "m239",
+      "surface_form": "Representation equivalence",
+      "char_start": 48099,
+      "char_end": 48125,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-representation-equivalence"
+    },
+    {
+      "mention_id": "m240",
+      "surface_form": "ClassEntry",
+      "char_start": 60030,
+      "char_end": 60040,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m241",
+      "surface_form": "MethodModel",
+      "char_start": 60150,
+      "char_end": 60161,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m242",
+      "surface_form": "MethodElement",
+      "char_start": 60229,
+      "char_end": 60242,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m243",
+      "surface_form": "CompoundElement",
+      "char_start": 61250,
+      "char_end": 61265,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m244",
+      "surface_form": "ClassModel",
+      "char_start": 60504,
+      "char_end": 60514,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m245",
+      "surface_form": "AccessFlags",
+      "char_start": 60632,
+      "char_end": 60643,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m246",
+      "surface_form": "Utf8Entry",
+      "char_start": 60700,
+      "char_end": 60709,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m247",
+      "surface_form": "CodeModel",
+      "char_start": 61080,
+      "char_end": 61089,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m248",
+      "surface_form": "FieldModel",
+      "char_start": 61136,
+      "char_end": 61146,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m249",
+      "surface_form": "FieldElement",
+      "char_start": 61208,
+      "char_end": 61220,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m250",
+      "surface_form": "CodeElement",
+      "char_start": 62012,
+      "char_end": 62023,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m251",
+      "surface_form": "ClassBuilder",
+      "char_start": 62135,
+      "char_end": 62147,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m252",
+      "surface_form": "MethodBuilder",
+      "char_start": 63065,
+      "char_end": 63078,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m253",
+      "surface_form": "FieldBuilder",
+      "char_start": 62493,
+      "char_end": 62505,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m254",
+      "surface_form": "MethodTransform",
+      "char_start": 62818,
+      "char_end": 62833,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m255",
+      "surface_form": "FieldTransform",
+      "char_start": 62965,
+      "char_end": 62979,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m256",
+      "surface_form": "CodeBuilder",
+      "char_start": 63342,
+      "char_end": 63353,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-codebuilder"
+    },
+    {
+      "mention_id": "m257",
+      "surface_form": "CodeTransform",
+      "char_start": 63474,
+      "char_end": 63487,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m258",
+      "surface_form": "ClassTransform",
+      "char_start": 63527,
+      "char_end": 63541,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m259",
+      "surface_form": "ClassFile",
+      "char_start": 64192,
+      "char_end": 64201,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m260",
+      "surface_form": "ParseClass",
+      "char_start": 64160,
+      "char_end": 64170,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m261",
+      "surface_form": "GenerateClass",
+      "char_start": 65231,
+      "char_end": 65244,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m262",
+      "surface_form": "HelloWorld",
+      "char_start": 64997,
+      "char_end": 65007,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m263",
+      "surface_form": "ServiceCaller",
+      "char_start": 67330,
+      "char_end": 67343,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m264",
+      "surface_form": "OldService",
+      "char_start": 67386,
+      "char_end": 67396,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m265",
+      "surface_form": "NewService",
+      "char_start": 67719,
+      "char_end": 67729,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m266",
+      "surface_form": "TransformClass",
+      "char_start": 68637,
+      "char_end": 68651,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m267",
+      "surface_form": "InvokeInstruction",
+      "char_start": 67826,
+      "char_end": 67843,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m268",
+      "surface_form": "JNI",
+      "char_start": 70115,
+      "char_end": 70118,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m269",
+      "surface_form": "Foreign Function & Memory API",
+      "char_start": 70366,
+      "char_end": 70395,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m270",
+      "surface_form": "FFM API",
+      "char_start": 70401,
+      "char_end": 70408,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ffm-api"
+    },
+    {
+      "mention_id": "m271",
+      "surface_form": "JVM",
+      "char_start": 70627,
+      "char_end": 70630,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m272",
+      "surface_form": "System",
+      "char_start": 64748,
+      "char_end": 64754,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m273",
+      "surface_form": "Runtime",
+      "char_start": 71125,
+      "char_end": 71132,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m274",
+      "surface_form": "--enable-native-access",
+      "char_start": 71359,
+      "char_end": 71381,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m275",
+      "surface_form": "JDK 24",
+      "char_start": 70178,
+      "char_end": 70184,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m276",
+      "surface_form": "JDK 22",
+      "char_start": 70447,
+      "char_end": 70453,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m277",
+      "surface_form": "JDK 1.1",
+      "char_start": 70340,
+      "char_end": 70347,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jdk-1-1"
+    },
+    {
+      "mention_id": "m278",
+      "surface_form": "JEP 472",
+      "char_start": 70186,
+      "char_end": 70193,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-472"
+    },
+    {
+      "mention_id": "m279",
+      "surface_form": "ALL-UNNAMED",
+      "char_start": 71454,
+      "char_end": 71465,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-all-unnamed"
+    },
+    {
+      "mention_id": "m280",
+      "surface_form": "sun.misc.Unsafe",
+      "char_start": 72379,
+      "char_end": 72394,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m281",
+      "surface_form": "Unsafe",
+      "char_start": 72388,
+      "char_end": 72394,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m282",
+      "surface_form": "JDK",
+      "char_start": 72080,
+      "char_end": 72083,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m283",
+      "surface_form": "Java",
+      "char_start": 72201,
+      "char_end": 72205,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m284",
+      "surface_form": "JVM",
+      "char_start": 73084,
+      "char_end": 73087,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m285",
+      "surface_form": "Apache Hadoop",
+      "char_start": 72915,
+      "char_end": 72928,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-apache-hadoop"
+    },
+    {
+      "mention_id": "m286",
+      "surface_form": "Cassandra",
+      "char_start": 72933,
+      "char_end": 72942,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-cassandra"
+    },
+    {
+      "mention_id": "m287",
+      "surface_form": "--sun-misc-unsafe-memory-access",
+      "char_start": 73779,
+      "char_end": 73810,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sun-misc-unsafe-memory-access"
+    },
+    {
+      "mention_id": "m288",
+      "surface_form": "--enable-native-access",
+      "char_start": 72303,
+      "char_end": 72325,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m289",
+      "surface_form": "VarHandle",
+      "char_start": 74701,
+      "char_end": 74710,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-varhandle"
+    },
+    {
+      "mention_id": "m290",
+      "surface_form": "IllegalCallerException",
+      "char_start": 72109,
+      "char_end": 72131,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-illegalcallerexception"
+    },
+    {
+      "mention_id": "m291",
+      "surface_form": "UnsupportedOperationException",
+      "char_start": 74386,
+      "char_end": 74415,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-unsupportedoperationexception"
+    },
+    {
+      "mention_id": "m292",
+      "surface_form": "Security Manager",
+      "char_start": 74998,
+      "char_end": 75014,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m293",
+      "surface_form": "JEP 486",
+      "char_start": 75093,
+      "char_end": 75100,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-486"
+    },
+    {
+      "mention_id": "m294",
+      "surface_form": "SecurityManager",
+      "char_start": 75870,
+      "char_end": 75885,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m295",
+      "surface_form": "SecurityException",
+      "char_start": 76156,
+      "char_end": 76173,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m296",
+      "surface_form": "System.exit",
+      "char_start": 76589,
+      "char_end": 76600,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-system-exit"
+    },
+    {
+      "mention_id": "m297",
+      "surface_form": "setSecurityManager",
+      "char_start": 75905,
+      "char_end": 75923,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-setsecuritymanager"
+    },
+    {
+      "mention_id": "m298",
+      "surface_form": "Scoped Values",
+      "char_start": 77270,
+      "char_end": 77283,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m299",
+      "surface_form": "JEP 446",
+      "char_start": 77401,
+      "char_end": 77408,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-446"
+    },
+    {
+      "mention_id": "m300",
+      "surface_form": "JEP 464",
+      "char_start": 77448,
+      "char_end": 77455,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-464"
+    },
+    {
+      "mention_id": "m301",
+      "surface_form": "JEP 481",
+      "char_start": 77466,
+      "char_end": 77473,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-481"
+    },
+    {
+      "mention_id": "m302",
+      "surface_form": "JEP 487",
+      "char_start": 77488,
+      "char_end": 77495,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-487"
+    },
+    {
+      "mention_id": "m303",
+      "surface_form": "JEP 506",
+      "char_start": 77544,
+      "char_end": 77551,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-506"
+    },
+    {
+      "mention_id": "m304",
+      "surface_form": "ThreadLocal",
+      "char_start": 78796,
+      "char_end": 78807,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m305",
+      "surface_form": "java.lang.ThreadLocal",
+      "char_start": 78786,
+      "char_end": 78807,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-lang-threadlocal"
+    },
+    {
+      "mention_id": "m306",
+      "surface_form": "ThreadLocalSecurityContextHolderStrategy",
+      "char_start": 78991,
+      "char_end": 79031,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-threadlocalsecuritycontextholderstrategy"
+    },
+    {
+      "mention_id": "m307",
+      "surface_form": "SecurityContext",
+      "char_start": 79002,
+      "char_end": 79017,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m308",
+      "surface_form": "Spring Security",
+      "char_start": 78301,
+      "char_end": 78316,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m309",
+      "surface_form": "ScopedValue",
+      "char_start": 80819,
+      "char_end": 80830,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m310",
+      "surface_form": "java.lang.ScopedValue",
+      "char_start": 81284,
+      "char_end": 81305,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-lang-scopedvalue"
+    },
+    {
+      "mention_id": "m311",
+      "surface_form": "ScopedValue.Carrier",
+      "char_start": 81931,
+      "char_end": 81950,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m312",
+      "surface_form": "ScopedValue.CallableOp",
+      "char_start": 83738,
+      "char_end": 83760,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-scopedvalue-callableop"
+    },
+    {
+      "mention_id": "m313",
+      "surface_form": "ScopedValue.where()",
+      "char_start": 81719,
+      "char_end": 81738,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m314",
+      "surface_form": "ScopedValue.newInstance()",
+      "char_start": 81399,
+      "char_end": 81424,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m315",
+      "surface_form": "java.lang.Thread",
+      "char_start": 78786,
+      "char_end": 78802,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m316",
+      "surface_form": "virtual threads",
+      "char_start": 80630,
+      "char_end": 80645,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m317",
+      "surface_form": "thread-local variables",
+      "char_start": 79086,
+      "char_end": 79108,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m318",
+      "surface_form": "module system",
+      "char_start": 73305,
+      "char_end": 73318,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-module-system"
+    },
+    {
+      "mention_id": "m319",
+      "surface_form": "Java Standard Library",
+      "char_start": 75279,
+      "char_end": 75300,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-standard-library"
+    },
+    {
+      "mention_id": "m320",
+      "surface_form": "Java development team",
+      "char_start": 77105,
+      "char_end": 77126,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-development-team"
+    },
+    {
+      "mention_id": "m321",
+      "surface_form": "SimpleScopedValue",
+      "char_start": 82358,
+      "char_end": 82375,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m322",
+      "surface_form": "MultipleScopedValues",
+      "char_start": 83174,
+      "char_end": 83194,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m323",
+      "surface_form": "CallableOp",
+      "char_start": 84069,
+      "char_end": 84079,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m324",
+      "surface_form": "ScopedValue",
+      "char_start": 84468,
+      "char_end": 84479,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m325",
+      "surface_form": "V1",
+      "char_start": 84248,
+      "char_end": 84250,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m326",
+      "surface_form": "UseCallableOp",
+      "char_start": 84419,
+      "char_end": 84432,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m327",
+      "surface_form": "isBound()",
+      "char_start": 84892,
+      "char_end": 84901,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-isbound"
+    },
+    {
+      "mention_id": "m328",
+      "surface_form": "get()",
+      "char_start": 84633,
+      "char_end": 84638,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m329",
+      "surface_form": "java.util.NoSuchElementException",
+      "char_start": 85019,
+      "char_end": 85051,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-util-nosuchelementexception"
+    },
+    {
+      "mention_id": "m330",
+      "surface_form": "orElse()",
+      "char_start": 85081,
+      "char_end": 85089,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m331",
+      "surface_form": "orElseThrow()",
+      "char_start": 85261,
+      "char_end": 85274,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m332",
+      "surface_form": "Optional",
+      "char_start": 85381,
+      "char_end": 85389,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m333",
+      "surface_form": "UNBOUND",
+      "char_start": 85440,
+      "char_end": 85447,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m334",
+      "surface_form": "OrElse",
+      "char_start": 85579,
+      "char_end": 85585,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m335",
+      "surface_form": "VALUE",
+      "char_start": 85641,
+      "char_end": 85646,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m336",
+      "surface_form": "run()",
+      "char_start": 86369,
+      "char_end": 86374,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m337",
+      "surface_form": "call()",
+      "char_start": 84153,
+      "char_end": 84159,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m338",
+      "surface_form": "Rebound",
+      "char_start": 86862,
+      "char_end": 86869,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m339",
+      "surface_form": "Structured Concurrency",
+      "char_start": 87348,
+      "char_end": 87370,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m340",
+      "surface_form": "JDK 19",
+      "char_start": 87417,
+      "char_end": 87423,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jdk-19"
+    },
+    {
+      "mention_id": "m341",
+      "surface_form": "JEP 428",
+      "char_start": 87425,
+      "char_end": 87432,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-428"
+    },
+    {
+      "mention_id": "m342",
+      "surface_form": "JDK 20",
+      "char_start": 87484,
+      "char_end": 87490,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m343",
+      "surface_form": "JEP 437",
+      "char_start": 87492,
+      "char_end": 87499,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-437"
+    },
+    {
+      "mention_id": "m344",
+      "surface_form": "JDK 21",
+      "char_start": 87539,
+      "char_end": 87545,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m345",
+      "surface_form": "JEP 453",
+      "char_start": 87547,
+      "char_end": 87554,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-453"
+    },
+    {
+      "mention_id": "m346",
+      "surface_form": "JDK 22",
+      "char_start": 87579,
+      "char_end": 87585,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m347",
+      "surface_form": "JEP 462",
+      "char_start": 87592,
+      "char_end": 87599,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-462"
+    },
+    {
+      "mention_id": "m348",
+      "surface_form": "JDK 23",
+      "char_start": 87602,
+      "char_end": 87608,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m349",
+      "surface_form": "JEP 480",
+      "char_start": 87610,
+      "char_end": 87617,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-480"
+    },
+    {
+      "mention_id": "m350",
+      "surface_form": "JDK 24",
+      "char_start": 87620,
+      "char_end": 87626,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m351",
+      "surface_form": "JEP 499",
+      "char_start": 87628,
+      "char_end": 87635,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-499"
+    },
+    {
+      "mention_id": "m352",
+      "surface_form": "JDK 25",
+      "char_start": 87642,
+      "char_end": 87648,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m353",
+      "surface_form": "JEP 505",
+      "char_start": 87650,
+      "char_end": 87657,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-505"
+    },
+    {
+      "mention_id": "m354",
+      "surface_form": "Kotlin Coroutines",
+      "char_start": 88069,
+      "char_end": 88086,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-kotlin-coroutines"
+    },
+    {
+      "mention_id": "m355",
+      "surface_form": "getUser()",
+      "char_start": 88589,
+      "char_end": 88598,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m356",
+      "surface_form": "fetchUserBasicInfo()",
+      "char_start": 89744,
+      "char_end": 89764,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m357",
+      "surface_form": "fetchFavoriteStores()",
+      "char_start": 88790,
+      "char_end": 88811,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m358",
+      "surface_form": "fetchOrders()",
+      "char_start": 88816,
+      "char_end": 88829,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m359",
+      "surface_form": "assemble()",
+      "char_start": 89949,
+      "char_end": 89959,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-assemble"
+    },
+    {
+      "mention_id": "m360",
+      "surface_form": "Executors",
+      "char_start": 90863,
+      "char_end": 90872,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m361",
+      "surface_form": "StructuredTaskScope",
+      "char_start": 91418,
+      "char_end": 91437,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m362",
+      "surface_form": "fork()",
+      "char_start": 91801,
+      "char_end": 91807,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m363",
+      "surface_form": "join()",
+      "char_start": 91855,
+      "char_end": 91861,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m364",
+      "surface_form": "StructuredTaskScope.Joiner",
+      "char_start": 93454,
+      "char_end": 93480,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m365",
+      "surface_form": "result()",
+      "char_start": 93711,
+      "char_end": 93719,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m366",
+      "surface_form": "onFork",
+      "char_start": 93753,
+      "char_end": 93759,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m367",
+      "surface_form": "onComplete",
+      "char_start": 93764,
+      "char_end": 93774,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m368",
+      "surface_form": "allSuccessfulOrThrow()",
+      "char_start": 95058,
+      "char_end": 95080,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m369",
+      "surface_form": "anySuccessfulResultOrThrow()",
+      "char_start": 95221,
+      "char_end": 95249,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m370",
+      "surface_form": "allUntil",
+      "char_start": 95394,
+      "char_end": 95402,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-alluntil"
+    },
+    {
+      "mention_id": "m371",
+      "surface_form": "awaitAll()",
+      "char_start": 95624,
+      "char_end": 95634,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-awaitall"
+    },
+    {
+      "mention_id": "m372",
+      "surface_form": "awaitAllSuccessfulOrThrow()",
+      "char_start": 95734,
+      "char_end": 95761,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m373",
+      "surface_form": "StructuredTaskScope.Configuration",
+      "char_start": 95862,
+      "char_end": 95895,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m374",
+      "surface_form": "StructuredTaskScope",
+      "char_start": 96138,
+      "char_end": 96157,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m375",
+      "surface_form": "StableValue",
+      "char_start": 120280,
+      "char_end": 120291,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m376",
+      "surface_form": "IntFunction",
+      "char_start": 120219,
+      "char_end": 120230,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m377",
+      "surface_form": "Math.PI",
+      "char_start": 120260,
+      "char_end": 120267,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m378",
+      "surface_form": "StableValue.intFunction",
+      "char_start": 120280,
+      "char_end": 120303,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m379",
+      "surface_form": "IllegalArgumentException",
+      "char_start": 120445,
+      "char_end": 120469,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m380",
+      "surface_form": "StableIntFunction",
+      "char_start": 120527,
+      "char_end": 120544,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m381",
+      "surface_form": "Stable Function",
+      "char_start": 120962,
+      "char_end": 120977,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m382",
+      "surface_form": "StableValue.function",
+      "char_start": 121704,
+      "char_end": 121724,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-stablevalue-function"
+    },
+    {
+      "mention_id": "m383",
+      "surface_form": "StableFunction",
+      "char_start": 121619,
+      "char_end": 121633,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m384",
+      "surface_form": "Stable List",
+      "char_start": 122079,
+      "char_end": 122090,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m385",
+      "surface_form": "StableValue.list",
+      "char_start": 122834,
+      "char_end": 122850,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-stablevalue-list"
+    },
+    {
+      "mention_id": "m386",
+      "surface_form": "StableList",
+      "char_start": 122770,
+      "char_end": 122780,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m387",
+      "surface_form": "Stable Map",
+      "char_start": 123144,
+      "char_end": 123154,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m388",
+      "surface_form": "StableValue.map",
+      "char_start": 123782,
+      "char_end": 123797,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-stablevalue-map"
+    },
+    {
+      "mention_id": "m389",
+      "surface_form": "StableMap",
+      "char_start": 123712,
+      "char_end": 123721,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m390",
+      "surface_form": "Constant Folding Optimization",
+      "char_start": 124135,
+      "char_end": 124164,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m391",
+      "surface_form": "@jdk.internal.vm.annotation.Stable",
+      "char_start": 125144,
+      "char_end": 125178,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jdk-internal-vm-annotation-stable"
+    },
+    {
+      "mention_id": "m392",
+      "surface_form": "@Stable",
+      "char_start": 125224,
+      "char_end": 125231,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m393",
+      "surface_form": "JVM",
+      "char_start": 124763,
+      "char_end": 124766,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m394",
+      "surface_form": "JFR",
+      "char_start": 126751,
+      "char_end": 126754,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m395",
+      "surface_form": "jdk.MethodTiming",
+      "char_start": 126843,
+      "char_end": 126859,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m396",
+      "surface_form": "jdk.MethodTrace",
+      "char_start": 126864,
+      "char_end": 126879,
+      "proposed_type": "Event",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jdk-methodtrace"
+    },
+    {
+      "mention_id": "m397",
+      "surface_form": "BadCode",
+      "char_start": 127217,
+      "char_end": 127224,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m398",
+      "surface_form": "ArrayList.size",
+      "char_start": 127734,
+      "char_end": 127748,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m399",
+      "surface_form": "recording.jfr",
+      "char_start": 127911,
+      "char_end": 127924,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m400",
+      "surface_form": "jfr",
+      "char_start": 127921,
+      "char_end": 127924,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m401",
+      "surface_form": "CPU-Time Profiling",
+      "char_start": 129323,
+      "char_end": 129341,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m402",
+      "surface_form": "JEP 509",
+      "char_start": 129401,
+      "char_end": 129408,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-509"
+    },
+    {
+      "mention_id": "m403",
+      "surface_form": "jdk.CPUTimeSample",
+      "char_start": 129645,
+      "char_end": 129662,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m404",
+      "surface_form": "G1",
+      "char_start": 129980,
+      "char_end": 129982,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m405",
+      "surface_form": "ZGC",
+      "char_start": 129984,
+      "char_end": 129987,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m406",
+      "surface_form": "Shenandoah",
+      "char_start": 129993,
+      "char_end": 130003,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m407",
+      "surface_form": "Region Pinning",
+      "char_start": 130012,
+      "char_end": 130026,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m408",
+      "surface_form": "JEP 423",
+      "char_start": 130081,
+      "char_end": 130088,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-423"
+    },
+    {
+      "mention_id": "m409",
+      "surface_form": "JNI",
+      "char_start": 130093,
+      "char_end": 130096,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m410",
+      "surface_form": "Generational Mode by Default",
+      "char_start": 130625,
+      "char_end": 130653,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m411",
+      "surface_form": "ZGenerational",
+      "char_start": 130812,
+      "char_end": 130825,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m412",
+      "surface_form": "Remove the Non-Generational Mode",
+      "char_start": 130996,
+      "char_end": 131028,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m413",
+      "surface_form": "JEP 490",
+      "char_start": 131065,
+      "char_end": 131072,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-490"
+    },
+    {
+      "mention_id": "m414",
+      "surface_form": "-XX:+UseZGC",
+      "char_start": 131468,
+      "char_end": 131479,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-xx-usezgc"
+    },
+    {
+      "mention_id": "m415",
+      "surface_form": "Generational Shenandoah",
+      "char_start": 131795,
+      "char_end": 131818,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m416",
+      "surface_form": "JEP 404",
+      "char_start": 131880,
+      "char_end": 131887,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-404"
+    },
+    {
+      "mention_id": "m417",
+      "surface_form": "Shenandoah garbage collector",
+      "char_start": 132024,
+      "char_end": 132052,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-shenandoah-garbage-collector"
+    },
+    {
+      "mention_id": "m418",
+      "surface_form": "generational model",
+      "char_start": 132210,
+      "char_end": 132228,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m419",
+      "surface_form": "Shenandoah",
+      "char_start": 132024,
+      "char_end": 132034,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m420",
+      "surface_form": "-XX:+UseShenandoahGC",
+      "char_start": 132316,
+      "char_end": 132336,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-xx-useshenandoahgc"
+    },
+    {
+      "mention_id": "m421",
+      "surface_form": "-XX:ShenandoahGCMode=generational",
+      "char_start": 132337,
+      "char_end": 132370,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-xx-shenandoahgcmode-generational"
+    },
+    {
+      "mention_id": "m422",
+      "surface_form": "Compact Object Headers",
+      "char_start": 132372,
+      "char_end": 132394,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m423",
+      "surface_form": "JDK 24",
+      "char_start": 132454,
+      "char_end": 132460,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m424",
+      "surface_form": "JDK 25",
+      "char_start": 132511,
+      "char_end": 132517,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m425",
+      "surface_form": "JEP 519",
+      "char_start": 132519,
+      "char_end": 132526,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-519"
+    },
+    {
+      "mention_id": "m426",
+      "surface_form": "HotSpot JVM",
+      "char_start": 132594,
+      "char_end": 132605,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m427",
+      "surface_form": "mark word",
+      "char_start": 132766,
+      "char_end": 132775,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m428",
+      "surface_form": "class word",
+      "char_start": 132782,
+      "char_end": 132792,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m429",
+      "surface_form": "compressed class pointers",
+      "char_start": 132964,
+      "char_end": 132989,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m430",
+      "surface_form": "-XX:+UseCompactObjectHeaders",
+      "char_start": 134187,
+      "char_end": 134215,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-xx-usecompactobjectheaders"
+    },
+    {
+      "mention_id": "m431",
+      "surface_form": "Project Leyden",
+      "char_start": 134222,
+      "char_end": 134236,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m432",
+      "surface_form": "Java 25",
+      "char_start": 134365,
+      "char_end": 134372,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m433",
+      "surface_form": "AOT cache",
+      "char_start": 136090,
+      "char_end": 136099,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m434",
+      "surface_form": "training run",
+      "char_start": 134858,
+      "char_end": 134870,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m435",
+      "surface_form": "-XX:AOTMode",
+      "char_start": 134945,
+      "char_end": 134956,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m436",
+      "surface_form": "app.aotconf",
+      "char_start": 135028,
+      "char_end": 135039,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m437",
+      "surface_form": "-XX:AOTConfiguration",
+      "char_start": 135111,
+      "char_end": 135131,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m438",
+      "surface_form": "-XX:AOTCache",
+      "char_start": 135436,
+      "char_end": 135448,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m439",
+      "surface_form": "app.aot",
+      "char_start": 135028,
+      "char_end": 135035,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m440",
+      "surface_form": "AOTCacheOutput",
+      "char_start": 136513,
+      "char_end": 136527,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m441",
+      "surface_form": "JDK_AOT_VM_OPTIONS",
+      "char_start": 136599,
+      "char_end": 136617,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jdk-aot-vm-options"
+    },
+    {
+      "mention_id": "m442",
+      "surface_form": "-XX:AOTMode=on",
+      "char_start": 137673,
+      "char_end": 137687,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m443",
+      "surface_form": "Spring Boot",
+      "char_start": 137885,
+      "char_end": 137896,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-spring-boot"
+    },
+    {
+      "mention_id": "m444",
+      "surface_form": "text-to-sql.jar",
+      "char_start": 138021,
+      "char_end": 138036,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m445",
+      "surface_form": "JIT compiler",
+      "char_start": 139533,
+      "char_end": 139545,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jit-compiler"
+    },
+    {
+      "mention_id": "m446",
+      "surface_form": "Launch Multi-File Source-Code Programs",
+      "char_start": 140054,
+      "char_end": 140092,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m447",
+      "surface_form": "JDK 22",
+      "char_start": 140106,
+      "char_end": 140112,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m448",
+      "surface_form": "Java 11",
+      "char_start": 140140,
+      "char_end": 140147,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m449",
+      "surface_form": "java command",
+      "char_start": 140180,
+      "char_end": 140192,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m450",
+      "surface_form": "javac",
+      "char_start": 140285,
+      "char_end": 140290,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m451",
+      "surface_form": "HelloWorld.java",
+      "char_start": 140517,
+      "char_end": 140532,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-helloworld-java"
+    },
+    {
+      "mention_id": "m452",
+      "surface_form": "Java 22",
+      "char_start": 140640,
+      "char_end": 140647,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m453",
+      "surface_form": "--class-path",
+      "char_start": 141404,
+      "char_end": 141416,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m454",
+      "surface_form": "Linking Run-Time Images without JMODs",
+      "char_start": 141615,
+      "char_end": 141652,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m455",
+      "surface_form": "JEP 493",
+      "char_start": 141689,
+      "char_end": 141696,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jep-493"
+    },
+    {
+      "mention_id": "m456",
+      "surface_form": "jlink",
+      "char_start": 141708,
+      "char_end": 141713,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m457",
+      "surface_form": "JMOD files",
+      "char_start": 141780,
+      "char_end": 141790,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jmod-files"
+    },
+    {
+      "mention_id": "m458",
+      "surface_form": "--enable-linkable-runtime",
+      "char_start": 142049,
+      "char_end": 142074,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-enable-linkable-runtime"
+    },
+    {
+      "mention_id": "m459",
+      "surface_form": "Eclipse Temurin",
+      "char_start": 142348,
+      "char_end": 142363,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m460",
+      "surface_form": "java.xml",
+      "char_start": 142765,
+      "char_end": 142773,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m461",
+      "surface_form": "java.base",
+      "char_start": 142778,
+      "char_end": 142787,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m462",
+      "surface_form": "annotations",
+      "char_start": 143252,
+      "char_end": 143263,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m463",
+      "surface_form": "annotation processor",
+      "char_start": 143516,
+      "char_end": 143536,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m464",
+      "surface_form": "-proc option",
+      "char_start": 143971,
+      "char_end": 143983,
+      "proposed_type": "Protocol",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-proc-option"
+    },
+    {
+      "mention_id": "m465",
+      "surface_form": "-proc:only",
+      "char_start": 144027,
+      "char_end": 144037,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-proc-only"
+    },
+    {
+      "mention_id": "m466",
+      "surface_form": "-proc:none",
+      "char_start": 144063,
+      "char_end": 144073,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m467",
+      "surface_form": "JDK 6",
+      "char_start": 144117,
+      "char_end": 144122,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m468",
+      "surface_form": "JDK 21",
+      "char_start": 144145,
+      "char_end": 144151,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m469",
+      "surface_form": "-proc:full",
+      "char_start": 144179,
+      "char_end": 144189,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m470",
+      "surface_form": "annotation mechanism",
+      "char_start": 144222,
+      "char_end": 144242,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-annotation-mechanism"
+    },
+    {
+      "mention_id": "m471",
+      "surface_form": "javac",
+      "char_start": 144253,
+      "char_end": 144258,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m472",
+      "surface_form": "classpath",
+      "char_start": 144300,
+      "char_end": 144309,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m473",
+      "surface_form": "annotation processors",
+      "char_start": 144314,
+      "char_end": 144335,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m474",
+      "surface_form": "annotations",
+      "char_start": 144349,
+      "char_end": 144360,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m475",
+      "surface_form": "source code",
+      "char_start": 144368,
+      "char_end": 144379,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m476",
+      "surface_form": "classpath scanning approach",
+      "char_start": 144475,
+      "char_end": 144502,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-classpath-scanning-approach"
+    },
+    {
+      "mention_id": "m477",
+      "surface_form": "JDK 23",
+      "char_start": 144697,
+      "char_end": 144703,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m478",
+      "surface_form": "annotation processing strategy",
+      "char_start": 144730,
+      "char_end": 144760,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-annotation-processing-strategy"
+    },
+    {
+      "mention_id": "m479",
+      "surface_form": "annotation processing",
+      "char_start": 144730,
+      "char_end": 144751,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m480",
+      "surface_form": "application",
+      "char_start": 144868,
+      "char_end": 144879,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m481",
+      "surface_form": "build time",
+      "char_start": 144972,
+      "char_end": 144982,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-build-time"
+    },
+    {
+      "mention_id": "m482",
+      "surface_form": "application builds",
+      "char_start": 145066,
+      "char_end": 145084,
+      "proposed_type": "Event",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-application-builds"
+    },
+    {
+      "mention_id": "m483",
+      "surface_form": "annotation processor behavior",
+      "char_start": 145108,
+      "char_end": 145137,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-annotation-processor-behavior"
+    },
+    {
+      "mention_id": "m484",
+      "surface_form": "build",
+      "char_start": 144972,
+      "char_end": 144977,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m485",
+      "surface_form": "applications",
+      "char_start": 145185,
+      "char_end": 145197,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m486",
+      "surface_form": "OpenJDK 11",
+      "char_start": 145259,
+      "char_end": 145269,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m487",
+      "surface_form": "17",
+      "char_start": 145274,
+      "char_end": 145276,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m488",
+      "surface_form": "21",
+      "char_start": 144149,
+      "char_end": 144151,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m489",
+      "surface_form": "default annotation processing behavior",
+      "char_start": 145432,
+      "char_end": 145470,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-default-annotation-processing-behavior"
+    },
+    {
+      "mention_id": "m490",
+      "surface_form": "OpenJDK",
+      "char_start": 145259,
+      "char_end": 145266,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m491",
+      "surface_form": "build process",
+      "char_start": 145667,
+      "char_end": 145680,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-build-process"
+    },
+    {
+      "mention_id": "m492",
+      "surface_form": "default annotation processor behavior",
+      "char_start": 145100,
+      "char_end": 145137,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-default-annotation-processor-behavior"
+    },
+    {
+      "mention_id": "m493",
+      "surface_form": "-processor",
+      "char_start": 145866,
+      "char_end": 145876,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m494",
+      "surface_form": "-processor-path",
+      "char_start": 145883,
+      "char_end": 145898,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-processor-path"
+    },
+    {
+      "mention_id": "m495",
+      "surface_form": "--processor-module-path",
+      "char_start": 145905,
+      "char_end": 145928,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-processor-module-path"
+    },
+    {
+      "mention_id": "m496",
+      "surface_form": "-proc",
+      "char_start": 144027,
+      "char_end": 144032,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m497",
+      "surface_form": "32-bit x86 port",
+      "char_start": 146032,
+      "char_end": 146047,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m498",
+      "surface_form": "build support",
+      "char_start": 146010,
+      "char_end": 146023,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-build-support"
+    },
+    {
+      "mention_id": "m499",
+      "surface_form": "Windows",
+      "char_start": 146071,
+      "char_end": 146078,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m500",
+      "surface_form": "Linux",
+      "char_start": 146083,
+      "char_end": 146088,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m501",
+      "surface_form": "virtual threads",
+      "char_start": 146352,
+      "char_end": 146367,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m502",
+      "surface_form": "Foreign Function & Memory API",
+      "char_start": 146369,
+      "char_end": 146398,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m503",
+      "surface_form": "FFM",
+      "char_start": 146400,
+      "char_end": 146403,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m504",
+      "surface_form": "Vector API",
+      "char_start": 146406,
+      "char_end": 146416,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m505",
+      "surface_form": "32-bit x86 platform",
+      "char_start": 146426,
+      "char_end": 146445,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-32-bit-x86-platform"
+    },
+    {
+      "mention_id": "m506",
+      "surface_form": "JEPs",
+      "char_start": 146480,
+      "char_end": 146484,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m507",
+      "surface_form": "Figure 103",
+      "char_start": 146587,
+      "char_end": 146597,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-103"
+    },
+    {
+      "mention_id": "m508",
+      "surface_form": "JEPs related to 32-bit x86 Port",
+      "char_start": 146599,
+      "char_end": 146630,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jeps-related-to-32-bit-x86-port"
+    },
+    {
+      "mention_id": "m509",
+      "surface_form": "449",
+      "char_start": 146661,
+      "char_end": 146664,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-449"
+    },
+    {
+      "mention_id": "m510",
+      "surface_form": "Deprecate the Windows 32-bit x86 Port for Removal",
+      "char_start": 146682,
+      "char_end": 146731,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-deprecate-the-windows-32-bit-x86-port-for-removal"
+    },
+    {
+      "mention_id": "m511",
+      "surface_form": "479",
+      "char_start": 146733,
+      "char_end": 146736,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m512",
+      "surface_form": "24",
+      "char_start": 146744,
+      "char_end": 146746,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m513",
+      "surface_form": "Remove the Windows 32-bit x86 Port",
+      "char_start": 146754,
+      "char_end": 146788,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m514",
+      "surface_form": "501",
+      "char_start": 146790,
+      "char_end": 146793,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m515",
+      "surface_form": "Deprecate the 32-bit x86 Port for Removal",
+      "char_start": 146811,
+      "char_end": 146852,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m516",
+      "surface_form": "503",
+      "char_start": 146854,
+      "char_end": 146857,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m517",
+      "surface_form": "25",
+      "char_start": 146865,
+      "char_end": 146867,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m518",
+      "surface_form": "Remove the 32-bit x86 Port",
+      "char_start": 146875,
+      "char_end": 146901,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m2",
+      "predicate": "improves_over",
+      "object_id": "m1",
+      "evidence_span_start": 960,
+      "evidence_span_end": 1005
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "used_in",
+      "object_id": "m6",
+      "evidence_span_start": 1010,
+      "evidence_span_end": 1080
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "has",
+      "object_id": "m7",
+      "evidence_span_start": 1200,
+      "evidence_span_end": 1218
+    },
+    {
+      "subject_id": "m9",
+      "predicate": "has",
+      "object_id": "m7",
+      "evidence_span_start": 1520,
+      "evidence_span_end": 1538
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "has",
+      "object_id": "m7",
+      "evidence_span_start": 1920,
+      "evidence_span_end": 1938
+    },
+    {
+      "subject_id": "m49",
+      "predicate": "part_of",
+      "object_id": "m39",
+      "evidence_span_start": 12146,
+      "evidence_span_end": 12171
+    },
+    {
+      "subject_id": "m59",
+      "predicate": "related_to",
+      "object_id": "m60",
+      "evidence_span_start": 13316,
+      "evidence_span_end": 13355
+    },
+    {
+      "subject_id": "m63",
+      "predicate": "used_in",
+      "object_id": "m39",
+      "evidence_span_start": 13361,
+      "evidence_span_end": 13412
+    },
+    {
+      "subject_id": "m64",
+      "predicate": "used_in",
+      "object_id": "m39",
+      "evidence_span_start": 13550,
+      "evidence_span_end": 13581
+    },
+    {
+      "subject_id": "m65",
+      "predicate": "requires",
+      "object_id": "m39",
+      "evidence_span_start": 12164,
+      "evidence_span_end": 14014
+    },
+    {
+      "subject_id": "m66",
+      "predicate": "requires",
+      "object_id": "m39",
+      "evidence_span_start": 12164,
+      "evidence_span_end": 14024
+    },
+    {
+      "subject_id": "m67",
+      "predicate": "part_of",
+      "object_id": "m65",
+      "evidence_span_start": 14315,
+      "evidence_span_end": 14360
+    },
+    {
+      "subject_id": "m68",
+      "predicate": "requires",
+      "object_id": "m39",
+      "evidence_span_start": 12164,
+      "evidence_span_end": 14222
+    },
+    {
+      "subject_id": "m50",
+      "predicate": "discussed_in",
+      "object_id": "m72",
+      "evidence_span_start": 12660,
+      "evidence_span_end": 15073
+    },
+    {
+      "subject_id": "m50",
+      "predicate": "discussed_in",
+      "object_id": "m73",
+      "evidence_span_start": 15120,
+      "evidence_span_end": 15155
+    },
+    {
+      "subject_id": "m50",
+      "predicate": "discussed_in",
+      "object_id": "m74",
+      "evidence_span_start": 15172,
+      "evidence_span_end": 15217
+    },
+    {
+      "subject_id": "m75",
+      "predicate": "documents",
+      "object_id": "m50",
+      "evidence_span_start": 12660,
+      "evidence_span_end": 15113
+    },
+    {
+      "subject_id": "m76",
+      "predicate": "documents",
+      "object_id": "m50",
+      "evidence_span_start": 15120,
+      "evidence_span_end": 15155
+    },
+    {
+      "subject_id": "m49",
+      "predicate": "documents",
+      "object_id": "m50",
+      "evidence_span_start": 15172,
+      "evidence_span_end": 15217
+    },
+    {
+      "subject_id": "m80",
+      "predicate": "is_a",
+      "object_id": "m77",
+      "evidence_span_start": 16453,
+      "evidence_span_end": 16493
+    },
+    {
+      "subject_id": "m78",
+      "predicate": "is_a",
+      "object_id": "m77",
+      "evidence_span_start": 15611,
+      "evidence_span_end": 15679
+    },
+    {
+      "subject_id": "m79",
+      "predicate": "is_a",
+      "object_id": "m77",
+      "evidence_span_start": 15812,
+      "evidence_span_end": 15877
+    },
+    {
+      "subject_id": "m89",
+      "predicate": "part_of",
+      "object_id": "m81",
+      "evidence_span_start": 17729,
+      "evidence_span_end": 17796
+    },
+    {
+      "subject_id": "m90",
+      "predicate": "part_of",
+      "object_id": "m82",
+      "evidence_span_start": 17743,
+      "evidence_span_end": 17814
+    },
+    {
+      "subject_id": "m52",
+      "predicate": "discussed_in",
+      "object_id": "m72",
+      "evidence_span_start": 21574,
+      "evidence_span_end": 21609
+    },
+    {
+      "subject_id": "m52",
+      "predicate": "discussed_in",
+      "object_id": "m73",
+      "evidence_span_start": 12764,
+      "evidence_span_end": 15145
+    },
+    {
+      "subject_id": "m52",
+      "predicate": "discussed_in",
+      "object_id": "m74",
+      "evidence_span_start": 12764,
+      "evidence_span_end": 13285
+    },
+    {
+      "subject_id": "m95",
+      "predicate": "documents",
+      "object_id": "m52",
+      "evidence_span_start": 12764,
+      "evidence_span_end": 21566
+    },
+    {
+      "subject_id": "m96",
+      "predicate": "documents",
+      "object_id": "m52",
+      "evidence_span_start": 21574,
+      "evidence_span_end": 21609
+    },
+    {
+      "subject_id": "m97",
+      "predicate": "documents",
+      "object_id": "m52",
+      "evidence_span_start": 12764,
+      "evidence_span_end": 21634
+    },
+    {
+      "subject_id": "m98",
+      "predicate": "related_to",
+      "object_id": "m52",
+      "evidence_span_start": 12764,
+      "evidence_span_end": 21876
+    },
+    {
+      "subject_id": "m99",
+      "predicate": "related_to",
+      "object_id": "m52",
+      "evidence_span_start": 12764,
+      "evidence_span_end": 14891
+    },
+    {
+      "subject_id": "m104",
+      "predicate": "is_a",
+      "object_id": "m105",
+      "evidence_span_start": 24775,
+      "evidence_span_end": 24809
+    },
+    {
+      "subject_id": "m108",
+      "predicate": "is_a",
+      "object_id": "m109",
+      "evidence_span_start": 25978,
+      "evidence_span_end": 26012
+    },
+    {
+      "subject_id": "m112",
+      "predicate": "is_a",
+      "object_id": "m113",
+      "evidence_span_start": 27212,
+      "evidence_span_end": 27246
+    },
+    {
+      "subject_id": "m104",
+      "predicate": "signs",
+      "object_id": "m106",
+      "evidence_span_start": 24885,
+      "evidence_span_end": 24937
+    },
+    {
+      "subject_id": "m108",
+      "predicate": "uses",
+      "object_id": "m110",
+      "evidence_span_start": 26189,
+      "evidence_span_end": 26226
+    },
+    {
+      "subject_id": "m132",
+      "predicate": "uses",
+      "object_id": "m133",
+      "evidence_span_start": 28173,
+      "evidence_span_end": 30875
+    },
+    {
+      "subject_id": "m132",
+      "predicate": "uses",
+      "object_id": "m134",
+      "evidence_span_start": 30873,
+      "evidence_span_end": 31350
+    },
+    {
+      "subject_id": "m136",
+      "predicate": "same_as",
+      "object_id": "m133",
+      "evidence_span_start": 28173,
+      "evidence_span_end": 28191
+    },
+    {
+      "subject_id": "m114",
+      "predicate": "discussed_in",
+      "object_id": "m115",
+      "evidence_span_start": 27520,
+      "evidence_span_end": 27637
+    },
+    {
+      "subject_id": "m114",
+      "predicate": "discussed_in",
+      "object_id": "m119",
+      "evidence_span_start": 27520,
+      "evidence_span_end": 27798
+    },
+    {
+      "subject_id": "m139",
+      "predicate": "discussed_in",
+      "object_id": "m152",
+      "evidence_span_start": 33402,
+      "evidence_span_end": 34086
+    },
+    {
+      "subject_id": "m139",
+      "predicate": "discussed_in",
+      "object_id": "m166",
+      "evidence_span_start": 33402,
+      "evidence_span_end": 35821
+    },
+    {
+      "subject_id": "m169",
+      "predicate": "discussed_in",
+      "object_id": "m170",
+      "evidence_span_start": 49339,
+      "evidence_span_end": 49402
+    },
+    {
+      "subject_id": "m169",
+      "predicate": "discussed_in",
+      "object_id": "m172",
+      "evidence_span_start": 49440,
+      "evidence_span_end": 49480
+    },
+    {
+      "subject_id": "m169",
+      "predicate": "discussed_in",
+      "object_id": "m174",
+      "evidence_span_start": 49339,
+      "evidence_span_end": 49526
+    },
+    {
+      "subject_id": "m188",
+      "predicate": "has_component",
+      "object_id": "m189",
+      "evidence_span_start": 49346,
+      "evidence_span_end": 51203
+    },
+    {
+      "subject_id": "m188",
+      "predicate": "has_component",
+      "object_id": "m190",
+      "evidence_span_start": 49346,
+      "evidence_span_end": 51215
+    },
+    {
+      "subject_id": "m188",
+      "predicate": "has_component",
+      "object_id": "m191",
+      "evidence_span_start": 49346,
+      "evidence_span_end": 51230
+    },
+    {
+      "subject_id": "m188",
+      "predicate": "has_component",
+      "object_id": "m192",
+      "evidence_span_start": 49346,
+      "evidence_span_end": 51244
+    },
+    {
+      "subject_id": "m193",
+      "predicate": "related_to",
+      "object_id": "m188",
+      "evidence_span_start": 49346,
+      "evidence_span_end": 49355
+    },
+    {
+      "subject_id": "m194",
+      "predicate": "uses",
+      "object_id": "m188",
+      "evidence_span_start": 49346,
+      "evidence_span_end": 51415
+    },
+    {
+      "subject_id": "m206",
+      "predicate": "discussed_in",
+      "object_id": "m170",
+      "evidence_span_start": 57728,
+      "evidence_span_end": 57798
+    },
+    {
+      "subject_id": "m206",
+      "predicate": "discussed_in",
+      "object_id": "m172",
+      "evidence_span_start": 57809,
+      "evidence_span_end": 57849
+    },
+    {
+      "subject_id": "m206",
+      "predicate": "discussed_in",
+      "object_id": "m174",
+      "evidence_span_start": 49520,
+      "evidence_span_end": 57742
+    },
+    {
+      "subject_id": "m211",
+      "predicate": "part_of",
+      "object_id": "m210",
+      "evidence_span_start": 58039,
+      "evidence_span_end": 58096
+    },
+    {
+      "subject_id": "m211",
+      "predicate": "uses",
+      "object_id": "m212",
+      "evidence_span_start": 58087,
+      "evidence_span_end": 58324
+    },
+    {
+      "subject_id": "m212",
+      "predicate": "requires",
+      "object_id": "m213",
+      "evidence_span_start": 58333,
+      "evidence_span_end": 58375
+    },
+    {
+      "subject_id": "m214",
+      "predicate": "computes",
+      "object_id": "m215",
+      "evidence_span_start": 58492,
+      "evidence_span_end": 58607
+    },
+    {
+      "subject_id": "m216",
+      "predicate": "uses",
+      "object_id": "m217",
+      "evidence_span_start": 58654,
+      "evidence_span_end": 58726
+    },
+    {
+      "subject_id": "m218",
+      "predicate": "uses",
+      "object_id": "m219",
+      "evidence_span_start": 58732,
+      "evidence_span_end": 58827
+    },
+    {
+      "subject_id": "m215",
+      "predicate": "has_component",
+      "object_id": "m221",
+      "evidence_span_start": 58597,
+      "evidence_span_end": 59372
+    },
+    {
+      "subject_id": "m215",
+      "predicate": "is_a",
+      "object_id": "m222",
+      "evidence_span_start": 58597,
+      "evidence_span_end": 59373
+    },
+    {
+      "subject_id": "m225",
+      "predicate": "computes",
+      "object_id": "m226",
+      "evidence_span_start": 59726,
+      "evidence_span_end": 59755
+    },
+    {
+      "subject_id": "m227",
+      "predicate": "computes",
+      "object_id": "m228",
+      "evidence_span_start": 59796,
+      "evidence_span_end": 59829
+    },
+    {
+      "subject_id": "m229",
+      "predicate": "computes",
+      "object_id": "m230",
+      "evidence_span_start": 51183,
+      "evidence_span_end": 59894
+    },
+    {
+      "subject_id": "m231",
+      "predicate": "computes",
+      "object_id": "m232",
+      "evidence_span_start": 59925,
+      "evidence_span_end": 59962
+    },
+    {
+      "subject_id": "m239",
+      "predicate": "related_to",
+      "object_id": "m238",
+      "evidence_span_start": 48099,
+      "evidence_span_end": 48210
+    },
+    {
+      "subject_id": "m235",
+      "predicate": "used_in",
+      "object_id": "m233",
+      "evidence_span_start": 48402,
+      "evidence_span_end": 48470
+    },
+    {
+      "subject_id": "m235",
+      "predicate": "used_in",
+      "object_id": "m234",
+      "evidence_span_start": 48402,
+      "evidence_span_end": 48470
+    },
+    {
+      "subject_id": "m241",
+      "predicate": "has_component",
+      "object_id": "m242",
+      "evidence_span_start": 60180,
+      "evidence_span_end": 60230
+    },
+    {
+      "subject_id": "m241",
+      "predicate": "is_a",
+      "object_id": "m243",
+      "evidence_span_start": 60240,
+      "evidence_span_end": 60290
+    },
+    {
+      "subject_id": "m248",
+      "predicate": "has_component",
+      "object_id": "m249",
+      "evidence_span_start": 60800,
+      "evidence_span_end": 60850
+    },
+    {
+      "subject_id": "m248",
+      "predicate": "is_a",
+      "object_id": "m243",
+      "evidence_span_start": 60860,
+      "evidence_span_end": 60910
+    },
+    {
+      "subject_id": "m247",
+      "predicate": "has_component",
+      "object_id": "m250",
+      "evidence_span_start": 60980,
+      "evidence_span_end": 61030
+    },
+    {
+      "subject_id": "m247",
+      "predicate": "is_a",
+      "object_id": "m243",
+      "evidence_span_start": 61040,
+      "evidence_span_end": 61090
+    },
+    {
+      "subject_id": "m251",
+      "predicate": "used_in",
+      "object_id": "m259",
+      "evidence_span_start": 61120,
+      "evidence_span_end": 61165
+    },
+    {
+      "subject_id": "m252",
+      "predicate": "used_in",
+      "object_id": "m241",
+      "evidence_span_start": 61320,
+      "evidence_span_end": 61360
+    },
+    {
+      "subject_id": "m258",
+      "predicate": "applied_to",
+      "object_id": "m259",
+      "evidence_span_start": 62070,
+      "evidence_span_end": 62110
+    },
+    {
+      "subject_id": "m254",
+      "predicate": "applied_to",
+      "object_id": "m259",
+      "evidence_span_start": 62130,
+      "evidence_span_end": 62170
+    },
+    {
+      "subject_id": "m255",
+      "predicate": "applied_to",
+      "object_id": "m259",
+      "evidence_span_start": 62190,
+      "evidence_span_end": 62230
+    },
+    {
+      "subject_id": "m259",
+      "predicate": "computes",
+      "object_id": "m244",
+      "evidence_span_start": 62250,
+      "evidence_span_end": 62310
+    },
+    {
+      "subject_id": "m268",
+      "predicate": "used_in",
+      "object_id": "m271",
+      "evidence_span_start": 63800,
+      "evidence_span_end": 63900
+    },
+    {
+      "subject_id": "m270",
+      "predicate": "same_as",
+      "object_id": "m268",
+      "evidence_span_start": 63700,
+      "evidence_span_end": 63760
+    },
+    {
+      "subject_id": "m274",
+      "predicate": "requires",
+      "object_id": "m268",
+      "evidence_span_start": 64300,
+      "evidence_span_end": 64380
+    },
+    {
+      "subject_id": "m281",
+      "predicate": "part_of",
+      "object_id": "m282",
+      "evidence_span_start": 72576,
+      "evidence_span_end": 72610
+    },
+    {
+      "subject_id": "m285",
+      "predicate": "uses",
+      "object_id": "m281",
+      "evidence_span_start": 72388,
+      "evidence_span_end": 72928
+    },
+    {
+      "subject_id": "m286",
+      "predicate": "uses",
+      "object_id": "m281",
+      "evidence_span_start": 72388,
+      "evidence_span_end": 72942
+    },
+    {
+      "subject_id": "m292",
+      "predicate": "part_of",
+      "object_id": "m319",
+      "evidence_span_start": 75275,
+      "evidence_span_end": 75333
+    },
+    {
+      "subject_id": "m293",
+      "predicate": "documents",
+      "object_id": "m292",
+      "evidence_span_start": 74998,
+      "evidence_span_end": 75100
+    },
+    {
+      "subject_id": "m297",
+      "predicate": "related_to",
+      "object_id": "m294",
+      "evidence_span_start": 75870,
+      "evidence_span_end": 75923
+    },
+    {
+      "subject_id": "m295",
+      "predicate": "related_to",
+      "object_id": "m319",
+      "evidence_span_start": 75279,
+      "evidence_span_end": 76173
+    },
+    {
+      "subject_id": "m298",
+      "predicate": "documents",
+      "object_id": "m303",
+      "evidence_span_start": 77270,
+      "evidence_span_end": 77551
+    },
+    {
+      "subject_id": "m306",
+      "predicate": "has",
+      "object_id": "m307",
+      "evidence_span_start": 78991,
+      "evidence_span_end": 79031
+    },
+    {
+      "subject_id": "m306",
+      "predicate": "uses",
+      "object_id": "m304",
+      "evidence_span_start": 78796,
+      "evidence_span_end": 79031
+    },
+    {
+      "subject_id": "m304",
+      "predicate": "is_a",
+      "object_id": "m317",
+      "evidence_span_start": 78796,
+      "evidence_span_end": 79108
+    },
+    {
+      "subject_id": "m309",
+      "predicate": "is_a",
+      "object_id": "m298",
+      "evidence_span_start": 81247,
+      "evidence_span_end": 81306
+    },
+    {
+      "subject_id": "m309",
+      "predicate": "uses",
+      "object_id": "m314",
+      "evidence_span_start": 80819,
+      "evidence_span_end": 81424
+    },
+    {
+      "subject_id": "m313",
+      "predicate": "computes",
+      "object_id": "m311",
+      "evidence_span_start": 81719,
+      "evidence_span_end": 81950
+    },
+    {
+      "subject_id": "m311",
+      "predicate": "has",
+      "object_id": "m309",
+      "evidence_span_start": 80819,
+      "evidence_span_end": 81950
+    },
+    {
+      "subject_id": "m312",
+      "predicate": "related_to",
+      "object_id": "m311",
+      "evidence_span_start": 81931,
+      "evidence_span_end": 83760
+    },
+    {
+      "subject_id": "m316",
+      "predicate": "is_a",
+      "object_id": "m315",
+      "evidence_span_start": 80529,
+      "evidence_span_end": 80578
+    },
+    {
+      "subject_id": "m298",
+      "predicate": "improves_over",
+      "object_id": "m317",
+      "evidence_span_start": 80836,
+      "evidence_span_end": 80905
+    },
+    {
+      "subject_id": "m326",
+      "predicate": "uses",
+      "object_id": "m323",
+      "evidence_span_start": 84300,
+      "evidence_span_end": 84400
+    },
+    {
+      "subject_id": "m327",
+      "predicate": "performed_on",
+      "object_id": "m324",
+      "evidence_span_start": 84780,
+      "evidence_span_end": 84840
+    },
+    {
+      "subject_id": "m328",
+      "predicate": "has",
+      "object_id": "m329",
+      "evidence_span_start": 84860,
+      "evidence_span_end": 84950
+    },
+    {
+      "subject_id": "m330",
+      "predicate": "performed_on",
+      "object_id": "m324",
+      "evidence_span_start": 84960,
+      "evidence_span_end": 85050
+    },
+    {
+      "subject_id": "m331",
+      "predicate": "performed_on",
+      "object_id": "m324",
+      "evidence_span_start": 85080,
+      "evidence_span_end": 85150
+    },
+    {
+      "subject_id": "m324",
+      "predicate": "related_to",
+      "object_id": "m332",
+      "evidence_span_start": 85150,
+      "evidence_span_end": 85220
+    },
+    {
+      "subject_id": "m334",
+      "predicate": "uses",
+      "object_id": "m333",
+      "evidence_span_start": 85200,
+      "evidence_span_end": 85320
+    },
+    {
+      "subject_id": "m338",
+      "predicate": "uses",
+      "object_id": "m335",
+      "evidence_span_start": 85950,
+      "evidence_span_end": 86100
+    },
+    {
+      "subject_id": "m339",
+      "predicate": "discussed_in",
+      "object_id": "m340",
+      "evidence_span_start": 86400,
+      "evidence_span_end": 86480
+    },
+    {
+      "subject_id": "m339",
+      "predicate": "discussed_in",
+      "object_id": "m342",
+      "evidence_span_start": 86490,
+      "evidence_span_end": 86530
+    },
+    {
+      "subject_id": "m339",
+      "predicate": "discussed_in",
+      "object_id": "m344",
+      "evidence_span_start": 86540,
+      "evidence_span_end": 86590
+    },
+    {
+      "subject_id": "m339",
+      "predicate": "discussed_in",
+      "object_id": "m346",
+      "evidence_span_start": 86590,
+      "evidence_span_end": 86630
+    },
+    {
+      "subject_id": "m339",
+      "predicate": "discussed_in",
+      "object_id": "m348",
+      "evidence_span_start": 86630,
+      "evidence_span_end": 86650
+    },
+    {
+      "subject_id": "m339",
+      "predicate": "discussed_in",
+      "object_id": "m350",
+      "evidence_span_start": 86650,
+      "evidence_span_end": 86670
+    },
+    {
+      "subject_id": "m339",
+      "predicate": "discussed_in",
+      "object_id": "m352",
+      "evidence_span_start": 86670,
+      "evidence_span_end": 86690
+    },
+    {
+      "subject_id": "m354",
+      "predicate": "implements",
+      "object_id": "m339",
+      "evidence_span_start": 86890,
+      "evidence_span_end": 86960
+    },
+    {
+      "subject_id": "m355",
+      "predicate": "has_component",
+      "object_id": "m356",
+      "evidence_span_start": 87400,
+      "evidence_span_end": 87520
+    },
+    {
+      "subject_id": "m355",
+      "predicate": "has_component",
+      "object_id": "m357",
+      "evidence_span_start": 87400,
+      "evidence_span_end": 87520
+    },
+    {
+      "subject_id": "m355",
+      "predicate": "has_component",
+      "object_id": "m358",
+      "evidence_span_start": 87400,
+      "evidence_span_end": 87520
+    },
+    {
+      "subject_id": "m355",
+      "predicate": "uses",
+      "object_id": "m359",
+      "evidence_span_start": 87800,
+      "evidence_span_end": 87860
+    },
+    {
+      "subject_id": "m361",
+      "predicate": "uses",
+      "object_id": "m362",
+      "evidence_span_start": 89240,
+      "evidence_span_end": 89290
+    },
+    {
+      "subject_id": "m361",
+      "predicate": "uses",
+      "object_id": "m363",
+      "evidence_span_start": 89290,
+      "evidence_span_end": 89370
+    },
+    {
+      "subject_id": "m364",
+      "predicate": "used_in",
+      "object_id": "m361",
+      "evidence_span_start": 90000,
+      "evidence_span_end": 90100
+    },
+    {
+      "subject_id": "m364",
+      "predicate": "requires",
+      "object_id": "m365",
+      "evidence_span_start": 90090,
+      "evidence_span_end": 90140
+    },
+    {
+      "subject_id": "m364",
+      "predicate": "has",
+      "object_id": "m366",
+      "evidence_span_start": 90140,
+      "evidence_span_end": 90190
+    },
+    {
+      "subject_id": "m364",
+      "predicate": "has",
+      "object_id": "m367",
+      "evidence_span_start": 90140,
+      "evidence_span_end": 90190
+    },
+    {
+      "subject_id": "m373",
+      "predicate": "part_of",
+      "object_id": "m361",
+      "evidence_span_start": 91000,
+      "evidence_span_end": 91080
+    },
+    {
+      "subject_id": "m378",
+      "predicate": "is_a",
+      "object_id": "m376",
+      "evidence_span_start": 120269,
+      "evidence_span_end": 120325
+    },
+    {
+      "subject_id": "m378",
+      "predicate": "uses",
+      "object_id": "m377",
+      "evidence_span_start": 120260,
+      "evidence_span_end": 120303
+    },
+    {
+      "subject_id": "m378",
+      "predicate": "related_to",
+      "object_id": "m379",
+      "evidence_span_start": 120280,
+      "evidence_span_end": 120469
+    },
+    {
+      "subject_id": "m382",
+      "predicate": "is_a",
+      "object_id": "m381",
+      "evidence_span_start": 121215,
+      "evidence_span_end": 121240
+    },
+    {
+      "subject_id": "m385",
+      "predicate": "is_a",
+      "object_id": "m384",
+      "evidence_span_start": 122173,
+      "evidence_span_end": 122225
+    },
+    {
+      "subject_id": "m388",
+      "predicate": "is_a",
+      "object_id": "m387",
+      "evidence_span_start": 123252,
+      "evidence_span_end": 123303
+    },
+    {
+      "subject_id": "m393",
+      "predicate": "performed_on",
+      "object_id": "m390",
+      "evidence_span_start": 125041,
+      "evidence_span_end": 125104
+    },
+    {
+      "subject_id": "m392",
+      "predicate": "used_in",
+      "object_id": "m393",
+      "evidence_span_start": 125391,
+      "evidence_span_end": 125428
+    },
+    {
+      "subject_id": "m395",
+      "predicate": "part_of",
+      "object_id": "m394",
+      "evidence_span_start": 126823,
+      "evidence_span_end": 126891
+    },
+    {
+      "subject_id": "m396",
+      "predicate": "part_of",
+      "object_id": "m394",
+      "evidence_span_start": 126823,
+      "evidence_span_end": 126891
+    },
+    {
+      "subject_id": "m395",
+      "predicate": "measures",
+      "object_id": "m398",
+      "evidence_span_start": 127696,
+      "evidence_span_end": 127756
+    },
+    {
+      "subject_id": "m394",
+      "predicate": "documents",
+      "object_id": "m399",
+      "evidence_span_start": 128271,
+      "evidence_span_end": 128323
+    },
+    {
+      "subject_id": "m403",
+      "predicate": "part_of",
+      "object_id": "m394",
+      "evidence_span_start": 129633,
+      "evidence_span_end": 129672
+    },
+    {
+      "subject_id": "m401",
+      "predicate": "discussed_in",
+      "object_id": "m402",
+      "evidence_span_start": 129323,
+      "evidence_span_end": 129408
+    },
+    {
+      "subject_id": "m407",
+      "predicate": "applied_to",
+      "object_id": "m404",
+      "evidence_span_start": 130033,
+      "evidence_span_end": 130090
+    },
+    {
+      "subject_id": "m407",
+      "predicate": "discussed_in",
+      "object_id": "m408",
+      "evidence_span_start": 130033,
+      "evidence_span_end": 130090
+    },
+    {
+      "subject_id": "m410",
+      "predicate": "applied_to",
+      "object_id": "m405",
+      "evidence_span_start": 129984,
+      "evidence_span_end": 130653
+    },
+    {
+      "subject_id": "m412",
+      "predicate": "applied_to",
+      "object_id": "m405",
+      "evidence_span_start": 129984,
+      "evidence_span_end": 131028
+    },
+    {
+      "subject_id": "m412",
+      "predicate": "discussed_in",
+      "object_id": "m413",
+      "evidence_span_start": 130996,
+      "evidence_span_end": 131072
+    },
+    {
+      "subject_id": "m415",
+      "predicate": "applied_to",
+      "object_id": "m406",
+      "evidence_span_start": 129993,
+      "evidence_span_end": 131818
+    },
+    {
+      "subject_id": "m415",
+      "predicate": "discussed_in",
+      "object_id": "m416",
+      "evidence_span_start": 131830,
+      "evidence_span_end": 131888
+    },
+    {
+      "subject_id": "m417",
+      "predicate": "has",
+      "object_id": "m418",
+      "evidence_span_start": 132024,
+      "evidence_span_end": 132100
+    },
+    {
+      "subject_id": "m421",
+      "predicate": "implements",
+      "object_id": "m418",
+      "evidence_span_start": 132150,
+      "evidence_span_end": 132250
+    },
+    {
+      "subject_id": "m422",
+      "predicate": "discussed_in",
+      "object_id": "m423",
+      "evidence_span_start": 132347,
+      "evidence_span_end": 132420
+    },
+    {
+      "subject_id": "m422",
+      "predicate": "discussed_in",
+      "object_id": "m424",
+      "evidence_span_start": 132430,
+      "evidence_span_end": 132470
+    },
+    {
+      "subject_id": "m427",
+      "predicate": "part_of",
+      "object_id": "m428",
+      "evidence_span_start": 132680,
+      "evidence_span_end": 132740
+    },
+    {
+      "subject_id": "m430",
+      "predicate": "implements",
+      "object_id": "m422",
+      "evidence_span_start": 133650,
+      "evidence_span_end": 133700
+    },
+    {
+      "subject_id": "m433",
+      "predicate": "requires",
+      "object_id": "m434",
+      "evidence_span_start": 134150,
+      "evidence_span_end": 134220
+    },
+    {
+      "subject_id": "m435",
+      "predicate": "implements",
+      "object_id": "m434",
+      "evidence_span_start": 134280,
+      "evidence_span_end": 134320
+    },
+    {
+      "subject_id": "m437",
+      "predicate": "documents",
+      "object_id": "m436",
+      "evidence_span_start": 134350,
+      "evidence_span_end": 134420
+    },
+    {
+      "subject_id": "m438",
+      "predicate": "documents",
+      "object_id": "m439",
+      "evidence_span_start": 134580,
+      "evidence_span_end": 134620
+    },
+    {
+      "subject_id": "m440",
+      "predicate": "implements",
+      "object_id": "m433",
+      "evidence_span_start": 134880,
+      "evidence_span_end": 134950
+    },
+    {
+      "subject_id": "m442",
+      "predicate": "verifies",
+      "object_id": "m433",
+      "evidence_span_start": 135750,
+      "evidence_span_end": 135830
+    },
+    {
+      "subject_id": "m445",
+      "predicate": "uses",
+      "object_id": "m433",
+      "evidence_span_start": 136950,
+      "evidence_span_end": 137050
+    },
+    {
+      "subject_id": "m446",
+      "predicate": "discussed_in",
+      "object_id": "m447",
+      "evidence_span_start": 137300,
+      "evidence_span_end": 137370
+    },
+    {
+      "subject_id": "m449",
+      "predicate": "discussed_in",
+      "object_id": "m448",
+      "evidence_span_start": 137400,
+      "evidence_span_end": 137500
+    },
+    {
+      "subject_id": "m453",
+      "predicate": "applied_to",
+      "object_id": "m449",
+      "evidence_span_start": 138080,
+      "evidence_span_end": 138160
+    },
+    {
+      "subject_id": "m454",
+      "predicate": "discussed_in",
+      "object_id": "m423",
+      "evidence_span_start": 138300,
+      "evidence_span_end": 138370
+    },
+    {
+      "subject_id": "m456",
+      "predicate": "uses",
+      "object_id": "m457",
+      "evidence_span_start": 138400,
+      "evidence_span_end": 138500
+    },
+    {
+      "subject_id": "m458",
+      "predicate": "implements",
+      "object_id": "m454",
+      "evidence_span_start": 138650,
+      "evidence_span_end": 138740
+    },
+    {
+      "subject_id": "m456",
+      "predicate": "has_component",
+      "object_id": "m460",
+      "evidence_span_start": 139050,
+      "evidence_span_end": 139140
+    },
+    {
+      "subject_id": "m463",
+      "predicate": "uses",
+      "object_id": "m462",
+      "evidence_span_start": 139550,
+      "evidence_span_end": 139650
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "applied_to",
+      "object_id": "m450",
+      "evidence_span_start": 139880,
+      "evidence_span_end": 139950
+    },
+    {
+      "subject_id": "m471",
+      "predicate": "uses",
+      "object_id": "m472",
+      "evidence_span_start": 144248,
+      "evidence_span_end": 144299
+    },
+    {
+      "subject_id": "m471",
+      "predicate": "uses",
+      "object_id": "m473",
+      "evidence_span_start": 144248,
+      "evidence_span_end": 144401
+    },
+    {
+      "subject_id": "m473",
+      "predicate": "applied_to",
+      "object_id": "m474",
+      "evidence_span_start": 144381,
+      "evidence_span_end": 144431
+    },
+    {
+      "subject_id": "m477",
+      "predicate": "uses",
+      "object_id": "m466",
+      "evidence_span_start": 144712,
+      "evidence_span_end": 144792
+    },
+    {
+      "subject_id": "m469",
+      "predicate": "applied_to",
+      "object_id": "m486",
+      "evidence_span_start": 145210,
+      "evidence_span_end": 145254
+    },
+    {
+      "subject_id": "m497",
+      "predicate": "related_to",
+      "object_id": "m499",
+      "evidence_span_start": 145843,
+      "evidence_span_end": 145947
+    },
+    {
+      "subject_id": "m497",
+      "predicate": "related_to",
+      "object_id": "m500",
+      "evidence_span_start": 145843,
+      "evidence_span_end": 145947
+    }
+  ]
+}
