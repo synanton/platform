@@ -16,6 +16,9 @@
   (`output_char_ratio`) for observability.
 - Oversized chunks return diagnostics with chunk ID, required tokens and provider
   cap.
+- `extraction_contract.py` separates semantic `ModelProposal` from
+  deterministically validated `ValidatedExtraction`; only the latter can be
+  persisted or resolved.
 - `surface_anchoring.py` resolves exact surfaces deterministically; repeated
   surfaces require unique contextual evidence or are rejected as
   `AMBIGUOUS_SURFACE`; model offsets are retained only for diagnostics.
@@ -24,12 +27,12 @@
   unique/repeated/missing/Unicode surfaces, BERT offset regression, chunk
   provenance and all 25 DEV gold v1.0 docs.
 
-28 offline tests pass, including all 25 DEV gold v1.0 documents.
+35 offline tests pass, including all 25 DEV gold v1.0 documents.
 
 Run:
 ```bash
 cd evaluation/dev25
-python3 -m unittest -v test_offline_validation.py test_extraction_pipeline.py test_surface_anchoring.py
+python3 -m unittest -v test_offline_validation.py test_extraction_pipeline.py test_surface_anchoring.py test_extraction_contract.py
 ```
 
 No experiment is authorized by this implementation.
