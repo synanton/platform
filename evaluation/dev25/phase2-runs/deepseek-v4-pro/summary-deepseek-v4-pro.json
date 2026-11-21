@@ -1,0 +1,685 @@
+{
+  "run_id": "20261121T095547Z-11007910",
+  "model_id": "deepseek-v4-pro",
+  "documents": 25,
+  "input_tokens": 168763,
+  "output_tokens": 285929,
+  "estimated_cost_usd": 0.3937,
+  "documents_detail": [
+    {
+      "doc_id": "g7-dev-001",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 11,
+      "relations": 7,
+      "rejected": 2,
+      "entity": {
+        "tp": 7,
+        "pred": 11,
+        "gold": 10,
+        "p": 0.6363636363636364,
+        "r": 0.7,
+        "f1": 0.6666666666666666
+      },
+      "relation": {
+        "tp": 4,
+        "predicted": 7,
+        "gold": 7,
+        "precision": 0.5714285714285714,
+        "recall": 0.5714285714285714,
+        "f1": 0.5714285714285714,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-002",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 12,
+      "relations": 7,
+      "rejected": 3,
+      "entity": {
+        "tp": 8,
+        "pred": 12,
+        "gold": 12,
+        "p": 0.6666666666666666,
+        "r": 0.6666666666666666,
+        "f1": 0.6666666666666666
+      },
+      "relation": {
+        "tp": 4,
+        "predicted": 7,
+        "gold": 7,
+        "precision": 0.5714285714285714,
+        "recall": 0.5714285714285714,
+        "f1": 0.5714285714285714,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-003",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 18,
+      "relations": 10,
+      "rejected": 6,
+      "entity": {
+        "tp": 11,
+        "pred": 18,
+        "gold": 15,
+        "p": 0.6111111111111112,
+        "r": 0.7333333333333333,
+        "f1": 0.6666666666666666
+      },
+      "relation": {
+        "tp": 2,
+        "predicted": 10,
+        "gold": 10,
+        "precision": 0.2,
+        "recall": 0.2,
+        "f1": 0.20000000000000004,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-004",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 14,
+      "relations": 9,
+      "rejected": 3,
+      "entity": {
+        "tp": 7,
+        "pred": 14,
+        "gold": 15,
+        "p": 0.5,
+        "r": 0.4666666666666667,
+        "f1": 0.4827586206896552
+      },
+      "relation": {
+        "tp": 4,
+        "predicted": 9,
+        "gold": 10,
+        "precision": 0.4444444444444444,
+        "recall": 0.4,
+        "f1": 0.4210526315789474,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-005",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 11,
+      "relations": 2,
+      "rejected": 4,
+      "entity": {
+        "tp": 7,
+        "pred": 11,
+        "gold": 18,
+        "p": 0.6363636363636364,
+        "r": 0.3888888888888889,
+        "f1": 0.4827586206896552
+      },
+      "relation": {
+        "tp": 0,
+        "predicted": 2,
+        "gold": 10,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-006",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 29,
+      "valid_chunks": 17,
+      "entities": 773,
+      "relations": 287,
+      "rejected": 181,
+      "entity": {
+        "tp": 495,
+        "pred": 773,
+        "gold": 1385,
+        "p": 0.6403622250970246,
+        "r": 0.3574007220216607,
+        "f1": 0.458758109360519
+      },
+      "relation": {
+        "tp": 36,
+        "predicted": 283,
+        "gold": 345,
+        "precision": 0.127208480565371,
+        "recall": 0.10434782608695652,
+        "f1": 0.11464968152866242,
+        "direction_errors": 1,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-007",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 9,
+      "valid_chunks": 2,
+      "entities": 138,
+      "relations": 51,
+      "rejected": 15,
+      "entity": {
+        "tp": 89,
+        "pred": 138,
+        "gold": 495,
+        "p": 0.644927536231884,
+        "r": 0.1797979797979798,
+        "f1": 0.2812006319115324
+      },
+      "relation": {
+        "tp": 12,
+        "predicted": 51,
+        "gold": 157,
+        "precision": 0.23529411764705882,
+        "recall": 0.07643312101910828,
+        "f1": 0.11538461538461539,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-008",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 10,
+      "valid_chunks": 4,
+      "entities": 98,
+      "relations": 31,
+      "rejected": 160,
+      "entity": {
+        "tp": 6,
+        "pred": 98,
+        "gold": 102,
+        "p": 0.061224489795918366,
+        "r": 0.058823529411764705,
+        "f1": 0.06
+      },
+      "relation": {
+        "tp": 0,
+        "predicted": 31,
+        "gold": 22,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-009",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 13,
+      "valid_chunks": 7,
+      "entities": 421,
+      "relations": 209,
+      "rejected": 51,
+      "entity": {
+        "tp": 270,
+        "pred": 421,
+        "gold": 518,
+        "p": 0.6413301662707839,
+        "r": 0.5212355212355212,
+        "f1": 0.5750798722044728
+      },
+      "relation": {
+        "tp": 15,
+        "predicted": 209,
+        "gold": 181,
+        "precision": 0.07177033492822966,
+        "recall": 0.08287292817679558,
+        "f1": 0.07692307692307693,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-010",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 22,
+      "valid_chunks": 10,
+      "entities": 393,
+      "relations": 175,
+      "rejected": 67,
+      "entity": {
+        "tp": 230,
+        "pred": 393,
+        "gold": 853,
+        "p": 0.5852417302798982,
+        "r": 0.2696365767878077,
+        "f1": 0.36918138041733545
+      },
+      "relation": {
+        "tp": 40,
+        "predicted": 175,
+        "gold": 273,
+        "precision": 0.22857142857142856,
+        "recall": 0.14652014652014653,
+        "f1": 0.17857142857142858,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-011",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 33,
+      "relations": 10,
+      "rejected": 3,
+      "entity": {
+        "tp": 14,
+        "pred": 33,
+        "gold": 15,
+        "p": 0.42424242424242425,
+        "r": 0.9333333333333333,
+        "f1": 0.5833333333333333
+      },
+      "relation": {
+        "tp": 4,
+        "predicted": 10,
+        "gold": 7,
+        "precision": 0.4,
+        "recall": 0.5714285714285714,
+        "f1": 0.47058823529411764,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-012",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 62,
+      "relations": 51,
+      "rejected": 0,
+      "entity": {
+        "tp": 50,
+        "pred": 62,
+        "gold": 59,
+        "p": 0.8064516129032258,
+        "r": 0.847457627118644,
+        "f1": 0.8264462809917354
+      },
+      "relation": {
+        "tp": 2,
+        "predicted": 51,
+        "gold": 9,
+        "precision": 0.0392156862745098,
+        "recall": 0.2222222222222222,
+        "f1": 0.06666666666666667,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-013",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 71,
+      "relations": 50,
+      "rejected": 4,
+      "entity": {
+        "tp": 21,
+        "pred": 71,
+        "gold": 23,
+        "p": 0.29577464788732394,
+        "r": 0.9130434782608695,
+        "f1": 0.44680851063829785
+      },
+      "relation": {
+        "tp": 4,
+        "predicted": 50,
+        "gold": 6,
+        "precision": 0.08,
+        "recall": 0.6666666666666666,
+        "f1": 0.14285714285714285,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-014",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 58,
+      "relations": 61,
+      "rejected": 0,
+      "entity": {
+        "tp": 30,
+        "pred": 58,
+        "gold": 43,
+        "p": 0.5172413793103449,
+        "r": 0.6976744186046512,
+        "f1": 0.594059405940594
+      },
+      "relation": {
+        "tp": 3,
+        "predicted": 61,
+        "gold": 26,
+        "precision": 0.04918032786885246,
+        "recall": 0.11538461538461539,
+        "f1": 0.06896551724137931,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-015",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 84,
+      "relations": 22,
+      "rejected": 0,
+      "entity": {
+        "tp": 28,
+        "pred": 84,
+        "gold": 34,
+        "p": 0.3333333333333333,
+        "r": 0.8235294117647058,
+        "f1": 0.4745762711864407
+      },
+      "relation": {
+        "tp": 1,
+        "predicted": 22,
+        "gold": 12,
+        "precision": 0.045454545454545456,
+        "recall": 0.08333333333333333,
+        "f1": 0.05882352941176471,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-016",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 47,
+      "relations": 30,
+      "rejected": 4,
+      "entity": {
+        "tp": 17,
+        "pred": 47,
+        "gold": 17,
+        "p": 0.3617021276595745,
+        "r": 1.0,
+        "f1": 0.53125
+      },
+      "relation": {
+        "tp": 4,
+        "predicted": 30,
+        "gold": 6,
+        "precision": 0.13333333333333333,
+        "recall": 0.6666666666666666,
+        "f1": 0.2222222222222222,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-017",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 65,
+      "relations": 16,
+      "rejected": 32,
+      "entity": {
+        "tp": 31,
+        "pred": 65,
+        "gold": 39,
+        "p": 0.47692307692307695,
+        "r": 0.7948717948717948,
+        "f1": 0.5961538461538463
+      },
+      "relation": {
+        "tp": 0,
+        "predicted": 16,
+        "gold": 11,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-018",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 54,
+      "relations": 36,
+      "rejected": 0,
+      "entity": {
+        "tp": 35,
+        "pred": 54,
+        "gold": 35,
+        "p": 0.6481481481481481,
+        "r": 1.0,
+        "f1": 0.7865168539325843
+      },
+      "relation": {
+        "tp": 5,
+        "predicted": 36,
+        "gold": 21,
+        "precision": 0.1388888888888889,
+        "recall": 0.23809523809523808,
+        "f1": 0.17543859649122806,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-019",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 42,
+      "valid_chunks": 19,
+      "entities": 1039,
+      "relations": 422,
+      "rejected": 249,
+      "entity": {
+        "tp": 517,
+        "pred": 1039,
+        "gold": 1992,
+        "p": 0.49759384023099135,
+        "r": 0.2595381526104418,
+        "f1": 0.34114153744638737
+      },
+      "relation": {
+        "tp": 36,
+        "predicted": 419,
+        "gold": 478,
+        "precision": 0.08591885441527446,
+        "recall": 0.07531380753138076,
+        "f1": 0.0802675585284281,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-020",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 5,
+      "valid_chunks": 4,
+      "entities": 78,
+      "relations": 15,
+      "rejected": 61,
+      "entity": {
+        "tp": 74,
+        "pred": 78,
+        "gold": 97,
+        "p": 0.9487179487179487,
+        "r": 0.7628865979381443,
+        "f1": 0.8457142857142856
+      },
+      "relation": {
+        "tp": 7,
+        "predicted": 15,
+        "gold": 25,
+        "precision": 0.4666666666666667,
+        "recall": 0.28,
+        "f1": 0.35000000000000003,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-021",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 11,
+      "valid_chunks": 8,
+      "entities": 282,
+      "relations": 165,
+      "rejected": 76,
+      "entity": {
+        "tp": 217,
+        "pred": 282,
+        "gold": 454,
+        "p": 0.7695035460992907,
+        "r": 0.4779735682819383,
+        "f1": 0.5896739130434782
+      },
+      "relation": {
+        "tp": 13,
+        "predicted": 160,
+        "gold": 141,
+        "precision": 0.08125,
+        "recall": 0.09219858156028368,
+        "f1": 0.08637873754152822,
+        "direction_errors": 1,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-022",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 15,
+      "valid_chunks": 14,
+      "entities": 711,
+      "relations": 356,
+      "rejected": 99,
+      "entity": {
+        "tp": 462,
+        "pred": 711,
+        "gold": 763,
+        "p": 0.6497890295358649,
+        "r": 0.6055045871559633,
+        "f1": 0.626865671641791
+      },
+      "relation": {
+        "tp": 48,
+        "predicted": 346,
+        "gold": 214,
+        "precision": 0.13872832369942195,
+        "recall": 0.22429906542056074,
+        "f1": 0.17142857142857143,
+        "direction_errors": 1,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-023",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 14,
+      "relations": 5,
+      "rejected": 0,
+      "entity": {
+        "tp": 9,
+        "pred": 14,
+        "gold": 9,
+        "p": 0.6428571428571429,
+        "r": 1.0,
+        "f1": 0.782608695652174
+      },
+      "relation": {
+        "tp": 1,
+        "predicted": 5,
+        "gold": 4,
+        "precision": 0.2,
+        "recall": 0.25,
+        "f1": 0.22222222222222224,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-024",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 13,
+      "valid_chunks": 10,
+      "entities": 343,
+      "relations": 30,
+      "rejected": 327,
+      "entity": {
+        "tp": 29,
+        "pred": 343,
+        "gold": 72,
+        "p": 0.08454810495626822,
+        "r": 0.4027777777777778,
+        "f1": 0.13975903614457832
+      },
+      "relation": {
+        "tp": 3,
+        "predicted": 9,
+        "gold": 16,
+        "precision": 0.3333333333333333,
+        "recall": 0.1875,
+        "f1": 0.24000000000000005,
+        "direction_errors": 0,
+        "missing_endpoint_relations": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-025",
+      "model_id": "deepseek-v4-pro",
+      "chunks": 19,
+      "valid_chunks": 10,
+      "entities": 477,
+      "relations": 260,
+      "rejected": 53,
+      "entity": {
+        "tp": 289,
+        "pred": 477,
+        "gold": 841,
+        "p": 0.6058700209643606,
+        "r": 0.3436385255648038,
+        "f1": 0.4385432473444613
+      },
+      "relation": {
+        "tp": 34,
+        "predicted": 260,
+        "gold": 282,
+        "precision": 0.13076923076923078,
+        "recall": 0.12056737588652482,
+        "f1": 0.12546125461254615,
+        "direction_errors": 7,
+        "missing_endpoint_relations": 0
+      }
+    }
+  ]
+}
