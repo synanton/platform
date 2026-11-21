@@ -1,0 +1,5583 @@
+{
+  "document_id": "ext-03-Cespedes----Gradle-Build-Automation-Handbook----2016.pdf",
+  "text_sha256": "04077ebdf2d9d19cbc3197d78dec6eb2c377e710752b3fa2a4fde2f857643aa6",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Gradle",
+      "char_start": 1,
+      "char_end": 7,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Gradle Build Automation Handbook",
+      "char_start": 1,
+      "char_end": 33,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Gradle \u201cHello World\u201d Tutorial",
+      "char_start": 273,
+      "char_end": 302,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "build tool",
+      "char_start": 578,
+      "char_end": 588,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "Gradle JVM Options",
+      "char_start": 1089,
+      "char_end": 1107,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Gradle Basic Concepts",
+      "char_start": 1224,
+      "char_end": 1245,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "Gradle Tasks",
+      "char_start": 1372,
+      "char_end": 1384,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Default Tasks",
+      "char_start": 1502,
+      "char_end": 1515,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Task Dependency",
+      "char_start": 1637,
+      "char_end": 1652,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Abbreviated Task Execution",
+      "char_start": 1772,
+      "char_end": 1798,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Gradle Scripts",
+      "char_start": 2046,
+      "char_end": 2060,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "Gradle Properties",
+      "char_start": 2164,
+      "char_end": 2181,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "System Properties",
+      "char_start": 2718,
+      "char_end": 2735,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "Project Properties",
+      "char_start": 2845,
+      "char_end": 2863,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Gradle\u2019s Properties",
+      "char_start": 2584,
+      "char_end": 2603,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "Custom Project Properties",
+      "char_start": 3120,
+      "char_end": 3145,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "Command Line",
+      "char_start": 3273,
+      "char_end": 3285,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "external file",
+      "char_start": 3409,
+      "char_end": 3422,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "Gradle GWT Integration",
+      "char_start": 3905,
+      "char_end": 3927,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "Gradle Plugins",
+      "char_start": 4183,
+      "char_end": 4197,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "Dependency Management",
+      "char_start": 4315,
+      "char_end": 4336,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "Source Sets",
+      "char_start": 4442,
+      "char_end": 4453,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "Java Plugin",
+      "char_start": 4455,
+      "char_end": 4466,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "Gradle\u2019s Installation",
+      "char_start": 4838,
+      "char_end": 4859,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "Eclipse Gradle & GWT Plugins",
+      "char_start": 4971,
+      "char_end": 4999,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "GWT SDK",
+      "char_start": 5121,
+      "char_end": 5128,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "GWT Project",
+      "char_start": 5229,
+      "char_end": 5240,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "GWT Gradle Build Script",
+      "char_start": 5481,
+      "char_end": 5504,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "Plugins and Dependencies",
+      "char_start": 5619,
+      "char_end": 5643,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "Eclipse Project",
+      "char_start": 6147,
+      "char_end": 6162,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "Gradle SourceSets",
+      "char_start": 6261,
+      "char_end": 6278,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "Gradle SourceSet",
+      "char_start": 6261,
+      "char_end": 6277,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "Gradle Project",
+      "char_start": 6936,
+      "char_end": 6950,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "Build.Gradle",
+      "char_start": 7068,
+      "char_end": 7080,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "SourceSet\u2019s Properties",
+      "char_start": 7187,
+      "char_end": 7209,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "JAR Files",
+      "char_start": 7344,
+      "char_end": 7353,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "SourceSet Documentation",
+      "char_start": 7458,
+      "char_end": 7481,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "Testing",
+      "char_start": 7579,
+      "char_end": 7586,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "Final Build.Gradle SourceSet Script",
+      "char_start": 7713,
+      "char_end": 7748,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m40",
+      "surface_form": "Gradle OSGi Plugin",
+      "char_start": 8103,
+      "char_end": 8121,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m41",
+      "surface_form": "BNDTools Bundle Integration",
+      "char_start": 8131,
+      "char_end": 8158,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-bndtools-bundle-integration"
+    },
+    {
+      "mention_id": "m42",
+      "surface_form": "Gradle and OSGi Integration",
+      "char_start": 8259,
+      "char_end": 8286,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m43",
+      "surface_form": "Basic Concepts",
+      "char_start": 1231,
+      "char_end": 1245,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m44",
+      "surface_form": "OSGi Project",
+      "char_start": 8914,
+      "char_end": 8926,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m45",
+      "surface_form": "Gradle Integration",
+      "char_start": 9166,
+      "char_end": 9184,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m46",
+      "surface_form": "Gradle OSGi Integration",
+      "char_start": 9308,
+      "char_end": 9331,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m47",
+      "surface_form": "Gradle OSGi",
+      "char_start": 8103,
+      "char_end": 8114,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m48",
+      "surface_form": "Gradle Wrapper",
+      "char_start": 9820,
+      "char_end": 9834,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m49",
+      "surface_form": "Wrapper Script",
+      "char_start": 10361,
+      "char_end": 10375,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m50",
+      "surface_form": "Gradle NetBeans",
+      "char_start": 10874,
+      "char_end": 10889,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m51",
+      "surface_form": "NetBeans IDE",
+      "char_start": 11031,
+      "char_end": 11043,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m52",
+      "surface_form": "Gradle Plugin",
+      "char_start": 4183,
+      "char_end": 4196,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m53",
+      "surface_form": "NetBeans",
+      "char_start": 10881,
+      "char_end": 10889,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m54",
+      "surface_form": "NetBeans Project",
+      "char_start": 11947,
+      "char_end": 11963,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m55",
+      "surface_form": "Gradle",
+      "char_start": 24210,
+      "char_end": 24216,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m56",
+      "surface_form": "gradle tasks --all",
+      "char_start": 24030,
+      "char_end": 24048,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-tasks-all"
+    },
+    {
+      "mention_id": "m57",
+      "surface_form": "gradle help --task",
+      "char_start": 24087,
+      "char_end": 24105,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-help-task"
+    },
+    {
+      "mention_id": "m58",
+      "surface_form": "tasks",
+      "char_start": 24003,
+      "char_end": 24008,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m59",
+      "surface_form": "default tasks",
+      "char_start": 24157,
+      "char_end": 24170,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-default-tasks"
+    },
+    {
+      "mention_id": "m60",
+      "surface_form": "agent",
+      "char_start": 24228,
+      "char_end": 24233,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m61",
+      "surface_form": "projects",
+      "char_start": 24270,
+      "char_end": 24278,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m62",
+      "surface_form": "Default Tasks",
+      "char_start": 24304,
+      "char_end": 24317,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m63",
+      "surface_form": "Default Tasks",
+      "char_start": 24352,
+      "char_end": 24365,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m64",
+      "surface_form": "build.gradle",
+      "char_start": 24434,
+      "char_end": 24446,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m65",
+      "surface_form": "defaultTasks",
+      "char_start": 24465,
+      "char_end": 24477,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m66",
+      "surface_form": "beforHelloWorld",
+      "char_start": 24479,
+      "char_end": 24494,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m67",
+      "surface_form": "helloWorld",
+      "char_start": 24502,
+      "char_end": 24512,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m68",
+      "surface_form": "gradle",
+      "char_start": 24030,
+      "char_end": 24036,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m69",
+      "surface_form": "Gradle Build Automation Handbook",
+      "char_start": 24831,
+      "char_end": 24863,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m70",
+      "surface_form": "Task Dependency",
+      "char_start": 25020,
+      "char_end": 25035,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m71",
+      "surface_form": "task dependency",
+      "char_start": 25097,
+      "char_end": 25112,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-task-dependency"
+    },
+    {
+      "mention_id": "m72",
+      "surface_form": "dependency-on task",
+      "char_start": 25174,
+      "char_end": 25192,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dependency-on-task"
+    },
+    {
+      "mention_id": "m73",
+      "surface_form": "dependsOn",
+      "char_start": 25401,
+      "char_end": 25410,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m74",
+      "surface_form": "gradle -q",
+      "char_start": 25497,
+      "char_end": 25506,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m75",
+      "surface_form": "Abbreviated Task Execution",
+      "char_start": 25655,
+      "char_end": 25681,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m76",
+      "surface_form": "camelCase",
+      "char_start": 25895,
+      "char_end": 25904,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-camelcase"
+    },
+    {
+      "mention_id": "m77",
+      "surface_form": "gradle -q hW",
+      "char_start": 25945,
+      "char_end": 25957,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m78",
+      "surface_form": "regular expressions",
+      "char_start": 26073,
+      "char_end": 26092,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-regular-expressions"
+    },
+    {
+      "mention_id": "m79",
+      "surface_form": "Ant",
+      "char_start": 26237,
+      "char_end": 26240,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m80",
+      "surface_form": "Maven",
+      "char_start": 26245,
+      "char_end": 26250,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m81",
+      "surface_form": "Java-based technologies",
+      "char_start": 26336,
+      "char_end": 26359,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-based-technologies"
+    },
+    {
+      "mention_id": "m82",
+      "surface_form": "predefined tasks",
+      "char_start": 26449,
+      "char_end": 26465,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-predefined-tasks"
+    },
+    {
+      "mention_id": "m83",
+      "surface_form": "framework",
+      "char_start": 26536,
+      "char_end": 26545,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m84",
+      "surface_form": "GradleHelloWorldTutorial",
+      "char_start": 26720,
+      "char_end": 26744,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradlehelloworldtutorial"
+    },
+    {
+      "mention_id": "m85",
+      "surface_form": "Gradle Properties",
+      "char_start": 26894,
+      "char_end": 26911,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m86",
+      "surface_form": "properties",
+      "char_start": 27036,
+      "char_end": 27046,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m87",
+      "surface_form": "developers",
+      "char_start": 27225,
+      "char_end": 27235,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m88",
+      "surface_form": "Gradle Hello World Tutorial",
+      "char_start": 27494,
+      "char_end": 27521,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m89",
+      "surface_form": "System properties",
+      "char_start": 27722,
+      "char_end": 27739,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-system-properties"
+    },
+    {
+      "mention_id": "m90",
+      "surface_form": "Project properties",
+      "char_start": 27744,
+      "char_end": 27762,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-project-properties"
+    },
+    {
+      "mention_id": "m91",
+      "surface_form": "JVM",
+      "char_start": 27820,
+      "char_end": 27823,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m92",
+      "surface_form": "builds",
+      "char_start": 27859,
+      "char_end": 27865,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m93",
+      "surface_form": "System Properties",
+      "char_start": 27995,
+      "char_end": 28012,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m94",
+      "surface_form": "environment variables",
+      "char_start": 28046,
+      "char_end": 28067,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m95",
+      "surface_form": "GRADLE_OPTS",
+      "char_start": 28081,
+      "char_end": 28092,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m96",
+      "surface_form": "JAVA_OPTS",
+      "char_start": 28096,
+      "char_end": 28105,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m97",
+      "surface_form": "Java home",
+      "char_start": 28142,
+      "char_end": 28151,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-home"
+    },
+    {
+      "mention_id": "m98",
+      "surface_form": "Heap",
+      "char_start": 28153,
+      "char_end": 28157,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m99",
+      "surface_form": "PermGem Spaces",
+      "char_start": 28162,
+      "char_end": 28176,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-permgem-spaces"
+    },
+    {
+      "mention_id": "m100",
+      "surface_form": "Gradle daemon",
+      "char_start": 28181,
+      "char_end": 28194,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m101",
+      "surface_form": "Gradle System Properties Configuration",
+      "char_start": 28526,
+      "char_end": 28564,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-system-properties-configuration"
+    },
+    {
+      "mention_id": "m102",
+      "surface_form": "libraries",
+      "char_start": 28632,
+      "char_end": 28641,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m103",
+      "surface_form": "classes",
+      "char_start": 28656,
+      "char_end": 28663,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m104",
+      "surface_form": "build",
+      "char_start": 24434,
+      "char_end": 24439,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m105",
+      "surface_form": "Gralde",
+      "char_start": 28695,
+      "char_end": 28701,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m106",
+      "surface_form": "Gradle Build no Daemon",
+      "char_start": 29025,
+      "char_end": 29047,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-build-no-daemon"
+    },
+    {
+      "mention_id": "m107",
+      "surface_form": "Gradle Build Daemon ON",
+      "char_start": 29250,
+      "char_end": 29272,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-build-daemon-on"
+    },
+    {
+      "mention_id": "m108",
+      "surface_form": "system properties",
+      "char_start": 29283,
+      "char_end": 29300,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-system-properties"
+    },
+    {
+      "mention_id": "m109",
+      "surface_form": "-D",
+      "char_start": 28311,
+      "char_end": 28313,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m110",
+      "surface_form": "Java command option",
+      "char_start": 29498,
+      "char_end": 29517,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-command-option"
+    },
+    {
+      "mention_id": "m111",
+      "surface_form": "gradle helloWorld -Dorg.gradle.daemon=false",
+      "char_start": 29587,
+      "char_end": 29630,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-helloworld-dorg-gradle-daemon-false"
+    },
+    {
+      "mention_id": "m112",
+      "surface_form": "org.gradle.java.home",
+      "char_start": 29761,
+      "char_end": 29781,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-org-gradle-java-home"
+    },
+    {
+      "mention_id": "m113",
+      "surface_form": "Java Home",
+      "char_start": 29797,
+      "char_end": 29806,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-home"
+    },
+    {
+      "mention_id": "m114",
+      "surface_form": "Gradle build process",
+      "char_start": 29815,
+      "char_end": 29835,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-build-process"
+    },
+    {
+      "mention_id": "m115",
+      "surface_form": "org.gradle.jvmargs",
+      "char_start": 29839,
+      "char_end": 29857,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-org-gradle-jvmargs"
+    },
+    {
+      "mention_id": "m116",
+      "surface_form": "memory settings",
+      "char_start": 29870,
+      "char_end": 29885,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-memory-settings"
+    },
+    {
+      "mention_id": "m117",
+      "surface_form": "org.gradle.configureondemand",
+      "char_start": 29901,
+      "char_end": 29929,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-org-gradle-configureondemand"
+    },
+    {
+      "mention_id": "m118",
+      "surface_form": "multi-projects",
+      "char_start": 30022,
+      "char_end": 30036,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-multi-projects"
+    },
+    {
+      "mention_id": "m119",
+      "surface_form": "org.gradle.parallel",
+      "char_start": 30074,
+      "char_end": 30093,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-org-gradle-parallel"
+    },
+    {
+      "mention_id": "m120",
+      "surface_form": "parallel mode",
+      "char_start": 30107,
+      "char_end": 30120,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-parallel-mode"
+    },
+    {
+      "mention_id": "m121",
+      "surface_form": "Project Properties",
+      "char_start": 30286,
+      "char_end": 30304,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m122",
+      "surface_form": "gradle properties",
+      "char_start": 30475,
+      "char_end": 30492,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m123",
+      "surface_form": "Properties",
+      "char_start": 26901,
+      "char_end": 26911,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m124",
+      "surface_form": "Gradle \"Hello World\" Example",
+      "char_start": 30538,
+      "char_end": 30566,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-hello-world-example"
+    },
+    {
+      "mention_id": "m125",
+      "surface_form": "Root project",
+      "char_start": 30688,
+      "char_end": 30700,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-root-project"
+    },
+    {
+      "mention_id": "m126",
+      "surface_form": "Gradle Properties Tutorial",
+      "char_start": 29560,
+      "char_end": 29586,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m127",
+      "surface_form": "buildDir",
+      "char_start": 31252,
+      "char_end": 31260,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m128",
+      "surface_form": "buildFile",
+      "char_start": 31316,
+      "char_end": 31325,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-buildfile"
+    },
+    {
+      "mention_id": "m129",
+      "surface_form": "default project properties",
+      "char_start": 34503,
+      "char_end": 34529,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-default-project-properties"
+    },
+    {
+      "mention_id": "m130",
+      "surface_form": "Custom Project Properties",
+      "char_start": 34542,
+      "char_end": 34567,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m131",
+      "surface_form": "build script",
+      "char_start": 34648,
+      "char_end": 34660,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m132",
+      "surface_form": "ext{}",
+      "char_start": 34670,
+      "char_end": 34675,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ext"
+    },
+    {
+      "mention_id": "m133",
+      "surface_form": "myFirstProperty",
+      "char_start": 34699,
+      "char_end": 34714,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m134",
+      "surface_form": "myCustomPropertyValue",
+      "char_start": 34718,
+      "char_end": 34739,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m135",
+      "surface_form": "showPropertiesTask",
+      "char_start": 34749,
+      "char_end": 34767,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m136",
+      "surface_form": "gradle sPT",
+      "char_start": 34907,
+      "char_end": 34917,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-spt"
+    },
+    {
+      "mention_id": "m137",
+      "surface_form": "Setting Properties in Command Line",
+      "char_start": 35151,
+      "char_end": 35185,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m138",
+      "surface_form": "properties file",
+      "char_start": 35291,
+      "char_end": 35306,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m139",
+      "surface_form": "-P",
+      "char_start": 35324,
+      "char_end": 35326,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m140",
+      "surface_form": "command-line option",
+      "char_start": 35327,
+      "char_end": 35346,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-command-line-option"
+    },
+    {
+      "mention_id": "m141",
+      "surface_form": "custom property",
+      "char_start": 35358,
+      "char_end": 35373,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-custom-property"
+    },
+    {
+      "mention_id": "m142",
+      "surface_form": "version",
+      "char_start": 34370,
+      "char_end": 34377,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m143",
+      "surface_form": "customProperty",
+      "char_start": 35550,
+      "char_end": 35564,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m144",
+      "surface_form": "Version",
+      "char_start": 35496,
+      "char_end": 35503,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m145",
+      "surface_form": "2.3.3",
+      "char_start": 35624,
+      "char_end": 35629,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m146",
+      "surface_form": "Custom property",
+      "char_start": 35532,
+      "char_end": 35547,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m147",
+      "surface_form": "myCustomValue",
+      "char_start": 35647,
+      "char_end": 35660,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m148",
+      "surface_form": "Setting Properties using an external file",
+      "char_start": 35959,
+      "char_end": 36000,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m149",
+      "surface_form": "gradle.properties",
+      "char_start": 36249,
+      "char_end": 36266,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m150",
+      "surface_form": "build.gradle",
+      "char_start": 36301,
+      "char_end": 36313,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m151",
+      "surface_form": "version",
+      "char_start": 36367,
+      "char_end": 36374,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m152",
+      "surface_form": "customProperty",
+      "char_start": 36381,
+      "char_end": 36395,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m153",
+      "surface_form": "gradle showPropertiesTask",
+      "char_start": 36612,
+      "char_end": 36637,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m154",
+      "surface_form": "showPropertiesTask",
+      "char_start": 36619,
+      "char_end": 36637,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m155",
+      "surface_form": "Version: 3.0",
+      "char_start": 36658,
+      "char_end": 36670,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-version-3-0"
+    },
+    {
+      "mention_id": "m156",
+      "surface_form": "Custom property: This value is obtained from gradle.properties",
+      "char_start": 36671,
+      "char_end": 36733,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m157",
+      "surface_form": "BUILD SUCCESSFUL",
+      "char_start": 36735,
+      "char_end": 36751,
+      "proposed_type": "Event",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m158",
+      "surface_form": "Total time: 0.943 secs",
+      "char_start": 36753,
+      "char_end": 36775,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-total-time-0-943-secs"
+    },
+    {
+      "mention_id": "m159",
+      "surface_form": "main Gradle directory",
+      "char_start": 36803,
+      "char_end": 36824,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m160",
+      "surface_form": "$USER_HOME/.gradle",
+      "char_start": 36963,
+      "char_end": 36981,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m161",
+      "surface_form": "Gradle Build Automation Handbook",
+      "char_start": 36984,
+      "char_end": 37016,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m162",
+      "surface_form": "Figure 2.4: Gradle User Home Properties",
+      "char_start": 37163,
+      "char_end": 37202,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-2-4-gradle-user-home-properties"
+    },
+    {
+      "mention_id": "m163",
+      "surface_form": "gradle build",
+      "char_start": 37388,
+      "char_end": 37400,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m164",
+      "surface_form": "Version: 4.0",
+      "char_start": 37525,
+      "char_end": 37537,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-version-4-0"
+    },
+    {
+      "mention_id": "m165",
+      "surface_form": "Custom property: This value is obtained from gradle.properties in user home",
+      "char_start": 37538,
+      "char_end": 37613,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-custom-property-this-value-is-obtained-from-gradle-properties-in-user-home"
+    },
+    {
+      "mention_id": "m166",
+      "surface_form": "Total time: 1.45 secs",
+      "char_start": 37633,
+      "char_end": 37654,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-total-time-1-45-secs"
+    },
+    {
+      "mention_id": "m167",
+      "surface_form": "Key Points",
+      "char_start": 37666,
+      "char_end": 37676,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m168",
+      "surface_form": "-D",
+      "char_start": 37871,
+      "char_end": 37873,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m169",
+      "surface_form": "-P",
+      "char_start": 37878,
+      "char_end": 37880,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m170",
+      "surface_form": "Gradle user home directory",
+      "char_start": 37941,
+      "char_end": 37967,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-user-home-directory"
+    },
+    {
+      "mention_id": "m171",
+      "surface_form": "project directory",
+      "char_start": 38036,
+      "char_end": 38053,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m172",
+      "surface_form": "Gradle home user directory",
+      "char_start": 38097,
+      "char_end": 38123,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m173",
+      "surface_form": "Gradle daemon",
+      "char_start": 38244,
+      "char_end": 38257,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m174",
+      "surface_form": "Gradle Scripts",
+      "char_start": 38331,
+      "char_end": 38345,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m175",
+      "surface_form": "Gradle Configuration Properties Tutorial",
+      "char_start": 38416,
+      "char_end": 38456,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-configuration-properties-tutorial"
+    },
+    {
+      "mention_id": "m176",
+      "surface_form": "Gradle GWT Integration Example",
+      "char_start": 38604,
+      "char_end": 38634,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m177",
+      "surface_form": "Gradle",
+      "char_start": 36585,
+      "char_end": 36591,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m178",
+      "surface_form": "GWT",
+      "char_start": 38611,
+      "char_end": 38614,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m179",
+      "surface_form": "Jetty Server",
+      "char_start": 38784,
+      "char_end": 38796,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jetty-server"
+    },
+    {
+      "mention_id": "m180",
+      "surface_form": "Google",
+      "char_start": 38859,
+      "char_end": 38865,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m181",
+      "surface_form": "Java",
+      "char_start": 36567,
+      "char_end": 36571,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m182",
+      "surface_form": "Java EE",
+      "char_start": 38954,
+      "char_end": 38961,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-ee"
+    },
+    {
+      "mention_id": "m183",
+      "surface_form": "Jetty",
+      "char_start": 38784,
+      "char_end": 38789,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m184",
+      "surface_form": "Gradle Plugins",
+      "char_start": 39370,
+      "char_end": 39384,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m185",
+      "surface_form": "plugins",
+      "char_start": 39592,
+      "char_end": 39599,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m186",
+      "surface_form": "apply plugin:\u2019PLUGIN_NAME\u2019",
+      "char_start": 39723,
+      "char_end": 39749,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-apply-plugin-plugin-name"
+    },
+    {
+      "mention_id": "m187",
+      "surface_form": "war",
+      "char_start": 39477,
+      "char_end": 39480,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m188",
+      "surface_form": "java",
+      "char_start": 39811,
+      "char_end": 39815,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m189",
+      "surface_form": "eclipse",
+      "char_start": 39820,
+      "char_end": 39827,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m190",
+      "surface_form": "compileJava",
+      "char_start": 39877,
+      "char_end": 39888,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m191",
+      "surface_form": "javac",
+      "char_start": 39922,
+      "char_end": 39927,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m192",
+      "surface_form": "classes",
+      "char_start": 39931,
+      "char_end": 39938,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m193",
+      "surface_form": "jar",
+      "char_start": 39986,
+      "char_end": 39989,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m194",
+      "surface_form": "Dependency Management",
+      "char_start": 40124,
+      "char_end": 40145,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m195",
+      "surface_form": "DSL",
+      "char_start": 40565,
+      "char_end": 40568,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m196",
+      "surface_form": "com.google.gwt:gwt-user:2.7.0",
+      "char_start": 40594,
+      "char_end": 40623,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-com-google-gwt-gwt-user-2-7-0"
+    },
+    {
+      "mention_id": "m197",
+      "surface_form": "Source Sets",
+      "char_start": 40768,
+      "char_end": 40779,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m198",
+      "surface_form": "Java Plugin",
+      "char_start": 40781,
+      "char_end": 40792,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m199",
+      "surface_form": "source set",
+      "char_start": 40839,
+      "char_end": 40849,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m200",
+      "surface_form": "src/main/java",
+      "char_start": 41056,
+      "char_end": 41069,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m201",
+      "surface_form": "src/main/resources",
+      "char_start": 41095,
+      "char_end": 41113,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-src-main-resources"
+    },
+    {
+      "mention_id": "m202",
+      "surface_form": "src/test/java",
+      "char_start": 41130,
+      "char_end": 41143,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m203",
+      "surface_form": "src/test/resources",
+      "char_start": 41162,
+      "char_end": 41180,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-src-test-resources"
+    },
+    {
+      "mention_id": "m204",
+      "surface_form": "Eclipse Luna 4.4",
+      "char_start": 41219,
+      "char_end": 41235,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m205",
+      "surface_form": "Eclipse Gradle Plugin",
+      "char_start": 41238,
+      "char_end": 41259,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m206",
+      "surface_form": "GWT Eclipse Plugin",
+      "char_start": 41273,
+      "char_end": 41291,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-eclipse-plugin"
+    },
+    {
+      "mention_id": "m207",
+      "surface_form": "JDK 1.7_75",
+      "char_start": 41294,
+      "char_end": 41304,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m208",
+      "surface_form": "Gradle 2.3",
+      "char_start": 41318,
+      "char_end": 41328,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m209",
+      "surface_form": "GWT 2.7.0",
+      "char_start": 41331,
+      "char_end": 41340,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-2-7-0"
+    },
+    {
+      "mention_id": "m210",
+      "surface_form": "GWT Steffen Schaefer plugin",
+      "char_start": 41343,
+      "char_end": 41370,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-steffen-schaefer-plugin"
+    },
+    {
+      "mention_id": "m211",
+      "surface_form": "Eclipse",
+      "char_start": 40099,
+      "char_end": 40106,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m212",
+      "surface_form": "GWT Plugins",
+      "char_start": 41464,
+      "char_end": 41475,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m213",
+      "surface_form": "GWT plugin",
+      "char_start": 41527,
+      "char_end": 41537,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m214",
+      "surface_form": "Javascript",
+      "char_start": 41570,
+      "char_end": 41580,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-javascript"
+    },
+    {
+      "mention_id": "m215",
+      "surface_form": "Environment Configuration",
+      "char_start": 41598,
+      "char_end": 41623,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m216",
+      "surface_form": "Gradle\u2019s Installation",
+      "char_start": 41633,
+      "char_end": 41654,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m217",
+      "surface_form": "Figure 3.1: Gradle Environment Variable Setting",
+      "char_start": 41927,
+      "char_end": 41974,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-3-1-gradle-environment-variable-setting"
+    },
+    {
+      "mention_id": "m218",
+      "surface_form": "Eclipse Gradle & GWT Plugins",
+      "char_start": 41985,
+      "char_end": 42013,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m219",
+      "surface_form": "Eclipse Marketplace",
+      "char_start": 42022,
+      "char_end": 42041,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m220",
+      "surface_form": "Eclipse Integration",
+      "char_start": 42053,
+      "char_end": 42072,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-eclipse-integration"
+    },
+    {
+      "mention_id": "m221",
+      "surface_form": "Figure 3.2: Gradle Eclipse Plugin",
+      "char_start": 42278,
+      "char_end": 42311,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-3-2-gradle-eclipse-plugin"
+    },
+    {
+      "mention_id": "m222",
+      "surface_form": "GWT Plugin",
+      "char_start": 41380,
+      "char_end": 41390,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m223",
+      "surface_form": "Help > Install New Software",
+      "char_start": 42479,
+      "char_end": 42506,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-help-install-new-software"
+    },
+    {
+      "mention_id": "m224",
+      "surface_form": "Figure 3.3: GWT Plugin Installation",
+      "char_start": 42616,
+      "char_end": 42651,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-3-3-gwt-plugin-installation"
+    },
+    {
+      "mention_id": "m225",
+      "surface_form": "GWT SDK",
+      "char_start": 42741,
+      "char_end": 42748,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m226",
+      "surface_form": "GWT 2.7 distribution",
+      "char_start": 42768,
+      "char_end": 42788,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-2-7-distribution"
+    },
+    {
+      "mention_id": "m227",
+      "surface_form": "Window > Preferences > Google > Web Toolkit",
+      "char_start": 42878,
+      "char_end": 42921,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-window-preferences-google-web-toolkit"
+    },
+    {
+      "mention_id": "m228",
+      "surface_form": "Figure 3.4: GWT SDK Eclipse Setting",
+      "char_start": 43143,
+      "char_end": 43178,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-3-4-gwt-sdk-eclipse-setting"
+    },
+    {
+      "mention_id": "m229",
+      "surface_form": "Creating GWT Project",
+      "char_start": 43271,
+      "char_end": 43291,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m230",
+      "surface_form": "Eclipse Wizard",
+      "char_start": 43380,
+      "char_end": 43394,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m231",
+      "surface_form": "Figure 3.5: GWT Gradle Project Wizard",
+      "char_start": 43619,
+      "char_end": 43656,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-3-5-gwt-gradle-project-wizard"
+    },
+    {
+      "mention_id": "m232",
+      "surface_form": "Google App Engine",
+      "char_start": 43699,
+      "char_end": 43716,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-google-app-engine"
+    },
+    {
+      "mention_id": "m233",
+      "surface_form": "GWT project",
+      "char_start": 38735,
+      "char_end": 38746,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m234",
+      "surface_form": "Super Dev Mode",
+      "char_start": 43976,
+      "char_end": 43990,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m235",
+      "surface_form": "GWT Super Dev Mode",
+      "char_start": 44000,
+      "char_end": 44018,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m236",
+      "surface_form": "GWT Application",
+      "char_start": 44029,
+      "char_end": 44044,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-application"
+    },
+    {
+      "mention_id": "m237",
+      "surface_form": "Web Explorer",
+      "char_start": 44050,
+      "char_end": 44062,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-web-explorer"
+    },
+    {
+      "mention_id": "m238",
+      "surface_form": "gwt plugin",
+      "char_start": 44085,
+      "char_end": 44095,
+      "proposed_type": "Component",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-plugin"
+    },
+    {
+      "mention_id": "m239",
+      "surface_form": "Firefox 24",
+      "char_start": 44120,
+      "char_end": 44130,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-firefox-24"
+    },
+    {
+      "mention_id": "m240",
+      "surface_form": "Chrome 21",
+      "char_start": 44134,
+      "char_end": 44143,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-chrome-21"
+    },
+    {
+      "mention_id": "m241",
+      "surface_form": "GWT 2.5+",
+      "char_start": 44288,
+      "char_end": 44296,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-2-5"
+    },
+    {
+      "mention_id": "m242",
+      "surface_form": "Figure 3.6: GWT Running Super Dev Mode",
+      "char_start": 44470,
+      "char_end": 44508,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-3-6-gwt-running-super-dev-mode"
+    },
+    {
+      "mention_id": "m243",
+      "surface_form": "Run As > GWT Super Dev Mode",
+      "char_start": 44558,
+      "char_end": 44585,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-run-as-gwt-super-dev-mode"
+    },
+    {
+      "mention_id": "m244",
+      "surface_form": "GWT Project",
+      "char_start": 43280,
+      "char_end": 43291,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m245",
+      "surface_form": "Setting Gradle in GWT Project",
+      "char_start": 44786,
+      "char_end": 44815,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m246",
+      "surface_form": "Gradle Build Script",
+      "char_start": 44863,
+      "char_end": 44882,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m247",
+      "surface_form": "Figure 3.7: Gradle Build File",
+      "char_start": 45004,
+      "char_end": 45033,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-figure-3-7-gradle-build-file"
+    },
+    {
+      "mention_id": "m248",
+      "surface_form": "workspace",
+      "char_start": 45074,
+      "char_end": 45083,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m249",
+      "surface_form": "GWT Gradle Build Script (Step by step)",
+      "char_start": 45326,
+      "char_end": 45364,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m250",
+      "surface_form": "gwt",
+      "char_start": 40605,
+      "char_end": 40608,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m251",
+      "surface_form": "jetty",
+      "char_start": 45479,
+      "char_end": 45484,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m252",
+      "surface_form": "sourceCompatibility",
+      "char_start": 45551,
+      "char_end": 45570,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m253",
+      "surface_form": "targetCompatibility",
+      "char_start": 45617,
+      "char_end": 45636,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m254",
+      "surface_form": "buildscript",
+      "char_start": 45677,
+      "char_end": 45688,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m255",
+      "surface_form": "jcenter()",
+      "char_start": 45730,
+      "char_end": 45739,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m256",
+      "surface_form": "de.richsource.gradle.plugins:gwt-gradle-plugin:0.6",
+      "char_start": 45846,
+      "char_end": 45896,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-de-richsource-gradle-plugins-gwt-gradle-plugin-0-6"
+    },
+    {
+      "mention_id": "m257",
+      "surface_form": "mavenCentral()",
+      "char_start": 45980,
+      "char_end": 45994,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m258",
+      "surface_form": "options.incremental",
+      "char_start": 46060,
+      "char_end": 46079,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-options-incremental"
+    },
+    {
+      "mention_id": "m259",
+      "surface_form": "gwtVersion",
+      "char_start": 46106,
+      "char_end": 46116,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwtversion"
+    },
+    {
+      "mention_id": "m260",
+      "surface_form": "2.7.0",
+      "char_start": 40618,
+      "char_end": 40623,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m261",
+      "surface_form": "sourceSets",
+      "char_start": 46252,
+      "char_end": 46262,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m262",
+      "surface_form": "src",
+      "char_start": 41056,
+      "char_end": 41059,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m263",
+      "surface_form": "logLevel",
+      "char_start": 46448,
+      "char_end": 46456,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m264",
+      "surface_form": "ERROR",
+      "char_start": 46460,
+      "char_end": 46465,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-error"
+    },
+    {
+      "mention_id": "m265",
+      "surface_form": "minHeapSize",
+      "char_start": 46478,
+      "char_end": 46489,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m266",
+      "surface_form": "512M",
+      "char_start": 46493,
+      "char_end": 46497,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-512m"
+    },
+    {
+      "mention_id": "m267",
+      "surface_form": "maxHeapSize",
+      "char_start": 46510,
+      "char_end": 46521,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m268",
+      "surface_form": "1024M",
+      "char_start": 46525,
+      "char_end": 46530,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-1024m"
+    },
+    {
+      "mention_id": "m269",
+      "surface_form": "superDev",
+      "char_start": 46544,
+      "char_end": 46552,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-superdev"
+    },
+    {
+      "mention_id": "m270",
+      "surface_form": "noPrecompile",
+      "char_start": 46573,
+      "char_end": 46585,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-noprecompile"
+    },
+    {
+      "mention_id": "m271",
+      "surface_form": "addGwtContainer",
+      "char_start": 46732,
+      "char_end": 46747,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m272",
+      "surface_form": "jettyRunWar.httpPort",
+      "char_start": 46979,
+      "char_end": 46999,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jettyrunwar-httpport"
+    },
+    {
+      "mention_id": "m273",
+      "surface_form": "8089",
+      "char_start": 47002,
+      "char_end": 47006,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m274",
+      "surface_form": "jettyDraftWar",
+      "char_start": 47015,
+      "char_end": 47028,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m275",
+      "surface_form": "JettyRunWar",
+      "char_start": 47035,
+      "char_end": 47046,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m276",
+      "surface_form": "draftWar",
+      "char_start": 47068,
+      "char_end": 47076,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m277",
+      "surface_form": "webApp",
+      "char_start": 47117,
+      "char_end": 47123,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m278",
+      "surface_form": "draftWar.archivePath",
+      "char_start": 47124,
+      "char_end": 47144,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-draftwar-archivepath"
+    },
+    {
+      "mention_id": "m279",
+      "surface_form": "Plugins and Dependencies",
+      "char_start": 47159,
+      "char_end": 47183,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m280",
+      "surface_form": "War",
+      "char_start": 46987,
+      "char_end": 46990,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m281",
+      "surface_form": "gwt-war",
+      "char_start": 47717,
+      "char_end": 47724,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-war"
+    },
+    {
+      "mention_id": "m282",
+      "surface_form": "eclipse project",
+      "char_start": 47916,
+      "char_end": 47931,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-eclipse-project"
+    },
+    {
+      "mention_id": "m283",
+      "surface_form": "Gr",
+      "char_start": 36585,
+      "char_end": 36587,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m284",
+      "surface_form": "Eclipse Project",
+      "char_start": 48029,
+      "char_end": 48044,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m285",
+      "surface_form": "jetty",
+      "char_start": 48062,
+      "char_end": 48067,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m286",
+      "surface_form": "war",
+      "char_start": 48105,
+      "char_end": 48108,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m287",
+      "surface_form": "Eclipse",
+      "char_start": 48152,
+      "char_end": 48159,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m288",
+      "surface_form": "BuildScript block",
+      "char_start": 48166,
+      "char_end": 48183,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m289",
+      "surface_form": "classloader",
+      "char_start": 48268,
+      "char_end": 48279,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-classloader"
+    },
+    {
+      "mention_id": "m290",
+      "surface_form": "Gradle build script",
+      "char_start": 48304,
+      "char_end": 48323,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m291",
+      "surface_form": "classpath",
+      "char_start": 48384,
+      "char_end": 48393,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m292",
+      "surface_form": "compile",
+      "char_start": 48432,
+      "char_end": 48439,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m293",
+      "surface_form": "runtime",
+      "char_start": 48442,
+      "char_end": 48449,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m294",
+      "surface_form": "testCompile",
+      "char_start": 48451,
+      "char_end": 48462,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m295",
+      "surface_form": "repositories block",
+      "char_start": 48679,
+      "char_end": 48697,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-repositories-block"
+    },
+    {
+      "mention_id": "m296",
+      "surface_form": "Gradle",
+      "char_start": 48304,
+      "char_end": 48310,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m297",
+      "surface_form": "gwt libraries",
+      "char_start": 48834,
+      "char_end": 48847,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-libraries"
+    },
+    {
+      "mention_id": "m298",
+      "surface_form": "gwt dependencies",
+      "char_start": 48872,
+      "char_end": 48888,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-dependencies"
+    },
+    {
+      "mention_id": "m299",
+      "surface_form": "console",
+      "char_start": 48957,
+      "char_end": 48964,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m300",
+      "surface_form": "Gradle GWT Integration",
+      "char_start": 49440,
+      "char_end": 49462,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m301",
+      "surface_form": "GWT",
+      "char_start": 49447,
+      "char_end": 49450,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m302",
+      "surface_form": "incremental compilation",
+      "char_start": 49620,
+      "char_end": 49643,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m303",
+      "surface_form": "GWT project",
+      "char_start": 49684,
+      "char_end": 49695,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m304",
+      "surface_form": "GWT task",
+      "char_start": 49876,
+      "char_end": 49884,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-task"
+    },
+    {
+      "mention_id": "m305",
+      "surface_form": "build script",
+      "char_start": 48311,
+      "char_end": 48323,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m306",
+      "surface_form": "GWT version",
+      "char_start": 49975,
+      "char_end": 49986,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-version"
+    },
+    {
+      "mention_id": "m307",
+      "surface_form": "2.7.0 distribution",
+      "char_start": 50028,
+      "char_end": 50046,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2-7-0-distribution"
+    },
+    {
+      "mention_id": "m308",
+      "surface_form": "GWT Module",
+      "char_start": 50091,
+      "char_end": 50101,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-module"
+    },
+    {
+      "mention_id": "m309",
+      "surface_form": "gwt.xml file",
+      "char_start": 50319,
+      "char_end": 50331,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-xml-file"
+    },
+    {
+      "mention_id": "m310",
+      "surface_form": "GradleGWTIntegrationExampleJCG",
+      "char_start": 50391,
+      "char_end": 50421,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m311",
+      "surface_form": "SourceSets",
+      "char_start": 51954,
+      "char_end": 51964,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m312",
+      "surface_form": "src/main/java",
+      "char_start": 52144,
+      "char_end": 52157,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m313",
+      "surface_form": "logLevel",
+      "char_start": 52164,
+      "char_end": 52172,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m314",
+      "surface_form": "minHeapSize",
+      "char_start": 52227,
+      "char_end": 52238,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m315",
+      "surface_form": "maxHeapSize",
+      "char_start": 52243,
+      "char_end": 52254,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m316",
+      "surface_form": "jvm args",
+      "char_start": 52291,
+      "char_end": 52299,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jvm-args"
+    },
+    {
+      "mention_id": "m317",
+      "surface_form": "addGwtContainer",
+      "char_start": 52315,
+      "char_end": 52330,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m318",
+      "surface_form": "GWT_CONTAINER",
+      "char_start": 52339,
+      "char_end": 52352,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-container"
+    },
+    {
+      "mention_id": "m319",
+      "surface_form": "eclipse classpath",
+      "char_start": 52376,
+      "char_end": 52393,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-eclipse-classpath"
+    },
+    {
+      "mention_id": "m320",
+      "surface_form": "GPE",
+      "char_start": 52459,
+      "char_end": 52462,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m321",
+      "surface_form": "GWT Plugin Eclipse",
+      "char_start": 52464,
+      "char_end": 52482,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-plugin-eclipse"
+    },
+    {
+      "mention_id": "m322",
+      "surface_form": "httpPort",
+      "char_start": 52554,
+      "char_end": 52562,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m323",
+      "surface_form": "jettyDraftWar",
+      "char_start": 52619,
+      "char_end": 52632,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m324",
+      "surface_form": "JettyRunWar",
+      "char_start": 52749,
+      "char_end": 52760,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m325",
+      "surface_form": "GWT Project",
+      "char_start": 52876,
+      "char_end": 52887,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m326",
+      "surface_form": "gradle JettyRunWar",
+      "char_start": 53163,
+      "char_end": 53181,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-jettyrunwar"
+    },
+    {
+      "mention_id": "m327",
+      "surface_form": "https://localhost:8089/GradleGWTIntegrationExampleJCG/",
+      "char_start": 53296,
+      "char_end": 53350,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-https-localhost-8089-gradlegwtintegrationexamplejcg"
+    },
+    {
+      "mention_id": "m328",
+      "surface_form": "buildScript block",
+      "char_start": 53687,
+      "char_end": 53704,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-buildscript-block"
+    },
+    {
+      "mention_id": "m329",
+      "surface_form": "repositories",
+      "char_start": 48679,
+      "char_end": 48691,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m330",
+      "surface_form": "dependencies blocks",
+      "char_start": 53726,
+      "char_end": 53745,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dependencies-blocks"
+    },
+    {
+      "mention_id": "m331",
+      "surface_form": "Gradle-Gwt-Plugin",
+      "char_start": 54063,
+      "char_end": 54080,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-gwt-plugin"
+    },
+    {
+      "mention_id": "m332",
+      "surface_form": "Steffen Schaeffer",
+      "char_start": 54094,
+      "char_end": 54111,
+      "proposed_type": "Person",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-steffen-schaeffer"
+    },
+    {
+      "mention_id": "m333",
+      "surface_form": "GWT compilation Gradle tasks",
+      "char_start": 54131,
+      "char_end": 54159,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gwt-compilation-gradle-tasks"
+    },
+    {
+      "mention_id": "m334",
+      "surface_form": "compileGWT",
+      "char_start": 54433,
+      "char_end": 54443,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-compilegwt"
+    },
+    {
+      "mention_id": "m335",
+      "surface_form": "cache",
+      "char_start": 54470,
+      "char_end": 54475,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m336",
+      "surface_form": "draftOut",
+      "char_start": 54477,
+      "char_end": 54485,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-draftout"
+    },
+    {
+      "mention_id": "m337",
+      "surface_form": "extra",
+      "char_start": 54487,
+      "char_end": 54492,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-extra"
+    },
+    {
+      "mention_id": "m338",
+      "surface_form": "gen",
+      "char_start": 48005,
+      "char_end": 48008,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m339",
+      "surface_form": "out",
+      "char_start": 48645,
+      "char_end": 48648,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m340",
+      "surface_form": "work",
+      "char_start": 54504,
+      "char_end": 54508,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m341",
+      "surface_form": "C:UsersAndres.gradlecachesmodules-2files-2.1",
+      "char_start": 54744,
+      "char_end": 54788,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m342",
+      "surface_form": "Gradle home",
+      "char_start": 54803,
+      "char_end": 54814,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m343",
+      "surface_form": "{gradle_home}/caches/modules-x/files-x.x/",
+      "char_start": 54816,
+      "char_end": 54857,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-home-caches-modules-x-files-x-x"
+    },
+    {
+      "mention_id": "m344",
+      "surface_form": "{gradle_home}/daemon/2.3",
+      "char_start": 54915,
+      "char_end": 54939,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-home-daemon-2-3"
+    },
+    {
+      "mention_id": "m345",
+      "surface_form": "Gradle Daemon",
+      "char_start": 54984,
+      "char_end": 54997,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-daemon"
+    },
+    {
+      "mention_id": "m346",
+      "surface_form": "Gradle GWT Plugin",
+      "char_start": 55050,
+      "char_end": 55067,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-gwt-plugin"
+    },
+    {
+      "mention_id": "m347",
+      "surface_form": "Gradle tasks",
+      "char_start": 54147,
+      "char_end": 54159,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m348",
+      "surface_form": "Gradle GWT Integration Example",
+      "char_start": 55276,
+      "char_end": 55306,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m349",
+      "surface_form": "Gradle SourceSets",
+      "char_start": 55452,
+      "char_end": 55469,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m350",
+      "surface_form": "Gradle Java Plugin",
+      "char_start": 55523,
+      "char_end": 55541,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-java-plugin"
+    },
+    {
+      "mention_id": "m351",
+      "surface_form": "Java Source Files",
+      "char_start": 55572,
+      "char_end": 55589,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-source-files"
+    },
+    {
+      "mention_id": "m352",
+      "surface_form": "sourceset",
+      "char_start": 55696,
+      "char_end": 55705,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m353",
+      "surface_form": "JAR",
+      "char_start": 55750,
+      "char_end": 55753,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m354",
+      "surface_form": "Gradle SourceSet",
+      "char_start": 55452,
+      "char_end": 55468,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m355",
+      "surface_form": "SourceSet",
+      "char_start": 51954,
+      "char_end": 51963,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m356",
+      "surface_form": "java source files",
+      "char_start": 55868,
+      "char_end": 55885,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m357",
+      "surface_form": "resource files",
+      "char_start": 55901,
+      "char_end": 55915,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-resource-files"
+    },
+    {
+      "mention_id": "m358",
+      "surface_form": "Eclipse Luna 4.4",
+      "char_start": 56146,
+      "char_end": 56162,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m359",
+      "surface_form": "Eclipse Gradle Plugin",
+      "char_start": 56166,
+      "char_end": 56187,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m360",
+      "surface_form": "JDK 1.7_75",
+      "char_start": 56190,
+      "char_end": 56200,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m361",
+      "surface_form": "Gradle 2.3",
+      "char_start": 56213,
+      "char_end": 56223,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m362",
+      "surface_form": "build.gradle script",
+      "char_start": 56256,
+      "char_end": 56275,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m363",
+      "surface_form": "Gradle environment variables",
+      "char_start": 56433,
+      "char_end": 56461,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m364",
+      "surface_form": "Gradle plugin",
+      "char_start": 56478,
+      "char_end": 56491,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m365",
+      "surface_form": "IDE",
+      "char_start": 56141,
+      "char_end": 56144,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m366",
+      "surface_form": "Gradle Hello World Tutorial",
+      "char_start": 56610,
+      "char_end": 56637,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m367",
+      "surface_form": "Eclipse Wizard",
+      "char_start": 56847,
+      "char_end": 56861,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m368",
+      "surface_form": "Gradle Project Wizard",
+      "char_start": 56875,
+      "char_end": 56896,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m369",
+      "surface_form": "Java API and Implementation",
+      "char_start": 57026,
+      "char_end": 57053,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-api-and-implementation"
+    },
+    {
+      "mention_id": "m370",
+      "surface_form": "build.gradle",
+      "char_start": 56256,
+      "char_end": 56268,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m371",
+      "surface_form": "java",
+      "char_start": 49647,
+      "char_end": 49651,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m372",
+      "surface_form": "maven",
+      "char_start": 49233,
+      "char_end": 49238,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m373",
+      "surface_form": "myorg",
+      "char_start": 57511,
+      "char_end": 57516,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-myorg"
+    },
+    {
+      "mention_id": "m374",
+      "surface_form": "mavenCentral()",
+      "char_start": 57552,
+      "char_end": 57566,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m375",
+      "surface_form": "apiCompile",
+      "char_start": 57589,
+      "char_end": 57599,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m376",
+      "surface_form": "commons-codec:commons-codec:1.5",
+      "char_start": 57601,
+      "char_end": 57632,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m377",
+      "surface_form": "implCompile",
+      "char_start": 57641,
+      "char_end": 57652,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m378",
+      "surface_form": "sourceSets.api.output",
+      "char_start": 57653,
+      "char_end": 57674,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m379",
+      "surface_form": "commons-lang:commons-lang:2.6",
+      "char_start": 57694,
+      "char_end": 57723,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m380",
+      "surface_form": "junit:junit:4.9",
+      "char_start": 57745,
+      "char_end": 57760,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m381",
+      "surface_form": "sourceSets.impl.output",
+      "char_start": 57949,
+      "char_end": 57971,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m382",
+      "surface_form": "configurations.apiRuntime",
+      "char_start": 57985,
+      "char_end": 58010,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m383",
+      "surface_form": "configurations.implRuntime",
+      "char_start": 58024,
+      "char_end": 58050,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m384",
+      "surface_form": "sourceSets.all",
+      "char_start": 58054,
+      "char_end": 58068,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m385",
+      "surface_form": "jarTask",
+      "char_start": 58086,
+      "char_end": 58093,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m386",
+      "surface_form": "Jar",
+      "char_start": 58113,
+      "char_end": 58116,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m387",
+      "surface_form": "baseName",
+      "char_start": 58140,
+      "char_end": 58148,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m388",
+      "surface_form": "artifacts",
+      "char_start": 58211,
+      "char_end": 58220,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m389",
+      "surface_form": "archives",
+      "char_start": 58232,
+      "char_end": 58240,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m390",
+      "surface_form": "sourceSets",
+      "char_start": 57653,
+      "char_end": 57663,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m391",
+      "surface_form": "api",
+      "char_start": 57589,
+      "char_end": 57592,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m392",
+      "surface_form": "impl",
+      "char_start": 50127,
+      "char_end": 50131,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m393",
+      "surface_form": "jar",
+      "char_start": 49206,
+      "char_end": 49209,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m394",
+      "surface_form": "uploadArchives",
+      "char_start": 58364,
+      "char_end": 58378,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m395",
+      "surface_form": "mavenDeployer",
+      "char_start": 58408,
+      "char_end": 58421,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-mavendeployer"
+    },
+    {
+      "mention_id": "m396",
+      "surface_form": "buildDir",
+      "char_start": 58459,
+      "char_end": 58467,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m397",
+      "surface_form": "addFilter",
+      "char_start": 58494,
+      "char_end": 58503,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m398",
+      "surface_form": "apiJar",
+      "char_start": 59701,
+      "char_end": 59707,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m399",
+      "surface_form": "implJar",
+      "char_start": 59714,
+      "char_end": 59721,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m400",
+      "surface_form": "Jar type",
+      "char_start": 59736,
+      "char_end": 59744,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m401",
+      "surface_form": "src folder",
+      "char_start": 59919,
+      "char_end": 59929,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-src-folder"
+    },
+    {
+      "mention_id": "m402",
+      "surface_form": "Gradle",
+      "char_start": 61672,
+      "char_end": 61678,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m403",
+      "surface_form": "Jar method",
+      "char_start": 60127,
+      "char_end": 60137,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m404",
+      "surface_form": "api",
+      "char_start": 60230,
+      "char_end": 60233,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m405",
+      "surface_form": "impl",
+      "char_start": 60238,
+      "char_end": 60242,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m406",
+      "surface_form": "SourceSets",
+      "char_start": 60243,
+      "char_end": 60253,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m407",
+      "surface_form": "apiJar",
+      "char_start": 60291,
+      "char_end": 60297,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m408",
+      "surface_form": "implJar",
+      "char_start": 60302,
+      "char_end": 60309,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m409",
+      "surface_form": "Jar",
+      "char_start": 60127,
+      "char_end": 60130,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m410",
+      "surface_form": "uploadArchives",
+      "char_start": 60473,
+      "char_end": 60487,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m411",
+      "surface_form": "Maven repository",
+      "char_start": 60526,
+      "char_end": 60542,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m412",
+      "surface_form": "SourceSet",
+      "char_start": 60243,
+      "char_end": 60252,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m413",
+      "surface_form": "task sourceSetProperties",
+      "char_start": 60724,
+      "char_end": 60748,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m414",
+      "surface_form": "main",
+      "char_start": 60791,
+      "char_end": 60795,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m415",
+      "surface_form": "gradle sSP",
+      "char_start": 61586,
+      "char_end": 61596,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m416",
+      "surface_form": "Andres",
+      "char_start": 61651,
+      "char_end": 61657,
+      "proposed_type": "Person",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m417",
+      "surface_form": "GradleSourceSetProject",
+      "char_start": 61672,
+      "char_end": 61694,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m418",
+      "surface_form": "DoublerImpl.java",
+      "char_start": 63125,
+      "char_end": 63141,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m419",
+      "surface_form": "src/main/java",
+      "char_start": 62482,
+      "char_end": 62495,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m420",
+      "surface_form": "src/api/java",
+      "char_start": 64047,
+      "char_end": 64059,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m421",
+      "surface_form": "src/impl/java",
+      "char_start": 64102,
+      "char_end": 64115,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m422",
+      "surface_form": "src/test/java",
+      "char_start": 64242,
+      "char_end": 64255,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m423",
+      "surface_form": "Doubler.java",
+      "char_start": 64532,
+      "char_end": 64544,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m424",
+      "surface_form": "JAR",
+      "char_start": 64799,
+      "char_end": 64802,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m425",
+      "surface_form": "sourceSet.output",
+      "char_start": 64947,
+      "char_end": 64963,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sourceset-output"
+    },
+    {
+      "mention_id": "m426",
+      "surface_form": "apiClasses",
+      "char_start": 65347,
+      "char_end": 65357,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m427",
+      "surface_form": "compileApiJava",
+      "char_start": 65288,
+      "char_end": 65302,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m428",
+      "surface_form": "processApiResources",
+      "char_start": 65315,
+      "char_end": 65334,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m429",
+      "surface_form": "build/libs",
+      "char_start": 66232,
+      "char_end": 66242,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-build-libs"
+    },
+    {
+      "mention_id": "m430",
+      "surface_form": "javadoc",
+      "char_start": 66651,
+      "char_end": 66658,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m431",
+      "surface_form": "sourceSets.<sourceSet>.allJava",
+      "char_start": 66735,
+      "char_end": 66765,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sourcesets-sourceset-alljava"
+    },
+    {
+      "mention_id": "m432",
+      "surface_form": "test",
+      "char_start": 63868,
+      "char_end": 63872,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m433",
+      "surface_form": "afterTest",
+      "char_start": 67577,
+      "char_end": 67586,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m434",
+      "surface_form": "DoublerImplTest",
+      "char_start": 68239,
+      "char_end": 68254,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-doublerimpltest"
+    },
+    {
+      "mention_id": "m435",
+      "surface_form": "Andres Cespedes",
+      "char_start": 68525,
+      "char_end": 68540,
+      "proposed_type": "Person",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m436",
+      "surface_form": "01 May 2015",
+      "char_start": 68550,
+      "char_end": 68561,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-01-may-2015"
+    },
+    {
+      "mention_id": "m437",
+      "surface_form": "www.javacodegeeks.com",
+      "char_start": 68609,
+      "char_end": 68630,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m438",
+      "surface_form": "java",
+      "char_start": 60831,
+      "char_end": 60835,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m439",
+      "surface_form": "mavenCentral()",
+      "char_start": 68929,
+      "char_end": 68943,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m440",
+      "surface_form": "commons-codec:commons-codec:1.5",
+      "char_start": 70632,
+      "char_end": 70663,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m441",
+      "surface_form": "commons-lang:commons-lang:2.6",
+      "char_start": 70745,
+      "char_end": 70774,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m442",
+      "surface_form": "junit:junit:4.9",
+      "char_start": 70811,
+      "char_end": 70826,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m443",
+      "surface_form": "Gradle NetBeans Plugin",
+      "char_start": 96234,
+      "char_end": 96256,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m444",
+      "surface_form": "Kelemen",
+      "char_start": 96280,
+      "char_end": 96287,
+      "proposed_type": "Person",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m445",
+      "surface_form": "NetBeans",
+      "char_start": 96159,
+      "char_end": 96167,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m446",
+      "surface_form": "Gradle",
+      "char_start": 96168,
+      "char_end": 96174,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m447",
+      "surface_form": "root project",
+      "char_start": 96378,
+      "char_end": 96390,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m448",
+      "surface_form": "gradle build scripts",
+      "char_start": 96497,
+      "char_end": 96517,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m449",
+      "surface_form": "Gradle NetBeans Project",
+      "char_start": 96699,
+      "char_end": 96722,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m450",
+      "surface_form": "Gradle War Plugin",
+      "char_start": 96872,
+      "char_end": 96889,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m451",
+      "surface_form": "Gradle Tomcat Plugin",
+      "char_start": 97034,
+      "char_end": 97054,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m452",
+      "surface_form": "WAR file",
+      "char_start": 97172,
+      "char_end": 97180,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m453",
+      "surface_form": "Tomcat server",
+      "char_start": 96991,
+      "char_end": 97004,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m454",
+      "surface_form": "war task",
+      "char_start": 97202,
+      "char_end": 97210,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m455",
+      "surface_form": "src/main/java",
+      "char_start": 97404,
+      "char_end": 97417,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m456",
+      "surface_form": "src/main/webapp",
+      "char_start": 97507,
+      "char_end": 97522,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-src-main-webapp"
+    },
+    {
+      "mention_id": "m457",
+      "surface_form": "webAppDirName",
+      "char_start": 97621,
+      "char_end": 97634,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m458",
+      "surface_form": "providedCompile",
+      "char_start": 97681,
+      "char_end": 97696,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-providedcompile"
+    },
+    {
+      "mention_id": "m459",
+      "surface_form": "providedRuntime",
+      "char_start": 97701,
+      "char_end": 97716,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-providedruntime"
+    },
+    {
+      "mention_id": "m460",
+      "surface_form": "WEB-INF/lib",
+      "char_start": 97822,
+      "char_end": 97833,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-web-inf-lib"
+    },
+    {
+      "mention_id": "m461",
+      "surface_form": "Eclipse Luna 4.4",
+      "char_start": 97978,
+      "char_end": 97994,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m462",
+      "surface_form": "Java JDK 1.7",
+      "char_start": 97997,
+      "char_end": 98009,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m463",
+      "surface_form": "Gradle 2.3",
+      "char_start": 98013,
+      "char_end": 98023,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m464",
+      "surface_form": "build.gradle",
+      "char_start": 98101,
+      "char_end": 98113,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m465",
+      "surface_form": "Dynamic Web Project",
+      "char_start": 98682,
+      "char_end": 98701,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m466",
+      "surface_form": "servlet 3.0",
+      "char_start": 98812,
+      "char_end": 98823,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-servlet-3-0"
+    },
+    {
+      "mention_id": "m467",
+      "surface_form": "index.jsp",
+      "char_start": 99008,
+      "char_end": 99017,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m468",
+      "surface_form": "WebContent",
+      "char_start": 98972,
+      "char_end": 98982,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m469",
+      "surface_form": "web.xml",
+      "char_start": 99629,
+      "char_end": 99636,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m470",
+      "surface_form": "GradleWarPlugin",
+      "char_start": 100001,
+      "char_end": 100016,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m471",
+      "surface_form": "jcenter()",
+      "char_start": 100527,
+      "char_end": 100536,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m472",
+      "surface_form": "com.bmuschko:gradle-tomcat-plugin:2.0",
+      "char_start": 100586,
+      "char_end": 100623,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-com-bmuschko-gradle-tomcat-plugin-2-0"
+    },
+    {
+      "mention_id": "m473",
+      "surface_form": "java plugin",
+      "char_start": 102029,
+      "char_end": 102040,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-java-plugin"
+    },
+    {
+      "mention_id": "m474",
+      "surface_form": "war plugin",
+      "char_start": 102076,
+      "char_end": 102086,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-war-plugin"
+    },
+    {
+      "mention_id": "m475",
+      "surface_form": "com.bmuschko.tomcat",
+      "char_start": 100692,
+      "char_end": 100711,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-com-bmuschko-tomcat"
+    },
+    {
+      "mention_id": "m476",
+      "surface_form": "sourceCompatibility",
+      "char_start": 100750,
+      "char_end": 100769,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m477",
+      "surface_form": "war.baseName",
+      "char_start": 100828,
+      "char_end": 100840,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-war-basename"
+    },
+    {
+      "mention_id": "m478",
+      "surface_form": "jcg-gradle-war-example",
+      "char_start": 100844,
+      "char_end": 100866,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-jcg-gradle-war-example"
+    },
+    {
+      "mention_id": "m479",
+      "surface_form": "mavenLocal()",
+      "char_start": 100985,
+      "char_end": 100997,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-mavenlocal"
+    },
+    {
+      "mention_id": "m480",
+      "surface_form": "mavenCentral()",
+      "char_start": 101002,
+      "char_end": 101016,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m481",
+      "surface_form": "sourceSets",
+      "char_start": 101044,
+      "char_end": 101054,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m482",
+      "surface_form": "tomcatVersion",
+      "char_start": 101381,
+      "char_end": 101394,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m483",
+      "surface_form": "org.apache.tomcat.embed:tomcat-embed-core",
+      "char_start": 101418,
+      "char_end": 101459,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-org-apache-tomcat-embed-tomcat-embed-core"
+    },
+    {
+      "mention_id": "m484",
+      "surface_form": "org.apache.tomcat.embed:tomcat-embed-logging-juli",
+      "char_start": 101492,
+      "char_end": 101541,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-org-apache-tomcat-embed-tomcat-embed-logging-juli"
+    },
+    {
+      "mention_id": "m485",
+      "surface_form": "org.apache.tomcat.embed:tomcat-embed-jasper",
+      "char_start": 101572,
+      "char_end": 101615,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-org-apache-tomcat-embed-tomcat-embed-jasper"
+    },
+    {
+      "mention_id": "m486",
+      "surface_form": "ecj",
+      "char_start": 101702,
+      "char_end": 101705,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ecj"
+    },
+    {
+      "mention_id": "m487",
+      "surface_form": "tomcatRun.contextPath",
+      "char_start": 101780,
+      "char_end": 101801,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-tomcatrun-contextpath"
+    },
+    {
+      "mention_id": "m488",
+      "surface_form": "tomcatRunWar.contextPath",
+      "char_start": 101808,
+      "char_end": 101832,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-tomcatrunwar-contextpath"
+    },
+    {
+      "mention_id": "m489",
+      "surface_form": "Benjamin Muschko",
+      "char_start": 102150,
+      "char_end": 102166,
+      "proposed_type": "Person",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-benjamin-muschko"
+    },
+    {
+      "mention_id": "m490",
+      "surface_form": "gradle war",
+      "char_start": 102737,
+      "char_end": 102747,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m491",
+      "surface_form": "gradle tomcatRun",
+      "char_start": 103580,
+      "char_end": 103596,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m492",
+      "surface_form": "gradle tR",
+      "char_start": 103600,
+      "char_end": 103609,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gradle-tr"
+    },
+    {
+      "mention_id": "m493",
+      "surface_form": "https://localhost:8080",
+      "char_start": 103931,
+      "char_end": 103953,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m494",
+      "surface_form": "cargo plugin",
+      "char_start": 105167,
+      "char_end": 105179,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m495",
+      "surface_form": "Gradle WAR and Tomcat Plugin Project",
+      "char_start": 105488,
+      "char_end": 105524,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "discussed_in",
+      "object_id": "m2",
+      "evidence_span_start": 0,
+      "evidence_span_end": 33
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "discussed_in",
+      "object_id": "m3",
+      "evidence_span_start": 100,
+      "evidence_span_end": 130
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m5",
+      "evidence_span_start": 300,
+      "evidence_span_end": 319
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m6",
+      "evidence_span_start": 330,
+      "evidence_span_end": 351
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m7",
+      "evidence_span_start": 370,
+      "evidence_span_end": 382
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "part_of",
+      "object_id": "m7",
+      "evidence_span_start": 400,
+      "evidence_span_end": 413
+    },
+    {
+      "subject_id": "m9",
+      "predicate": "part_of",
+      "object_id": "m7",
+      "evidence_span_start": 430,
+      "evidence_span_end": 445
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "part_of",
+      "object_id": "m7",
+      "evidence_span_start": 460,
+      "evidence_span_end": 487
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m12",
+      "evidence_span_start": 560,
+      "evidence_span_end": 577
+    },
+    {
+      "subject_id": "m13",
+      "predicate": "part_of",
+      "object_id": "m12",
+      "evidence_span_start": 700,
+      "evidence_span_end": 717
+    },
+    {
+      "subject_id": "m14",
+      "predicate": "part_of",
+      "object_id": "m12",
+      "evidence_span_start": 730,
+      "evidence_span_end": 748
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "same_as",
+      "object_id": "m12",
+      "evidence_span_start": 770,
+      "evidence_span_end": 789
+    },
+    {
+      "subject_id": "m16",
+      "predicate": "part_of",
+      "object_id": "m14",
+      "evidence_span_start": 810,
+      "evidence_span_end": 836
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m19",
+      "evidence_span_start": 950,
+      "evidence_span_end": 973
+    },
+    {
+      "subject_id": "m20",
+      "predicate": "part_of",
+      "object_id": "m1",
+      "evidence_span_start": 1000,
+      "evidence_span_end": 1014
+    },
+    {
+      "subject_id": "m21",
+      "predicate": "part_of",
+      "object_id": "m19",
+      "evidence_span_start": 1030,
+      "evidence_span_end": 1051
+    },
+    {
+      "subject_id": "m22",
+      "predicate": "part_of",
+      "object_id": "m23",
+      "evidence_span_start": 1070,
+      "evidence_span_end": 1101
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "performed_on",
+      "object_id": "m24",
+      "evidence_span_start": 1150,
+      "evidence_span_end": 1170
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m25",
+      "evidence_span_start": 1190,
+      "evidence_span_end": 1219
+    },
+    {
+      "subject_id": "m26",
+      "predicate": "used_in",
+      "object_id": "m27",
+      "evidence_span_start": 1230,
+      "evidence_span_end": 1247
+    },
+    {
+      "subject_id": "m28",
+      "predicate": "applied_to",
+      "object_id": "m27",
+      "evidence_span_start": 1330,
+      "evidence_span_end": 1354
+    },
+    {
+      "subject_id": "m19",
+      "predicate": "implements",
+      "object_id": "m28",
+      "evidence_span_start": 1420,
+      "evidence_span_end": 1443
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m31",
+      "evidence_span_start": 1540,
+      "evidence_span_end": 1557
+    },
+    {
+      "subject_id": "m32",
+      "predicate": "part_of",
+      "object_id": "m31",
+      "evidence_span_start": 1590,
+      "evidence_span_end": 1616
+    },
+    {
+      "subject_id": "m34",
+      "predicate": "part_of",
+      "object_id": "m33",
+      "evidence_span_start": 1680,
+      "evidence_span_end": 1702
+    },
+    {
+      "subject_id": "m35",
+      "predicate": "part_of",
+      "object_id": "m32",
+      "evidence_span_start": 1730,
+      "evidence_span_end": 1751
+    },
+    {
+      "subject_id": "m32",
+      "predicate": "used_in",
+      "object_id": "m36",
+      "evidence_span_start": 1760,
+      "evidence_span_end": 1789
+    },
+    {
+      "subject_id": "m37",
+      "predicate": "documents",
+      "object_id": "m32",
+      "evidence_span_start": 1800,
+      "evidence_span_end": 1831
+    },
+    {
+      "subject_id": "m39",
+      "predicate": "applied_to",
+      "object_id": "m32",
+      "evidence_span_start": 1880,
+      "evidence_span_end": 1916
+    },
+    {
+      "subject_id": "m40",
+      "predicate": "part_of",
+      "object_id": "m1",
+      "evidence_span_start": 1950,
+      "evidence_span_end": 1968
+    },
+    {
+      "subject_id": "m41",
+      "predicate": "related_to",
+      "object_id": "m40",
+      "evidence_span_start": 1950,
+      "evidence_span_end": 2008
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m42",
+      "evidence_span_start": 2030,
+      "evidence_span_end": 2057
+    },
+    {
+      "subject_id": "m44",
+      "predicate": "part_of",
+      "object_id": "m42",
+      "evidence_span_start": 2110,
+      "evidence_span_end": 2132
+    },
+    {
+      "subject_id": "m45",
+      "predicate": "related_to",
+      "object_id": "m40",
+      "evidence_span_start": 2160,
+      "evidence_span_end": 2178
+    },
+    {
+      "subject_id": "m46",
+      "predicate": "related_to",
+      "object_id": "m40",
+      "evidence_span_start": 2190,
+      "evidence_span_end": 2224
+    },
+    {
+      "subject_id": "m48",
+      "predicate": "part_of",
+      "object_id": "m1",
+      "evidence_span_start": 2290,
+      "evidence_span_end": 2314
+    },
+    {
+      "subject_id": "m49",
+      "predicate": "part_of",
+      "object_id": "m48",
+      "evidence_span_start": 2340,
+      "evidence_span_end": 2364
+    },
+    {
+      "subject_id": "m48",
+      "predicate": "used_in",
+      "object_id": "m1",
+      "evidence_span_start": 2370,
+      "evidence_span_end": 2394
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m50",
+      "evidence_span_start": 2430,
+      "evidence_span_end": 2445
+    },
+    {
+      "subject_id": "m52",
+      "predicate": "used_in",
+      "object_id": "m51",
+      "evidence_span_start": 2490,
+      "evidence_span_end": 2542
+    },
+    {
+      "subject_id": "m33",
+      "predicate": "used_in",
+      "object_id": "m53",
+      "evidence_span_start": 2600,
+      "evidence_span_end": 2624
+    },
+    {
+      "subject_id": "m33",
+      "predicate": "used_in",
+      "object_id": "m53",
+      "evidence_span_start": 2640,
+      "evidence_span_end": 2664
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "has",
+      "object_id": "m58",
+      "evidence_span_start": 24130,
+      "evidence_span_end": 24165
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "is_a",
+      "object_id": "m60",
+      "evidence_span_start": 24205,
+      "evidence_span_end": 24245
+    },
+    {
+      "subject_id": "m66",
+      "predicate": "part_of",
+      "object_id": "m65",
+      "evidence_span_start": 24461,
+      "evidence_span_end": 24490
+    },
+    {
+      "subject_id": "m66",
+      "predicate": "requires",
+      "object_id": "m67",
+      "evidence_span_start": 25260,
+      "evidence_span_end": 25297
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "uses",
+      "object_id": "m78",
+      "evidence_span_start": 25830,
+      "evidence_span_end": 25890
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "combines",
+      "object_id": "m79",
+      "evidence_span_start": 25930,
+      "evidence_span_end": 26003
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "combines",
+      "object_id": "m80",
+      "evidence_span_start": 25930,
+      "evidence_span_end": 26003
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "used_in",
+      "object_id": "m81",
+      "evidence_span_start": 26070,
+      "evidence_span_end": 26123
+    },
+    {
+      "subject_id": "m58",
+      "predicate": "part_of",
+      "object_id": "m55",
+      "evidence_span_start": 26160,
+      "evidence_span_end": 26206
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "is_a",
+      "object_id": "m83",
+      "evidence_span_start": 26290,
+      "evidence_span_end": 26314
+    },
+    {
+      "subject_id": "m55",
+      "predicate": "has",
+      "object_id": "m86",
+      "evidence_span_start": 26790,
+      "evidence_span_end": 26830
+    },
+    {
+      "subject_id": "m89",
+      "predicate": "applied_to",
+      "object_id": "m91",
+      "evidence_span_start": 27300,
+      "evidence_span_end": 27456
+    },
+    {
+      "subject_id": "m90",
+      "predicate": "applied_to",
+      "object_id": "m61",
+      "evidence_span_start": 27322,
+      "evidence_span_end": 27528
+    },
+    {
+      "subject_id": "m95",
+      "predicate": "uses",
+      "object_id": "m100",
+      "evidence_span_start": 27900,
+      "evidence_span_end": 27954
+    },
+    {
+      "subject_id": "m112",
+      "predicate": "measures",
+      "object_id": "m97",
+      "evidence_span_start": 29250,
+      "evidence_span_end": 29330
+    },
+    {
+      "subject_id": "m115",
+      "predicate": "has",
+      "object_id": "m116",
+      "evidence_span_start": 29360,
+      "evidence_span_end": 29418
+    },
+    {
+      "subject_id": "m117",
+      "predicate": "applied_to",
+      "object_id": "m118",
+      "evidence_span_start": 29450,
+      "evidence_span_end": 29634
+    },
+    {
+      "subject_id": "m119",
+      "predicate": "has",
+      "object_id": "m120",
+      "evidence_span_start": 29700,
+      "evidence_span_end": 29743
+    },
+    {
+      "subject_id": "m85",
+      "predicate": "same_as",
+      "object_id": "m86",
+      "evidence_span_start": 30000,
+      "evidence_span_end": 30110
+    },
+    {
+      "subject_id": "m133",
+      "predicate": "has",
+      "object_id": "m134",
+      "evidence_span_start": 32760,
+      "evidence_span_end": 32801
+    },
+    {
+      "subject_id": "m135",
+      "predicate": "uses",
+      "object_id": "m133",
+      "evidence_span_start": 32820,
+      "evidence_span_end": 32850
+    },
+    {
+      "subject_id": "m139",
+      "predicate": "applied_to",
+      "object_id": "m141",
+      "evidence_span_start": 33470,
+      "evidence_span_end": 33535
+    },
+    {
+      "subject_id": "m135",
+      "predicate": "uses",
+      "object_id": "m142",
+      "evidence_span_start": 33600,
+      "evidence_span_end": 33657
+    },
+    {
+      "subject_id": "m135",
+      "predicate": "uses",
+      "object_id": "m143",
+      "evidence_span_start": 33600,
+      "evidence_span_end": 33694
+    },
+    {
+      "subject_id": "m149",
+      "predicate": "related_to",
+      "object_id": "m150",
+      "evidence_span_start": 36296,
+      "evidence_span_end": 36369
+    },
+    {
+      "subject_id": "m153",
+      "predicate": "computes",
+      "object_id": "m155",
+      "evidence_span_start": 36551,
+      "evidence_span_end": 36612
+    },
+    {
+      "subject_id": "m153",
+      "predicate": "computes",
+      "object_id": "m156",
+      "evidence_span_start": 36551,
+      "evidence_span_end": 36676
+    },
+    {
+      "subject_id": "m149",
+      "predicate": "used_in",
+      "object_id": "m160",
+      "evidence_span_start": 36780,
+      "evidence_span_end": 36938
+    },
+    {
+      "subject_id": "m149",
+      "predicate": "used_in",
+      "object_id": "m171",
+      "evidence_span_start": 37912,
+      "evidence_span_end": 37938
+    },
+    {
+      "subject_id": "m177",
+      "predicate": "related_to",
+      "object_id": "m178",
+      "evidence_span_start": 38382,
+      "evidence_span_end": 38394
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "requires",
+      "object_id": "m179",
+      "evidence_span_start": 38508,
+      "evidence_span_end": 38675
+    },
+    {
+      "subject_id": "m186",
+      "predicate": "uses",
+      "object_id": "m185",
+      "evidence_span_start": 39030,
+      "evidence_span_end": 39147
+    },
+    {
+      "subject_id": "m190",
+      "predicate": "uses",
+      "object_id": "m191",
+      "evidence_span_start": 39290,
+      "evidence_span_end": 39345
+    },
+    {
+      "subject_id": "m199",
+      "predicate": "part_of",
+      "object_id": "m198",
+      "evidence_span_start": 40000,
+      "evidence_span_end": 40060
+    },
+    {
+      "subject_id": "m177",
+      "predicate": "is_a",
+      "object_id": "m208",
+      "evidence_span_start": 40490,
+      "evidence_span_end": 40500
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "is_a",
+      "object_id": "m209",
+      "evidence_span_start": 40510,
+      "evidence_span_end": 40519
+    },
+    {
+      "subject_id": "m213",
+      "predicate": "uses",
+      "object_id": "m181",
+      "evidence_span_start": 40700,
+      "evidence_span_end": 40768
+    },
+    {
+      "subject_id": "m213",
+      "predicate": "computes",
+      "object_id": "m214",
+      "evidence_span_start": 40700,
+      "evidence_span_end": 40768
+    },
+    {
+      "subject_id": "m177",
+      "predicate": "requires",
+      "object_id": "m208",
+      "evidence_span_start": 40900,
+      "evidence_span_end": 40910
+    },
+    {
+      "subject_id": "m213",
+      "predicate": "used_in",
+      "object_id": "m189",
+      "evidence_span_start": 40650,
+      "evidence_span_end": 40661
+    },
+    {
+      "subject_id": "m225",
+      "predicate": "is_a",
+      "object_id": "m226",
+      "evidence_span_start": 41700,
+      "evidence_span_end": 41837
+    },
+    {
+      "subject_id": "m233",
+      "predicate": "uses",
+      "object_id": "m177",
+      "evidence_span_start": 42650,
+      "evidence_span_end": 42686
+    },
+    {
+      "subject_id": "m236",
+      "predicate": "used_in",
+      "object_id": "m234",
+      "evidence_span_start": 42720,
+      "evidence_span_end": 42815
+    },
+    {
+      "subject_id": "m234",
+      "predicate": "requires",
+      "object_id": "m241",
+      "evidence_span_start": 42990,
+      "evidence_span_end": 43048
+    },
+    {
+      "subject_id": "m150",
+      "predicate": "same_as",
+      "object_id": "m246",
+      "evidence_span_start": 43520,
+      "evidence_span_end": 43592
+    },
+    {
+      "subject_id": "m150",
+      "predicate": "uses",
+      "object_id": "m187",
+      "evidence_span_start": 43940,
+      "evidence_span_end": 43973
+    },
+    {
+      "subject_id": "m150",
+      "predicate": "uses",
+      "object_id": "m181",
+      "evidence_span_start": 43940,
+      "evidence_span_end": 43994
+    },
+    {
+      "subject_id": "m150",
+      "predicate": "uses",
+      "object_id": "m178",
+      "evidence_span_start": 43940,
+      "evidence_span_end": 44013
+    },
+    {
+      "subject_id": "m150",
+      "predicate": "uses",
+      "object_id": "m189",
+      "evidence_span_start": 43940,
+      "evidence_span_end": 44037
+    },
+    {
+      "subject_id": "m150",
+      "predicate": "uses",
+      "object_id": "m183",
+      "evidence_span_start": 43940,
+      "evidence_span_end": 44055
+    },
+    {
+      "subject_id": "m150",
+      "predicate": "requires",
+      "object_id": "m256",
+      "evidence_span_start": 44500,
+      "evidence_span_end": 44550
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "has",
+      "object_id": "m260",
+      "evidence_span_start": 44770,
+      "evidence_span_end": 44787
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "has",
+      "object_id": "m265",
+      "evidence_span_start": 45030,
+      "evidence_span_end": 45048
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "has",
+      "object_id": "m267",
+      "evidence_span_start": 45060,
+      "evidence_span_end": 45079
+    },
+    {
+      "subject_id": "m272",
+      "predicate": "has",
+      "object_id": "m273",
+      "evidence_span_start": 45300,
+      "evidence_span_end": 45328
+    },
+    {
+      "subject_id": "m274",
+      "predicate": "is_a",
+      "object_id": "m275",
+      "evidence_span_start": 45350,
+      "evidence_span_end": 45383
+    },
+    {
+      "subject_id": "m274",
+      "predicate": "requires",
+      "object_id": "m276",
+      "evidence_span_start": 45400,
+      "evidence_span_end": 45408
+    },
+    {
+      "subject_id": "m178",
+      "predicate": "implements",
+      "object_id": "m281",
+      "evidence_span_start": 45800,
+      "evidence_span_end": 45907
+    },
+    {
+      "subject_id": "m189",
+      "predicate": "applied_to",
+      "object_id": "m282",
+      "evidence_span_start": 46000,
+      "evidence_span_end": 46065
+    },
+    {
+      "subject_id": "m285",
+      "predicate": "applied_to",
+      "object_id": "m286",
+      "evidence_span_start": 48060,
+      "evidence_span_end": 48108
+    },
+    {
+      "subject_id": "m288",
+      "predicate": "related_to",
+      "object_id": "m289",
+      "evidence_span_start": 48162,
+      "evidence_span_end": 48263
+    },
+    {
+      "subject_id": "m304",
+      "predicate": "requires",
+      "object_id": "m306",
+      "evidence_span_start": 49700,
+      "evidence_span_end": 49791
+    },
+    {
+      "subject_id": "m308",
+      "predicate": "discussed_in",
+      "object_id": "m309",
+      "evidence_span_start": 49885,
+      "evidence_span_end": 50002
+    },
+    {
+      "subject_id": "m311",
+      "predicate": "related_to",
+      "object_id": "m312",
+      "evidence_span_start": 50220,
+      "evidence_span_end": 50393
+    },
+    {
+      "subject_id": "m317",
+      "predicate": "related_to",
+      "object_id": "m318",
+      "evidence_span_start": 50550,
+      "evidence_span_end": 50588
+    },
+    {
+      "subject_id": "m317",
+      "predicate": "related_to",
+      "object_id": "m320",
+      "evidence_span_start": 50550,
+      "evidence_span_end": 50714
+    },
+    {
+      "subject_id": "m323",
+      "predicate": "is_a",
+      "object_id": "m324",
+      "evidence_span_start": 50830,
+      "evidence_span_end": 50961
+    },
+    {
+      "subject_id": "m326",
+      "predicate": "performed_on",
+      "object_id": "m303",
+      "evidence_span_start": 51080,
+      "evidence_span_end": 51249
+    },
+    {
+      "subject_id": "m332",
+      "predicate": "related_to",
+      "object_id": "m331",
+      "evidence_span_start": 51830,
+      "evidence_span_end": 51876
+    },
+    {
+      "subject_id": "m354",
+      "predicate": "has_component",
+      "object_id": "m351",
+      "evidence_span_start": 53240,
+      "evidence_span_end": 53354
+    },
+    {
+      "subject_id": "m354",
+      "predicate": "related_to",
+      "object_id": "m353",
+      "evidence_span_start": 53200,
+      "evidence_span_end": 53289
+    },
+    {
+      "subject_id": "m370",
+      "predicate": "uses",
+      "object_id": "m371",
+      "evidence_span_start": 54400,
+      "evidence_span_end": 54484
+    },
+    {
+      "subject_id": "m370",
+      "predicate": "uses",
+      "object_id": "m372",
+      "evidence_span_start": 54400,
+      "evidence_span_end": 54505
+    },
+    {
+      "subject_id": "m398",
+      "predicate": "related_to",
+      "object_id": "m311",
+      "evidence_span_start": 55800,
+      "evidence_span_end": 55910
+    },
+    {
+      "subject_id": "m399",
+      "predicate": "related_to",
+      "object_id": "m311",
+      "evidence_span_start": 55810,
+      "evidence_span_end": 55910
+    },
+    {
+      "subject_id": "m403",
+      "predicate": "uses",
+      "object_id": "m406",
+      "evidence_span_start": 60018,
+      "evidence_span_end": 60143
+    },
+    {
+      "subject_id": "m407",
+      "predicate": "has_component",
+      "object_id": "m404",
+      "evidence_span_start": 60196,
+      "evidence_span_end": 60300
+    },
+    {
+      "subject_id": "m408",
+      "predicate": "has_component",
+      "object_id": "m405",
+      "evidence_span_start": 60196,
+      "evidence_span_end": 60300
+    },
+    {
+      "subject_id": "m410",
+      "predicate": "applied_to",
+      "object_id": "m411",
+      "evidence_span_start": 60352,
+      "evidence_span_end": 60416
+    },
+    {
+      "subject_id": "m413",
+      "predicate": "uses",
+      "object_id": "m414",
+      "evidence_span_start": 60540,
+      "evidence_span_end": 60604
+    },
+    {
+      "subject_id": "m415",
+      "predicate": "implements",
+      "object_id": "m413",
+      "evidence_span_start": 61000,
+      "evidence_span_end": 61010
+    },
+    {
+      "subject_id": "m426",
+      "predicate": "requires",
+      "object_id": "m427",
+      "evidence_span_start": 63500,
+      "evidence_span_end": 63552
+    },
+    {
+      "subject_id": "m430",
+      "predicate": "uses",
+      "object_id": "m431",
+      "evidence_span_start": 64250,
+      "evidence_span_end": 64280
+    },
+    {
+      "subject_id": "m432",
+      "predicate": "uses",
+      "object_id": "m433",
+      "evidence_span_start": 64600,
+      "evidence_span_end": 64709
+    },
+    {
+      "subject_id": "m434",
+      "predicate": "part_of",
+      "object_id": "m432",
+      "evidence_span_start": 65100,
+      "evidence_span_end": 65115
+    },
+    {
+      "subject_id": "m435",
+      "predicate": "related_to",
+      "object_id": "m437",
+      "evidence_span_start": 65400,
+      "evidence_span_end": 65500
+    },
+    {
+      "subject_id": "m438",
+      "predicate": "used_in",
+      "object_id": "m402",
+      "evidence_span_start": 65600,
+      "evidence_span_end": 65604
+    },
+    {
+      "subject_id": "m443",
+      "predicate": "used_in",
+      "object_id": "m445",
+      "evidence_span_start": 96234,
+      "evidence_span_end": 96274
+    },
+    {
+      "subject_id": "m446",
+      "predicate": "requires",
+      "object_id": "m447",
+      "evidence_span_start": 96312,
+      "evidence_span_end": 96399
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "has_component",
+      "object_id": "m454",
+      "evidence_span_start": 97183,
+      "evidence_span_end": 97217
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "applied_to",
+      "object_id": "m452",
+      "evidence_span_start": 97135,
+      "evidence_span_end": 97181
+    },
+    {
+      "subject_id": "m451",
+      "predicate": "applied_to",
+      "object_id": "m453",
+      "evidence_span_start": 102180,
+      "evidence_span_end": 102221
+    },
+    {
+      "subject_id": "m451",
+      "predicate": "applied_to",
+      "object_id": "m452",
+      "evidence_span_start": 103473,
+      "evidence_span_end": 103509
+    },
+    {
+      "subject_id": "m451",
+      "predicate": "has_component",
+      "object_id": "m453",
+      "evidence_span_start": 104999,
+      "evidence_span_end": 105042
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "uses",
+      "object_id": "m456",
+      "evidence_span_start": 97507,
+      "evidence_span_end": 97584
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "uses",
+      "object_id": "m455",
+      "evidence_span_start": 97404,
+      "evidence_span_end": 97463
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "has_component",
+      "object_id": "m458",
+      "evidence_span_start": 97647,
+      "evidence_span_end": 97716
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "has_component",
+      "object_id": "m459",
+      "evidence_span_start": 97647,
+      "evidence_span_end": 97716
+    },
+    {
+      "subject_id": "m470",
+      "predicate": "uses",
+      "object_id": "m464",
+      "evidence_span_start": 100401,
+      "evidence_span_end": 100472
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "requires",
+      "object_id": "m472",
+      "evidence_span_start": 100575,
+      "evidence_span_end": 100624
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "uses",
+      "object_id": "m473",
+      "evidence_span_start": 100636,
+      "evidence_span_end": 100656
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "uses",
+      "object_id": "m474",
+      "evidence_span_start": 100657,
+      "evidence_span_end": 100676
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "uses",
+      "object_id": "m475",
+      "evidence_span_start": 100677,
+      "evidence_span_end": 100712
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "uses",
+      "object_id": "m471",
+      "evidence_span_start": 98101,
+      "evidence_span_end": 100536
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "uses",
+      "object_id": "m479",
+      "evidence_span_start": 100985,
+      "evidence_span_end": 100997
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "uses",
+      "object_id": "m480",
+      "evidence_span_start": 101002,
+      "evidence_span_end": 101016
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "requires",
+      "object_id": "m483",
+      "evidence_span_start": 101410,
+      "evidence_span_end": 101477
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "requires",
+      "object_id": "m484",
+      "evidence_span_start": 101491,
+      "evidence_span_end": 101559
+    },
+    {
+      "subject_id": "m464",
+      "predicate": "requires",
+      "object_id": "m485",
+      "evidence_span_start": 101564,
+      "evidence_span_end": 101634
+    },
+    {
+      "subject_id": "m485",
+      "predicate": "related_to",
+      "object_id": "m486",
+      "evidence_span_start": 101645,
+      "evidence_span_end": 101706
+    },
+    {
+      "subject_id": "m490",
+      "predicate": "computes",
+      "object_id": "m452",
+      "evidence_span_start": 102840,
+      "evidence_span_end": 102903
+    },
+    {
+      "subject_id": "m491",
+      "predicate": "applied_to",
+      "object_id": "m453",
+      "evidence_span_start": 103580,
+      "evidence_span_end": 103646
+    },
+    {
+      "subject_id": "m492",
+      "predicate": "same_as",
+      "object_id": "m491",
+      "evidence_span_start": 103580,
+      "evidence_span_end": 103629
+    },
+    {
+      "subject_id": "m470",
+      "predicate": "visits",
+      "object_id": "m493",
+      "evidence_span_start": 104000,
+      "evidence_span_end": 104062
+    },
+    {
+      "subject_id": "m451",
+      "predicate": "related_to",
+      "object_id": "m494",
+      "evidence_span_start": 97034,
+      "evidence_span_end": 105179
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "combines",
+      "object_id": "m451",
+      "evidence_span_start": 105184,
+      "evidence_span_end": 105289
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "improves_over",
+      "object_id": "m451",
+      "evidence_span_start": 105184,
+      "evidence_span_end": 105289
+    },
+    {
+      "subject_id": "m450",
+      "predicate": "related_to",
+      "object_id": "m461",
+      "evidence_span_start": 104794,
+      "evidence_span_end": 104888
+    }
+  ]
+}

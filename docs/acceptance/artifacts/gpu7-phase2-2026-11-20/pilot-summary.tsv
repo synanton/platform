@@ -1,0 +1,10 @@
+model	documents	success	json_valid	provider_errors
+claude-sonnet-5-5	5	5	0	0
+deepseek-v4-pro	5	5	5	0
+deepseek-v4.1-flash-free	5	0	0	5
+deepseek-v4.1-flash	5	5	2	0
+gemini-3.5-flash	5	5	0	0
+glm-5.3-flash	5	5	4	0
+gpt-5.6-luna	5	5	0	0
+longcat-2.5-free	5	0	0	5
+nemotron-3.5-lightning-free	5	0	0	5

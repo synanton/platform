@@ -1,0 +1,117 @@
+{
+  "document_id": "structured-supply-chain.md",
+  "text_sha256": "e135c0c1a794e44393de434963aa820211a7e3592f1c2533fe11f88b07951ace",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Acme Corp",
+      "char_start": 90,
+      "char_end": 99,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "fasteners",
+      "char_start": 108,
+      "char_end": 117,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Initech Ltd",
+      "char_start": 123,
+      "char_end": 134,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Rotterdam hub",
+      "char_start": 171,
+      "char_end": 184,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "EU inbound logistics",
+      "char_start": 193,
+      "char_end": 213,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Singapore hub",
+      "char_start": 230,
+      "char_end": 243,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "vendor shipments",
+      "char_start": 257,
+      "char_end": 273,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Vendor concentration",
+      "char_start": 293,
+      "char_end": 313,
+      "proposed_type": "Problem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "primary operational risk",
+      "char_start": 326,
+      "char_end": 350,
+      "proposed_type": "Problem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "uses",
+      "object_id": "m3",
+      "evidence_span_start": 88,
+      "evidence_span_end": 132
+    },
+    {
+      "subject_id": "m4",
+      "predicate": "has",
+      "object_id": "m5",
+      "evidence_span_start": 160,
+      "evidence_span_end": 200
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has",
+      "object_id": "m7",
+      "evidence_span_start": 216,
+      "evidence_span_end": 257
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "is_a",
+      "object_id": "m9",
+      "evidence_span_start": 276,
+      "evidence_span_end": 328
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+doc_id	document_id	category	sha256	annotation_status	annotator_1	annotator_2	adjudicator	entity_count	relation_count	ambiguous_count	unresolvable_count	review_status	notes
+g7-dev-011	supply-chain-overview.txt	relationship_heavy	ba1db29e87762db14596505073764a18028ed69213bf0a2809fad33dd9ba00b0	UNLABELED									new-entity candidate
+g7-dev-012	vendor-agreements.txt	relationship_heavy	ed36a4410ae887b3fa3c4bed5548fe8f0adaf94e44c35a5929d328092f368983	UNLABELED									new-entity candidate
+g7-dev-013	risk-factors-2025.txt	relationship_heavy	e122bd2083c05aa07ce513009f2fe41881e482fad1dd3df06d731ffe35ba94d2	UNLABELED									new-entity candidate
+g7-dev-014	compliance-report.txt	relationship_heavy	845bf03d88c465ef54f1b1c6c0b9108695f0d47a5a15340b3e16cbc26e8e4ce6	UNLABELED									new-entity candidate
+g7-dev-015	logistics-network.md	relationship_heavy	d5a093f416cc998a8d4584bb479b4bc0b44447bc32966e10e05dd2cafc4b14d2	UNLABELED									new-entity candidate; markdown

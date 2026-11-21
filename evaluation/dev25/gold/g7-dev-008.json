@@ -1,0 +1,1080 @@
+{
+  "document_id": "ext-05-Neill-L.---Python-Machine-Learning-for-Beginners---2024.pdf",
+  "text_sha256": "d43c724d54dc5312ac0d95fde9bec183aa485385be791750cc2a7603beab1f9d",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "python",
+      "char_start": 12846,
+      "char_end": 12852,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "ai",
+      "char_start": 12024,
+      "char_end": 12026,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "ml",
+      "char_start": 12031,
+      "char_end": 12033,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "siri",
+      "char_start": 12326,
+      "char_end": 12330,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-siri"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "numpy",
+      "char_start": 13331,
+      "char_end": 13336,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "pandas",
+      "char_start": 13338,
+      "char_end": 13344,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "scipy",
+      "char_start": 13346,
+      "char_end": 13351,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "nltk",
+      "char_start": 13571,
+      "char_end": 13575,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "spacy",
+      "char_start": 13580,
+      "char_end": 13585,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-spacy"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "pytorch",
+      "char_start": 16165,
+      "char_end": 16172,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-pytorch"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "google",
+      "char_start": 15588,
+      "char_end": 15594,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "python.org",
+      "char_start": 21719,
+      "char_end": 21729,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "anaconda",
+      "char_start": 22573,
+      "char_end": 22581,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "lua",
+      "char_start": 15250,
+      "char_end": 15253,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "torch",
+      "char_start": 15981,
+      "char_end": 15986,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "plaidml",
+      "char_start": 15931,
+      "char_end": 15938,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-plaidml"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "api",
+      "char_start": 15834,
+      "char_end": 15837,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "nlp",
+      "char_start": 14935,
+      "char_end": 14938,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "matplotlib",
+      "char_start": 24148,
+      "char_end": 24158,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "pandas",
+      "char_start": 24181,
+      "char_end": 24187,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "Python",
+      "char_start": 24126,
+      "char_end": 24132,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "pip",
+      "char_start": 24136,
+      "char_end": 24139,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "1936",
+      "char_start": 25492,
+      "char_end": 25496,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-1936"
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "dataframe",
+      "char_start": 27687,
+      "char_end": 27696,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "csv",
+      "char_start": 25329,
+      "char_end": 25332,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "data visualization",
+      "char_start": 34718,
+      "char_end": 34736,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "Plotly",
+      "char_start": 35654,
+      "char_end": 35660,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-plotly"
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "df",
+      "char_start": 28310,
+      "char_end": 28312,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "ds",
+      "char_start": 24011,
+      "char_end": 24013,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "(50, 5)",
+      "char_start": 29299,
+      "char_end": 29306,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-50-5"
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "Matplotlib",
+      "char_start": 36142,
+      "char_end": 36152,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "python",
+      "char_start": 36156,
+      "char_end": 36162,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "pandas",
+      "char_start": 36287,
+      "char_end": 36293,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "Box plot",
+      "char_start": 36540,
+      "char_end": 36548,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "Violin plot",
+      "char_start": 36564,
+      "char_end": 36575,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "Pair plot",
+      "char_start": 36752,
+      "char_end": 36761,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-pair-plot"
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "Distribution plots",
+      "char_start": 37042,
+      "char_end": 37060,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "iris.csv",
+      "char_start": 37313,
+      "char_end": 37321,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "Country",
+      "char_start": 37513,
+      "char_end": 37520,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-country"
+    },
+    {
+      "mention_id": "m40",
+      "surface_form": "Points",
+      "char_start": 37548,
+      "char_end": 37554,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-points"
+    },
+    {
+      "mention_id": "m41",
+      "surface_form": "Price",
+      "char_start": 37555,
+      "char_end": 37560,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-price"
+    },
+    {
+      "mention_id": "m42",
+      "surface_form": "num",
+      "char_start": 37926,
+      "char_end": 37929,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m43",
+      "surface_form": "150930 rows x 11 columns",
+      "char_start": 39134,
+      "char_end": 39158,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-150930-rows-x-11-columns"
+    },
+    {
+      "mention_id": "m44",
+      "surface_form": "statistical algorithms",
+      "char_start": 41642,
+      "char_end": 41664,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-statistical-algorithms"
+    },
+    {
+      "mention_id": "m45",
+      "surface_form": "Aviation",
+      "char_start": 44215,
+      "char_end": 44223,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-aviation"
+    },
+    {
+      "mention_id": "m46",
+      "surface_form": "Banking and financial",
+      "char_start": 44728,
+      "char_end": 44749,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-banking-and-financial"
+    },
+    {
+      "mention_id": "m47",
+      "surface_form": "Car industry",
+      "char_start": 45160,
+      "char_end": 45172,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-car-industry"
+    },
+    {
+      "mention_id": "m48",
+      "surface_form": "Insurance",
+      "char_start": 47225,
+      "char_end": 47234,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m49",
+      "surface_form": "Manufacturing",
+      "char_start": 47789,
+      "char_end": 47802,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m50",
+      "surface_form": "corporations",
+      "char_start": 48365,
+      "char_end": 48377,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m51",
+      "surface_form": "supply",
+      "char_start": 48714,
+      "char_end": 48720,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m52",
+      "surface_form": "oil, gas, and utility industry",
+      "char_start": 48777,
+      "char_end": 48807,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m53",
+      "surface_form": "python",
+      "char_start": 49312,
+      "char_end": 49318,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m54",
+      "surface_form": "algorithms",
+      "char_start": 49406,
+      "char_end": 49416,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m55",
+      "surface_form": "algorithm",
+      "char_start": 49406,
+      "char_end": 49415,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m56",
+      "surface_form": "programming",
+      "char_start": 49456,
+      "char_end": 49467,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m57",
+      "surface_form": "data structure",
+      "char_start": 50243,
+      "char_end": 50257,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m58",
+      "surface_form": "Sort",
+      "char_start": 50471,
+      "char_end": 50475,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m59",
+      "surface_form": "Update",
+      "char_start": 50580,
+      "char_end": 50586,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-update"
+    },
+    {
+      "mention_id": "m60",
+      "surface_form": "Finite",
+      "char_start": 51275,
+      "char_end": 51281,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-finite"
+    },
+    {
+      "mention_id": "m61",
+      "surface_form": "Input",
+      "char_start": 51415,
+      "char_end": 51420,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m62",
+      "surface_form": "Output",
+      "char_start": 51672,
+      "char_end": 51678,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m63",
+      "surface_form": "data",
+      "char_start": 48062,
+      "char_end": 48066,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m64",
+      "surface_form": "flow chart",
+      "char_start": 59146,
+      "char_end": 59156,
+      "proposed_type": "DataStructure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-flow-chart"
+    },
+    {
+      "mention_id": "m65",
+      "surface_form": "root node",
+      "char_start": 59893,
+      "char_end": 59902,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m66",
+      "surface_form": "branch",
+      "char_start": 59955,
+      "char_end": 59961,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m67",
+      "surface_form": "python",
+      "char_start": 61430,
+      "char_end": 61436,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m68",
+      "surface_form": "information gain",
+      "char_start": 63346,
+      "char_end": 63362,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m69",
+      "surface_form": "CART",
+      "char_start": 64763,
+      "char_end": 64767,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-cart"
+    },
+    {
+      "mention_id": "m70",
+      "surface_form": "think tank",
+      "char_start": 70225,
+      "char_end": 70235,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m71",
+      "surface_form": "classification",
+      "char_start": 72086,
+      "char_end": 72100,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m72",
+      "surface_form": "black box approach",
+      "char_start": 72273,
+      "char_end": 72291,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-black-box-approach"
+    },
+    {
+      "mention_id": "m73",
+      "surface_form": "Banking applications",
+      "char_start": 72540,
+      "char_end": 72560,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-banking-applications"
+    },
+    {
+      "mention_id": "m74",
+      "surface_form": "node",
+      "char_start": 73289,
+      "char_end": 73293,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m75",
+      "surface_form": "pruning",
+      "char_start": 73542,
+      "char_end": 73549,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-pruning"
+    },
+    {
+      "mention_id": "m76",
+      "surface_form": "training data",
+      "char_start": 75414,
+      "char_end": 75427,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m77",
+      "surface_form": "bagging",
+      "char_start": 76590,
+      "char_end": 76597,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m78",
+      "surface_form": "variance",
+      "char_start": 76415,
+      "char_end": 76423,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m79",
+      "surface_form": "bags",
+      "char_start": 76864,
+      "char_end": 76868,
+      "proposed_type": "DataStructure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m80",
+      "surface_form": "N",
+      "char_start": 77120,
+      "char_end": 77121,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m81",
+      "surface_form": "N1",
+      "char_start": 77174,
+      "char_end": 77176,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m82",
+      "surface_form": "M",
+      "char_start": 72382,
+      "char_end": 72383,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m83",
+      "surface_form": "Boosting",
+      "char_start": 77558,
+      "char_end": 77566,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m84",
+      "surface_form": "bias",
+      "char_start": 76014,
+      "char_end": 76018,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m85",
+      "surface_form": "ada boost",
+      "char_start": 77903,
+      "char_end": 77912,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ada-boost"
+    },
+    {
+      "mention_id": "m86",
+      "surface_form": "human brain",
+      "char_start": 79597,
+      "char_end": 79608,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m87",
+      "surface_form": "activation function",
+      "char_start": 81081,
+      "char_end": 81100,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m88",
+      "surface_form": "backpropagation",
+      "char_start": 81237,
+      "char_end": 81252,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-backpropagation"
+    },
+    {
+      "mention_id": "m89",
+      "surface_form": "outage",
+      "char_start": 84223,
+      "char_end": 84229,
+      "proposed_type": "Problem",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m90",
+      "surface_form": "back propagation",
+      "char_start": 84994,
+      "char_end": 85010,
+      "proposed_type": "Algorithm",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m91",
+      "surface_form": "big data",
+      "char_start": 85816,
+      "char_end": 85824,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m92",
+      "surface_form": "kilobyte",
+      "char_start": 85082,
+      "char_end": 85090,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m93",
+      "surface_form": "bit",
+      "char_start": 85496,
+      "char_end": 85499,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m94",
+      "surface_form": "byte",
+      "char_start": 85086,
+      "char_end": 85090,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m95",
+      "surface_form": "gigabyte",
+      "char_start": 85618,
+      "char_end": 85626,
+      "proposed_type": "Measurement",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m96",
+      "surface_form": "volume",
+      "char_start": 86181,
+      "char_end": 86187,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m97",
+      "surface_form": "value",
+      "char_start": 87317,
+      "char_end": 87322,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m98",
+      "surface_form": "smart city",
+      "char_start": 91941,
+      "char_end": 91951,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m99",
+      "surface_form": "artificial limbs",
+      "char_start": 97068,
+      "char_end": 97084,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m100",
+      "surface_form": "Anaconda",
+      "char_start": 106710,
+      "char_end": 106718,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-anaconda"
+    },
+    {
+      "mention_id": "m101",
+      "surface_form": "pandas",
+      "char_start": 108085,
+      "char_end": 108091,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m102",
+      "surface_form": "Python",
+      "char_start": 109422,
+      "char_end": 109428,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m10",
+      "predicate": "is_a",
+      "object_id": "m15",
+      "evidence_span_start": 15981,
+      "evidence_span_end": 16172
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "uses",
+      "object_id": "m14",
+      "evidence_span_start": 15987,
+      "evidence_span_end": 16049
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "used_in",
+      "object_id": "m18",
+      "evidence_span_start": 13571,
+      "evidence_span_end": 14938
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "used_in",
+      "object_id": "m13",
+      "evidence_span_start": 12846,
+      "evidence_span_end": 22581
+    },
+    {
+      "subject_id": "m19",
+      "predicate": "used_in",
+      "object_id": "m21",
+      "evidence_span_start": 24126,
+      "evidence_span_end": 24168
+    },
+    {
+      "subject_id": "m20",
+      "predicate": "used_in",
+      "object_id": "m21",
+      "evidence_span_start": 24210,
+      "evidence_span_end": 24238
+    },
+    {
+      "subject_id": "m22",
+      "predicate": "applied_to",
+      "object_id": "m19",
+      "evidence_span_start": 24126,
+      "evidence_span_end": 24168
+    },
+    {
+      "subject_id": "m22",
+      "predicate": "applied_to",
+      "object_id": "m20",
+      "evidence_span_start": 24210,
+      "evidence_span_end": 24238
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "part_of",
+      "object_id": "m32",
+      "evidence_span_start": 36000,
+      "evidence_span_end": 36040
+    },
+    {
+      "subject_id": "m33",
+      "predicate": "related_to",
+      "object_id": "m31",
+      "evidence_span_start": 36000,
+      "evidence_span_end": 36100
+    },
+    {
+      "subject_id": "m58",
+      "predicate": "applied_to",
+      "object_id": "m57",
+      "evidence_span_start": 50100,
+      "evidence_span_end": 50180
+    },
+    {
+      "subject_id": "m59",
+      "predicate": "applied_to",
+      "object_id": "m57",
+      "evidence_span_start": 50190,
+      "evidence_span_end": 50290
+    },
+    {
+      "subject_id": "m77",
+      "predicate": "measures",
+      "object_id": "m78",
+      "evidence_span_start": 75440,
+      "evidence_span_end": 75510
+    },
+    {
+      "subject_id": "m83",
+      "predicate": "measures",
+      "object_id": "m78",
+      "evidence_span_start": 76120,
+      "evidence_span_end": 76210
+    },
+    {
+      "subject_id": "m83",
+      "predicate": "measures",
+      "object_id": "m84",
+      "evidence_span_start": 76120,
+      "evidence_span_end": 76210
+    },
+    {
+      "subject_id": "m83",
+      "predicate": "related_to",
+      "object_id": "m77",
+      "evidence_span_start": 76230,
+      "evidence_span_end": 76260
+    },
+    {
+      "subject_id": "m85",
+      "predicate": "is_a",
+      "object_id": "m83",
+      "evidence_span_start": 76290,
+      "evidence_span_end": 76320
+    },
+    {
+      "subject_id": "m91",
+      "predicate": "has_component",
+      "object_id": "m96",
+      "evidence_span_start": 85970,
+      "evidence_span_end": 86005
+    },
+    {
+      "subject_id": "m91",
+      "predicate": "has_component",
+      "object_id": "m97",
+      "evidence_span_start": 85970,
+      "evidence_span_end": 86005
+    },
+    {
+      "subject_id": "m94",
+      "predicate": "has_component",
+      "object_id": "m93",
+      "evidence_span_start": 85487,
+      "evidence_span_end": 85500
+    },
+    {
+      "subject_id": "m92",
+      "predicate": "has_component",
+      "object_id": "m94",
+      "evidence_span_start": 85506,
+      "evidence_span_end": 85528
+    },
+    {
+      "subject_id": "m102",
+      "predicate": "has_component",
+      "object_id": "m101",
+      "evidence_span_start": 109619,
+      "evidence_span_end": 109684
+    }
+  ]
+}

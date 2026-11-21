@@ -1,0 +1,203 @@
+{
+  "document_id": "supply-chain-overview.epub",
+  "text_sha256": "e245b86391f4ca1debe592fa94226c33a762d4f985531d655a8b722e30a35702",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Supply chain management",
+      "char_start": 85,
+      "char_end": 108,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-chain-management"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Acme Corp",
+      "char_start": 804,
+      "char_end": 813,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 1077,
+      "char_end": 1097,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-globex-manufacturing"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Initech Ltd",
+      "char_start": 1127,
+      "char_end": 1138,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "ERP systems",
+      "char_start": 1531,
+      "char_end": 1542,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "IoT sensors",
+      "char_start": 1544,
+      "char_end": 1555,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "carrier APIs",
+      "char_start": 1561,
+      "char_end": 1573,
+      "proposed_type": "Protocol",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "dual-sourcing strategies",
+      "char_start": 845,
+      "char_end": 869,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dual-sourcing-strategies"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "strategic inventory buffers",
+      "char_start": 886,
+      "char_end": 913,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-strategic-inventory-buffers"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "scenario planning",
+      "char_start": 1976,
+      "char_end": 1993,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-scenario-planning"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "cross-functional crisis response teams",
+      "char_start": 2034,
+      "char_end": 2072,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "performance reviews",
+      "char_start": 1326,
+      "char_end": 1345,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-performance-reviews"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "site audits",
+      "char_start": 1347,
+      "char_end": 1358,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-site-audits"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "Predictive analytics",
+      "char_start": 1670,
+      "char_end": 1690,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-predictive-analytics"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Visibility tools",
+      "char_start": 1489,
+      "char_end": 1505,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "recovery times",
+      "char_start": 2101,
+      "char_end": 2115,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-recovery-times"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "total cost of disruption",
+      "char_start": 2126,
+      "char_end": 2150,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-total-cost-of-disruption"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m2",
+      "predicate": "implements",
+      "object_id": "m8",
+      "evidence_span_start": 790,
+      "evidence_span_end": 835
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "has",
+      "object_id": "m9",
+      "evidence_span_start": 840,
+      "evidence_span_end": 877
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "uses",
+      "object_id": "m5",
+      "evidence_span_start": 1470,
+      "evidence_span_end": 1558
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "uses",
+      "object_id": "m6",
+      "evidence_span_start": 1470,
+      "evidence_span_end": 1558
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "uses",
+      "object_id": "m7",
+      "evidence_span_start": 1470,
+      "evidence_span_end": 1558
+    },
+    {
+      "subject_id": "m10",
+      "predicate": "improves_over",
+      "object_id": "m16",
+      "evidence_span_start": 1963,
+      "evidence_span_end": 2124
+    }
+  ]
+}

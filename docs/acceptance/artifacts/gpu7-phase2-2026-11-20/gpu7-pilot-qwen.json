@@ -1,0 +1,13 @@
+{
+  "provider_model": "qwen3.8-flash",
+  "tenant": "smoke-tenant",
+  "state": "FAILED",
+  "latency_s": 120.58315410700015,
+  "usage": {
+    "input": 0,
+    "output": 0
+  },
+  "upstream_request_id": "",
+  "result_chars": 0,
+  "result": ""
+}

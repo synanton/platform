@@ -1,0 +1,436 @@
+{
+  "document_id": "vendor-agreements.epub",
+  "text_sha256": "aa87447a7272614b454c2791c961fa334b9604aada7cdf5b5ed2c93a1744130b",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Acme Corp",
+      "char_start": 181,
+      "char_end": 190,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 484,
+      "char_end": 504,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-globex-manufacturing"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Initech Ltd",
+      "char_start": 1563,
+      "char_end": 1574,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "master supply agreement",
+      "char_start": 193,
+      "char_end": 216,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "Vendor Agreements Framework and Summary",
+      "char_start": 26,
+      "char_end": 65,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-vendor-agreements-framework-and-summary"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Midwest Manufacturer's Steel Price Index",
+      "char_start": 930,
+      "char_end": 970,
+      "proposed_type": "Metric",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "IATF 16949",
+      "char_start": 2214,
+      "char_end": 2224,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-iatf-16949"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Supplier Code of Conduct",
+      "char_start": 2593,
+      "char_end": 2617,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Foreign Corrupt Practices Act",
+      "char_start": 2798,
+      "char_end": 2827,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-foreign-corrupt-practices-act"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "UK Bribery Act",
+      "char_start": 2832,
+      "char_end": 2846,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-uk-bribery-act"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Mississauga hub",
+      "char_start": 1924,
+      "char_end": 1939,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "vendor-managed inventory (VMI)",
+      "char_start": 1798,
+      "char_end": 1828,
+      "proposed_type": "Procedure",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "annual supplier audits",
+      "char_start": 1194,
+      "char_end": 1216,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-annual-supplier-audits"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "85% of Acme Corp's rolling twelve-month forecast",
+      "char_start": 810,
+      "char_end": 858,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-85-of-acme-corp-s-rolling-twelve-month-forecast"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "500 units per part number per release",
+      "char_start": 1000,
+      "char_end": 1037,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-500-units-per-part-number-per-release"
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "30-day payment term",
+      "char_start": 1045,
+      "char_end": 1064,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-30-day-payment-term"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "1.5% early payment discount",
+      "char_start": 1072,
+      "char_end": 1099,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-1-5-early-payment-discount"
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "10-day supply of finished goods",
+      "char_start": 1885,
+      "char_end": 1916,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-10-day-supply-of-finished-goods"
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "January 1, 2022",
+      "char_start": 645,
+      "char_end": 660,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-january-1-2022"
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "December 31, 2026",
+      "char_start": 691,
+      "char_end": 708,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-december-31-2026"
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "2003",
+      "char_start": 604,
+      "char_end": 608,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2003"
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "2009",
+      "char_start": 1654,
+      "char_end": 1658,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2009"
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "48 hours",
+      "char_start": 1382,
+      "char_end": 1390,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-48-hours"
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "180 days",
+      "char_start": 1723,
+      "char_end": 1731,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-180-days"
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "30 days' notice",
+      "char_start": 1222,
+      "char_end": 1237,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-30-days-notice"
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "rolling three-year evergreen term",
+      "char_start": 1677,
+      "char_end": 1710,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "most-favored-customer pricing",
+      "char_start": 2080,
+      "char_end": 2109,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "capacity reservation commitment",
+      "char_start": 730,
+      "char_end": 761,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-capacity-reservation-commitment"
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "quarterly pricing adjustments",
+      "char_start": 885,
+      "char_end": 914,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-quarterly-pricing-adjustments"
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "sub-tier supplier lists",
+      "char_start": 1297,
+      "char_end": 1320,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "production records",
+      "char_start": 1259,
+      "char_end": 1277,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "quality data",
+      "char_start": 1279,
+      "char_end": 1291,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "equipment failures",
+      "char_start": 1463,
+      "char_end": 1481,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-equipment-failures"
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "labor actions",
+      "char_start": 1483,
+      "char_end": 1496,
+      "proposed_type": "Event",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-labor-actions"
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "supply disruptions",
+      "char_start": 1501,
+      "char_end": 1519,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-disruptions"
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "tier-two inputs",
+      "char_start": 1530,
+      "char_end": 1545,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "delivered components",
+      "char_start": 2458,
+      "char_end": 2478,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "finished goods",
+      "char_start": 1902,
+      "char_end": 1916,
+      "proposed_type": "Material",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "procurement, legal, and supply chain operations teams",
+      "char_start": 289,
+      "char_end": 342,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m2",
+      "evidence_span_start": 506,
+      "evidence_span_end": 608
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m3",
+      "evidence_span_start": 1576,
+      "evidence_span_end": 1658
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "has",
+      "object_id": "m28",
+      "evidence_span_start": 710,
+      "evidence_span_end": 787
+    },
+    {
+      "subject_id": "m29",
+      "predicate": "uses",
+      "object_id": "m6",
+      "evidence_span_start": 885,
+      "evidence_span_end": 970
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "performed_on",
+      "object_id": "m13",
+      "evidence_span_start": 1142,
+      "evidence_span_end": 1216
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "requires",
+      "object_id": "m1",
+      "evidence_span_start": 1322,
+      "evidence_span_end": 1390
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "implements",
+      "object_id": "m12",
+      "evidence_span_start": 1798,
+      "evidence_span_end": 1898
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "obeys",
+      "object_id": "m7",
+      "evidence_span_start": 2177,
+      "evidence_span_end": 2258
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "related_to",
+      "object_id": "m9",
+      "evidence_span_start": 2753,
+      "evidence_span_end": 2827
+    },
+    {
+      "subject_id": "m8",
+      "predicate": "related_to",
+      "object_id": "m10",
+      "evidence_span_start": 2753,
+      "evidence_span_end": 2846
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "requires",
+      "object_id": "m8",
+      "evidence_span_start": 2522,
+      "evidence_span_end": 2617
+    }
+  ]
+}

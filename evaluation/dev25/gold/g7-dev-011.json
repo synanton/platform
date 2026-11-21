@@ -1,0 +1,192 @@
+{
+  "document_id": "supply-chain-overview.txt",
+  "text_sha256": "ba1db29e87762db14596505073764a18028ed69213bf0a2809fad33dd9ba00b0",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Supply chain management",
+      "char_start": 55,
+      "char_end": 78,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-chain-management"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Acme Corp",
+      "char_start": 774,
+      "char_end": 783,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 1047,
+      "char_end": 1067,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-globex-manufacturing"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Initech Ltd",
+      "char_start": 1097,
+      "char_end": 1108,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "ERP systems",
+      "char_start": 1501,
+      "char_end": 1512,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "IoT sensors",
+      "char_start": 1514,
+      "char_end": 1525,
+      "proposed_type": "Component",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "carrier APIs",
+      "char_start": 1531,
+      "char_end": 1543,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "dual-sourcing strategies",
+      "char_start": 815,
+      "char_end": 839,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dual-sourcing-strategies"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "strategic inventory buffers",
+      "char_start": 856,
+      "char_end": 883,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-strategic-inventory-buffers"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "scenario planning",
+      "char_start": 1946,
+      "char_end": 1963,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-scenario-planning"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "cross-functional crisis response teams",
+      "char_start": 2004,
+      "char_end": 2042,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "Predictive analytics",
+      "char_start": 1640,
+      "char_end": 1660,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-predictive-analytics"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "Visibility tools",
+      "char_start": 1459,
+      "char_end": 1475,
+      "proposed_type": "Product",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "supply chain transparency",
+      "char_start": 390,
+      "char_end": 415,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-chain-transparency"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "Supplier relationship management",
+      "char_start": 922,
+      "char_end": 954,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supplier-relationship-management"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m2",
+      "predicate": "implements",
+      "object_id": "m8",
+      "evidence_span_start": 676,
+      "evidence_span_end": 730
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "has",
+      "object_id": "m9",
+      "evidence_span_start": 735,
+      "evidence_span_end": 773
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "related_to",
+      "object_id": "m3",
+      "evidence_span_start": 960,
+      "evidence_span_end": 1025
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "related_to",
+      "object_id": "m4",
+      "evidence_span_start": 1030,
+      "evidence_span_end": 1085
+    },
+    {
+      "subject_id": "m13",
+      "predicate": "uses",
+      "object_id": "m5",
+      "evidence_span_start": 1400,
+      "evidence_span_end": 1482
+    },
+    {
+      "subject_id": "m13",
+      "predicate": "uses",
+      "object_id": "m6",
+      "evidence_span_start": 1400,
+      "evidence_span_end": 1482
+    },
+    {
+      "subject_id": "m13",
+      "predicate": "uses",
+      "object_id": "m7",
+      "evidence_span_start": 1400,
+      "evidence_span_end": 1482
+    }
+  ]
+}
