@@ -56,7 +56,8 @@ def main() -> int:
             if not gold.exists():
                 errors.append(f'{r["doc_id"]}: gold record missing')
             else:
-                text = p.read_text(encoding='utf-8', errors='replace')
+                tp = DEV / 'extracted' / f'{r["doc_id"]}.txt'
+                text = tp.read_text(encoding='utf-8', errors='replace') if tp.exists() else p.read_text(encoding='utf-8', errors='replace')
                 errors += validate_gold(gold, text)
                 validated += 1
     unlabeled = sum(r['annotation_status'] == 'UNLABELED' for r in rows)

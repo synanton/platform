@@ -27,11 +27,11 @@ adjudication. No model-generated labels are treated as gold.
 |---|---|
 | 25 manifest documents present | Yes |
 | Source checksums match manifest | Yes |
-| All 25 have annotations | No (20 pending) |
-| 20 new docs human-reviewed | No |
+| All 25 have annotations | No (11 PDF pending) |
+| 20 new docs human-reviewed | 9 reviewed (11 PDF pending) |
 | Disagreements adjudicated | No |
-| Evidence spans validated | Partial (5 gold) |
-| Ambiguous/unresolvable represented | Partial (5 gold) |
+| Evidence spans validated | Partial (14 gold) |
+| Ambiguous/unresolvable represented | Partial (14 gold) |
 | Gold checksums frozen | No |
 
 This dataset must not be used for Phase 2 evaluation until all criteria pass and

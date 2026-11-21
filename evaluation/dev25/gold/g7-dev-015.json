@@ -1,0 +1,398 @@
+{
+  "document_id": "logistics-network.md",
+  "text_sha256": "d5a093f416cc998a8d4584bb479b4bc0b44447bc32966e10e05dd2cafc4b14d2",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Synanton logistics network",
+      "char_start": 68,
+      "char_end": 94,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "North America",
+      "char_start": 101,
+      "char_end": 114,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-north-america"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Europe",
+      "char_start": 119,
+      "char_end": 125,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-europe"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 195,
+      "char_end": 215,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-globex-manufacturing"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "Initech Ltd",
+      "char_start": 220,
+      "char_end": 231,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Acme Corp",
+      "char_start": 237,
+      "char_end": 246,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "Columbus, OH",
+      "char_start": 568,
+      "char_end": 580,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-columbus-oh"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Mississauga, ON",
+      "char_start": 675,
+      "char_end": 690,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-mississauga-on"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Atlanta, GA",
+      "char_start": 795,
+      "char_end": 806,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-atlanta-ga"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Krakow, PL",
+      "char_start": 895,
+      "char_end": 905,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-krakow-pl"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Poland",
+      "char_start": 947,
+      "char_end": 953,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-poland"
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "Columbus hub",
+      "char_start": 1095,
+      "char_end": 1107,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-columbus-hub"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "three departures per week",
+      "char_start": 1178,
+      "char_end": 1203,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-three-departures-per-week"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "Ohio",
+      "char_start": 1214,
+      "char_end": 1218,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ohio"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "less-than-truckload (LTL)",
+      "char_start": 1261,
+      "char_end": 1286,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-less-than-truckload-ltl"
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "milk-run service",
+      "char_start": 1455,
+      "char_end": 1471,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-milk-run-service"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "six-hour frequency",
+      "char_start": 1487,
+      "char_end": 1505,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-six-hour-frequency"
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "emergency air freight",
+      "char_start": 1540,
+      "char_end": 1561,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-emergency-air-freight"
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "Mississauga hub",
+      "char_start": 1644,
+      "char_end": 1659,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-mississauga-hub"
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "Krakow facility",
+      "char_start": 1668,
+      "char_end": 1683,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-krakow-facility"
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "ocean freight",
+      "char_start": 1692,
+      "char_end": 1705,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ocean-freight"
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "28-day transit",
+      "char_start": 1729,
+      "char_end": 1743,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-28-day-transit"
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "air",
+      "char_start": 754,
+      "char_end": 757,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-air"
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "air freight",
+      "char_start": 754,
+      "char_end": 765,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-air-freight"
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "5% of annual volume",
+      "char_start": 1835,
+      "char_end": 1854,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-5-of-annual-volume"
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "Q1 2025",
+      "char_start": 1881,
+      "char_end": 1888,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-q1-2025"
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "Globex Columbus OH to Columbus Hub",
+      "char_start": 1978,
+      "char_end": 2012,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "Initech Mississauga milk-run",
+      "char_start": 2044,
+      "char_end": 2072,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "Hub Atlanta outbound",
+      "char_start": 2116,
+      "char_end": 2136,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "Krakow to Mississauga",
+      "char_start": 2169,
+      "char_end": 2190,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "dynamic routing optimization system",
+      "char_start": 2296,
+      "char_end": 2331,
+      "proposed_type": "Algorithm",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dynamic-routing-optimization-system"
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "Columbus-to-Atlanta lane",
+      "char_start": 2499,
+      "char_end": 2523,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "4% reduction in transit time variability",
+      "char_start": 2531,
+      "char_end": 2571,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-4-reduction-in-transit-time-variability"
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "2.1% reduction in freight cost per unit",
+      "char_start": 2578,
+      "char_end": 2617,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2-1-reduction-in-freight-cost-per-unit"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m2",
+      "evidence_span_start": 4,
+      "evidence_span_end": 81
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m3",
+      "evidence_span_start": 4,
+      "evidence_span_end": 81
+    },
+    {
+      "subject_id": "m4",
+      "predicate": "related_to",
+      "object_id": "m12",
+      "evidence_span_start": 491,
+      "evidence_span_end": 540
+    },
+    {
+      "subject_id": "m5",
+      "predicate": "related_to",
+      "object_id": "m8",
+      "evidence_span_start": 586,
+      "evidence_span_end": 621
+    },
+    {
+      "subject_id": "m5",
+      "predicate": "related_to",
+      "object_id": "m10",
+      "evidence_span_start": 790,
+      "evidence_span_end": 846
+    },
+    {
+      "subject_id": "m4",
+      "predicate": "repeats_every",
+      "object_id": "m13",
+      "evidence_span_start": 1010,
+      "evidence_span_end": 1072
+    },
+    {
+      "subject_id": "m5",
+      "predicate": "uses",
+      "object_id": "m16",
+      "evidence_span_start": 1230,
+      "evidence_span_end": 1320
+    },
+    {
+      "subject_id": "m16",
+      "predicate": "repeats_every",
+      "object_id": "m17",
+      "evidence_span_start": 1321,
+      "evidence_span_end": 1372
+    },
+    {
+      "subject_id": "m21",
+      "predicate": "has",
+      "object_id": "m22",
+      "evidence_span_start": 1526,
+      "evidence_span_end": 1574
+    },
+    {
+      "subject_id": "m24",
+      "predicate": "related_to",
+      "object_id": "m25",
+      "evidence_span_start": 1616,
+      "evidence_span_end": 1671
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "improves_over",
+      "object_id": "m33",
+      "evidence_span_start": 2240,
+      "evidence_span_end": 2339
+    },
+    {
+      "subject_id": "m31",
+      "predicate": "improves_over",
+      "object_id": "m34",
+      "evidence_span_start": 2340,
+      "evidence_span_end": 2388
+    }
+  ]
+}

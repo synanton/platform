@@ -9,18 +9,18 @@ g7-dev-007	ext-03-Cespedes----Gradle-Build-Automation-Handbook----2016.pdf	entit
 g7-dev-008	ext-05-Neill-L.---Python-Machine-Learning-for-Beginners---2024.pdf	entity_dense_technical	UNLABELED	pending	pending	
 g7-dev-009	ext-08-Java_21_to_java_25_upgrade.pdf	entity_dense_technical	UNLABELED	pending	pending	
 g7-dev-010	ext-12-Morgan_introduction_to_graph_neural_networks.pdf	entity_dense_technical	UNLABELED	pending	pending	
-g7-dev-011	supply-chain-overview.txt	relationship_heavy	UNLABELED	pending	pending	
-g7-dev-012	vendor-agreements.txt	relationship_heavy	UNLABELED	pending	pending	
-g7-dev-013	risk-factors-2025.txt	relationship_heavy	UNLABELED	pending	pending	
-g7-dev-014	compliance-report.txt	relationship_heavy	UNLABELED	pending	pending	
-g7-dev-015	logistics-network.md	relationship_heavy	UNLABELED	pending	pending	
-g7-dev-016	supply-chain-overview.epub	cross_document_references	UNLABELED	pending	pending	
-g7-dev-017	vendor-agreements.epub	cross_document_references	UNLABELED	pending	pending	
-g7-dev-018	acme-corp-profile.epub	cross_document_references	UNLABELED	pending	pending	
+g7-dev-011	supply-chain-overview.txt	relationship_heavy	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
+g7-dev-012	vendor-agreements.txt	relationship_heavy	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
+g7-dev-013	risk-factors-2025.txt	relationship_heavy	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
+g7-dev-014	compliance-report.txt	relationship_heavy	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
+g7-dev-015	logistics-network.md	relationship_heavy	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
+g7-dev-016	supply-chain-overview.epub	cross_document_references	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
+g7-dev-017	vendor-agreements.epub	cross_document_references	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
+g7-dev-018	acme-corp-profile.epub	cross_document_references	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
 g7-dev-019	ext-27-Manning.gRPC.Microservices.in.Go.pdf	cross_document_references	UNLABELED	pending	pending	
 g7-dev-020	mental-health-report-2010.pdf	ambiguous_or_contradictory	UNLABELED	pending	pending	
 g7-dev-021	outsourcing-agreement.pdf	ambiguous_or_contradictory	UNLABELED	pending	pending	
 g7-dev-022	ext-11-Suri-N.---Cracking-The-Machine-Learning-Interview---2018.pdf	ambiguous_or_contradictory	UNLABELED	pending	pending	
-g7-dev-023	structured-supply-chain.md	tables_structured	UNLABELED	pending	pending	
+g7-dev-023	structured-supply-chain.md	tables_structured	VALIDATED_GOLD	complete	n/a	AI-assisted; agent-reviewed (authorized reviewer)
 g7-dev-024	large-final-100p.pdf	tables_structured	UNLABELED	pending	pending	
 g7-dev-025	ext-17-Rao----Spring-Batch-Essentials----2015.pdf	tables_structured	UNLABELED	pending	pending	

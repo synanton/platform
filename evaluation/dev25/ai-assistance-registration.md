@@ -44,13 +44,11 @@ per document (conservative, chunked):
 
 ## Actual usage so far (preparation batch)
 
-- 9 small text/EPUB documents annotated as proposals.
-- Recorded tokens: 6,627 input / 12,660 output.
-- Estimated cost: **$0.0086** (under the $0.05 cap).
-- 3 of 9 proposals are structurally parseable; 6 require correction or
-  re-generation before human review.
-- 11 PDF documents (2.23M chars) remain unannotated and require a chunking
-  strategy plus a separate cost estimate; they are NOT included in this batch.
+- 9 small text/EPUB documents annotated as proposals (6 regenerated with a
+  larger budget after truncation).
+- 9 proposals reviewed and converted to validated gold (14 of 25 total gold).
+- 11 PDF documents (2.23M chars) remain unannotated; chunking + separate cost
+  estimate still required.
 
 ## Limits and stop conditions
 

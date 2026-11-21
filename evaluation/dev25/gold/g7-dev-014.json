@@ -1,0 +1,577 @@
+{
+  "document_id": "compliance-report.txt",
+  "text_sha256": "845bf03d88c465ef54f1b1c6c0b9108695f0d47a5a15340b3e16cbc26e8e4ce6",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Acme Corp",
+      "char_start": 119,
+      "char_end": 128,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 543,
+      "char_end": 563,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-globex-manufacturing"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Initech Ltd",
+      "char_start": 568,
+      "char_end": 579,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Board's Audit and Risk Committee",
+      "char_start": 462,
+      "char_end": 494,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "ISO 14001",
+      "char_start": 1138,
+      "char_end": 1147,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-iso-14001"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Responsible Business Alliance (RBA) Code of Conduct",
+      "char_start": 1338,
+      "char_end": 1389,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-responsible-business-alliance-rba-code-of-conduct"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "C-TPAT",
+      "char_start": 1867,
+      "char_end": 1873,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-c-tpat"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "USMCA",
+      "char_start": 2168,
+      "char_end": 2173,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-usmca"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "SEC Rule 13p-1",
+      "char_start": 2352,
+      "char_end": 2366,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-sec-rule-13p-1"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Dodd-Frank Act",
+      "char_start": 2377,
+      "char_end": 2391,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dodd-frank-act"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Form SD",
+      "char_start": 2446,
+      "char_end": 2453,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-form-sd"
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "CMRT survey",
+      "char_start": 2588,
+      "char_end": 2599,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "SOC 2 Type II",
+      "char_start": 3020,
+      "char_end": 3033,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-soc-2-type-ii"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "Supplier Cybersecurity Minimum Requirements",
+      "char_start": 2766,
+      "char_end": 2809,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supplier-cybersecurity-minimum-requirements"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "conflict minerals report",
+      "char_start": 393,
+      "char_end": 417,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-conflict-minerals-report"
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "corrective action plan",
+      "char_start": 956,
+      "char_end": 978,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-corrective-action-plan"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "RBA-aligned audits",
+      "char_start": 1422,
+      "char_end": 1440,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-rba-aligned-audits"
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "baseline assessment questionnaire",
+      "char_start": 2954,
+      "char_end": 2987,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-baseline-assessment-questionnaire"
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "tantalum",
+      "char_start": 2464,
+      "char_end": 2472,
+      "proposed_type": "Material",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-tantalum"
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "tin",
+      "char_start": 416,
+      "char_end": 419,
+      "proposed_type": "Material",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-tin"
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "tungsten",
+      "char_start": 2479,
+      "char_end": 2487,
+      "proposed_type": "Material",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-tungsten"
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "gold",
+      "char_start": 2493,
+      "char_end": 2497,
+      "proposed_type": "Material",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gold"
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "wastewater discharge reporting",
+      "char_start": 851,
+      "char_end": 881,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-wastewater-discharge-reporting"
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "overtime hour tracking",
+      "char_start": 1633,
+      "char_end": 1655,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-overtime-hour-tracking"
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "multi-factor authentication",
+      "char_start": 3159,
+      "char_end": 3186,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-multi-factor-authentication"
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "patch management",
+      "char_start": 3191,
+      "char_end": 3207,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-patch-management"
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "Ohio",
+      "char_start": 920,
+      "char_end": 924,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ohio"
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "Polish facilities",
+      "char_start": 1967,
+      "char_end": 1984,
+      "proposed_type": "Location",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "conflict-affected or high-risk areas",
+      "char_start": 2656,
+      "char_end": 2692,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "FY2024",
+      "char_start": 48,
+      "char_end": 54,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-fy2024"
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "FY2025",
+      "char_start": 3058,
+      "char_end": 3064,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-fy2025"
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "60 days",
+      "char_start": 993,
+      "char_end": 1000,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-60-days"
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "28 supplier facilities",
+      "char_start": 664,
+      "char_end": 686,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-28-supplier-facilities"
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "four high-risk facilities",
+      "char_start": 1444,
+      "char_end": 1469,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-four-high-risk-facilities"
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "47 part numbers",
+      "char_start": 2195,
+      "char_end": 2210,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-47-part-numbers"
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "$1.2 million in duty savings",
+      "char_start": 2090,
+      "char_end": 2118,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-1-2-million-in-duty-savings"
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "two minor non-conformances",
+      "char_start": 813,
+      "char_end": 839,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-two-minor-non-conformances"
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "Two findings related to overtime hour tracking",
+      "char_start": 1609,
+      "char_end": 1655,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-two-findings-related-to-overtime-hour-tracking"
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "Three lower-tier suppliers",
+      "char_start": 3066,
+      "char_end": 3092,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m40",
+      "surface_form": "tier-two sub-supplier",
+      "char_start": 1661,
+      "char_end": 1682,
+      "proposed_type": "Organization",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m41",
+      "surface_form": "trade compliance team",
+      "char_start": 2134,
+      "char_end": 2155,
+      "proposed_type": "Role",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m42",
+      "surface_form": "supply chain operations",
+      "char_start": 131,
+      "char_end": 154,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-chain-operations"
+    },
+    {
+      "mention_id": "m43",
+      "surface_form": "corrective action watch list",
+      "char_start": 3110,
+      "char_end": 3138,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-corrective-action-watch-list"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m2",
+      "evidence_span_start": 507,
+      "evidence_span_end": 579
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m3",
+      "evidence_span_start": 507,
+      "evidence_span_end": 579
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "obeys",
+      "object_id": "m5",
+      "evidence_span_start": 1079,
+      "evidence_span_end": 1192
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "obeys",
+      "object_id": "m5",
+      "evidence_span_start": 1079,
+      "evidence_span_end": 1192
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "uses",
+      "object_id": "m6",
+      "evidence_span_start": 1228,
+      "evidence_span_end": 1390
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "obeys",
+      "object_id": "m7",
+      "evidence_span_start": 1799,
+      "evidence_span_end": 1907
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "uses",
+      "object_id": "m8",
+      "evidence_span_start": 2120,
+      "evidence_span_end": 2244
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "obeys",
+      "object_id": "m9",
+      "evidence_span_start": 2333,
+      "evidence_span_end": 2454
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "documents",
+      "object_id": "m11",
+      "evidence_span_start": 2393,
+      "evidence_span_end": 2454
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "implements",
+      "object_id": "m14",
+      "evidence_span_start": 2743,
+      "evidence_span_end": 2897
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "seeks",
+      "object_id": "m13",
+      "evidence_span_start": 2898,
+      "evidence_span_end": 3065
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "seeks",
+      "object_id": "m13",
+      "evidence_span_start": 2898,
+      "evidence_span_end": 3065
+    },
+    {
+      "subject_id": "m2",
+      "predicate": "performed_on",
+      "object_id": "m18",
+      "evidence_span_start": 2898,
+      "evidence_span_end": 2987
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "performed_on",
+      "object_id": "m18",
+      "evidence_span_start": 2898,
+      "evidence_span_end": 2987
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "performed_on",
+      "object_id": "m17",
+      "evidence_span_start": 1391,
+      "evidence_span_end": 1469
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "implements",
+      "object_id": "m16",
+      "evidence_span_start": 926,
+      "evidence_span_end": 1000
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "documents",
+      "object_id": "m15",
+      "evidence_span_start": 2393,
+      "evidence_span_end": 2497
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "has_component",
+      "object_id": "m19",
+      "evidence_span_start": 2455,
+      "evidence_span_end": 2530
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "has_component",
+      "object_id": "m20",
+      "evidence_span_start": 2455,
+      "evidence_span_end": 2530
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "has_component",
+      "object_id": "m21",
+      "evidence_span_start": 2455,
+      "evidence_span_end": 2530
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "has_component",
+      "object_id": "m22",
+      "evidence_span_start": 2455,
+      "evidence_span_end": 2530
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m4",
+      "evidence_span_start": 422,
+      "evidence_span_end": 494
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "has_component",
+      "object_id": "m41",
+      "evidence_span_start": 2120,
+      "evidence_span_end": 2190
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "related_to",
+      "object_id": "m40",
+      "evidence_span_start": 1609,
+      "evidence_span_end": 1767
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m25",
+      "evidence_span_start": 3066,
+      "evidence_span_end": 3218
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m26",
+      "evidence_span_start": 3066,
+      "evidence_span_end": 3218
+    }
+  ]
+}
