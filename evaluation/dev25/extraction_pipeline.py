@@ -27,6 +27,7 @@ def plan_chunks(text, target_chars=5000, overlap_chars=200, max_output_tokens=32
             "chunk_id": cid, "char_start": start, "char_end": end,
             "chars": len(body), "sha256": hashlib.sha256(body.encode()).hexdigest(),
             "estimated_input_tokens": math.ceil(len(body) / 4),
+            "output_char_ratio": output_char_ratio,
             "recommended_max_tokens": min(max_output_tokens, max(min_output_tokens, estimated_output_tokens)),
         })
         if end == len(text): break
@@ -34,9 +35,30 @@ def plan_chunks(text, target_chars=5000, overlap_chars=200, max_output_tokens=32
 
 def validate_provider_output_budget(required_tokens, provider_max_output_tokens):
     """Fail closed when a provider cannot support the planned output budget."""
+    if not isinstance(provider_max_output_tokens, int) or provider_max_output_tokens <= 0:
+        return "provider max output limit is missing or invalid"
     if provider_max_output_tokens < required_tokens:
         return f"provider max output {provider_max_output_tokens} < required {required_tokens}"
     return None
+
+def preflight_output_budget(chunks, provider_max_output_tokens, provider_limit_source):
+    """Pre-inference gate: verify the advertised runtime limit, then every chunk."""
+    errors = []
+    if not provider_limit_source:
+        errors.append({"reason": "provider output limit not verified at runtime"})
+    if not isinstance(provider_max_output_tokens, int) or provider_max_output_tokens <= 0:
+        errors.append({"reason": "provider output limit missing or invalid"})
+        return errors
+    for chunk in chunks:
+        required = chunk["recommended_max_tokens"]
+        if required > provider_max_output_tokens:
+            errors.append({
+                "reason": "chunk output budget exceeds provider limit",
+                "chunk_id": chunk.get("chunk_id"),
+                "required_tokens": required,
+                "provider_max_tokens": provider_max_output_tokens,
+            })
+    return errors
 
 def stage1_entities(text, candidates, allowed_types=ALLOWED_TYPES):
     accepted = []

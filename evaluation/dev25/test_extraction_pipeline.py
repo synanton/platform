@@ -2,6 +2,7 @@ import unittest, json, csv
 from pathlib import Path
 from extraction_pipeline import (plan_chunks, stage1_entities, stage2_relations,
                                  merge_chunk_entities, validate_provider_output_budget,
+                                 preflight_output_budget,
                                  ALLOWED_TYPES, ALLOWED_PREDICATES)
 from offline_validation import norm_predicate
 
@@ -21,8 +22,30 @@ class PipelineTests(unittest.TestCase):
         self.assertGreaterEqual(c32['recommended_max_tokens'],2048)
         self.assertLessEqual(c32['recommended_max_tokens'],32768)
         self.assertLessEqual(c64['recommended_max_tokens'],65536)
+        self.assertEqual(c32['output_char_ratio'],3.0)
         self.assertIsNone(validate_provider_output_budget(c32['recommended_max_tokens'],32768))
         self.assertIsNotNone(validate_provider_output_budget(65536,32768))
+        self.assertEqual(preflight_output_budget([c32],32768,'live:/v1/models'),[])
+        big=plan_chunks(text,12000,0,max_output_tokens=65536,output_char_ratio=12.0)[0]
+        oversized=preflight_output_budget([big],32768,'live:/v1/models')
+        self.assertEqual(oversized[0]['reason'],'chunk output budget exceeds provider limit')
+        self.assertTrue(preflight_output_budget([c32],32768,None))
+        self.assertTrue(preflight_output_budget([c32],None,'live:/v1/models'))
+
+    def test_ratio_is_configurable_and_observable(self):
+        text='x'*12000
+        a=plan_chunks(text,12000,0,max_output_tokens=65536,output_char_ratio=2.0)[0]
+        b=plan_chunks(text,12000,0,max_output_tokens=65536,output_char_ratio=4.0)[0]
+        self.assertEqual(a['output_char_ratio'],2.0); self.assertEqual(b['output_char_ratio'],4.0)
+        self.assertLess(a['recommended_max_tokens'],b['recommended_max_tokens'])
+
+    def test_boundary_conditions(self):
+        self.assertEqual(plan_chunks('',5000),[])
+        exact=plan_chunks('x'*5000,5000,0)
+        self.assertEqual(len(exact),1); self.assertEqual(exact[0]['char_end'],5000)
+        short=plan_chunks('x',5000,0)
+        self.assertEqual(short[0]['recommended_max_tokens'],2048)
+        with self.assertRaises(ValueError): plan_chunks('x',5000,5000)
 
     def test_stage1_rejects_bad_type_and_span(self):
         text='Acme supplies Widget'
