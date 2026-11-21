@@ -24,10 +24,12 @@
   unique/repeated/missing/Unicode surfaces, BERT offset regression, chunk
   provenance and all 25 DEV gold v1.0 docs.
 
+28 offline tests pass, including all 25 DEV gold v1.0 documents.
+
 Run:
 ```bash
 cd evaluation/dev25
-python3 -m unittest -v test_offline_validation.py test_extraction_pipeline.py
+python3 -m unittest -v test_offline_validation.py test_extraction_pipeline.py test_surface_anchoring.py
 ```
 
 No experiment is authorized by this implementation.
