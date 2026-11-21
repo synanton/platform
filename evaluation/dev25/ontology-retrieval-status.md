@@ -8,8 +8,10 @@
 - Each snapshot records tenant, ontology version, query hash, object IDs, context
   hash and top-k.
 - No graph retrieval is included in this increment.
-- Tests cover relevance, tenant isolation, version pinning, determinism, budgets
-  and top-k.
+- Tests cover relevance, tenant isolation, version pinning, determinism, budgets,
+  top-k, cross-tenant/version fail-closed behavior, deterministic tie-breaking,
+  post-serialization budgets and context/evidence separation.
+- 11 ontology tests pass; full offline suite passes.
 
 Run:
 ```bash

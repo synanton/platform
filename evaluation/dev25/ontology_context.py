@@ -42,6 +42,8 @@ def retrieve_ontology(query, items, *, tenant, ontology_version, top_k=8, max_co
         chosen.append(item); blocks.append(block); size+=len(block)
         if len(chosen)>=top_k: break
     context='\n'.join(blocks)
+    while len(context)>max_context_chars and chosen:
+        chosen.pop(); blocks.pop(); context='\n'.join(blocks)
     return ContextSnapshot(tenant,ontology_version,hashlib.sha256((query or '').encode()).hexdigest(),top_k,tuple(i.object_id for i in chosen),context,hashlib.sha256(context.encode()).hexdigest())
 
 def snapshot_json(snap):
