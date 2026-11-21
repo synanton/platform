@@ -106,3 +106,65 @@ def merge_chunk_entities(chunks):
                            "chunk_id": meta["chunk_id"],
                            "chunk_char_start": meta["char_start"]})
     return merged
+def _paragraph_spans(text):
+    import re
+    spans=[]; start=0
+    for m in re.finditer(r'\n\s*\n', text):
+        end=m.end()
+        if end>start: spans.append((start,end))
+        start=end
+    if start<len(text): spans.append((start,len(text)))
+    return spans
+
+def _sentence_spans(text,start,end):
+    import re
+    body=text[start:end]; out=[]; cur=0
+    for m in re.finditer(r'(?<=[.!?])\s+|\n+', body):
+        if m.end()>cur: out.append((start+cur,start+m.end())); cur=m.end()
+    if cur<end-start: out.append((start+cur,end))
+    return out or [(start,end)]
+
+def _spans_with_limit(text, start, end, target_chars):
+    if end-start<=target_chars: return [(start,end)]
+    out=[]
+    for s,e in _sentence_spans(text,start,end):
+        if e-s<=target_chars: out.append((s,e))
+        else:
+            for x in range(s,e,target_chars): out.append((x,min(e,x+target_chars)))
+    return out
+
+def plan_boundary_chunks(text, target_chars=5000, overlap_chars=200, max_output_tokens=32768,
+                         output_char_ratio=3.0, min_output_tokens=2048):
+    import hashlib, math
+    if target_chars<=0: raise ValueError('target_chars must be positive')
+    if overlap_chars<0 or overlap_chars>=target_chars: raise ValueError('invalid overlap')
+    units=[]
+    for ps,pe in _paragraph_spans(text):
+        units.extend(_spans_with_limit(text,ps,pe,target_chars))
+    chunks=[]; prev_end=0; ui=0
+    while prev_end < len(text):
+        start=max(0,prev_end-overlap_chars) if chunks else 0
+        while ui < len(units) and units[ui][1] <= start:
+            ui += 1
+        end=start; chosen=[]; j=ui
+        while j < len(units):
+            s,e=units[j]
+            if e<=start: j+=1; continue
+            if s<end: j+=1; continue
+            if chosen and e-start>target_chars: break
+            chosen.append((s,e)); end=e; j+=1
+            if end-start>=target_chars: break
+        if not chosen:
+            end=min(len(text),start+target_chars); chosen=[(start,end)]
+        ui=j if j>ui else ui
+        body=text[start:end]
+        chunks.append({'chunk_id':len(chunks),'char_start':start,'char_end':end,'chars':len(body),
+                       'sha256':hashlib.sha256(body.encode()).hexdigest(),
+                       'estimated_input_tokens':math.ceil(len(body)/4),
+                       'output_char_ratio':output_char_ratio,
+                       'recommended_max_tokens':min(max_output_tokens,max(min_output_tokens,math.ceil(len(body)*output_char_ratio/4))),
+                       'overlap_chars':start-(chunks[-1]['char_end']-overlap_chars) if chunks else 0,
+                       'boundary':'paragraph/sentence'})
+        prev_end=end
+        if end>=len(text): break
+    return chunks
