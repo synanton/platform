@@ -48,7 +48,7 @@ last_reviewed: "2026-11-09"
 | [`decisions/`](./decisions/) | Architecture Decision Records (ADRs) |
 | [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) | **Accepted** - graph storage abstraction and logical projection contracts; implementation tracked by #587 |
 
-## Research Architecture Baselines
+| [External Engines and Stable Contracts](./external-engines-and-stable-contracts.md) | **Draft for review** — technology shortlist, adoption vocabulary, stable adapter principles, and open decisions; no new adoption approved. |\n\n## Research Architecture Baselines
 
 | Document | Status | Scope |
 |---|---|---|
