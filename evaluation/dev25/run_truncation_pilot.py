@@ -33,7 +33,7 @@ def main():
   req=pb.ExecutionRequest(request_id=rid,tenant_id='smoke-tenant',model='synanton-external-chat',model_version='1',operation=pb.SYNTHESIZE,payload=json.dumps(payload).encode())
   t=time.monotonic(); rec={'request_id':rid,'selection_id':row['selection_id'],'doc_id':did,'chunk_id':row['chunk_id'],'model_id':'deepseek-v4-pro','provider':'opencode','max_tokens':a.max_tokens,'provider_limit':limit,'provider_limit_source':source,'chunk_sha256':row['source_chunk_sha256']}
   try:
-   r=stub.Execute(req,timeout=300); rec['latency_s']=time.monotonic()-t; rec['state']=pb.ExecutionState.Name(r.state); rec['usage']={'input':r.usage.input_tokens,'output':r.usage.output_tokens}; rec['upstream_request_id']=r.upstream_request_id; rec['error_code']=r.error.code; rec['error_message']=r.error.message
+   r=stub.Execute(req,timeout=700); rec['latency_s']=time.monotonic()-t; rec['state']=pb.ExecutionState.Name(r.state); rec['usage']={'input':r.usage.input_tokens,'output':r.usage.output_tokens}; rec['upstream_request_id']=r.upstream_request_id; rec['error_code']=r.error.code; rec['error_message']=r.error.message
    raw=r.result.decode('utf-8','replace') if r.result else ''; rec['response_sha256']=sha(raw); rp=out/'raw'/f'{row["selection_id"]}.json'; rp.write_text(raw); rec['raw_response_path']=str(rp.relative_to(out)); total_in+=r.usage.input_tokens; total_out+=r.usage.output_tokens
    content=json.loads(raw)['choices'][0]['message'].get('content') or ''; ch=json.loads(raw)['choices'][0]; rec['finish_reason']=ch.get('finish_reason')
    try:
