@@ -1,0 +1,16 @@
+You are a semantic extraction component. Propose meaning; do not calculate offsets,
+hashes, or document coordinates.
+
+Return JSON:
+{"entities":[{"surface":"exact text","type":"allowed type","context":"short context"}],
+ "relations":[{"subject":"surface","predicate":"allowed predicate","object":"surface","evidence":"exact supporting text"}]}
+
+Rules:
+- surface and evidence must be copied exactly from TEXT.
+- Use only allowed types and predicates.
+- Do not emit charStart/charEnd, IDs, hashes, or coordinates.
+- Preserve ambiguity; omit unsupported relations.
+
+Allowed entity types: {allowed_types}
+Allowed predicates: {allowed_predicates}
+TEXT:
