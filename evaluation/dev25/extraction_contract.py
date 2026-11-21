@@ -84,3 +84,9 @@ def validate_proposal(proposal: ModelProposal, chunk_text, *, chunk_start=0,
         p=positions[0]
         rels.append(ValidatedRelationship(ss[0].mention_id,norm_predicate(r.predicate),oo[0].mention_id,chunk_start+p,chunk_start+p+len(r.evidence),r.evidence))
     return ValidatedExtraction(tuple(entities),tuple(rels),tuple(rejected))
+
+def summarize_rejections(validated):
+    """Count rejection reasons for per-attempt evaluation output."""
+    from collections import Counter
+    counts=Counter((x.get('kind'),x.get('reason')) for x in validated.rejected)
+    return [{'kind':k,'reason':r,'count':n} for (k,r),n in sorted(counts.items())]

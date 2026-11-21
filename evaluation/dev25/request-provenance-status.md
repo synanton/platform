@@ -10,6 +10,9 @@
   as evidence with `ONTOLOGY_CONTEXT_NOT_EVIDENCE`.
 - Evidence offsets are always resolved against the original chunk text.
 - Models still return `ModelProposal`; only `ValidatedExtraction` is produced.
+- `PinnedArmRequestBuilder` fixes one ontology snapshot for all Arm B requests.
+- Rejection summaries are persisted by kind/reason; mixed valid-source plus ontology
+  evidence is tested to preserve the valid source relation.
 
 Run:
 ```bash

@@ -1,7 +1,7 @@
 import unittest,json,hashlib
-from request_provenance import build_arm_request
+from request_provenance import build_arm_request, PinnedArmRequestBuilder
 from ontology_context import ContextSnapshot
-from extraction_contract import ModelProposal,ModelEntityProposal,ModelRelationProposal,validate_proposal
+from extraction_contract import ModelProposal,ModelEntityProposal,ModelRelationProposal,validate_proposal,summarize_rejections
 from extraction_pipeline import ALLOWED_TYPES,ALLOWED_PREDICATES
 
 SETTINGS={'temperature':0,'top_p':1,'seed':0,'max_tokens':4096}
@@ -22,6 +22,8 @@ class RequestProvenanceTests(unittest.TestCase):
  def test_hashes_are_over_exact_serialized_payload(self):
   p=build_arm_request(arm_id='A',chunk_text='Acme Widget',system_prompt=PROMPT.format(t='x',p='y'),model='m',settings=SETTINGS)
   self.assertEqual(p.serialized_context_hash,hashlib.sha256(p.serialized_payload.encode()).hexdigest())
+  payload=json.loads(p.serialized_payload)
+  self.assertEqual(payload['messages'][0]['role'],'system'); self.assertEqual(payload['messages'][1]['role'],'user')
 
  def test_arm_a_does_not_call_retrieval(self):
   def boom(): raise AssertionError('retrieval called for A')
@@ -36,6 +38,21 @@ class RequestProvenanceTests(unittest.TestCase):
   v=validate_proposal(prop,text,allowed_types=ALLOWED_TYPES,allowed_predicates=ALLOWED_PREDICATES,ontology_context=SNAP.context)
   self.assertEqual(v.relationships,())
   self.assertEqual(v.rejected[0]['reason'],'ONTOLOGY_CONTEXT_NOT_EVIDENCE')
+
+ def test_pinned_snapshot_is_immutable_across_requests(self):
+  b=PinnedArmRequestBuilder(system_prompt=PROMPT.format(t='x',p='y'),model='m',settings=SETTINGS,ontology_snapshot=SNAP)
+  a=b.build(arm_id='B',chunk_text='one'); c=b.build(arm_id='B',chunk_text='two')
+  self.assertEqual(a.ontology_snapshot_hash,c.ontology_snapshot_hash); self.assertEqual(a.ontology_block_hash,c.ontology_block_hash)
+
+ def test_mixed_source_and_ontology_evidence(self):
+  text='Acme supplies Widget.'
+  prop=ModelProposal(entities=(ModelEntityProposal('Acme','Organization'),ModelEntityProposal('Widget','Product')),relations=(
+    ModelRelationProposal('Acme','has_component','Widget','Acme supplies Widget.'),
+    ModelRelationProposal('Acme','has_component','Widget','Component: a physical part.')))
+  v=validate_proposal(prop,text,allowed_types=ALLOWED_TYPES,allowed_predicates=ALLOWED_PREDICATES,ontology_context=SNAP.context)
+  self.assertEqual(len(v.relationships),1); self.assertEqual(v.relationships[0].evidence,'Acme supplies Widget.')
+  self.assertEqual(v.rejected[0]['reason'],'ONTOLOGY_CONTEXT_NOT_EVIDENCE')
+  self.assertIn('ONTOLOGY_CONTEXT_NOT_EVIDENCE',{x['reason'] for x in summarize_rejections(v)})
 
  def test_evidence_must_resolve_in_original_chunk(self):
   text='Acme supplies Widget.'; prop=ModelProposal(entities=(ModelEntityProposal('Acme','Organization'),ModelEntityProposal('Widget','Product')),relations=(ModelRelationProposal('Acme','has_component','Widget','Acme supplies Widget.'),))

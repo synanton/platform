@@ -9,6 +9,7 @@ class RequestProvenance:
     source_input_hash: str
     ontology_block_hash: str | None
     serialized_context_hash: str
+    ontology_snapshot_hash: str | None
     ontology_object_ids: tuple[str, ...]
     serialized_payload: str
 
@@ -57,4 +58,14 @@ def build_arm_request(*, arm_id, chunk_text, system_prompt, model, settings,
         'stream': False,
     }
     serialized = json.dumps(payload, sort_keys=True, separators=(',', ':'))
-    return RequestProvenance(arm_id, _sha(chunk_text), ontology_hash, _sha(serialized), object_ids, serialized)
+    snapshot_hash = getattr(ontology_snapshot, 'context_sha256', None) if arm_id == 'B' else None
+    return RequestProvenance(arm_id, _sha(chunk_text), ontology_hash, _sha(serialized), snapshot_hash, object_ids, serialized)
+
+class PinnedArmRequestBuilder:
+    """One immutable ontology snapshot for every Arm B request in a run."""
+    def __init__(self, *, system_prompt, model, settings, ontology_snapshot=None):
+        self.system_prompt=system_prompt; self.model=model; self.settings=settings; self.ontology_snapshot=ontology_snapshot
+    def build(self, *, arm_id, chunk_text):
+        return build_arm_request(arm_id=arm_id, chunk_text=chunk_text,
+                                 system_prompt=self.system_prompt, model=self.model,
+                                 settings=self.settings, ontology_snapshot=self.ontology_snapshot)
