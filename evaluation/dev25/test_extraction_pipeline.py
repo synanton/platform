@@ -87,3 +87,39 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(checked,25)
 
 if __name__=='__main__': unittest.main()
+
+class BoundaryChunkTests(unittest.TestCase):
+    def test_boundary_chunks_cover_document(self):
+        from extraction_pipeline import plan_boundary_chunks
+        text=('Paragraph one. Second sentence.\n\n'*20)+'Heading\n\n'+('Long sentence. '*100)
+        chunks=plan_boundary_chunks(text,target_chars=500,overlap_chars=50)
+        self.assertEqual(chunks[0]['char_start'],0); self.assertEqual(chunks[-1]['char_end'],len(text))
+        self.assertTrue(all(c['chars']<=500 or 'boundary' in c for c in chunks))
+        for a,b in zip(chunks,chunks[1:]): self.assertLess(a['char_start'],b['char_start'])
+    def test_boundary_prefers_sentence_breaks(self):
+        from extraction_pipeline import plan_boundary_chunks
+        text=('Sentence one. Sentence two. Sentence three. '*30)
+        chunks=plan_boundary_chunks(text,target_chars=120,overlap_chars=0)
+        self.assertTrue(all(c['char_end']==len(text) or text[:c['char_end']].rstrip()[-1] in '.!?\n' for c in chunks))
+    def test_boundary_output_budget_and_provenance(self):
+        from extraction_pipeline import plan_boundary_chunks
+        chunks=plan_boundary_chunks('x'*12000,target_chars=5000,overlap_chars=100,max_output_tokens=65536)
+        self.assertTrue(all(c['output_char_ratio']==3.0 and c['recommended_max_tokens']<=65536 for c in chunks))
+        self.assertTrue(all('chunk_id' in c and 'sha256' in c for c in chunks))
+
+    def test_boundary_all_gold_documents(self):
+        from extraction_pipeline import plan_boundary_chunks
+        base=Path(__file__).resolve().parent
+        man=list(csv.DictReader(open(base/'manifest.tsv'),delimiter='\t'))
+        checked=0
+        for r in man:
+            textp=base/'extracted'/f"{r['doc_id']}.txt"
+            text=textp.read_text(errors='replace') if textp.exists() else (base.parent.parent/r['source_path']).read_text(errors='replace')
+            chunks=plan_boundary_chunks(text,target_chars=5000,overlap_chars=200)
+            self.assertEqual(chunks[0]['char_start'],0,r['doc_id'])
+            self.assertEqual(chunks[-1]['char_end'],len(text),r['doc_id'])
+            for c in chunks:
+                import hashlib
+                self.assertEqual(hashlib.sha256(text[c['char_start']:c['char_end']].encode()).hexdigest(),c['sha256'])
+            checked+=1
+        self.assertEqual(checked,25)

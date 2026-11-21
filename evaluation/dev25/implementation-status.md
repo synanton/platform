@@ -2,8 +2,10 @@
 
 **Status:** implemented offline; no provider calls, spend, or acceptance claim.
 
-- `extraction_pipeline.py` implements chunk planning with coverage and output
-  budgets, Stage-1 entity filtering, Stage-2 relation filtering with direction
+- `extraction_pipeline.py` now implements boundary-aware chunking on paragraph
+  and sentence units with deterministic offsets/overlap, plus linear-time unit
+  scanning for large PDFs.
+- It implements chunk planning with coverage and output budgets, Stage-1 entity filtering, Stage-2 relation filtering with direction
   normalization and endpoint checks, and provenance-preserving chunk merge.
 - `offline_validation.py` provides pure schema/evidence/endpoint validators.
 - Output budgets are parameterized for **32K** (default) and **64K** completion
