@@ -1,0 +1,253 @@
+{
+  "model": "qwen3-extraction",
+  "results": [
+    {
+      "doc_id": "g7-dev-001",
+      "model": "qwen3-extraction",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 330,
+        "total_tokens": 794,
+        "completion_tokens": 464,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "json_valid": true,
+      "proposal_entities": 7,
+      "accepted_entities": 5,
+      "validated_relations": 1,
+      "rejected": [
+        {
+          "kind": "entity",
+          "surface": "relief valve on the secondary manifold",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "entity",
+          "surface": "certified Halcyon-7 technicians",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Halcyon-7 auxiliary coolant loop",
+          "object": "pressure-testing"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "relief valve on the secondary manifold",
+          "object": "replacement"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "certified Halcyon-7 technicians",
+          "object": "pressure-test log"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "pressure-testing",
+          "object": "Halcyon-7 auxiliary coolant loop"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "replacement",
+          "object": "relief valve on the secondary manifold"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "ambient dew point",
+          "object": "ambient conditions"
+        }
+      ],
+      "entity_f1": 0.4,
+      "relation_f1": 0.25,
+      "latency_s": 9.746996172000024,
+      "content_sha256": "b5b1f88de3b307a132e3155cc95227a3867edb586c8a9c7688722bc4dc4714ee"
+    },
+    {
+      "doc_id": "g7-dev-002",
+      "model": "qwen3-extraction",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 340,
+        "total_tokens": 979,
+        "completion_tokens": 639,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "json_valid": true,
+      "proposal_entities": 7,
+      "accepted_entities": 5,
+      "validated_relations": 0,
+      "rejected": [
+        {
+          "kind": "entity",
+          "surface": "helium leak check",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "entity",
+          "surface": "quarterly torque audits",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Quarterly torque audits",
+          "object": "auxiliary coolant manifold"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Quarterly torque audits",
+          "object": "manifold pressure drift"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "technicians",
+          "object": "titanium retaining fasteners"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "any fastener",
+          "object": "audit tolerance exceeds two percent"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Zephyr-9 Calibration Protocol (Revision B)",
+          "object": "helium leak check"
+        },
+        {
+          "kind": "relation",
+          "reason": "PREDICATE_NOT_ALLOWED",
+          "predicate": "performed_every"
+        },
+        {
+          "kind": "relation",
+          "reason": "PREDICATE_NOT_ALLOWED",
+          "predicate": "applies_to"
+        }
+      ],
+      "entity_f1": 0.35294117647058826,
+      "relation_f1": 0,
+      "latency_s": 13.301789917000008,
+      "content_sha256": "403caa75926fac55469375acf423dcaf9d95fc27fd2aee1b459a85010b9fdfc3"
+    },
+    {
+      "doc_id": "g7-dev-003",
+      "model": "qwen3-extraction",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 708,
+        "total_tokens": 1941,
+        "completion_tokens": 1233,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "json_valid": true,
+      "proposal_entities": 12,
+      "accepted_entities": 8,
+      "validated_relations": 0,
+      "rejected": [
+        {
+          "kind": "entity",
+          "surface": "sorting",
+          "reason": "AMBIGUOUS_SURFACE"
+        },
+        {
+          "kind": "entity",
+          "surface": "data structures",
+          "reason": "AMBIGUOUS_SURFACE"
+        },
+        {
+          "kind": "entity",
+          "surface": "O(n2)",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "entity",
+          "surface": "data structure",
+          "reason": "AMBIGUOUS_SURFACE"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "sorting",
+          "object": "Concept"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "heapsort",
+          "object": "Algorithm"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "mergesort",
+          "object": "Algorithm"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "quicksort",
+          "object": "Algorithm"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "distribution sort",
+          "object": "Algorithm"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "sorting",
+          "object": "divide-and-conquer"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "sorting",
+          "object": "data structures"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "sorting",
+          "object": "randomized algorithms"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "sorting",
+          "object": "O(n2)"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "sorting",
+          "object": "Section 17.1"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "sorting",
+          "object": "data structure"
+        }
+      ],
+      "entity_f1": 0.608695652173913,
+      "relation_f1": 0,
+      "latency_s": 26.08126786600002,
+      "content_sha256": "812c4a5f97f6830cc0e6d3c07088b4809c6b2fc78f074a5ff5ac6a461a36759a"
+    }
+  ]
+}
