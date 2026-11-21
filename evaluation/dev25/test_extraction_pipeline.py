@@ -1,17 +1,28 @@
 import unittest, json, csv
 from pathlib import Path
 from extraction_pipeline import (plan_chunks, stage1_entities, stage2_relations,
-                                 merge_chunk_entities, ALLOWED_TYPES, ALLOWED_PREDICATES)
+                                 merge_chunk_entities, validate_provider_output_budget,
+                                 ALLOWED_TYPES, ALLOWED_PREDICATES)
 from offline_validation import norm_predicate
 
 class PipelineTests(unittest.TestCase):
     def test_chunk_coverage_and_budget(self):
         text='x'*12001
-        chunks=plan_chunks(text,5000,200)
+        chunks=plan_chunks(text,5000,200,max_output_tokens=32768)
         self.assertEqual(chunks[0]['char_start'],0)
         self.assertEqual(chunks[-1]['char_end'],len(text))
         for a,b in zip(chunks,chunks[1:]): self.assertLess(a['char_start'],b['char_start'])
-        self.assertTrue(all(c['recommended_max_tokens'] <= 8192 for c in chunks))
+        self.assertTrue(all(c['recommended_max_tokens'] <= 32768 for c in chunks))
+
+    def test_large_output_caps_and_provider_validation(self):
+        text='x'*12000
+        c32=plan_chunks(text,12000,0,max_output_tokens=32768)[0]
+        c64=plan_chunks(text,12000,0,max_output_tokens=65536)[0]
+        self.assertGreaterEqual(c32['recommended_max_tokens'],2048)
+        self.assertLessEqual(c32['recommended_max_tokens'],32768)
+        self.assertLessEqual(c64['recommended_max_tokens'],65536)
+        self.assertIsNone(validate_provider_output_budget(c32['recommended_max_tokens'],32768))
+        self.assertIsNotNone(validate_provider_output_budget(65536,32768))
 
     def test_stage1_rejects_bad_type_and_span(self):
         text='Acme supplies Widget'

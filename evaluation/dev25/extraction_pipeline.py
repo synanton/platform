@@ -6,23 +6,37 @@ from offline_validation import norm_predicate, norm_surface, validate_entities, 
 ALLOWED_TYPES = frozenset("MaintenanceSystem, Component, Protocol, Procedure, Material, Organization, Person, Role, Product, Document, Standard, Metric, Measurement, Location, Time, Algorithm, DataStructure, Concept, Event, Problem".split(", "))
 ALLOWED_PREDICATES = frozenset("has_component, part_of, tested_every, replaced_every, signs, records, documents, performed_on, logs, verifies, replaced_at, requires, repeats_every, applied_to, is_a, used_in, improves_over, discussed_in, same_as, seeks, visits, combines, implements, uses, has, related_to, computes, measures, obeys, matches".split(", "))
 
-def plan_chunks(text, target_chars=5000, overlap_chars=200, max_output_tokens=8192):
-    """Return deterministic chunks with coverage and a conservative output budget."""
+def plan_chunks(text, target_chars=5000, overlap_chars=200, max_output_tokens=32768,
+                output_char_ratio=3.0, min_output_tokens=2048):
+    """Return deterministic chunks with coverage and an output budget.
+
+    The default 32K completion ceiling is intended for providers that expose it.
+    JSON output can be several times the input character count, so the budget is
+    derived from input size and capped by the provider capability.
+    """
     if target_chars <= 0: raise ValueError("target_chars must be positive")
     if overlap_chars < 0 or overlap_chars >= target_chars: raise ValueError("invalid overlap")
+    if output_char_ratio <= 0: raise ValueError("invalid output_char_ratio")
     step = target_chars - overlap_chars
     chunks = []
     for cid, start in enumerate(range(0, len(text), step)):
         end = min(len(text), start + target_chars)
         body = text[start:end]
+        estimated_output_tokens = math.ceil(len(body) * output_char_ratio / 4)
         chunks.append({
             "chunk_id": cid, "char_start": start, "char_end": end,
             "chars": len(body), "sha256": hashlib.sha256(body.encode()).hexdigest(),
             "estimated_input_tokens": math.ceil(len(body) / 4),
-            "recommended_max_tokens": min(max_output_tokens, max(512, math.ceil(len(body) / 2))),
+            "recommended_max_tokens": min(max_output_tokens, max(min_output_tokens, estimated_output_tokens)),
         })
         if end == len(text): break
     return chunks
+
+def validate_provider_output_budget(required_tokens, provider_max_output_tokens):
+    """Fail closed when a provider cannot support the planned output budget."""
+    if provider_max_output_tokens < required_tokens:
+        return f"provider max output {provider_max_output_tokens} < required {required_tokens}"
+    return None
 
 def stage1_entities(text, candidates, allowed_types=ALLOWED_TYPES):
     accepted = []
