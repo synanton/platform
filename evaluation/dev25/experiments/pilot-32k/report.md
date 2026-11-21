@@ -22,13 +22,13 @@ The live provider metadata was verified before the run:
 The first five calls reached `upstream_provider_timeout` after ~120 seconds.
 The provider circuit then opened and rejected the remaining calls.
 
-One of those timeouts, `failed-05` (`g7-dev-010`, chunk 0), was later observed
-on the provider dashboard as a **successful** request:
+Two of those timeouts were later observed on the provider dashboard as
+**successful** requests:
 
-- HTTP 200, `stop`, elapsed **3m22s**
-- 2,830 input / **19,870 output** tokens, 256 cache-read
-- **$0.0741**
-- upstream request ID `01a1fdee-9547-7aee-96d9-62844448ed10`
+- `failed-04` (`g7-dev-009`): HTTP 200, `stop`, **2m20s**, 4,259 input /
+  10,695 output tokens, **$0.0447**, upstream `01a1fdec-c0ef-7240-99b8-c8a8e45a558e`.
+- `failed-05` (`g7-dev-010`): HTTP 200, `stop`, **3m22s**, 2,830 input /
+  19,870 output tokens, **$0.0741**, upstream `01a1fdee-9547-7aee-96d9-62844448ed10`.
 
 The raw body was not returned through the timed-out gateway call, so JSON/schema
 quality cannot be scored. The other four timed-out requests have unknown
@@ -46,8 +46,8 @@ that 32K allowed a `stop` at ~19.9K output tokens.
 ## Corrected spend
 
 - Gateway ledger: $0 for `p32k-*` (timeouts were not metered through the Gateway).
-- Provider-observed: **at least $0.0741**.
-- Unknown: four other timed-out calls may have completed/charged.
+- Provider-observed: **at least $0.1188**.
+- Unknown: three other timed-out calls may have completed/charged.
 - Do not report the pilot as zero-cost.
 
 ## Decision

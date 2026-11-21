@@ -1,2 +1,4 @@
 request_id	selection_id	doc_id	chunk_id	http_status	stop_reason	elapsed	model	reasoning_effort	input_tokens	output_tokens	cache_read	cost_usd	upstream_request_id	source
 p32k-f27764f0-a5dd-476d-b891-81f5a52d9528	failed-05	g7-dev-010	0	200	stop	3m22s	deepseek-v4-pro	low	2830	19870	256	0.0741	01a1fdee-9547-7aee-96d9-62844448ed10	operator-supplied provider dashboard record
+p32k-ad81e21d-5133-48f7-a44e-70209b144094	failed-04	g7-dev-009	0	200	stop	2m20s	deepseek-v4-pro	low	4259	10695	256	0.0447	01a1fdec-c0ef-7240-99b8-c8a8e45a558e	operator-supplied provider dashboard record
+p32k-6384b1b2-4309-470f-81a7-e470f7bcf7d7	failed-03	g7-dev-008	2	200	stop	4m30s	deepseek-v4-pro	low	4236	23141	0	0.0879	01a1fdea-eb82-7ca5-97d3-c7fde3f7acee	operator-supplied provider dashboard record; old 120s pilot request
