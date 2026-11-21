@@ -229,7 +229,22 @@ Any future integration or experiment must remain behind Synanton-owned contracts
 
 ### TrustGraph source material
 
-The original assessment's TrustGraph architecture and capability claims must be pinned to the exact release and official documentation before any future technical benchmark. The current document preserves the review-date findings as a screening assessment, not a verified compatibility certification.
+The capability statements are retained from the review-date assessment and should be rechecked against the exact TrustGraph release before any future technical benchmark.
+
+- TrustGraph — [How does TrustGraph work?](https://docs.trustgraph.ai/learn/how-it-works.html)
+- TrustGraph — [Storage](https://docs.trustgraph.ai/architecture/storage.html)
+- TrustGraph — [Ontology RAG](https://docs.trustgraph.ai/guides/ontology-rag/)
+- TrustGraph — [Policy-Based Query Filtering](https://docs.trustgraph.ai/guides/policy-filtering/)
+- TrustGraph — [Explainability](https://docs.trustgraph.ai/architecture/explainability.html)
+- TrustGraph — [Architecture / Services](https://docs.trustgraph.ai/architecture/architecture.html)
+- TrustGraph source repository — [trustgraph-ai/trustgraph](https://github.com/trustgraph-ai/trustgraph)
+
+### Synanton sources
+
+- [External Engines and Stable Contracts](../architecture/external-engines-and-stable-contracts.md) — current draft for review.
+- [Synanton platform repository](https://github.com/synanton/platform)
+- [Issue #789](https://github.com/synanton/platform/issues/789)
+- [PR #788](https://github.com/synanton/platform/pull/788) — source of the current contract framework proposal.
 
 ---
 
