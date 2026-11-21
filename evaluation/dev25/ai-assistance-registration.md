@@ -46,8 +46,8 @@ per document (conservative, chunked):
 
 - All 20 unlabeled documents annotated (9 small + 11 PDF, chunked) and reviewed
   into validated gold; the full set is now 25/25 validated.
-- Recorded annotator tokens: 6,627 input / 18,342 output.
-- Estimated annotator cost: **$0.012** (under the $2.00 approved budget).
+- Recorded annotator tokens: 535,967 input / 875,776 output.
+- Estimated annotator cost: **$0.606** (under the $2.00 approved budget).
 - The 11 PDFs are full books annotated chunk-by-chunk; coverage is partial
   rather than exhaustive and is documented in the release record.
 
