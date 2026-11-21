@@ -1,0 +1,2108 @@
+Python Machine Le arning for Be ginne rs
+                  ,           ,       ,       ,
+
+
+
+
+A Ste p by Ste p Approach to Scikit-Le arn
+     ,       ,                            ,
+
+
+
+
+             and Te nsorFlow
+                          ,
+
+
+
+
+                 Le na Ne ill
+                      ,           ,
+                             Table, of conte,nts
+Introduction
+Chapte,r 1: python
+Chapte,r 2: start le,arning python
+Chapte,r 3: working with data
+Chapte,r 4: working with data visualization
+Chapte,r 5: pre,dictive, analytics
+Chapte,r 6: working with algorithms
+Chapte,r 7: machine, le,arning algorithms
+Chapte,r 8: re,gre,ssion tre,e,s and cart
+Chapte,r 9: random fore,sts
+Chapte,r 10: ove,rvie,w of ne,ural ne,tworks, big data, the, inte,rne,t of
+things (iot), and cloud computing
+Conclusion
+Re,fe,re,nce,s
+© copyright 2024 - all rights re,se,rve,d.
+The, conte,nt containe,d within this book may not be, re,produce,d, duplicate,d or transmitte,d
+without dire,ct writte,n pe,rmission from the, author or the, publishe,r.
+Unde,r no circumstance,s will any blame, or le,gal re,sponsibility be, he,ld against the, publishe,r,
+or author, for any damage,s, re,paration, or mone,tary loss due, to the, information containe,d
+within this book, e,ithe,r dire,ctly or indire,ctly.
+Le,gal notice,:
+This book is copyright prote,cte,d. it is only for pe,rsonal use,. you cannot ame,nd, distribute,, se,ll,
+use,, quote, or paraphrase, any part, or the, conte,nt within this book, without the, conse,nt of the,
+author or publishe,r.
+Disclaime,r notice,:
+Ple,ase, note, the, information containe,d within this docume,nt is for e,ducational and
+e,nte,rtainme,nt purpose,s only. all e,ffort has be,e,n e,xe,cute,d to pre,se,nt accurate,, up to date,,
+re,liable,, comple,te, information. no warrantie,s of any kind are, de,clare,d or implie,d. re,ade,rs
+acknowle,dge, that the, author is not e,ngage,d in the, re,nde,ring of le,gal, financial, me,dical or
+profe,ssional advice,. the, conte,nt within this book has be,e,n de,rive,d from various source,s.
+ple,ase, consult a lice,nse,d profe,ssional be,fore, atte,mpting any te,chnique,s outline,d in this
+book.
+By re,ading this docume,nt, the, re,ade,r agre,e,s that unde,r no circumstance,s is the, author
+re,sponsible, for any losse,s, dire,ct or indire,ct, that are, incurre,d as a re,sult of the, use, of the,
+information containe,d within this docume,nt, including, but not limite,d to, e,rrors, omissions,
+or inaccuracie,s.
+                       INTRODUCTION
+In this be,ginne,r’s guide,, you will le,arn the, programming language,
+syntax, basic programming conce,pts, and how to apply the,m to code,.
+othe,r topics cove,re,d in this booking include,:
+Use,ful python fe,ature,s that be,ginne,rs can use, in re,al- world situations
+How to install and configure, python
+Python programming me,chanics such as control stre,am, factors,
+re,cords or le,xicons, and classe,s
+Machine, le,arning basics and how machine, le,arning is imple,me,nte,d in
+python, including scikit-le,arn, te,nsorflow, and more,
+Artificial inte,llige,nce, (ai)
+Both a robot controlle,d by a compute,r and a digital compute,r that is
+able, to pe,rform tasks that an inte,llige,nt be,ing can are, de,fine,d as
+artificial inte,llige,nce, (ai). the,re, are, many subse,ts of ai which most
+commonly include,:
+   De,e,p le,arning (dl) — ne,ural ne,tworks.
+   E,xpe,rt syste,ms (e,s) — te,aching syste,ms and syste,ms with de,cision
+   support.
+   Machine, le,arning (ml) — ve,rsion space, and de,cision tre,e, le,arning.
+   Machine, vision (mv) — unde,rstanding image,s and characte,r/obje,ct
+   re,cognition
+   Natural language, proce,ssing (nlp) — machine, translation.
+   Planning — game,play, sche,duling, and task-drive,n syste,ms.
+   Robotics — autonomous syste,ms with inte,llige,nt control.
+   Spe,e,ch re,cognition (sr)— language, re,cognition.
+For a machine, to be, classe,d as an artificial inte,llige,nce, syste,m, it
+ne,e,ds to be, able, to:
+Se,nse,
+Re,ason
+Act
+Adapt
+For an ai to be, able, to carry out its goals succe,ssfully and e,xhibit the,
+four qualitie,s above,, it ne,e,ds to be, able, to think. unlike, natural
+inte,llige,nce,, a compute,r's inte,llige,nce, come,s from cle,ve,rly de,signe,d
+algorithms that can le,arn. the,re,fore,, one, of the, most important parts
+of ai is machine, le,arning, as we,ll as de,e,p le,arning (which can be,
+classifie,d as a subse,t of ml).
+Machine, le,arning is the, subse,t of ai that provide,s the, machine, with
+the, ability to le,arn. ml is like, the, brain of an ai syste,m, giving it the,
+inte,llige,nce, it ne,e,ds to automatically le,arn by e,xpe,rie,nce, without
+e,xplicit programming instructions.
+Machine, le,arning (ml)
+Machine, le,arning is the, study of algorithms de,signe,d to be, able, to
+le,arn through the, input of data. using the, data the, programme,r
+traine,d the, syste,m on, the, algorithm will le,arn how to de,scribe, the,
+data, improve, upon the, data, and pre,dict outcome,s. most analytical
+and statistical data found in the, mode,rn day come,s from using a
+machine, le,arning algorithm.
+A prime, e,xample, of machine, le,arning is the, popup adve,rts found on
+se,arch e,ngine,s such as google,. you may notice, that the, adve,rts that
+appe,ar will pe,rtain to re,ce,nt se,arche,s or products you have, looke,d at
+on the, we,b. that is the, machine, le,arning algorithm assimilating your
+se,arch history and pre,dicting what it thinks you will find inte,re,sting or
+use,ful.
+Some, of the, more, common machine, le,arning me,thods or algorithms
+include,:
+De,cision tre,e,s
+K-me,ans cluste,ring
+K-ne,are,st ne,ighbor
+Naive, baye,s
+Random fore,st
+Support ve,ctor machine,
+Four important te,chnique,s most artificial inte,llige,nce, syste,ms
+have, in common
+      Le,arning — ais have, the, capability to gain knowle,dge, from the,ir
+      e,nvironme,nt.
+      Re,pre,se,ntation — ai’s have, the, capability to de,te,rmine, how to
+      re,pre,se,nt the, knowle,dge, the,y le,arn from the,ir e,nvironme,nt.
+      Rule,s — ais have, an e,xplicit se,t of instructions or rule,s which are,
+      the, guide,line,s upon which it le,arns and grows.
+      Se,arch — ais have, the, ability to se,arch through and find a
+      se,que,nce, of state,s, the, conne,ction of we,ights, e,tc., that le,ad to a
+      solution or outcome,.
+This guide, cove,rs an introduction to the, basics of python machine,
+le,arning. python is by far one, of the, e,asie,st and most acce,ssible,
+programming e,nvironme,nts to use, to start le,arning about this
+subdivision of artificial inte,llige,nce,.
+History of python
+Guido van rossum founde,d python afte,r working for a couple, of ye,ars
+at the, ce,ntrum wiskunde, & informatica (cwi), in amste,rdam,
+ne,the,rlands. at cwi guido worke,d on a proje,ct cre,ating a programming
+language, calle,d abc in the, mid 1980s. it was the, abc programming
+language, that inspire,d him to cre,ate, python in abc’s image, in the, late,
+1980s. guido use,d his knowle,dge, of what worke,d be,st with abc to draw
+from and e,nhance, python. the, things he, kne,w only frustrate,d him
+with abc, he, found a way to fine,-tune, or le,ave, out all toge,the,r if the,y
+we,re, not ne,ce,ssary.
+Guido cre,ate,d python to be, fre,e, ope,n-source, software, that was e,asy to
+use, and allowe,d othe,rs to contribute, to the, language, librarie,s which
+cre,ate,d a huge, python community. he, chose, python for the, name, of
+the, language, whe,n he, starte,d to work on the, proje,ct as a big fan of
+monty python's flying circus and be,cause, he, was fe,e,ling irre,ve,re,nt at
+the, time,.
+Ve,rsion 0.9.0 was the, first ve,rsion of python that guido publishe,d in
+fe,bruary 1991. it was first publishe,d on alt.source,s as a module, and
+obje,ct-orie,nte,d syste,m. this ve,rsion include,d fe,ature,s like, functions,
+e,xce,ption handling, and core, data type,s.
+January 1994 saw python ve,rsion 1.0 re,le,ase,d with some, functional
+programming tools that guido was not too happy with. the,se, tools
+include,d a map, filte,r, re,duce,, and lambda.
+The, ne,xt ne,w ve,rsion to be, re,le,ase,d was done, six ye,ars late,r in
+octobe,r of 2000 and was ve,rsion 2.0, which include,d a list of ne,w
+fe,ature,s. ve,rsion 2.0 fe,ature,s allowe,d for the, support of unicode,, a full
+garbage, colle,ctor, and list compre,he,nsions.
+Ve,rsion 2.x stuck around and was constantly be,ing update,d for the,
+ne,xt e,ight ye,ars until ve,rsion 3.0 was re,le,ase,d. ve,rsion 3.0 was not
+compatible, with ve,rsion 2.x but could be, run alongside, it as a
+comple,te,ly se,parate, installation. ve,rsion 3.0 was re,le,ase,d in
+de,ce,mbe,r of 2008 and was a ne,we,r, le,ane,r ve,rsion of python. guido
+had re,move,d a lot of duplicate, module,s and constructs from the,
+python programming language, which we,re, found in pre,vious ve,rsions.
+Although python 3 is the, primary ve,rsion use,d, ve,rsion 2.x is still use,d
+by a lot of programme,rs and the, ve,rsion is still be,ing update,d, with the,
+last update, be,ing ve,rsion 2.7. de,ve,lopme,nt of python 2.x ce,ase,d on
+ve,rsion 2.7 in april 2020 with ve,rsion 3.x gaining more, popularity.
+                    CHAPTE R 1: PYTHON
+                                   ,
+
+
+Python is a ve,rsatile, inte,rpre,te,d, obje,ct-orie,nte,d programming
+language, that can be, run on any syste,m including linux, windows, and
+mac. ove,r the, past de,cade, or so, python has be,come, a ve,ry popular
+programming language, due, to its e,ase, of use,, wide, availability, and
+cle,ar syntax.
+Python is ope,n-source, software,, which me,ans that it can be, acce,sse,d
+and downloade,d for fre,e,. it is e,asy to use,, unde,rstand, and follow
+be,cause, it is a programming language, that is ve,ry similar to the,
+e,nglish language,.
+Python programming language, top fe,ature,s
+Since, python's de,ve,lopme,nt in the, late, 1980s, it has be,come, a ve,ry
+popular go-to programming language,, e,spe,cially for ne,w
+programme,rs.
+Some, of the, fe,ature,s that make, python so popular include,:
+Dynamic typing, which me,ans that python doe,s not ne,e,d an e,xplicit
+de,claration of a variable, be,ing use,d.
+E,xce,ptions are, not syntactically he,avy.
+It is e,asy to re,ad and follow e,ve,n if you are, not an e,xpe,rt programme,r.
+As an inte,rpre,te,d programming language, it doe,s not ne,e,d a compile,r
+to compile, a program into machine,-language, instructions to run.
+Python is an obje,ct-orie,nte,d programming language, similar to ruby,
+pe,rl, and java.
+Python is fre,e, ope,n-source, software,, as are, its vast amount of librarie,s.
+Python is continuously update,d and adde,d to; this include,s its librarie,s.
+Python has a huge, standard library, stacke,d with simple, programming
+commands, e,fficie,nt proce,ssing, and file, handling.
+Python has the, ability to se,arch through te,xt with commonly use,d
+e,xpre,ssions and commands.
+Python’s platform inde,pe,nde,nce, me,ans it is available, on most
+ope,rating syste,ms.
+Python is de,sirable, for use, with machine, le,arning applications.
+With the, use, of inte,ractive, inte,rface,s, python make,s te,sting smalle,r
+chunks of code, a lot simple,r.
+Python come,s standard with a de,ve,lopme,nt and le,arning e,nvironme,nt
+calle,d idle, . the, idle, inte,ractive, she,ll is a full-fe,ature,d te,xt e,ditor for
+python that make,s cre,ating python scripts quick, e,asy, and with little,
+to no syntax e,rrors. idle, come,s with fe,ature,s such as a de,bugge,r,
+autocomple,te,, smart inde,nts, and syntax highlighting.
+Python can se,amle,ssly inte,grate, or work with othe,r software, and
+programming language,s like, c, c++, java, and more,.
+Python can be, use,d as a program inte,rface, for othe,r applications.
+Machine, le,arning
+Machine, le,arning (ml) is an algorithm-base,d program that is
+de,ve,lope,d to e,ncourage, a compute,r to be, able, to le,arn without be,ing
+programme,d to. it is a form of artificial inte,llige,nce, (ai) de,signe,d in
+such a way that the, compute,r will use, ne,w data input as a me,ans to
+le,arn, de,ve,lop, and advance,.
+As ai and ml be,come, more, and more, e,ntwine,d with a pe,rson's
+e,ve,ryday life,, we, be,come, more, and more, re,liant on the,m. de,vice,s
+from phone, apps, to cars that can drive, and navigate, the,mse,lve,s, to
+the, re,frige,rator in the, kitche,n use, a form of ai and ml. e,ve,ry time,
+You talk to siri or ale,xa, you are, addre,ssing a form of ai. e,ve,ry time,
+you ask an ai some,thing, it is logging and tracking the,se, choice,s.
+Banking apps and automate,d assistance, are, in use, e,ve,ry day. the, more,
+information fe,d into the,m, the, more, the,y le,arn and grow. ai and ml
+are, the, he,re, and now as we,ll as the, future,, which make,s it all the,
+more, worthwhile, to study ml in orde,r to ke,e,p your place, in the, job
+marke,t.
+One, of the, be,st programming language,s to le,arn ml on or e,ve,n ai is
+python. a fe,w fe,ature,s that make, python a good language, to ge,t your
+fe,e,t we,t with ml include,:
+Simplicity
+Consiste,ncy
+E,xte,nsive, colle,ction of librarie,s
+E,xte,nsive, colle,ction of frame,works
+Python is platform-inde,pe,nde,nt
+Due, to python’s popularity, it has a large, community
+Common ai/ml use,s and te,chnologie,s python is be,st suite,d for
+Python is suitable, for use,s and te,chnologie,s including:
+Compute,r vision using ope,ncv te,chnology
+Data analysis using numpy, pandas, scipy, and se,aborn te,chnologie,s
+Data visualization using numpy, pandas, scipy, and se,aborn
+te,chnologie,s
+Machine, le,arning using ke,ras, scikit-le,arn, and te,nsorflow
+te,chnologie,s
+Natural language, proce,ssing using nltk and spacy te,chnologie,s
+Python ai and ml librarie,s
+Python's large, se,le,ction of librarie,s make,s it not only e,asie,r to code,
+with, but it also cuts down on de,ve,lopme,nt time,. python's rich
+te,chnology stack include,s a vast numbe,r of machine, le,arning and
+artificial inte,llige,nce, library se,ts. librarie,s contain pre,writte,n code,
+make,s scripting a lot e,asie,r for de,ve,lope,rs, cutting down and silly
+e,rrors that can occur whe,n writing comple,x algorithms.
+Python’s machine, le,arning librarie,s include, the, following:
+Scikit-le,arn
+Scikit-le,arn consists of a numbe,r of supe,rvise,d and unsupe,rvise,d
+le,arning algorithms and provide,s machine, le,arning functionality that
+include,s:
+Classification — k-ne,are,st ne,ighbors
+Cluste,ring — k-me,an ++ and k-me,ans
+Mode,l se,le,ction
+Pre,proce,ssing
+Re,gre,ssion — line,ar and logistic
+Scikit-le,arn is built upon te,chnology such as pandas, matplotlib, and
+numpy. it is a powe,rful library that allows a programme,r to e,ngine,e,r
+stable,, robust machine, le,arning programs.
+Nltk
+Natural language, toolkit (nltk) is not spe,cifically de,signe,d for machine,
+le,arning. howe,ve,r, the, toolkit come,s in ve,ry handy in the, cre,ation of
+programs that ne,e,d to work with human language, data. it is use,d to
+apply human language, data in statistical natural language, proce,ssing
+(nlp) and contains nume,rous te,xt proce,ssing librarie,s.
+The,ano
+The,ona is a python library that is use,d for machine, le,arning and de,e,p
+le,arning. since, 2007, the,ano has be,e,n use,d to run computationally
+inte,nsive, scie,ntific inve,stigations on a massive, scale,. it is a powe,rful
+library that can e,valuate,, de,fine,, and optimize, comple,x mathe,matical
+e,xpre,ssions with multi-dime,nsional arrays.
+Te,nsorflow
+Te,nsorflow is a machine, le,arning library use,d to cre,ate, de,e,p le,arning
+mode,ls that use, fast nume,rical computing. although it is run as a
+python library, te,nsorflow was de,signe,d, de,ve,lope,d, and re,le,ase,d by
+google,. like, python, and most of the, python librarie,s, te,nsorflow is
+ope,n-source, software, that is e,asy and fre,e, to download and install.
+Ke,ras
+Ke,ras is a python library that give,s a top-le,ve,l application
+programming inte,rface, (api) to ne,ural-ne,tworking syste,ms. it works
+be,st running alongside, or on top of the,ano, r, plaidml, ms cognitive,
+toolkit, or te,nsorflow.
+Pytorch
+Pytorch is a popular de,e,p le,arning library writte,n in lua. it is an ope,n-
+source, mode,l of torch for python. it give,s programme,rs acce,ss to the,
+same, torch librarie,s. pytorch is good for be,ginne,rs and has some, use,ful
+tutorials with lots of e,xample,s.
+     CHAPTE R 2: START LE ARNING PYTHON
+                  ,                        ,
+
+
+Scikit-le,arn is one, of the, most popular machine, le,arning python
+librarie,s, to be,gin with. it give,s ne,w de,ve,lope,rs a good base, from
+which to le,arn how the, various aspe,cts of ml work, such as labe,ling,
+mode,ling, and te,sting.
+Anothe,r good machine, le,arning base, to start with is ke,ras, which is
+known for its e,ase, of use, and straightforward mode,ling structure,. as
+you be,come, more, ade,pt with python and machine, le,arning, you will
+be, able, to make, more, informe,d python machine, le,arning library
+choice,s.
+Brie,f ove,rvie,w of machine, le,arning proce,sse,s
+Be,fore, you ge,t into python machine, le,arning, the,re, are, a fe,w machine,
+le,arning proce,sse,s that you ne,e,d to be, aware, of. the,se, proce,sse,s
+include,:
+Supe,rvise,d le,arning — supe,rvise,d le,arning is whe,re, the, syste,m will
+de,ve,lop a pre,dictive, outcome, base,d on both input and output data.
+mode,ls of supe,rvise,d le,arning include,:
+Classification
+Re,gre,ssion
+Unsupe,rvise,d le,arning — unsupe,rvise,d le,arning is base,d on input
+data. the, syste,m will inte,rpre,t and group data base,d on the, input data.
+mode,ls of unsupe,rvise,d le,arning include,:
+Cluste,ring
+The, basic principle,s of python machine, le,arning
+The, basis of machine, le,arning is for the, syste,m to le,arn base,d on
+e,xpe,rie,nce,. for e,xample,, think about te,aching a child the, diffe,re,nce,
+be,twe,e,n shark fins and dolphins fins. you would show the,m that a
+shark's tail fin is ve,rtical and that it sways from side, to side,, while, a
+Dolphin's tail is horizontal and sways up and down. once, the, child has
+gathe,re,d that information, the,y will be, able, to use, that to distinguish
+be,twe,e,n the, two cre,ature,s.
+In a similar way, a machine, le,arning algorithm is fe,d base, data upon
+which to le,arn and grow. for instance,, an e,state, age,nt may have,
+statistical information about ne,ighborhoods, the, house,s in those,
+ne,ighborhoods, and the, ave,rage, cost pe,r house,. this information
+would be, the, training information for the, ml. from this information,
+the, syste,m would be, able, to output the, ave,rage, costs of two or thre,e,
+be,droome,d house,s base,d on ce,rtain crite,ria. this crite,ria could be, the,
+cost of a two be,droom house, in a ne,ighborhood with two bathrooms
+and a double, garage,.
+Basic principle,s of python machine, le,arning
+To start de,signing a python machine, le,arning algorithm, you will ne,e,d
+to:
+De,te,rmine, a proble,m
+Gathe,r and pre,pare, the, re,quire,d data
+Analyze, and e,valuate, the, algorithms
+Incre,ase, the, outcome, of positive, re,sults
+De,fine, re,sults & pre,se,nt the,m in a ce,rtain way
+Stage,s of python machine, le,arning
+Once, you have, de,te,rmine,d the, proble,m your machine, le,arning
+algorithm is going to be, de,signe,d for, you will ne,e,d to de,sign the, ml
+algorithm.
+The, stage,s of python machine, le,arning are,:
+Colle,ction of data
+Sorting of the, colle,cte,d data
+Analyzing the, sorte,d colle,ction of data
+De,signing the, ml algorithm
+De,ve,loping the, ml algorithm
+Training the, ml algorithm
+Te,sting the, ml algorithm
+Using the, ml algorithm in a live, e,nvironme,nt
+Python machine, le,arning e,xample, training datase,ts
+Whe,n you are, le,arning to use, ml, you are, not going to want to le,arn on
+a live, datase,t. the, good ne,ws is that the,re, are, quite, a fe,w fre,e,-to- use,
+e,xample, datase,ts available, for python ml coding.
+Some, of the, more, popular e,xample, datase,ts are,:
+Fishe,r iris flowe,r datase,t — this datase,t has be,e,n around for many
+ye,ars and is use,d in most ml training sce,narios. it is a csv file, that
+contains diffe,re,nt spe,cie,s of the, iris plant (iris spe,cie,s , n.d.).
+Prima indians diabe,te,s datase,t — this datase,t can be, use,d fre,e,ly as a
+training datase,t for python machine, le,arning. like, the, iris datase,t, you
+must download the, csv file,. this datase,t is use,d to pre,dict a pe,rson's
+chance,s of ge,tting diabe,te,s base,d on ce,rtain crite,ria (pre,dict diabe,te,s
+from me,dical re,cords . n.d.).
+The,se, datase,ts can both be, obtaine,d at a we,bsite, calle,d
+Kaggle,.com .
+Place, your datase,t in a dire,ctory that you have, administration rights
+for and note, the, full path to the, datase,t.
+Both the,se, datase,ts are, small and have, e,nough columns as we,ll as data
+to be, use,ful as training datase,ts but will not ge,t out of control. whe,n
+you are, le,arning to cre,ate, an ml algorithm, you do not want to start
+with huge, amounts of data that could have, loads of variable, crite,ria.
+Ge,tting starte,d with python
+One, of the, first machine, le,arning python programs to atte,mpt is the,
+simple, “we,lcome, world” machine, le,arning program.
+Some, python fe,ature,s that will be, discusse,d in this se,ction are,:
+Introducing the, python platform and librarie,s
+Stacking the, data se,t
+Conde,nsing the, data se,t
+Introducing the, data se,t
+Working with algorithms
+Pre,dicting some, outcome,s
+While, you are, starting out and le,arning, it is important to re,me,mbe,r to
+take, as much time, as ne,e,de,d. progre,ss at your own pace, and join a
+python support group. the,re, are, many out the,re,, and some, of the,
+more, popular one,s can be, found on the, python we,bsite, (the, python
+community, n.d.).
+Ste,p 1: download and install
+The, late,st ve,rsion of python is available, on the, python we,bsite,
+(python.org). it is be,st to download the, late,st ve,rsion of python on all
+the, supporting librarie,s. at the, date, this guide, was publishe,d, python
+ve,rsion 3.8.5 was the, late,st ve,rsion. ve,rsion 2.7.18 was still supporte,d
+and will work with the, following e,xe,rcise,s.
+Download python from the, python.org we,bsite,.
+Follow the, instructional guide, provide,d by python.org to install and
+se,t up the, python e,nvironme,nt in re,adine,ss for ml.
+Ste,p 2: install the, python librarie,s
+Python machine, le,arning supporting librarie,s you will ne,e,d are,:
+Matplotlib
+Numpy
+Pandas
+Scipy
+Scikit-le,arn
+Once, again, follow the, compre,he,nsive, instructional guide, on the,
+Python.org we,bsite, on how to install python librarie,s.
+Ste,p 3 - build your e,nvironme,nt
+The, e,asie,st way to code, with python ml and build an e,nvironme,nt is
+with anaconda using jupyte,r note,book (which is part of the, anaconda
+suite,).
+To download anaconda, go to the, anaconda we,bsite, (anaconda individual
+e,dition , n.d.). download the, late,st ve,rsion to e,nsure, it works with the,
+installe,d ve,rsion of python on your machine,.
+Both the, python we,bsite, and the, anaconda we,bsite, have,
+compre,he,nsive, guide,s on how to download, install, and se,t up the,
+python ml e,nvironme,nt with anaconda.
+Alte,rnative,ly, you can use, python scipy. the, following e,xample,s run
+with python scipy. to run and se,t up the, python scipy e,nvironme,nt, go
+to the, scipy we,bpage,, and follow the, compre,he,nsive, installation and
+se,tup guide,line,s (scipy installation , n.d.).
+Ste,p 4: che,ck the, python installation and import the, librarie,s
+For the, first fe,w e,xe,rcise,s, it is be,st to use, the, python 3.8 command
+line,.
+At a ne,w command line, in the, python inte,rpre,te,r, type, the, following:
+Python
+The, following scre,e,n should appe,ar:
+
+
+
+
+Type, the, following commands to import the, ne,e,de,d librarie,s:
+Import sys import pip import scipy import numpy import skle,arn
+
+
+
+
+You will ne,e,d to install matplotlib and pandas. to do this, type, the,
+following commands at the, command line, prompt.
+To install matplotlib type, the, following:
+Python -m pip install matplotlib
+The, installation will gathe,r the, matplotlib file,s and the,n install the,m.
+if the, installation e,nds with a warning that your ve,rsion may ne,e,d to
+be, upgrade,d, run an upgrade, by using the, following command:
+Python -m pip install matplotlib --upgrade,
+To install pandas type, the, following:
+Python -m pip install pandas
+The, installation will gathe,r the, pandas file,s and the,n install the,m. if
+the, installation e,nds with a warning that your ve,rsion may ne,e,d to be,
+upgrade,d, run an upgrade, by using the, following command:
+Python -m pip install pandas --upgrade,
+Once, matplotlib and pandas are, installe,d and up to date,, type, the,
+following at the, command line, prompt:
+Import matplotlib import pandas
+This will import the, module,s and you should now have, all the, re,quire,d
+librarie,s/module,s importe,d and re,ady to use,.
+To che,ck the, module,s that are, installe,d in python, type, the, following
+at the, command line, prompt:
+Pip list
+Or
+He,lp(“module,s”)
+The, syste,m can take, a minute, or two to gathe,r the, ne,ce,ssary
+information and will display a list of all installe,d and available, librarie,s
+in python.
+         CHAPTE R 3: WORKING WITH DATA
+                       ,
+
+
+To work with data, you are, going to download the, fishe,r iris flowe,r
+datase,t from the, following we,bsite, (download the, zip file,):
+Https://gist.github.com/curran/a08a1080b88344b0c8a7#fil e,-iris-csv
+If you want to re,ad up on this datase,t you can do so in wikipe,dia, which
+has a host of information on it. the, datase,t was de,signe,d by ronald
+fishe,r in 1936 as a line,ar discriminant analysis e,xample, (iris flowe,r data
+se,t , n.d.). the,re, are, thre,e, spe,cie,s of iris liste,d in the, datase,t, with
+ove,r fifty sample,s pe,r spe,cie,s. the, le,ngth and width of the, pe,tals and
+se,pals we,re, me,asure,d for all the, sample,s to diffe,re,ntiate, be,twe,e,n
+the, iris spe,cie,s.
+Download the, iris data into python using csv format and place, it in an
+e,asily acce,ssible, dire,ctory.
+For e,xample,:
+C:\datase,ts\
+Ste,p 1: load skle,arn, pandas, and matplotlib supporting librarie,s
+Once, you have, the, iris datase,t csv file, loade,d, you ne,e,d to load the,
+supporting librarie,s for skle,arn, pandas, and matplotlib.
+Import skle,arn supporting librarie,s by typing the, following into the,
+command line,:
+From skle,arn.me,trics import accuracy_score, from skle,arn.me,trics import
+classification_re,port
+From skle,arn.mode,l_se,le,ction import cross_val_score, from skle,arn.me,trics
+import confusion_matrix
+From skle,arn.tre,e, import de,cisiontre,e,classifie,r
+From skle,arn.ne,ighbors import kne,ighborsclassifie,r
+From skle,arn.naive,_baye,s import gaussiannb
+From skle,arn.line,ar_mode,l import logisticre,gre,ssion
+From skle,arn.discriminant_analysis import line,ardiscriminantanalysis
+From skle,arn.svm import svc
+From       skle,arn.mode,l_se,le,ction       import  stratifie,dkfold from
+skle,arn.mode,l_se,le,ction import train_te,st_split
+Import matplotlib supporting librarie,s by typing the, following into the,
+command line,:
+From matplotlib import pyplot
+Import pandas supporting librarie,s by typing the, following into the,
+command line,:
+From pandas.plotting import scatte,r_matrix from pandas import re,ad_csv
+
+
+
+
+If you e,ncounte,r an e,rror, che,ck that you have, skle,arn, matplotlib, and
+pandas corre,ctly installe,d and importe,d into python.
+Ste,p 2: import the, datase,t into python
+Pandas is use,d to import the, datase,t and se,t up column name,s. this is
+how we, se,t up the, visualization of the, output data.
+You will ne,e,d to know the, e,xact path to the, dire,ctory whe,re, you
+downloade,d the, iris csv file, to (e,x. c:\datase,ts\iris.csv).
+For the, following e,xe,rcise,s, you will be, se,tting up a dataframe, . a
+dataframe, is like, an e,xce,l spre,adshe,e,t that contains a numbe,r of
+columns listing the, data type,s. it will also contain a numbe,r of rows
+containing the, data pe,rtaining to e,ach data type,. in python, a
+dataframe, is classifie,d as a 2-dime,nsional data structure, (intro to data
+structure,s , n.d.).
+At the, command line, prompt type, in the, following:
+Import pandas as pd
+Ds = pd.re,ad_csv (r’c:\datase,ts\iris.csv’)
+Df= pd.dataframe,(ds, columns= [‘se,pal_le,ngth’, ‘se,pal_width’, ‘pe,tal_le,ngth’,
+‘pe,tal_width’, ‘spe,cie,s’])
+
+
+
+
+                                                    print (df)
+Make, sure, the, column he,adings you use, in the, “df” de,finition match
+the, column name,s in the, .csv file,. if the,y do not, you will ge,t nan
+value,s in the, table, whe,n it prints as pe,r the, image, be,low.
+
+
+
+
+Ste,p 3: working with the, shape, prope,rty
+The,re, are, diffe,re,nt ways to vie,w the, data and diffe,re,nt me,trics that
+can be, pulle,d from. one, such me,tric is the, dime,nsions of the, datase,t.
+Whe,n the,re, are, massive, amounts of data se,t out in rows and columns,
+the,re, is a quick way to figure, out how many instance,s and attribute,s
+the,re, are,. you can do this by using the, .shape, prope,rty of the, de,fine,d
+datase,t.
+For this e,xe,rcise,, you are, going to use, the, alre,ady de,fine,d dataframe,,
+calle,d df , that you cre,ate,d in the, pre,vious e,xe,rcise,.
+To find how many attribute,s and instance,s the,re, are, in the, iris.csv
+datase,t, type, the, following into the, command line, prompt:
+Print (df.shape,)
+The, command will re,turn: (50, 5)
+This translate,s to 50 instance,s of 5 attribute,s. instance,s are, the, rows of
+data (data) and the, attribute,s (de,scribe,s the, data) are, the, columns of
+data.
+
+
+
+
+Ste,p 4: working with the, he,ad() prope,rty
+Once, you know how much data the,re, is, you can find out if you have,
+the, corre,ct data type, or vie,w the, quality of data by looking at the, first
+fe,w rows of it. to vie,w the, first fe,w rows of data in the, datase,t you will
+use, the, .he,ad() prope,rty.
+Use, the, dataframe, you de,fine,d in the, first e,xe,rcise, as df . in the,
+command line, prompt type, the, following:
+Print (df.he,ad(15))
+
+
+
+
+                                                 this te,lls the, syste,m to
+print the, first 15 rows in the, dataframe, df ; the, syste,m should re,turn
+information similar to the, image, be,low.
+Ste,p 5: working with the, de,scribe,() prope,rt y
+Python pandas include,s a numbe,r of de,scriptive, statistic functions,
+liste,d in the, table,.
+
+ De,scriptive, statistics
+ function
+ Use, of the, function
+ Abs()
+
+ Absolute, value,
+ Count()
+ Amount       of    non-
+ null obse,rvations
+ Cumsum()
+ Cumulative, sum
+ Cumprod()
+
+ Cumulative, product
+ Max()
+ Maximum value,
+ Me,an()
+ Me,an of value,s
+ Me,dian
+ Me,dian of value,s
+ Min()
+ Minimum value,
+ Mode,()
+ Mode, of value,s
+ Prod()
+
+ Product of value,s
+ Std()
+ Standard de,viation
+   of value,s
+
+It is important to note, that some, ge,ne,ric ope,rations will not work with
+all of the, de,scriptive, functions be,cause, a dataframe, is a
+he,te,roge,ne,ous data structure,. some, functions will work with both
+characte,r/string and nume,ric data, while, some, only work with
+nume,ric data.
+Functions such as abs() and cumprod() will re,turn an e,xce,ption if a
+string or characte,r data is use,d.
+Functions such as sum() and cumsum() will work with nume,ric and
+characte,r/string data.
+For a statistical summary of the, data columns in the, dataframe, the,
+.de,scribe,() function is use,d.
+Type, the, following into the, command line, to summarize, the, data in
+the, ds dataframe, columns.
+Print (ds.de,scribe,())
+
+
+
+
+                                                      the,       syste,m
+should re,turn a scre,e,n that looks similar to the, one, in the, image,
+be,low.
+The, .de,scribe,() function re,turns:
+Count — total count of the, obje,cts liste,d pe,r data ite,m e,xcluding any
+null value,s in the, dataframe,.
+Me,an — the, me,an value, (ave,rage,) of all the, data in the, dataframe,.
+Std —the, standard de,viation for all the, liste,d data in the, dataframe,.
+Min — the, minimum value, for the, data in the, dataframe,.
+Iqr — the, rows liste,d as 25%, 50%, and 75% are, the, inte,rquartile,
+range, of the, data value,s in the, dataframe,. this me,asure,s the,
+diffe,re,nce, be,twe,e,n the, 25th, 50th, and 75th pe,rce,ntile, of the, data.
+Max — the, maximum value, for the, data in the, dataframe,.
+The, function e,xclude,s any columns with characte,rs, which is why it
+doe,s not list or include, the, “spe,cie,s” column in the, output table,.
+The, iris datase,t is me,asure,d in ce,ntime,te,rs. from this summary a
+pe,rson can se,e, that the, value,s in the, table, fall within a scale, of
+be,twe,e,n 0 to 8 ce,ntime,te,rs.
+Ste,p 6: working with the, groupby() prope,rty
+In a massive, table, of data, it is e,asie,r to vie,w and work with data that is
+split up into se,ts. to split the, data into se,ts the, .groupby() prope,rty is
+use,d. this prope,rty is use,d to pe,rform functions such as:
+Aggre,gation — this function will compute, a statistical summary of the,
+data.
+Filtration — this function will sort through and discard conditional data.
+Transformation — this function is use,d for group-spe,cific information.
+To use, the, .groupby() prope,rty, type, in the, following at the, command
+line, prompt to group the, df dataframe, by spe,cie,s and size,.
+Print (df.groupby(‘spe,cie,s’).size,())
+The, syste,m should re,turn a table, that looks similar to the, one, in the,
+image, be,low.
+Ste,p 7: cre,ating your own datase,ts
+Why not try the, following e,xe,rcise, and cre,ate, your own datase,t?
+Think up a table, of statistics such as the, sale,s statistics pe,r product pe,r
+ye,ar.
+Cre,ate, a workshe,e,t and fill it with data, for e,xample,:
+
+ Ite,m
+ Sale,s
+ Ye,ar
+ Ran k
+ Butte,r
+ 20000
+ 2010
+ 2
+
+ Cre,am
+ 15000
+ 2011
+ 3
+
+ E,ggs
+ 35000
+ 2012
+  1
+ Milk
+  45000
+  2013
+  1
+
+ Chocolate,
+  40000
+  2014
+  2
+
+
+The, above, table, is a list of inve,ntory for a shop, total sale,s for e,ach
+ye,ar, and whe,re, the,ir sale,s ranke,d within the,ir te,rritory.
+You can cre,ate, the, table, in e,xce,l and save, it as a csv file, and the,n
+import it into python. or, you can cre,ate, it dire,ctly in the, command
+line, to practice, with the, functions you have, le,arne,d in the, chapte,r.
+Type, the, following into a ne,w command line,:
+Import pandas as pd
+Sale,s_data        =    {‘ite,m’    :     [‘butte,r’,   ‘cre,am’,   ‘e,ggs’,   ‘milk’,
+‘chocolate,’],
+‘sale,s’ : [20000, 15000, 35000, 45000, 40000],
+‘ye,ar’ : [2010, 2011, 2012, 2013, 2014],
+‘rank’ : [2, 3, 1, 1, 2]}
+Df = pd.dataframe,(sale,s_data) print (df)
+A table, similar to the, one, be,low will be, the, syste,ms output.
+Cre,ate, your own datase,ts and use, the, functions in this chapte,r to gain
+various statistical information from it.
+            CHAPTE R 4: WORKING WITH DATA
+                       ,
+
+
+
+
+                    VISUALIZATION
+The, conce,pt of data visualization is to vie,w or unde,rstand data in a
+visual form. laying data out in a visual form make,s it e,asie,r to
+distinguish tre,nds, patte,rns, and corre,lations that may othe,rwise, be,
+misse,d.
+Python has quite, a fe,w librarie,s for data visualization. e,ach of the,se,
+graphing librarie,s has use,ful fe,ature,s. the, library you choose, to use,
+should be, one, that be,st suits your data visual ne,e,ds. some, of the,
+python graphing librarie,s that can be, use,d are,:
+      Matplotlib — this library is one, of the, more, popular graphing
+librarie,s in python. it is use,d to cre,ate, bar charts, histograms, line,
+charts, and othe,r basic graphs. matplolib take,s quite, a bit of coding to
+cre,ate, its data visualization output.
+      Pandas visualization — this library has an application
+programming inte,rface, (api). it is for high-le,ve,l visualization with le,ss
+coding re,quire,me,nts than matplotlib.
+      Plotly — this library is good for cre,ating inte,ractive, plots for
+e,xploratory visualizations.
+      Se,aborn — this library is base,d on the, matplotlib library. it is a
+high-le,ve,l inte,rface, de,signe,d to give, more, informational statistics
+attractive,ly displaye,d.
+The,re, are, diffe,re,nt kinds of plots that can be, use,d to visualize, data.
+some, of the, more, commonly use,d plots include,:
+Bar graph
+Line, chart or graph
+Histogram plot
+Scatte,r plot
+Box and whiske,r plot
+Matplotlib is python's core, plotting function. unde,rstanding how this
+library works he,lps you be,tte,r unde,rstand the, plotting functions in
+pandas and se,aborn.
+The,re, are, thre,e, type,s of e,xploratory data analysis me,thods use,d for
+plots. the,se, are,:
+      Bivariate, analysis — this me,thod is use,d to find the, re,lationship
+be,twe,e,n the, variable,s in a datase,t.
+               Box plot
+               Violin plot
+      Multivariate, analysis — this me,thod is use,d to find the,
+inte,raction be,twe,e,n two or more, variable,s in the, datase,t.
+               Scatte,r plot
+               Pair plot
+        Univariate, analysis — this me,thod is use,d to summarize, e,ach
+fie,ld in the, datase,t statistics base,d on one, variable,.
+               Box plot
+               Cumulative, distributive, function (cdf)
+               Probability de,nsity function (pdf)
+               Distribution plots
+               Violin plot
+For this chapte,r, you will ne,e,d to download the, wine, re,vie,w analysis
+csv file, from the, following we,bsite,:
+Https://github.com/gorbulus/wine,re,vie,wanalysis place, the, csv in the,
+same, dire,ctory you place,d the, iris.csv file,.
+C:\datase,ts\
+You will find that the, csv file, has a long name,, so it is be,st to re,name,
+this to wine,.csv.
+The, datase,t contains the, following column he,ading:
+_blank he,ading_
+Country
+De,scription
+De,signation
+Points
+Price,
+Re,gion_1
+Re,gion_2
+Varie,ty
+Wine,ry
+Re,me,mbe,r whe,n se,tting up datase,t de,scriptions that the, name,s of the,
+columns have, to be, an e,xact match to the, one,s in the, csv file,. this
+include,s the, lowe,r and uppe,rcase, words (it is case, se,nsitive,). the, first
+column he,ading in the, csv file, is blank. it is be,st to give, it a name,, for
+instance, “num”.
+Ge,tting starte,d with data visualization
+Install se,aborn by typing the, following in the, command line, prompt:
+Python -m pip install se,aborn import se,aborn
+The, last line, will te,st whe,the,r or not se,aborn was succe,ssfully
+Installe,d. if you are, re,turne,d to the, command line, prompt with no
+e,rrors, the, library has be,e,n installe,d.
+The, first thing you have, to do is import and re,name, the, librarie,s in a
+ne,w command line,.
+Import numpy as np
+Import matplotlib.pyplot as plt import pandas as pd
+Import se,aborn as sns
+Ne,xt, you will ne,e,d to load the, wine,.csv datase,t into the, syste,m by
+typing in the, following at the, command line, prompt:
+Wine, = pd.re,ad_csv(r’c:\datase,ts\wine,.csv’)
+Df = pd.dataframe,(wine,, columns= [‘num’, ‘country’, ‘de,scription’, ‘de,signation’,
+‘points’, ‘price,’, ‘province,’, ‘re,gion_1’, ‘re,gion_2’, ‘varie,ty’, ‘wine,ry’])
+Basic wine, re,vie,w analysis
+The, basic analysis would be, what the, .shape, , .he,ad() , and .tail()
+Functions would give, of the, wine, re,vie,w analysis data.
+Type, the, following into the, command line, prompt to find out the,
+numbe,r of rows and columns in the, file,:
+Print (wine,.shape,)
+
+
+
+
+The,re, are, 150930 rows x 11 columns in the, datase,t
+Vie,w the, first 15 rows of data in the, datase,t by using the, .he,ad(15)
+Prope,rty.
+
+
+
+
+Print (df.he,ad(15))
+Vie,w the, last 15 rows of data in the, datase,t by using the, .tail(15)
+Prope,rty.
+
+
+
+
+Print (df.tail(15))
+High-le,ve,l wine, re,vie,w analysis
+High-le,ve,l analysis can supply you with more, in-de,pth statistical
+information on the, datase,t. this is information you would ge,t from
+using the, .de,scribe,() and .info() prope,rtie,s. the,se, type,s of statistics can
+be, use,d to re,turn the, iqr stats, the, me,ans value,s, standard de,viation
+value,s, maximum value,s, and so on.
+Type, the, following into the, command line, prompt to output some,
+high-le,ve,l wine, re,vie,w statistics:
+Print (df.de,scribe,())
+
+
+
+
+Type, the, following into the, command line, prompt:
+Print (“*”*60)
+Print (df.info())
+Univariate, analysis
+The,re, are, a fe,w plots that you can do in orde,r to do graph analysis
+base,d on one, variable,. for the,se, e,xample,s, you will be, using the,
+iris.csv dataframe,.
+Distribution plots
+As the, data in the, datase,t is nume,rical, it is e,asy e,nough to cre,ate, box
+and whiske,r graphs. the,se, type,s of plots offe,r you a visual of the, data
+distribution.
+Type, the, following into the, command line, prompt:
+Iris = pd.re,ad_csv(r’c:\datase,ts\iris.csv’)
+Df=        pd.dataframe,(iris,         columns=      [‘se,pal_le,ngth’, ‘se,pal_width’,
+‘pe,tal_le,ngth’, ‘pe,tal_width’, ‘spe,cie,s’])
+Df.plot(kind=           ‘box’,       subplots=true,,      layout=(2,2), share,x=false,,
+share,y=false,)
+pyplot.show()
+The, histogram is anothe,r way to ge,t a distribution plot. type, the,
+following at the, command line, prompt:
+Df.hist() pyplot.show()
+Multivariate, analysis
+Using the, wine,.csv dataframe, that you have, alre,ady se,t up, you are,
+going to continue, using the, iris dataframe, you cre,ate,d above,.
+The, multivariate, analysis allows you to de,te,rmine, the, corre,lations
+be,twe,e,n the, data in the, datase,t. this e,xample, use,s the, scatte,r plot.
+Type, the, following at the, command line, prompt:
+Scatte,r_matrix(df) pyplot.show()
+      CHAPTE R 5: PRE DICTIVE ANALYTICS
+                    ,              ,              ,
+
+
+The,re, are, ve,ry fe,w organizations, e,spe,cially the, large,r one,s, that do
+not use, pre,dictive, analytics to grasp ne,w opportunitie,s or solve,
+curre,nt proble,ms.
+What is pre,dictive, analytics?
+Historical data is use,d by various machine, le,arning te,chnique,s and
+statistical algorithms to pre,dict future, outcome,s. by le,arning about
+what happe,ne,d in the, past, pre,dictive, analytics can be, use,d to pre,dict
+possible, future, outcome,s.
+In the, past, pre,dictive, analytics was le,ft to the, statisticians and
+mathe,maticians. with the, advance,s in te,chnology busine,ss analysts
+have, se,e,n the, advantage,s of using pre,dictive, analytics to incre,ase,
+busine,ss re,ve,nue,, e,spe,cially in today's compe,titive, busine,ss
+e,nvironme,nt with social me,dia and inte,ractive, software, be,ing more,
+re,adily available,.
+The, world of te,chnology as it stands today allows for faste,r and
+che,ape,r compute,r syste,ms with e,asy to use, analytical software,. this
+give,s compute,r use,rs acce,ss to large,r volume,s of diffe,re,nt type,s of
+data. this data can be, use,d to provide, organizations with valuable,
+insights into various busine,ss, marke,t, and custome,r tre,nds.
+Busine,ss e,nvironme,nts in this ce,ntury face, tough e,conomic conditions
+and to ke,e,p ahe,ad or maintain the,ir e,dge, in the, marke,tplace, the,y
+ne,e,d a compe,titive, e,dge,. having acce,ss to large, volume,s of data from
+which the,y can pull various statistics give,s the,m this e,dge,.
+The, use, of pre,dictive, analytics
+Pre,dictive, analytics is use,d in many syste,ms the,se, days and plays an
+important role, in:
+Fraud de,te,ction
+Ope,rations improve,me,nts
+Marke,ting campaign optimization
+Re,ducing risk
+Pre,dicting marke,t tre,nds
+As syste,ms be,come, more, advance,d so doe,s cybe,rcrime,. with
+pre,dictive, analytics, syste,ms can more, e,asily ide,ntify ce,rtain patte,rns
+that can quickly de,te,ct anomalie,s. fraud de,te,ction syste,ms run high-
+pe,rformance, be,havioral analysis algorithms to find any indications of
+advance,d thre,ats.
+Busine,sse,s now use, pre,dictive, analytics to e,nhance, the,ir marke,ting
+campaigns to grow the,ir custome,r base, and e,nsure, the,ir curre,nt one,s
+ke,e,p coming back. this is done, with the, analysis of the,ir custome,r’s
+re,sponse,s to various ite,ms, se,rvice,s, and so on.
+Risk re,duction come,s in be,ing able, to asse,ss a custome,r’s like,lihood of
+de,faulting on loans, highe,r purchase,s, e,tc. insurance, companie,s use, it
+for insurance, claims, and much more,.
+The, hote,l industry is a prime, e,xample, of using pre,dictive, analytics to
+incre,ase, the,ir re,ve,nue, and e,nsure, high room occupancy pe,r night.
+Who use,s pre,dictive, analytics?
+The,re, are, not many industrie,s that do not use, some, form of pre,dictive,
+analytics.
+Some, re,al-world e,xample,s include,:
+Aviation
+As airline,s e,xpand the, globe, the,y fall into the, cate,gory of large,
+comple,x busine,sse,s that come, with large, comple,x proce,sse,s.
+pre,dictive, analytics he,lp airline,s improve, upon ne,twork route,
+planning, be,ing able, to quickly adapt to e,me,rge,ncie,s, and avoiding
+ove,rbooking.
+Airline,s are, also striving to offe,r the,ir custome,rs more, pe,rsonalize,d
+se,rvice,s. with pre,dictive, analytics, the, syste,m can offe,r the,se, to the,
+custome,r base,d on the,ir pre,vious choice,s.
+Banking and financial
+The, banking and financial industrie,s use, pre,dictive, analytics to de,te,ct
+fraud and can do so within a fraction of the, time, a human could.
+custome,rs’ cre,dit risks can be, asse,sse,d within minute,s inste,ad of days
+or we,e,ks. with data be,ing colle,cte,d on the,ir custome,rs thanks to
+inte,rne,t banking, the,se, institute,s are, able, to offe,r more, pe,rsonalize,d
+package,s to the,ir custome,rs.
+Car industry
+Conne,cte,d car te,chnology me,ans that the,re, is bidire,ctional
+communication be,twe,e,n the, car and othe,r syste,ms on the, inte,rne,t it
+is conne,cte,d to. the,se, communications include, various statistics such
+as car mile,age,, malfunctions, and more, to the, car company or
+re,giste,re,d de,ale,r. car tracking companie,s will ke,e,p a log of whe,re, the,
+car is going, whe,re, it has be,e,n, the, spe,e,ds it was trave,ling at, e,tc. all
+this data is be,ing colle,cte,d and use,d to improve, upon car pe,rformance,,
+re,sponse, time,s to bre,akdowns, se,curity issue,s, traffic proble,ms, and
+more,.
+Car manufacture,rs are, able, to asse,ss the, quality of various products
+use,d in a particular ve,hicle,. the,y also use, pre,dictive, analysis to asse,ss
+how the,ir late,st in-car te,chnology is working or be,ing re,ce,ive,d.
+
+Gove,rnme,nt and public se,ctors
+Gove,rnme,nts have, be,e,n taking advantage, of pre,dictive, analytics for a
+lot longe,r than most se,ctors. the,y use, statistics from the, bure,au of the,
+ce,nsus to he,lp with population tre,nds, ge,t a be,tte,r unde,rstanding of
+the,ir custome,rs, and to he,lp improve, upon se,rvice,s.
+It also he,lps the,m find whe,re, a district may be, in ne,e,d of schools, bus
+route,s, and various town se,rvice,s upgrade,s or imple,me,ntations such as
+se,wage,s. if a ne,ighborhood is be,coming more, popular, the, city ne,e,ds
+to be, able, to e,nsure, the, are,a can sustain the, growth. pre,dictive,
+analysis can e,asily asce,rtain this and he,lp the, city to plan for this
+growth.
+He,alth and me,dical
+He,alth and me,dical industrie,s use, pre,dictive, analysis to he,lp pre,dict
+who is more, like,ly at risk of de,ve,loping ce,rtain dise,ase,s. by gathe,ring
+a patie,nt's me,dical history, life,style, choice,s, and habits, pre,dictive,
+analysis can de,te,rmine, if the,y are, at risk for de,ve,loping he,art dise,ase,,
+cance,r, diabe,te,s, and more,.
+The, me,dical industry is fast advancing by using machine, le,arning
+te,chnique,s that utilize, comple,x pre,dictive, algorithms.
+
+Insurance,
+Insurance, companie,s use, pre,dictive, analytics to pre,ve,nt fraud, spe,e,d
+up the, claim proce,ss, and can de,te,ct whe,n a pe,rson is not adhe,ring to
+the, te,rms of the,ir contract. for instance,, in the, me,dical insurance,
+se,ctor, insurance, companie,s have, acce,ss to doctors and pharmacy
+database,s. me,dical insurance, syste,ms can de,te,ct a clie,nt’s purchase,
+history and me,dical visits. this re,sults in the, syste,m be,ing able, to spot
+patte,rns whe,re, the, custome,r is not ke,e,ping to the,ir script or he,alth
+care, instructions.
+Manufacturing
+Manufacture,rs use, pre,dictive, analytics to e,nsure, the, quality of parts,
+se,rvice, re,source,s, and re,duce, waste, or risk of syste,ms failure,. by
+be,ing able, to acce,ss things like, warranty claims, custome,r complaints,
+product re,calls, and sale,s data, manufacture,rs are, able, to improve,
+the,ir products. with the, e,xplosion of social me,dia gaining ground, it
+has ope,ne,d up a ne,w adve,rtising stre,am. che,ape,r adve,rtising that has
+a large,r outre,ach me,ans that large, manufacture,rs are, not only trying
+to ke,e,p a foothold with large, corporations, but smalle,r companie,s, too.
+Pre,dictive, analytics he,lps manufacture,rs ke,e,p a foot in the, marke,t,
+quickly asse,ss infe,rior products, and e,nable,s the,m to ke,e,p up with or
+stay ahe,ad of marke,t tre,nds.
+Oil, gas, and utilitie,s
+Be,ing able, to pre,dict whe,n a large, powe,r-ge,ne,rating turbine, ne,e,ds
+mainte,nance, or supply may shortly not me,e,t de,mand is a huge, plus for
+the, oil, gas, and utility industry. with the, de,re,gulation of powe,r
+Companie,s at the, turn of the, ce,ntury, consume,rs have, acce,ss to
+private, powe,r supplie,s. pre,dictive, analytics give,s powe,r companie,s
+the, e,dge, to ke,e,p ahe,ad of the,ir consume,r’s ne,e,ds in orde,r to stop
+the,m from going e,lse,whe,re,.
+               CHAPTE R 6: WORKING WITH
+                           ,
+
+
+
+
+                     ALGORITHMS
+By now you should have, an ide,a about the, workings of some, of the,
+basic machine, le,arning functions in python and know what pre,dictive,
+analytics is. in this chapte,r, you are, going to work with algorithms.
+What is an algorithm?
+An algorithm in programming is a se,t of instructions that ne,e,d to be,
+e,xe,cute,d in an orde,rly fashion from start to finish in orde,r to achie,ve,
+the, de,sire,d outcome,. de,signing an algorithm is unive,rsal and not code,
+spe,cific. one, algorithm may be, use,d across many diffe,re,nt
+programming language,s. although it may be, writte,n diffe,re,ntly, the,
+functionality and outcome, will be, the, same, no matte,r the, language, it
+is writte,n in.
+Important cate,gorie,s of an algorithm
+The,re, are, diffe,re,nt cate,gorie,s that algorithms fall into that a
+programme,r ne,e,ds to take, into account whe,n de,signing an algorithm.
+The, following are, import algorithm cate,gorie,s to be, aware, of:
+       De,le,te, — this would be, an algorithm to de,le,te, duplicate, data
+from an e,xisting data structure,.
+       Inse,rt — this would be, an algorithm to inse,rt data into an e,xisting
+data structure,.
+       Se,arch — this would be, an algorithm to se,arch for spe,cific data in
+an e,xisting data structure,.
+       Sort — this would be, an algorithm to sort data in a ce,rtain orde,r
+in an e,xisting data structure,.
+       Update, — this would be, an algorithm that e,nable,s data in an
+e,xisting data structure, to be, update,d/modifie,d.
+Algorithm characte,ristics
+Algorithms have, we,ll-de,fine,d characte,ristics and if a proce,dure, doe,s
+not display the,se, characte,ristics, the,y cannot be, calle,d algorithms.
+The, following are, characte,ristics of an algorithm:
+       E,ffe,ctive, — an algorithm ne,e,ds to be, use,ful with no unne,ce,ssary
+ste,ps that could make, it le,ss e,ffe,ctive,. it has to be, fe,asible, with the,
+re,source,s available,.
+       E,xplicit — an algorithm must be, unambiguous; it can have, only
+one, me,aning, so it has to be, cle,ar and concise, with e,ach ste,p laid out.
+       Finite, — an algorithm ne,e,ds to display the, characte,ristic of
+finite,ne,ss and te,rminate, afte,r a spe,cific numbe,r of ste,ps.
+       Input — an algorithm must have, we,ll-de,fine,d inputs. this me,ans
+that the, programme,r ne,e,ds to know the, amount of data, the, form of
+the, data, and what kind of data the,y are, de,aling with. all algorithms
+should have, ze,ro or more, inputs.
+       Output — as with the, input data, to ge,t the, re,quire,d output a
+programme,r ne,e,ds to know the, kind of data the,y are, working with,
+how much data the,re, is, and the, form of the, data. algorithms ne,e,d 1 or
+more, outputs that must be, we,ll- de,fine,d.
+Ge,tting starte,d with algorithms
+As algorithms are, not code, spe,cific, programme,rs ge,ne,rally write,
+the,m using basic common code, constructs that are, share,d with the,
+diffe,re,nt programming language,s. the,re, are, no se,t hard and fast rule,s
+or standards for de,signing or writing algorithms e,ithe,r, rathe,r the,y
+are, writte,n de,pe,nding on the, available, re,source,s for a proble,m that
+e,xists or may arise,.
+Writing algorithms is a proce,ss that starts once, the, proble,m it is be,ing
+writte,n for has be,e,n we,ll-de,fine,d. as an algorithm is a ste,p-by- ste,p
+se,t of proce,dure,s, writing the, algorithm is ge,ne,rally a ste,p-by- ste,p
+proce,dure,, too.
+How do you start writing an algorithm?
+An algorithm is like, a re,cipe,. you have, ce,rtain ingre,die,nts that are,
+use,d (data), and the,se, ingre,die,nts are, mixe,d in a ste,p by ste,p
+proce,dure, (pe,rforming a task) in orde,r to ge,t the, de,sire,d dish
+(outcome,).
+Using a re,cipe, as an e,xample,, you are, going to le,arn how to write, an
+algorithm.
+Ste,p 1: the, proble,m
+The, first ste,p is to de,fine, the, proble,m. in this case,, it is a re,cipe,, but
+for what?
+You want to make, a cake,. what type, of cake,:
+Chocolate, cake,. how many cake,s?
+Now the, proble,m has be,e,n de,fine,d:
+You want to make, 1 chocolate, cake,.
+It must be, note,d that proble,ms in re,al-life, situations are, not as simple,
+as above,. the,re, is a lot that goe,s into de,fining a proble,m. usually,
+de,ve,lope,rs do not ge,t involve,d at this le,ve,l unle,ss the,y are,
+de,ve,loping a syste,m the,y want to de,ve,lop for the,mse,lve,s.
+Although most de,ve,lope,rs shy away from ge,tting involve,d in de,fining
+the, proble,m, the,y are, always rope,d in. if you go back to the, start of
+this chapte,r part of a characte,ristic of an algorithm is a “we,ll-de,fine,d
+proble,m.”
+Some, of the, common fe,ature,s of a we,ll-de,fine,d proble,m should
+include,:
+The, de,scriptions should not be, ambiguous.
+       The, proble,m should be, cle,ar and concise, with no unstate,d
+pre,sumptions.
+The,re, should be, no inte,rnal contradictions.
+       The, de,scription of the, proble,m should be, comple,te, and de,taile,d.
+Ste,p 2: analyze, the, proble,m
+Once, the, proble,m has be,e,n ide,ntifie,d as a we,ll-de,fine,d one,, the,
+programme,r ne,e,ds to analyze, it. during this ste,p, you ne,e,d to answe,r
+que,stions such as:
+What kind of data is it?
+Are, the,re, rule,s pe,rtaining to working with the, data?
+Is the, data re,adily available,?
+Whe,re, is the, data?
+What is the, re,lationship be,twe,e,n the, data?
+What ite,ms ne,e,d to be, re,move,d?
+What ite,ms ne,e,d to be, change,d, update,d, or modifie,d?
+What are, the, change,s, modifications, or update,s?
+What is the, de,sire,d outcome, or e,nd re,sults?
+Ste,p 3: the, algorithm
+Input the, ingre,die,nts (input data)
+       Mix the, ingre,die,nts in a ce,rtain way and put it in the, ove,n
+(pe,rform the, task)
+Output the, bake,d cake, (output data)
+Now that you have, de,fine,d the, proble,m and analyze,d it, it is time, to
+figure, out the, solution algorithm to obtain the, de,sire,d outcome,. but if
+you look at baking cake,s, for e,xample,, you will se,e, that the,re, is more,
+than one, way to bake, a cake,.
+As with any proble,m, the,re, is usually more, than one, solution that can
+output the, de,sire,d re,sults. you can’t just take, the, first solution you
+have, pre,se,nte,d, be,cause, the, se,cond, third, or e,ve,n fourth solution
+may be, a be,tte,r fit for the, situation.
+Whe,n de,signing algorithms, you will more, than like,ly e,nd up with a
+numbe,r of solution algorithms that could be, suitable, for the, de,fine,d
+proble,m.
+Ste,p 4: analyzing and choosing the, be,st solution algorithm for the,
+proble,m
+The, be,st solution algorithm will de,pe,nd on a numbe,r of factors, such
+as:
+       The, re,source,s at your disposal — you can e,liminate, solutions that
+may incur e,xtra time,, e,ffort, or re,source,s.
+       Costs — the, most cost-e,ffe,ctive, solution that doe,s not cut back on
+quality and puts no e,xtra stre,ss on othe,r re,source,s.
+       Spe,e,d — an algorithm ne,e,ds to be, stre,amline,d and finite,. if one,
+solution has fe,we,r proce,dure,s to de,live,r the, de,sire,d outcome,, you are,
+going to choose, it.
+Ste,p 5: de,ve,lop the, algorithm
+Once, the, solution algorithm has be,e,n chose,n, you will ne,e,d to de,ve,lop
+a high-le,ve,l algorithm. this is the, basic structure, of the, algorithm
+which will give, a satisfactory day-to-day outcome, if run as is.
+This structure, is be,st to start with, like, the, frame,work for a house,.
+once, we, know it will e,ffe,ctive,ly pe,rform the, basic task, for instance,, if
+the, foundation and frame,work are, solid, we, can add de,tail to it.
+Ste,p 6: re,fine, the, chose,n solution algorithm
+Once, the, solution algorithm has be,e,n chose,n, it ne,e,ds to be, re,fine,d by
+adding more, de,tail. what e,lse, doe,s the, algorithm ne,e,d, what are,
+pote,ntial proble,ms that could arise,, e,tc.
+Like, baking a cake,, whe,n you are, de,signing an algorithm it is not only
+the, data or proble,m that has to be, take,n into account. you have, to
+think about the, more, te,chnical aspe,cts like, computing powe,r. what is
+it going to take, to run the, algorithm?
+A good rule, of thumb is to ove,r-stack the, algorithm with de,tail rathe,r
+than to unde,r-stack it. it is e,asie,r to take, away de,tail than it is to add it.
+Ste,p 7: re,vie,w
+Ste,p 7 is like, a ne,ve,r-e,nding loop. once, the, algorithm is done, it must
+be, constantly re,vie,we,d for change,s, update,s, or ways to make, it
+be,tte,r. if the,re, are, update,s, change,s, or additions it will go back a ste,p
+or two.
+Choosing a mode,l
+Not only could the,re, are, many diffe,re,nt solutions to a proble,m, but
+the,re, could also be, a fe,w mode,ls to base, the, algorithm on.
+Some, of the, machine, le,arning algorithm mode,ls in python are,:
+       Classification and re,gre,ssion tre,e,s (cart) — use,d for classification
+and pre,diction mode,ling.
+       De,cision tre,e, — this mode,l is use,d for de,cision-base,d outcome,s
+like, a bank would use, to approve, a loan.
+       K-me,ans cluste,ring — this mode,l is use,d for unsupe,rvise,d
+le,arning mode,ls. it is use,d to find patte,rns in spe,cific datase,ts.
+       K-ne,are,st ne,ighbor (knn) — de,te,rmine,s patte,rns by obse,rving its
+close,st ne,ighbor.
+       Line,ar re,gre,ssion — a basic ye,t powe,rful mode,l, use,d to pre,dict
+an outcome, base,d on one, or more, inde,pe,nde,nt variable,s.
+       Logistic re,gre,ssion — this mode,l works on the, same, principle,s as
+a classification mode,l. it is use,d to pre,dict ne,w probable, outcome,s
+base,d on a particular cate,gory.
+       Principal compone,nt analysis (pca) — this mode,l take,s a huge,
+chunk of data and conde,nse,s it into a more, manage,able, one,.
+In the, ne,xt chapte,r, you will have, a brie,f ove,rvie,w of some, of the,
+mode,ls liste,d above,.
+         CHAPTE R 7: MACHINE LE ARNING
+                       ,                        ,     ,
+
+
+
+
+                  ALGORITHMS
+De,cisions tre,e, (e,xample, of a classification tre,e,)
+Anyone, who has done, math, programming, or busine,ss course,s knows
+what a flow chart is. the,y can be, use,d as graphical re,pre,se,ntations of a
+transactional flow for most busine,ss, me,chanical, te,chnical, and
+programming sce,narios.
+The, image, be,low re,pre,se,nts what could pass as a basic flowchart,
+e,asily re,cognizable, to anyone,.
+
+
+
+
+What is a de,cision tre,e,?
+A de,cision tre,e, is a flowchart with a tre,e,-like, structure, and works the,
+same, way any othe,r flowchart would.
+The, compone,nts of a de,cision tre,e, flowchart
+A de,cision tre,e, also has the, same, sort of flowchart bits and pie,ce,s that
+re,pre,se,nt the, flow, a de,cision, and an outcome,. the,se, node,s are, as
+follows:
+De,cision node,
+Branch
+Le,af node,
+Sub-tre,e,
+The, de,cision tre,e, starts with a de,cision node, calle,d the, root node,.
+e,ach line, that flows from a node, is known as a branch. the, de,cision
+node,s/inte,rnal node,s can branch out to be, quite, a fe,w. some, may e,ve,n
+span to a sub-tre,e,. all the, outcome,s are, known as the, le,af node,(s).
+
+The, de,cision tre,e, flowchart is de,signe,d to he,lp visualize, de,cision
+making and can be, use,d in most busine,ss practice,s, program de,signs,
+and or anywhe,re, de,cisions are, to be, made,.
+Whe,n to use, a de,cision tre,e,
+De,cision tre,e,s are, good mode,ls to use, whe,n the,re, is more, than one,
+outcome, to a proble,m (if … the,n … e,lse, … situations). the,y are, also
+good to use, for cate,gorization proble,ms whe,re, the,re, are, ite,ms that
+ne,e,d to be, classifie,d or cate,gorize,d, such as animal spe,cie,s, plant
+spe,cie,s, and so on.
+De,cision tre,e, is a popular mode,l use,d in machine, le,arning for
+application in industrie,s such as e,ne,rgy, financial, pharmace,utical,
+busine,ss, manufacturing, he,althcare,, e,ngine,e,ring, and more,.
+De,cision tre,e, algorithm
+The, de,cision tre,e, is an algorithm that mainly ge,ts use,d for
+classification mode,ls as a supe,rvise,d le,arning algorithm. it is the,re,fore,
+re,fe,rre,d to as a classification tre,e, mode,l.
+The,re, are, a fe,w type,s of de,cision tre,e, mode,ls including:
+
+
+
+
+Cate,gorical variable, de,cision tre,e, — an algorithm that has a cate,gorical
+targe,t variable,.
+      Continuous variable, de,cision tre,e, — an algorithm that has a
+continuous targe,t variable,.
+
+
+
+Structure, of a de,cision tre,e, in python?
+The,re, are, five, ste,ps to the, structure, of the, de,cision tre,e,.
+Lay out the, datase,t
+Train a mode,l
+Cre,ate, de,cision node,s to accomplish targe,t crite,ria
+Cre,ate, le,af node,s as the, pre,dictions
+Achie,ve, the, targe,te,d outcome,
+As an e,xample,, you will make, the, de,cision to go to the, be,ach if it is
+sunny or stay at home, if it is not.
+In the, command line, prompt type, the, following:
+From skle,arn import tre,e,
+From skle,arn.mode,l_se,le,ction import train_te,st_split import numpy as np
+Fe,ature,s = [‘sunny’] x = [[0], [1]]
+Y = [0, 1]
+De,s = tre,e,.de,cisiontre,e,classifie,r() de,s.fit(x, y)
+De,sfile, = ope,n(“dtre,e,.dot”, ‘w’)
+Tre,e,.e,xport.graphviz(de,s, out_file, = de,sfile,, fe,ature,_name,s= fille,d=true,,
+rounde,d=true,, impurity=false,, class_name,s= [ ‘be,ach’, ‘home,’]
+De,sfile,.close,()
+Print (de,s.pre,dict([[0]]) )
+Try the, print state,me,nt with the, [[1]], [0], and [1] pre,dictions to vie,w
+the, outcome,s.
+Advantage,s of de,cision tre,e,
+The, advantage,s of using the, de,cision tre,e, mode,l are,:
+It is e,asy to use, and unde,rstand
+It is gre,at for fe,ature, se,le,ction
+It is gre,at for pe,rforming variable, scre,e,ning
+The,re, is little, to no data cle,aning re,quire,d
+The,re, is not a lot of pre,paration re,quire,d as compare,d to othe,r mode,ls
+like, re,gre,ssion tre,e, mode,ls
+It is a lot e,asie,r whe,n it come,s to ge,ne,rating rule,s
+Disadvantage,s/limitations of de,cision tre,e,s
+The, disadvantage,s or limitation of the, de,cision tre,e, mode,l are,:
+Tre,e,s can ge,t complicate,d. this is calle,d ove,rfitting and is a tre,e, that
+doe,s not ge,ne,ralize, data.
+Re,ctangular partitioning is use,d for classification.
+The, data can be,come, quite, large, and cumbe,rsome, if not prune,d.
+It is not partial to non-nume,rical data.
+E,ntropy and gini inde,x in python
+A node,, in a python de,cision tre,e, algorithm, is split by calculating
+information gain. this split is done, by e,ntropy and gini inde,x which are,
+me,asure,s of impurity of the, data or node,. an impure, node, is a node,
+that has many classe,s associate,d with it, as the,re, is a disorde,r in the,
+node,. a node, with only a single, class in it is more, orde,rly and
+the,re,fore, the, node, is pure,. both e,ntropy and gini inde,x are, use,d for
+se,le,ction crite,ria in de,cision tre,e,s.
+In most datase,ts, the,re, will not be, a big diffe,re,nce, be,twe,e,n using
+e,ithe,r e,ntropy or gini inde,x in a de,cision tre,e, mode,l. it is, howe,ve,r,
+important to be, aware, of the,se, two me,asure,s.
+E,ntropy
+
+
+
+E,ntropy me,asure,s how to re,duce, unce,rtainty in a split. it is not as e,asy
+as the, gini inde,x as it is more, computational. e,ntropy te,nds to favor
+splits that have, a lot of unique, value,s but smalle,r counts. the, formula
+for e,ntropy is as follows:
+Gini inde,x
+The, gini inde,x is use,d in the, cart algorithm. it use,s a square,d
+proportion of classe,s and is calculate,d by minus the, sum of the, square,d
+probabilitie,s pe,r class from 1.
+
+
+
+
+The, gini formula looks as follows:
+The, gini inde,x is usually use,d for continuous attribute,s; it will se,e,k out
+the, large,st class and is good at minimizing misclassification.
+     CHAPTE R 8: RE GRE SSION TRE E S AND
+                    ,             ,      ,                   ,   ,
+
+
+
+
+                     CART
+Data se,ts are, split base,d on data that is of the, same, or similar nature, in
+classification tre,e, mode,ls. for instance,, take, a datase,t that will
+de,te,rmine, if a consume,r will buy a garme,nt base,d on the,ir age, and
+ge,nde,r. if 95% of pe,ople, who bought the, garme,nt we,re, wome,n, this is
+whe,re, the, split would be, made, and the, top node, in the, tre,e, would
+be,come, wome,n (the, split would now be, 95% pure,). this is whe,re, the,
+gini inde,x and e,ntropy me,asure,s come, in, as the,y are, use,d to quantify
+data’s homoge,ne,ity. classification mode,ls in te,rms of machine, le,arning
+are, gre,at for algorithms that have, scale,d targe,t fe,ature,s. in the,
+de,cision tre,e, e,xample, in chapte,r 7, you use,d an e,xample, of going to
+the, be,ach. he,re, you could add fe,ature,s such as stay at home, or go to
+the, be,ach; the, variable,s we,re, known.
+What happe,ns whe,n the,re, is a situation whe,re, one, classification could
+have, a numbe,r of variable,s?
+
+
+Re,gre,ssions tre,e,s
+If, for instance,, the,re, is a datase,t whe,re, you ne,e,d to pre,dict the, price,
+of a brand ne,w car from the, showroom floor, the, de,cision tre,e, mode,l
+is not going to work. most mode,ls of cars have, diffe,re,nt classe,s and
+e,ve,n the, diffe,re,nt classe,s of mode,l price,s can diffe,r de,pe,nding upon
+the, additional e,xtras you can ge,t with the, ve,hicle,. a classification tre,e,
+mode,l is not going to work in this situation, but a re,gre,ssion tre,e,
+mode,l will. re,gre,ssion tre,e,s allow for an infinite, numbe,r of
+continuously scale,d value,s of the, targe,t fe,ature,.
+The, re,gre,ssion tre,e, formula is calculate,d on the, variance, and is as
+follows:
+
+
+
+
+A re,gre,ssion tre,e, is se,t up much like, the, de,cision tre,e,, whe,re, it starts
+off with a root node, and se,arche,s for the, de,scriptive, fe,ature,, splitting
+the, targe,t fe,ature, into pure, value,s. once, it has those, value,s the,
+datase,t is divide,d into the, de,scriptive, fe,ature,. this proce,ss is the,n
+re,pe,ate,d within the, subse,ts of the, split until the,re, are, no more, splits
+and a le,af node, is forme,d.
+Whe,n the,re, is a pre,diction type, of proble,m, the, be,st mode,ls to use,
+are, re,gre,ssion tre,e, mode,ls.
+Cart mode,ls
+Cart stands for classification and re,gre,ssion tre,e,, which is a pre,dictive,
+machine, le,arning algorithm. cart is one, of the, olde,st me,thodologie,s in
+machine, le,arning and forms the, foundation for algorithms such as
+booste,d de,cision tre,e,s, bagge,d de,cision tre,e,s, and random fore,sts.
+Base,d on ce,rtain pre,dictor variable,s, the, cart algorithm can pre,dict
+outcome,s. in othe,r words, it will show that a targe,t variable, can be,
+pre,dicte,d by a numbe,r of value,s. cart can handle, the, tasks of both
+re,gre,ssion and classification tre,e, mode,ls.
+Tre,e,s that are, use,d for classification of data are, known as classification
+mode,ls (de,cision tre,e,s), such as grouping animals by spe,cie,s. tre,e,s
+that are, use,d for e,stimation are, the, re,gre,ssion tre,e,s, such as
+e,stimating the, cost of a two-door conve,rtible, with le,athe,r se,ats,
+spe,cial rims, and ce,rtain color paint.
+The, cart mode,l allows you to use, both classification and re,gre,ssion
+tre,e, mode,ls; it also supports nume,rical targe,t variable,s but it will not
+calculate, rule, se,ts.
+For a more, comple,x tre,e, whe,re, you would have, to first classify a
+spe,cie,s and the,n subse,ts of that spe,cie,s, you would use, the, cart tre,e,
+mode,l.
+            CHAPTE R 9: RANDOM FORE STS
+                           ,                                   ,
+
+
+Most pre,dictions have, variance,s. for instance,, you may cre,ate, a mode,l
+that will pre,dict the, we,athe,r for the, ne,xt day. this pre,diction will be,
+base,d on various factors which you will fe,e,d into training mode,ls such
+as the, se,ason, the, month, the, we,athe,r patte,rn for the, past couple, of
+ye,ars to ge,t a historical ave,rage,, e,tc. the, mode,l will take, all the,
+training data and look for a re,lationship be,twe,e,n the, fe,ature,s in orde,r
+to pre,dict the, targe,te,d outcome,. the, mode,l le,arns by e,xample,, like,
+humans do, and formulate,s the, be,st que,stions to ge,t to the, most
+accurate, pre,diction.
+The, tre,e, has a targe,t for which it le,arns how to map re,late,d data to,
+such as the, we,athe,r. it may know that a sunny day is hot and the,
+ave,rage, te,mpe,rature,s that fall into the, hot cate,gory. unlike, humans,
+the, mode,l has no pre,vious knowle,dge, of te,mpe,rature, and to it, it is
+ge,ne,rating outputs base,d on its training mode,l that agre,e, with data
+be,ing inputte,d. in a classification mode,l such as a de,cision tre,e, mode,l,
+it is basing its pre,dictions on a single, de,cision tre,e, mode,l. at this le,ve,l,
+the, mode,l would not be, able, to answe,r diffe,re,nt que,stions about the,
+we,athe,r.
+In orde,r to e,nable, the, mode,l to le,arn a lot more, about a proble,m, you
+can use, random fore,sts to cre,ate, a more, dive,rse, knowle,dge, base,. if
+we, look at proble,m-solving in human te,rms, we, know that a single,
+human could solve, multiple, small proble,ms. as the, proble,m grows one,
+pe,rson alone, may not be, able, to cope,. the,re, are, many variable,s, such
+as not having the, scope, of knowle,dge,, the,y only have, the,ir point of
+vie,w, and so on. but, two or more, pe,ople, working on the, same, proble,m
+brings about a whole, ne,w dime,nsion to solving it. a think tank consists
+of a group of like,-minde,d pe,ople, working toge,the,r, e,ach bringing
+the,ir own unique, se,t of skills and knowle,dge, to the, table,.
+Look at a de,cision tre,e, or re,gre,ssion tre,e, mode,l as one, pe,rson
+working on a part of the, proble,m the,y have, the, information, training,
+and knowle,dge, about, while, a random fore,st is a think tank of
+De,cision tre,e,s and re,gre,ssion tre,e, mode,ls working toge,the,r to cre,ate,
+a more, robust and dive,rse, mode,l. the, more, tre,e,s the,re, are, in the,
+random fore,st, the, highe,r the, accuracy rate, will be, of the, mode,l. for
+instance,, if your mode,l was cate,gorizing large, cats, a random fore,st of
+datase,ts with diffe,re,nt cat spe,cie,s e,nsure,s more, accurate,, dive,rse,
+data, data that is not biase,d by one, particular datase,t.
+Building the, random fore,st
+The, first ste,p will be, to cre,ate, multiple, de,cision or re,gre,ssion tre,e,s
+that will make, up the, random fore,st. the,se, tre,e,s can be, made, up of
+various de,cision tre,e, algorithms such as gigi inde,x, information gain,
+e,tc.
+In the, cart mode,l, the,re, are, only single, tre,e,s. in a random fore,st, you
+will grow multiple, tre,e,s. any ne,w classification that ne,e,ds to be,
+classifie,d is done, so on various attribute,s. the, tre,e,s alre,ady in the,
+mode,l will give, a classification of those, attribute,s base,d on the, data in
+the,ir datase,t. the, classification of the, tre,e, with the, most vote,s will be,
+what the, ne,w classification will fall unde,r. in the, re,gre,ssion mode,l,
+the, ave,rage, of the, vote,s is use,d.
+Advantage,s of random fore,st
+The, mode,l will not be, ove,rfitte,d
+Highe,r dime,nsionality for large, data se,t handling
+Random fore,sts maintain accuracy for any missing data and are, able, to
+handle, it
+Random fore,sts can pe,rform both re,gre,ssion and classification tasks
+Disadvantage,s of random fore,st
+Random fore,sts are, be,tte,r at handling classification mode,ls than the,y
+are, with re,gre,ssion.
+Random fore,sts are, more, of a black box approach as the,re, is little, to no
+control ove,r what the, mode,l doe,s.
+Use,s of random fore,st
+Me,dical applications — me,dicine, validation.
+Dise,ase, analytics — ide,ntify a pe,rson's risk of ge,tting ce,rtain dise,ase,s
+from the,ir me,dical history.
+Banking applications — fraud de,te,ction
+Stock marke,ts — ide,ntifying patte,rns of sock be,havior as we,ll as
+e,xpe,cte,d losse,s or gains.
+Se,arch e,ngine,s — product ide,ntification and re,comme,ndations base,d
+on a custome,r's se,arch history.
+Image, classification — compute,rs use, came,ras to ide,ntify diffe,re,nt
+body parts for applications such as game,s on the, xbox.
+      Voice, classification — spe,e,ch re,cognition and lip-re,ading syste,m.
+How the, random fore,st works
+       1. In a training se,t, assume, that a numbe,r of case,s are, a.
+
+
+       2. A sample,, with re,place,me,nt, of the, a case,s is randomly take,n.
+
+
+       3. For b input fe,ature,s or variable,s, b<b will be, spe,cifie,d.
+
+
+       4. This allows for e,ach node,s b variable, to be, randomly se,le,cte,d out of the, b input
+         value,s.
+
+       5. The, node, is split on the, b value,s se,le,cte,d.
+
+
+       6. While, the, fore,st grows the, value, of b will be, he,ld constant.
+
+
+       7. The,re, is no pruning of data, allowing for e,ach tre,e, in the, random fore,st to grow to
+         its fulle,st pote,ntial.
+
+       8. By aggre,gating the, pre,dictions of the, b value,s ne,w data can be, pre,dicte,d. this is
+         whe,re, the, majority of vote,s for classification mode,ls and ave,rage, vote,s for
+         re,gre,ssion mode,ls come, in.
+The, te,st fe,ature,s of the, random fore,st algorithm have, to run through
+all the, rule,s as laid out by e,ach tre,e, in the, random fore,st. a subse,t of
+The, fore,st will vote, on what the, pre,dicte,d outcome, should be,. for
+instance,, if the, subje,ct is a face,, a fe,w tre,e,s in the, fore,st may re,turn
+data pe,rtaining to the, face,, such as a nose,, an e,ye,, or an e,ar. if in a
+fore,st of, say, 800 tre,e,s only 200 re,turn information pe,rtaining to the,
+face,, the, vote, will be, cast out of 800. if the, majority of the, node,s list an
+e,ye,, the, outcome, will be, an e,ye,. if some, of the, othe,r tre,e,s have, put
+forward an e,ar, nose,, e,tc., the,n the, highe,r le,ve,ls of the, tre,e, can vote,
+that the, re,sult is a face,.
+E,nse,mble, algorithm
+Random fore,sts are, known as e,nse,mble, algorithms that are, base,d on a
+conce,pt that a single, le,arne,r may not have, all the, stre,ngth ne,e,de,d to
+solve, a proble,m. the,y are, the,n known as a we,ak le,arne,r. but a group of
+we,ak le,arne,rs bande,d toge,the,r can be,come, a colle,ctive,ly strong
+le,arne,r.
+The, same, applie,s to classification tre,e,s. on the,ir own the,y are, we,ake,r
+le,arne,rs, but colle,ctive,ly the,y be,come, a force, of knowle,dge,. as the,y
+share, knowle,dge, and grow the, applications the,y are, capable, of
+be,coming e,ndle,ss.
+E,nse,mble, le,arne,rs
+Single, le,arne,rs consist of training and te,sting data.
+Training data = a le,arning me,thod such as k-ne,are,st ne,ighbor (knn)
+A mode,l is forme,d from the, training data which, if you punch in a
+que,ry, you will ge,t an outcome, from.
+E,nse,mble, le,arne,rs also consist of training and te,sting data but
+incorporate, an e,nse,mble, of diffe,re,nt le,arning me,thods. e,ach le,arning
+me,thod is traine,d and te,ste,d with the, same, data. e,ach mode,l would be,
+individually que,rie,d to ge,t a pre,dicte,d outcome, and will re,turn the,ir
+pre,diction; the, answe,r with the, most vote,s would be, the, answe,r. in
+re,gre,ssion, the, me,an value, will be, the, answe,r.
+E,nse,mble, le,arne,rs are, good to use, be,cause, e,ach mode,l you use, has its
+own bias and variable,s. whe,n you combine, the,se, me,thods,
+The,ir biase,s and variable,s are, radically re,duce,d due, to a voting
+(classification) or ave,raging syste,m (re,gre,ssion).
+Bagging or bootstrap aggre,gation
+Bagging or bootstrap aggre,gation is use,d in re,gre,ssion and statistical
+classification. it is primarily use,d to improve, upon an algorithm's
+accuracy. it doe,s this by re,ducing variance, and improving the, stability
+of the, mode,l.
+In the, e,nse,mble, le,arne,rs in the, above, se,ction, we, looke,d at training
+diffe,re,nt mode,ls on the, same, data. bagging or bootstrap aggre,gation is
+anothe,r way of cre,ating e,nse,mble, le,arne,rs by using the, same, me,thod,
+with the, datase,t, but training e,ach le,arne,r on a diffe,re,nt se,ction of
+the, data.
+To bag the, data, you would ne,e,d to cre,ate, subse,ts of the, data (bags
+fille,d with diffe,re,nt se,ctions of the, data).
+Data is chose,n at random from the, same, se,t of data pe,r bag with
+re,place,me,nt. with re,place,me,nt me,ans that the, random grab for data
+may se,le,ct the, same, data it has alre,ady colle,cte,d.
+N = the, numbe,r of data instance,s in the, datase,t.
+N1 = the, numbe,r of data instance,s pe,r bag. the, rule, of thumb for the,
+training instance,s pe,r bag should be, no more, than 60% of the, datase,t
+training instance,s.
+M = the, numbe,r of bags in the, e,nse,mble, of le,arne,rs.
+E,ach mode,l is traine,d on the, data it has randomly gathe,re,d and te,ste,d
+on the, outcome, as e,ithe,r vote,d by the, mode,ls or the, me,an value,.
+Boosting
+The, boosting machine, le,arning e,nse,mble, me,ta-algorithm is use,d in
+supe,rvise,d le,arning to cut down on variance,, re,duce, bias, and boost
+we,ak le,arne,rs. boosting is similar to bagging but it's use,d to boost
+e,nse,mble, le,arne,rs that are, not pe,rforming as the,y should be,
+pe,rforming.
+Whe,n using an algorithm such as ada boost, you se,t up the, le,arning as
+you would to se,le,ct random data (like, in bagging) from the,
+Datase,t. the, mode,l will ge,t traine,d in the, same, way, the, only
+diffe,re,nce, will be, that not just 40% or so of the, datase,t will be, use,d to
+te,st the, mode,l. all of the, training data is use,d to te,st the, le,arne,r’s
+mode,l. the, outcome, of this te,st usually pinpoints e,rrors or
+inconsiste,ncie,s in the, te,sting datase,t.
+The, ne,xt ste,p will be, to build the, ne,xt bag of randomly se,le,cte,d data
+from the, datase,t but we,ighte,d towards the, e,rrone,ous data. this me,ans
+that instance,s in the, datase,t that displaye,d the, e,rror will be, the,
+instance,s that will be, picke,d first ove,r othe,r instance,s of the, data. this
+will continue, for the, amount of bagging instance,s ne,e,de,d to comple,te,
+the, mode,l.
+Boosting he,lps to fix poorly mode,le,d data and cut down on e,rrors in
+the, mode,l.
+     CHAPTE R 10: OVE RVIE W OF NE URAL
+                    ,                 ,        ,              ,
+
+
+
+
+    NE TWORKS, BIG DATA, THE INTE RNE T
+         ,                                            ,           ,    ,
+
+
+
+
+        OF THINGS (IOT), AND CLOUD
+                COMPUTING
+Whe,n you are, starting out with machine, le,arning, the,re, are, a lot of
+te,rms and type,s of machine, le,arning that you will come, across.
+although you may not go in-de,pth with le,arning the,m, it is still a be,st
+practice, to know what the,y are, all about. in this chapte,r, we, will touch
+on a fe,w of the,se, topics with a brie,f ove,rvie,w of the,m.
+Ne,ural ne,tworks
+Ne,ural ne,tworks have, be,e,n around since, the, late, 1950s and we,re,
+mode,le,d around the, human brain by mimicking characte,ristics of the,
+brain's ne,urons. ne,ural ne,tworks work by passing data through various
+inte,rconne,cte,d node,s. e,ach node, will analyze,, classify, and the,n pass
+the, data to the, ne,xt node,. the,re, are, usually more, than two or thre,e,
+laye,rs hidde,n in a ne,ural ne,twork. some, ne,ural ne,tworks have,
+hundre,ds of hidde,n laye,rs, which is why most ne,ural ne,twork mode,ls
+fall unde,r the, cate,gory of de,e,p le,arning. as you know, de,e,p le,arning is
+a subse,t of both machine, le,arning and ai.
+Type,s of ne,ural ne,tworks
+The,re, are, quite, a fe,w type,s of ne,ural ne,tworks, and e,ach of the,m has
+its own unique, application value, and use,s diffe,re,nt me,thods to
+de,te,rmine, rule,s.
+The, diffe,re,nt type,s of ne,ural ne,tworks include, the, following list.
+Convolutional ne,ural ne,twork
+Convolutional ne,ural ne,tworks (cnn) laye,rs are, e,ithe,r poole,d or
+inte,rconne,cte,d. the,y can have, from one, to many laye,rs. the, use, of a
+convolution ope,ration runs on the, input to make, the, ne,twork le,ss
+parame,te,r hungry, and it is a ve,ry de,e,p ne,twork.
+The,se, ne,ural ne,tworks are, use,d in applications such as natural
+language, proce,ssing (nlp), vide,o re,cognition, and re,comme,nde,r
+syste,ms.
+Fe,e,dforward ne,ural ne,twork
+The, fe,e,dforward ne,ural ne,twork is one, of the, simple,st forms of ne,ural
+ne,twork, whe,re,in data only move,s in one, dire,ction from input to
+output. it use,s a classifying activation function to cre,ate, a front
+propagate,d wave,. this type, of ne,ural ne,twork can have, one, laye,r or
+multiple, hidde,n laye,rs, but it has no backpropagation.
+A fe,e,dforward ne,ural ne,twork is quite, e,asy to maintain and is usually
+use,d in datase,ts that contain a lot of noise,. data that contains a lot of
+noise, re,fe,rs to data that has a lot of me,aningle,ss information mixe,d
+with it. the,y are, use,d in applications whe,re, the, classe,s of targe,ts are,
+hard to classify, such as compute,r vision and face, re,cognition.
+A single,-laye,r pe,rce,ptron (slp) is a type, of fe,e,dforward ne,ural
+ne,twork. it ne,e,ds a binary targe,t of which it can only classify case,s that
+can be, se,parate,d line,arly. it is a thre,shold-base,d ne,ural ne,twork that
+activate,s whe,n the, targe,t re,ache,s a pre,de,te,rmine,d thre,shold.
+Modular ne,ural ne,twork
+As the, name, state,s, a modular ne,ural ne,twork has inde,pe,nde,ntly
+pe,rforming modular ne,tworks. the,se, ne,tworks all pe,rform se,parate,
+sub-tasks without signaling or inte,racting in any way with e,ach othe,r
+during computation. the,y work this way e,ve,n though the,y are, working
+towards a common goal. the,y’re, like, a company with diffe,re,nt
+de,partme,nts that all work se,parate,ly, but at the, e,nd of the, day all are,
+ne,e,de,d to ke,e,p the, company ope,rational. e,ach of the, tasks pe,rforme,d
+is vital to the, ope,ration of the, syste,m.
+Large, comple,x data structure,s ge,t broke,n down into smalle,r bits that
+spe,e,d up the, computational proce,ss. once, again, you can think of it
+similar to that of an office, situation. diffe,re,nt de,partme,nts take, the,
+load off of one, or two pe,ople, trying to ke,e,p the, office, running
+e,fficie,ntly. by incre,asing the, workforce,, e,ach with the,ir own se,parate,
+tasks to do, the, work is done, faste,r and more, e,fficie,ntly. this is the,
+Same, for large, and comple,x data syste,ms that ne,e,d the, data to be,
+broke,n down so as not to cre,ate, bottle,ne,cks in the, syste,m.
+Multi-laye,r pe,rce,ptron
+The, multi-laye,r pe,rce,ptron ne,ural ne,twork is use,d e,xte,nsive,ly in
+applications such as spe,e,ch re,cognition or machine, translation. it is a
+ne,ural ne,twork that consists of thre,e, or more, laye,rs. e,ach node, in one,
+laye,r is conne,cte,d to the, node,s in the, ne,xt laye,r. it is a fully
+conne,cte,d ne,ural ne,twork.
+Nonline,ar activation function is use,d in a multi-laye,r pe,rce,ptron to
+classify non-line,ar data.
+Radial basis function ne,ural ne,twork
+The, radial basis function is use,d in applications for syste,ms such as
+large, powe,r grids. the,y consist of two laye,rs, the, inne,r laye,r and the,
+oute,r laye,r, of which the, ne,twork me,asure,s the, distance, of any point
+in the, ne,twork re,lative, to the, ce,nte,r point.
+It calculate,s the, output from the, ce,nte,r point to the, ne,xt point in
+orde,r to find the, shorte,st distance, be,twe,e,n the, two points. as powe,r
+stations have, grown and the, syste,ms have, be,come, more, comple,x, it is
+important to be, able, to de,te,rmine, the, quicke,st way to re,store, powe,r
+in the, e,ve,nt of an outage,.
+Re,curre,nt ne,ural ne,tworks
+To he,lp pre,dict the, outcome, of a re,curre,nt ne,ural ne,twork laye,r, the,
+output of a laye,r is save,d and fe,d back to the, input. it use,s a long short-
+te,rm me,mory function and starts the, ne,twork off with the, first laye,r
+be,ing the, same, as a fe,e,dforward ne,ural ne,twork. the, laye,rs afte,r the,
+first laye,r incorporate, the, re,curre,nt ne,ural ne,twork function.
+Re,curre,nt ne,ural ne,tworks start with front propagation, ke,e,ping the,
+information it ne,e,ds store,d as me,mory in a ce,ll. while, it is holding the,
+information in its me,mory it will continue, to pe,rform its ne,xt se,t of
+instructions. this syste,m is a se,lf-le,arning syste,m and if it ge,ts a wrong
+pre,diction, it will go back during back propagation and right the, e,rror.
+Big data
+Whe,n compute,rs first starte,d out, a kilobyte, of information was
+conside,re,d quite, large,. in mode,rn computing te,rms, a kilobyte, is a
+drop in the, oce,an compare,d to the, huge, amounts of data that are, use,d.
+The, table, be,low shows how data is me,asure,d from the, smalle,st unit to
+the, large,st unit in e,xiste,nce, to date,.
+
+ Data        storage,
+ unit
+ Capacity of the,
+ unit
+ Storage,     unit
+ abbre,viation
+ Bit
+ 1 or 0
+ B
+ Byte,
+ 8 bits
+ B
+
+ Kilobyte,
+ 1024 byte,s
+ Kb
+ Me,gabyte,
+ 1024 kilobyte,s
+ Mb
+ Gigabyte,
+ 1024 me,gabyte,s
+ Gb
+ Te,rabyte,
+ 1024 gigabyte,s
+ Tb
+ Pe,tabyte,
+ 1024 te,rabyte,s
+ Pb
+ E,xabyte,
+ 1024 pe,tabyte,s
+ E,b
+ Ze,ttabyte,
+ 1024 e,xabyte,s
+ Zb
+
+ Yottabyte,
+ 1024 ze,ttabyte,s
+ Yb
+
+
+Ve,ry large, amounts of data are, known as big data that is colle,cte,d,
+proce,sse,d, le,arne,d, and grows e,xpone,ntially re,gardle,ss of its curre,nt
+size,.
+5 ke,y e,le,me,nts (5v’s) of big data
+Big data has five, ke,y e,le,me,nts that make, it the, huge, busine,ss it is
+today. the,se, five, ke,y e,le,me,nts are,:
+Volume,
+In the, e,arly 2000’s, data available, for analysis starte,d to amass into
+huge, volume,s. ordinary syste,ms could not handle, the, copious amounts
+of data that we,re, ove,rwhe,lming the,m. that’s whe,n the, te,rm “big data”
+was coine,d in re,fe,re,nce, to data be,ing too big to fit into
+Conve,ntional syste,ms. volume, in the, 5v’s re,fe,rs to the, she,e,r volume,
+of information available, to analysts the,se, days in a data syste,m that
+continue,s to grow. most big data syste,ms pote,ntially double, in size,
+e,ve,ry two ye,ars.
+Ve,locity
+The, ve,locity re,fe,rs to the, spe,e,d at which the, volume, of data is
+produce,d. thanks to re,al-time, data applications the,re, is a huge, amount
+of data produce,d ne,arly e,ve,ry se,cond of e,ve,ry day. re,al- time, data
+applications include, syste,ms such as mobile, phone,s, rfid chips, and
+facial re,cognition syste,ms. as re,al-time, data has to be, de,alt with as
+soon as it is capture,d, it has a knock-on e,ffe,ct with its supporting
+syste,ms such as ne,tworking bandwidth. it can also take, up a lot of
+syste,ms storage, and proce,ssing powe,r.
+Ve,racity
+The,re, is also a lot of data that is capture,d e,ve,ry single, day that is
+conside,re,d noise, or of no value,. the, syste,ms de,signe,d to handle, big
+data have, to be, ade,pt at be,ing able, to quickly, e,ffe,ctive,ly, and
+e,fficie,ntly de,al with this junk data to e,nsure, valid and use,ful output
+data.
+Value,
+The, bigge,r a datase,t ge,ts, the, le,ss structure, it te,nds to have,. the, le,ss
+structure,d data is, the, harde,r a syste,m has to work to proce,ss it. that is
+why normal conve,ntional syste,ms are, not e,quippe,d to handle, big data.
+as data is a valuable, commodity in this day and age,, big data has only
+starte,d to ge,t a foothold in the, machine, le,arning fie,ld.
+Big data use,s
+Why is data so valuable,? be,cause, in the, mode,rn-day busine,ss world,
+compe,tition is e,xtre,me,ly fie,rce,. e,ve,n smalle,r busine,sse,s have, the,
+pote,ntial to re,ach millions of pote,ntial custome,rs all around the, globe,.
+with payme,nt and de,live,ry me,thods be,ing as e,asy as the, world wide,
+we,b has made, the,m, custome,rs will support the, company that pays the,
+most atte,ntion to the,ir ne,e,ds.
+Having acce,ss to large, amounts of statistical data he,lps organizations
+ge,t an e,dge, by be,ing able, to pre,dict the, wants and ne,e,ds of the,ir
+targe,t audie,nce,s. this is whe,re, big data and machine, le,arning go hand
+in hand. some, of the, applications big data is use,d for include, the,
+following.
+Pre,dicting machine,ry mainte,nance,
+Corre,ctly analyze,d data of a syste,m can pre,dict whe,n a machine,'s
+parts are, like,ly to fail or the, life,span of the, part prolonge,d by
+providing various se,rvice,s. it can also quite, accurate,ly pre,dict a failure,
+in advance, as an applie,d warning syste,m for production line,s, for
+e,xample,.
+Pre,dicting marke,t tre,nds
+Big data has the, ability to accurate,ly pre,dict marke,t tre,nds base,d on
+historical data colle,cte,d from custome,r purchase,s ove,r a ce,rtain
+numbe,r of months or ye,ars. pre,dicting what the, custome,r wants
+be,fore, the,y know the,y will want is a marve,lous e,dge, to have,. it also
+shows the, custome,r that you we,re, taking notice, of what the,y wante,d,
+ne,e,d, and may like, in the, future,.
+
+Fraud and compliance,
+One, of the, bigge,st use,s for big data is in fraud de,te,ction. with the, large,
+amount of data, the, syste,m has a lot to base, ce,rtain patte,rns on. as a
+re,sult, it may be, able, to accurate,ly pre,dict a fraudule,nt transaction or
+one, that has be,e,n tampe,re,d with. be,cause, a compute,r can proce,ss this
+much faste,r than the, human brain can, fraud can be, de,alt with in a
+time,ly manne,r, if not pre,ve,nte,d.
+Product de,ve,lopme,nt
+Base,d on the, late,st marke,t tre,nds, manufacture,rs can base, ne,w and
+improve,d products upon this. it can gre,atly cut down on cost and
+quickly show which products are, worth upgrading or e,nding the,
+production of.
+Custome,r re,lations
+For a custome,r, filling out those, custome,r satisfaction surve,ys can be, a
+bothe,r. most will fill the,m in be,cause, the,y fe,e,l it is giving the,m a
+Say, which the,y do have, a right to do as the, consume,r. what this me,ans
+for a busine,ss is that the, data colle,cte,d from this information not only
+he,lps with production but also custome,r inte,raction. in this day and
+age, busine,sse,s strive, to ke,e,p a happy custome,r, e,spe,cially as word of
+mouth is now word of finge,rtip thanks to the, e,ve,r- e,xpanding we,b of
+social me,dia.
+Inte,rne,t of things (iot)
+Carne,gie, me,llon unive,rsity was one, of the, ve,ry first institutions to
+imple,me,nt an inte,rne,t of things (iot) syste,m in the, e,arly 1980s. this
+syste,m was a coke, machine, that was conne,cte,d to the, inte,rne,t and
+allowe,d for a re,mote, syste,m to monitor the, te,mpe,rature, of the,
+machine,. be,ing conne,cte,d ove,r the, inte,rne,t also allowe,d the, supplie,r
+of the, machine, to know whe,n it ran out of stock.
+The, inte,rne,t of things is found in many applications in the, 21st
+ce,ntury, from watche,s to appliance,s, cars, buildings, and e,ve,n towns.
+any de,vice, that is conne,cte,d ove,r the, inte,rne,t is known by the, te,rm
+inte,rne,t of things (iot). if you take, a look around your home, right now,
+you are, bound to find at le,ast one, de,vice, that be,longs to the, cate,gory
+of iot. a smart de,vice,, the, the,rmostat, and e,ve,n je,t e,ngine,s the,se, days
+have, se,nsors on the,m re,porting status.
+Use,s of the, inte,rne,t of things (iot)
+Basically, any de,vice, that has an on/off button that e,ithe,r works with
+or through the, inte,rne,t is conside,re,d to be, an iot de,vice,. as we, live, in
+a high-te,ch world, soon the,re, will not be, many de,vice,s that are, not
+classifie,d as such. in a smart city, e,ve,n the, roads are, conne,cte,d
+through the, inte,rne,t.
+The,re, are, many mode,rn-day use,s for the, inte,rne,t of things
+applications, including the, following.
+Manufacturing
+Thanks to the, applications that support the, inte,rne,t of things,
+manufacture,rs are, able, to incre,ase, the, productivity of ne,w goods
+turning out highe,r volume,s, faste,r, and with le,ss waste,. machine,ry is
+now fitte,d with various de,vice,s such as se,nsors, ide,ntification de,vice,s,
+actuation monitoring, and communication. this cuts down
+Various high-risk factors that use,d to plague, the, manufacturing
+industry. the,se, de,vice,s cut down on the, room for human e,rror, safe,ty
+issue,s, and re,dundant proce,sse,s.
+By inte,grating machine, le,arning into various manufacturing proce,sse,s,
+companie,s can e,mploy statistical e,valuation and pre,dictive,
+mainte,nance, to maximize, re,liability. iot toge,the,r with ml has
+comple,te,ly change,d the, way the, manufacturing industry ope,rate,s.
+Disable,d or e,lde,rly care,
+With monitoring syste,ms installe,d into smart home,s, it allows for a sort
+of assiste,d living giving the, frail and e,lde,rly a little, more,
+inde,pe,nde,nce,. iot allows for 24/7 monitoring and assistance, whe,n or
+whe,re, ne,e,de,d without having a full-time, care,take,r.
+Transportation
+Whe,n it come,s to transportation, iot conne,cts roads, traffic control, and
+e,ve,n cars. iot use,s smart se,nsors that can he,lp with fle,e,t mainte,nance,.
+it is also use,ful for gps tracking, drive,r anomalie,s while, driving,
+ve,hicle, proble,ms, and can he,lp cut down on road accide,nts.
+For traffic control, se,nsors alongside, and in the, road can se,nse,
+conge,stion. with this data citie,s can figure, out if road syste,ms ne,e,d to
+be, upgrade,d. traffic lights can se,nse, whe,n the,re, is more, traffic backe,d
+up on the, one, side, than the, othe,r and switch accordingly.
+Smart cars are, making the,ir de,but and are, fully e,quippe,d with ml, ai,
+and iot syste,ms that e,nable, the,m to not only drive,, but adapt to the,
+ne,e,ds of its passe,nge,rs. the, car le,arns as it drive,s, colle,cting and
+proce,ssing the, information base,d on the, habits of its owne,r or
+passe,nge,r.
+Home, or building automation
+Home, or building automation are, syste,ms in a home, or building that
+can be, monitore,d and controlle,d. the,se, include, lighting, te,mpe,rature,,
+e,le,ctric, air control, fire, syste,ms, and more,.
+The,se, i0t syste,ms can he,lp to pre,ve,nt fire,s, carbon monoxide,
+poisoning, and he,lp re,duce, e,ne,rgy footprint while, cutting down on
+House,hold running costs.
+Agriculture,
+Iot has he,lpe,d the, agricultural industry by using various se,nsors and
+we,athe,r de,vice,s. the,se, syste,ms allow for the, colle,ction of valuable,
+data such as soil composition, pe,st infe,stations, te,mpe,rature,, humidity,
+wind spe,e,ds, e,tc. this information he,lps farme,rs to re,duce, crop
+mainte,nance,, various risks, cut down on waste,, and improve, not only
+the, quality of the,ir products, but quantity as we,ll.
+Monitoring of the, e,nvironme,nt
+With the, gre,at e,mphasis on e,nvironme,ntal issue,s the,se, days, iot he,lps
+with the, capturing of information such as air quality, soil conditions,
+se,ismic activity, wildlife, through habitat, and more,. some, of the, more,
+sophisticate,d syste,ms can save, live,s by be,ing able, to pre,dict a natural
+disaste,r for e,arly warning de,te,ction syste,ms. the,se, syste,ms are, vital
+for e,arly e,vacuations and e,me,rge,ncy re,sponse, syste,ms. as the, world
+wide, we,b spans the, globe,, iot paire,d with ml allows for ge,ographical
+scalability.
+City manage,me,nt
+Slowly but sure,ly, smart citie,s are, starting to take, root in ce,rtain
+countrie,s around the, world. with the, iot and ml working hand in hand,
+citie,s now have, the, ability to have, gre,ate,r control of things like,
+se,wage, control, e,le,ctrical grids, and bridge,s, monitor various wind
+conditions, and more,. it can also be, e,ffe,ctive, in the, monitoring of rural
+and urban infrastructure,. this is ne,e,de,d to e,nsure, the, infrastructure,
+of those, are,as can support the, growing or curre,nt population within
+the, are,a.
+E,ne,rgy manage,me,nt
+The,re, are, ve,ry fe,w e,le,ctronic de,vice,s on the, marke,t today that
+cannot conne,ct to the, inte,rne,t. e,ne,rgy manage,me,nt functions are,
+built into a lot of smart house,s alre,ady. the,se, manage,me,nt functions
+control the, te,mpe,rature,, lights, and make, sure, the, house, is e,ne,rgy
+e,fficie,nt. this he,lps to limit the, e,ne,rgy footprint and save, on
+house,hold costs.
+Some, smart house,s can be, controlle,d re,mote,ly or allow for the,
+sche,duling of switching on lights, he,ating, air conditioning, or e,ve,n
+turn on the, ove,n and coffe,e, pot.
+He,alth care,
+He,alth care, has its own inte,rne,t of things, a syste,m that has take,n off
+in re,ce,nt ye,ars. the, inte,rne,t of he,alth things (ioht) has drive,n the,
+he,alth care, syste,m to be,come, digitize,d in orde,r to re,mote,ly monitor a
+pe,rson’s he,alth. the,se, de,vice,s can be, found in syste,ms such as
+pace,make,rs and artificial limbs.
+He,alth care, syste,ms that can be, monitore,d re,mote,ly can cut down on
+dosage, e,rrors and notify he,althcare, provide,rs of pote,ntial he,alth
+issue,s. this is also valuable, in he,lping with e,me,rge,ncy re,sponse, time,s,
+e,spe,cially if the, syste,m can pre,dict a possible, fatal he,alth issue,.
+Ioht, ai, and ml have, combine,d to provide, a pe,rson with a be,tte,r
+quality of life, and quicke,r re,sponse,s to pote,ntial he,alth-re,late,d issue,s.
+Consume,r products
+Smart de,vice,s, machine, orde,ring de,vice,s, information robots,
+conne,cte,d ve,hicle,s, and smartwatche,s are, all iot de,vice,s. as you know,
+consume,rs have, be,come, re,liant on most of the,ir smart de,vice,s for
+ke,e,ping track of appointme,nts, contacts, banking information, and
+ope,rations.
+Iot vs se,curity
+A big conce,rn with the, inte,rne,t of things in any application is se,curity.
+mode,rn-day criminals don’t re,ally have, to le,ave, the, comfort of the,ir
+home, to rob a bank account or take, control of a conne,cte,d car. with
+the, amount of pe,rsonal information data that is colle,cte,d from around
+the, world on a daily basis, the,re, is always the, possibility that that
+information is vulne,rable,.
+We, are, taught ne,ve,r to le,ave, atm slips around without te,aring the,m
+up or shre,dding account information be,fore, binning it. but with data,
+once, it is out the,re, on the, world wide, we,b, it is pre,tty hard to re,tract
+Without changing your life,style, or ide,ntity. as you have, now le,arne,d,
+big data is worth a lot of mone,y. so, it is a targe,te,d commodity for some,
+hacke,rs.
+In orde,r to fill the, gaps in the,se, iot vulne,rabilitie,s, machine, le,arning
+applications are, put in place,. as a re,sult, iot de,vice,s no longe,r just
+conne,ct to the, inte,rne,t to transfe,r or colle,ct information. the,y are,
+ge,tting smarte,r and le,arning to pre,dict things. for instance,, airbus has
+many diffe,re,nt se,nsors monitoring various aspe,cts of the, aircraft,
+things like, cabin te,mpe,rature, and air pre,ssure,, e,ngine, functions, and
+se,nsors that can pre,dict accurate, outside, te,mpe,rature,s. this
+information is fe,d to a cloud-base,d ne,twork and can be, monitore,d both
+in the, plane, as we,ll as re,mote,ly.
+With the, application of de,e,p le,arning inte,gration, iot vulne,rabilitie,s
+can be, ove,rcome,, with fraud de,te,ction and unusual activitie,s picke,d
+up e,asily by de,e,p le,arning algorithms. nasa use,s iot and ml inte,gration
+for syste,ms like, zigbe,e, and xbe,e, to monitor the, pe,rformance, function
+of its e,xo-brake, de,vice,s. nasa use,s e,xtre,me,ly modifie,d se,nsors along
+with ml to he,lp incre,ase, the, life,span of the, rove,rs and make, the,m
+more, e,ffe,ctive,. nasa has be,e,n working on imple,me,nting ml and iot in
+the,ir lunar lande,r proje,ct which use,s the, limitle,ss amounts of solar
+powe,r available, in space,.
+The, military use,s iot and ml inte,gration for use, with drone,s that
+colle,ct data on various military ope,rations. thanks to e,ach drone,'s
+unique, ml algorithm, the, data the, drone, colle,cts whe,n it flie,s is
+automatically sifte,d through to de,te,rmine, if it is re,le,vant or not.
+As iot de,vice,s colle,ct huge, volume,s of data on a daily basis, ml analytics
+are, ne,e,de,d to sort through the, data to sift out data that is not ne,e,de,d.
+Cloud-base,d machine, le,arning
+With big data on the, rise, and companie,s ne,e,ding more, proce,ssing
+powe,r or moving to inte,grate,d syste,ms to cut down on costs, more, and
+more, are, moving to cloud-base,d e,nvironme,nts. cloud-base,d syste,ms
+allow organizations the, fre,e,dom to te,st out various
+Infrastructure,, software, applications, and give, the,m a che,ape,r
+alte,rnative, for cre,ating in-house, syste,ms.
+Amazon aws offe,rs package,s that can offe,r on-de,mand re,source,s that
+are, scalable, to the, custome,r’s ne,e,ds as and whe,n the,y re,quire, the,m.
+this me,ans that should the, custome,r ne,e,d a lot more, proce,ssing powe,r
+or storage, for a limite,d time,, the,y only pay for the, space, and le,ngth of
+use,. the,re, are, many diffe,re,nt companie,s offe,ring cloud-base,d
+package,s such as google, cloud platform and microsoft azure,.
+So why slot cloud-base,d syste,ms into this guide,? be,cause, cloud- base,d
+syste,ms are, not only be,ne,ficial to large, organizations, but to smalle,r
+one,s and individuals too. machine, le,arning programming language,s
+like, python may be, ope,n-source, syste,ms along with most of the,ir
+librarie,s, but the,y can still take, a lot of proce,ssing powe,r and storage,.
+be,cause, of scalable, on-the,-fly re,source,s offe,re,d by cloud- base,d
+syste,ms provide,rs, re,source,s that may othe,rwise, not be, an option due,
+to costs or acce,ssibility are, made, available,.
+As an individual starting out with machine, le,arning, your curre,nt
+syste,m may be, able, to handle, the, smalle,r proje,cts, but as you grow you
+will find your syste,m’s re,source,s may be,come, limite,d. finding a cloud-
+base,d syste,m that is both affordable, and suitable, for your ne,e,ds will be,
+highly be,ne,ficial to your machine, le,arning training and growth.
+                          CONCLUSION
+Hope,fully, you found this book use,ful in he,lping you ge,t starte,d with
+python machine, le,arning. you should now have, the, foundational tools
+you ne,e,d to he,lp you move, onto the, more, inte,rme,diary python
+machine, le,arning.
+Some, ke,y points to re,me,mbe,r whe,n starting out with python machine,
+le,arning are,:
+Le,arn all the, buzzwords and make, sure, you unde,rstand the,m
+Have, a good grasp of basic python programming
+If you are, a be,ginne,r, work through the, basics of python and le,arn the,
+functions, librarie,s, and commands
+Try to write, a small python program using the, supporting platforms
+like, anaconda or idle,
+Unde,rstand the, basic conce,pts of machine, le,arning as laid out in this
+guide,
+Practice, the, e,xe,rcise,s and start to add to the,m the, more, confide,nt you
+fe,e,l
+Look for various youtube, vide,os to e,xpand your python machine,
+le,arning knowle,dge,
+The, inte,rne,t is a valuable, source, of information and has ple,nty of
+python machine, le,arning support groups to he,lp you or bounce, ide,as
+around with.
+As with any te,chnology e,nvironme,nt, you should strive, to join groups
+that ke,e,p you update,d and informe,d on bre,akthrough te,chnologie,s
+within the, fie,ld. re,ad data scie,nce, magazine,s and article,s. sign up to
+popular data scie,nce, ne,wsle,tte,rs from re,liable, source,s such as
+te,chre,public, data scie,nce, magazine,, and site,s like, me,dium.com.
+Some, we,bsite,s with ne,wsle,tte,rs to follow or podcasts of inte,re,st to
+ke,e,p yourse,lf update,d on the, late,st ai or ml de,ve,lopme,nts and ne,ws
+include,:
+Ai we,e,kly — http://aiwe,e,kly.co/ — this site, is a good site, for
+ne,wsle,tte,rs and has some, ve,ry inte,re,sting blogs that are, update,d
+re,gularly and adde,d to.
+Ai ne,ws — https://artificialinte,llige,nce,-ne,ws.com/ — aine,ws is
+anothe,r we,bsite, with re,gularly update,d article,s, blogs, and
+ne,wsle,tte,rs.
+Talking machine,s — http://www.the,talkingmachine,s.com/
+— this is a we,bsite, for podcasts on the, late,st in ai advance,me,nts. the,re,
+are, always a lot of inte,re,sting talks, shows, de,bate,s, and more,.
+Conce,rning ai — https://conce,rning.ai/ — this is a we,bsite, for podcasts
+on the, innovations, advance,me,nts, and pote,ntial for ai.
+O’re,illy            data              show               podcast            —
+https://www.ore,illy.com/radar/topics/ore,illy-data-show- podcast/ — a
+podcast that e,xplore,s the, drive, be,hind big data, e,xploration into ai,
+and data scie,nce,.
+Twiml — https://twimlai.com/shows/ — this podcast site, is a top site,
+for those, wanting to ke,e,p abre,ast of all the, late,st ai and ml tre,nds. it
+has a varie,ty of hosts to choose, from that discuss all sorts of topics, not
+only those, re,lating to ai or ml.
+Thank you for buying this book and if you are, re,ading the, conclusion,
+congratulations on working your way through it! ke,e,p practicing, as
+the, more, you do, the, e,asie,r machine, le,arning will be,come,, and you
+will be, programming your own ml algorithm in no time,.
+Good luck on your python machine, le,arning journe,y, and if you found
+this book he,lpful, ple,ase, le,t us know. it is always gre,at to he,ar from
+our re,ade,rs!
+                            RE FE RE NCE S
+                                ,    ,    ,       ,
+
+
+
+
+ A be,ginne,r’s guide, to classification and re,gre,ssion tre,e,s. (n.d.). digital
+       vidya. https://www.digitalvidya.com/blog/classification-and-
+                                     re,gre,ssion-
+tre,e,s/#:~:te,xt=in%20a%20re,gre,ssion%20tre,e,%2c%20a,square,d%20e,rro
+                               r s%e,2%80%9d(sse,) .
+    A compre,he,nsive, guide, to type,s of ne,ural ne,tworks. (n.d.). digital
+ vidya. https://www.digitalvidya.com/blog/type,s-of-ne,ural-ne,tworks/
+    Adkoli, v. (2019, octobe,r 5). machine, le,arning (ml) and iot can work
+                    toge,the,r to improve, live,s . ope,nsource,.
+https://www.ope,nsource,foru.com/2019/10/machine,-le,arning-ml-and-
+                      iot- can-work-toge,the,r-to-improve,-
+  live,s/#:~:te,xt=machine,%20le,arning%20(ml)%20and%20iot%20can%20
+                work%20toge,the,r%20to%20improve,%20live,s,-
+by&te,xt=the,y%20colle,ct%20huge,%20amounts%20of,and%20make,%20th
+                            e,m%20more,%20e,fficie,nt .
+    All image,s in this book we,re, of the, author's own making, including
+                            scre,e,nshots of any coding.
+                 Anaconda individual e,dition. (n.d.). anaconda.
+              https://www.anaconda.com/products/individual
+Advantage,s and disadvantage,s of python programming language,. (2017,
+                                 april 24). me,dium.
+      https://me,dium.com/mindfire,solutions.usa/advantage,s- and-
+      disadvantage,s-of-python-programming-language,-fd0b394f2121
+ Be,kle,myshe,va, a. (n.d.). why use, python for ai and machine, le,arning?
+   ste,e,l kiwi. https://ste,e,lkiwi.com/blog/python-for-ai-and-machine,-
+ le,arning/#:~:te,xt=be,ne,fits%20that%20make,%20python%20the,,ove,rall
+                  %20 popularity%20of%20the,%20language, .
+Brownle,e,, j. (2019, fe,bruary 10). your first machine, le,arning proje,ct in
+             python ste,p-by-ste,p . machine, le,arning maste,ry.
+ https://machine,le,arningmaste,ry.com/machine,-le,arning-in-python-
+                                   ste,p- by-ste,p/
+   Cope,land, b.j. (2020, august 11). artificial inte,llige,nce, . britannica.
+    https://www.britannica.com/te,chnology/artificial-inte,llige,nce,
+     History of python. (n.d.). python course,. https://www.python-
+             course,.e,u/python3_history_and_philosophy.php
+How to import a csv file, into python using pandas. (2019, de,ce,mbe,r 21).
+   data to fish. https://datatofish.com/import-csv-file,-python-using-
+                                       pandas/
+                    Intro to data structure,s. (n.d.). pandas.
+                       https://pandas.pydata.org/pandas-
+                     docs/stable,/use,r_guide,/dsintro.html
+                      Iris flowe,r data se,t. (n.d.). wikipe,dia.
+           https://e,n.wikipe,dia.org/wiki/iris_flowe,r_data_se,t
+     Iris spe,cie,s. (n.d.). kaggle,. https://www.kaggle,.com/uciml/iris
+Khare,e,m sudlow. (2019, august 3). your first machine, le,arning proje,ct
+  in python ste,p-by-ste,p - start machine, le,arning in python? [vide,o].
+         youtube,. https://www.youtube,.com/watch?V=_j-u7jcycli
+Koe,hrse,n, w. (2017, de,ce,mbe,r 27). random fore,st simple, e,xplanation .
+   Me,dium. https://me,dium.com/williamkoe,hrse,n/random-fore,st-
+                       simple,- e,xplanation-377895a60d2d
+   Machine, le,arning random fore,sts. (n.d.). python machine, le,arning
+      tutorial. https://www.python-course,.e,u/random_fore,sts.php
+   Mode,rn machine, le,arning algorithms: stre,ngths and we,akne,sse,s.
+         (n.d.). https://e,lite,datascie,nce,.com/machine,-le,arning-
+                              algorithms#re,gre,ssion
+         Pre,dict diabe,te,s from me,dical re,cords. (n.d.). kaggle,.
+https://www.kaggle,.com/paultimothymoone,y/pre,dict-diabe,te,s-with-
+                          python- starte,r-ke,rne,l
+ Python language, advantage,s and applications . (n.d.). ge,e,ksforge,e,ks.
+    https://www.ge,e,ksforge,e,ks.org/python- language,-advantage,s-
+                                 applications/
+      Python pandas - de,scriptive, statistics. (n.d.). tutorialspoint.
+https://www.tutorialspoint.com/python_pandas/python_pandas_de,scr
+                            ipti ve,_statistics.htm
+                Python pandas - function application. (n.d.). tutorialspoint.
+ https://www.tutorialspoint.com/python_pandas/python_pandas_function_ap plication.htm
+       Re,gre,ssion tre,e,s. (n.d.). python machine, le,arning tutorial.
+         https://www.python- course,.e,u/re,gre,ssion_tre,e,s.php
+            Scipy installation. (n.d.). scipy. https://www.scipy.org/install.html
+                     The, iris datase,t . (n.d.). github.
+  https://gist.github.com/curran/a08a1080b88344b0c8a7#file,-iris-csv
+                 The, python community . (n.d.). python.
+            https://www.python.org/community- landing/
+  What are, de,cision tre,e,s? (n.d.). python machine, le,arning tutorial.
+          https://www.python-course,.e,u/de,cision_tre,e,s.php
+

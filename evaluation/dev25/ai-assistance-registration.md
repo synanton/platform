@@ -11,7 +11,7 @@ annotations. The AI output is never a gold label.
 ## Proposed annotator model
 
 - Provider: OpenCode Zen (`opencode` arm), external-only, no local fallback.
-- Proposed model ID: `gemini-3.5-flash` (a non-candidate model).
+- Proposed model ID: `deepseek-v4.1-flash` (a non-candidate model, cheaper).
 - Restriction: must NOT be a Phase 2 candidate (`deepseek-v4-pro` or
   `glm-5.3-flash`). Reject any accidental overlap with the evaluation set.
 - Final model ID and revision must be recorded at call time from `GET /models`.
@@ -34,10 +34,23 @@ per document (conservative, chunked):
 
 - Input: 20 × 1,500 = 30,000 tokens.
 - Output: 20 × 600 = 12,000 tokens.
-- At a conservative $0.15 / $0.50 per million tokens:
-  - input ≈ $0.005, output ≈ $0.006, total ≈ **$0.011**.
-- Proposed spend cap for AI assistance: **$0.05**.
+- Annotator pricing (DeepSeek V4.1 Flash, off-peak): $0.15 / $0.60 per million tokens.
+- Estimated for the 9 small text/EPUB documents (~24k chars input, ~6k output):
+  input ≈ $0.001, output ≈ $0.004, total ≈ **$0.005**.
+- The 11 PDFs (2.23M chars) require chunking and a separate estimate; annotating
+  them fully exceeds the $0.05 cap and is deferred.
+- Proposed spend cap for AI assistance: **$0.05** (not to be exceeded).
 - These are estimates only; actual cost is recorded from provider usage.
+
+## Actual usage so far (preparation batch)
+
+- 9 small text/EPUB documents annotated as proposals.
+- Recorded tokens: 6,627 input / 12,660 output.
+- Estimated cost: **$0.0086** (under the $0.05 cap).
+- 3 of 9 proposals are structurally parseable; 6 require correction or
+  re-generation before human review.
+- 11 PDF documents (2.23M chars) remain unannotated and require a chunking
+  strategy plus a separate cost estimate; they are NOT included in this batch.
 
 ## Limits and stop conditions
 
