@@ -9,7 +9,7 @@ last_reviewed: "2026-11-22"
 **Decision:** [ADR-044: Ontology-Grounded Chunk Extraction](../../architecture/decisions/adr-044-ontology-grounded-chunk-extraction.md)
 **Design source:** [v1.36 OGCE proposal §9](../../architecture/proposals/v1.36/ontology-grounded-chunk-extraction.md#9-phased-rollout-and-legacy-migration)
 **Gate register:** [OGCE acceptance gates](../../quality/ogce-gates.md)
-**Owner:** aminin
+**Owner:** andreminin
 
 Status mirrors ADR-044; see ADR-044 for transition criteria. This runbook defines the drain observables only. It does not claim the drain has occurred, authorize decommissioning, or change any gate status.
 
