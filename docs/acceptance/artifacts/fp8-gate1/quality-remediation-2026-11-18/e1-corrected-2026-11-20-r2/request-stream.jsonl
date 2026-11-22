@@ -1,0 +1,78 @@
+{"event": "warmup", "ordinal": 252, "http_status": 200, "latency_s": 63.81850817799932, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 252, "rep": 1, "latency_s": 67.34817879000002, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 387, "rep": 1, "latency_s": 30.01437556500059, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 423, "rep": 1, "latency_s": 24.195225986999503, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 442, "rep": 1, "latency_s": 53.53959756399945, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 453, "rep": 1, "latency_s": 40.30227285000001, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 508, "rep": 1, "latency_s": 22.790482293000423, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 520, "rep": 1, "latency_s": 85.13689950000025, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 524, "rep": 1, "latency_s": 69.86158145900026, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 18, "rep": 1, "latency_s": 38.649287817000186, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 150, "rep": 1, "latency_s": 99.60116904899951, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 179, "rep": 1, "latency_s": 123.68205111800035, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 427, "rep": 1, "latency_s": 78.75155636699947, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 450, "rep": 1, "latency_s": 85.4682906349999, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 475, "rep": 1, "latency_s": 52.52742526400016, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 492, "rep": 1, "latency_s": 33.93076907500017, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 493, "rep": 1, "latency_s": 62.44862308100073, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 516, "rep": 1, "latency_s": 52.300162731000455, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 526, "rep": 1, "latency_s": 131.51237301100082, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 252, "rep": 2, "latency_s": 63.73515208800018, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 387, "rep": 2, "latency_s": 30.020957218999683, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 423, "rep": 2, "latency_s": 24.191391329999533, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 442, "rep": 2, "latency_s": 53.54760350400011, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 453, "rep": 2, "latency_s": 40.305929389000084, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 508, "rep": 2, "latency_s": 22.787344760999986, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 520, "rep": 2, "latency_s": 85.13673197200023, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 524, "rep": 2, "latency_s": 69.8631925439995, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 18, "rep": 2, "latency_s": 38.65228720699997, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 150, "rep": 2, "latency_s": 99.60568511800011, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 179, "rep": 2, "latency_s": 123.6852745619999, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 427, "rep": 2, "latency_s": 78.74644094399991, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 450, "rep": 2, "latency_s": 85.47103986799993, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 475, "rep": 2, "latency_s": 52.532842833999894, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 492, "rep": 2, "latency_s": 33.928819950000616, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 493, "rep": 2, "latency_s": 62.44858913999997, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 516, "rep": 2, "latency_s": 52.30567974299993, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 526, "rep": 2, "latency_s": 131.51519253800052, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 252, "rep": 3, "latency_s": 63.74544011099988, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 387, "rep": 3, "latency_s": 30.021339345999877, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 423, "rep": 3, "latency_s": 24.194128297000134, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 442, "rep": 3, "latency_s": 53.54111633800039, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 453, "rep": 3, "latency_s": 40.30467609100015, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 508, "rep": 3, "latency_s": 22.792091121999874, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 520, "rep": 3, "latency_s": 85.1314817780003, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 524, "rep": 3, "latency_s": 69.8699001089999, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 18, "rep": 3, "latency_s": 38.65106325800025, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 150, "rep": 3, "latency_s": 99.60708079000051, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 179, "rep": 3, "latency_s": 123.68983731299977, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 427, "rep": 3, "latency_s": 78.75538823399984, "finish": "stop", "json_valid": false, "fatal": null}
+{"event": "request", "ordinal": 450, "rep": 3, "latency_s": 85.4800176890003, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 475, "rep": 3, "latency_s": 52.522012297999936, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 492, "rep": 3, "latency_s": 33.935801591999734, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 493, "rep": 3, "latency_s": 62.45408859500003, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 516, "rep": 3, "latency_s": 52.3045979540002, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 526, "rep": 3, "latency_s": 131.5223029860008, "finish": "stop", "json_valid": false, "fatal": null}
+{
+  "model": "gate1-fp8-8b",
+  "endpoint": "http://127.0.0.1:8001",
+  "prompt_template_sha256": "8a1a610cddc5e1ed21a54330ce95d5c1e07bddf2a06cfe9a271819c44b443f1e",
+  "rendered_prompt_sha256": "6901b657abe50ad9994a6df294bb322834f93186c524c117183dbc8c670e159f",
+  "max_tokens": 7168,
+  "temperature": 0,
+  "reps": 3,
+  "scheduled": 54,
+  "completed": 54,
+  "fatal_failures": 0,
+  "json_valid": 36,
+  "finish_reasons": {
+    "stop": 54
+  },
+  "latency_p50_s": 53.54760350400011,
+  "latency_p95_s": 131.51237301100082,
+  "latency_max_s": 131.5223029860008,
+  "completion_tokens": 155982,
+  "prompt_tokens": 40965,
+  "completion_tokens_per_s": 45.224458701154724,
+  "total_request_seconds": 3449.062840768004
+}

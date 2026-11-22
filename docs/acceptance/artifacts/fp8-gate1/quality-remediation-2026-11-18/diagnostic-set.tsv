@@ -1,0 +1,19 @@
+role	chunk_ordinal	failure_class	notes
+target	252	reasoning_preface_placeholder_tokens	invalid in all 3 reps; finish_reason=stop
+target	387	reasoning_preface_multi_object	invalid in all 3 reps; finish_reason=stop
+target	423	reasoning_preface_multi_object	invalid in all 3 reps; finish_reason=stop
+target	442	truncation_at_max_tokens	invalid in all 3 reps; finish_reason=length
+target	453	reasoning_preface_multi_object	invalid in all 3 reps; finish_reason=stop
+target	508	reasoning_preface_multi_object	invalid in all 3 reps; finish_reason=stop
+target	520	truncation_at_max_tokens	invalid in all 3 reps; finish_reason=length
+target	524	reasoning_preface_placeholder_tokens	invalid in all 3 reps; finish_reason=stop
+control	18	none	valid in all 3 reps
+control	150	none	valid in all 3 reps
+control	179	none	valid in all 3 reps
+control	427	none	valid in all 3 reps
+control	450	none	valid in all 3 reps
+control	475	none	valid in all 3 reps
+control	492	none	valid in all 3 reps
+control	493	none	valid in all 3 reps
+control	516	none	valid in all 3 reps
+control	526	none	valid in all 3 reps

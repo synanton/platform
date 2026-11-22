@@ -1,0 +1,18 @@
+== relix ==
+ACTIVATION_RECOVERY_ENABLED=true
+PROMOTION_COMPLETION_ENABLED=true
+PROMOTION_CONSUMER_ENABLED=true
+RECONCILIATION_ENABLED=true
+
+== synflux ==
+Defaulted container "synflux" out of: synflux, content-cache-perms (init)
+EXTRACTION_CONSUMER_ENABLED=true
+EXTRACTION_GRAPH_ENABLED=true
+EXTRACTION_PROVIDER=llm
+PROMOTION_PRODUCER_ENABLED=true
+
+== synquest ==
+Defaulted container "synquest" out of: synquest, index-perms (init)
+RESOLUTION_CONSUMER_ENABLED=true
+
+OWNERSHIP_ENABLED: not a defined flag in this tree; ownership fencing is always active on the promotion producer/consumer path.

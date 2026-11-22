@@ -1,9 +1,10 @@
 package org.synanton.relix.api;
 
 import org.junit.jupiter.api.Test;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.tenant.MissingTenantContextException;
 import org.synanton.relix.api.dto.GraphQueryRequest;
-import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.graph.GraphReadPort;
 import org.synanton.relix.service.EntityLookupExecutor;
 import org.synanton.relix.service.OneHopExecutor;
 
@@ -19,19 +20,20 @@ import static org.mockito.Mockito.mock;
  */
 class TenantContextRequiredTest {
 
-    private final GraphConnector connector = mock(GraphConnector.class);
+    private final GraphReadPort connector = mock(GraphReadPort.class);
+    private final GraphIdentity identity = GraphIdentity.canonical("tenant-a", "v1");
 
     @Test
     void entityLookupWithoutTenantRejects() {
         GraphQueryRequest request = new GraphQueryRequest(null, "lookup", Map.of("label", "x"));
-        assertThatThrownBy(() -> new EntityLookupExecutor().execute(connector, request))
+        assertThatThrownBy(() -> new EntityLookupExecutor().execute(connector, identity, request))
                 .isInstanceOf(MissingTenantContextException.class);
     }
 
     @Test
     void oneHopWithoutTenantRejects() {
         GraphQueryRequest request = new GraphQueryRequest(null, "hop", Map.of());
-        assertThatThrownBy(() -> new OneHopExecutor().execute(connector, request))
+        assertThatThrownBy(() -> new OneHopExecutor().execute(connector, identity, request))
                 .isInstanceOf(MissingTenantContextException.class);
     }
 }

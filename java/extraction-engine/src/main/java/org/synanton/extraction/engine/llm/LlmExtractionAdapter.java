@@ -7,7 +7,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -20,6 +26,7 @@ import java.util.UUID;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.extraction.engine.TextSegment;
@@ -42,37 +49,70 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     public static final String PROMPT_VERSION = "extraction-v1";
     private static final String PROMPT_RESOURCE = "/prompts/extraction-v1.txt";
-    private static final int MAX_TOKENS = 2048;
+    private static final int DEFAULT_MAX_TOKENS = 2048;
 
     static final String DEFAULT_TYPES = String.join(", ",
-            "MaintenanceSystem", "Component", "Protocol", "Procedure", "Material", "Organization",
-            "Person", "Role", "Product", "Document", "Standard", "Metric", "Measurement",
-            "Location", "Time", "Algorithm", "DataStructure", "Concept", "Event", "Problem");
+            "Organization", "Supplier", "Customer", "Product", "Warehouse", "Order", "OrderLine",
+            "Shipment", "InventoryItem", "Location", "Address", "Country", "City", "PurchaseOrder",
+            "SalesOrder", "Carrier", "Contract", "Invoice", "Payment", "MaintenanceSystem",
+            "Component", "Procedure", "Document", "Measurement", "Time", "Concept");
 
     static final String DEFAULT_PREDICATES = String.join(", ",
-            "has_component", "part_of", "tested_every", "replaced_every", "signs", "records",
-            "documents", "performed_on", "logs", "verifies", "replaced_at", "requires",
-            "repeats_every", "applied_to", "is_a", "used_in", "improves_over", "discussed_in",
-            "same_as", "seeks", "visits", "combines", "implements", "uses", "has", "related_to",
-            "computes", "measures", "obeys", "matches");
+            "hasSupplier", "hasCustomer", "locatedIn", "containsProduct", "partOfOrder",
+            "shipsVia", "fulfillsOrder", "tested_every", "replaced_every", "records", "requires");
+
+    static final String RELATION_CONTRACT = """
+            Product --hasSupplier--> Supplier
+            Order --hasCustomer--> Customer
+            Warehouse --locatedIn--> Location
+            OrderLine --containsProduct--> Product
+            OrderLine --partOfOrder--> Order
+            Shipment --shipsVia--> Carrier
+            Shipment --fulfillsOrder--> Order
+            Component --tested_every--> Time
+            Component --replaced_every--> Time
+            Concept --records--> Measurement
+            MaintenanceSystem --requires--> Component
+            """.strip();
 
     private final HttpClient client;
     private final String endpoint;
     private final String model;
     private final Duration timeout;
+    private final int maxTokens;
+    private final Path captureDir;
     private final String promptTemplate;
 
     public LlmExtractionAdapter(String endpoint, String model) {
-        this(endpoint, model, Duration.ofSeconds(120));
+        this(endpoint, model, Duration.ofSeconds(120), DEFAULT_MAX_TOKENS, null);
     }
 
     public LlmExtractionAdapter(String endpoint, String model, Duration timeout) {
+        this(endpoint, model, timeout, DEFAULT_MAX_TOKENS, null);
+    }
+
+    public LlmExtractionAdapter(String endpoint, String model, Duration timeout, int maxTokens) {
+        this(endpoint, model, timeout, maxTokens, null);
+    }
+
+    public LlmExtractionAdapter(String endpoint, String model, Duration timeout, int maxTokens,
+                                Path captureDir) {
         this(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
                         .connectTimeout(Duration.ofSeconds(10)).build(),
-                endpoint, model, timeout);
+                endpoint, model, timeout, maxTokens, captureDir);
     }
 
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model, Duration timeout) {
+        this(client, endpoint, model, timeout, DEFAULT_MAX_TOKENS, null);
+    }
+
+    public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
+                                Duration timeout, int maxTokens) {
+        this(client, endpoint, model, timeout, maxTokens, null);
+    }
+
+    public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
+                                Duration timeout, int maxTokens, Path captureDir) {
         if (endpoint == null || endpoint.isBlank()) {
             throw new IllegalArgumentException("LLM extraction endpoint is required");
         }
@@ -80,6 +120,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         this.endpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
         this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
         this.timeout = timeout == null ? Duration.ofSeconds(120) : timeout;
+        this.maxTokens = Math.max(1, maxTokens);
+        this.captureDir = captureDir;
         this.promptTemplate = loadPrompt();
     }
 
@@ -90,8 +132,17 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             return ExtractionResult.empty();
         }
         int base = segment.charOffsetStart();
-        String content = call(buildPrompt(context), text);
-        Map<String, Object> raw = Json.parseObject(Json.extractObject(content));
+        LlmCallResult call = call(buildPrompt(context), text);
+        String content = call.content();
+        String parserInput = null;
+        Map<String, Object> raw;
+        try {
+            parserInput = Json.extractObject(content);
+            raw = Json.parseObject(parserInput);
+        } catch (RuntimeException parseFailure) {
+            captureParseFailure(segment, context, call, content, parserInput, parseFailure);
+            throw parseFailure;
+        }
 
         List<PreEntity> entities = new ArrayList<>();
         Map<String, PreEntity> bySurface = new LinkedHashMap<>();
@@ -158,7 +209,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             relations.add(new RelationCandidate(subject.mentionId(), predicate, object.mentionId(),
                     segment.chunkId(), evidenceStart, evidenceEnd));
         }
-        return new ExtractionResult(List.copyOf(entities), List.copyOf(relations));
+        return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage());
     }
 
     private PreEntity resolve(String surface, String quote, String text, int base, TextSegment segment,
@@ -241,9 +292,9 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         return out;
     }
 
-    private String call(String prompt, String text) {
+    private LlmCallResult call(String prompt, String text) {
         String body = "{\"model\":" + Json.quote(model)
-                + ",\"temperature\":0,\"max_tokens\":" + MAX_TOKENS
+                + ",\"temperature\":0,\"max_tokens\":" + maxTokens
                 + ",\"messages\":[{\"role\":\"system\",\"content\":" + Json.quote(prompt)
                 + "},{\"role\":\"user\",\"content\":" + Json.quote("TEXT:\n" + text) + "}]}";
         HttpRequest request = HttpRequest.newBuilder(URI.create(chatCompletionsUrl()))
@@ -258,22 +309,103 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 throw new IllegalStateException("LLM extraction returned HTTP " + response.statusCode()
                         + ": " + truncate(response.body()));
             }
-            Map<String, Object> envelope = Json.parseObject(response.body());
+            String responseBody = response.body();
+            Map<String, Object> envelope = Json.parseObject(responseBody);
             List<Map<String, Object>> choices = Json.objectList(envelope, "choices");
             if (choices.isEmpty()) {
                 throw new IllegalStateException("LLM extraction response has no choices");
             }
-            String content = Json.string(Json.object(choices.get(0), "message"), "content", "");
+            Map<String, Object> choice = choices.get(0);
+            String finishReason = Json.string(choice, "finish_reason", "unknown");
+            Map<String, Object> usage = Json.object(envelope, "usage");
+            LlmUsage llmUsage = new LlmUsage(
+                    finishReason,
+                    Json.integer(usage, "prompt_tokens", -1),
+                    Json.integer(usage, "completion_tokens", -1),
+                    Json.integer(usage, "total_tokens", -1));
+            String content = Json.string(Json.object(choice, "message"), "content", "");
+            if (llmUsage.isIncomplete()) {
+                throw new LlmIncompleteOutputException(llmUsage, responseBody.length(),
+                        sha256(responseBody));
+            }
             if (content.isBlank()) {
                 throw new IllegalStateException("LLM extraction response has empty content");
             }
-            return content;
+            return new LlmCallResult(content, llmUsage, responseBody);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("LLM extraction interrupted", e);
         } catch (IOException e) {
             throw new IllegalStateException("LLM extraction request failed: " + endpoint, e);
         }
+    }
+
+    private static String sha256(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder out = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                out.append(String.format("%02x", b));
+            }
+            return out.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable", e);
+        }
+    }
+
+    private void captureParseFailure(TextSegment segment, ExtractionContext context,
+                                     LlmCallResult call, String content, String parserInput,
+                                     RuntimeException failure) {
+        if (captureDir == null) {
+            return;
+        }
+        try {
+            Files.createDirectories(captureDir);
+            String raw = call.rawBody();
+            String input = parserInput == null ? "" : parserInput;
+            StringBuilder json = new StringBuilder(256 + raw.length() + content.length());
+            json.append('{');
+            appendField(json, "timestamp", Instant.now().toString()).append(',');
+            appendField(json, "tenant_id", context == null ? null : context.tenantId()).append(',');
+            appendField(json, "source_version_id", context == null ? null : context.sourceVersionId()).append(',');
+            appendField(json, "document_id", context == null ? null : context.documentId()).append(',');
+            appendField(json, "chunk_id", segment == null ? null : segment.chunkId()).append(',');
+            appendField(json, "finish_reason", call.usage().finishReason()).append(',');
+            json.append("\"prompt_tokens\":").append(call.usage().promptTokens()).append(',');
+            json.append("\"completion_tokens\":").append(call.usage().completionTokens()).append(',');
+            json.append("\"total_tokens\":").append(call.usage().totalTokens()).append(',');
+            appendField(json, "raw_response_sha256", sha256(raw)).append(',');
+            json.append("\"raw_response_chars\":").append(raw.length()).append(',');
+            appendField(json, "content_sha256", sha256(content)).append(',');
+            json.append("\"content_chars\":").append(content.length()).append(',');
+            appendField(json, "parser_input_sha256", sha256(input)).append(',');
+            json.append("\"parser_input_chars\":").append(input.length()).append(',');
+            appendField(json, "parser_exception", failure.toString()).append(',');
+            appendField(json, "raw_response", raw).append(',');
+            appendField(json, "content", content).append(',');
+            appendField(json, "parser_input", input);
+            json.append('}');
+            Path target = captureDir.resolve("parse-failure-" + UUID.randomUUID() + ".json");
+            Files.writeString(target, json.toString(), StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+            try {
+                Files.setPosixFilePermissions(target,
+                        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+            } catch (UnsupportedOperationException ignored) {
+                // Non-POSIX filesystems still rely on the capture directory ACL.
+            }
+        } catch (Exception ignored) {
+            // Capture must never mask the parser failure.
+        }
+    }
+
+    private static StringBuilder appendField(StringBuilder json, String key, String value) {
+        return json.append(Json.quote(key)).append(':')
+                .append(value == null ? "null" : Json.quote(value));
+    }
+
+    private record LlmCallResult(String content, LlmUsage usage, String rawBody) {
     }
 
     private String chatCompletionsUrl() {
@@ -287,7 +419,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 ? String.join(", ", context.allowedEntityTypes())
                 : DEFAULT_TYPES;
         return promptTemplate.replace("{allowed_types}", types)
-                .replace("{allowed_predicates}", DEFAULT_PREDICATES);
+                .replace("{allowed_predicates}", DEFAULT_PREDICATES)
+                .replace("{relation_contract}", RELATION_CONTRACT);
     }
 
     private static String normalizePredicate(String predicate) {

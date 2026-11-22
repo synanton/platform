@@ -1,0 +1,3 @@
+classification=INFRASTRUCTURE_ABORTED
+cause=transport_connection_refused_from_dropped_port_forward
+model_quality_signal=none

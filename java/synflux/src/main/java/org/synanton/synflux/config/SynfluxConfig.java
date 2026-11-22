@@ -2,8 +2,8 @@ package org.synanton.synflux.config;
 
 import org.synanton.contentcache.ContentStore;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
-import org.synanton.extraction.engine.llm.LlmExtractionAdapter;
-import org.synanton.extraction.engine.regex.RegexExtractorAdapter;
+import org.synanton.synflux.extraction.provider.ExtractionEngines;
+import org.synanton.synflux.extraction.provider.ExtractionProvider;
 import org.synanton.contentcache.FileSystemContentStore;
 import org.synanton.common.kafka.KafkaClientConfig;
 import org.synanton.extraction.client.ExtractionClientMetrics;
@@ -32,6 +32,7 @@ import org.synanton.synflux.resolution.CanonicalRelationValidator;
 import org.synanton.synflux.resolution.DefaultCanonicalRelationValidator;
 import org.synanton.synflux.resolution.HttpRelixResolutionLookup;
 import org.synanton.common.jwt.ServiceTokenMinter;
+import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.synflux.domain.ChunkerConfig;
 import org.synanton.synflux.pipeline.PipelineStage;
@@ -115,24 +116,8 @@ public class SynfluxConfig {
     @Bean
     @ConditionalOnMissingBean(ExtractionEngineAdapter.class)
     public ExtractionEngineAdapter extractionEngineAdapter(ExtractionEngineProperties properties) {
-        String provider = properties.provider() == null
-                ? "regex"
-                : properties.provider().strip().toLowerCase(Locale.ROOT);
-        return switch (provider) {
-            case "regex" -> new RegexExtractorAdapter();
-            case "llm" -> new LlmExtractionAdapter(
-                    properties.endpoint() == null || properties.endpoint().isBlank()
-                            ? "http://localhost:8000/v1"
-                            : properties.endpoint(),
-                    properties.model() == null || properties.model().isBlank()
-                            ? "qwen3-extraction"
-                            : properties.model(),
-                    Duration.ofSeconds(properties.timeoutSeconds() == null
-                            ? 120
-                            : Math.max(1, properties.timeoutSeconds())));
-            default -> throw new IllegalStateException(
-                    "unknown synflux.extraction-engine.provider: " + provider + " (want regex|llm)");
-        };
+        ExtractionProvider provider = ExtractionProvider.parseOrDefault(properties.provider());
+        return ExtractionEngines.create(provider, properties);
     }
 
     @Bean
@@ -152,8 +137,10 @@ public class SynfluxConfig {
     @Bean
     public GraphWriter graphWriter(IngestionCacheClient cacheClient, RelationValidator validator,
                                    GraphWriteClient graphWriteClient, ExtractionGraphProperties properties,
-                                   Clock clock) {
-        return new GraphWriter(cacheClient, validator, graphWriteClient, properties, clock);
+                                   Clock clock,
+                                   org.springframework.beans.factory.ObjectProvider<org.synanton.ingestioncache.activation.SourceActivationStore> activationStore) {
+        return new GraphWriter(cacheClient, validator, graphWriteClient, properties, clock,
+                activationStore.getIfAvailable());
     }
 
     private static ObjectMapper graphMapper() {
@@ -162,7 +149,7 @@ public class SynfluxConfig {
     }
 
     @Bean
-    public ResolutionGraphLookup resolutionGraphLookup(
+    public HttpRelixResolutionLookup resolutionGraphLookup(
             @Value("${RELIX_BASE_URL:http://relix:8080}") String relixBaseUrl,
             @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
         return new HttpRelixResolutionLookup(relixBaseUrl,
@@ -171,10 +158,12 @@ public class SynfluxConfig {
 
     @Bean
     public CanonicalRelationValidator canonicalRelationValidator(
-            ResolutionGraphLookup resolutionGraphLookup, RelationValidator relationValidator,
-            IngestionCacheClient cacheClient, Clock clock) {
-        return new DefaultCanonicalRelationValidator(resolutionGraphLookup, relationValidator,
-                cacheClient, clock);
+            ResolutionGraphLookup resolutionGraphLookup,
+            ExtractedMentionGraphReadPort extractedReadPort,
+            RelationValidator relationValidator,
+            IngestionCacheClient cacheClient) {
+        return new DefaultCanonicalRelationValidator(resolutionGraphLookup, extractedReadPort,
+                relationValidator, cacheClient);
     }
 
     @Bean

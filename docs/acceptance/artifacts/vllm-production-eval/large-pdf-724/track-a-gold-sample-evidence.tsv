@@ -1,0 +1,342 @@
+candidate_id	split	chunk_ordinal	page_start	page_end	token_count	predicate	subject_surface	object_surface	evidence_start	evidence_end	evidence_text	chunk_text
+cand-00dd9da79f14	DEV	493	83	83	379	is_a	6.6.1	Google	492	801	In collaboration with UNEP and the European Commission Joint Research Centre, Google launched a new platform—the Freshwater Ecosystems Explorer—enabling all countries to freely measure and monitor freshwater resources (towards Sustainable Development Goal 6.6.1), and when and where surface water is changing.	"Environmental Report > Operating sustainably > Nature and biodiversity > Partnerships > Organization Details
+
+World Resources Institute (WRI)
+
+Since 2015, Google and the U.N. Food and Agricultural Organization have partnered on the monitoring of forests, natural resources, livelihoods, and the environment. FAO uses Google Earth Engine for satellite remote sensing and geospatial data science towards groundbreaking science and operational workflows used by practitioners around the globe.
+
+In collaboration with UNEP and the European Commission Joint Research Centre, Google launched a new platform—the Freshwater Ecosystems Explorer—enabling all countries to freely measure and monitor freshwater resources (towards Sustainable Development Goal 6.6.1), and when and where surface water is changing.
+
+Google has been a member of the WBCSD for several years and participates in a number of its initiatives. We’re actively involved in initiatives related to improving well-being for people and the planet, including shifting diets, consumer behavior changes, and regenerative agriculture.
+
+Google has a 13-year long relationship with WRI for impact-focused collaboration. Some key projects include developing a near-real-time land cover dataset (Dynamic World), deforestation monitoring and alerts (Global Forest Watch), ending commodity-driven deforestation and accelerating restoration (Forest Data Partnership), measuring and mitigating extreme heat (supported by Google.org), and educating stakeholders on 24/7 CFE."
+cand-014867b89e47	DEV	516	87	88	327	is_a	Our Operational Scope	Category	406	510	Our Operational Scope 3 emissions are made up of Category 6 and Category 7, and are third-party assured.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Our inventory > Scope 3 GHG emissions
+
+In our Environmental data tables, we present certain emissions from Category 1, Category 2, Category 11, nd Category 12 as an aggregated subtotal—“Other categories”—for business reasons, as described further below.
+
+Our Operational Scope 3 emissions are made up of Category 6 and Category 7, and are third-party assured. All reported Scope 3 emissions values are rounded to the nearest thousand.
+
+Category 1: “Purchased goods and services” includes emissions generated from manufacturing consumer hardware and our food program. To estimate full supply chain emissions generated from manufacturing consumer hardware, we perform third-party-verified Life Cycle Assessments (LCAs) in accordance with ISO 14040 and
+
+14044. For our food program, we use LCA emission
+
+factors from WRI and annual Bay Area procurement volumes to estimate emissions, which we extrapolate to our global operations using building admittances.
+
+In our Environmental data tables, emissions from manufacturing consumer hardware products are presented in Category 2: “Capital goods.” Emissions from our food program are presented in “Other categories.”"
+cand-02f151b90e6d	DEV	427	70	70	408	is_a	Biophilic Design Toolkit	Some	1387	1554	To further this, we collaborated on an initiative with the ILFI to make a Biophilic Design Toolkit that was launched in 2022 and is freely available for anyone to use.	"Environmental Report > Operating sustainably > Nature and biodiversity > Our approach > Protecting nature and making it more accessible > Connecting communities and nature
+
+Connecting communities and nature
+
+We invest for the long term, so we want to care for the environments and communities where we operate. We engage with local communities and leading programming that extends the benefits of nature to all. For example, in partnership with the Santa Clara Valley Audubon Society, the City of Mountain View, and other organizations, Google hosts “Egret Office Hours” at the Shorebird Way rookery so the public can safely see moments throughout the egret breeding cycle.
+
+As another example, we created the Green Loop, a publicly accessible pedestrian and cycling trail connecting some of our buildings in Mountain View. The Green Loop was designed with native vegetation to enhance habitats for pollinators and other wildlife (including nearly 100 native trees), as well as to help manage stormwater.
+
+We ensure that Googlers have access to the benefits of high-quality biodiverse nature through incorporating exterior landscapes and access to nature on our campuses, as described above. We also focus on bringing attributes of natural environments into our interior spaces by applying biophilic design practices, such as natureinspired architecture, interior, and landscape design. To further this, we collaborated on an initiative with the ILFI to make a Biophilic Design Toolkit that was launched in 2022 and is freely available for anyone to use.
+
+Some recent buildings that reflect this approach to biophilic design include:"
+cand-03765db61ebe	DEV	520	87	88	341	is_a	Emissions	DEFRA U	873	919	Emissions are calculated using 2022 DEFRA U.K.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Our inventory > Scope 3 GHG emissions
+
+worksites by private vehicle, public transit, motorcycle, and gas-powered scooter commuting trips. To determine the number of commuting trips by mode made in 2022, we surveyed our employees to determine typical commuting patterns and applied these commuting patterns to our global employee population. The calculation uses an average commuting distance for passenger vehicles obtained from the U.S. Department of Transportation’s 2017 National Household Travel Survey and an average fuel efficiency for passenger vehicles obtained from the U.S. Department of Transportation’s Transportation Statistics Table 4–23. Data obtained from our value chain partners isn’t used at this time. Emissions are calculated using 2022 DEFRA U.K. Government GHG Conversion Factors for passenger vehicles. This category also includes teleworking emissions, which we began to estimate and report in 2020, when teleworking became prevalent due to the global pandemic. Teleworking represents emissions generated by employees working remotely from their homes. We apply the estimation methodology outlined in EcoAct’s 2020 Homeworking Emissions white paper to our annual average workforce in 2022."
+cand-009ad1b46846	DEV	524	88	89	448	is_a	GHGs	GHG	784	939	A carbon offset project is an activity that reduces GHG emissions or captures GHG emissions from the atmosphere, ultimately represented by a carbon credit.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Emissions reductions and compensations
+
+Emissions reductions and compensations
+
+We calculate our total operational emissions by summing Scope 1, Scope 2 (market-based), Scope 3 (Category 6: Business travel), and Scope 3 (Category 7: Employee commuting, including teleworking), per the criteria described above. This market-based subtotal has been reduced by the impact of renewable energy procurement via PPAs and market-based emission factors.
+
+Our operational emissions are then further compensated for by high-quality carbon credits enabled through contracted carbon offset projects, which capture and destroy highly potent GHGs. A carbon offset project is an activity that reduces GHG emissions or captures GHG emissions from the atmosphere, ultimately represented by a carbon credit. The carbon credit signifies that GHG emissions are lower than if no one had invested in the project. One carbon credit equals one metric ton of carbon dioxide equivalent prevented from entering the atmosphere. We assess these projects against four standards before investing: additionality, leakage prevention, permanence, and verifiability.
+
+We primarily enter into long-term purchase agreements with carbon credit suppliers to secure future deliveries. Once carbon credits from a project under contract are verified by a third-party and issued by a carbon registry, per the agreement terms, ownership of the carbon credits is transferred from the project owner to Google. Our carbon credits are verified under the Climate Action Reserve (CAR), American Carbon Registry (ACR), Verified Carbon Standard (VCS), or the UNFCCC Clean Development Mechanism."
+cand-00a9fd0a20ff	DEV	524	88	89	448	is_a	Our	Climate Action Reserve	1614	1792	Our carbon credits are verified under the Climate Action Reserve (CAR), American Carbon Registry (ACR), Verified Carbon Standard (VCS), or the UNFCCC Clean Development Mechanism.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Emissions reductions and compensations
+
+Emissions reductions and compensations
+
+We calculate our total operational emissions by summing Scope 1, Scope 2 (market-based), Scope 3 (Category 6: Business travel), and Scope 3 (Category 7: Employee commuting, including teleworking), per the criteria described above. This market-based subtotal has been reduced by the impact of renewable energy procurement via PPAs and market-based emission factors.
+
+Our operational emissions are then further compensated for by high-quality carbon credits enabled through contracted carbon offset projects, which capture and destroy highly potent GHGs. A carbon offset project is an activity that reduces GHG emissions or captures GHG emissions from the atmosphere, ultimately represented by a carbon credit. The carbon credit signifies that GHG emissions are lower than if no one had invested in the project. One carbon credit equals one metric ton of carbon dioxide equivalent prevented from entering the atmosphere. We assess these projects against four standards before investing: additionality, leakage prevention, permanence, and verifiability.
+
+We primarily enter into long-term purchase agreements with carbon credit suppliers to secure future deliveries. Once carbon credits from a project under contract are verified by a third-party and issued by a carbon registry, per the agreement terms, ownership of the carbon credits is transferred from the project owner to Google. Our carbon credits are verified under the Climate Action Reserve (CAR), American Carbon Registry (ACR), Verified Carbon Standard (VCS), or the UNFCCC Clean Development Mechanism."
+cand-077784679afc	HOLDOUT	179	27	27	426	has	Google	Wildlife Insights	1324	1589	Since 2017, Google has been a founding technology partner in Wildlife Insights—a collaboration between seven leading conservation organizations to streamline biodiversity monitoring with the help of AI and to fill critical data gaps to inform data-driven decisions.	"Environmental Report > Working together > Our approach > Supporting partners > Researchers, academics, and NGOs > Wildlife monitoring
+
+Wildlife monitoring
+
+In 2022, global search interest in “wildlife” nearly tripled,63 reaching a 15-year high.64 We’re using our technology to support wildlife conservation efforts around the world. TerrAdapt uses satellite monitoring technology powered by Google Earth Engine to project habitat conditions given future climate and land-use scenarios. TerrAdapt can help prioritize areas for conservation actions—like habitat restoration, increasing protection status, and building wildlife crossings.
+
+Google teamed up with the Commonwealth Scientific and Industrial Research Organisation (CSIRO—Australia’s national science agency) and the Kaggle data science community to protect coral reefs including Australia’s Great Barrier Reef, the world’s biggest coral reef system. We developed a machine learning solution to analyze underwater images of a species of starfish that feed on living coral. By detecting them more accurately and efficiently, scientists can now more easily monitor the reef and manage the impact of the starfish more effectively. In collaboration with CSIRO and other partners, we’re also applying AI to measure carbon sequestration capacity of seagrass ecosystems.
+
+Since 2017, Google has been a founding technology partner in Wildlife Insights—a collaboration between seven leading conservation organizations to streamline biodiversity monitoring with the help of AI and to fill critical data gaps to inform data-driven decisions. This platform makes it easier for conservationists and scientists to collect and analyze data from remote cameras."
+cand-20cf797293d3	DEV	150	23	23	290	has	Google	AI-based	0	528	"Environmental Report > Working together > Our approach > Supporting partners > Governments and intergovernmental organizations > Adaptation support for communities > Wildfire detection and prediction
+
+Wildfire detection and prediction
+
+Climate change is increasing the frequency and severity of wildfires, which are having a devastating impact on communities and ecosystems around the world.56 To minimize the impact of wildfires on communities, Google has developed a new AI-based technology to map wildfires in near real time."	"Environmental Report > Working together > Our approach > Supporting partners > Governments and intergovernmental organizations > Adaptation support for communities > Wildfire detection and prediction
+
+Wildfire detection and prediction
+
+Climate change is increasing the frequency and severity of wildfires, which are having a devastating impact on communities and ecosystems around the world.56 To minimize the impact of wildfires on communities, Google has developed a new AI-based technology to map wildfires in near real time. It uses data from geostationary satellites such as NOAA’s GOES constellation to show the size of a wildfire, with data being refreshed roughly every 15–20 minutes. Additionally, we’re collaborating with the USFS on wildfire research by using advanced simulation and AI techniques to accelerate their fire spread model.57
+
+We’ve also been working closely with U.S. agencies, such as the U.S. Forest Service (USFS). USFS used Google Earth Engine and Google Cloud technology to build a Landscape Change Monitoring System to map and monitor land cover change across the United States and support forest planning and post-fire recovery."
+cand-03b1b7056cd8	HOLDOUT	490	83	83	374	has	Ellen MacArthur Foundation	AI	0	408	"Environmental Report > Operating sustainably > Nature and biodiversity > Partnerships > Organization Details
+
+Google is a partner of the Ellen MacArthur Foundation, having joined the foundation’s network in 2015, and has coauthored a number of thought leadership white papers and case studies in areas such as safer chemistry, the deconstruction and reuse of commercial office buildings, electronics, and AI."	"Environmental Report > Operating sustainably > Nature and biodiversity > Partnerships > Organization Details
+
+Google is a partner of the Ellen MacArthur Foundation, having joined the foundation’s network in 2015, and has coauthored a number of thought leadership white papers and case studies in areas such as safer chemistry, the deconstruction and reuse of commercial office buildings, electronics, and AI.
+
+Ellen MacArthur Foundation (EMF)
+
+Environmental Defense Fund (EDF)
+
+Google has partnered with EDF to map air quality using Street View cars in the U.S., Europe, and Southeast Asia, and to detect methane leaks in cities since 2011.
+
+Google supported the launch of the European 24/7 Hub with Eurelectric, which provides education on the “what, why, and how” of 24/7 carbon-free energy buyers and suppliers in Europe. Google spoke at the launch event during European Sustainable Energy Week.
+
+European 24/7 Hub
+
+European Climate Pact
+
+Google was among the leading businesses that joined the European Climate Pact in its inaugural year to share our commitment to help achieve a climate neutral Europe.
+
+Google is an active member of the EGDC—a group of technology companies committed to supporting the green and digital transformation of the EU. As a member, Google participates in the initiative, designed to harness the emission-reducing potential of digital solutions for all other sectors, and support green and digital transformations in the EU.
+
+European Green Digital Coalition (EGDC)"
+cand-0dfbdb600a71	DEV	18	4	4	300	has	Google	AI	1004	1162	In order to push the frontiers of innovation, Google has long had a world-class research organization that’s been at the forefront of AI and machine learning.	"Environmental Report > Executive letters > A letter from our Senior Vice President of Learning and Sustainability
+
+Helpful information can be critical in both efforts to reduce emissions as well as adapt to extreme climate events like floods, wildfires, and heat waves. But this information often lives in silos and is hard to access. Making the information accessible and useful can be a tough technical challenge. Our products like Environmental Insights Explorer, Earth Engine, and Data Commons are key solutions to support the decisions that cities and organizations will have to make. Information can also have a significant impact on the decisions of individuals—particularly in the areas of home energy and transportation. Our products like Maps, Search, and Nest reach billions of users around the world, and we’re building many features to respond to the demand for that information in our products.
+
+Given the scale of the problem, innovation will also be key to getting us to a better future. In order to push the frontiers of innovation, Google has long had a world-class research organization that’s been at the forefront of AI and machine learning. These solutions can help in predicting"
+cand-14af64641dbc	DEV	520	87	88	341	includes	This	Teleworking	978	1137	This category also includes teleworking emissions, which we began to estimate and report in 2020, when teleworking became prevalent due to the global pandemic.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Our inventory > Scope 3 GHG emissions
+
+worksites by private vehicle, public transit, motorcycle, and gas-powered scooter commuting trips. To determine the number of commuting trips by mode made in 2022, we surveyed our employees to determine typical commuting patterns and applied these commuting patterns to our global employee population. The calculation uses an average commuting distance for passenger vehicles obtained from the U.S. Department of Transportation’s 2017 National Household Travel Survey and an average fuel efficiency for passenger vehicles obtained from the U.S. Department of Transportation’s Transportation Statistics Table 4–23. Data obtained from our value chain partners isn’t used at this time. Emissions are calculated using 2022 DEFRA U.K. Government GHG Conversion Factors for passenger vehicles. This category also includes teleworking emissions, which we began to estimate and report in 2020, when teleworking became prevalent due to the global pandemic. Teleworking represents emissions generated by employees working remotely from their homes. We apply the estimation methodology outlined in EcoAct’s 2020 Homeworking Emissions white paper to our annual average workforce in 2022."
+cand-268c5495e2ea	DEV	526	89	89	310	includes	GRI Disclosure	Where	876	1031	"Total electricity consumption is calculated as defined by
+
+GRI Disclosure 302-1c(i) and 302-1f, and includes both purchased and self-generated electricity."	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Other carbon and energy metrics
+
+Other carbon and energy metrics
+
+Our carbon intensity metrics are calculated as defined by GRI Disclosure 305-4a-c. Carbon intensity metrics are based on gross global combined Scope 1 and Scope 2 (market-based) emissions. Reported carbon intensity per unit of revenue and per full-time equivalent (FTE) employee values are rounded to the nearest hundredth, and reported carbon intensity per MWh of energy consumed values are rounded to the nearest ten thousandth.
+
+Total energy consumption is calculated as defined by GRI Disclosure 302-1e-f. Total energy consumption includes all fuel and natural gas consumption, purchased electricity, purchased heating, and all electricity generated on-site from renewable sources. Total electricity consumption is calculated as defined by
+
+GRI Disclosure 302-1c(i) and 302-1f, and includes both purchased and self-generated electricity. Where actual electricity consumption for facilities isn’t available, we estimate consumption using company square footage and internally developed electricity intensity factors based on fiscal year 2022 data."
+cand-08c415e69cef	DEV	450	76	76	376	includes	Our	Fitbit	1080	1181	Our consumer hardware includes Fitbit wearable devices, Google Nest home products, and Pixel devices.	"Environmental Report > Operating sustainably > Nature and biodiversity > About Google > As our founders explained in their first letter to shareholders, Google’s goal is to “develop services that significantly improve the lives of as many people as possible.”
+
+As our founders explained in their first letter to shareholders, Google’s goal is to “develop services that significantly improve the lives of as many people as possible.”
+
+We believe in technology’s potential to have a positive impact on the world. That unconventional spirit has been a driving force throughout our history, inspiring us to tackle big problems and invest in moonshots, such as our longterm opportunities in AI. We continue this work under the leadership of Alphabet and Google CEO Sundar Pichai.
+
+Alphabet is a collection of businesses—the largest of which is Google. Google comprises two segments: Google Services and Google Cloud. Google Services’ core products and platforms include ads, Android, Chrome, hardware, Gmail, Google Drive, Google Maps, Google Photos, Google Play, Search, and YouTube. Our consumer hardware includes Fitbit wearable devices, Google Nest home products, and Pixel devices. Our Google Cloud offerings include Google Cloud Platform and Google Workspace.
+
+Our headquarters are located in Mountain View, California. We own and lease office facilities and data centers around the world, primarily in North America, Europe, and Asia. To learn more, see our data center locations and our office locations."
+cand-0e683cba338e	HOLDOUT	521	87	88	382	includes	Use	Google	0	323	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Our inventory > Scope 3 GHG emissions
+
+Category 11: “Use of sold products” includes emissions generated by all of Google’s flagship consumer hardware products sold in 2022."	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Our inventory > Scope 3 GHG emissions
+
+Category 11: “Use of sold products” includes emissions generated by all of Google’s flagship consumer hardware products sold in 2022. Flagship consumer hardware products are products that can provide their main functionality without connection to another product. For example, this doesn’t include accessories, such as cases. Use impact was calculated using laboratory power draw measurements, data on use patterns, common industry assumptions on product lifetimes, and LCA electricity emission factors from the 2022 Sphera LCA for Experts database. In our Environmental data tables, emissions from use of sold products are presented in “Other categories.”
+
+Category 12: “End-of-life treatment of sold products” includes GHG emissions associated with the end-of-life treatment of all of Google’s flagship consumer hardware products sold in 2022. End-of-life impact was calculated through our LCA process using emission factors from the 2022 Sphera LCA for Experts database. Our initial assessments identify this category to be one that doesn’t have significant life-cycle impact. We continue to develop programs to extend the life of our sold products and also to ensure efficient management of end-of-life materials. In our Environmental data tables, emissions from end-oflife treatment of sold products are presented in “Other categories.”"
+cand-400b3affbff6	HOLDOUT	610	102	102	906	uses	Google	See UL Spot Database	657	752	Google uses a third party to validate conformance and independently certify to these standards.	"Environmental Report > Operating sustainably > Nature and biodiversity > Endnotes
+
+• Search interest from April 2018–April 2023 to that of April 2013–April 2018.
+112 See endnote 35 above.
+113 “Importance of Methane,” EPA, 2021.
+114 Percent reduction in food waste per Googler was calculated as food waste generated in kitchens and cafes at Google’s global offices per unique badge swipes, against a 2019 baseline.
+115 “A Whopping 91 Percent of Plastic Isn’t Recycled,” National Geographic, December 2018.
+116 UL110 and IEEE 1680.1 are multi-attribute, consensus-based sustainability standards for mobile phones and for computers and displays, respectively. Google uses a third party to validate conformance and independently certify to these standards. See UL Spot Database.
+117 Carbon footprint reduction claim based on third-party verified life cycle assessment. Recycled aluminum in the enclosures is at least 9% of applicable product based on weight.
+118 Doesn’t include third-party products such as the Nest x Yale Lock.
+119 For products launched in 2020 and 2021: Nest, Pixel, and Chromecast devices are made with recycled plastic ranging between 9% and 68% based on weight of plastic used in each respective product launched during this timeframe. The following items are excluded: plastics in printed circuit boards, labels, cables, connectors, electronic components and modules, optical components, electrostatic discharge (ESD) components, electromagnetic interference (EMI) components, films, coatings and adhesives. For products launched in 2022: Pixel, Nest, and Chromecast devices are made with recycled materials ranging between 9% and 60% based on respective product weights.
+120 Based on total plastic weight of (A) Google Pixel, Nest, and Chromecast products manufactured in 2022 and (B) Fitbit products launched and manufactured in 2022. Includes U.S. configuration of in-box accessories but does not include standalone accessory products other than Pixel phone cases, and Pixel Watch Active, Stretch, and Woven bands. This does not include plastics in printed circuit boards, labels, cables, connectors, electronic components and modules, optical components, electrostatic discharge (ESD) components, electromagnetic interference (EMI) components, films, coatings, and adhesives.
+121 Based on total weight of new Google Pixel, Nest, Chromecast, and Fitbit products launched and manufactured in 2022, including U.S. configuration of in-box accessories. Does not include standalone accessory products other than Pixel phone cases, and Pixel Watch Active, Stretch, and Woven bands.
+122 Carbon footprint reduction claim based on third-party-verified life cycle assessment. Recycled aluminum in the enclosures is at least 9% of applicable product based on weight.
+123 See endnote 122 above.
+124 See endnote 120 above.
+125 The following may be excluded from the calculation of percentage: printed circuit boards, labels, cables, connectors, electronic components and modules, optical components, electrostatic discharge components, electromagnetic interference components, films, coatings, and adhesives. Renewable content consists of plastic made from bio-based material. Does not include third-party products such as the Nest x Yale Lock.
+126 Based on total weight of new Google Pixel, Nest, Chromecast, and Fitbit retail packaging (excluding adhesive materials) for products launched and manufactured in 2022, as shipped by Google. Due to global variations in packaging, U.S. retail packaging data is used for our reporting. To meet the request of some clients, plastic stickers are applied to some packaging"
+cand-4d56f9d76d16	DEV	179	27	27	426	uses	TerrAdapt	Google Earth Engine	333	485	TerrAdapt uses satellite monitoring technology powered by Google Earth Engine to project habitat conditions given future climate and land-use scenarios.	"Environmental Report > Working together > Our approach > Supporting partners > Researchers, academics, and NGOs > Wildlife monitoring
+
+Wildlife monitoring
+
+In 2022, global search interest in “wildlife” nearly tripled,63 reaching a 15-year high.64 We’re using our technology to support wildlife conservation efforts around the world. TerrAdapt uses satellite monitoring technology powered by Google Earth Engine to project habitat conditions given future climate and land-use scenarios. TerrAdapt can help prioritize areas for conservation actions—like habitat restoration, increasing protection status, and building wildlife crossings.
+
+Google teamed up with the Commonwealth Scientific and Industrial Research Organisation (CSIRO—Australia’s national science agency) and the Kaggle data science community to protect coral reefs including Australia’s Great Barrier Reef, the world’s biggest coral reef system. We developed a machine learning solution to analyze underwater images of a species of starfish that feed on living coral. By detecting them more accurately and efficiently, scientists can now more easily monitor the reef and manage the impact of the starfish more effectively. In collaboration with CSIRO and other partners, we’re also applying AI to measure carbon sequestration capacity of seagrass ecosystems.
+
+Since 2017, Google has been a founding technology partner in Wildlife Insights—a collaboration between seven leading conservation organizations to streamline biodiversity monitoring with the help of AI and to fill critical data gaps to inform data-driven decisions. This platform makes it easier for conservationists and scientists to collect and analyze data from remote cameras."
+cand-23b07dca01a9	HOLDOUT	520	87	88	341	uses	The	Department	492	588	The calculation uses an average commuting distance for passenger vehicles obtained from the U.S.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology > Greenhouse gas emissions > Our inventory > Scope 3 GHG emissions
+
+worksites by private vehicle, public transit, motorcycle, and gas-powered scooter commuting trips. To determine the number of commuting trips by mode made in 2022, we surveyed our employees to determine typical commuting patterns and applied these commuting patterns to our global employee population. The calculation uses an average commuting distance for passenger vehicles obtained from the U.S. Department of Transportation’s 2017 National Household Travel Survey and an average fuel efficiency for passenger vehicles obtained from the U.S. Department of Transportation’s Transportation Statistics Table 4–23. Data obtained from our value chain partners isn’t used at this time. Emissions are calculated using 2022 DEFRA U.K. Government GHG Conversion Factors for passenger vehicles. This category also includes teleworking emissions, which we began to estimate and report in 2020, when teleworking became prevalent due to the global pandemic. Teleworking represents emissions generated by employees working remotely from their homes. We apply the estimation methodology outlined in EcoAct’s 2020 Homeworking Emissions white paper to our annual average workforce in 2022."
+cand-30a561a3656c	HOLDOUT	390	63	63	214	uses	Pro	99%	0	304	"Environmental Report > Operating sustainably > Circular economy > Our approach > Designing more sustainable consumer hardware products > Sustainable packaging > Packaging for Pixel 7 and 7 Pro uses 99% plastic-free materials.128
+
+Packaging for Pixel 7 and 7 Pro uses 99% plastic-free materials.128
+
+goal."	"Environmental Report > Operating sustainably > Circular economy > Our approach > Designing more sustainable consumer hardware products > Sustainable packaging > Packaging for Pixel 7 and 7 Pro uses 99% plastic-free materials.128
+
+Packaging for Pixel 7 and 7 Pro uses 99% plastic-free materials.128
+
+goal. For more information on packaging for each of our products, see our Product Environmental Reports.
+
+Transitioning packaging away from plastic is challenging because many plastic-free alternatives are often not available for specific packaging needs. We’ll continue to work with suppliers to create plastic-free solutions that provide durability, protection, and aesthetics.
+
+TARGET
+
+2022 PROGRESS
+
+Make product packaging 100% plastic-free by 2025
+
+For new Google products launched and manufactured in 2022, our packaging was at least 96% plastic-free129"
+cand-530fe65637a4	DEV	492	83	83	435	part_of	Climate Accord\n\nGoogle	Climate Accord	674	853	"iMasons Climate Accord
+
+Google is a founding member and part of the governing body of the iMasons Climate Accord, a coalition united on carbon reduction in digital infrastructure."	"Environmental Report > Operating sustainably > Nature and biodiversity > Partnerships > Organization Details
+
+Google is a partner of the regional secretariats of ICLEI—Local Governments for Sustainability—in Africa, Europe, and the U.S. Through these partnerships, ICLEI regional teams support sustainable city development projects with data and insights from Google’s Environmental Insights Explorer. Additionally, in 2022, Google.org provided a $10 million grant to ICLEI to support 10 nonprofit-led projects in the United States and Europe that help cities accelerate their sustainable transition through data-driven environmental and climate action at the local level.
+
+iMasons Climate Accord
+
+Google is a founding member and part of the governing body of the iMasons Climate Accord, a coalition united on carbon reduction in digital infrastructure.
+
+ReFED
+
+In 2022, to activate industry-wide change, Google provided anchor funding to kickstart the ReFED Catalytic Grant Fund, with the goal of accelerating and scaling food waste solutions.
+
+The Nature Conservancy (TNC)
+
+In 2022, Google supported three of the Nature Conservancy’s watershed projects in Chile and the United States, and Google.org supported a three-phased approach to catalyze active reforestation of kelp at impactful scales. Google.org also provided a grant to TNC to develop a machine-learning-powered timber-tracing API to stop deforestation in the Amazon at scale; a team of Google engineers is working full-time for six months with TNC to develop this product as part of the Google.org Fellowship Program.
+
+United Nations Food and Agriculture Organization (FAO)
+
+United Nations Environment Program (UNEP)
+
+World Business Council for Sustainable Development (WBCSD)"
+cand-0ad3ab5d1258	DEV	423	69	69	416	part_of	London Wildlife Trust	In	967	1109	We’re collaborating with the London Wildlife Trust as part of a wider initiative to protect our native species and improve local biodiversity.	"Environmental Report > Operating sustainably > Nature and biodiversity > Our approach > Building for biodiversity > Designing for ecology > Bringing nature back to cities
+
+Bringing nature back to cities
+
+We’re also bringing nature back to many cities where we operate. Global search interest in “pollinators” and “tree planting” reached all-time highs in 2022.139
+
+In urban areas around the world, we’re designing nature into the built environment to improve urban biodiversity and connect people to nature. For example, our Platform G building in London’s King’s Cross neighborhood will include a biodiverse green roof and planting palette designed to support native birds, bats, bees, and insects, designed in collaboration with the London Wildlife Trust. A densely planted outdoor roof garden with a rainwater irrigation system will provide a habitat for protected species of bats and birds, as well as offering a quiet green space for breaks during the work day. We’re collaborating with the London Wildlife Trust as part of a wider initiative to protect our native species and improve local biodiversity.
+
+In city centers lacking greenspace, the urban heat island effect produces higher temperatures, leading to increased energy needs, air pollution, and heat-related illness.140 Google is helping to abate the urban heat island effect by prioritizing plantings, green open spaces, and tree canopy cover on our campuses, as well as reducing impermeable surfaces like concrete.
+
+We published insights from some of this work in an academic paper, aiming to inspire others and provide them with tools and techniques for integrating nature into dense urban areas."
+cand-1f70c36bd523	DEV	453	77	77	204	part_of	As	The	288	438	As with financial, operational, and strategic risks, the team assesses environmental risks as part of the company’s overall risk management framework.	"Environmental Report > Operating sustainably > Nature and biodiversity > Risk management
+
+Risk management
+
+Our Enterprise Risk Management (ERM) team is responsible for identifying, assessing, and reporting risks related to the company’s operations, financial performance, and reputation. As with financial, operational, and strategic risks, the team assesses environmental risks as part of the company’s overall risk management framework. The risks and opportunities identified through this process support public disclosures and inform Google’s environmental sustainability strategy. Our Chief Sustainability Officer and sustainability teams work to address risks by identifying opportunities to reduce the company’s environmental impacts from its operations and value chain, and through improving climate resilience."
+cand-c1cb2e3f7a87	DEV	475	80	80	425	measures	CEDI	Together	838	1069	government that aims to connect countries with companies seeking to rapidly deploy clean energy, enabling companies to send demand signals for clean energy and advance policy measures that enable corporate clean energy procurement.	"Environmental Report > Operating sustainably > Nature and biodiversity > Public policy and advocacy > Policy engagement > United States
+
+Google filed comments on the Clean Hydrogen Production Standard draft guidance. In particular, we highlighted the need for strong quality criteria—hourly temporal correlation, geographic correlation, and additionality—to ensure that grid-based clean hydrogen is produced using clean electricity.
+
+Engagement with coalitions and sustainability initiatives
+
+Supporting the U.S. State Department’s Clean Energy Demand Initiative (CEDI)
+
+Electricity customer coalitions
+
+Google.org provided a philanthropic grant to support the establishment of the Secretariat of the U.S. State Department’s Clean Energy Demand Initiative within the Clean Energy Buyers Association. CEDI is an initiative led by the U.S. government that aims to connect countries with companies seeking to rapidly deploy clean energy, enabling companies to send demand signals for clean energy and advance policy measures that enable corporate clean energy procurement.
+
+Together with business partners, Google helped launch three trade groups and campaigns to support the creation of customer-centric wholesale electricity markets across the United States, with the goal of enabling rapid decarbonization of electricity grids while reducing costs. These include Western Freedom, Coalition for Energy Market Reform, and Electricity Customers Alliance.
+
+U.S. state engagement
+
+Utility regulation
+
+Regulatory frameworks for decarbonization
+
+Google intervened in over 30 regulatory dockets across the United States with coalition partners to promote the cost-effective adoption of clean energy resources."
+cand-37d8fa3e1302	DEV	252	39	39	119	measures	As	MWh	313	479	As a result, we identified more than 200 energy conservation measures that we’re now actively implementing—which are projected to save a total of 5,600 MWh of energy.	"Environmental Report > Operating sustainably > Net-zero carbon > Our approach > Reducing carbon emissions > Energy-efficient and low-carbon facilities > Offices > Energy audits in Asia-Pacific
+
+Energy audits in Asia-Pacific
+
+In 2022, we conducted more than 20 energy audits across our largest Asia Pacific sites. As a result, we identified more than 200 energy conservation measures that we’re now actively implementing—which are projected to save a total of 5,600 MWh of energy."
+cand-2ea17f239845	DEV	442	73	74	415	requires	This	Bay View	145	336	This integrated geothermal pile system also enabled us to electrify the building’s overall systems more effectively, because recycling ground heat requires less energy than creating new heat.	"Environmental Report > Operating sustainably > Nature and biodiversity > Building a more sustainable campus in Mountain View
+
+predictive models. This integrated geothermal pile system also enabled us to electrify the building’s overall systems more effectively, because recycling ground heat requires less energy than creating new heat. Bay View also features our largest electric kitchen, through which we’re learning lessons that will inform the transition of all our kitchens to electric cooking.
+
+Water stewardship To help address local water scarcity, Bay View is on track to meet the LBC’s definition of “net water positive,” meaning it’s designed to produce more recycled water than the site requires. Predictive models estimate that the on-site geothermal energy system is expected to help reduce about 90% of the water needed for cooling, compared with a traditional cooling tower system. To further reduce water use, we designed the campus landscapes with native plants and drought-tolerant species that don’t require as much watering.
+
+We’re also capturing and reusing water on-site when possible. Stormwater retention ponds and constructed wetlands for wastewater treatment were integrated into the site landscape. A central plant treats stormwater gathered from retention ponds and wastewater collected from buildings, producing recycled water that can be used for cooling towers, flushing toilets, and irrigation.
+
+Circular economy Bay View incorporates our circularity principles of minimizing waste, keeping materials in use for as long as possible, and promoting healthy materials that are safe for people and the environment. We’ve diverted 76%"
+cand-15b65adee91b	HOLDOUT	295	46	46	409	requires	In	In	0	453	"Environmental Report > Operating sustainably > Net-zero carbon > Our approach > Advancing carbon-free energy > Transforming the energy system through partnerships and advocacy > Public policy and advocacy
+
+Public policy and advocacy
+
+In addition to corporate action, we recognize that the clean energy transition also requires strong actions from governments, and we call for ambitious public policies aimed at decarbonizing electricity grids worldwide."	"Environmental Report > Operating sustainably > Net-zero carbon > Our approach > Advancing carbon-free energy > Transforming the energy system through partnerships and advocacy > Public policy and advocacy
+
+Public policy and advocacy
+
+In addition to corporate action, we recognize that the clean energy transition also requires strong actions from governments, and we call for ambitious public policies aimed at decarbonizing electricity grids worldwide. In 2022, we published a first-of-its-kind policy roadmap sharing our recommendations for energy policy and market reforms to accelerate electricity decarbonization, informed by our experiences as a large energy user and
+
+clean energy buyer around the world. As we advance toward our goal of 24/7 CFE, we’re committed to working with others and advocating for clean energy policies that can enable 24/7 CFE for all energy consumers by decarbonizing electricity grids at the scale and pace required to meet the world’s climate challenge.
+
+We also recognize that accurate, comprehensive, and actionable corporate GHG inventories are essential to help companies understand their carbon footprints and determine how to mitigate emissions. That’s why we recently submitted comments in response to an open survey on the future of the Greenhouse Gas Protocol (GHGP). Updating the GHGP will drive continued improvements in the accuracy of companies’ GHG inventories, providing useful information that enables them to make decisions and take actions that drive real, measurable GHG reductions.
+
+For more information on our public policy and advocacy, see the Governance and engagement section."
+cand-1f1afeb3dc8f	DEV	508	86	86	162	applied_to	Due	Environmental Report	427	649	Due to rounding applied to all reported years of data in our 2023 Environmental Report, some of our reported values for prior years don’t directly match the related Independent Accountants’ Review Reports from those years.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Methodology
+
+Methodology
+
+The below methodologies apply to our GHG emissions, as well as certain other carbon, energy, and water metrics as presented in our Environmental data tables, focused primarily on those where we have obtained third-party limited assurance. These metrics have been rounded as described below. Due to rounding applied to all reported years of data in our 2023 Environmental Report, some of our reported values for prior years don’t directly match the related Independent Accountants’ Review Reports from those years."
+cand-5eaca9a4cebf	HOLDOUT	236	36	36	167	applied_to	Scope	Had	0	481	"Environmental Report > Operating sustainably > Net-zero carbon > Our approach > Reducing carbon emissions > Our emissions reduction goal > DETAILS > 2021 > Legend
+
+Legend
+
+Total emissions Business as usual (footprint in absence of PPAs) Estimated difference in 2022 total emissions due to Scope 3 methodology update
+
+In 2022, our reported total GHG emissions decreased
+
+due to improvements we made to our Scope 3 accounting methodology, which we haven’t yet applied to prior years."	"Environmental Report > Operating sustainably > Net-zero carbon > Our approach > Reducing carbon emissions > Our emissions reduction goal > DETAILS > 2021 > Legend
+
+Legend
+
+Total emissions Business as usual (footprint in absence of PPAs) Estimated difference in 2022 total emissions due to Scope 3 methodology update
+
+In 2022, our reported total GHG emissions decreased
+
+due to improvements we made to our Scope 3 accounting methodology, which we haven’t yet applied to prior years.
+
+Had we not made these methodology changes, we estimate that our reported 2022 Scope 3 emissions would have been approximately 18% higher, remaining relatively flat when compared to 2021."
+cand-d332218ab842	HOLDOUT	611	102	102	810	applied_to	To	See	300	395	To meet the request of some clients, plastic stickers are applied to some packaging variations.	"Environmental Report > Operating sustainably > Nature and biodiversity > Endnotes
+
+• variations. Doesn’t include stand-alone accessory products other than Pixel phone cases, and Pixel Watch Active, Stretch, and Woven bands.
+127 Based on U.S. retail packaging weight with adhesive materials excluded. To meet the request of some clients, plastic stickers are applied to some packaging variations.
+128 See endnote 127 above.
+129 See endnote 126 above.
+130 See Learn when you’ll get software updates on Google Pixel phones for more details.
+131 We offer free recycling for eligible products from any brand. Learn more about Google’s recycling program on our site.
+132 Learn more about UL 2799 Zero Waste to Landfill certification.
+133 See endnote 108 above.
+134 “A Warning Sign: Where Biodiversity Loss Is Happening Around the World,” World Wildlife Fund, 2021.
+135 See endnote 134 above.
+136 “From Savanna to Suburb: Effects of 160 Years of Landscape Change on Carbon Storage in Silicon Valley, California,” Landscape and Urban Planning, vol. 195, March 2020.
+137 “Charleston Retention Basin Improvement Project,” California Environmental Quality Act, accessed 2023.
+138 “Western Monarch Thanksgiving Count Tallies Over 330,000 Butterflies Before Storms Batter Overwintering Sites,” Xerces Society, 2023.
+139 See endnote 13 above.
+140 “Reduce Urban Heat Island Effect,” EPA, May 2019.
+141 The percentage of FSC-certified wood used at Bay View and Charleston East is calculated based on material costs for new wood purchased for these projects during construction.
+142 See endnote 141 above.
+143 “Paris Agreement,” UNFCCC, 2015.
+144 “Summary for Policymakers of IPCC Special Report on Global Warming of 1.5°C Approved by Governments,” IPCC, 2018.
+145 “Sixth Assessment Report,” IPCC, 2019.
+146 All reported Scope 1 GHG emissions, Scope 2 GHG emissions, and biogenic emissions values are rounded to the nearest hundred. All reported Scope 3 emissions values are rounded to the nearest thousand.
+147 In 2022, we included estimates for hydrofluorocarbon (HFC) emissions resulting from the leakage of refrigerants from cooling equipment at our offices and data centers in our Scope 1 emissions. We have not updated prior years to include estimated refrigerant emissions.
+148 Our Scope 2 market-based emissions increased 37%, primarily due to increased data center electricity consumption and a lack of full regional coverage of renewable energy procurement in the United States and Asia Pacific regions.
+149 Certain Category 1: “Purchased goods and services” emissions are presented in Category 2: “Capital goods.” See the Methodology section for more details.
+150 In 2022, we updated our Scope 3 Category 7: “Employee commuting” methodology to estimate additional modes of transportation due to the availability of new data sources. See the Methodology section for more details.
+151 We present certain Scope 3 emissions from Category 1, Category 2, Category 11, and Category 12 as an aggregated subtotal “Other categories” for business reasons, as described further in the Methodology section.
+152 Other GHGs, including perfluorocarbons (PFCs), sulfur hexafluoride (SF6), and nitrogen trifluoride (NF3), are not included in our inventory, as they’re"
+cand-9c58d0a6b888	DEV	387	63	63	152	contains	Product	That	0	337	"Environmental Report > Operating sustainably > Circular economy > Our approach > Designing more sustainable consumer hardware products > Sustainable packaging
+
+Sustainable packaging
+
+Product packaging typically contains many materialslike the plastic film materials you often see on electronic packages—which can be difficult to recycle."	"Environmental Report > Operating sustainably > Circular economy > Our approach > Designing more sustainable consumer hardware products > Sustainable packaging
+
+Sustainable packaging
+
+Product packaging typically contains many materialslike the plastic film materials you often see on electronic packages—which can be difficult to recycle.
+
+That’s why we’re committed to eliminating plastic from our hardware product packaging by 2025. By focusing on fiber-based materials, we’re enabling consumers to more easily recycle our packaging and ensure that the materials will be accepted in as many recycling systems"
+cand-d77f032a1ebf	HOLDOUT	529	89	89	314	discussed_in	While	The	345	581	While certain matters discussed in this report may be significant, any significance should not be read as necessarily rising to the level of materiality used for the purposes of complying with applicable securities laws and regulations.	"Environmental Report > Operating sustainably > Nature and biodiversity > Reporting approach and methodology > Forward-looking information
+
+Forward-looking information
+
+References to information in this report should not be construed as a characterization regarding the materiality of such information to our financial results or our operations. While certain matters discussed in this report may be significant, any significance should not be read as necessarily rising to the level of materiality used for the purposes of complying with applicable securities laws and regulations. The information in this report may contain projections, future estimates, plans, expectations, goals, and other forward-looking statements. Forwardlooking statements are based on current expectations and assumptions that are subject to certain risks and uncertainties, which could cause our actual results to differ materially from those reflected in the forwardlooking statements. Any changes in methodology may result in material changes to our calculations and may result in the current and previous periods, including our base year, to be adjusted. Except as required by law, we undertake no obligation to correct, revise, or update any information included in this report."

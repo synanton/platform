@@ -14,6 +14,7 @@ import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.ingestioncache.domain.ExtractionResultRow;
@@ -55,10 +56,19 @@ public class GraphCommitConsumer {
         if (!graphProperties.enabled()) {
             return;
         }
-        String tenant = consumerProperties.tenant();
-        if (tenant == null || tenant.isBlank()) {
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(consumerProperties.tenant(), cacheClient);
+        } catch (Exception e) {
+            log.warn("Graph retry tenant discovery failed: {}", e.toString());
             return;
         }
+        for (String tenant : tenants) {
+            pollTenant(tenant);
+        }
+    }
+
+    private void pollTenant(String tenant) {
         List<GraphCommitRequestRow> pending;
         try {
             pending = cacheClient.listPendingGraphCommits(tenant, 1, clock.instant());
@@ -92,6 +102,7 @@ public class GraphCommitConsumer {
         return new ExtractionRequestRow(row.tenantId(), row.connectorId(), row.sourceId(), row.resourceId(),
                 row.eventId(), row.versionId(), row.contentRefId(), row.payloadJson(), row.requestedAt(),
                 row.searchProjectedAt(), row.extractionStatus(), row.extractionAttemptCount(),
-                row.extractionLastError(), row.extractionNextAttemptAt(), row.extractionDeadLettered());
+                row.extractionLastError(), row.extractionNextAttemptAt(), row.extractionDeadLettered(),
+                row.generation());
     }
 }

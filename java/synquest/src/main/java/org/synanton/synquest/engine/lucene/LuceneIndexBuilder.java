@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.synanton.ingestioncache.client.IngestionCacheClient;import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.EmbeddingRow;
@@ -132,7 +136,15 @@ public class LuceneIndexBuilder {
 
         try (FSDirectory dir = FSDirectory.open(path);
              IndexWriter writer = new IndexWriter(dir, config)) {
-            writer.deleteDocuments(new org.apache.lucene.index.Term(FIELD_DOC_TYPE, "CHUNK"));
+            // Delete every non-entity document. This includes legacy chunk docs
+            // that predate the doc_type field; a plain doc_type=CHUNK delete leaves
+            // them live and a full rebuild doubles the index (#706).
+            BooleanQuery nonEntityDocs = new BooleanQuery.Builder()
+                    .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)
+                    .add(new TermQuery(new org.apache.lucene.index.Term(FIELD_DOC_TYPE, "ENTITY")),
+                            BooleanClause.Occur.MUST_NOT)
+                    .build();
+            writer.deleteDocuments(nonEntityDocs);
 
             for (ManifestRow manifest : cacheClient.manifestCursor(tenant, MANIFEST_LIMIT)) {
                 if (!isIndexable(manifest)) {

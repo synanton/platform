@@ -1,0 +1,73 @@
+{
+  "model": "longcat-2.5-free",
+  "documents": 5,
+  "no_thinking": false,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "longcat-2.5-free",
+      "latency_s": 1.2721065819987416,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "provider_rate_limited",
+      "error_message": "provider rate limited the request"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "longcat-2.5-free",
+      "latency_s": 0.5314061559984111,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "provider_rate_limited",
+      "error_message": "provider rate limited the request"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "longcat-2.5-free",
+      "latency_s": 0.241917971001385,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "longcat-2.5-free",
+      "latency_s": 0.02524518599966541,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "longcat-2.5-free",
+      "latency_s": 0.03182579399981478,
+      "state": "FAILED",
+      "usage": {
+        "input": 0,
+        "output": 0
+      },
+      "upstream_request_id": "",
+      "error_code": "circuit_open",
+      "error_message": "provider 'opencode' circuit is open"
+    }
+  ]
+}

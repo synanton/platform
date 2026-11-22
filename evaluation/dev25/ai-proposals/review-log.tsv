@@ -1,0 +1,65 @@
+doc_id	item	decision	reason	surface	detail
+g7-dev-011	relation	REJECTED	endpoint	Predictive analytics/supplier substitution	
+g7-dev-013	entity	REJECTED	not-found	ransomware incidents	
+g7-dev-013	relation	REJECTED	endpoint	SOC 2 Type II/suppliers	
+g7-dev-013	relation	REJECTED	endpoint	climate risk scoring/supplier selection and annual 	
+g7-dev-014	entity	REJECTED	not-found	Canadian facilities	
+g7-dev-015	entity	REJECTED	type/surface	Synanton logistics network	
+g7-dev-015	entity	REJECTED	type/surface	North America	
+g7-dev-015	entity	REJECTED	type/surface	Europe	
+g7-dev-015	entity	REJECTED	type/surface	Globex Manufacturing	
+g7-dev-015	entity	REJECTED	type/surface	Initech Ltd	
+g7-dev-015	entity	REJECTED	type/surface	Acme Corp	
+g7-dev-015	entity	REJECTED	type/surface	Columbus, OH	
+g7-dev-015	entity	REJECTED	type/surface	Globex Manufacturing	
+g7-dev-015	entity	REJECTED	type/surface	Mississauga, ON	
+g7-dev-015	entity	REJECTED	type/surface	Initech Ltd	
+g7-dev-015	entity	REJECTED	type/surface	Atlanta, GA	
+g7-dev-015	entity	REJECTED	type/surface	Acme Corp	
+g7-dev-015	entity	REJECTED	type/surface	Krakow, PL	
+g7-dev-015	entity	REJECTED	type/surface	Initech Ltd	
+g7-dev-015	entity	REJECTED	type/surface	Poland	
+g7-dev-015	entity	REJECTED	type/surface	Globex Manufacturing	
+g7-dev-015	entity	REJECTED	type/surface	Columbus hub	
+g7-dev-015	entity	REJECTED	type/surface	three departures per week	
+g7-dev-015	entity	REJECTED	type/surface	Ohio	
+g7-dev-015	entity	REJECTED	type/surface	less-than-truckload (LTL)	
+g7-dev-015	entity	REJECTED	type/surface	Initech Ltd	
+g7-dev-015	entity	REJECTED	type/surface	Acme Corp	
+g7-dev-015	entity	REJECTED	type/surface	milk-run service	
+g7-dev-015	entity	REJECTED	type/surface	six-hour frequency	
+g7-dev-015	entity	REJECTED	type/surface	emergency air freight	
+g7-dev-015	entity	REJECTED	type/surface	Mississauga hub	
+g7-dev-015	entity	REJECTED	type/surface	Krakow facility	
+g7-dev-015	entity	REJECTED	type/surface	ocean freight	
+g7-dev-015	entity	REJECTED	type/surface	28-day transit	
+g7-dev-015	entity	REJECTED	type/surface	air	
+g7-dev-015	entity	REJECTED	type/surface	air freight	
+g7-dev-015	entity	REJECTED	type/surface	5% of annual volume	
+g7-dev-015	entity	REJECTED	type/surface	Q1 2025	
+g7-dev-015	entity	REJECTED	type/surface	Globex Columbus OH to Columbus Hub	
+g7-dev-015	entity	REJECTED	type/surface	Initech Mississauga milk-run	
+g7-dev-015	entity	REJECTED	type/surface	Hub Atlanta outbound	
+g7-dev-015	entity	REJECTED	type/surface	Krakow to Mississauga	
+g7-dev-015	entity	REJECTED	type/surface	dynamic routing optimization system	
+g7-dev-015	entity	REJECTED	type/surface	Columbus-to-Atlanta lane	
+g7-dev-015	entity	REJECTED	type/surface	4% reduction in transit time variability	
+g7-dev-015	entity	REJECTED	type/surface	2.1% reduction in freight cost per unit	
+g7-dev-015	relation	REJECTED	endpoint	Synanton logistics network/North America	
+g7-dev-015	relation	REJECTED	endpoint	Synanton logistics network/Europe	
+g7-dev-015	relation	REJECTED	endpoint	Globex Manufacturing/Columbus hub	
+g7-dev-015	relation	REJECTED	endpoint	Initech Ltd/Mississauga, ON	
+g7-dev-015	relation	REJECTED	endpoint	Initech Ltd/Krakow, PL	
+g7-dev-015	relation	REJECTED	endpoint	Globex Manufacturing/three departures per week	
+g7-dev-015	relation	REJECTED	endpoint	Initech Ltd/milk-run service	
+g7-dev-015	relation	REJECTED	endpoint	milk-run service/six-hour frequency	
+g7-dev-015	relation	REJECTED	endpoint	ocean freight/28-day transit	
+g7-dev-015	relation	REJECTED	endpoint	air freight/5% of annual volume	
+g7-dev-015	relation	REJECTED	endpoint	dynamic routing optimization s/4% reduction in transit time v	
+g7-dev-015	relation	REJECTED	endpoint	dynamic routing optimization s/2.1% reduction in freight cost	
+g7-dev-016	relation	REJECTED	endpoint	supplier relationship manageme/Globex Manufacturing	
+g7-dev-016	relation	REJECTED	endpoint	supplier relationship manageme/Initech Ltd	
+g7-dev-016	relation	REJECTED	endpoint	performance reviews/supplier relationship manageme	
+g7-dev-016	relation	REJECTED	endpoint	site audits/supplier relationship manageme	
+g7-dev-016	relation	REJECTED	endpoint	Predictive analytics/supplier substitution	
+g7-dev-017	entity	REJECTED	not-found	95% on-time delivery	

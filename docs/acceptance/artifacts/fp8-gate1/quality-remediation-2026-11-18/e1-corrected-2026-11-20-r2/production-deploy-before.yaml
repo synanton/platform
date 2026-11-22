@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "3"
+    gpu.cluster/prev-replicas: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"vllm-extraction"},"name":"vllm-extraction","namespace":"gpu-plane"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"vllm-extraction"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"labels":{"app":"vllm-extraction"}},"spec":{"containers":[{"args":["/models","--served-model-name","qwen3-extraction","--host","0.0.0.0","--port","8000","--gpu-memory-utilization","0.85","--max-model-len","8192","--max-num-seqs","4"],"env":[{"name":"HF_HUB_OFFLINE","value":"1"},{"name":"TRANSFORMERS_OFFLINE","value":"1"}],"image":"local-registry:5000/vllm-openai:v0.29.0","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":3,"httpGet":{"path":"/health","port":8000},"periodSeconds":30},"name":"vllm","ports":[{"containerPort":8000}],"readinessProbe":{"failureThreshold":3,"httpGet":{"path":"/health","port":8000},"periodSeconds":15},"resources":{"limits":{"cpu":"8","memory":"32Gi","nvidia.com/gpu":1},"requests":{"cpu":"4","memory":"16Gi","nvidia.com/gpu":1}},"startupProbe":{"failureThreshold":90,"httpGet":{"path":"/health","port":8000},"periodSeconds":10},"volumeMounts":[{"mountPath":"/models","name":"model","readOnly":true},{"mountPath":"/root/.cache/vllm","name":"vllm-cache"}]}],"imagePullSecrets":[{"name":"local-registry-cred"}],"nodeName":"node3","runtimeClassName":"nvidia","volumes":[{"emptyDir":{},"name":"vllm-cache"},{"hostPath":{"path":"/mnt/local-fast/models/qwen3-4b-instruct-2507","type":"Directory"},"name":"model"}]}}}}
+  creationTimestamp: "2026-11-08T15:56:22Z"
+  generation: 20
+  labels:
+    app: vllm-extraction
+  name: vllm-extraction
+  namespace: gpu-plane
+  resourceVersion: "3500299"
+  uid: 4435ec5c-bced-48f4-bf6f-25d4494dc624
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: vllm-extraction
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: vllm-extraction
+    spec:
+      containers:
+      - args:
+        - /models
+        - --served-model-name
+        - qwen3-extraction
+        - --host
+        - 0.0.0.0
+        - --port
+        - "8000"
+        - --gpu-memory-utilization
+        - "0.85"
+        - --max-model-len
+        - "8192"
+        - --max-num-seqs
+        - "4"
+        env:
+        - name: HF_HUB_OFFLINE
+          value: "1"
+        - name: TRANSFORMERS_OFFLINE
+          value: "1"
+        image: local-registry:5000/vllm-openai:v0.29.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: vllm
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 15
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "8"
+            memory: 32Gi
+            nvidia.com/gpu: "1"
+          requests:
+            cpu: "4"
+            memory: 16Gi
+            nvidia.com/gpu: "1"
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /models
+          name: model
+          readOnly: true
+        - mountPath: /root/.cache/vllm
+          name: vllm-cache
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: local-registry-cred
+      nodeName: node3
+      restartPolicy: Always
+      runtimeClassName: nvidia
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: vllm-cache
+      - hostPath:
+          path: /mnt/local-fast/models/qwen3-4b-instruct-2507
+          type: Directory
+        name: model
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2026-11-08T15:56:22Z"
+    lastUpdateTime: "2026-11-17T20:32:00Z"
+    message: ReplicaSet "vllm-extraction-b44664546" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2026-11-20T16:34:10Z"
+    lastUpdateTime: "2026-11-20T16:34:10Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 20
+  readyReplicas: 1
+  replicas: 1
+  terminatingReplicas: 0
+  updatedReplicas: 1

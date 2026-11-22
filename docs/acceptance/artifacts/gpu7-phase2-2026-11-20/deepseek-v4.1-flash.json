@@ -1,0 +1,107 @@
+{
+  "model": "deepseek-v4.1-flash",
+  "documents": 5,
+  "no_thinking": true,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "deepseek-v4.1-flash",
+      "latency_s": 4.784482952998587,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 571,
+        "output": 682
+      },
+      "upstream_request_id": "chatcmpl-ae4977f8195b49d89fc2278fbe6f1ae3",
+      "finish_reason": "stop",
+      "content_chars": 3765,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Extra data: line 2 column 1 (char 1322)"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "deepseek-v4.1-flash",
+      "latency_s": 3.2554193069991015,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 563,
+        "output": 506
+      },
+      "upstream_request_id": "chatcmpl-5cec31a11bcd4e42b359855daa9d1b8a",
+      "finish_reason": "stop",
+      "content_chars": 2089,
+      "json_valid": true,
+      "pred_entities": 12,
+      "gold_entities": 10,
+      "entity_tp": 0,
+      "entity_p": 0.0,
+      "entity_r": 0.0,
+      "entity_f1": 0.0,
+      "pred_relations": 5,
+      "gold_relations": 7,
+      "relation_tp": 1,
+      "relation_p": 0.2,
+      "relation_r": 0.14285714285714285,
+      "relation_f1": 0.16666666666666666,
+      "content_sha256": "7f08057bffbaf7c84d90b5f18395d88e00ef024b0039c004368343986a8dc5d4"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "deepseek-v4.1-flash",
+      "latency_s": 7.998924864999935,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1010,
+        "output": 1520
+      },
+      "upstream_request_id": "chatcmpl-5ac21c3e17b04d838f135290cbd6bad3",
+      "finish_reason": "stop",
+      "content_chars": 6283,
+      "json_valid": true,
+      "pred_entities": 48,
+      "gold_entities": 15,
+      "entity_tp": 2,
+      "entity_p": 0.041666666666666664,
+      "entity_r": 0.13333333333333333,
+      "entity_f1": 0.06349206349206349,
+      "pred_relations": 10,
+      "gold_relations": 10,
+      "relation_tp": 4,
+      "relation_p": 0.4,
+      "relation_r": 0.4,
+      "relation_f1": 0.4000000000000001,
+      "content_sha256": "cd3f94e98b61d6d9c14c8853126c58058bc1e6e1b316515a3dfc7337a525acd7"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "deepseek-v4.1-flash",
+      "latency_s": 10.025267504999647,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 915,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-5ab54a075a46453d8566658a57786de8",
+      "finish_reason": "length",
+      "content_chars": 9869,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Expecting ',' delimiter: line 1 column 8167 (char 8166)"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "deepseek-v4.1-flash",
+      "latency_s": 11.053089761999217,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1221,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-75ec310654af4f229e81468747b7f6d6",
+      "finish_reason": "length",
+      "content_chars": 8998,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Expecting ',' delimiter: line 1 column 7402 (char 7401)"
+    }
+  ]
+}

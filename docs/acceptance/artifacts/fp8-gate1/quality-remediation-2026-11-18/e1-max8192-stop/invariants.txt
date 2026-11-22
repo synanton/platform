@@ -1,0 +1,3 @@
+ready=true node=node3 image=local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
+8a1a610cddc5e1ed21a54330ce95d5c1e07bddf2a06cfe9a271819c44b443f1e  java/extraction-engine/src/main/resources/prompts/extraction-v1.txt
+2160d5f058ee56ac23ca5f0777c272bcc81a550e61962fb8f01d85e32d548dea  /tmp/gate1-e1-diagnostic-workload.json

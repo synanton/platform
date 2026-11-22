@@ -1,0 +1,27 @@
+deployed code commit: 3faef3f0a34cbf355a1326f12e614674b387048c (3faef3f0a34cbf355a1326f12e614674b387048c)
+
+--- registry tags and manifest digests ---
+relix tag: local-registry:5000/synanton/relix:3faef3f0a34cbf355a1326f12e614674b387048c
+relix digest: Name:      local-registry:5000/synanton/relix:3faef3f0a34cbf355a1326f12e614674b387048c
+MediaType: application/vnd.docker.distribution.manifest.v2+json
+Digest:    sha256:ca51ef514b07395b978f67c3520329a2163a0c87fc6bcb1862a20ff42cb456ad
+relix revision label: 3faef3f0a34cbf355a1326f12e614674b387048c
+synflux tag: local-registry:5000/synanton/synflux:3faef3f0a34cbf355a1326f12e614674b387048c
+synflux digest: Name:      local-registry:5000/synanton/synflux:3faef3f0a34cbf355a1326f12e614674b387048c
+MediaType: application/vnd.docker.distribution.manifest.v2+json
+Digest:    sha256:9a9dc03274e56c39444f091820a274e20bbf46b97697f5ba28178a9d0536149f
+synflux revision label: 3faef3f0a34cbf355a1326f12e614674b387048c
+syntology tag: local-registry:5000/synanton/syntology:3faef3f0a34cbf355a1326f12e614674b387048c
+syntology digest: Name:      local-registry:5000/synanton/syntology:3faef3f0a34cbf355a1326f12e614674b387048c
+MediaType: application/vnd.docker.distribution.manifest.v2+json
+Digest:    sha256:fc4b70badb08168585ec4be8c01560a61ce6d2e7862170e994d096cbd0357adc
+syntology revision label: 3faef3f0a34cbf355a1326f12e614674b387048c
+
+--- pod image IDs ---
+== relix ==
+relix-5c58656b49-d2jlj local-registry:5000/synanton/relix@sha256:ca51ef514b07395b978f67c3520329a2163a0c87fc6bcb1862a20ff42cb456ad
+== synflux ==
+synflux-8699cd7c69-lpf75 local-registry:5000/synanton/synflux@sha256:9a9dc03274e56c39444f091820a274e20bbf46b97697f5ba28178a9d0536149f
+synflux-8699cd7c69-zmc4l local-registry:5000/synanton/synflux@sha256:9a9dc03274e56c39444f091820a274e20bbf46b97697f5ba28178a9d0536149f
+== syntology ==
+syntology-84c7d78998-gwq8s local-registry:5000/synanton/syntology@sha256:fc4b70badb08168585ec4be8c01560a61ce6d2e7862170e994d096cbd0357adc

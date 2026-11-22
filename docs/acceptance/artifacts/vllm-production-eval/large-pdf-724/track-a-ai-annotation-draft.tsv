@@ -1,0 +1,31 @@
+candidate_id	split	ai_subject_valid	ai_subject_type	ai_object_valid	ai_object_type	ai_predicate_correct	ai_evidence_sufficient	ai_relation_valid	proposed_subject_correction	proposed_object_correction	proposed_predicate_correction	ai_rationale	draft_status
+cand-00dd9da79f14	DEV	YES	Identifier	YES	Concept	NO	YES	NO				6.6.1 is a goal identifier, not a subclass of Google.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-014867b89e47	DEV	NO	NONE	NO	NONE	NO	YES	NO				Both extracted endpoints are sentence fragments: “Our Operational Scope” and “Category”.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-02f151b90e6d	DEV	YES	Concept	NO	NONE	NO	YES	NO		Biophilic Design Toolkit		The toolkit is valid; “Some” is a sentence fragment, not its object.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-03765db61ebe	DEV	YES	Concept	NO	NONE	NO	YES	NO		DEFRA U.K. Government GHG Conversion Factors		“DEFRA U” is truncated; evidence says emissions are calculated using the conversion factors.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-009ad1b46846	DEV	YES	Concept	YES	Concept	NO	YES	NO				GHGs/GHG are meaningful terms, but the evidence does not express an is_a relation.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-00a9fd0a20ff	DEV	NO	NONE	YES	Concept	NO	YES	NO	Google			“Our” is a pronoun; Climate Action Reserve is a valid entity mentioned as a verification standard.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-20cf797293d3	DEV	YES	Concept	NO	NONE	NO	YES	NO		AI-based		“AI-based” modifies technology; it is not a standalone object entity.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-0dfbdb600a71	DEV	YES	Concept	YES	Concept	NO	YES	NO				The evidence places Google at the forefront of AI research; it does not support generic has.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-14af64641dbc	DEV	NO	NONE	YES	Concept	YES	YES	NO	This category	teleworking emissions		The inclusion fact is supported, but “This” is unresolved and the object boundary is incomplete.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-268c5495e2ea	DEV	AMBIGUOUS	Identifier	NO	NONE	NO	YES	NO	Total electricity consumption	purchased and self-generated electricity		The context concerns total electricity consumption and purchased/self-generated electricity; “Where” is a fragment.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-08c415e69cef	DEV	NO	NONE	YES	Concept	YES	YES	NO	Our consumer hardware	Fitbit wearable devices		The source supports an inclusion statement about Fitbit devices, but “Our” is not a valid subject entity.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-4d56f9d76d16	DEV	YES	Concept	YES	Concept	YES	YES	YES				The evidence directly states TerrAdapt uses satellite monitoring technology powered by Google Earth Engine.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-530fe65637a4	DEV	NO	NONE	YES	Concept	YES	YES	NO	Google	iMasons Climate Accord		The intended subject is Google and object is iMasons Climate Accord, but the extracted subject includes a heading fragment.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-0ad3ab5d1258	DEV	YES	Concept	NO	NONE	NO	YES	NO		London Wildlife Trust		London Wildlife Trust is valid; “In” is a fragment. Evidence describes collaboration, not the extracted part_of relation.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-1f70c36bd523	DEV	NO	NONE	NO	NONE	NO	YES	NO	environmental risks	company’s overall risk management framework	assessed_as_part_of	The source supports environmental risks being assessed as part of the framework, but both extracted endpoints are fragments.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-c1cb2e3f7a87	DEV	YES	Concept	NO	NONE	NO	YES	NO		Clean Energy Demand Initiative		CEDI refers to the initiative; “Together” begins the next sentence. No measures relation is expressed.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-37d8fa3e1302	DEV	NO	NONE	YES	Metric	NO	YES	NO	Energy conservation measures	5,600 MWh	projected_to_save	“As” is a fragment; 5,600 MWh is the projected saving, not the object of measures.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-2ea17f239845	DEV	NO	NONE	YES	Concept	NO	YES	NO	recycling ground heat	less energy	requires_less_energy_than	“This” is unresolved and Bay View is not the object. The evidence compares energy needed to recycle ground heat vs create new heat.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-1f1afeb3dc8f	DEV	NO	NONE	YES	Concept	NO	YES	NO	rounding	reported values for prior years	applied_to	The source says rounding was applied to reported years; “Due” and “Environmental Report” are not the relation endpoints.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-9c58d0a6b888	DEV	AMBIGUOUS	Concept	NO	NONE	YES	YES	NO	Product packaging	many materials	contains	The sentence supports Product packaging contains many materials, but the extracted spans are incomplete and include a following pronoun.	AI_DRAFT_REQUIRES_HUMAN_REVIEW
+cand-077784679afc	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-03b1b7056cd8	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-0e683cba338e	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-400b3affbff6	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-23b07dca01a9	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-30a561a3656c	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-15b65adee91b	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-5eaca9a4cebf	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-d332218ab842	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED
+cand-d77f032a1ebf	HOLDOUT											HOLDOUT labels intentionally withheld to preserve independent evaluation.	HOLDOUT_SEALED

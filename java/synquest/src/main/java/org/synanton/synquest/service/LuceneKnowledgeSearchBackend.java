@@ -1,11 +1,18 @@
 package org.synanton.synquest.service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.slf4j.Logger;
 import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.SourceIdentityRow;
+import org.synanton.ingestioncache.domain.SourceRow;
+import org.synanton.ingestioncache.domain.SourceVersionRow;
 import org.synanton.synquest.api.dto.SearchRequest;
 import org.synanton.synquest.api.dto.SearchResponse;
 import org.synanton.synquest.config.SynquestProperties;
@@ -14,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,14 +45,27 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
     private final SearchService searchService;
     private final IngestionCacheClient cacheClient;
     private final int tombstoneOverfetchMargin;
+    private final boolean failOpenUnmapped;
+    private final MeterRegistry registry;
 
+    @Autowired
     public LuceneKnowledgeSearchBackend(
             LuceneIndexBuilder indexBuilder, SearchService searchService, IngestionCacheClient cacheClient,
-            SynquestProperties properties) {
+            SynquestProperties properties,
+            @Value("${synquest.search.visibility.fail-open-unmapped:true}") boolean failOpenUnmapped,
+            MeterRegistry registry) {
         this.indexBuilder = indexBuilder;
         this.searchService = searchService;
         this.cacheClient = cacheClient;
         this.tombstoneOverfetchMargin = Math.max(0, properties.search().tombstoneOverfetchMargin());
+        this.failOpenUnmapped = failOpenUnmapped;
+        this.registry = registry;
+    }
+
+    public LuceneKnowledgeSearchBackend(
+            LuceneIndexBuilder indexBuilder, SearchService searchService, IngestionCacheClient cacheClient,
+            SynquestProperties properties) {
+        this(indexBuilder, searchService, cacheClient, properties, true, new SimpleMeterRegistry());
     }
 
     @Override
@@ -73,8 +94,10 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
 
     @Override
     public int project(String tenantId) throws Exception {
-        indexBuilder.build(tenantId);
-        searchService.initTenant(tenantId);
+        // Route through the engine's per-tenant reindex lock. Calling the builder
+        // directly bypassed the lock and allowed concurrent full rebuilds to
+        // interleave deletes/adds, doubling the live Lucene documents (#706).
+        searchService.reindex(tenantId);
         return indexBuilder.lastReport(tenantId)
                 .map(LuceneIndexBuilder.BuildReport::docs)
                 .orElse(0);
@@ -89,10 +112,18 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
             tombstoned = Set.of();
         }
 
+        // Query-time visibility (#656/#694): the index is an immutable projection.
+        // A chunk is visible only while at least one of its supporting source
+        // versions is the authoritative current revision. This is orthogonal to the
+        // #654 ownership protocol: it reads the current pointer and takes no locks.
+        Map<UUID, SourceVersionRow> versionsById = tenantVersions(tenantId);
+        Map<String, Optional<UUID>> currentRevisionBySource = new HashMap<>();
+
         int fetch = Math.min(limit + tombstoneOverfetchMargin, MAX_RETRIEVAL_WINDOW);
         while (true) {
             SearchResponse response = searchService.search(new SearchRequest(tenantId, query, fetch, 0, fetch, null));
-            List<KnowledgeCandidate> live = liveCandidates(tenantId, response.hits(), tombstoned, limit);
+            List<KnowledgeCandidate> live = liveCandidates(
+                    tenantId, response.hits(), tombstoned, versionsById, currentRevisionBySource, limit);
             if (live.size() >= limit || response.hits().size() < fetch || fetch >= MAX_RETRIEVAL_WINDOW) {
                 return live;
             }
@@ -114,7 +145,9 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
     }
 
     private List<KnowledgeCandidate> liveCandidates(
-            String tenantId, List<org.synanton.synquest.api.dto.Hit> hits, Set<UUID> tombstoned, int limit) {
+            String tenantId, List<org.synanton.synquest.api.dto.Hit> hits, Set<UUID> tombstoned,
+            Map<UUID, SourceVersionRow> versionsById,
+            Map<String, Optional<UUID>> currentRevisionBySource, int limit) {
         Map<UUID, List<ChunkRow>> chunksByRef = new HashMap<>();
         List<KnowledgeCandidate> candidates = new java.util.ArrayList<>();
         for (var hit : hits) {
@@ -122,18 +155,45 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
                 hit.contentRefId(), ref -> cacheClient.readChunks(tenantId, ref));
             Set<UUID> liveVersions = new java.util.HashSet<>();
             ChunkRow matched = null;
+            String hiddenReason = null;
             for (ChunkRow row : rows) {
-                if (row.chunkOrdinal() != hit.chunkOrdinal() || row.sourceVersionIds() == null) {
+                if (row.chunkOrdinal() != hit.chunkOrdinal()) {
                     continue;
                 }
                 matched = row;
+                if (row.sourceVersionIds() == null || row.sourceVersionIds().isEmpty()) {
+                    if (!failOpenUnmapped) {
+                        hiddenReason = hiddenReason == null ? "unmapped" : hiddenReason;
+                    }
+                    continue;
+                }
                 for (UUID versionId : row.sourceVersionIds()) {
-                    if (!tombstoned.contains(versionId)) {
+                    if (tombstoned.contains(versionId)) {
+                        continue;
+                    }
+                    Visibility visibility = visibility(
+                            tenantId, versionId, versionsById, currentRevisionBySource);
+                    if (visibility == Visibility.CURRENT) {
                         liveVersions.add(versionId);
+                    } else if (visibility == Visibility.UNMAPPED
+                            || visibility == Visibility.NO_CURRENT) {
+                        if (failOpenUnmapped) {
+                            // Pre-#654 compatibility: unmapped/no-pointer versions remain
+                            // visible until the #699 backfill + fail-closed switch.
+                            liveVersions.add(versionId);
+                        } else {
+                            hiddenReason = hiddenReason == null ? visibility.reason : hiddenReason;
+                        }
                     }
                 }
             }
-            if (liveVersions.isEmpty() || matched == null) {
+            if (liveVersions.isEmpty()) {
+                if (hiddenReason != null) {
+                    registry.counter("search.visibility.hidden_unmapped", "reason", hiddenReason).increment();
+                }
+                continue;
+            }
+            if (matched == null) {
                 continue;
             }
             String title = hit.heading() == null || hit.heading().isBlank()
@@ -150,5 +210,70 @@ public class LuceneKnowledgeSearchBackend implements KnowledgeSearchBackend {
             }
         }
         return candidates;
+    }
+
+    /**
+     * Per-query version index for visibility. The bounded tenant scan is the same
+     * source/identity/version path used by the existing read surfaces; it never
+     * crosses tenant boundaries.
+     */
+    private Map<UUID, SourceVersionRow> tenantVersions(String tenantId) {
+        Map<UUID, SourceVersionRow> versions = new HashMap<>();
+        List<SourceRow> sources = cacheClient.listSources(tenantId);
+        if (sources == null) {
+            return versions;
+        }
+        for (SourceRow source : sources) {
+            List<SourceIdentityRow> identities = cacheClient.listSourceIdentities(
+                    tenantId, source.sourceId(), source.connectorId());
+            if (identities == null) {
+                continue;
+            }
+            for (SourceIdentityRow identity : identities) {
+                List<SourceVersionRow> rows = cacheClient.listSourceVersions(
+                        tenantId, identity.connectorId(), identity.sourceId(), identity.resourceId());
+                if (rows == null) {
+                    continue;
+                }
+                for (SourceVersionRow row : rows) {
+                    versions.put(row.versionId(), row);
+                }
+            }
+        }
+        return versions;
+    }
+
+    private enum Visibility {
+        CURRENT(null),
+        SUPERSEDED(null),
+        UNMAPPED("unmapped"),
+        NO_CURRENT("no_current");
+
+        private final String reason;
+
+        Visibility(String reason) {
+            this.reason = reason;
+        }
+    }
+
+    /**
+     * A supporting version is visible while it is the authoritative current
+     * revision for its source. An unmapped version and a mapped source with no
+     * current pointer are the #699 fail-open cases; the flag decides whether they
+     * remain visible or are hidden and counted.
+     */
+    private Visibility visibility(String tenantId, UUID versionId,
+                                  Map<UUID, SourceVersionRow> versionsById,
+                                  Map<String, Optional<UUID>> currentRevisionBySource) {
+        SourceVersionRow version = versionsById.get(versionId);
+        if (version == null) {
+            return Visibility.UNMAPPED;
+        }
+        Optional<UUID> current = currentRevisionBySource.computeIfAbsent(
+                version.sourceId(), sourceId -> cacheClient.readCurrentRevisionId(tenantId, sourceId));
+        if (current.isEmpty()) {
+            return Visibility.NO_CURRENT;
+        }
+        return current.get().equals(versionId) ? Visibility.CURRENT : Visibility.SUPERSEDED;
     }
 }

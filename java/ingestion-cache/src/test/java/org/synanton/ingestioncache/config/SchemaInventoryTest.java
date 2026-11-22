@@ -41,11 +41,15 @@ class SchemaInventoryTest {
                     "manifest_transitions_outbox",
                     "operation_idempotency",
                     "operations",
+                    "source_activation",
+                    "source_current",
                     "source_identities",
+                    "source_revision_generation",
                     "source_tombstones",
                     "source_version_manifest_entries",
                     "source_versions",
                     "sources",
+                    "tenant_provider_config",
                     "tenant_registry",
                     "workflow_states",
                     "workflow_leases",
@@ -128,7 +132,9 @@ class SchemaInventoryTest {
             "chunk_source_versions.processing_run_id",
             "manifest.processing_run_id",
             "knowledge_processing_runs.producer_version",
-            "knowledge_processing_runs.input_source_version_ids"
+            "knowledge_processing_runs.input_source_version_ids",
+            "source_versions.extraction_provider",
+            "tenant_provider_config.provider"
         );
 
         // EWP-2 Migration 3 (V16): typed-envelope metadata on both outbox tables.
@@ -158,6 +164,23 @@ class SchemaInventoryTest {
             "source_versions.extraction_event_next_attempt_at",
             "source_versions.extraction_event_dead_lettered",
             "source_versions.extraction_status",
+            "source_versions.activation_event_id",
+            "source_versions.activation_event_type",
+            "source_versions.activation_event_payload_json",
+            "source_versions.activation_event_published",
+            "source_versions.activation_event_published_at",
+            "source_versions.activation_event_attempt_count",
+            "source_versions.activation_event_last_error",
+            "source_versions.activation_event_next_attempt_at",
+            "source_versions.activation_event_dead_lettered",
+            "source_current.accepted_generation",
+            "source_revision_generation.tenant_id",
+            "source_revision_generation.source_id",
+            "source_revision_generation.revision_id",
+            "source_revision_generation.generation",
+            "source_revision_generation.connector_id",
+            "source_revision_generation.resource_id",
+            "source_revision_generation.created_at",
             "extraction_results.entities_json",
             "extraction_results.relations_json",
             "source_versions.graph_status",
@@ -197,7 +220,15 @@ class SchemaInventoryTest {
             "relation_promotion_results.next_attempt_at",
             "relation_promotion_results.claimed_at",
             "relation_promotion_results.last_error",
-            "relation_promotion_results.failure_class"
+            "relation_promotion_results.failure_class",
+            "relation_promotion_results.owner_producer_id",
+            "relation_promotion_results.owner_generation",
+            "relation_promotion_results.owner_closed",
+            "relation_promotion_results.owner_started_at",
+            "relation_promotion_results.owner_closed_at",
+            "relation_promotion_results.owner_takeover_count",
+            "relation_promotion_results.owner_last_write_at",
+            "relation_promotion_results.consumer_last_write_at"
         );
     }
 }

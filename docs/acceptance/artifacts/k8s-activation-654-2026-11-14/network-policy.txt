@@ -1,0 +1,5 @@
+networkpolicy syntology-allow-synflux after fix:
+["synflux","ui","relix"]
+
+relix -> syntology health from inside relix pod:
+{"status":"UP","groups":["liveness","readiness"]}

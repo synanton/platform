@@ -1,0 +1,3889 @@
+From Java 21 to Java 25
+Upgrade to Java 25 from Java 21
+
+Fu Cheng
+This book is available at https://leanpub.com/java21to25
+
+This version was published on 2025-10-09
+
+
+
+
+This is a Leanpub book. Leanpub empowers authors and publishers with the
+Lean Publishing process. Lean Publishing is the act of publishing an
+in-progress ebook using lightweight tools and many iterations to get reader
+feedback, pivot until you have the right book and build traction once you do.
+
+© 2025 Fu Cheng
+Also By Fu Cheng
+Exploring Java 25
+Text-to-SQL, Spring AI Implementation with RAG
+Understanding Java Virtual Threads
+Build AI Applications with Spring AI
+From Java 17 to Java 21
+Build Native Java Apps with GraalVM
+From Java 11 to Java 17
+ES6 Generators
+A Practical Guide for Java 8 Lambdas and Streams
+Lodash 4 Cookbook
+JUnit 5 Cookbook
+Contents
+
+Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      1
+   JEPs in Different Java Releases . . . . . . . . . . . . . . . . . . . . . . . . .          1
+   Install Java 25 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    4
+   Build Tools . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      5
+   Source Code . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .        5
+
+
+Java Language . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .                    6
+
+Module Import Declarations . . . . . . . . . . . . . . . . . . . . . . . . . . . .            7
+  Module Import Declaration . . . . . . . . . . . . . . . . . . . . . . . . . . .             7
+  Import Ambiguity . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .          8
+  Choose Import Declaration . . . . . . . . . . . . . . . . . . . . . . . . . . .            10
+
+Flexible Constructor Bodies . . . . . . . . . . . . . . . . . . . . . . . . . . . .          12
+
+Compact Source Files and Instance Main Methods . . . . . . . . . . . . .                     16
+  Instance main methods . . . . . . . . . . . . . . . . . . . . . . . . . . . . .            16
+  Compact Source Files . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .         17
+  IO . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   18
+
+Pattern Matching . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       20
+   Unnamed Variables & Patterns . . . . . . . . . . . . . . . . . . . . . . . . .            21
+   Primitive Types in Patterns, instanceof, and switch . . . . . . . . . . . .               25
+
+
+Core Library . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .                 31
+
+Stream Gatherers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       32
+
+Class-File API . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     37
+   ClassFile . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       37
+CONTENTS
+
+
+   Models . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     37
+   Builders . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     39
+   Transform . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      40
+   Parse . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    40
+   Generate . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     41
+   Transform . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      43
+
+Integrity by Default . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .        45
+   Prepare to Restrict the Use of JNI . . . . . . . . . . . . . . . . . . . . . . .           45
+   Warn upon Use of Memory-Access Methods in sun.misc.Unsafe . .                              46
+
+Security . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    48
+   Permanently Disable the Security Manager . . . . . . . . . . . . . . . . .                 48
+
+
+Multi-threading . . . . . . . . . . . . . . . . . . . . . . . . . . . . 50
+Scoped Values . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       51
+   Thread Local . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       51
+   ScopedValue . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .        52
+
+Structured Concurrency . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .            57
+   Basic Usage . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      59
+   Joiner . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   60
+   Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      61
+   Open a StructuredTaskScope . . . . . . . . . . . . . . . . . . . . . . . . . .             62
+   Exception Handling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .         63
+   A Concrete Example . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .           64
+   Joiner.allSuccessfulOrThrow . . . . . . . . . . . . . . . . . . . . . . . . . .            66
+   Joiner.anySuccessfulResultOrThrow . . . . . . . . . . . . . . . . . . . . .                67
+   Close of StructuredTaskScope . . . . . . . . . . . . . . . . . . . . . . . . .             68
+
+Synchronize Virtual Threads without Pinning . . . . . . . . . . . . . . . .                   69
+
+Stable Values . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     72
+   StableValue . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      72
+   Stable Supplier . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      75
+   Stable IntFunction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       76
+   Stable Function . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .        76
+   Stable List . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    77
+   Stable Map . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       78
+   Constant Folding Optimization . . . . . . . . . . . . . . . . . . . . . . . . .            78
+   Use StableValue . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .        79
+
+
+JVM . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .         81
+
+JFR . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   82
+   Method Timing and Tracing . . . . . . . . . . . . . . . . . . . . . . . . . . .            82
+   CPU-Time Profiling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .         83
+
+Garbage Collectors . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .        85
+  G1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    85
+  ZGC . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     85
+  Generational Shenandoah . . . . . . . . . . . . . . . . . . . . . . . . . . . .             86
+
+Compact Object Headers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .            87
+
+Project Leyden . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      88
+   Class Loading & Linking . . . . . . . . . . . . . . . . . . . . . . . . . . . . .          88
+   Method Profiling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       91
+
+
+Tools . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 92
+Launch Multi-File Source-Code Programs . . . . . . . . . . . . . . . . . . .                  93
+
+Linking Run-Time Images without JMODs . . . . . . . . . . . . . . . . . . .                   94
+
+Annotations Processing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .          95
+
+
+Deprecated & Removed Features . . . . . . . . . . 97
+32-bit x86 Port . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     98
+Introduction
+Java 25 is released on September 16, 2025. Java 25 is the next LTS version after
+Java 21. It’s expected that users of Java 21 will gradually migrate to Java 25. This
+book summaries all major changes from Java 21 to Java 25, so you can easily
+migrate from Java 21 to Java 25.
+
+
+             If you are currently using Java 17, check out my book From Java 17 to
+             Java 21 for upgrading from Java 17 to Java 21 first.
+
+
+
+
+JEPs in Different Java Releases
+
+Java Enhancement Proposal (JEP) is used to organize changes to OpenJDK. A
+Java release may contain a list of JEPs. Below are lists of JEPs added in each
+Java release from Java 22 to Java 25.
+
+
+Java 22
+
+Java 22 has 12 JEPs, see the table below.
+
+                                Figure 1. JEPs in Java 22
+
+
+ Number     Name
+ 423        Region Pinning for G1
+ 447        Statements before super(…) (Preview)
+ 454        Foreign Function & Memory API
+ 456        Unnamed Variables & Patterns
+ 457        Class-File API (Preview)
+ 458        Launch Multi-File Source-Code Programs
+ 459        String Templates (Second Preview)
+ 460        Vector API (Seventh Incubator)
+ 461        Stream Gatherers (Preview)
+Introduction                                                                            2
+
+
+ Number        Name
+ 462           Structured Concurrency (Second Preview)
+ 463           Implicitly Declared Classes and Instance Main Methods (Second Preview)
+ 464           Scoped Values (Second Preview)
+
+
+
+
+Java 23
+
+Java 23 has 12 JEPs, see the table below.
+
+                                  Figure 2. JEPs in Java 23
+
+
+ Number        Name
+ 455           Primitive Types in Patterns, instanceof, and switch (Preview)
+ 466           Class-File API (Second Preview)
+ 467           Markdown Documentation Comments
+ 469           Vector API (Eighth Incubator)
+ 473           Stream Gatherers (Second Preview)
+ 471           Deprecate the Memory-Access Methods in sun.misc.Unsafe for Removal
+ 474           ZGC: Generational Mode by Default
+ 476           Module Import Declarations (Preview)
+ 477           Implicitly Declared Classes and Instance Main Methods (Third Preview)
+ 480           Structured Concurrency (Third Preview)
+ 481           Scoped Values (Third Preview)
+ 482           Flexible Constructor Bodies (Second Preview)
+
+
+
+
+Java 24
+
+Java 24 has 24 JEPs, see the table below.
+Introduction                                                                          3
+
+
+                                   Figure 3. JEPs in Java 24
+
+
+ Number        Name
+ 404           Generational Shenandoah (Experimental)
+ 450           Compact Object Headers (Experimental)
+ 472           Prepare to Restrict the Use of JNI
+ 475           Late Barrier Expansion for G1
+ 478           Key Derivation Function API (Preview)
+ 479           Remove the Windows 32-bit x86 Port
+ 483           Ahead-of-Time Class Loading & Linking
+ 484           Class-File API
+ 485           Stream Gatherers
+ 486           Permanently Disable the Security Manager
+ 487           Scoped Values (Fourth Preview)
+ 488           Primitive Types in Patterns, instanceof, and switch (Second Preview)
+ 489           Vector API (Ninth Incubator)
+ 490           ZGC: Remove the Non-Generational Mode
+ 491           Synchronize Virtual Threads without Pinning
+ 492           Flexible Constructor Bodies (Third Preview)
+ 493           Linking Run-Time Images without JMODs
+ 494           Module Import Declarations (Second Preview)
+ 495           Simple Source Files and Instance Main Methods (Fourth Preview)
+ 496           Quantum-Resistant Module-Lattice-Based Key Encapsulation
+               Mechanism
+ 497           Quantum-Resistant Module-Lattice-Based Digital Signature Algorithm
+ 498           Warn upon Use of Memory-Access Methods in sun.misc.Unsafe
+ 499           Structured Concurrency (Fourth Preview)
+ 501           Deprecate the 32-bit x86 Port for Removal
+
+
+
+
+Java 25
+
+Java 25 has 18 JEPs, see the table below.
+Introduction                                                                         4
+
+
+                                  Figure 4. JEPs in Java 25
+
+
+ Number        Name
+ 470           PEM Encodings of Cryptographic Objects (Preview)
+ 502           Stable Values (Preview)
+ 503           Remove the 32-bit x86 Port
+ 505           Structured Concurrency (Fifth Preview)
+ 506           Scoped Values
+ 507           Primitive Types in Patterns, instanceof, and switch (Third Preview)
+ 508           Vector API (Tenth Incubator)
+ 509           JFR CPU-Time Profiling (Experimental)
+ 510           Key Derivation Function API
+ 511           Module Import Declarations
+ 512           Compact Source Files and Instance Main Methods
+ 513           Flexible Constructor Bodies
+ 514           Ahead-of-Time Command-Line Ergonomics
+ 515           Ahead-of-Time Method Profiling
+ 518           JFR Cooperative Sampling
+ 519           Compact Object Headers
+ 520           JFR Method Timing & Tracing
+ 521           Generational Shenandoah
+
+
+
+
+Install Java 25
+
+You can get Java 25 binaries from several different places. Since Java 25 is a LTS
+version, many vendors will provide Java 25 releases. For most users, Eclipse
+Temurin is the best choice.
+
+   • Download OpenJDK 25 build from jdk.java.net.
+   • Download Eclipse Temurin from Adoptium.
+   • Use SDKMAN to install, e.g. sdk install java 25-tem or sdk install
+     java 25-graalce. You can get a list of JDK distributions using sdk ls
+     java | grep 25.
+   • Use IDE to download. IntelliJ IDEA can download JDK.
+
+Below is the output of java -version for Eclipse Temurin JDK 25 build.
+     Introduction                                                           5
+
+
+     Figure 5. Output of java -version
+
+1    openjdk 25 2025-09-16 LTS
+2    OpenJDK Runtime Environment Temurin-25+36 (build 25+36-LTS)
+3    OpenJDK 64-Bit Server VM Temurin-25+36 (build 25+36-LTS, mixed mode)
+
+
+
+
+     Build Tools
+
+     When using Java 25 with build tools, Maven or Gradle, you may need to
+     add the --enable-preview option to enable preview features. The follow-
+     ing code shows an example of the configuration of Maven compiler plugin.
+     jdk.incubator.vector is an incubating module, so it needs to be added
+     explicitly using --add-modules.
+
+     Figure 6. Maven compiler plugin configuration
+
+1    <plugin>
+2        <groupId>org.apache.maven.plugins</groupId>
+3        <artifactId>maven-compiler-plugin</artifactId>
+4        <version>3.14.0</version>
+5        <configuration>
+6            <source>25</source>
+7            <target>25</target>
+8            <compilerArgs>
+9                <arg>--enable-preview</arg>
+10               <arg>--add-modules</arg>
+11               <arg>jdk.incubator.vector</arg>
+12           </compilerArgs>
+13       </configuration>
+14   </plugin>
+
+
+
+
+     Source Code
+
+     Source code of this book can be found on GitHub.
+Java Language
+
+This part covers changes in Java language.
+    Module Import Declarations
+          Module Import Declarations was introduced in JDK 23 as a preview
+          feature (JEP 476), and previewed again in JDK 24 (JEP 494), then
+          became a standard feature in JDK 25 (JEP 511).
+
+
+    Import declarations are basic constructs in Java programming language. In a
+    Java source file, to use an other class, this class must be imported first, unless
+    that class is in the same package, or it’s in the java.lang package.
+
+    Before Java 23, there were four types of import declarations. These import
+    declarations are actually divided into two categories:
+
+
+       • A single-type-import declaration imports a single class or interface by giv-
+         ing its canonical name. For example, import java.util.List imports
+         the interface java.util.List.
+       • A type-import-on-demand declaration allows all accessible classes and
+         interfaces of a named package, class, or interface to be imported as
+         needed. For example, after using import java.util.*, all accessible
+         classes and interfaces of java.util package will be imported as needed.
+
+
+    Below is the grammar of import declarations before Java 23.
+
+    Figure 7. Import declarations before Java 23
+
+1   ImportDeclaration:
+2     SingleTypeImportDeclaration
+3     TypeImportOnDemandDeclaration
+4     SingleStaticImportDeclaration
+5     StaticImportOnDemandDeclaration
+
+
+
+
+    Module Import Declaration
+
+    In Java 23, a new module import declaration is added. As shown in the code
+    below, M is the module to import.
+    Module Import Declarations                                                8
+
+
+    Figure 8. Module import declaration
+
+1   import module M;
+
+
+
+    This declaration imports, on demand, all of the public top-level classes and
+    interfaces in
+
+
+       • The packages exported by the module M to the current module, and
+       • The packages exported by the modules that are read by the current
+         module due to reading the module M.
+
+
+    Below is the new grammar of import declarations from Java 23. ModuleIm-
+    portDeclaration is newly added.
+
+    Figure 9. Import declarations from Java 23
+
+1   ImportDeclaration:
+2     SingleTypeImportDeclaration
+3     TypeImportOnDemandDeclaration
+4     SingleStaticImportDeclaration
+5     StaticImportOnDemandDeclaration
+6     ModuleImportDeclaration
+7
+8   ModuleImportDeclaration:
+9     import module ModuleName;
+
+
+
+
+    Import Ambiguity
+
+    Importing a module has the effect of importing multiple packages. In these
+    imported packages, there may be multiple classes with the same simple name.
+    Using this kind of simple names will cause a compile-time error due to
+    ambiguous imports.
+
+    For example, modules java.base and java.sql both export a Date class,
+    java.util.Date and java.sql.Date.
+
+    In the code below, after importing java.base and java.sql, we cannot use
+    Date directly, because the name of Date is ambiguous.
+    Module Import Declarations                                                    9
+
+
+    Figure 10. Ambiguous Date
+
+1   import module java.base;
+2   import module java.sql;
+3
+4   Date d = ...
+
+
+
+    To resolve ambiguities, we can add another import declaration to specify the
+    correct type to use.
+
+    In the code below, after adding import java.sql.Date, the ambiguity is
+    resolved.
+
+    Figure 11. Resolve ambiguity
+
+1   import module java.base;
+2   import module java.sql;
+3
+4   import java.sql.Date;
+5
+6   Date d = ...
+
+
+
+    These three import declarations have their specificity. Below is the list of
+    import declarations from most specific to least specific.
+
+
+      1. single-type-import declaration,
+      2. type-import-on-demand declaration,
+      3. module import declaration.
+
+
+    An import declaration can shadow import declaration that are less specific.
+
+
+       • A single-type-import declaration can shadow both a type-import-on-
+         demand declaration and a module import declaration.
+       • A type-import-on-demand declaration can shadow a module import dec-
+         laration.
+
+
+    In a source file, we can organize import declarations by their specificity, from
+    least specific to most specific.
+     Module Import Declarations                                                  10
+
+
+     Figure 12. Organize import declarations
+
+1    // Module imports
+2    import module java.base;
+3    import module java.sql;
+4
+5    // Package imports
+6    import java.util.*;
+7
+8    // Single-type imports
+9    import java.sql.Date;
+
+
+
+
+     Choose Import Declaration
+
+     Given a type, it can be imported by using one of these three import dec-
+     larations. For example, for the type java.util.List, it can be imported
+     using import java.util.List, import java.util.*, and import module
+     java.se. For these three import declarations, it’s usually recommended to
+     prefer single-type-import declarations.
+
+     There are some scenarios where module import declarations are useful. For
+     a Java source file, only the package java.lang is imported on demand. For
+     most Java programs, there are some commonly used classes and interfaces, like
+     java.util, java.io, and java.time. Using single-type-import declarations
+     to import all these common types is a tedious task.
+
+     The code below shows a simple program to count names by their first charac-
+     ter. In this program, we need to import types from java.util package.
+
+
+
+     Figure 13. Simple program using Stream
+
+1    import java.util.Map.Entry;
+2    import java.util.stream.Collectors;
+3    import java.util.stream.Stream;
+4
+5    public class NameCounter {
+6
+7      void count() {
+8        var result = Stream.of("Alice", "Alex", "Amelia", "Andrew",
+9                "Bob", "Bella", "Brian", "Bianca", "Ethan", "Emma")
+10           .collect(
+11               Collectors.groupingBy(name -> name.toUpperCase().substring(0, 1),
+     Module Import Declarations                                                11
+
+
+12                       Collectors.counting()))
+13               .entrySet()
+14               .stream()
+15               .sorted(Entry.comparingByValue())
+16               .toList();
+17           System.out.println(result);
+18       }
+19
+20       static void main() {
+21         new NameCounter().count();
+22       }
+23   }
+
+
+
+     By using a module import declaration, these three import declarations can be
+     simplified to a single import module java.se.
+Flexible Constructor Bodies
+     Flexible Constructor Bodies was introduced in JDK 22 as a preview
+     feature (JEP 447), then previewed again in JDK 23 (JEP 482) and JDK
+     24 (JEP 492), and finally became a standard feature in JDK 25 (JEP
+     513).
+
+
+When learning Java, we all remember a Java syntax rule related to class
+inheritance and constructors. When inheriting from a class, the subclass’s
+constructor must use super to call the superclass’s constructor. This super
+statement must be the first statement in the constructor method. If super
+is not the first statement, a compilation error occurs. This rule also applies
+to calling the constructor of the same class, that is, when calling this. this
+statement in the constructor must also be the first statement.
+
+When a class inherits from another class, the subclass inherits functionality
+from the superclass and adds its own fields and methods. The initial values of
+the subclass’s fields may depend on the initial values of the superclass’s fields.
+Therefore, the superclass’s fields must be initialized before the subclass’s fields.
+
+To ensure the order of field initialization, constructors must be run in a top-
+down manner. The superclass’s constructor must run before the subclass’s
+constructor. Another restriction is that the class’s fields cannot be accessed
+before they are initialized. To ensure this, code in constructors cannot access
+fields in the current class, and accessing fields in superclasses must wait until
+the superclass’s constructor completes.
+
+To ensure that superclass fields are initialized first, Java 1.0 has adopted a
+very strict syntax, requiring super and this to be the first statement in a
+constructor. This restriction prevents access errors, but it also limits many
+legitimate use cases.
+
+This restriction was removed in Java 22. In constructor methods, super and
+this statements are no longer required to be the first statement. Other
+statements can precede them. Of course, the top-down execution requirement
+of constructors remains unchanged, and fields cannot be accessed before
+initialization. These two restrictions still apply.
+     Flexible Constructor Bodies                                                 13
+
+
+     If other statements precede super and this, the compiler will perform stricter
+     checks to ensure that these statements do not violate these restrictions. Java
+     developers do not need to pay too much attention to the syntax rules; if there
+     are any problems, the compiler will report an error, then you can then fix them
+     accordingly.
+
+     Allowing statements before super simplifies three scenarios related to con-
+     structor parameters in constructor implementation.
+
+     The first is constructor parameter validation. If the subclass constructor’s
+     parameters fail validation, an exception can be thrown directly without calling
+     the superclass constructor.
+
+     In the code below, the subclass Child1 validates the value of its constructor
+     parameter value before calling the superclass constructor.
+
+
+
+     Figure 14. Constructor parameter validation
+
+1    /**
+2     * Validating superclass constructor arguments
+3     */
+4    class Super1 {
+5
+6        private int value;
+7
+8        Super1(int value) {
+9          this.value = value;
+10       }
+11   }
+12
+13   public class Child1 extends Super1 {
+14
+15       Child1(int value) {
+16         if (value < 0) {
+17           throw new IllegalArgumentException("invalid value");
+18         }
+19         super(value);
+20       }
+21   }
+
+
+
+     The second is constructor parameter preparation. This often occurs when
+     the superclass constructor’s parameters differ significantly from the subclass
+     constructor’s. The subclass constructor method must execute complex logic
+     to obtain the parameters passed to the superclass constructor. This logic can
+     Flexible Constructor Bodies                                                  14
+
+
+     be placed before the super call, making the constructor code clearer and easier
+     to understand.
+
+     In the code below, the subclass Child2 calculates the newId based on the
+     value of its constructor parameter, then the newId is used to call superclass
+     constructor.
+
+
+
+     Figure 15. Constructor parameter preparation
+
+1    import java.util.UUID;
+2
+3    /**
+4     * Preparing superclass constructor arguments
+5     */
+6    class Super2 {
+7
+8        private String id;
+9
+10       Super2(String id) {
+11         this.id = id;
+12       }
+13   }
+14
+15   public class Child2 extends Super2 {
+16
+17       Child2(String oldId) {
+18         String newId;
+19         if (oldId != null) {
+20           newId = "o_" + oldId.toLowerCase();
+21         } else {
+22           newId = UUID.randomUUID().toString();
+23         }
+24         super(newId);
+25       }
+26   }
+
+
+
+     The third type is shared constructor parameters. The parent class’s con-
+     structor may have multiple parameters of the same type, and the child class’s
+     constructor uses the same value as the values of multiple parameters in the
+     parent class’s constructor.
+
+     In the code below, the constructor of superclass Super3 requires two int pa-
+     rameters. One constructor of subclass Child3 accepts a single int parameter.
+     The two parameters of the superclass constructor share the same value, and
+     its value only needs to be calculated once.
+     Flexible Constructor Bodies                   15
+
+
+
+
+     Figure 16. Shared constructor parameters
+
+1    /**
+2     * Sharing superclass constructor arguments
+3     */
+4    class Super3 {
+5
+6        private int v1;
+7        private int v2;
+8
+9        Super3(int v1, int v2) {
+10         this.v1 = v1;
+11         this.v2 = v2;
+12       }
+13   }
+14
+15   public class Child3 extends Super3 {
+16
+17       Child3(int v) {
+18         int pv = v * 1024;
+19         super(pv, pv);
+20       }
+21
+22       Child3(String str) {
+23         int v = str.length() * 100;
+24         this(v);
+25       }
+26   }
+    Compact Source Files and Instance
+    Main Methods
+          Compact Source Files and Instance Main Methods was first introduced
+          as a preview feature in JDK 21 (JEP 445), then previewed again in JDK
+          22 (JEP 463), JDK 23 (JEP 477), and JDK 24 (JEP 495), and finally became
+          a standard feature in JDK 25 (JEP 512).
+
+    When we start to learn programming with Java, we always start from the
+    famous “Hello World” program. The code below shows a typical “Hello World”
+    program. This program has five lines, but only one line actually does something.
+
+    Figure 17. Original ’Hello World’ program
+1   public class HelloWorld {
+2     public static void main(String[] args) {
+3       System.out.println("Hello, World!");
+4     }
+5   }
+
+
+
+
+    Instance main methods
+
+    Before Java 21, the entry point of launching a Java program must be a public
+    static void main(String[] args) method. Starting from Java 21, the
+    launching protocol of a Java application has changed. The Java launcher is now
+    flexible about choosing the main method.
+
+       • If the class declares or inherits a main method with a String[] parameter
+         then the launcher chooses that method. Otherwise, if the class declares
+         or inherits a main method with no parameters then the launcher chooses
+         that method. Otherwise, the launcher reports an error and terminates.
+       • If the chosen method is static then the launcher invokes it. Otherwise,
+         the class must have a non-private constructor with no parameters. The
+         launcher invokes that constructor and then invokes the chosen main
+         method of the resulting object. If there is no such constructor then the
+         launcher reports an error and terminates.
+    Compact Source Files and Instance Main Methods                                 17
+
+
+    After this change, the “Hello World” program can be written as below.
+
+    Figure 18. A simplified ’Hello World’ program
+
+1   class HelloWorld {
+2     void main() {
+3       System.out.println("Hello, World!");
+4     }
+5   }
+
+
+
+
+    Compact Source Files
+
+    Java language has a structured way to manage classes. Every class resides in
+    a package and every package resides in a module. If the package and module
+    declarations are omitted for a class, then this class will reside in an unnamed
+    package of an unnamed module.
+
+    Classes provide namespacing and encapsulation for fields and methods. But
+    small programs do not need these concepts. If the Java compiler encounters a
+    source file with fields and methods that are not enclosed in a class declaration,
+    it will consider the source file to implicitly declare a class whose members
+    are the unenclosed fields and methods. Such a source file is called a compact
+    source file.
+
+    By using a compact source file, the “Hello World” program can be further
+    simplified as below.
+
+    Figure 19. Minimal ’Hello World’ program
+
+1   void main() {
+2     System.out.println("Hello, World!");
+3   }
+
+
+
+    Below is another example of using a compact source file. This source file
+    contains a method getMessage.
+    Compact Source Files and Instance Main Methods                                          18
+
+
+    Figure 20. Compact source file with a method
+
+1   String getMessage() {
+2     return "Current time is: " + LocalDateTime.now();
+3   }
+4
+5   void main() {
+6     IO.println(getMessage());
+7   }
+
+
+
+    In the code above, we don’t need to import LocalDateTime in java.time
+    package. This is because a compact source file is considered to import
+    the java.base module automatically, as if the declaration import module
+    java.base; appears at the start of every compact source file.
+
+
+
+    IO
+
+    When writing simple Java programs, it’s common to interact with the console.
+    This was done using methods in System.out and System.in. To make it easier
+    for programs to interact with the console, a new java.lang.IO class is added.
+    This class has only static methods.
+
+    The table below shows static methods of IO. These methods use System.out
+    and System.in internally, but provide a simpler interface.
+
+                                     Figure 21. Methods of IO
+
+
+     Method                                 Description
+     println(Object obj)                    Writes a string representation of the specified
+                                            object and then writes a line separator to the
+                                            standard output. It’s the same as
+                                            System.out.println(obj).
+     print(Object obj)                      Writes a string representation of the specified
+                                            object to the standard output.
+     println()                              Writes a line separator to the standard output.
+                                            It’s the same as System.out.println().
+     String readln()                        Reads a single line of text from the standard
+                                            input.
+     String readln(String prompt)           Writes a prompt and then reads a line of input.
+    Compact Source Files and Instance Main Methods                            19
+
+
+     Method                                  Description
+
+
+
+
+    After using the println method in IO, the final “Hello World” can be written
+    as below.
+
+    Figure 22. Final ’Hello World’ program
+
+1   void main() {
+2     IO.println("Hello, World!");
+3   }
+
+
+
+    The code below shows a simple program that reads from the standard input
+    and writes some output.
+
+
+
+    Figure 23. Simple program to use IO
+
+1   void main() {
+2     String confirmation = IO.readln("Do you wish to continue? y/n");
+3     if ("y".equalsIgnoreCase(confirmation)) {
+4       IO.println("Files deleted");
+5     } else {
+6       IO.println("Operation cancelled");
+7     }
+8   }
+Pattern Matching
+Pattern matching is a large piece of changes that are being added to JDK
+gradually since Java 14. The following table shows features in pattern matching
+and their support in different Java releases. In Java 25, we can now use
+unnamed variables and patterns. Primitive types can also be used in patterns,
+instanceof and switch.
+
+                           Figure 24. JEPs of pattern matching
+
+
+ Java         instanceof      switch         Record          Unnamed       Primitive
+ Release                                     Patterns        Variables &   Types in
+                                                             Patterns      Patterns
+ Java 14      JEP 305
+              (Preview)
+ Java 15      JEP 375
+              (Second
+              Preview)
+ Java 16      JEP 394
+              (Standard)
+ Java 17      Standard        JEP 406
+                              (Preview)
+ Java 18      Standard        JEP 420
+                              (Second
+                              Preview)
+ Java 19      Standard        JEP 427        JEP 405
+                              (Third         (Preview)
+                              Preview)
+ Java 20      Standard        JEP 433        JEP 432
+                              (Fourth        (Second
+                              Preview)       Preview)
+ Java 21      Standard        JEP 441        JEP 440
+                              (Standard)     (Standard)
+ Java 22      Standard        Standard       Standard        JEP 456
+                                                             (Standard)
+    Pattern Matching                                                                   21
+
+
+     Java              instanceof    switch       Record     Unnamed       Primitive
+     Release                                      Patterns   Variables &   Types in
+                                                             Patterns      Patterns
+     Java 23           Standard      Standard     Standard   Standard      JEP 455
+                                                                           (Preview)
+     Java 24           Standard      Standard     Standard   Standard      JEP 488
+                                                                           (Second
+                                                                           Preview)
+     Java 25           Standard      Standard     Standard   Standard      JEP 507
+                                                                           (Third
+                                                                           Preview)
+
+
+
+
+    Unnamed Variables & Patterns
+
+          Unnamed Variables & Patterns is a standard feature in Java 22 (JEP
+          456).
+
+
+
+    Unnamed Variables
+
+    When writing Java code, we may have to declare some unused variables. A
+    typical example is the exception parameter in a catch block.
+
+    In the code below, the exception parameter e of type NumberFormatException
+    is not used in the catch block. But we have to declare it to satisfy the compiler.
+
+    Figure 25. Unused variable in a catch block
+
+1   public int parseHttpPort(String port) {
+2     try {
+3       return Integer.parseInt(port);
+4     } catch (NumberFormatException e) {
+5       return 80;
+6     }
+7   }
+
+
+
+    In Java 22, we can use _ to declare unused variables. _ can be used in the
+    following places:
+    Pattern Matching                                                           22
+
+
+        • A local variable declaration statement in a block.
+        • A resource specification of a try-with-resources statement.
+        • The header of a basic for statement.
+        • The header of an enhanced for loop.
+        • An exception parameter of a catch block.
+        • A formal parameter of a lambda expression.
+
+
+    Let’s see examples of using _ for unnamed variables.
+
+    In the code below, _ is used for local variables in a method. We can see that
+    _ appears twice in the method body. This is because an unnamed variable never
+    shadows any other variable, so multiple unnamed variables can be declared in
+    the same block.
+
+    _ is not in scope, so the variable cannot be written or read after it has been
+    initialized.
+
+    Figure 26. _ as local variables
+
+1   public void localVariable() {
+2     var list = List.of(1, 2, 3);
+3     var _ = list.removeFirst();
+4     var _ = list.removeFirst();
+5     var third = list.removeFirst();
+6     System.out.println(third); // Print 3 to the console
+7   }
+
+
+
+    In the code below, _ is used in a try-with-resources statement.
+
+    Figure 27. _ in try-with-resources
+
+1   public void tryWithResources() {
+2     try (var _ = SomeContext.create()) {
+3       System.out.println("Do in the context");
+4     }
+5   }
+
+
+
+    In the code below, _ is used in the header of a basic for statement.
+    Pattern Matching                                                             23
+
+
+    Figure 28. _ in the header of a basic for statement
+
+1   public void basicFor() {
+2     for (int i = 0, _ = takeSomeAction(); i < 10; i++) {
+3       System.out.println("Print in the loop");
+4     }
+5   }
+
+
+
+    In the code below, _ is used in the header of an enhanced for loop.
+
+    Figure 29. _ in the header of an enhanced for loop
+
+1   public void enhancedFor() {
+2     var list = List.of(1, 2, 3);
+3     for (var _ : list) {
+4       System.out.println("Print in the loop");
+5     }
+6   }
+
+
+
+    In the code below, _ is used to declare an exception parameter of a catch block.
+
+    Figure 30. _ in a catch block
+
+1   public int catchException(String port) {
+2     try {
+3       return Integer.parseInt(port);
+4     } catch (NumberFormatException _) {
+5       return 80;
+6     }
+7   }
+
+
+
+    In the code below, _ is used as a parameter of a lambda expression.
+
+    Figure 31. _ in a lambda expression
+
+1   public void lambdaExpression() {
+2     var list = List.of("a", "b", "c");
+3     var map = list.stream()
+4         .collect(Collectors.toMap(Function.identity(), _ -> 0));
+5     System.out.println(map);
+6   }
+    Pattern Matching                                                           24
+
+
+    Unnamed Patterns
+
+    With record patterns, we can easily extract components from matched record
+    values. However, we have to declare all components in the record patterns,
+    even though we may only use some of those components. For example,
+    when matching a record value of type Point, we may only want to use the
+    x component, but we still need to declare the record type as Point(int x,
+    int y).
+
+    With unnamed patterns and unnamed pattern variables, we can omit unused
+    record components in pattern matching. Unnamed patterns and unnamed
+    pattern variables are denoted by an underscore character _. In the code
+    below, the type pattern Point(int x, _) uses _ to denote the unused record
+    component y.
+
+    Figure 32. Unnamed pattern
+
+1   public void match(Object input) {
+2     if (input instanceof Point(int x, _)) {
+3       System.out.println("X: " + x);
+4     }
+5   }
+
+
+
+    We can also keep the type declaration and use _ to only denote the variable.
+
+    Figure 33. Unnamed pattern variable
+
+1   public void match(Object input) {
+2     if (input instanceof Point(int x, int _)) {
+3       System.out.println("X: " + x);
+4     }
+5   }
+
+
+
+    Unnamed patterns are quite useful when matching complicated object graphs
+    formed with nested record types. We usually only need to extract some
+    components from a subset of record types. By denoting unused components
+    as _, we can simplify the matching patterns.
+     Pattern Matching                                                                 25
+
+
+     Figure 34. Match User with nested record patterns, unnamed
+
+1    public class MatchUser {
+2
+3        public void matchUser(Object obj) {
+4          if (obj instanceof User(
+5               _,
+6               User.Name(
+7                    String firstName,
+8                    String lastName,
+9                    _,
+10                   _
+11              ),
+12              User.Address(
+13                   String addressLine1,
+14                   String addressLine2,
+15                   String city,
+16                   String zipCode
+17              ),
+18              _
+19         )) {
+20           System.out.printf("%s %s%n%n%s%n%s%n%s,%s",
+21                 firstName, lastName, addressLine1, addressLine2, city, zipCode);
+22         }
+23       }
+24   }
+
+
+
+
+     Primitive Types in Patterns, instanceof, and switch
+
+            Primitive Types in Patterns, instanceof, and switch was introduced in
+            JDK 23 as a preview feature (JEP 455), and previewed again in JDK 24
+            (JEP 488), then previewed again in JDK 25 (JEP 507).
+
+
+     In Java, primitive types and reference types are quite different. Java has 8
+     primitive types, see the table below.
+Pattern Matching                                                                 26
+
+
+                             Figure 35. Java primitive types
+
+
+ Type        Size (bits)       Default Value     Range
+ byte        8                 0                 –128 to 127
+ short       16                0                 –32,768 to 32,767
+ int         32                0                 –2,147,483,648 to 2,147,483,647
+ long        64                0L                –9,223,372,036,854,775,808 to
+                                                 9,223,372,036,854,775,807
+ float       32                0.0f              ~±3.4e38
+ double      64                0.0d              ~±1.8e308
+ char        16                '\u0000'          Unicode 0 to 65,535
+ boolean     JVM-dependent     false             true or false
+
+
+
+
+Primitive types have several constraints when comparing to reference types,
+so Java also has wrapper types of those primitive types, like Integer for int
+and Float for float. With autoboxing and unboxing, primitive types and their
+wrapper types can be easily converted when necessary.
+
+In Java 25, some constraints on primitive types have been eliminated. Primitive
+types can be used in patterns, instanceof and switch.
+
+
+instanceof
+
+In Java 25, instanceof operator can also be used with primitive types. For
+primitive types, instanceof operator checks for safe casting. Type casting
+between primitive types follows certain rules. A conversion is exact if no loss
+of information occurs.
+
+Given a source type and a target type, an unconditionally exact conversion
+is guaranteed not to lose information for any value. No action is needed at
+runtime for an unconditional exact conversation. Examples include byte to
+int, int to long, and float to double.
+
+For other conversations between a source type and a targe type, a runtime test
+is required to check whether the value can be converted from the source type
+to the target type without loss of information. For example, a conversation
+from long to int may be exact depends on the runtime.
+Pattern Matching                                                                    27
+
+
+For instanceof operator, if the conversation from a source type to a target
+type is exact, then the instanceof checks passes.
+
+
+   • unconditionally exact determined at compile time, or
+   • exact determined at runtime.
+
+
+The following table denotes the conversions that are permitted between
+primitive types.
+
+                     Figure 36. Conversions between primitive types
+
+
+ To           byte   short     char      int   long     float    double   boolean
+ From
+ byte         ≈      (1)       (3)(2)    (1)   (1)      (1)      (1)      —
+ short        (2)    ≈         (2)       (1)   (1)      (1)      (1)      —
+ char         (2)    (2)       ≈         (1)   (1)      (1)      (1)      —
+ int          (2)    (2)       (2)       ≈     (1)      (3)      (1)      —
+ long         (2)    (2)       (2)       (2)   ≈        (3)      (3)      —
+ float        (2)    (2)       (2)       (2)   (2)      ≈        (1)      —
+ double       (2)    (2)       (2)       (2)   (2)      (2)      ≈        —
+ boolean      —      —         —         —     —        —        —        ≈
+
+
+
+   • ≈ - identity conversion (same type)
+   • (1) - unconditionally exact conversion (safe, no loss of information)
+   • (2) - narrowing conversion (possible data loss)
+   • (3) - widening with precision loss (e.g., int -> float)
+   • (3)(2) - both narrowing and widening depending on value range
+   • — - not convertible
+
+
+For example, given a variable b of type byte, the check b instanceof int
+passes at compile time, because it’s a unconditionally exact conversion. Given
+a variable i of type int, the result of i instanceof byte check depends on
+the runtime value of i.
+
+In the code below, when the value of i is 42, the instanceof check returns
+true as 42 is in the range of byte. However, since 1000 is not a valid value for
+byte, the second instanceof check returns false.
+    Pattern Matching                                                           28
+
+
+    Figure 37. instanceof with runtime check
+
+1   int i = 42;
+2   i instanceof byte;             // true
+3
+4   int i = 1000;
+5   i instanceof byte;             // false
+
+
+
+
+    switch
+
+    Before Java 23, only a subset of the integral primitive types can be used in
+    switch. In Java 23, switch is enhanced to cover the remaining primitive types,
+    including long, float, double and boolean, as well as the corresponding
+    boxed types.
+
+    When switch is used on primitive type long, float, double, or boolean, any
+    constants used in case labels must have the same type as the switch, or its
+    corresponding boxed type.
+
+    For example, if the type of the selector expression is double or Double, then
+    any case constants must be floating-point literals of type double.
+
+    Figure 38. primitive value in switch
+
+1   void test(double d) {
+2     var value = switch (d) {
+3        case 0.0 -> "zero";
+4        case 100.0 -> "one hundred";
+5        case double x when x > 1000.0 -> "large value";
+6        default -> "small value";
+7     };
+8     System.out.println(value);
+9   }
+
+
+
+    The semantics of floating-point literals in case labels is defined in terms of
+    representation equivalence at compile time and run time. It is a compile-time
+    error to use two floating-point literals that are representation equivalent.
+
+    The code below has compile-time error of duplicate label, because 1.0f ==
+    0.99999999f.
+    Pattern Matching                                                                      29
+
+
+    Figure 39. Duplicate label error
+
+1   float v = ...
+2   switch (v) {
+3     case 1.0f -> ...
+4     case 0.99999999f -> ...          // error: duplicate label
+5     default -> ...
+6   }
+
+
+
+
+                   Representation equivalence means the two floating-point values rep-
+                   resent the same IEEE 754 datum. In particular, for finite values,
+                   the sign, exponent, and significand components of the floating-point
+                   values are the same.
+
+
+
+
+    Patterns
+
+    Type patterns in instanceof and switch can also use primitive types.
+
+    In the code below, i instanceof byte b means to test if i instanceof
+    byte and, if so, cast i to byte and bind that value to b.
+
+    Figure 40. type pattern in instanceof
+
+1   int i = 1000;
+2   if (i instanceof byte b) {
+3     // b
+4   }
+
+
+
+    In the code below, type pattern is used in switch. The variable type is int.
+    The first case label uses byte b. This case label will match if the value is in the
+    range of byte.
+    Pattern Matching                                                         30
+
+
+    Figure 41. type pattern in switch
+
+1   void test(int i) {
+2     switch (i) {
+3       case byte b -> System.out.println("byte: " + b);
+4       case int x when x > 1000 -> System.out.println("large int: " + x);
+5       default -> System.out.println("small int: " + i);
+6     }
+7   }
+Core Library
+
+This part covers changes in Java core library.
+Stream Gatherers
+     Stream Gatherers was introduced in JDK 22 (JEP 461) as a preview
+     feature, then previewed again in JDK 23 (JEP 473), and became a
+     standard feature in JDK 24 (JEP 485).
+
+
+Since Java 8 introduced stream, it has been used very frequently in Java
+applications.
+
+The pipeline for stream processing consists of three parts:
+
+
+   • a source,
+   • intermediate operations,
+   • a terminal operation.
+
+
+The source is the source of elements in the stream and can be created using
+the Stream.of method or obtained from a collection. Intermediate operations
+process the elements in the stream and are defined in the Stream interface.
+These include map, filter, flatMap, and distinct. Terminal operations,
+which ultimately produce a result or side effect, include collect, reduce,
+count, and forEach.
+
+A major pain point when using streams is that intermediate operations cannot
+be customized. We can only use those provided by the Stream interface.
+Stream in the standard library cannot be modified to add more intermediate
+operations. This can make using streams awkward in some cases. For example,
+Stream includes the intermediate distinct operation, which can remove
+duplicate elements from the stream, but it only removes duplicates based
+on object equality. In real-world development, a common requirement is to
+remove duplicates based on object properties. For example, given a stream
+contains Student objects representing students, we may want to remove
+duplicates based on the id property of these Student objects. This cannot
+be achieved with built-in distinct.
+
+Java 22 introduced the Gatherer interface, which allows application code to
+provide custom intermediate stream operations.
+     Stream Gatherers                                                            33
+
+
+     A Gatherer interface consists of four methods: initializer, integrator,
+     combiner, and finisher. Only the integrator is required; the others are
+     optional.
+
+         • The initializer creates new mutable state; it’s not required for state-
+           less gatherers.
+         • The integrator provides elements to be passed downstream.
+         • The combiner is used for parallel processing to merge intermediate state;
+           it’s not required for sequential processing.
+         • The finisher performs additional processing on the final result.
+
+     Gatherers are created using the of method on Gatherers and used by the
+     gather method on streams.
+
+     The following code demonstrates how to use a Gatherer to implement dis-
+     tinct operations based on object properties. This Gatherer implementation
+     uses sequential processing, so a combiner is not required. State represents
+     the intermediate state, with a Map used to record previously encountered
+     values. The initializer returns a new State object. The integrator calls
+     the provided extractor function for each element, extracting property values
+     from the element object. The property values serve as the keys to the Map, and
+     the values are the elements themselves. The finisher examines all values in
+     the Map in State and adds these value objects to the downstream using the
+     push method. This is the value passed to the downstream.
+
+
+
+     Figure 42. distinct by object properties
+
+1    /**
+2     * Distinct by an object's property, keep last duplicated element
+3     */
+4    public class DistinctBy {
+5
+6      /**
+7       * Create a new {@linkplain DistinctBy} gatherer
+8       *
+9       * @param extractor Extract the property from an element
+10      * @param <T>       Type of the element
+11      * @param <R>       Type of the element's property
+12      * @return A new {@linkplain DistinctBy} gatherer
+13      */
+14     static <T, R> Gatherer<T, ?, T> of(
+15         Function<? super T, ? extends R> extractor) {
+     Stream Gatherers                                                                   34
+
+
+16           class State {
+17
+18               final Map<R, T> seen = new HashMap<>();
+19           }
+20
+21           return Gatherer.ofSequential(State::new, Integrator.ofGreedy(
+22                   ((state, element, _) -> {
+23                     state.seen.put(extractor.apply(element), element);
+24                     return true;
+25                   })),
+26               (state, downstream) -> state.seen.values().forEach(downstream::push)
+27           );
+28       }
+29   }
+
+
+
+     The following code demonstrates how to use this Gatherer. The stream
+     contains Student objects. DistinctBy is used to distinct Student objects by
+     their id property.
+
+     Calling the gather method on a Stream and passing it the Gatherer object is
+     straightforward. The overall code is clear and easy to understand.
+
+
+
+     Figure 43. Use stream gatherer
+
+1    public class CustomGatherers {
+2
+3        record Student(String id, String name) {
+4
+5        }
+6
+7        void distinctBy() {
+8          var result = Stream.of(
+9                  new Student("001", "Alex"),
+10                 new Student("002", "Bob"),
+11                 new Student("001", "Alex")
+12             ).gather(DistinctBy.of(Student::id))
+13             .toList();
+14         // [Student[id=001, name=Alex], Student[id=002, name=Bob]]
+15         System.out.println(result);
+16       }
+17
+18       static void main() {
+19         new CustomGatherers().distinctBy();
+20       }
+21   }
+     Stream Gatherers                                                           35
+
+
+     Several built-in Gatherer implementations were released alongside the Gath-
+     erer interface. Within the Gatherers class, these built-in implementations
+     include:
+
+
+        • windowFixed, which gathers elements into a window of a specified size;
+        • windowSliding, which gathers elements into a sliding window of a spec-
+          ified size;
+        • fold, similar to reduce, which produces a single value for the down-
+          stream;
+        • scan, starting with an initial value, each subsequent value is calculated
+          based on the current value and the input elements in the stream. All of
+          these values are provided to the downstream.
+        • mapConcurrent performs concurrent map operations, allowing to specify
+          a maximum number of tasks to run simultaneously.
+
+
+     The code below shows examples of using built-in gatherers.
+
+
+
+     Figure 44. Examples of using built-in gatherers
+
+1    public class BuiltInGatherers {
+2
+3      void fold() {
+4        var result = Stream.of(1, 2, 3, 4, 5).gather(
+5            Gatherers.fold(
+6                () -> "",
+7                (output, value) -> output + value + ", "
+8            )
+9        ).findFirst();
+10       // 1, 2, 3, 4, 5,
+11       result.ifPresent(System.out::println);
+12     }
+13
+14     void scan() {
+15       var result = Stream.of(1, 2, 3, 4, 5).gather(
+16           Gatherers.scan(() -> 0, Integer::sum)
+17       ).toList();
+18       // [1, 3, 6, 10, 15]
+19       System.out.println(result);
+20     }
+21
+22     void windowFixed() {
+23       var result = Stream.of(1, 2, 3, 4, 5).gather(
+24           Gatherers.windowFixed(2)
+     Stream Gatherers                                       36
+
+
+25           ).toList();
+26           // [[1, 2], [3, 4], [5]]
+27           System.out.println(result);
+28       }
+29
+30       void windowSliding() {
+31         var result = Stream.of(1, 2, 3, 4, 5).gather(
+32             Gatherers.windowSliding(2)
+33         ).toList();
+34         // [[1, 2], [2, 3], [3, 4], [4, 5]]
+35         System.out.println(result);
+36       }
+37
+38       void mapConcurrent() {
+39         var result = Stream.of(1, 2, 3, 4, 5).gather(
+40             Gatherers.mapConcurrent(3, value -> {
+41                try {
+42                  Thread.sleep(Duration.ofSeconds(1));
+43                } catch (InterruptedException e) {
+44                  //ignore
+45                }
+46                return value * 10;
+47             })
+48         ).toList();
+49         // [10, 20, 30, 40, 50]
+50         System.out.println(result);
+51       }
+52
+53       static void main() {
+54         var builtInGatherers = new BuiltInGatherers();
+55         builtInGatherers.fold();
+56         builtInGatherers.scan();
+57         builtInGatherers.windowFixed();
+58         builtInGatherers.windowSliding();
+59         builtInGatherers.mapConcurrent();
+60       }
+61   }
+Class‐File API
+     Class-File API was introduced in JDK 22 (JEP 457) as a preview feature,
+     and it’s previewed again in JDK 23 (JEP 466), then became a standard
+     feature in JDK 24 (JEP 484).
+
+
+Class-File API is the standard API for parsing, generating, and transforming Java
+class files. The Class-File API resides in the java.lang.classfile package
+and sub-packages.
+
+
+ClassFile
+
+java.lang.classfile.ClassFile is the entry point of using Class-File API.
+A ClassFile serves as a context that defines the options governing the
+processes of parsing and generation. A ClassFile is created using the static
+of() method. The of() method accepts a list of Options. If no Options are
+provided, ClassFile use a list of default options.
+
+After creating a ClassFile, it can be used to parse, generate, and transform
+class files.
+
+
+   • parse method parses a file or a byte array and gets a ClassModel
+     representing the parsed class file.
+   • build method builds a class file into a byte array using a ClassBuilder.
+   • transformClass method transform sa ClassModel into a new class file
+     using a ClassTransform.
+
+
+
+Models
+
+The java.lang.classfile package contains many interfaces which define
+various models related to java class file. These models match definitions in
+the class file format of Java Virtual Machine Specification. Here we cannot
+cover details of all models, but only describe some important models.
+Class-File API                                                                      38
+
+
+ClassModel
+
+ClassModel models a class file. A ClassModel is a composition of Clas-
+sElements, so ClassModel extends from CompoundElement<ClassElement>.
+ClassModel also defines methods relate to a class.
+
+The table below shows main methods of ClassModel. These methods are all
+used to get data from a ClassModel.
+
+                          Figure 45. Methods of ClassModel
+
+
+ Method            Return type               Description
+ constantPool      ConstantPool              Returns the constant pool
+ flags             AccessFlags               Returns the access flags
+ fields            List<FieldModel>          Returns the fields
+ methods           List<MethodModel>         Returns the methods
+ superclass        Optional<ClassEntry>      Returns the superclass of this class
+ interfaces        List<ClassEntry>          Returns the interfaces implemented
+                                             by this class.
+
+
+
+
+MethodModel
+
+MethodModel models a method.    A MethodModel is a composition
+of MethodElements, so MethodModel extends from CompoundEle-
+ment<MethodElement>. MethodModel also defines methods relate to a
+method.
+
+                          Figure 46. Methods of MethodModel
+
+
+ Method          Return type               Description
+ parent          Optional<ClassModel>      Returns the class model this method is a
+                                           member of
+ flags           AccessFlags               Returns the access flags
+ methodName      Utf8Entry                 Returns the name of this method
+ methodType      Utf8Entry                 Returns the method descriptor string of
+                                           this method
+Class-File API                                                                              39
+
+
+ Method           Return type                  Description
+ code             Optional<CodeModel>          Returns the body of this method
+
+
+
+
+FieldModel
+
+FieldModel models a field. A FieldModel is a composition of FieldElements,
+so FieldModel extends from CompoundElement<FieldElement>.                          Field-
+Model also defines methods relate to a field.
+
+                               Figure 47. Methods of FieldModel
+
+
+ Method          Return type                  Description
+ parent          Optional<ClassModel>         Returns the class model this field is a
+                                              member of
+ flags           AccessFlags                  Returns the access flags
+ fieldName       Utf8Entry                    Returns the name of this field
+ fieldType       Utf8Entry                    Returns the field descriptor string of this
+                                              field
+
+
+
+
+CodeModel
+
+CodeModel   models the body of a method.         A CodeModel is a
+composition of CodeElements, so CodeModel extends from CompoundEle-
+ment<CodeElement>.
+
+
+
+Builders
+
+Builders are used to create models.
+
+
+ClassBuilder
+
+ClassBuilder is the builder for a class file. ClassBuilder has different with
+methods to set various elements of a class.
+Class-File API                                                          40
+
+
+    • withMethod adds a method. The method is created using a Method-
+      Builder.
+    • withField adds a field. The field is created using a FieldBuilder.
+    • withFlags sets the access flags of this class.
+    • withSuperclass sets the superclass of this class.
+    • withInterfaces sets the interfaces of this class.
+
+ClassBuilder also has transform methods to add a method or a field by
+transforming an existing model.
+
+    • transformMethod(MethodModel method, MethodTransform
+      transform) adds a method by using a MethodTransform to transform a
+      MethodModel.
+    • transformField(FieldModel field, FieldTransform transform)
+      adds a field by using a FieldTransform to transform a FieldModel.
+
+
+MethodBuilder
+
+MethodBuilder is the builder for a method. MethodBuilder also has different
+with methods to set various elements of a method.
+
+    • withFlags sets the method access flags.
+    • withCode builds the method body for this method. The code is created
+      using a CodeBuilder.
+
+MethodBuilder also has the transformCode(CodeModel code, CodeTrans-
+form transform) method to set the code by using a CodeTransform to
+transform a CodeModel.
+
+
+Transform
+
+ClassTransform transforms a class file. It accepts a ClassBuilder and a
+ClassElement, then uses this ClassBuilder to update the ClassElement.
+
+MethodTransform transforms a class file. It accepts a MethodBuilder and a
+MethodElement, then uses this MethodBuilder to update the MethodElement.
+
+FieldTransform transforms a class file. It accepts a FieldBuilder and a
+FieldElement, then uses this FieldBuilder to update the FieldElement.
+     Class-File API                                                                   41
+
+
+     Parse
+
+     The code below shows an example of parsing a class. The class to parse is the
+     current ParseClass. The parse method of ClassFile parses a byte array into
+     a ClassModel. From the ClassModel, we can get its methods.
+
+
+
+     Figure 48. Parse a class
+
+1    public class ParseClass {
+2
+3        void parse() throws IOException {
+4          var classModel = ClassFile.of().parse(
+5              Path.of("target", "classes", "me", "vividcode", "java21to25",
+6                  "classfile", "ParseClass.class"));
+7          var methods = classModel.methods().stream().map(MethodModel::methodName)
+8              .collect(
+9                  Collectors.joining(", "));
+10         System.out.println(methods);
+11       }
+12
+13       static void main() throws IOException {
+14         new ParseClass().parse();
+15       }
+16   }
+
+
+
+
+     Generate
+
+     The code below shows an example of generating a class. The class name is
+     HelloWorld. It has a static method greet which prints out “Hello world” using
+     IO.println.
+     Class-File API                                                                 42
+
+
+     Figure 49. Parse a class
+
+1    public class GenerateClass {
+2
+3        void generate() throws IOException {
+4          var classDesc = ClassDesc.of("HelloWorld");
+5          ClassFile.of()
+6              .buildTo(Path.of("target", "classes", "HelloWorld.class"),
+7                  classDesc,
+8                  classBuilder -> {
+9                    classBuilder.withMethod("greet", MethodTypeDesc.of(CD_void),
+10                        ACC_STATIC,
+11                        methodBuilder -> {
+12                          methodBuilder.withCode(codeBuilder -> {
+13                            codeBuilder.loadConstant("Hello world");
+14                            codeBuilder.invoke(Opcode.INVOKESTATIC,
+15                                ClassDesc.of("java.lang.IO"), "println",
+16                                MethodTypeDesc.of(CD_void, CD_Object), false);
+17                            codeBuilder.return_();
+18                          });
+19                        });
+20                   classBuilder.withMethod("main", MethodTypeDesc.of(CD_void),
+21                        ACC_PUBLIC | ACC_STATIC,
+22                        methodBuilder -> {
+23                          methodBuilder.withCode(codeBuilder -> {
+24                            codeBuilder.invoke(Opcode.INVOKESTATIC, classDesc,
+25                                "greet", MethodTypeDesc.of(CD_void), false);
+26                            codeBuilder.return_();
+27                          });
+28                        });
+29                 });
+30       }
+31
+32       static void main() throws IOException {
+33         new GenerateClass().generate();
+34       }
+35   }
+
+
+
+     Below is the de-compiled Java class source code from the byte code generated
+     above.
+     Class-File API                                                           43
+
+
+     Figure 50. De-compiled class from byte code
+
+1    public class HelloWorld {
+2      static void greet() {
+3        IO.println("Hello world");
+4      }
+5
+6        public static void main() {
+7          greet();
+8        }
+9    }
+
+
+
+
+     Transform
+
+     Class-File API can also transform an existing class. Given the ServiceCaller
+     shown below, the call method invokes OldService.call().
+
+
+
+     Figure 51. ServiceCaller to transform
+
+1    public class ServiceCaller {
+2
+3        public static void call() {
+4          OldService.call();
+5        }
+6
+7        static void main() {
+8          call();
+9        }
+10   }
+
+
+
+     What we want to do is to change the invocation of OldService.call() to
+     NewService.call(). This can be done using the code below. It creates
+     a CodeTransform which checks for InvokeInstruction. If the invocation
+     owner is OldService, then this invocation is converted to use NewService
+     instead.
+
+     A MethodTransform is created from the CodeTransform using
+     MethodTransform.transformingCode, then a ClassTransform is created
+     from the MethodTransform using ClassTransform.transformingMethods.
+     When transforming the existing ServiceCaller class, its bytecode is parsed
+     to get a ClassModel first, then ClassFile.transformClass is used to
+     Class-File API                                                                    44
+
+
+     transform the ClassModel with the ClassTransform. The transformation
+     result is the updated bytecode, which can be used to overwrite the original
+     class file.
+
+
+
+     Figure 52. Transform a class
+
+1    public class TransformClass {
+2
+3        void transform() throws IOException {
+4          CodeTransform codeTransform = (codeBuilder, e) -> {
+5             switch (e) {
+6               case InvokeInstruction i when i.owner().asInternalName()
+7                   .contains("OldService") -> codeBuilder.invoke(i.opcode(),
+8                   ClassDesc.of(
+9                       "me.vividcode.java21to25.classfile.totransform.NewService"),
+10                  i.name().stringValue(),
+11                  i.typeSymbol(), i.isInterface());
+12              default -> codeBuilder.accept(e);
+13            }
+14         };
+15         var methodTransform = MethodTransform.transformingCode(codeTransform);
+16         var classTransform = ClassTransform.transformingMethods(
+17              methodTransform);
+18         var packagePath = Path.of("target", "classes", "me", "vividcode",
+19              "java21to25",
+20              "classfile", "totransform");
+21         var classModel = ClassFile.of().parse(
+22              packagePath.resolve("ServiceCaller.class"));
+23         var bytes = ClassFile.of()
+24              .transformClass(classModel,
+25                  classTransform);
+26         Files.write(packagePath.resolve("ServiceCaller.class"), bytes,
+27              StandardOpenOption.TRUNCATE_EXISTING);
+28       }
+29
+30       static void main() throws IOException {
+31         new TransformClass().transform();
+32       }
+33   }
+Integrity by Default
+Prepare to Restrict the Use of JNI
+
+     Prepare to Restrict the Use of JNI was introduced in JDK 24 (JEP 472).
+
+In current Java versions, if you need to interact with native code, you have two
+options. The first is the JNI, which has been available since JDK 1.1. The other
+is the Foreign Function & Memory API, the FFM API, which became officially
+available in JDK 22. For most applications, the JNI remains the most common
+choice.
+
+Using the JNI and FFM to interact with native code is highly dangerous.
+Improper use can directly cause the JVM to crash.
+
+To ensure the integrity of the Java platform, code that loads and links native
+libraries is restricted. In JDK 24, calling code that loads and links native libraries
+will generate a warning on the first call. This applies to both JNI and FFM. In
+future Java versions, this warning will be upgraded to an exception.
+
+The following methods that access native code are restricted:
+
+   • The load and loadLibrary methods of the System class.
+   • The load and loadLibrary methods of the Runtime class.
+
+Methods declared as native are bound to methods in the native library on first
+call. This binding is also restricted.
+
+To avoid warnings and future exceptions, we can enable native access using
+the command-line option --enable-native-access. The value of this option
+is a comma-separated list of module names, or ALL-UNNAMED for all unnamed
+modules. No warnings or exceptions are output for modules that are allowed
+to access native code.
+
+If code in a module is not allowed to access native code, the Java runtime
+can take different actions when code in that module attempts to access native
+code. The specific actions are configured with the option --illegal-native-
+access. This option has three possible values.
+Integrity by Default                                                           46
+
+
+    • allow allows these access actions.
+    • warn allows these access actions but outputs a warning. This is the default
+      value in JDK 24.
+    • deny throws an IllegalCallerException for each access action. This
+      will become the default in future Java versions.
+
+
+If you encounter warning messages when using JNI, follow the instructions to
+add the --enable-native-access option.
+
+
+
+Warn upon Use of Memory‐Access Methods in
+sun.misc.Unsafe
+
+Unsafe in Java is a special class.     It provides many features for efficient
+memory operations. Unsafe was introduced to Java in 2002. Its package name,
+sun.misc, indicates that it is an internal class of the JDK, intended for use only
+by JDK internal code and not for external applications. However, previous Java
+versions did not provide a way to restrict application access to internal classes.
+The features provided by Unsafe are extremely useful and are used by many
+performance-critical applications, including Apache Hadoop and Cassandra.
+However, as the name suggests, the methods in Unsafe are unsafe. Improper
+use can at best degrade application performance or even cause the JVM to
+crash. Unsafe is a powerful double-edged sword.
+
+One of the development directions of Java is to ensure system integrity. A key
+part of this is restricting access to JDK internal classes. When JDK 9 introduced
+the module system, most JDK internal classes were encapsulated, but Unsafe
+was an exception due to its widespread use. Restricting Unsafe would cause
+problems in many applications. Therefore, the restrictions on Unsafe were
+delayed for a long time. It wasn’t until JDK 23 that the methods in Unsafe were
+declared deprecated.
+
+In Java 24, a warning message is output by default when a memory access
+method in Unsafe is used for the first time. JDK 23 added the startup parameter
+--sun-misc-unsafe-memory-access, which has four possible values: allow,
+warn, debug, and deny.
+
+
+    • In JDK 23, the default value is allow, which allows the use of these
+      memory access methods.
+Integrity by Default                                                          47
+
+
+    • In JDK 24, the default value is warn, which outputs a warning message
+      when these methods are used.
+    • debug outputs a warning and a stack trace every time an Unsafe memory
+      access method is used.
+    • If the parameter value is deny, any use of these memory access methods
+      will directly throw an UnsupportedOperationException.
+
+
+In JDK 26, deny becomes the default value for this parameter. In subsequent
+versions, these memory access methods will be removed.
+
+Most applications don’t use Unsafe directly. The JDK already provides standard
+alternatives to Unsafe.
+
+
+    • For heap memory operations, we can use VarHandle introduced in Java
+      9.
+    • For off-heap memory operations, we can use Foreign Function & Memory
+      API, which became official in Java 22.
+
+
+If Unsafe is still used in your code, you should replace it with the standard API
+as soon as possible.
+Security
+Permanently Disable the Security Manager
+
+     Permanently Disable the Security Manager was introduced in JDK 24
+     (JEP 486).
+
+
+Security is an important aspect of application development. When you think
+of security features in Java, there are many third-party libraries that come to
+mind. In fact, the Java Standard Library has a Security Manager since 1.0, to
+restrict Java applications’ access to system resources, including the file system
+and network, and to perform sensitive operations.
+
+Despite its early introduction, Security Manager is rarely used by external
+applications. Security Manager is disabled by default and is rarely enabled.
+
+Security Manager is deprecated in Java 17. In Java 24, Security Manager is
+permanently disabled.
+
+Starting with Java 24, you cannot use the system property, -
+Djava.security.manager to enable Security Manager. At runtime, you
+cannot install the SecurityManager using the System’s setSecurityManager
+method. The APIs associated with the Security Manager, while still preserved,
+are rendered as non-functional. These APIs are retained for backward
+compatibility. Some constructors and methods in the Java standard library,
+may throw SecurityExceptions at runtime. After Security Manager is
+disabled, SecurityExceptions are no longer thrown, so the documentation
+for these apis, has been updated to remove SecurityException.
+
+Because Security Manager is rarely used, disabling it will not affect the vast
+majority of existing applications. The only thing that might be affected is the
+use of Security Manager to block calls to some Java platform APIs, especially
+the System.exit method. When Security Manager is disabled, the Java stan-
+dard library does not provide an alternative solution, but requires application
+developers to switch to other methods, such as transforming Java bytecode at
+runtime.
+Security                                                                    49
+
+
+It is a good thing that the Security Manager is disabled. With Security Manager
+disabled, code in the Java standard library no longer requires permission
+checks, greatly reducing maintenance costs. Java development team can focus
+on more important security features.
+Multi‐threading
+
+In Java 25, there are serval changes related to multi-threading programming.
+Scoped Values
+     Scoped Values was introduced in JDK 20 as an incubating feature (JEP
+     429), and became a preview in JDK 21 (JEP 446), then previewed again
+     in JDK 22 (JEP 464), JDK 23 (JEP 481), and JDK 24 (JEP 487), and became
+     a standard feature in JDK 25 (JEP 506).
+
+To invoke a method, we need to pass parameters to it. Sometimes it’s not easy
+to pass parameters down the call stack. For example, method A calls method B,
+then method B calls method C. Suppose that method C requires a parameter a,
+this parameter needs to be passed from method A. Even though this parameter
+a is not used in method B, this parameter still needs to be declared in method
+B, and then passed to method C.
+
+This approach doesn’t scale for deep call stacks. We may need to modify
+signatures of many methods to pass parameters down the call stack. What we
+need is a convenient way to share values across different methods, like implicit
+parameters that can be used between methods.
+A typical example is security context object used in Spring Security. This
+context object is populated after the user has successfully authenticated. This
+context object contains basic information about current user. This context
+object may be used in different places of the code, so it not feasible to required
+this object to be passed in as a method parameter.
+
+
+Thread Local
+
+Thread-local variables are used to share data between methods on the call
+stack without using method arguments. A thread-local variable is a variable of
+type java.lang.ThreadLocal. A thread-local variable has one current value
+per thread. Code running in one thread automatically reads and writes the
+value associated with the current thread.
+In Spring Security, ThreadLocalSecurityContextHolderStrategy is the
+strategy to hold SecurityContext objects using thread-local variables. As
+shown in the code below, the ThreadLocal object contextHolder holds the
+SecurityContext object.
+    Scoped Values                                                                      52
+
+
+    Figure 53. Use a thread-local variable
+
+1   private static final ThreadLocal<Supplier<SecurityContext>> contextHolder =
+2       new ThreadLocal<>();
+
+
+
+    Thread-local variables have some problems.
+
+        • Unconstrained mutability - All thread-local variables are mutable. Any
+          code that has access to a ThreadLocal object can use the set() method
+          to update its value. When the ThreadLocal object is modified in different
+          places, it’s hard to track the current value that held by this object.
+        • Unbounded lifetime - Once a value is set to a ThreadLocal object for the
+          current thread, this value is retained for the life-time of the thread, or until
+          code running in the thread calls the remove() method. Unfortunately,
+          developers rarely call remove() method to clear the reference, so per-
+          thread data is often retained for a longer time than necessary.
+        • Expensive inheritance - Thread-local variables of a parent thread can
+          be inherited by child threads. For inheritable thread-local variables,
+          child threads need to allocate storage for those variables. This can add
+          significant memory footprint.
+
+    Virtual threads are instances of java.lang.Thread, and can have thread-local
+    variables. However, virtual threads are light-weight and short-lived. There
+    may be millions of virtual threads, then the memory pressure will be too high
+    with inheritable thread-local variables.
+
+
+    ScopedValue
+
+    Scoped values are lightweight alternatives to thread-local variables. Like a
+    thread-local variable, a scoped value has multiple values associated with it, one
+    per thread. Code running on different threads see the value associated with the
+    current thread. Being a lightweight alternative, a scoped value is immutable,
+    and is only available for a bounded period during execution of a thread.
+
+    A scoped value is a variable of type java.lang.ScopedValue. The code
+    below shows the basic usage of ScopedValue. A ScopedValue is created
+    using ScopedValue.newInstance() method. A newly created ScopedValue is
+    unbound for all threads. A scoped value is typically declared as a final static
+    field, so it can be easily accessed from many methods.
+     Scoped Values                                                                 53
+
+
+     The static method ScopedValue.where() has two parameters. The first
+     parameter is a ScopedValue object, the second parameter is the value bound
+     to the ScopedValue object. The return value of ScopedValue.where() is
+     a ScopedValue.Carrier object. The run method of ScopedValue.Carrier
+     runs an operation with a scoped value bound to its value in the current thread.
+     During the execution of the Runnable object, the ScopedValue has the value
+     specified as the second parameter of ScopedValue.where(). Value of the
+     ScopedValue object can be retrieved using the get() method.
+
+
+
+
+     Figure 54. Use ScopedValue
+
+1    public class SimpleScopedValue {
+2
+3        private final static ScopedValue<String> VALUE = ScopedValue.newInstance();
+4
+5        void print() {
+6          ScopedValue.where(VALUE, "hello")
+7              .run(() -> System.out.println(VALUE.get()));
+8        }
+9
+10       static void main() {
+11         new SimpleScopedValue().print();
+12       }
+13   }
+
+
+
+     In fact, a Carrier object can accumulate mappings for multiple ScopedValue
+     objects. This is done by chaining multiple where() calls.
+
+     In the code below, V1 and V2 are both ScopedValue objects. Each is bound
+     with a value. During the execution of the Runnable object, V1 and V2 will have
+     the bound value.
+     Scoped Values                                                                  54
+
+
+     Figure 55. Multiple where()
+
+1    public class MultipleScopedValues {
+2
+3        private final static ScopedValue<String> V1 = ScopedValue.newInstance();
+4        private final static ScopedValue<String> V2 = ScopedValue.newInstance();
+5
+6        void multiple() {
+7          ScopedValue.where(V1, "hello")
+8              .where(V2, "world")
+9              .run(() -> System.out.println(V1.get() + " " + V2.get()));
+10       }
+11
+12       static void main() {
+13         new MultipleScopedValues().multiple();
+14       }
+15   }
+
+
+
+     Carrier    also has other methods.          The call() method calls a
+     ScopedValue.CallableOp object and returns its value. During the execution
+     of this CallableOp object, each scoped value will have the value bound in this
+     Carrier object.
+
+     CallableOp is a functional interface with only a single call method. This call
+     method throws a checked exception of type X.
+
+     Figure 56. CallableOp
+
+1    public interface CallableOp<T, X extends Throwable> {
+2
+3        T call() throws X;
+4    }
+
+
+
+     In the code below, the CallableOp is invoked with scoped value V1 bound to
+     the value hello.
+     Scoped Values                                                                   55
+
+
+     Figure 57. Use call()
+
+1    public class UseCallableOp {
+2
+3         private final static ScopedValue<String> V1 = ScopedValue.newInstance();
+4
+5         void call() {
+6           var result = ScopedValue.where(V1, "hello")
+7               .call(() -> V1.get().toUpperCase());
+8           System.out.println(result);
+9         }
+10
+11        static void main() {
+12          new UseCallableOp().call();
+13        }
+14   }
+
+
+
+     A ScopedValue object may not be bound to a value in the current
+     thread.    The isBound() method can test if a ScopedValue is bound.
+     If a scoped value is not bound, calling the get() method throws
+     java.util.NoSuchElementException. If a value is required, the orElse()
+     method can be used to return a fallback value when the scoped value is not
+     bound. If you prefer to throw an exception when a scoped value is not bound,
+     the orElseThrow() method can be used to provide a custom exception. To
+     some degree, a ScopedValue object works like an Optional object.
+
+     In the code below, the scoped value UNBOUND is not bound, so the value default
+     specified in orElse() will be returned.
+
+
+
+     Figure 58. Use orElse()
+
+1    public class OrElse {
+2
+3         private final static ScopedValue<String> VALUE = ScopedValue.newInstance();
+4         private final static ScopedValue<String> UNBOUND = ScopedValue.newInstance(\
+5    );
+6
+7         void orElse() {
+8           var result = ScopedValue.where(VALUE, "hello")
+9               .call(() -> VALUE.get() + " " + UNBOUND.orElse("default"));
+10          System.out.println(result);
+11        }
+12
+13        static void main() {
+14          new OrElse().orElse();
+     Scoped Values                                                                 56
+
+
+15       }
+16   }
+
+
+
+     Scoped values can be nested. A scoped value may be bound multiple times.
+     When the get() method is called, the bound value from the closet scope
+     is returned. When the operation specified in run() or call() completes,
+     normally or with an exception, the scoped value will revert to being unbound,
+     or revert to its previous value when previously bound in the current thread.
+
+     In the code below, the scoped value VALUE is bound to hello in the outer run()
+     method, then is bound to world in the inner call() method. The return value
+     of VALUE.get() is world, the bound value from the closet scope.
+
+
+
+     Figure 59. Rebinding of a scoped value
+
+1    public class Rebound {
+2
+3        private final static ScopedValue<String> VALUE = ScopedValue.newInstance();
+4
+5        void rebound() {
+6          ScopedValue.where(VALUE, "hello")
+7              .run(() -> {
+8                var result = ScopedValue.where(VALUE, "world")
+9                    .call(() -> VALUE.get().toUpperCase());
+10               System.out.println(result);
+11             });
+12       }
+13
+14       static void main() {
+15         new Rebound().rebound();
+16       }
+17   }
+Structured Concurrency
+     Structured Concurrency was introduced in JDK 19 (JEP 428) as an
+     incubating API, and incubated again in JDK 20 (JEP 437), and became
+     a preview feature in JDK 21 (JEP 453), then preview again in JDK 22
+     (JEP 462), JDK 23 (JEP 480), JDK 24 (JEP 499), and JDK 25 (JEP 505).
+
+
+Structured concurrency is a coined term. It’s described in details in this post.
+The key point of structured concurrency is structured. Structured means the
+structure of concurrent tasks should match the code structure. By leveraging
+structured concurrency, developers can write concurrent programs just like
+single-threaded programs. All the heavy-lifting jobs are done by the underlying
+framework.
+
+
+     Kotlin Coroutines is a great example of using structured concur-
+     rency. New coroutines can be only launched in a specific Corou-
+     tineScope which delimits the lifetime of the coroutine.
+
+
+Considering that we are creating an API to expose a user’s information in
+an e-commerce application. When using microservice architecture, a user’s
+information may be maintained by different services. We may need to fetch
+data from multiple sources and assemble them to get the final result.
+
+The code below shows a simple getUser() method to load and assemble a
+user’s information. It fetches data from three different sources. We can treat
+the getUser() method as a task, while those three methods fetchUserBa-
+sicInfo(), fetchFavoriteStores() and fetchOrders() are subtasks of the
+main task.
+    Structured Concurrency                                                         58
+
+
+    Figure 60. A scenario of data loading
+
+1   public UserData getUser(String userId) {
+2     UserBasicInfo basicInfo = fetchUserBasicInfo(userId);
+3     List<Store> favoriteStores = fetchFavoriteStores(userId);
+4     List<Order> orders = fetchOrders(userId);
+5     return assemble(basicInfo, favoriteStores, orders);
+6   }
+
+
+
+    Apparently, there is a dependency between the main task and subtasks.
+
+
+       • The main task can only complete when all the subtasks complete.
+       • If any of the subtask failed, the main task will also fail. All other ongoing
+         subtasks should be cancelled, because there results won’t be used any
+         more.
+
+
+    If all subtasks are executed synchronously in a single thread, then we can easily
+    get the following assumptions:
+
+
+       • If fetchUserBasicInfo() method fails, both fetchFavoriteStores()
+         and fetchOrders() methods won’t be executed, getUser() method
+         returns immediately.
+       • getUser() method completes after assemble() completes, fetchUser-
+         BasicInfo(), fetchFavoriteStores() and fetchOrders() methods
+         all complete successfully before that.
+
+
+    These assumptions can be easily derived from the code structure of getUser()
+    method. Those three methods are contained in the block of getUser()
+    method, so their life time is confined by the outer method.
+
+    If subtasks are executed asynchronously in different threads, then we cannot
+    make the same assumption.
+
+
+       • Even getUser() method returns due to a failure in a subtask, all other
+         subtasks may still be running in their own threads.
+       • If fetchUserBasicInfo() method fails, other two subtasks may still run
+         to their ends.
+Structured Concurrency                                                       59
+
+
+It’s possible to implement getUser() method correctly with multi-threading
+support in Java, including Executors and thread pools. However, it’s not an
+easy task, even for most-experienced developers. You have to deal with Ex-
+ecutors, thread pools, thread interruption, timeout, cooperative cancellation,
+graceful shutdown, and other issues.
+
+With structured concurrency, we can simply treat concurrent subtasks as they
+are running in a single thread. Those assumptions for synchronous execution
+still hold. This makes concurrent programming much easier.
+
+
+
+Basic Usage
+
+The main API to use structured concurrency is java.util.concurrent.StructuredTaskSc
+A StructuredTaskScope object is a scope where subtasks are executed in.
+StructuredTaskScope<T, R> is a generic type.
+
+
+   • T: the result type of subtasks executed in the scope.
+   • R: the result type of the scope.
+
+
+The workflow of using StructuredTaskScope is as follows:
+
+
+  1. The main task creates a StructuredTaskScope object using Struc-
+     turedTaskScope.open.
+  2. Use the fork() method to create a new subtask.
+  3. Calls the join() method to wait for subtasks to complete or be cancelled.
+  4. After joining, handle any errors in the subtasks and process their results.
+  5. Close the scope, usually implicitly via try-with-resources.
+
+
+The thread that creates a StructuredTaskScope object is the owner of the
+scope.
+
+The table below shows main methods of StructuredTaskScope.
+Structured Concurrency                                                                  60
+
+
+                         Figure 61. Methods of StructuredTaskScope
+
+
+ Method                                       Description
+ <U extends T> Subtask<U>                     Forks a subtask by starting a new thread
+ fork(Callable<? extends U> task)             in this scope to execute a
+                                              value-returning method.
+ <U extends T> Subtask<U>                     Forks a subtask by starting a new thread
+ fork(Runnable task)                          in this scope to execute a method that
+                                              does not return a result.
+ R join() throws                              Returns the result, or throws, after
+ InterruptedException                         waiting for all subtasks to complete or
+                                              the scope to be cancelled.
+ boolean isCancelled()                        Returns true if this scope is cancelled
+                                              or in the process of being cancelled,
+                                              otherwise false.
+ close()                                      Closes this scope.
+
+
+
+
+Joiner
+
+StructuredTaskScope.Joiner is used with a StructuredTaskScope to han-
+dle subtask completion and produce the result for the scope owner waiting in
+the join method for subtasks to complete.
+
+The table below shows methods StructuredTaskScope.Joiner. Only the
+result() method is required to implement. onFork and onComplete have
+default implementations. For onFork and onComplete, if true is returned,
+then the scope will be cancelled.
+Structured Concurrency                                                                 61
+
+
+                    Figure 62. Methods of StructuredTaskScope.Joiner
+
+
+ Method                                      Description
+ R result() throws Throwable                 Invoked by the join() method to
+                                             produce the result (or exception) after
+                                             waiting for all subtasks to complete or
+                                             the scope cancelled.
+ boolean onFork(Subtask<? extends            Invoked by fork(Callable) and
+ T> subtask)                                 fork(Runnable) when forking a
+                                             subtask.
+ boolean onComplete(Subtask<?                Invoked by the thread started to execute
+ extends T> subtask)                         a subtask after the subtask completes
+                                             successfully or fails with an exception.
+
+
+
+
+There are some built-in Joiner implementations for common scenarios. These
+Joiner objects are created using static methods of Joiner.
+
+   • <T> Joiner<T, Stream<Subtask<T>>> allSuccessfulOrThrow() re-
+     turns a new Joiner object that yields a stream of all subtasks when all
+     subtasks complete successfully.
+   • <T> Joiner<T, T> anySuccessfulResultOrThrow() returns a new
+     Joiner object that yields the result of any subtask that completed
+     successfully.
+   • <T> Joiner<T, Stream<Subtask<T>>> allUntil(Predicate<Subtask<?
+     extends T>> isDone) returns a new Joiner object that yields a stream
+     of all subtasks when all subtasks complete or a predicate returns true to
+     cancel the scope.
+   • <T> Joiner<T, Void> awaitAll() returns a new Joiner object that
+     waits for all subtasks to complete.
+   • <T> Joiner<T, Void> awaitAllSuccessfulOrThrow() returns a new
+     Joiner object that waits for subtasks to complete successfully.
+
+
+Configuration
+
+StructuredTaskScope.Configuration represents the configuration for a
+StructuredTaskScope. The table below shows methods of Configuration.
+     Structured Concurrency                                                             62
+
+
+                      Figure 63. Methods of StructuredTaskScope.Configuration
+
+
+      Method                                       Description
+      Configuration                                Returns a new Configuration object
+      withThreadFactory(ThreadFactory              with the given thread factory.
+      threadFactory)
+      Configuration withName(String                Returns a new Configuration object
+      name)                                        with the given name.
+      Configuration                                Returns a new Configuration object
+      withTimeout(Duration timeout)                with the given timeout.
+
+
+
+
+     Open a StructuredTaskScope
+
+     The StructuredTaskScope.open() method opens a new Structured-
+     TaskScope. The open() method accepts an optional Joiner object and an
+     optional Function<Configuration, Configuration> object.
+
+     The   default  Joiner   is   Joiner.awaitAllSuccessfulOrThrow().
+     The default Configuration has a ThreadFactory created using
+     Thread.ofVirtual().factory(), a null name, and a null timeout.
+
+     In the code below, Joiner.anySuccessfulResultOrThrow() is used as the
+     Joiner when using open().
+
+
+
+
+     Figure 64. Open a scope using Joiner.anySuccessfulResultOrThrow()
+
+1    public class OpenAnySuccessfulScope {
+2
+3      int open() throws InterruptedException {
+4        try (var scope = StructuredTaskScope.open(
+5            Joiner.anySuccessfulResultOrThrow())) {
+6          scope.fork(() -> 3);
+7          scope.fork(() -> 4);
+8          return (int) scope.join();
+9        }
+10     }
+11
+12     static void main() throws InterruptedException {
+13       System.out.println(new OpenAnySuccessfulScope().open());
+     Structured Concurrency                                                         63
+
+
+14       }
+15   }
+
+
+
+     In the code below, the Configuration is configured with a ThreadFactory,
+     a name, and a timeout duration. The timeout is set to 10 seconds, but the
+     subtask takes 15 seconds to complete. So the main task will fail with a
+     StructuredTaskScope.TimeoutException.
+
+
+
+     Figure 65. Open a scope using Joiner and Configuration
+
+1    public class OpenScopeWithConfiguration {
+2
+3        int open() throws InterruptedException {
+4          try (var scope = StructuredTaskScope.open(
+5              Joiner.anySuccessfulResultOrThrow(),
+6              config -> config.withThreadFactory(
+7                      Thread.ofVirtual().name("test-", 0).factory())
+8                  .withName("Demo")
+9                  .withTimeout(Duration.ofSeconds(10)))) {
+10           scope.fork(() -> {
+11             Thread.sleep(Duration.ofSeconds(15));
+12             return 10;
+13           });
+14           return (int) scope.join();
+15         }
+16       }
+17
+18       static void main() throws InterruptedException {
+19         System.out.println(new OpenScopeWithConfiguration().open());
+20       }
+21   }
+
+
+
+
+     Exception Handling
+
+     The join() method of Joiner is used to handle subtask completion and
+     produce the outcome. The outcome may be a result, or an exception. If
+     the outcome is an exception then the join method throws Structured-
+     TaskScope.FailedException with the exception as the cause. The actual
+     exception thrown depends on the Joiner implementation.
+
+             • The exception may be an exception thrown by a subtask that failed.
+     Structured Concurrency                                                 64
+
+
+        • For allSuccessfulOrThrow and awaitAllSuccessfulOrThrow, the ex-
+          ception is from the first subtask to fail.
+
+
+     When a timeout is set in the Configuration when opens a
+     StructuredTaskScope, the timeout starts when the new scope is
+     opened. If the timeout expires before the join method has completed,
+     then the scope is cancelled.  This causes the join method to throw
+     StructuredTaskScope.TimeoutException.
+
+
+
+     A Concrete Example
+
+     The following code shows an example of using StructuredTaskScope. The
+     main task is calculate() method. It creates a StructuredTaskScope object,
+     then it forks a subtask that calls the op1() method. The calculateInner()
+     method creates another StructuredTaskScope object which forks two
+     subtasks to call the op21() and op22() methods. The join() method
+     waits for the subtasks to complete.          The fork() method returns a
+     java.util.concurrent.StructuredTaskScope.Subtask object.             After
+     join() method returns, we can be sure that the subtask has completed, the
+     the get() method can be called to get the result.
+
+
+
+     Figure 66. Example of using structured concurrency
+
+1    public class StructuredCurrencyExample {
+2
+3      static void main() throws Exception {
+4        System.out.println(
+5            "Result is " + new StructuredCurrencyExample().calculate());
+6      }
+7
+8      public int calculate() throws InterruptedException {
+9        try (var scope = StructuredTaskScope.open()) {
+10         var v1 = scope.fork(this::op1);
+11         int v2 = calculateInner();
+12         scope.join();
+13         return v1.get() * v2;
+14       }
+15     }
+16
+17     private int calculateInner() throws InterruptedException {
+18       try (var scope = StructuredTaskScope.open()) {
+     Structured Concurrency                                                  65
+
+
+19               var v21 = scope.fork(this::op21);
+20               var v22 = scope.fork(this::op22);
+21               scope.join();
+22               return v21.get() + v22.get();
+23           }
+24       }
+25
+26       private int op1() {
+27         System.out.println("Operation 1 starts");
+28         try {
+29           Thread.sleep(Duration.ofSeconds(3));
+30         } catch (InterruptedException e) {
+31           // ignored
+32         }
+33         System.out.println("Operation 1 finishes");
+34         return 2;
+35       }
+36
+37       private int op21() {
+38         System.out.println("Operation 2.1 starts");
+39         try {
+40           Thread.sleep(Duration.ofSeconds(4));
+41         } catch (InterruptedException e) {
+42           // ignored
+43         }
+44         System.out.println("Operation 2.1 finishes");
+45         return 3;
+46       }
+47
+48       private int op22() {
+49         System.out.println("Operation 2.2 starts");
+50         try {
+51           Thread.sleep(Duration.ofSeconds(2));
+52         } catch (InterruptedException e) {
+53           // ignored
+54         }
+55         System.out.println("Operation 2.2 finishes");
+56         return 3;
+57       }
+58   }
+
+
+
+     Output of the code above is shown as below. From the output, we can see the
+     execution order of these tasks.
+    Structured Concurrency                                                  66
+
+
+    Figure 67. Output of the example shown above
+
+1   Operation 1 starts
+2   Operation 2.1 starts
+3   Operation 2.2 starts
+4   Operation 2.2 finishes
+5   Operation 1 finishes
+6   Operation 2.1 finishes
+7   Result is 12
+
+
+
+    The code above demonstrates a task execution tree. The chart below shows
+    the task tree. The parent task supervises subtasks in the children nodes.
+
+    Figure 68. A task execution tree
+
+1             calculate
+2        /               \
+3       op1          calculateInner
+4                  /            \
+5                op21           op22
+
+
+
+
+    Joiner.allSuccessfulOrThrow
+
+    Joiner.allSuccessfulOrThrow can be used to perform invokeAll actions.
+
+    The code below shows an example of using Joiner.allSuccessfulOrThrow.
+    In the invokeAll() method, 10000 tasks are created to re-
+    turn an integer, then all these integers are summed up.         When
+    Joiner.allSuccessfulOrThrow is used, the join() method returns a
+    Stream<StructuredTaskScope.Subtask<Integer>>.
+     Structured Concurrency                                                      67
+
+
+     Figure 69. Example of Joiner.allSuccessfulOrThrow
+
+1    public class AllSuccessful {
+2
+3        static void main() throws Exception {
+4          System.out.println(new AllSuccessful().call());
+5        }
+6
+7        public long call() throws InterruptedException {
+8          try (var scope = StructuredTaskScope.open(
+9              Joiner.<Integer>allSuccessfulOrThrow())) {
+10           subTasks().forEach(scope::fork);
+11           var subtasks = scope.join();
+12           return subtasks.map(Subtask::get).reduce(0, Integer::sum);
+13         }
+14       }
+15
+16       private Stream<Callable<Integer>> subTasks() {
+17         return IntStream.range(0, 10_000)
+18             .mapToObj(
+19                 i ->
+20                      () -> {
+21                        try {
+22                          Thread.sleep(
+23                              Duration.ofSeconds(
+24                                  ThreadLocalRandom.current().nextLong(3)));
+25                        } catch (InterruptedException e) {
+26                          // ignore
+27                        }
+28                        return i;
+29                      });
+30       }
+31   }
+
+
+
+
+     Joiner.anySuccessfulResultOrThrow
+
+     Joiner.anySuccessfulResultOrThrow can be used to perform invokeAny
+     actions.
+
+     The code below shows an example of using Joiner.anySuccessfulResultOrThrow.
+     This example is similar with the InvokeAll code. It starts 1000 tasks and
+     returns the result of the first task that succeeded. When running the program,
+     we can see that the result varies.
+     Structured Concurrency                                                       68
+
+
+     Figure 70. Example of Joiner.anySuccessfulResultOrThrow
+
+1    public class AnySuccessful {
+2
+3        static void main() throws Exception {
+4          System.out.println(new AnySuccessful().call());
+5        }
+6
+7        public int call() throws InterruptedException {
+8          try (var scope = StructuredTaskScope.open(
+9              Joiner.<Integer>anySuccessfulResultOrThrow())) {
+10           subTasks().forEach(scope::fork);
+11           return scope.join();
+12         }
+13       }
+14
+15       private Stream<Callable<Integer>> subTasks() {
+16         return IntStream.range(0, 1000)
+17             .mapToObj(
+18                 i ->
+19                      () -> {
+20                        try {
+21                          Thread.sleep(Duration.ofSeconds(
+22                              1 + ThreadLocalRandom.current().nextLong(10)));
+23                        } catch (InterruptedException e) {
+24                          // ignore
+25                        }
+26                        return i;
+27                      });
+28       }
+29   }
+
+
+
+
+     Close of StructuredTaskScope
+
+     The close() method first cancels the scope, if not already cancelled. This
+     interrupts the threads executing unfinished subtasks. This method then waits
+     for all threads to finish. If interrupted while waiting then it will continue to
+     wait until the threads finish, before completing with the interrupt status set.
+
+     The close() method is usually called implicitly using try-with-resources.
+
+     The close() method may only be invoked by the task scope owner.
+Synchronize Virtual Threads without
+Pinning
+     Synchronize Virtual Threads without Pinning was introduced in JDK
+     24 (JEP 491).
+
+Threads in Java are divided into platform threads and virtual threads. Platform
+threads are heavyweight, corresponding one-to-one with native threads in the
+operating system and scheduled by the operating system. An application is
+limited in the number of platform threads it can create. Virtual threads are
+lightweight and are created and scheduled by the Java runtime. Virtual threads
+consume very few resources, and the theoretical number of virtual threads that
+can be created is limited only by the system’s memory capacity. On a typical
+machine, creating millions of virtual threads is not a problem.
+
+At runtime, a virtual thread is assigned to a plat form thread by the JDK
+scheduler. This process is called mounting the virtual thread to a platform
+thread. This mounted platform thread is called the carrier of virtual thread.
+After being mounted to a platform thread, a virtual thread runs the virtual
+thread’s code. If the code execution is blocked for some reason, the virtual
+thread is unmounted from the current platform thread, and the scheduler
+mounts another virtual thread to the current platform thread. During the
+execution of an application, a virtual thread may be scheduled to run on
+different platform threads, and a platform thread may run the code of multiple
+virtual threads. The mounting and unmounting of virtual threads is frequent
+and transparent.
+
+The mounting relationship between virtual threads and platform threads
+demonstrates that to improve application performance, it’s necessary to
+ensure that virtual threads can be properly unmounted from platform threads.
+In some cases, a virtual thread cannot be unmounted from a platform thread,
+causing it to be pinned on the platform thread. When a virtual thread is
+pinned, its carrier cannot run other virtual threads.
+
+In Java 21 through 23, virtual threads can be pinned for two reasons: when
+executing a synchronized method or code block, and when executing a native
+Synchronize Virtual Threads without Pinning                                    70
+
+
+or foreign method. The impact of being pinned while executing a native or
+foreign method is minimal, as most Java applications rarely use native or foreign
+methods. However, the first scenario, when executing a synchronized method
+or code block, is very common in application code and occurs extensively in
+multi-threaded code.
+
+Prior to Java 24, synchronized methods or code blocks could be pinned due
+to the Java synchronized implementation. This implementation relies on a
+monitor on each object. A monitor on an object can only be acquired by one
+thread at most. When running synchronized code, it first acquires the monitor
+on the current object and then releases the monitor after execution completes.
+
+In its implementation, the JVM keeps track of the thread currently holding an
+object’s monitor, but this relationship is of the platform thread, not the virtual
+thread. Imagine an object obj whose class declares synchronized methods.
+If virtual thread A is allowed to unmount while executing a synchronized
+method on object obj, then after virtual thread A unmounts, a new virtual
+thread B might be scheduled onto the same platform thread to execute another
+synchronized method on object obj. When virtual thread B is scheduled to
+execute, since it is on the same platform thread, the JVM will assume that
+virtual thread B already holds the monitor on object obj and allow virtual thread
+B to execute other synchronized methods. This violates the mutual exclusivity
+between virtual threads A and B, causing thread synchronization issues.
+
+Because synchronized locks can cause virtual threads to lock, affecting ap-
+plication performance, prior to Java 24, the common practice was to replace
+synchronized with locks in the java.util.concurrent package. However,
+this requires code modifications.
+
+Java 24 modified the JVM’s internal implementation of the synchronized
+keyword. Virtual threads can acquire, hold, and release object monitors
+independently of the platform thread to which they are currently mounted.
+When a virtual thread’s code blocks acquiring an object monitor, the virtual
+thread is unmounted from its carrier. The JDK scheduler can then schedule
+other virtual threads onto the platform thread. Once the monitor is released,
+other virtual threads waiting on the monitor can be rescheduled. Only virtual
+threads that have acquired a monitor can run synchronized methods.
+
+When a virtual thread is pinned, the JFR event jdk.VirtualThreadPinned is
+logged. Since the synchronized keyword no longer causes a virtual thread to
+be pinned, this event is only generated by calls to native or foreign methods.
+Synchronize Virtual Threads without Pinning                                  71
+
+
+The event itself has also been updated to include the reason the virtual thread
+was pinned and the identifier of the carrier platform thread. The system
+property jdk.tracePinnedThreads prints a stack trace of the current thread
+when a virtual thread is pinned while running a synchronized method. Java
+24 removed this system property.
+
+Because the synchronized keyword no longer causes virtual threads to be
+pinned, existing code using synchronized no longer needs to be modified.
+This removes a major obstacle to the adoption of virtual threads.
+Stable Values
+     Stable Values was introduced in Java 25 as a preview feature (JEP 502).
+
+
+Stable values are objects that hold immutable data. When writing Java pro-
+grams, it’s recommended to use immutable objects. If an object is immutable,
+once the object is initialized, its state won’t change. So an immutable object
+can be shared freely across multiple threads.
+
+An immutable object cannot be updated after initialized. Ideally, an immutable
+object should only be initialized when necessary.
+
+The Java Platform’s main tool for managing immutability is final fields. final
+fields have restrictions. They must be set eagerly, either during construction
+for instance fields or during class initialization for static fields. The order in
+which final fields are initialized is determined by the textual order in which
+the fields are declared.
+
+final fields must be initialized eagerly. Objects referenced by final fields
+may be expensive to create, which will slow down the start of the application.
+Not all these final fields will actually be used in the runtime, which means
+some eager initializations are unnecessary.
+
+To avoid unnecessary initialization, we can use mutable non-final fields. But
+this means we need to use code to ensure the correctness of immutability. This
+is not an easy task.
+
+A stable value is an object, of type StableValue, that holds a single data value,
+its content. A stable value must be initialized some time before its content is
+first retrieved, and it is immutable thereafter. A stable value is a way to achieve
+deferred immutability.
+
+
+StableValue
+
+StableValue.of() method creates a new unset stable value. We can also
+provide content when creating a stable value using the StableValue.of(T
+contents) method.
+     Stable Values                                                                  73
+
+
+     The content of a stable value can be set using the trySet() method. The
+     content of a stable value can only be set once. If the content of a stable
+     value was set to the provided content in trySet, then trySet returns true.
+     Otherwise, trySet returns false. trySet method only returns true once.
+     When trySet is invoked concurrently by multiple threads on an unset stable
+     value, only one thread can observe the return value true, all other threads will
+     observe the return value false.
+
+     In the code below, value is an unset stable value. The trySet method is
+     invoked by 10 threads concurrently. From the output of this code, we can see
+     that only one thread successfully set the value.
+
+
+
+     Figure 71. trySet with multiple threads
+
+1    public class SetStableValue {
+2
+3        private final StableValue<String> value = StableValue.of();
+4
+5        void trySet() {
+6          var result = value.trySet("hello");
+7          if (result) {
+8            System.out.println(
+9                "Value set in thread: " + Thread.currentThread().getName());
+10         } else {
+11           System.out.println(
+12               "Value not set in thread: " + Thread.currentThread().getName());
+13         }
+14       }
+15
+16       static void main() {
+17         var setStableValue = new SetStableValue();
+18         try (var executor = Executors.newFixedThreadPool(10)) {
+19           for (int i = 0; i < 10; i++) {
+20             executor.submit(setStableValue::trySet);
+21           }
+22         }
+23       }
+24   }
+
+
+
+     Instead of returning false, we can choose to throw an exception when the
+     content of a stable value is not set the provided content. This is done using the
+     setOrThrow method. When using setOrThrow, if the content of a stable value
+     is already set, then this method throws IllegalStateException.
+     Stable Values                                                                  74
+
+
+     In the code below, the unset stable value is set to “hello” first using trySet, so
+     the next call to setOrThrow will throw IllegalStateException.
+
+
+
+     Figure 72. SetOrThrow
+
+1    public class SetOrThrow {
+2
+3        private final StableValue<String> value = StableValue.of();
+4
+5        void setOrThrow() {
+6          value.trySet("hello");
+7          value.setOrThrow("world");
+8        }
+9
+10       static void main() {
+11         new SetOrThrow().setOrThrow();
+12       }
+13   }
+
+
+
+     The isSet method checks if the content of a stable value is set.
+
+     The orElse(T other) method returns the content if set, otherwise, returns
+     the provided other value.
+
+     Figure 73. orElse
+
+1    var content = value.orElse("hello");
+
+
+
+     The orElseThrow() method returns the content if set, otherwise, throws
+     NoSuchElementException.
+
+     Figure 74. orElseThrow
+
+1    var content = value.orElseThrow();
+
+
+
+     The orElseSet(Supplier<? extends T> supplier) method returns the
+     content if set, otherwise, computes and sets the content using the provided
+     supplier. The provided supplier is guaranteed to be invoked at most once if
+     it completes without throwing an exception. If this method is invoked multiple
+     times with different suppliers, only one of them will be invoked if it completes
+     without throwing an exception.
+     Stable Values                                                              75
+
+
+     Figure 75. orElseSet
+
+1    String orElseSet() {
+2      return value.orElseSet(() -> "hello");
+3    }
+
+
+
+
+     Stable Supplier
+
+     The       static      <T> Supplier<T> supplier(Supplier<? extends T>
+     underlying) method creates a new stable supplier. The returned supplier
+     records the value of the underlying supplier upon being first accessed via
+     the returned supplier’s get() method. The provided underlying supplier
+     is guaranteed to be successfully invoked at most once. In a multi-threaded
+     environment, when a thread invokes the returned supplier’s get() method
+     and a value is already under computation by another thread, then the current
+     thread will block until a value is computed or an exception is thrown. Once a
+     value is computed successfully, the current thread will observe this value and
+     never execute the underlying supplier.
+
+     In the code below, the underlying method creates a Supplier<String>,
+     while the stable creates a stable Supplier<String> which wraps the under-
+     lying supplier. Even the get method of the stable supplier is invoked three
+     times, the output message in the underlying supplier will be printed out once.
+
+
+
+     Figure 76. Stable supplier
+
+1    public class StableSupplier {
+2
+3      Supplier<String> underlying() {
+4        return () -> {
+5           System.out.println("Called the underlying supplier");
+6           return "hello";
+7        };
+8      }
+9
+10     Supplier<String> stable() {
+11       return StableValue.supplier(underlying());
+12     }
+13
+14     static void main() {
+15       var supplier = new StableSupplier().stable();
+     Stable Values                                                                   76
+
+
+16           supplier.get();
+17           supplier.get();
+18           supplier.get();
+19       }
+20   }
+
+
+
+
+     Stable IntFunction
+
+     The static <R> IntFunction<R> intFunction(int size, IntFunction<?
+     extends R> underlying) method creates a stable IntFunction. The pa-
+     rameter size specifies the range of valid input of the returned IntFunction,
+     which is [0, size). The provided underlying function is guaranteed to be
+     successfully invoked at most once per allowed input. This is the same behavior
+     as the Supplier.
+     In the code below, the underlying IntFunction calculates the power of
+     Math.PI. When using StableValue.intFunction, the size is set to 5, so the
+     valid inputs are 0, 1, 2, 3, and 4. When calling the stable IntFunction using
+     the input 5, it throws IllegalArgumentException.
+
+
+
+     Figure 77. Stable IntFunction
+1    public class StableIntFunction {
+2
+3        IntFunction<Double> intFunction() {
+4          return StableValue.intFunction(5, (value -> Math.pow(Math.PI, value)));
+5        }
+6
+7        static void main() {
+8          var function = new StableIntFunction().intFunction();
+9          System.out.println(function.apply(3));
+10         System.out.println(function.apply(4));
+11         System.out.println(function.apply(5));
+12       }
+13   }
+
+
+
+
+     Stable Function
+
+     The    static   <T, R> Function<T, R> function(Set<? extends T>
+     inputs, Function<? super T, ? extends R> underlying)     method
+     Stable Values                                                                     77
+
+
+     creates a stable Function. The parameter inputs specifies the valid input of
+     the returned Function. The provided underlying function is guaranteed to be
+     successfully invoked at most once per allowed input. This is the same behavior
+     as the Supplier.
+
+     In the code below, valid inputs of the stable function are “hello” and “world”.
+
+
+
+     Figure 78. Stable Function
+
+1    public class StableFunction {
+2
+3        Function<String, Integer> function() {
+4          return StableValue.function(Set.of("hello", "world"),
+5              String::length);
+6        }
+7
+8        static void main() {
+9          var function = new StableFunction().function();
+10         System.out.println(function.apply("hello"));
+11         System.out.println(function.apply("world"));
+12         System.out.println(function.apply("test"));
+13       }
+14   }
+
+
+
+
+     Stable List
+
+     The static <E> List<E> list(int size, IntFunction<? extends E>
+     mapper) method creates a stable list with the specified size. The returned list
+     is unmodifiable. The list’s elements are computed via the provided mapper
+     when they are first accessed. The provided mapper function is guaranteed to
+     be successfully invoked at most once per list index. This is the same behavior
+     as the Supplier.
+
+     In the code below, the list size is 5. When the element at an index is first
+     accessed, a message is printed out.
+     Stable Values                                                                 78
+
+
+     Figure 79. Stable list
+1    public class StableList {
+2
+3        List<Double> list() {
+4          return StableValue.list(5, v -> {
+5            System.out.println("Calculate value for " + v);
+6            return Math.pow(Math.PI, v);
+7          });
+8        }
+9
+10       static void main() {
+11         var list = new StableList().list();
+12         list.get(0);
+13         list.get(1);
+14       }
+15   }
+
+
+
+
+     Stable Map
+
+     The static <K, V> Map<K, V> map(Set<K> keys, Function<? super K,
+     ? extends V> mapper) method creates a stable map with the specified keys.
+     The returned map is unmodifiable. The map’s values are computed via the
+     provided mapper when they are first accessed. The provided mapper function
+     is guaranteed to be successfully invoked at most once per key. This is the
+     same behavior as the Supplier.
+
+     In the code below, a stable map is created with valid keys “hello” and “world”.
+
+
+
+     Figure 80. Stable map
+1    public class StableMap {
+2
+3        Map<String, Integer> map() {
+4          return StableValue.map(Set.of("hello", "world"), String::length);
+5        }
+6
+7        static void main() {
+8          var map = new StableMap().map();
+9          System.out.println(map.get("hello"));
+10         System.out.println(map.get("test"));
+11       }
+12   }
+    Stable Values                                                                 79
+
+
+    Constant Folding Optimization
+
+    Constant folding is an optimization to evaluate constant expressions at compile
+    time or JIT time instead of runtime. For the Java compiler, it will replace
+    expressions made up entirely of compile-time constants with their evaluated
+    value.
+
+    In the code below, the final field secondsIn30Days has value 2592000 in the
+    compiled class file.
+
+    Figure 81. Constant folding in Java compiler
+
+1   final int secondsIn30Days = 30 * 24 * 60 * 60; // folded to 2592000
+
+
+
+    Some expressions cannot be resolved at compile time as constants, but they are
+    actually constants and JVM can perform constant folding on them to improve
+    performance. This is true for those lazily initialized immutable fields. Even
+    though this kind of fields are non-final, the JVM can trust that their values
+    will not change after their initial and only update.
+
+    JVM can perform constant folding optimization on stable values. This is done
+    by using JDK internal @jdk.internal.vm.annotation.Stable annotation. If
+    a field is annotated with @Stable, then JVM will promote its value as a constant,
+    thereby enabling superior optimizations of code depending on such a value,
+    including constant folding. @Stable is used in JDK internal code.
+
+    For a stable value created using StableValue, the content is stored in a non-
+    final field annotated with the @Stable annotation.
+
+
+
+    Use StableValue
+
+    The table below shows the comparison of final field, StableValue and non-
+    final field. For an immutable field, if the field has a primitive type or simple
+    type like String, then this field can be eagerly initialized as a final field.
+    Otherwise, this field should use StableValue.
+Stable Values                                                                                 80
+
+
+                Figure 82. Comparison of final field, StableValue and non-final field
+
+
+ Type                 Update count       Update              Constant            Concurrent
+                                         location            folding?            updates?
+ final field          1                  Constructor         Yes                 No
+                                         or static
+                                         initializer
+ StableValue          [0, 1]             Anywhere            Yes, after          Yes, by winner
+                                                             update
+ Non-final field      [0, ∞)             Anywhere            No                  Yes
+JVM
+
+This part covers changes related to JVM, including JFR, garbage collectors.
+     JFR
+     Method Timing and Tracing
+
+     Two new JFR events, jdk.MethodTiming and jdk.MethodTrace, are added.
+     These two events both accept a filter to select the methods to time and trace.
+     Considering the large number of methods, it’s recommended to always add a
+     filter.
+
+     The code below has a performance issue. items.size is called too many times.
+
+
+
+     Figure 83. Code with performance issue
+
+1    public class BadCode {
+2
+3        static void main() {
+4          List<String> items = new ArrayList<>();
+5          for (int i = 0; i < 100_000; i++) {
+6            items.add("Item " + i);
+7          }
+8
+9            long count = 0;
+10
+11           for (int i = 0; i < items.size(); i++) {
+12             if (items.get(i).contains("999")) {
+13               count++;
+14             }
+15           }
+16
+17           System.out.println("Found " + count + " items.");
+18       }
+19   }
+
+
+
+     We can use JFR to track the timing of ArrayList.size method. The command
+     below runs the code with JFR event jdk.MethodTiming enabled with a filter
+     java.util.ArrayList::size. The recording is saved to file recording.jfr.
+    JFR                                                                         83
+
+
+    Figure 84. Enable jdk.MethodTiming event
+
+1   java -XX:StartFlightRecording:jdk.MethodTiming#filter=java.util.ArrayList::si\
+2   ze,filename=recording.jfr \
+3     -cp target/java21to25-0.1.0-SNAPSHOT.jar \
+4     me.vividcode.java21to25.jfr.BadCode
+
+
+
+    The recording file can be analyzed with jfr command. The command below
+    prints the jdk.MethodTiming event.
+
+    Figure 85. Analyze JFR recording
+
+1   jfr print --events jdk.MethodTiming recording.jfr
+
+
+
+    Below is the jdk.MethodTiming event. The size method is invoked 100024
+    times.
+
+    Figure 86. jdk.MethodTiming event
+
+1   jdk.MethodTiming {
+2     startTime = 10:12:05.150 (2025-09-13)
+3     method = java.util.ArrayList.size()
+4     invocations = 100024
+5     minimum = 0.000012 ms
+6     average = 0.000012 ms
+7     maximum = 0.00213 ms
+8   }
+
+
+
+    Below is the syntax of method filters.
+
+    Figure 87. Method filter syntax
+
+1   filter ::= target (";" target)*
+2   target ::= class | class-method | method | annotation
+3   class ::= identifier ("." identifier)*
+4   class-method ::= class method
+5   method ::= "::" method-name
+6   method-name ::= identifier | "<clinit>" | "<init>"
+7   annotation ::= "@" class
+    JFR                                                                         84
+
+
+    CPU‐Time Profiling
+
+          JFR CPU-Time Profiling is an experimental feature introduced in JDK
+          25 (JEP 509).
+
+
+    JFR is enhanced to capture more accurate CPU-time profiling information on
+    Linux. This is done by using the Linux kernel’s CPU timer to safely produce a
+    more accurate CPU-time profiles of Java programs.
+
+    A new event jdk.CPUTimeSample is added. This event is not enabled by default.
+    The following code shows how to enable it.
+
+    Figure 88. Enable jdk.CPUTimeSample
+
+1   java -XX:StartFlightRecording=jdk.CPUTimeSample#enabled=true,filename=profile\
+2   .jfr
+Garbage Collectors
+There are changes related to built-in garbage collectors, including G1, ZGC,
+and Shenandoah.
+
+
+
+G1
+
+Region Pinning
+
+     Region Pinning for G1 was introduced in JDK 22 (JEP 423).
+
+
+JNI defines functions to get and release direct pointers to Java objects. These
+functions must always be used in pairs. Code within such function pairs is
+considered to run a critical region. The Java object available for use during
+that time is a critical object.
+
+When a Java thread is in a critical region, G1 simply disables GC. This has a
+significant impact on latency.
+
+With region pinning in for G1, only the regions that contain critical objects will
+be pinned. Garbage collection is still done in unpinned regions.
+
+
+
+ZGC
+
+Generational Mode by Default
+
+     ZGC: Generational Mode by Default was introduced in JDK 23 (JEP
+     474).
+
+
+Generational ZGC was made the default mode of ZGC. The command-line
+option ZGenerational has a default value of true.
+    Garbage Collectors                                                            86
+
+
+    Remove the Non‐Generational Mode
+
+          ZGC: Remove the Non-Generational Mode was introduced in JDK 24
+          (JEP 490).
+
+
+    In JDK 24, ZGC’s non-generational mode was removed, along with both code
+    and tests. This eliminates the need to maintain separate code for both
+    generational and non-generational modes.
+
+    The command-line option ZGenerational has also been deprecated. This
+    option will expire in a future release, at which point it will not be recognized.
+
+    When ZGC is enabled with the -XX:+UseZGC option, generational mode is
+    always used.
+
+    The removal of non-generational mode may have some impact. Some work-
+    loads are naturally non-generational, so switching to generational mode may
+    result in a slight performance degradation, but the number of these workloads
+    is relatively small.
+
+
+
+    Generational Shenandoah
+
+          Generational Shenandoah was introduced in JDK 24 (JEP 404) as an
+          experimental feature and became a production feature in JDK 25 (JEP
+          521).
+
+
+    The generational mode of the Shenandoah garbage collector is production
+    feature. However, Shenandoah will continue to use a single generation by
+    default.
+
+    The command-line options shown below enable the generational model of
+    Shenandoah.
+
+    Figure 89. Enable generational model of Shenandoah
+
+1   $ java -XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational
+Compact Object Headers
+     Compact Object Headers was an experimental feature in JDK 24 (JEP
+     450) and became a production feature in JDK 25 (JEP 519).
+
+
+With compact object headers, the size of object headers in the HotSpot JVM is
+reduced from between 96 and 128 bits down to 64 bits on 64-bit architectures.
+
+Before using compact object headers, the object header layout is split into a
+mark word and a class word.
+
+
+   • The mark word comes first, has the size of a machine address.
+   • The class word comes after the mark word. It takes one of two shapes,
+     depending on whether compressed class pointers are enabled. Uncom-
+     pressed class pointers have a size of 64 bits, while compressed class
+     pointers have a size of 32 bits.
+
+
+On 64-bit architectures, if compressed class pointers are enabled, the size of
+object header is 64 + 32 = 96 bits. If compressed class pointers are disabled,
+the size of object header is 64 + 64 = 128 bits.
+
+Compressed class pointers are enabled by default, but can be disabled via XX:-
+UseCompressedClassPointers. The only reason to disable them, however,
+would be for an application that loads more than about four million classes.
+
+For compact object headers, the original mark word and class word are
+combined into a 64 bits structure. Compressed class pointers are required
+to be enabled and, moreover, the size of compressed class pointers is reduced
+from 32 bits to 22 bits by changing the compressed class pointer encoding.
+
+There are various experiments that demonstrate the performance improve-
+ments by enabling compact object headers. These experiments show less heap
+use, less CPU time, and less number of garbage collections. But you should still
+run your own tests to verify the results of enabling it.
+
+Compact object headers can be enabled with -XX:+UseCompactObjectHeaders.
+    Project Leyden
+    The goal of Project Leyden is to improve the startup time, time to peak
+    performance, and footprint of Java programs. In Java 25, we can use some
+    features from Project Leyden.
+
+
+
+    Class Loading & Linking
+
+    JVM supports an ahead-of-time cache which can store classes after reading,
+    parsing, loading, and linking them. Once a cache is created for a specific
+    application, it can be re-used in subsequent runs of that application to improve
+    startup time.
+
+
+    Create a Cache
+
+    To create a cache, we first need to run the application once to record its AOT
+    configuration. This is called a training run. The AOT configuration is saved to
+    a file.
+
+    In the command below, -XX:AOTMode is set to record, and the AOT configu-
+    ration is saved to the file app.aotconf.
+
+    Figure 90. Create AOT configuration
+
+1   java -XX:AOTMode=record -XX:AOTConfiguration=app.aotconf \
+2       -cp app.jar com.example.App
+
+
+
+    After the configuration file is created, the cache can be created using the
+    command below.
+
+
+       • -XX:AOTMode is set to create.
+       • -XX:AOTConfiguration is set to the configuration file created in the first
+         command.
+       • -XX:AOTCache is the cache file.
+    Project Leyden                                                             89
+
+
+    Figure 91. Create a cache
+
+1   java -XX:AOTMode=create -XX:AOTConfiguration=app.aotconf \
+2       -XX:AOTCache=app.aot -cp app.jar
+
+
+
+    This cache file can be used when running the application.
+
+    Figure 92. Start application using a cache
+
+1   java -XX:AOTCache=app.aot -cp app.jar com.example.App
+
+
+
+    If the cache file is unusable or does not exist, then the JVM issues a warning
+    message and continues.
+
+    This two-step flow to create a cache can be simplified with the option AOT-
+    CacheOutput, which specifies an AOT cache output file. When this option
+    is used alone, with no other AOT options, this option causes the launcher
+    to, in effect, split its invocation into two sub-invocations: The first does a
+    training run (AOTMode=record) and then the second creates the AOT cache
+    (AOTMode=create).
+
+    The command below shows a single step to create a cache.
+
+    Figure 93. Create a cache in a single step
+
+1   java -XX:AOTCacheOutput=app.aot -cp app.jar com.example.App
+
+
+
+    A new environment variable, JDK_AOT_VM_OPTIONS, can be used to
+    pass command-line options that apply specifically to cache creation
+    (AOTMode=create), without affecting the training run (AOTMode=record).
+
+
+    Training Run
+
+    The effectiveness of the AOT cache depends on the training run. Ideally, the
+    training run should load the same classes that a production run loads when
+    it starts. It may not be an easy task to create an effective training run. A
+    production run may require many external dependencies, which may not be
+    available in a training run. We can use mocks to simulate those dependencies,
+    but may still miss some classes loaded in the production run.
+
+    For a cache to take effect, the training run and all subsequent runs must be
+    essentially similar.
+    Project Leyden                                                                 90
+
+
+    By default, if a configured AOT cache doesn’t exist or it violates constraints for
+    a cache, JVM issues a warning and ignores the cache. We can also force JVM to
+    report an error and exit by using the -XX:AOTMode=on option.
+
+    Figure 94. Check AOT cache
+
+1   java -XX:AOTCache=app.aot -XX:AOTMode=on \
+2          -cp app.jar com.example.App
+
+
+
+
+    An Example
+
+    Let’s see an example of using AOT cache for a Spring Boot application. The
+    code of this application can be found at GitHub.
+
+    The application is packaged as a single JAR file text-to-sql.jar using Spring
+    Boot Maven plugin. The size of this JAR file is 42.5 MB.
+
+
+    Two Steps to Create AOT Cache
+
+    The AOT cache configuration file is created first. The size of this configuration
+    file is 77.5 MB.
+
+    Figure 95. Create AOT cache configuration
+
+1   java -XX:AOTMode=record -XX:AOTConfiguration=app.aotconf -jar text-to-sql.jar
+
+
+
+    The AOT cache is created from the configuration file. The size of this cache file
+    is 77.3 MB.
+
+    Figure 96. Create AOT cache
+
+1   java -XX:AOTMode=create -XX:AOTConfiguration=app.aotconf \
+2       -XX:AOTCache=app.aot -jar text-to-sql.jar
+
+
+
+
+    Single Step to Create AOT Cache
+
+    We can also use a single step to create the AOT cache.
+    Project Leyden                                                              91
+
+
+    Figure 97. Create AOT cache
+
+1   java -XX:AOTCacheOutput=app.aot -jar text-to-sql.jar
+
+
+
+
+    Start with AOT Cache
+
+    The application is started with the AOT cache.
+
+    Figure 98. Start application with AOT cache
+
+1   java -XX:AOTCache=app.aot -jar text-to-sql.jar
+
+
+
+    We can see the difference of application starting time after AOT cache is used.
+    It’s about 27.2% improvement of the starting time.
+
+
+       • With AOT cache: 0.855 seconds
+       • Without AOT cache: 1.174 seconds
+
+
+
+
+    Method Profiling
+
+    The AOT cache also collects method-execution profiles during training runs.
+    When the JVM starts, it can use method-execution profiles in the cache to
+    improve warmup time. The JIT compiler generates native code immediately
+    upon application startup, doesn’t need to wait for profiles to be collected.
+
+    Even with cached profiles, the HotSpot JVM continues to profile and optimize
+    the application as it runs. The JIT runs earlier and with more accuracy, using
+    the profiles to optimize the hot methods so that the application experiences a
+    shorter warmup period.
+Tools
+
+This part covers changes in tools of Java platform.
+    Launch Multi‐File Source‐Code
+    Programs
+          Launch Multi-File Source-Code Programs was added in JDK 22 (JEP
+          458).
+
+
+    Java 11 added a feature that allows the java command to directly run a single
+    Java source code file, eliminating the need to compile it with javac first, then
+    run it with java. This simplifies running of Java programs. For example, the
+    “Hello World” Java program can be run directly with the following command.
+
+    Figure 99. Run Java program using java
+
+1   java HelloWorld.java
+
+
+
+    However, this method also has certain limitations: it only allows a single Java
+    source file. In Java 22, the java command’s ability to directly run Java source
+    code files has been enhanced. Multiple Java source files can be run. A single
+    Java source file is still specified as the entry point, but during execution, the
+    source files of referenced Java classes are compiled as needed.
+
+    Pre-compiled class files and JAR files can be referenced at runtime. For exam-
+    ple, if the Main class references the greet method in the GreetingService
+    class, when the the source file of Main is run, the source file of GreetingSer-
+    vice will also be automatically compiled and loaded. Without relying on build
+    tools, Java programs composed of multiple Java source files can be easily run.
+
+    For pre-compiled class files and JAR files, the --class-path option can be
+    used with java command to specify the path.
+
+    Figure 100. Specify the classpath
+
+1   java --class-path ./lib/* App.java
+    Linking Run‐Time Images without
+    JMODs
+          Linking Run-Time Images without JMODs was introduced in JDK 24
+          (JEP 493).
+
+    The jlink tool can create custom runtime images without using the JDK’s
+    JMOD files. The resulting JDK does not include module files, so it’s approxi-
+    mately 25% smaller than a JDK built with the default configuration.
+    The feature is not enabled by default. It must be enabled when the JDK is
+    built using the configuration option --enable-linkable-runtime. We can
+    check if this feature is enabled by checking the output of jlink --help. If the
+    feature is enabled, it shows Linking from run-time image enabled. Otherwise,
+    the output will contain Linking from run-time image disabled.
+    The output of jlink --help of Eclipse Temurin is shown as below. We can
+    see that this feature is enabled.
+
+    Figure 101. Output of jlink --help of Eclipse Temurin
+1   Usage: jlink <options> --module-path <modulepath> --add-modules <module>[,<mo\
+2   dule>...]
+3   Possible options include:
+4
+5
+6   Capabilities:
+7         Linking from run-time image enabled
+
+
+
+    The command below creates a custom runtime image that contains only the
+    java.xml and java.base modules. Size of the resulting JDK is about 63.7MB.
+
+    Figure 102. Create a custom runtime image
+1   jlink --add-modules java.xml --output image-xml
+
+
+
+    If we run the same command using a JDK that doesn’t enable this feature, size of
+    the resulting JDK is about 100.1MB. The difference is the resulting JDK contains
+    a modules file in the lib directory, which has a size of about 40.8MB.
+Annotations Processing
+Java developers are likely familiar with annotations in the Java language. An-
+notations are metadata added to Java source code. In addition to processing
+annotations at runtime using the reflection API, the Java compiler can also
+process annotations at compile time. Because annotation processing by the
+annotation processor may generate new Java source code, compilation of the
+source code occurs after annotation processing. During compilation, javac
+has three modes related to whether to compile and process annotations.
+
+   • The first mode processes annotations first, then compiles.
+   • The second mode processes annotations only, without compiling.
+   • The third mode compiles only, without processing annotations.
+
+These modes are determined by the -proc option of the javac command. The
+second mode uses -proc:only, and the third mode uses -proc:none. The first
+mode has been the default since JDK 6 and had no name until JDK 21, when it
+was given a name, -proc:full.
+
+Since the introduction of the annotation mechanism in JDK 6, javac’s default
+behavior has been scanning the classpath for annotation processors matching
+the annotations in the source code, then using the found annotation processors
+to process the annotations before compiling.
+
+This classpath scanning approach has some issues. Unintentional third-
+party dependencies containing annotation processors may be present on the
+classpath, and running these annotation processors can cause unexpected
+problems. JDK 23 changed the default javac annotation processing strategy
+from -proc:full to -proc:none, meaning that annotation processing is no
+longer enabled by default. If your application relies on the default classpath
+scanning mechanism to discover annotation processors during build time,
+annotation processors found on the classpath will not be run in JDK 23,
+impacting application builds.
+
+Changing the default annotation processor behavior can significantly impact
+the build of existing applications. Therefore, the new -proc:full option has
+been backported to OpenJDK 11 and 17. If your application uses OpenJDK 11,
+Annotations Processing                                                      96
+
+
+17, 21, or later and relies on the default annotation processing behavior, you
+can explicitly enable the previous default behavior by adding the -proc:full
+option. This way, you won’t need to make changes when upgrading to newer
+OpenJDK versions.
+
+If your application’s build process doesn’t rely on the default annotation pro-
+cessor behavior, no changes are required. Specifically, if javac already uses
+the following options, they do not need to be modified.
+
+
+   • -processor,
+   • -processor-path,
+   • --processor-module-path,
+   • -proc.
+Deprecated & Removed
+Features
+32‐bit x86 Port
+The source code and build support for the 32-bit x86 port was removed,
+including Windows and Linux. The motivation is that the cost of maintaining
+32-bit x86 port outweighs the benefits. Removing this port can unblock new
+features that require platform-specific support from having to implement 32-
+bit x86 fallbacks. The cost for implementing new features like virtual threads,
+Foreign Function & Memory API (FFM), Vector API, etc. on 32-bit x86 platform
+is very high.
+
+There are multiple JEPs related to the deprecation and removal of 32-bit x86
+port, see the table below.
+
+                     Figure 103. JEPs related to 32-bit x86 Port
+
+
+ Number     Target    Name
+ 449        21        Deprecate the Windows 32-bit x86 Port for Removal
+ 479        24        Remove the Windows 32-bit x86 Port
+ 501        24        Deprecate the 32-bit x86 Port for Removal
+ 503        25        Remove the 32-bit x86 Port
+

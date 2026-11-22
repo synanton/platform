@@ -9,26 +9,39 @@ import io.micrometer.core.instrument.Timer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.ContractViolationException;
 import org.synanton.common.resolution.FailureClass;
 import org.synanton.common.resolution.FailureClassifier;
+import org.synanton.common.resolution.FenceBehindException;
+import org.synanton.common.resolution.RetryReason;
+import org.synanton.common.resolution.RetryableProcessingException;
+import org.synanton.common.resolution.StaleGenerationException;
+import org.synanton.common.resolution.StaleOwnershipException;
+import org.synanton.common.resolution.UnauthorizedGenerationException;
 import org.synanton.relix.config.PromotionConsumerProperties;
 import org.synanton.relix.graph.CanonicalRelationPromotionPort;
 import org.synanton.ingestioncache.claim.ClaimService;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionWorkRow;
 
 /**
- * PR #4d.1 promotion orchestration. It claims only VALID validation rows and
- * delegates atomic graph invariants to the existing Relix promotion port. It
- * never re-implements validation and never re-runs extraction.
+ * PR #4d.1 promotion orchestration. It claims VALID and INVALID validation
+ * rows; VALID rows promote assertions, INVALID rows record contradiction
+ * evidence when canonical endpoints were resolved. It never re-implements
+ * validation and never re-runs extraction.
  */
 @Component
 public final class PromotionConsumer {
@@ -39,6 +52,8 @@ public final class PromotionConsumer {
     private final CanonicalRelationPromotionPort promotionPort;
     private final PromotionConsumerProperties properties;
     private final MeterRegistry registry;
+    private final CanonicalGraphCompletion completion;
+    private final PromotionOwnershipStore ownership;
     private final ObjectMapper mapper = new ObjectMapper();
     private final String workerId = UUID.randomUUID().toString();
     private final Clock clock = Clock.systemUTC();
@@ -46,21 +61,55 @@ public final class PromotionConsumer {
     private final Counter claimed;
     private final Counter completed;
     private final Counter failed;
+    private final Counter exhausted;
     private final Timer latency;
     private final DistributionSummary claimAge;
 
     public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
                              PromotionConsumerProperties properties, MeterRegistry registry) {
+        this(claims, promotionPort, properties, registry, null, null);
+    }
+
+    public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
+                             PromotionConsumerProperties properties, MeterRegistry registry,
+                             CanonicalGraphCompletion completion) {
+        this(claims, promotionPort, properties, registry, completion, null);
+    }
+
+    @Autowired
+    public PromotionConsumer(ClaimService claims, CanonicalRelationPromotionPort promotionPort,
+                             PromotionConsumerProperties properties, MeterRegistry registry,
+                             CanonicalGraphCompletion completion, PromotionOwnershipStore ownership) {
         this.claims = claims;
         this.promotionPort = promotionPort;
         this.properties = properties;
         this.registry = registry;
+        this.completion = completion;
+        this.ownership = ownership;
         this.claimed = registry.counter("promotion.claimed");
         this.completed = registry.counter("promotion.completed");
         this.failed = registry.counter("promotion.failed");
+        this.exhausted = registry.counter("promotion.exhausted");
         this.latency = Timer.builder("promotion.latency").register(registry);
         this.claimAge = DistributionSummary.builder("promotion.claim_age")
                 .baseUnit("milliseconds").register(registry);
+    }
+
+    @Scheduled(fixedDelayString = "${relix.promotion-consumer.consumer-recovery-interval-ms:60000}")
+    public void recoverStalledConsumers() {
+        if (ownership == null) {
+            return;
+        }
+        long timeoutSeconds = 600L;
+        java.time.Instant staleBefore = clock.instant().minusSeconds(timeoutSeconds);
+        for (PromotionOwnershipStore.OwnershipRow stale
+                : ownership.findStaleClosed(staleBefore, 100)) {
+            if (ownership.countPendingRows(stale.tenantId(), stale.sourceVersionId()) == 0) {
+                continue;
+            }
+            ownership.takeoverClosedSet(stale.tenantId(), stale.sourceVersionId(),
+                    "promotion-recovery-" + UUID.randomUUID(), stale.ownerGeneration());
+        }
     }
 
     @Scheduled(fixedDelayString = "${relix.promotion-consumer.poll-delay-ms:10000}")
@@ -68,11 +117,19 @@ public final class PromotionConsumer {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Promotion consumer is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), claims);
+        } catch (Exception e) {
+            log.warn("Promotion tenant discovery failed: {}", e.toString());
             return;
         }
+        for (String tenant : tenants) {
+            pollTenant(tenant);
+        }
+    }
+
+    private void pollTenant(String tenant) {
         Instant now = clock.instant();
         try {
             claims.reclaimExpiredPromotions(tenant, now, properties.batchRelationsOrDefault());
@@ -86,17 +143,29 @@ public final class PromotionConsumer {
             log.warn("Promotion poll failed tenant={}: {}", tenant, e.toString());
             return;
         }
+        Set<UUID> abortedVersions = new HashSet<>();
         for (RelationPromotionWorkRow work : pending) {
-            process(work);
+            try {
+                UUID version = work.result().sourceVersionId();
+                if (abortedVersions.contains(version)) {
+                    continue;
+                }
+                if (!process(work)) {
+                    abortedVersions.add(version);
+                }
+                completeCanonicalIfTerminal(work);
+            } catch (Exception e) {
+                log.warn("Promotion processing failed tenant={}: {}", tenant, e.toString());
+            }
         }
     }
 
-    private void process(RelationPromotionWorkRow work) {
+    private boolean process(RelationPromotionWorkRow work) {
         Instant now = clock.instant();
         try {
             if (!claims.claimPromotion(work, workerId, now,
                     Duration.ofSeconds(properties.leaseSecondsOrDefault()))) {
-                return;
+                return true;
             }
             claimed.increment();
             if (work.result().decidedAt() != null) {
@@ -106,42 +175,119 @@ public final class PromotionConsumer {
         } catch (Exception e) {
             log.warn("Promotion claim failed relation={}: {}",
                     work.result().relationId(), e.toString());
-            return;
+            return true;
+        }
+
+        PromotionOwnershipStore.OwnershipToken token = null;
+        if (ownership != null) {
+            token = ownerToken(work.result().tenantId(), work.result().sourceVersionId());
+            if (token == null) {
+                log.warn("Promotion consumer found no ownership for relation={} version={}; "
+                                + "releasing claim", work.result().relationId(),
+                        work.result().sourceVersionId());
+                claims.releasePromotion(work, workerId, FailureClass.INFRASTRUCTURE_RETRYABLE,
+                        "Promotion ownership not available", properties.maxAttemptsOrDefault(),
+                        properties.retryBackoffSecondsOrDefault(), clock.instant());
+                return false;
+            }
         }
 
         Instant claimedAt = now;
         try {
-            CanonicalRelation relation = canonicalRelation(work.result());
-            promotionPort.promoteRelation(relation);
+            if (!"INVALID".equals(work.result().promotionStatus())
+                    || hasCanonicalTarget(work.result())) {
+                CanonicalRelation relation = canonicalRelation(work.result());
+                promotionPort.promoteRelation(relation);
+            }
             if (!claims.completePromotion(work, workerId, clock.instant())) {
                 log.warn("Promotion completion lost ownership relation={}",
                         work.result().relationId());
-                return;
+                return true;
+            }
+            if (token != null) {
+                try {
+                    ownership.updateOutcomeFenced(work.result().tenantId(),
+                            work.result().sourceVersionId(), work.result().relationId(),
+                            "COMPLETED", token);
+                } catch (StaleOwnershipException e) {
+                    log.warn("Promotion outcome lost ownership relation={} version={}; "
+                                    + "aborting this revision batch", work.result().relationId(),
+                            work.result().sourceVersionId());
+                    return false;
+                }
             }
             completed.increment();
             registry.counter("promotion.outcome", "outcome", "PROMOTED").increment();
         } catch (ContractViolationException e) {
             failed.increment();
+            String outcome = e instanceof StaleGenerationException ? "STALE_GENERATION"
+                    : e instanceof UnauthorizedGenerationException ? "UNAUTHORIZED_GENERATION"
+                    : "CONTRACT_VIOLATION";
+            registry.counter("promotion.outcome", "outcome", outcome).increment();
             claims.releasePromotion(work, workerId, FailureClass.CONTRACT_VIOLATION,
                     e.getMessage(), properties.maxAttemptsOrDefault(),
                     properties.retryBackoffSecondsOrDefault(), clock.instant());
-            log.warn("Promotion contract failure relation={}: {}",
-                    work.result().relationId(), e.toString());
+            log.warn("Promotion contract failure relation={} outcome={}: {}",
+                    work.result().relationId(), outcome, e.toString());
         } catch (Exception e) {
             FailureClass failureClass = FailureClassifier.classify(e);
             failed.increment();
-            if (failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE
-                    && work.attemptCount() + 1 < properties.maxAttemptsOrDefault()) {
+            boolean attemptExhausted = failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE
+                    && work.attemptCount() + 1 >= properties.maxAttemptsOrDefault();
+            String outcome = e instanceof FenceBehindException ? "FENCE_BEHIND"
+                    : attemptExhausted ? "EXHAUSTED_RETRY"
+                    : isAbortRecoverable(e) ? "ABORT_RECOVERABLE"
+                    : failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE ? "RETRYABLE"
+                    : "FAILED";
+            registry.counter("promotion.outcome", "outcome", outcome).increment();
+            if (attemptExhausted) {
+                exhausted.increment();
+            } else if (failureClass == FailureClass.INFRASTRUCTURE_RETRYABLE) {
                 registry.counter("promotion.retried").increment();
             }
             claims.releasePromotion(work, workerId, failureClass, e.toString(),
                     properties.maxAttemptsOrDefault(),
                     properties.retryBackoffSecondsOrDefault(), clock.instant());
-            log.warn("Promotion failure relation={} class={}: {}",
-                    work.result().relationId(), failureClass, e.toString());
+            log.warn("Promotion failure relation={} class={} outcome={}: {}",
+                    work.result().relationId(), failureClass, outcome, e.toString());
         } finally {
             latency.record(Duration.between(claimedAt, clock.instant()));
         }
+        return true;
+    }
+
+    private PromotionOwnershipStore.OwnershipToken ownerToken(String tenantId,
+                                                               UUID sourceVersionId) {
+        Optional<PromotionOwnershipStore.OwnershipRow> owner =
+                ownership.read(tenantId, sourceVersionId);
+        if (owner.isEmpty() || owner.get().ownerProducerId() == null
+                || owner.get().ownerGeneration() < 1) {
+            return null;
+        }
+        return new PromotionOwnershipStore.OwnershipToken(owner.get().ownerProducerId(),
+                owner.get().ownerGeneration());
+    }
+
+    private void completeCanonicalIfTerminal(RelationPromotionWorkRow work) {
+        if (completion == null) {
+            return;
+        }
+        try {
+            completion.completeIfPromotionTerminal(work.result());
+        } catch (Exception e) {
+            log.warn("Canonical graph completion check failed relation={}: {}",
+                    work.result().relationId(), e.toString());
+        }
+    }
+
+    private static boolean isAbortRecoverable(Exception failure) {
+        return failure instanceof RetryableProcessingException retryable
+                && retryable.reason() == RetryReason.TRANSACTION_ABORTED;
+    }
+
+    private static boolean hasCanonicalTarget(RelationPromotionResultRow row) {
+        return row.canonicalSubjectId() != null && row.canonicalObjectId() != null
+                && row.evidenceJson() != null && !row.evidenceJson().isBlank();
     }
 
     private CanonicalRelation canonicalRelation(RelationPromotionResultRow row) {
@@ -169,6 +315,12 @@ public final class PromotionConsumer {
                 row.objectMentionId(), row.canonicalObjectId(), row.predicate(),
                 row.ontologyVersion(), evidenceChunkId,
                 view.path("evidenceChunkOffsetStart").asInt(-1),
-                view.path("evidenceChunkOffsetEnd").asInt(-1));
+                view.path("evidenceChunkOffsetEnd").asInt(-1),
+                row.sourceId() != null ? row.sourceId() : view.path("sourceId").asText(null),
+                row.revisionId() != null ? row.revisionId().toString()
+                        : view.path("revisionId").asText(row.sourceVersionId().toString()),
+                row.generation() > 0 ? row.generation() : view.path("generation").asLong(0),
+                row.extractionRunId() != null ? row.extractionRunId()
+                        : view.path("extractionRunId").asText(null));
     }
 }

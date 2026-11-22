@@ -39,4 +39,5 @@ public record GraphCapabilities(
     public boolean supportsRelationPromotion() {
         return supportsConditionalWrites && supportsAtomicMultiNodeWrite && supportsIdempotentUpsert;
     }
+
 }

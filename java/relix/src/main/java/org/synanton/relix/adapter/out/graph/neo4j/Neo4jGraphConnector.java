@@ -1,25 +1,32 @@
 package org.synanton.relix.adapter.out.graph.neo4j;
 
 import org.jgrapht.graph.DirectedMultigraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.relix.api.dto.Path;
 import org.synanton.relix.api.dto.SourceRef;
 import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.graph.GraphReadPort;
+import org.synanton.relix.graph.GraphWritePort;
 import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.ExtractedMention;
 import org.synanton.relix.graph.ExtractedRelation;
+import org.synanton.relix.graph.RelationRetirement;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
 import org.synanton.relix.graph.EntityNeighborhood;
 import org.synanton.relix.graph.SourceRefCodec;
 import org.synanton.relix.graph.ResolutionIds;
+import org.synanton.relix.identity.UnsupportedGraphIdException;
 import org.synanton.relix.graph.PromotionIds;
 import org.synanton.common.resolution.ActiveResolution;
 import org.synanton.common.resolution.ExtractedRelationView;
 import org.synanton.common.resolution.CanonicalRelation;
 import org.synanton.common.resolution.PromotionResult;
+import org.synanton.common.resolution.RetryReason;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.common.resolution.ContractViolationException;
@@ -30,6 +37,11 @@ import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.common.resolution.GraphResolutionObservation;
 import org.synanton.common.resolution.ResolutionKey;
 import org.synanton.common.resolution.ResolutionWriteOutcome;
+import org.synanton.common.resolution.FenceBehindException;
+import org.synanton.common.resolution.GraphCapabilities;
+import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.SourceRevisionIdentity;
+import org.synanton.common.resolution.StaleGenerationException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,18 +55,172 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Bolt/Cypher adapter. Relationship type is always {@code REL}; the original verb is a property (avoids Cypher injection).
  */
-public class Neo4jGraphConnector implements GraphConnector {
+public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, GraphWritePort, RelationRetirement {
+
+    private static final Logger log = LoggerFactory.getLogger(Neo4jGraphConnector.class);
 
     private static final int MAX_HOPS_CAP = 6;
 
     private final GraphLoader graphLoader;
     private final CypherExecutor cypher;
+    private final Runnable promotionAbortPoint;
     private final Map<String, GraphStats> statsByTenant = new ConcurrentHashMap<>();
     private volatile boolean extractedSchemaEnsured;
 
     public Neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypher) {
+        this(graphLoader, cypher, null);
+    }
+
+    /**
+     * Test seam: runs after the promotion fence check and staged writes, before commit.
+     * Production construction passes {@code null}.
+     */
+    Neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypher, Runnable promotionAbortPoint) {
         this.graphLoader = graphLoader;
         this.cypher = cypher;
+        this.promotionAbortPoint = promotionAbortPoint;
+    }
+
+    @Override
+    public java.util.Optional<Entity> getEntity(GraphIdentity identity, String entityId) {
+        requireCanonical(identity);
+        if (entityId == null || entityId.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (n:Entity {id: $id, tenant: $tenant})
+                RETURN n.id AS id, n.label AS label, n.type AS type,
+                       n.confidence AS confidence, n.sources AS sources
+                LIMIT 1
+                """, Map.of("id", entityId, "tenant", identity.tenantId()));
+        return rows.stream().findFirst().map(Neo4jGraphConnector::toEntity);
+    }
+
+    @Override
+    public EntityLookupResult lookupEntities(GraphIdentity identity, String label, String type, int limit) {
+        requireCanonical(identity);
+        return lookupEntities(identity.tenantId(), label, type, limit);
+    }
+
+    @Override
+    public OneHopResult oneHop(GraphIdentity identity, UUID entityId, List<String> edgeTypes,
+                               String direction, int limit) {
+        requireCanonical(identity);
+        return oneHop(identity.tenantId(), entityId, edgeTypes, direction, limit);
+    }
+
+    @Override
+    public KHopResult kHopPaths(GraphIdentity identity, UUID fromEntityId, UUID toEntityId,
+                                int maxHops, int maxPaths) {
+        requireCanonical(identity);
+        return kHopPaths(identity.tenantId(), fromEntityId, toEntityId, maxHops, maxPaths);
+    }
+
+    @Override
+    public java.util.Optional<String> getActiveEntityType(GraphIdentity identity, String entityId) {
+        requireCanonical(identity);
+        return getActiveEntityType(identity.tenantId(), entityId);
+    }
+
+    @Override
+    public java.util.Optional<EntityNeighborhood> neighborhood(GraphIdentity identity, String entityId, int limit) {
+        requireCanonical(identity);
+        return neighborhood(identity.tenantId(), entityId, limit);
+    }
+
+    @Override
+    public GraphStats stats(GraphIdentity identity) {
+        requireCanonical(identity);
+        return stats(identity.tenantId());
+    }
+
+    @Override
+    public void loadTenant(GraphIdentity identity) {
+        requireCanonical(identity);
+        loadTenant(identity.tenantId());
+    }
+
+    @Override
+    public void upsertEntity(GraphIdentity identity, Entity entity) {
+        requireCanonical(identity);
+        if (entity == null || entity.entityId() == null) {
+            throw new IllegalArgumentException("entity and entity id are required");
+        }
+        cypher.write("""
+                MERGE (n:Entity {id: $id, tenant: $tenant})
+                SET n.label = $label, n.type = $type,
+                    n.confidence = $confidence, n.sources = $sources
+                """, Map.of(
+                "id", entity.entityId().toString(),
+                "tenant", identity.tenantId(),
+                "label", entity.label() == null ? "" : entity.label(),
+                "type", entity.type() == null ? "" : entity.type(),
+                "confidence", entity.confidence(),
+                "sources", encodeSources(entity.sourceRefs())));
+    }
+
+    @Override
+    public void upsertRelation(GraphIdentity identity, Edge relation) {
+        requireCanonical(identity);
+        if (relation == null || relation.edgeId() == null
+                || relation.fromEntityId() == null || relation.toEntityId() == null) {
+            throw new IllegalArgumentException("relation endpoints and id are required");
+        }
+        cypher.write("""
+                MATCH (a:Entity {id: $fromId, tenant: $tenant})
+                MATCH (b:Entity {id: $toId, tenant: $tenant})
+                MERGE (a)-[r:REL {id: $id}]->(b)
+                SET r.verb = $verb, r.confidence = $confidence, r.sources = $sources
+                """, Map.of(
+                "fromId", relation.fromEntityId().toString(),
+                "toId", relation.toEntityId().toString(),
+                "tenant", identity.tenantId(),
+                "id", relation.edgeId().toString(),
+                "verb", relation.verb() == null ? "" : relation.verb(),
+                "confidence", relation.confidence(),
+                "sources", encodeSources(relation.sourceRefs())));
+    }
+
+    @Override
+    public PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation) {
+        requireCanonical(identity);
+        if (relation == null || !identity.tenantId().equals(relation.tenantId())) {
+            throw new IllegalArgumentException("relation tenant must match graph identity tenant");
+        }
+        return promoteRelation(relation);
+    }
+
+    @Override
+    public PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation,
+                                           SourceRevisionIdentity sourceRevision) {
+        requireCanonical(identity);
+        if (relation == null || !identity.tenantId().equals(relation.tenantId())) {
+            throw new IllegalArgumentException("relation tenant must match graph identity tenant");
+        }
+        if (sourceRevision == null || !identity.tenantId().equals(sourceRevision.tenantId())) {
+            throw new IllegalArgumentException("source revision tenant must match graph identity tenant");
+        }
+        return promoteRelationInternal(relation, sourceRevision);
+    }
+
+    private static String encodeSources(List<SourceRef> refs) {
+        Map<UUID, Set<Integer>> grouped = new LinkedHashMap<>();
+        if (refs != null) {
+            for (SourceRef ref : refs) {
+                if (ref == null || ref.contentRefId() == null) {
+                    continue;
+                }
+                grouped.computeIfAbsent(ref.contentRefId(), ignored -> new LinkedHashSet<>())
+                        .addAll(ref.chunkOrdinals() == null ? List.of() : ref.chunkOrdinals());
+            }
+        }
+        return SourceRefCodec.encode(grouped);
+    }
+
+    private static void requireCanonical(GraphIdentity identity) {
+        if (identity == null || !"canonical".equals(identity.graphId())) {
+            throw new UnsupportedGraphIdException("Canonical graph port supports only graphId='canonical'");
+        }
     }
 
     @Override
@@ -65,6 +231,11 @@ public class Neo4jGraphConnector implements GraphConnector {
     @Override
     public EngineDescriptor descriptor() {
         return new EngineDescriptor("neo4j", "neo4j-bolt", "ALL_NATIVE");
+    }
+
+    @Override
+    public GraphCapabilities capabilities() {
+        return GraphCapabilities.neo4j();
     }
 
     @Override
@@ -251,7 +422,9 @@ public class Neo4jGraphConnector implements GraphConnector {
                        o.mention_id AS object_mention_id, r.predicate AS predicate,
                        r.source_version_id AS source_version_id, r.evidence_chunk_id AS evidence_chunk_id,
                        r.evidence_chunk_offset_start AS offset_start,
-                       r.evidence_chunk_offset_end AS offset_end
+                       r.evidence_chunk_offset_end AS offset_end,
+                       r.source_id AS source_id, r.extraction_run_id AS extraction_run_id,
+                       r.generation AS generation
                 LIMIT 1
                 """, Map.of("tenant", tenant, "relationId", relationId));
         if (rows.isEmpty()) {
@@ -267,7 +440,11 @@ public class Neo4jGraphConnector implements GraphConnector {
                 String.valueOf(row.get("predicate")),
                 String.valueOf(row.get("evidence_chunk_id")),
                 row.get("offset_start") == null ? -1 : ((Number) row.get("offset_start")).intValue(),
-                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue()));
+                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue(),
+                row.get("source_id") == null ? null : String.valueOf(row.get("source_id")),
+                String.valueOf(row.get("source_version_id")),
+                row.get("generation") == null ? 0 : ((Number) row.get("generation")).longValue(),
+                row.get("extraction_run_id") == null ? null : String.valueOf(row.get("extraction_run_id"))));
     }
 
     private static Map<String, Object> params(String tenant, String sourceVersionId) {
@@ -288,7 +465,9 @@ public class Neo4jGraphConnector implements GraphConnector {
                        s.mention_id AS subject_mention_id, o.mention_id AS object_mention_id,
                        r.predicate AS predicate, r.evidence_chunk_id AS evidence_chunk_id,
                        r.evidence_chunk_offset_start AS offset_start,
-                       r.evidence_chunk_offset_end AS offset_end
+                       r.evidence_chunk_offset_end AS offset_end,
+                       r.source_id AS source_id, r.extraction_run_id AS extraction_run_id,
+                       r.generation AS generation
                 ORDER BY r.relation_id
                 LIMIT 1000
                 """, params(tenant, sourceVersionId));
@@ -300,12 +479,81 @@ public class Neo4jGraphConnector implements GraphConnector {
                 String.valueOf(row.get("predicate")),
                 String.valueOf(row.get("evidence_chunk_id")),
                 row.get("offset_start") == null ? -1 : ((Number) row.get("offset_start")).intValue(),
-                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue()
+                row.get("offset_end") == null ? -1 : ((Number) row.get("offset_end")).intValue(),
+                row.get("source_id") == null ? null : String.valueOf(row.get("source_id")),
+                String.valueOf(row.get("source_version_id")),
+                row.get("generation") == null ? 0 : ((Number) row.get("generation")).longValue(),
+                row.get("extraction_run_id") == null ? null : String.valueOf(row.get("extraction_run_id"))
         )).toList();
     }
 
     @Override
     public PromotionResult promoteRelation(CanonicalRelation relation) {
+        return promoteRelationInternal(relation, null);
+    }
+
+    @Override
+    public PromotionResult recordContradiction(GraphIdentity identity, CanonicalRelation relation,
+                                              SourceRevisionIdentity sourceRevision) {
+        ensureExtractedSchema();
+        String canonicalRelationId = PromotionIds.canonicalRelationId(relation);
+        String evidenceId = PromotionIds.evidenceId(relation);
+        String predicate = PromotionIds.normalizePredicate(relation.predicate());
+        String now = java.time.Instant.now().toString();
+        java.util.Map<String, Object> params = new java.util.LinkedHashMap<>();
+        params.put("tenant", relation.tenantId());
+        params.put("sourceVersionId", relation.sourceVersionId());
+        params.put("extractedRelationId", relation.extractedRelationId());
+        params.put("subjectMentionId", relation.subjectMentionId());
+        params.put("subjectEntityId", relation.subjectEntityId());
+        params.put("objectMentionId", relation.objectMentionId());
+        params.put("objectEntityId", relation.objectEntityId());
+        params.put("predicate", predicate);
+        params.put("evidenceChunkId", relation.evidenceChunkId());
+        params.put("offsetStart", relation.evidenceChunkOffsetStart());
+        params.put("offsetEnd", relation.evidenceChunkOffsetEnd());
+        params.put("canonicalRelationId", canonicalRelationId);
+        params.put("evidenceId", evidenceId);
+        params.put("now", now);
+        params.put("sourceId", sourceRevision == null ? null : sourceRevision.sourceId());
+        params.put("expectedGeneration", sourceRevision == null ? null : sourceRevision.generation());
+
+        List<Map<String, Object>> rows = cypher.writeReturning("""
+                MATCH (se:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[rel:REL {tenant_id: $tenant, canonical_relation_id: $canonicalRelationId}]->
+                      (oe:Entity {tenant: $tenant, id: $objectEntityId})
+                MERGE (ev:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
+                  ON CREATE SET ev.created_at = $now
+                SET ev.canonical_relation_id = $canonicalRelationId,
+                    ev.status = 'CONTRADICTING',
+                    ev.polarity = 'CONTRADICTS',
+                    ev.status_changed_at = $now,
+                    ev.source_version_id = $sourceVersionId,
+                    ev.extracted_relation_id = $extractedRelationId,
+                    ev.source_id = $sourceId,
+                    ev.generation = $expectedGeneration,
+                    ev.evidence_chunk_id = $evidenceChunkId,
+                    ev.evidence_offset_start = $offsetStart,
+                    ev.evidence_offset_end = $offsetEnd
+                MERGE (xr:ExtractedRelation {tenant_id: $tenant, relation_id: $extractedRelationId})
+                SET xr.source_version_id = $sourceVersionId,
+                    xr.subject_mention_id = $subjectMentionId,
+                    xr.object_mention_id = $objectMentionId,
+                    xr.source_id = $sourceId,
+                    xr.generation = $expectedGeneration,
+                    xr.predicate = $predicate
+                MERGE (xr)-[:SUPPORTS {tenant_id: $tenant}]->(ev)
+                RETURN 1 AS applied
+                """, params);
+        if (rows.isEmpty()) {
+            return new PromotionResult(0, 0, 0);
+        }
+        recomputeAssertionState(relation.tenantId(), canonicalRelationId);
+        return new PromotionResult(0, 1, 0);
+    }
+
+    private PromotionResult promoteRelationInternal(CanonicalRelation relation,
+                                                     SourceRevisionIdentity sourceRevision) {
         ensureExtractedSchema();
         String canonicalRelationId = PromotionIds.canonicalRelationId(relation);
         String evidenceId = PromotionIds.evidenceId(relation);
@@ -327,17 +575,27 @@ public class Neo4jGraphConnector implements GraphConnector {
         params.put("canonicalRelationId", canonicalRelationId);
         params.put("evidenceId", evidenceId);
         params.put("now", now);
+        params.put("sourceId", sourceRevision == null ? null : sourceRevision.sourceId());
+        params.put("expectedGeneration", sourceRevision == null ? null : sourceRevision.generation());
 
         List<Map<String, Object>> rows;
         try {
-            rows = cypher.writeReturning("""
-                WITH [$subjectMentionId, $objectMentionId] AS mentionIds
+            String promotionCypher = """
+                OPTIONAL MATCH (fence:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                WITH fence
+                FOREACH (ignored IN CASE WHEN fence IS NULL THEN [] ELSE [1] END |
+                    SET fence.accepted_generation = fence.accepted_generation
+                )
+                WITH fence
+                WHERE $expectedGeneration IS NULL
+                   OR (fence IS NOT NULL AND fence.accepted_generation = $expectedGeneration)
+                WITH fence, [$subjectMentionId, $objectMentionId] AS mentionIds
                 UNWIND mentionIds AS mentionId
-                WITH DISTINCT mentionId
+                WITH DISTINCT mentionId, fence
                 ORDER BY mentionId
                 MERGE (slot:ResolutionSlot {tenant_id: $tenant, mention_id: mentionId})
                 SET slot.locked_at = $now
-                WITH collect(slot) AS slots
+                WITH collect(slot) AS slots, fence
                 MATCH (s:ExtractedMention {tenant_id: $tenant, mention_id: $subjectMentionId})
                       -[:RESOLVES_TO {active: true}]->
                       (se:Entity {tenant: $tenant, id: $subjectEntityId})
@@ -359,8 +617,13 @@ public class Neo4jGraphConnector implements GraphConnector {
                 MERGE (ev:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
                   ON CREATE SET ev.created_at = $now
                 SET ev.canonical_relation_id = $canonicalRelationId,
+                    ev.status = coalesce(ev.status, 'CURRENT'),
+                    ev.polarity = coalesce(ev.polarity, 'SUPPORTS'),
+                    ev.status_changed_at = coalesce(ev.status_changed_at, $now),
                     ev.source_version_id = $sourceVersionId,
                     ev.extracted_relation_id = $extractedRelationId,
+                    ev.source_id = $sourceId,
+                    ev.generation = $expectedGeneration,
                     ev.evidence_chunk_id = $evidenceChunkId,
                     ev.evidence_offset_start = $offsetStart,
                     ev.evidence_offset_end = $offsetEnd
@@ -368,19 +631,29 @@ public class Neo4jGraphConnector implements GraphConnector {
                 SET xr.source_version_id = $sourceVersionId,
                     xr.subject_mention_id = $subjectMentionId,
                     xr.object_mention_id = $objectMentionId,
+                    xr.source_id = $sourceId,
+                    xr.generation = $expectedGeneration,
                     xr.predicate = $predicate
                 MERGE (xr)-[sup:SUPPORTS {tenant_id: $tenant}]->(ev)
                 RETURN CASE WHEN existingRel IS NULL THEN 1 ELSE 0 END AS relations_created,
                        CASE WHEN existingEv IS NULL THEN 1 ELSE 0 END AS evidence_created,
                        1 AS evidence_matched
-                """, params);
+                """;
+            rows = promotionAbortPoint == null
+                    ? cypher.writeReturning(promotionCypher, params)
+                    : cypher.writeReturning(promotionCypher, params, promotionAbortPoint);
         } catch (RuntimeException e) {
-            throw new RetryableProcessingException("Canonical relation promotion transaction failed", e);
+            throw new RetryableProcessingException("Canonical relation promotion transaction aborted",
+                    e, RetryReason.TRANSACTION_ABORTED);
         }
         if (rows.isEmpty()) {
+            if (sourceRevision != null) {
+                classifyFence(relation.tenantId(), sourceRevision);
+            }
             return new PromotionResult(0, 0, 0);
         }
         Map<String, Object> row = rows.getFirst();
+        recomputeAssertionState(relation.tenantId(), canonicalRelationId);
         return new PromotionResult(
                 ((Number) row.get("relations_created")).intValue(),
                 ((Number) row.get("evidence_created")).intValue(),
@@ -462,6 +735,122 @@ public class Neo4jGraphConnector implements GraphConnector {
                 SET r.active = false, r.status = 'SUPERSEDED', r.superseded_at = $at
                 """, Map.of("tenant", tenantId, "mentionId", mentionId,
                 "at", (supersededAt == null ? java.time.Instant.now() : supersededAt).toString()));
+    }
+
+    @Override
+    public void retireSupersededEvidence(String tenantId, String sourceId, long currentGeneration) {
+        List<Map<String, Object>> affected = cypher.writeReturning("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, source_id: $source})
+                WHERE coalesce(e.generation, 0) < $generation
+                  AND coalesce(e.status, 'CURRENT') <> 'SUPERSEDED'
+                SET e.status = 'SUPERSEDED', e.superseded_at = $now,
+                    e.status_changed_at = $now
+                RETURN DISTINCT e.canonical_relation_id AS relation
+                """, Map.of("tenant", tenantId, "source", sourceId,
+                "generation", currentGeneration,
+                "now", java.time.Instant.now().toString()));
+        for (Map<String, Object> row : affected) {
+            Object relation = row.get("relation");
+            if (relation != null) {
+                recomputeAssertionState(tenantId, String.valueOf(relation));
+            }
+        }
+    }
+
+    @Override
+    public void recomputeAssertionState(String tenantId, String canonicalRelationId) {
+        List<Map<String, Object>> counts = cypher.read("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $relation}]->()
+                OPTIONAL MATCH (e:RelationEvidence {tenant_id: $tenant,
+                                                    canonical_relation_id: $relation})
+                RETURN sum(CASE WHEN e IS NOT NULL
+                                  AND coalesce(e.status, 'CURRENT') <> 'SUPERSEDED'
+                                  AND coalesce(e.polarity, 'SUPPORTS') = 'SUPPORTS'
+                                 THEN 1 ELSE 0 END) AS support,
+                       sum(CASE WHEN e IS NOT NULL
+                                  AND coalesce(e.status, 'CURRENT') <> 'SUPERSEDED'
+                                  AND coalesce(e.polarity, 'SUPPORTS') = 'CONTRADICTS'
+                                 THEN 1 ELSE 0 END) AS conflict
+                """, Map.of("tenant", tenantId, "relation", canonicalRelationId));
+        if (counts.isEmpty()) {
+            return;
+        }
+        long support = ((Number) counts.getFirst().get("support")).longValue();
+        long conflict = ((Number) counts.getFirst().get("conflict")).longValue();
+        boolean active = support > 0 && conflict == 0;
+        boolean review = support > 0 && conflict > 0;
+        String status = support > 0 && conflict > 0 ? "CONFLICTED"
+                : support > 0 ? "ACTIVE" : "UNSUPPORTED";
+        cypher.write("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $relation}]->()
+                SET r.active = $active, r.status = $status,
+                    r.review_required = $review, r.updated_at = $now
+                """, Map.of("tenant", tenantId, "relation", canonicalRelationId,
+                "active", active, "status", status, "review", review,
+                "now", java.time.Instant.now().toString()));
+    }
+
+    @Override
+    public int reconcileRetirementState(String tenantId, int limit) {
+        int bounded = limit <= 0 ? 100 : limit;
+        String watermark = cypher.read("""
+                MATCH (w:RetirementSweepWatermark {tenant_id: $tenant})
+                RETURN w.last_sweep_at AS watermark
+                """, Map.of("tenant", tenantId))
+                .stream()
+                .findFirst()
+                .map(row -> row.get("watermark"))
+                .filter(java.util.Objects::nonNull)
+                .map(String::valueOf)
+                .orElse("");
+        List<Map<String, Object>> changed = cypher.read("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant})
+                WITH e, coalesce(e.status_changed_at, e.created_at) AS changedAt
+                WHERE changedAt IS NOT NULL
+                  AND ($watermark = '' OR datetime(changedAt) > datetime($watermark))
+                  AND e.canonical_relation_id IS NOT NULL
+                WITH e.canonical_relation_id AS relation, max(datetime(changedAt)) AS lastChange
+                RETURN relation, toString(lastChange) AS lastChange
+                ORDER BY lastChange
+                LIMIT $limit
+                """, Map.of("tenant", tenantId, "watermark", watermark, "limit", bounded));
+        int repaired = 0;
+        String maxChange = null;
+        for (Map<String, Object> row : changed) {
+            String relation = String.valueOf(row.get("relation"));
+            String before = relationStatus(tenantId, relation);
+            recomputeAssertionState(tenantId, relation);
+            String after = relationStatus(tenantId, relation);
+            if (!java.util.Objects.equals(before, after)) {
+                repaired++;
+                log.info("retirement reconciled tenant={} relation={} {} -> {}",
+                        tenantId, relation, before, after);
+            }
+            Object lastChange = row.get("lastChange");
+            if (lastChange != null && !String.valueOf(lastChange).isBlank()) {
+                maxChange = String.valueOf(lastChange);
+            }
+        }
+        if (maxChange != null) {
+            cypher.write("""
+                    MERGE (w:RetirementSweepWatermark {tenant_id: $tenant})
+                    SET w.last_sweep_at = $watermark
+                    """, Map.of("tenant", tenantId, "watermark", maxChange));
+        }
+        return repaired;
+    }
+
+    private String relationStatus(String tenantId, String relation) {
+        return cypher.read("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $relation}]->()
+                RETURN r.status AS status
+                """, Map.of("tenant", tenantId, "relation", relation))
+                .stream()
+                .findFirst()
+                .map(row -> row.get("status"))
+                .filter(java.util.Objects::nonNull)
+                .map(String::valueOf)
+                .orElse(null);
     }
 
     @Override
@@ -547,6 +936,10 @@ public class Neo4jGraphConnector implements GraphConnector {
             row.put("evidenceDocumentOffsetStart", relation.evidenceDocumentOffsetStart());
             row.put("evidenceDocumentOffsetEnd", relation.evidenceDocumentOffsetEnd());
             row.put("validatedAt", relation.validatedAt() == null ? null : relation.validatedAt().toString());
+            row.put("sourceId", relation.sourceId());
+            row.put("revisionId", relation.revisionId());
+            row.put("generation", relation.generation());
+            row.put("extractionRunId", relation.extractionRunId());
             rows.add(row);
         }
         cypher.write("""
@@ -561,7 +954,11 @@ public class Neo4jGraphConnector implements GraphConnector {
                     e.evidence_chunk_offset_end = row.evidenceChunkOffsetEnd,
                     e.evidence_document_offset_start = row.evidenceDocumentOffsetStart,
                     e.evidence_document_offset_end = row.evidenceDocumentOffsetEnd,
-                    e.validated_at = row.validatedAt
+                    e.validated_at = row.validatedAt,
+                    e.source_id = row.sourceId,
+                    e.revision_id = row.revisionId,
+                    e.generation = row.generation,
+                    e.extraction_run_id = row.extractionRunId
                 """, Map.of("tenant", tenant, "rows", rows));
         return countByIds(tenant, rows, "relationId",
                 "MATCH ()-[e:EXTRACTED_RELATION {tenant_id: $tenant, relation_id: id}]->() RETURN count(e) AS c");
@@ -573,6 +970,21 @@ public class Neo4jGraphConnector implements GraphConnector {
                 "UNWIND $ids AS id " + query, Map.of("tenant", tenant, "ids", ids));
         Object count = countRows.isEmpty() ? 0 : countRows.getFirst().get("c");
         return count instanceof Number number ? number.intValue() : 0;
+    }
+
+    private void classifyFence(String tenant, SourceRevisionIdentity sourceRevision) {
+        List<Map<String, Object>> rows = cypher.read("""
+                MATCH (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                RETURN f.accepted_generation AS generation
+                """, Map.of("tenant", tenant, "sourceId", sourceRevision.sourceId()));
+        if (rows.isEmpty() || rows.getFirst().get("generation") == null) {
+            throw new FenceBehindException("Neo4j source fence is missing; reconciliation required");
+        }
+        long fence = ((Number) rows.getFirst().get("generation")).longValue();
+        if (fence > sourceRevision.generation()) {
+            throw new StaleGenerationException("Neo4j fence is newer than operation generation");
+        }
+        throw new FenceBehindException("Neo4j fence has not reached operation generation; reconciliation required");
     }
 
     private void ensureExtractedSchema() {
@@ -598,6 +1010,10 @@ public class Neo4jGraphConnector implements GraphConnector {
             cypher.write("""
                     CREATE CONSTRAINT canonical_relation_anchor_unique IF NOT EXISTS
                     FOR (r:CanonicalRelationAnchor) REQUIRE r.canonical_relation_id IS UNIQUE
+                    """, Map.of());
+            cypher.write("""
+                    CREATE CONSTRAINT source_revision_fence_unique IF NOT EXISTS
+                    FOR (f:SourceRevisionFence) REQUIRE (f.tenant_id, f.source_id) IS UNIQUE
                     """, Map.of());
             cypher.write("""
                     CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS

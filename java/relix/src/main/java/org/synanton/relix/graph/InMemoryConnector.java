@@ -2,6 +2,7 @@ package org.synanton.relix.graph;
 
 import org.jgrapht.graph.DirectedMultigraph;
 import org.synanton.relix.api.dto.Edge;
+import org.synanton.relix.api.dto.SourceRef;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.api.dto.Path;
 import org.synanton.relix.index.EntityIndex;
@@ -33,6 +34,12 @@ public class InMemoryConnector {
     private final long generation;
     private final long loadTimeMs;
 
+    public static InMemoryConnector empty() {
+        return new InMemoryConnector(new GraphLoader.LoadResult(
+                new DirectedMultigraph<>(GraphEdge.class), new EntityIndex(),
+                new java.util.LinkedHashMap<>(), 0, 0));
+    }
+
     public InMemoryConnector(GraphLoader.LoadResult result) {
         this.graph = result.graph();
         this.entityIndex = result.entityIndex();
@@ -55,6 +62,74 @@ public class InMemoryConnector {
 
     public int edgeCount() {
         return graph.edgeSet().size();
+    }
+
+    public java.util.Optional<Entity> entity(String entityId) {
+        try {
+            GraphNode node = nodeById.get(UUID.fromString(entityId));
+            return node == null ? java.util.Optional.empty()
+                    : java.util.Optional.of(DtoMapper.toDto(node));
+        } catch (IllegalArgumentException e) {
+            return java.util.Optional.empty();
+        }
+    }
+
+    public void upsertEntity(Entity entity) {
+        GraphNode node = nodeById.get(entity.entityId());
+        if (node == null) {
+            node = new GraphNode(entity.entityId(),
+                    entity.label() == null ? "" : entity.label(),
+                    entity.type() == null ? "" : entity.type(),
+                    entity.confidence());
+            graph.addVertex(node);
+            nodeById.put(entity.entityId(), node);
+            entityIndex.add(node);
+        } else {
+            node.mergeConfidence(entity.confidence());
+        }
+        addSources(node, entity.sourceRefs());
+    }
+
+    public void upsertRelation(Edge relation) {
+        GraphNode from = nodeById.get(relation.fromEntityId());
+        GraphNode to = nodeById.get(relation.toEntityId());
+        if (from == null || to == null) {
+            return;
+        }
+        GraphEdge edge = graph.edgeSet().stream()
+                .filter(candidate -> candidate.edgeId().equals(relation.edgeId()))
+                .findFirst().orElse(null);
+        if (edge == null) {
+            edge = new GraphEdge(relation.edgeId(),
+                    relation.verb() == null ? "" : relation.verb(),
+                    relation.confidence());
+            graph.addEdge(from, to, edge);
+        } else {
+            edge.mergeConfidence(relation.confidence());
+        }
+        addSources(edge, relation.sourceRefs());
+    }
+
+    private static void addSources(GraphNode node, List<SourceRef> refs) {
+        if (refs == null) {
+            return;
+        }
+        for (SourceRef ref : refs) {
+            if (ref != null && ref.contentRefId() != null && ref.chunkOrdinals() != null) {
+                node.mergeSourceRef(ref.contentRefId(), ref.chunkOrdinals());
+            }
+        }
+    }
+
+    private static void addSources(GraphEdge edge, List<SourceRef> refs) {
+        if (refs == null) {
+            return;
+        }
+        for (SourceRef ref : refs) {
+            if (ref != null && ref.contentRefId() != null && ref.chunkOrdinals() != null) {
+                edge.mergeSourceRef(ref.contentRefId(), ref.chunkOrdinals());
+            }
+        }
     }
 
     public java.util.Optional<String> activeType(String entityId) {

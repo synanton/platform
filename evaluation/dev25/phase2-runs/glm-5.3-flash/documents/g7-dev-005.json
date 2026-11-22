@@ -1,0 +1,27 @@
+{
+  "doc_id": "g7-dev-005",
+  "model_id": "glm-5.3-flash",
+  "chunks": 1,
+  "valid_chunks": 1,
+  "entities": 28,
+  "relations": 8,
+  "rejected": 5,
+  "entity": {
+    "tp": 13,
+    "pred": 28,
+    "gold": 18,
+    "p": 0.4642857142857143,
+    "r": 0.7222222222222222,
+    "f1": 0.5652173913043479
+  },
+  "relation": {
+    "tp": 0,
+    "predicted": 8,
+    "gold": 10,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "direction_errors": 0,
+    "missing_endpoint_relations": 0
+  }
+}

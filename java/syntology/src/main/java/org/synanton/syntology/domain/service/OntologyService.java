@@ -74,6 +74,11 @@ public class OntologyService {
         return metadataRepository.findAll(tenant());
     }
 
+    /** Active ontology version for the verified tenant, if one exists. */
+    public java.util.Optional<OntologyVersion> activeVersion(String tenantId) {
+        return metadataRepository.findActive(tenantId);
+    }
+
     public OntologyVersion createVersion(
             String version,
             String label,

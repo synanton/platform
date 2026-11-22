@@ -1,0 +1,83 @@
+{
+  "model": "gemini-3.5-flash",
+  "documents": 5,
+  "no_thinking": false,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "gemini-3.5-flash",
+      "latency_s": 10.676002324000365,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 581,
+        "output": 2044
+      },
+      "upstream_request_id": "chatcmpl-19831a7f3d72472fb602b3192a8e101d",
+      "finish_reason": "length",
+      "content_chars": 836,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Expecting ',' delimiter: line 8 column 6 (char 162)"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "gemini-3.5-flash",
+      "latency_s": 10.093130386001576,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 575,
+        "output": 2044
+      },
+      "upstream_request_id": "chatcmpl-861606b092444d6f9b13b88ede48f900",
+      "finish_reason": "length",
+      "content_chars": 715,
+      "json_valid": false,
+      "parse_error": "ValueError: no JSON object"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "gemini-3.5-flash",
+      "latency_s": 9.508089035998637,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1048,
+        "output": 2044
+      },
+      "upstream_request_id": "chatcmpl-5d5c573538b746548cb41decb19f39eb",
+      "finish_reason": "length",
+      "content_chars": 833,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Expecting ',' delimiter: line 8 column 6 (char 143)"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "gemini-3.5-flash",
+      "latency_s": 9.728929844999584,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 957,
+        "output": 2044
+      },
+      "upstream_request_id": "chatcmpl-88771e3346ce40f99078af84a77e507b",
+      "finish_reason": "length",
+      "content_chars": 662,
+      "json_valid": false,
+      "parse_error": "ValueError: no JSON object"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "gemini-3.5-flash",
+      "latency_s": 10.35576029999902,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1265,
+        "output": 2044
+      },
+      "upstream_request_id": "chatcmpl-69428f208b214ebe96cb046fde0d9734",
+      "finish_reason": "length",
+      "content_chars": 834,
+      "json_valid": false,
+      "parse_error": "ValueError: no JSON object"
+    }
+  ]
+}

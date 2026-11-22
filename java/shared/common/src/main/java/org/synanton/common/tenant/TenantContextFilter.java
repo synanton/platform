@@ -16,19 +16,27 @@ import java.util.UUID;
 /**
  * Spring-compatible servlet filter that populates TenantContext from a Bearer JWT.
  *
- * Paths in the skip-list (e.g. /auth/**, /actuator/**) are passed through
- * without authentication. All other paths require a valid Bearer token.
+ * Paths in the skip-list are passed through without authentication. A
+ * separate exact-path list can be limited to GET so read-only probes do not
+ * make mutating endpoints anonymous. All other paths require a Bearer token.
  */
 public class TenantContextFilter extends org.springframework.web.filter.OncePerRequestFilter {
 
     private final JwtVerifier jwtVerifier;
     private final String defaultTenantId;
     private final String[] skipPrefixes;
+    private final String[] skipGetExactPaths;
 
     public TenantContextFilter(JwtVerifier jwtVerifier, String defaultTenantId, String... skipPrefixes) {
+        this(jwtVerifier, defaultTenantId, skipPrefixes, new String[0]);
+    }
+
+    public TenantContextFilter(JwtVerifier jwtVerifier, String defaultTenantId,
+                               String[] skipPrefixes, String[] skipGetExactPaths) {
         this.jwtVerifier = jwtVerifier;
         this.defaultTenantId = defaultTenantId;
         this.skipPrefixes = skipPrefixes;
+        this.skipGetExactPaths = skipGetExactPaths;
     }
 
     @Override
@@ -39,19 +47,17 @@ public class TenantContextFilter extends org.springframework.web.filter.OncePerR
     ) throws ServletException, IOException {
         String path = request.getRequestURI();
 
-        for (String prefix : skipPrefixes) {
-            if (path.startsWith(prefix)) {
-                TenantContext.setAnonymous(defaultTenantId);
-                String traceId = resolveTraceId(request);
-                RequestContextHolder.set(new RequestContext(defaultTenantId, "anonymous", traceId));
-                try {
-                    chain.doFilter(request, response);
-                } finally {
-                    TenantContext.clear();
-                    RequestContextHolder.clear();
-                }
-                return;
+        if (isSkipped(path, request.getMethod())) {
+            TenantContext.setAnonymous(defaultTenantId);
+            String traceId = resolveTraceId(request);
+            RequestContextHolder.set(new RequestContext(defaultTenantId, "anonymous", traceId));
+            try {
+                chain.doFilter(request, response);
+            } finally {
+                TenantContext.clear();
+                RequestContextHolder.clear();
             }
+            return;
         }
 
         String authHeader = request.getHeader("Authorization");
@@ -88,6 +94,22 @@ public class TenantContextFilter extends org.springframework.web.filter.OncePerR
             TenantContext.clear();
             RequestContextHolder.clear();
         }
+    }
+
+    private boolean isSkipped(String path, String method) {
+        for (String prefix : skipPrefixes) {
+            if (path.startsWith(prefix)) {
+                return true;
+            }
+        }
+        if ("GET".equalsIgnoreCase(method)) {
+            for (String exact : skipGetExactPaths) {
+                if (path.equals(exact)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static void reject(HttpServletResponse response, String code, String detail) throws IOException {

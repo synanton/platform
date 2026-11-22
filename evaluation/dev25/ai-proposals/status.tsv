@@ -1,0 +1,10 @@
+doc_id	state	input_tokens	output_tokens	struct_ok	candidate_entities	candidate_relations	flags	annotator_model	upstream_request_id
+g7-dev-011	SUCCESS	625	1281	True	15	8	10	deepseek-v4.1-flash	chatcmpl-74e4ec2e-d8c0-4154-9796-ef01c9329ff6
+g7-dev-012	SUCCESS	837	1536	False				deepseek-v4.1-flash	chatcmpl-eff735e5-d196-49ba-af2f-f3faf0a8ab1e
+g7-dev-013	SUCCESS	811	1536	False				deepseek-v4.1-flash	chatcmpl-c583b58c-2423-47fe-a325-05c66823f463
+g7-dev-014	SUCCESS	884	1536	False				deepseek-v4.1-flash	chatcmpl-cf49908c-15cc-43ac-a4a3-d655fa95baf7
+g7-dev-015	SUCCESS	866	1536	False				deepseek-v4.1-flash	chatcmpl-9d926eb9-f83a-4501-948c-e78703e840b7
+g7-dev-016	SUCCESS	632	1484	True	17	11	10	deepseek-v4.1-flash	chatcmpl-02ea1485-bfe6-4b10-b402-c69d77f8293b
+g7-dev-017	SUCCESS	842	1536	False				deepseek-v4.1-flash	chatcmpl-40354987-cbe2-4cbe-8456-2f6e92dd58b9
+g7-dev-018	SUCCESS	763	1536	False				deepseek-v4.1-flash	chatcmpl-a8b7dd2f-e072-4d79-9144-b737212a316c
+g7-dev-023	SUCCESS	367	679	True	9	4	8	deepseek-v4.1-flash	chatcmpl-af8e3fa0-39ea-4753-b610-386fca2432e9

@@ -40,6 +40,13 @@ public class SchemaInstaller {
         "cql/V24__resolution_reason.cql",
         "cql/V25__consumer_claims.cql",
         "cql/V26__resolution_search_generation.cql",
+        "cql/V27__source_revision_identity.cql",
+        "cql/V28__relation_promotion_identity.cql",
+        "cql/V29__source_activation.cql",
+        "cql/V30__ingestion_activation.cql",
+        "cql/V31__promotion_ownership.cql",
+        "cql/V32__consumer_ownership_heartbeat.cql",
+        "cql/V33__extraction_provider_config.cql",
     };
 
     public static void install(CqlSession session) {

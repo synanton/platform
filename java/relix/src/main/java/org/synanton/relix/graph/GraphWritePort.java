@@ -1,19 +1,36 @@
 package org.synanton.relix.graph;
 
-import java.util.List;
+import org.synanton.common.resolution.CanonicalRelation;
+import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.common.resolution.PromotionResult;
+import org.synanton.common.resolution.SourceRevisionIdentity;
+import org.synanton.relix.api.dto.Edge;
+import org.synanton.relix.api.dto.Entity;
 
 /**
- * Isolated write contract for RAKG extracted mentions/relations (ADR-022 / PR #3).
- * It never creates canonical :Entity nodes or :REL edges; those belong to the
- * canonical graph and PR #4 resolution.
+ * Canonical graph write contract (:Entity/:REL). Every operation requires an
+ * explicit GraphIdentity; extraction-pipeline writes belong on
+ * ExtractedMentionGraphWritePort.
  */
 public interface GraphWritePort {
 
-    default int upsertMentions(List<ExtractedMention> mentions) {
-        throw new UnsupportedOperationException("graph connector does not support extracted-mention writes");
+    void loadTenant(GraphIdentity identity);
+
+    void upsertEntity(GraphIdentity identity, Entity entity);
+
+    void upsertRelation(GraphIdentity identity, Edge relation);
+
+    PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation);
+
+    /** Records contradicting evidence when an existing assertion is contradicted. */
+    default PromotionResult recordContradiction(GraphIdentity identity, CanonicalRelation relation,
+                                                SourceRevisionIdentity sourceRevision) {
+        return new PromotionResult(0, 0, 0);
     }
 
-    default int upsertRelations(List<ExtractedRelation> relations) {
-        throw new UnsupportedOperationException("graph connector does not support extracted-relation writes");
+    /** Generation-fenced promotion; the check must be inside the graph transaction. */
+    default PromotionResult promoteRelation(GraphIdentity identity, CanonicalRelation relation,
+                                            SourceRevisionIdentity sourceRevision) {
+        throw new UnsupportedOperationException("graph connector does not support generation-fenced promotion");
     }
 }

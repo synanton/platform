@@ -7,7 +7,10 @@ import org.synanton.relix.api.dto.GraphQueryResponse;
 import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.relix.api.dto.GraphTrace;
 import org.synanton.relix.api.dto.Path;
-import org.synanton.relix.graph.GraphConnector;
+import org.synanton.common.resolution.GraphIdentity;
+import org.synanton.relix.graph.GraphReadPort;
+import org.synanton.relix.graph.GraphWritePort;
+import org.synanton.relix.identity.GraphIdentityResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,29 +24,32 @@ public class GraphQueryService {
 
     private static final Logger log = LoggerFactory.getLogger(GraphQueryService.class);
 
-    private final GraphConnector graphConnector;
+    private final GraphReadPort graphReadPort;
+    private final GraphWritePort graphWritePort;
+    private final GraphIdentityResolver identityResolver;
     private final EntityLookupExecutor entityLookup;
     private final OneHopExecutor oneHop;
     private final KHopPathExecutor kHopPath;
     private final Map<String, Object> rebuildLocks = new ConcurrentHashMap<>();
 
-    public GraphQueryService(GraphConnector graphConnector,
+    public GraphQueryService(GraphReadPort graphReadPort,
+                             GraphWritePort graphWritePort,
+                             GraphIdentityResolver identityResolver,
                              EntityLookupExecutor entityLookup,
                              OneHopExecutor oneHop,
                              KHopPathExecutor kHopPath) {
-        this.graphConnector = graphConnector;
+        this.graphReadPort = graphReadPort;
+        this.graphWritePort = graphWritePort;
+        this.identityResolver = identityResolver;
         this.entityLookup = entityLookup;
         this.oneHop = oneHop;
         this.kHopPath = kHopPath;
     }
 
-    public void loadTenant(String tenant) {
-        graphConnector.loadTenant(tenant);
-    }
-
     public GraphQueryResponse query(GraphQueryRequest req) {
         long t0 = System.currentTimeMillis();
         long traversalStart = System.currentTimeMillis();
+        GraphIdentity identity = resolveIdentity(req.tenant());
 
         List<Entity> entities;
         List<Edge> edges;
@@ -52,21 +58,21 @@ public class GraphQueryService {
 
         switch (req.shape()) {
             case "entity_lookup" -> {
-                var result = entityLookup.execute(graphConnector, req);
+                var result = entityLookup.execute(graphReadPort, identity, req);
                 entities = result.entities();
                 edges = List.of();
                 paths = List.of();
                 candidateCount = result.candidateCount();
             }
             case "one_hop" -> {
-                var result = oneHop.execute(graphConnector, req);
+                var result = oneHop.execute(graphReadPort, identity, req);
                 entities = result.entities();
                 edges = result.edges();
                 paths = List.of();
                 candidateCount = result.candidateCount();
             }
             case "k_hop_path" -> {
-                var result = kHopPath.execute(graphConnector, req);
+                var result = kHopPath.execute(graphReadPort, identity, req);
                 entities = result.entities();
                 edges = result.edges();
                 paths = result.paths();
@@ -77,25 +83,30 @@ public class GraphQueryService {
 
         long traversalMs = System.currentTimeMillis() - traversalStart;
         long totalMs = System.currentTimeMillis() - t0;
-        String tenant = req.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            throw new org.synanton.common.tenant.MissingTenantContextException();
-        }
-        long generation = graphConnector.stats(tenant).graphGeneration();
+        long generation = graphReadPort.stats(identity).graphGeneration();
         GraphTrace trace = new GraphTrace(req.shape(), generation, candidateCount, traversalMs, totalMs);
         return new GraphQueryResponse(entities, edges, paths, trace);
     }
 
     public void rebuild(String tenant) {
+        GraphIdentity identity = resolveIdentity(tenant);
         Object lock = rebuildLocks.computeIfAbsent(tenant, ignored -> new Object());
         synchronized (lock) {
-            log.info("Rebuilding graph for tenant '{}' via connector '{}'", tenant, graphConnector.id());
-            loadTenant(tenant);
+            log.info("Rebuilding canonical graph for tenant '{}'", tenant);
+            graphWritePort.loadTenant(identity);
             log.info("Graph rebuild complete for tenant '{}'", tenant);
         }
     }
 
     public GraphStats stats(String tenant) {
-        return graphConnector.stats(tenant);
+        return graphReadPort.stats(resolveIdentity(tenant));
+    }
+
+    private GraphIdentity resolveIdentity(String tenant) {
+        if (tenant == null || tenant.isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException(
+                    "graph operation requires an explicit tenant");
+        }
+        return identityResolver.resolveCanonical(tenant);
     }
 }

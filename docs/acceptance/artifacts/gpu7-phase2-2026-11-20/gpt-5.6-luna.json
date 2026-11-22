@@ -1,0 +1,83 @@
+{
+  "model": "gpt-5.6-luna",
+  "documents": 5,
+  "no_thinking": false,
+  "max_tokens": 2048,
+  "results": [
+    {
+      "document": "e650-live-dense-v2.txt",
+      "model": "gpt-5.6-luna",
+      "latency_s": 18.82012715000019,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 557,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-c7ad1e1e971e479eb9160c1f3995fa44",
+      "finish_reason": "length",
+      "content_chars": 33363,
+      "json_valid": false,
+      "parse_error": "JSONDecodeError: Expecting ',' delimiter: line 1 column 300 (char 299)"
+    },
+    {
+      "document": "halcyon-7-directive.txt",
+      "model": "gpt-5.6-luna",
+      "latency_s": 17.14960204199997,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 551,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-1f0c6913b84f4faba703c4fd97db1d51",
+      "finish_reason": "length",
+      "content_chars": 28379,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    },
+    {
+      "document": "skiena-dynamic-programming.txt",
+      "model": "gpt-5.6-luna",
+      "latency_s": 22.7581154970012,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1007,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-0f7d93a17c084e2cae76360851d0d380",
+      "finish_reason": "length",
+      "content_chars": 29407,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    },
+    {
+      "document": "skiena-sorting.txt",
+      "model": "gpt-5.6-luna",
+      "latency_s": 18.103691958998752,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 910,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-5dc871a69ce54301b8668001452d6c71",
+      "finish_reason": "length",
+      "content_chars": 27399,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    },
+    {
+      "document": "skiena-tsp-parsing.txt",
+      "model": "gpt-5.6-luna",
+      "latency_s": 18.111091839000437,
+      "state": "SUCCESS",
+      "usage": {
+        "input": 1226,
+        "output": 2048
+      },
+      "upstream_request_id": "chatcmpl-aa5f5461f3a649de918ef89128b95924",
+      "finish_reason": "length",
+      "content_chars": 27191,
+      "json_valid": false,
+      "parse_error": "ValueError: empty content"
+    }
+  ]
+}

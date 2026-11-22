@@ -1,0 +1,470 @@
+{
+  "document_id": "acme-corp-profile.epub",
+  "text_sha256": "f184c179f41b3626d3c2500841a4beb85691babd09da83ff354f2bdfd76bcb78",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Acme Corp",
+      "char_start": 5,
+      "char_end": 14,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Springfield",
+      "char_start": 162,
+      "char_end": 173,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Denver",
+      "char_start": 200,
+      "char_end": 206,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Atlanta",
+      "char_start": 208,
+      "char_end": 215,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "Toronto",
+      "char_start": 221,
+      "char_end": 228,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 710,
+      "char_end": 730,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-globex-manufacturing"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "Initech Ltd",
+      "char_start": 739,
+      "char_end": 750,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "ISO 9001:2015",
+      "char_start": 1268,
+      "char_end": 1281,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-iso-9001-2015"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "IATF 16949",
+      "char_start": 1286,
+      "char_end": 1296,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-iatf-16949"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "precision castings",
+      "char_start": 877,
+      "char_end": 895,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "forged steel blanks",
+      "char_start": 897,
+      "char_end": 916,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "machined subassemblies",
+      "char_start": 922,
+      "char_end": 944,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "electrical harnesses",
+      "char_start": 1130,
+      "char_end": 1150,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "printed circuit board assemblies",
+      "char_start": 1152,
+      "char_end": 1184,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "thermal management components",
+      "char_start": 1190,
+      "char_end": 1219,
+      "proposed_type": "Component",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "supply chain diversification",
+      "char_start": 1437,
+      "char_end": 1465,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "nearshoring",
+      "char_start": 1467,
+      "char_end": 1478,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "digitalization of procurement workflows",
+      "char_start": 1520,
+      "char_end": 1559,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "Mexico",
+      "char_start": 1620,
+      "char_end": 1626,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "Poland",
+      "char_start": 1631,
+      "char_end": 1637,
+      "proposed_type": "Location",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "Revenue",
+      "char_start": 1813,
+      "char_end": 1820,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-revenue"
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "$870M",
+      "char_start": 1823,
+      "char_end": 1828,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-870m"
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "Gross Margin",
+      "char_start": 1833,
+      "char_end": 1845,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-gross-margin"
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "34.2%",
+      "char_start": 1848,
+      "char_end": 1853,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-34-2"
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "EBITDA",
+      "char_start": 1858,
+      "char_end": 1864,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-ebitda"
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "$112M",
+      "char_start": 1867,
+      "char_end": 1872,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-112m"
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "Supply Chain Cost as % of Revenue",
+      "char_start": 1877,
+      "char_end": 1910,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-chain-cost-as-of-revenue"
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "18.4%",
+      "char_start": 1913,
+      "char_end": 1918,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-18-4"
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "risk committee",
+      "char_start": 2210,
+      "char_end": 2224,
+      "proposed_type": "Role",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "port congestion",
+      "char_start": 2159,
+      "char_end": 2174,
+      "proposed_type": "Problem",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "fuel surcharges",
+      "char_start": 2179,
+      "char_end": 2194,
+      "proposed_type": "Concept",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "single-region concentration",
+      "char_start": 1986,
+      "char_end": 2013,
+      "proposed_type": "Problem",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "currency exposure",
+      "char_start": 2041,
+      "char_end": 2058,
+      "proposed_type": "Problem",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "long-term supply agreement",
+      "char_start": 1046,
+      "char_end": 1072,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "2025-2027 strategic plan",
+      "char_start": 1401,
+      "char_end": 1425,
+      "proposed_type": "Document",
+      "resolution_status": "unresolvable",
+      "canonical_id": ""
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "has",
+      "object_id": "m6",
+      "evidence_span_start": 5,
+      "evidence_span_end": 730
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "has",
+      "object_id": "m7",
+      "evidence_span_start": 5,
+      "evidence_span_end": 750
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has_component",
+      "object_id": "m10",
+      "evidence_span_start": 710,
+      "evidence_span_end": 895
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has_component",
+      "object_id": "m11",
+      "evidence_span_start": 710,
+      "evidence_span_end": 916
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has_component",
+      "object_id": "m12",
+      "evidence_span_start": 710,
+      "evidence_span_end": 944
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "has_component",
+      "object_id": "m13",
+      "evidence_span_start": 739,
+      "evidence_span_end": 1150
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "has_component",
+      "object_id": "m14",
+      "evidence_span_start": 739,
+      "evidence_span_end": 1184
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "has_component",
+      "object_id": "m15",
+      "evidence_span_start": 739,
+      "evidence_span_end": 1219
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "obeys",
+      "object_id": "m8",
+      "evidence_span_start": 739,
+      "evidence_span_end": 1281
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "obeys",
+      "object_id": "m9",
+      "evidence_span_start": 739,
+      "evidence_span_end": 1296
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "measures",
+      "object_id": "m21",
+      "evidence_span_start": 5,
+      "evidence_span_end": 1820
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "measures",
+      "object_id": "m23",
+      "evidence_span_start": 5,
+      "evidence_span_end": 1845
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "measures",
+      "object_id": "m25",
+      "evidence_span_start": 5,
+      "evidence_span_end": 1864
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "measures",
+      "object_id": "m27",
+      "evidence_span_start": 5,
+      "evidence_span_end": 1910
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m32",
+      "evidence_span_start": 5,
+      "evidence_span_end": 2013
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m33",
+      "evidence_span_start": 5,
+      "evidence_span_end": 2058
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m30",
+      "evidence_span_start": 5,
+      "evidence_span_end": 2174
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "related_to",
+      "object_id": "m31",
+      "evidence_span_start": 5,
+      "evidence_span_end": 2194
+    },
+    {
+      "subject_id": "m29",
+      "predicate": "part_of",
+      "object_id": "m1",
+      "evidence_span_start": 5,
+      "evidence_span_end": 2224
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "has",
+      "object_id": "m35",
+      "evidence_span_start": 5,
+      "evidence_span_end": 1425
+    },
+    {
+      "subject_id": "m6",
+      "predicate": "has",
+      "object_id": "m34",
+      "evidence_span_start": 710,
+      "evidence_span_end": 1072
+    }
+  ]
+}

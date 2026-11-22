@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -41,7 +42,7 @@ class GraphWriterTest {
     @Test
     void writesDeterministicMentionAndRelationIdsWithDocumentOffsets() {
         when(validator.validate(any(), any(), any(), any(), any())).thenReturn(new RelationValidation(true, List.of()));
-        when(graphClient.upsertMentions(any())).thenReturn(2);
+        when(graphClient.upsertMentions(any())).thenReturn(3);
         when(graphClient.upsertRelations(any())).thenReturn(1);
         when(cache.claimGraphCommit(any())).thenReturn(true);
         GraphWriter writer = writer(true);
@@ -71,10 +72,14 @@ class GraphWriterTest {
                 mentions.getValue().get(1).mentionId()));
         assertThat(relations.getValue().getFirst().evidenceDocumentOffsetStart()).isEqualTo(100);
         assertThat(relations.getValue().getFirst().evidenceChunkId()).isEqualTo(REF + ":0");
+        assertThat(relations.getValue().getFirst().sourceId()).isEqualTo("source");
+        assertThat(relations.getValue().getFirst().revisionId()).isEqualTo(VERSION.toString());
+        assertThat(relations.getValue().getFirst().generation()).isEqualTo(7);
 
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
         verify(cache).claimGraphCommit(request);
-        verify(cache).markGraphCommitted(eq(request), eq("GRAPH_COMMITTED"), counters.capture(), eq(0), any());
+        verify(cache).markGraphCommitted(eq(request), eq("MENTIONS_COMMITTED"), counters.capture(), eq(0),
+                any(), isNull(), isNull(), isNull());
         assertThat(counters.getValue()).containsEntry("mentions_accepted", 2)
                 .containsEntry("relations_accepted", 1)
                 .containsEntry("relations_rejected", 0);
@@ -83,7 +88,7 @@ class GraphWriterTest {
     @Test
     void commitsIdempotentResolutionWorkForEveryMention() {
         when(validator.validate(any(), any(), any(), any(), any())).thenReturn(new RelationValidation(true, List.of()));
-        when(graphClient.upsertMentions(any())).thenReturn(2);
+        when(graphClient.upsertMentions(any())).thenReturn(3);
         when(graphClient.upsertRelations(any())).thenReturn(1);
         when(cache.claimGraphCommit(any())).thenReturn(true);
         ExtractionRequestRow request = request();
@@ -110,18 +115,56 @@ class GraphWriterTest {
     void rejectedRelationProducesPartialStatusAndIsNotWritten() {
         when(validator.validate(any(), any(), any(), any(), any())).thenReturn(
                 new RelationValidation(false, List.of(new RelationValidation.Violation("range_mismatch", "bad", "x"))));
-        when(graphClient.upsertMentions(any())).thenReturn(2);
+        when(graphClient.upsertMentions(any())).thenReturn(3);
         when(cache.claimGraphCommit(any())).thenReturn(true);
         GraphWriter writer = writer(true);
         ExtractionRequestRow request = request();
 
-        writer.commit(request, List.of(chunk()), Map.of(0, result()));
+        GraphCommitResult outcome = writer.commit(request, List.of(chunk()), Map.of(0, result()));
 
+        assertThat(outcome.rejected()).isEqualTo(1);
+        assertThat(outcome.candidates()).isEqualTo(1);
+        assertThat(outcome.rejectionCounts()).containsEntry("range_mismatch", 1);
+        assertThat(outcome.rejectionCodes()).contains("range_mismatch");
         verify(graphClient, never()).upsertRelations(any());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Integer>> counters = ArgumentCaptor.forClass(Map.class);
-        verify(cache).markGraphCommitted(eq(request), eq("PARTIAL"), counters.capture(), eq(0), any());
+        verify(cache).markGraphCommitted(eq(request), eq("PARTIAL"), counters.capture(), eq(0),
+                any(), isNull(), isNull(), isNull());
         assertThat(counters.getValue()).containsEntry("relations_rejected", 1);
+    }
+
+    @Test
+    void candidateAccountingReconcilesAcceptedValidationAndMissingEndpoint() {
+        when(validator.validate(any(), any(), any(), any(), any())).thenReturn(
+                new RelationValidation(true, List.of()),
+                new RelationValidation(false,
+                        List.of(new RelationValidation.Violation("range_mismatch", "bad", "x"))));
+        when(graphClient.upsertMentions(any())).thenReturn(3);
+        when(graphClient.upsertRelations(any())).thenReturn(1);
+        when(cache.claimGraphCommit(any())).thenReturn(true);
+        PreEntity subject = new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "ctx");
+        PreEntity object = new PreEntity("m2", "helium leak check", "Procedure", 23, 40, "ctx");
+        PreEntity secondObject = new PreEntity("m3", "second procedure", "Procedure", 45, 61, "ctx");
+        ExtractionResult result = new ExtractionResult(List.of(subject, object, secondObject), List.of(
+                new RelationCandidate("m1", "requires", "m2", "ref:0", 0, 41),
+                new RelationCandidate("m1", "requires", "m3", "ref:0", 0, 41),
+                new RelationCandidate("m1", "requires", "missing", "ref:0", 0, 41)));
+
+        GraphCommitResult outcome = writer(true).commit(request(), List.of(chunk()), Map.of(0, result));
+
+        assertThat(outcome.candidates()).isEqualTo(3);
+        assertThat(outcome.accepted()).isEqualTo(1);
+        assertThat(outcome.rejected()).isEqualTo(2);
+        assertThat(outcome.rejectionCounts())
+                .containsEntry("range_mismatch", 1)
+                .containsEntry("MISSING_ENDPOINT", 1);
+        assertThat(outcome.rejectionPredicateCounts()).containsEntry("requires", 2);
+        assertThat(outcome.rejectionSubjectTypeCounts()).containsEntry("MaintenanceSystem", 2);
+        assertThat(outcome.rejectionObjectTypeCounts())
+                .containsEntry("Procedure", 1)
+                .containsEntry("missing", 1);
+        assertThat(outcome.accepted() + outcome.rejected()).isEqualTo(outcome.candidates());
     }
 
     @Test
@@ -164,7 +207,7 @@ class GraphWriterTest {
 
     private static ExtractionRequestRow request() {
         return new ExtractionRequestRow(TENANT, "upload", "source", "resource", UUID.randomUUID(),
-                VERSION, REF, "{}", NOW, NOW, "KNOWLEDGE_READY", 0, null, null, false);
+                VERSION, REF, "{}", NOW, NOW, "KNOWLEDGE_READY", 0, null, null, false, 7);
     }
 
     private static ChunkRow chunk() {

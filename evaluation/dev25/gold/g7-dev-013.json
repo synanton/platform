@@ -1,0 +1,257 @@
+{
+  "document_id": "risk-factors-2025.txt",
+  "text_sha256": "e122bd2083c05aa07ce513009f2fe41881e482fad1dd3df06d731ffe35ba94d2",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "Acme Corp",
+      "char_start": 758,
+      "char_end": 767,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acme-corp"
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "Globex Manufacturing",
+      "char_start": 846,
+      "char_end": 866,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-globex-manufacturing"
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Initech Ltd",
+      "char_start": 871,
+      "char_end": 882,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-initech-ltd"
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Canada",
+      "char_start": 1520,
+      "char_end": 1526,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-canada"
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "Poland",
+      "char_start": 1531,
+      "char_end": 1537,
+      "proposed_type": "Location",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-poland"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "SOC 2 Type II",
+      "char_start": 2677,
+      "char_end": 2690,
+      "proposed_type": "Standard",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-soc-2-type-ii"
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "2025",
+      "char_start": 38,
+      "char_end": 42,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2025"
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "2026",
+      "char_start": 252,
+      "char_end": 256,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2026"
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "62%",
+      "char_start": 790,
+      "char_end": 793,
+      "proposed_type": "Metric",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-62"
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "10 to 14 days",
+      "char_start": 1149,
+      "char_end": 1162,
+      "proposed_type": "Measurement",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-10-to-14-days"
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "top 20 sourcing relationships",
+      "char_start": 1751,
+      "char_end": 1780,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-top-20-sourcing-relationships"
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "three of the past five years",
+      "char_start": 2015,
+      "char_end": 2043,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-three-of-the-past-five-years"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "tier-one suppliers",
+      "char_start": 677,
+      "char_end": 695,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-tier-one-suppliers"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "tier-two and tier-three suppliers",
+      "char_start": 2522,
+      "char_end": 2555,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-tier-two-and-tier-three-suppliers"
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "supply concentration",
+      "char_start": 421,
+      "char_end": 441,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-concentration"
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "cross-border trade policy uncertainty",
+      "char_start": 443,
+      "char_end": 480,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-cross-border-trade-policy-uncertainty"
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "climate-related disruption",
+      "char_start": 482,
+      "char_end": 508,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-climate-related-disruption"
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "cybersecurity exposure",
+      "char_start": 514,
+      "char_end": 536,
+      "proposed_type": "Problem",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-cybersecurity-exposure"
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "business continuity planning",
+      "char_start": 2271,
+      "char_end": 2299,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-business-continuity-planning"
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "dual-source qualification",
+      "char_start": 2822,
+      "char_end": 2847,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-dual-source-qualification"
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "supplier-specific crisis response playbooks",
+      "char_start": 3006,
+      "char_end": 3049,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supplier-specific-crisis-response-playbooks"
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "climate risk scoring",
+      "char_start": 3065,
+      "char_end": 3085,
+      "proposed_type": "Procedure",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-climate-risk-scoring"
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "supply chain visibility platforms",
+      "char_start": 2950,
+      "char_end": 2983,
+      "proposed_type": "Product",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-supply-chain-visibility-platforms"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m1",
+      "predicate": "uses",
+      "object_id": "m2",
+      "evidence_span_start": 648,
+      "evidence_span_end": 757
+    },
+    {
+      "subject_id": "m1",
+      "predicate": "uses",
+      "object_id": "m3",
+      "evidence_span_start": 648,
+      "evidence_span_end": 757
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m4",
+      "evidence_span_start": 1310,
+      "evidence_span_end": 1377
+    },
+    {
+      "subject_id": "m3",
+      "predicate": "has",
+      "object_id": "m5",
+      "evidence_span_start": 1310,
+      "evidence_span_end": 1377
+    },
+    {
+      "subject_id": "m20",
+      "predicate": "applied_to",
+      "object_id": "m2",
+      "evidence_span_start": 2540,
+      "evidence_span_end": 2634
+    },
+    {
+      "subject_id": "m20",
+      "predicate": "applied_to",
+      "object_id": "m3",
+      "evidence_span_start": 2540,
+      "evidence_span_end": 2634
+    }
+  ]
+}

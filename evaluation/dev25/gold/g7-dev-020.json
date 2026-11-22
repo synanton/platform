@@ -1,0 +1,1056 @@
+{
+  "document_id": "mental-health-report-2010.pdf",
+  "text_sha256": "d60e114c25f8bf7d69df2bdddead567b2958c8df326f30ccfb8800c3ebdb191f",
+  "entities": [
+    {
+      "mention_id": "m1",
+      "surface_form": "American Hospital Association Annual Survey",
+      "char_start": 3489,
+      "char_end": 3532,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m2",
+      "surface_form": "American Hospital Association",
+      "char_start": 3489,
+      "char_end": 3518,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m3",
+      "surface_form": "Annual Census of Admission and Resident Patient Characteristics",
+      "char_start": 4243,
+      "char_end": 4306,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m4",
+      "surface_form": "Area Resource File (ARF)",
+      "char_start": 4648,
+      "char_end": 4672,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m5",
+      "surface_form": "Brandeis University",
+      "char_start": 5674,
+      "char_end": 5693,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-brandeis-university"
+    },
+    {
+      "mention_id": "m6",
+      "surface_form": "Census of State and Federal Adult Correctional Facilities",
+      "char_start": 5808,
+      "char_end": 5865,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m7",
+      "surface_form": "Bureau of Justice Statistics",
+      "char_start": 6340,
+      "char_end": 6368,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m8",
+      "surface_form": "Decision Support System",
+      "char_start": 6861,
+      "char_end": 6884,
+      "proposed_type": "MaintenanceSystem",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m9",
+      "surface_form": "Veterans Health Administration",
+      "char_start": 6824,
+      "char_end": 6854,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m10",
+      "surface_form": "Department of Defense",
+      "char_start": 7253,
+      "char_end": 7274,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m11",
+      "surface_form": "Employer Health Benefits Survey",
+      "char_start": 9448,
+      "char_end": 9479,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m12",
+      "surface_form": "Henry J. Kaiser Family Foundation",
+      "char_start": 9341,
+      "char_end": 9374,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-henry-j-kaiser-family-foundation"
+    },
+    {
+      "mention_id": "m13",
+      "surface_form": "Health Research & Educational Trust",
+      "char_start": 9379,
+      "char_end": 9414,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-health-research-educational-trust"
+    },
+    {
+      "mention_id": "m14",
+      "surface_form": "International Survey of Clubhouses",
+      "char_start": 10226,
+      "char_end": 10260,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m15",
+      "surface_form": "International Center for Clubhouse Development",
+      "char_start": 10325,
+      "char_end": 10371,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-international-center-for-clubhouse-development"
+    },
+    {
+      "mention_id": "m16",
+      "surface_form": "Medicaid Analytic eXtract (MAX)",
+      "char_start": 10944,
+      "char_end": 10975,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m17",
+      "surface_form": "Medicaid Statistical Information System (MSIS)",
+      "char_start": 11169,
+      "char_end": 11215,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m18",
+      "surface_form": "Medical Expenditure Panel Survey (MEPS)",
+      "char_start": 11463,
+      "char_end": 11502,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m19",
+      "surface_form": "Mental Health, United States, 2010",
+      "char_start": 3233,
+      "char_end": 3267,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m20",
+      "surface_form": "Appendix A",
+      "char_start": 2528,
+      "char_end": 2538,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-appendix-a"
+    },
+    {
+      "mention_id": "m21",
+      "surface_form": "Appendix B",
+      "char_start": 2707,
+      "char_end": 2717,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-appendix-b"
+    },
+    {
+      "mention_id": "m22",
+      "surface_form": "Appendix C",
+      "char_start": 2912,
+      "char_end": 2922,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-appendix-c"
+    },
+    {
+      "mention_id": "m23",
+      "surface_form": "Glossary",
+      "char_start": 2734,
+      "char_end": 2742,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-glossary"
+    },
+    {
+      "mention_id": "m24",
+      "surface_form": "Medication Lists",
+      "char_start": 2940,
+      "char_end": 2956,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m25",
+      "surface_form": "Data Source Descriptions",
+      "char_start": 2556,
+      "char_end": 2580,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-data-source-descriptions"
+    },
+    {
+      "mention_id": "m26",
+      "surface_form": "References",
+      "char_start": 2346,
+      "char_end": 2356,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-references"
+    },
+    {
+      "mention_id": "m27",
+      "surface_form": "Tables",
+      "char_start": 1420,
+      "char_end": 1426,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m28",
+      "surface_form": "Mental Health of the Population",
+      "char_start": 575,
+      "char_end": 606,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m29",
+      "surface_form": "Providers and Settings for Mental Health Services",
+      "char_start": 748,
+      "char_end": 797,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m30",
+      "surface_form": "Payers and Payment Mechanisms",
+      "char_start": 887,
+      "char_end": 916,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m31",
+      "surface_form": "States: People, Providers, and Payers",
+      "char_start": 1051,
+      "char_end": 1088,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m32",
+      "surface_form": "Data Gaps",
+      "char_start": 1212,
+      "char_end": 1221,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-data-gaps"
+    },
+    {
+      "mention_id": "m33",
+      "surface_form": "Introduction",
+      "char_start": 367,
+      "char_end": 379,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-introduction"
+    },
+    {
+      "mention_id": "m34",
+      "surface_form": "Executive Summary",
+      "char_start": 180,
+      "char_end": 197,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-executive-summary"
+    },
+    {
+      "mention_id": "m35",
+      "surface_form": "Acknowledgments",
+      "char_start": 14,
+      "char_end": 29,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-acknowledgments"
+    },
+    {
+      "mention_id": "m36",
+      "surface_form": "Medicare Cost Report",
+      "char_start": 12183,
+      "char_end": 12203,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m37",
+      "surface_form": "Centers for Medicare & Medicaid Services",
+      "char_start": 12294,
+      "char_end": 12334,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m38",
+      "surface_form": "Medicare Standard Analytical Files (SAF)",
+      "char_start": 12690,
+      "char_end": 12730,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-medicare-standard-analytical-files-saf"
+    },
+    {
+      "mention_id": "m39",
+      "surface_form": "Mercer",
+      "char_start": 13246,
+      "char_end": 13252,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m40",
+      "surface_form": "National Vital Statistics Report",
+      "char_start": 13701,
+      "char_end": 13733,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m41",
+      "surface_form": "National Comorbidity Survey Replication (NCS-R)",
+      "char_start": 14612,
+      "char_end": 14659,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-national-comorbidity-survey-replication-ncs-r"
+    },
+    {
+      "mention_id": "m42",
+      "surface_form": "National Compensation Survey",
+      "char_start": 15049,
+      "char_end": 15077,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m43",
+      "surface_form": "Bureau of Labor Statistics",
+      "char_start": 15022,
+      "char_end": 15048,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m44",
+      "surface_form": "Office of Management and Budget",
+      "char_start": 15486,
+      "char_end": 15517,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-office-of-management-and-budget"
+    },
+    {
+      "mention_id": "m45",
+      "surface_form": "Spending Estimates Project",
+      "char_start": 16778,
+      "char_end": 16804,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m46",
+      "surface_form": "National Health and Nutrition Examination Survey (NHANES)",
+      "char_start": 17379,
+      "char_end": 17436,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-national-health-and-nutrition-examination-survey-nhanes"
+    },
+    {
+      "mention_id": "m47",
+      "surface_form": "National Health Interview Survey (NHIS)",
+      "char_start": 17785,
+      "char_end": 17824,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-national-health-interview-survey-nhis"
+    },
+    {
+      "mention_id": "m48",
+      "surface_form": "National Home and Hospice Care Survey",
+      "char_start": 18332,
+      "char_end": 18369,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-national-home-and-hospice-care-survey"
+    },
+    {
+      "mention_id": "m49",
+      "surface_form": "National Nursing Home Survey",
+      "char_start": 18926,
+      "char_end": 18954,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m50",
+      "surface_form": "National Survey of Child and Adolescent Well-Being II (NSCAW II)",
+      "char_start": 19304,
+      "char_end": 19368,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-national-survey-of-child-and-adolescent-well-being-ii-nscaw-ii"
+    },
+    {
+      "mention_id": "m51",
+      "surface_form": "National Survey of Mental Health Treatment Facilities",
+      "char_start": 20395,
+      "char_end": 20448,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-national-survey-of-mental-health-treatment-facilities"
+    },
+    {
+      "mention_id": "m52",
+      "surface_form": "National Survey on Drug Use and Health (NSDUH)",
+      "char_start": 20816,
+      "char_end": 20862,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-national-survey-on-drug-use-and-health-nsduh"
+    },
+    {
+      "mention_id": "m53",
+      "surface_form": "Nationwide Emergency Department Sample (NEDS)",
+      "char_start": 21224,
+      "char_end": 21269,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-nationwide-emergency-department-sample-neds"
+    },
+    {
+      "mention_id": "m54",
+      "surface_form": "Revenues and Expenditures Study",
+      "char_start": 21432,
+      "char_end": 21463,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m55",
+      "surface_form": "NRI Inc.",
+      "char_start": 21650,
+      "char_end": 21658,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m56",
+      "surface_form": "School Health Policies and Programs Study (SHPPS)",
+      "char_start": 21761,
+      "char_end": 21810,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-school-health-policies-and-programs-study-shpps"
+    },
+    {
+      "mention_id": "m57",
+      "surface_form": "State Inpatient Databases",
+      "char_start": 22560,
+      "char_end": 22585,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m58",
+      "surface_form": "Survey of Inmates in State and Federal Correctional Facilities, 2004",
+      "char_start": 23402,
+      "char_end": 23470,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-survey-of-inmates-in-state-and-federal-correctional-facilities-2004"
+    },
+    {
+      "mention_id": "m59",
+      "surface_form": "Survey of Inmates in Local Jails, 2002",
+      "char_start": 23548,
+      "char_end": 23586,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-survey-of-inmates-in-local-jails-2002"
+    },
+    {
+      "mention_id": "m60",
+      "surface_form": "Bureau of Justice Statistics",
+      "char_start": 23937,
+      "char_end": 23965,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m61",
+      "surface_form": "Mental Health, United States, 2010",
+      "char_start": 14168,
+      "char_end": 14202,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m62",
+      "surface_form": "Survey of Mental Health Organizations (SMHO)",
+      "char_start": 24108,
+      "char_end": 24152,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m63",
+      "surface_form": "Survey of Youth in Residential Placement (SYRP)",
+      "char_start": 24738,
+      "char_end": 24785,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m64",
+      "surface_form": "Uniform Data System",
+      "char_start": 25158,
+      "char_end": 25177,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m65",
+      "surface_form": "Any mental illness (AMI)",
+      "char_start": 25828,
+      "char_end": 25852,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-any-mental-illness-ami"
+    },
+    {
+      "mention_id": "m66",
+      "surface_form": "National Survey on Drug Use and Health",
+      "char_start": 31915,
+      "char_end": 31953,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m67",
+      "surface_form": "Behavioral health",
+      "char_start": 26582,
+      "char_end": 26599,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m68",
+      "surface_form": "Medicaid",
+      "char_start": 27227,
+      "char_end": 27235,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m69",
+      "surface_form": "Child welfare system",
+      "char_start": 27927,
+      "char_end": 27947,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-child-welfare-system"
+    },
+    {
+      "mention_id": "m70",
+      "surface_form": "Clubhouse",
+      "char_start": 25877,
+      "char_end": 25886,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m71",
+      "surface_form": "Community health center (CHC)",
+      "char_start": 26631,
+      "char_end": 26660,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-community-health-center-chc"
+    },
+    {
+      "mention_id": "m72",
+      "surface_form": "Medicare",
+      "char_start": 27214,
+      "char_end": 27222,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m73",
+      "surface_form": "Community hospital",
+      "char_start": 27300,
+      "char_end": 27318,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-community-hospital"
+    },
+    {
+      "mention_id": "m74",
+      "surface_form": "Emergency department",
+      "char_start": 29226,
+      "char_end": 29246,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-emergency-department"
+    },
+    {
+      "mention_id": "m75",
+      "surface_form": "Emotional disturbance",
+      "char_start": 29616,
+      "char_end": 29637,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-emotional-disturbance"
+    },
+    {
+      "mention_id": "m76",
+      "surface_form": "Functional impairment",
+      "char_start": 30569,
+      "char_end": 30590,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-functional-impairment"
+    },
+    {
+      "mention_id": "m77",
+      "surface_form": "General hospital",
+      "char_start": 30811,
+      "char_end": 30827,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-general-hospital"
+    },
+    {
+      "mention_id": "m78",
+      "surface_form": "Health maintenance organization (HMO)",
+      "char_start": 31765,
+      "char_end": 31802,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-health-maintenance-organization-hmo"
+    },
+    {
+      "mention_id": "m79",
+      "surface_form": "Home health care",
+      "char_start": 28991,
+      "char_end": 29007,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-home-health-care"
+    },
+    {
+      "mention_id": "m80",
+      "surface_form": "Hospice",
+      "char_start": 29668,
+      "char_end": 29675,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m81",
+      "surface_form": "Inpatient",
+      "char_start": 30337,
+      "char_end": 30346,
+      "proposed_type": "Concept",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m82",
+      "surface_form": "Insurance administration",
+      "char_start": 30666,
+      "char_end": 30690,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-insurance-administration"
+    },
+    {
+      "mention_id": "m83",
+      "surface_form": "Major depressive episode (MDE)",
+      "char_start": 30863,
+      "char_end": 30893,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-major-depressive-episode-mde"
+    },
+    {
+      "mention_id": "m84",
+      "surface_form": "Mood disorder",
+      "char_start": 34680,
+      "char_end": 34693,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-mood-disorder"
+    },
+    {
+      "mention_id": "m85",
+      "surface_form": "Nursing home care",
+      "char_start": 35196,
+      "char_end": 35213,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-nursing-home-care"
+    },
+    {
+      "mention_id": "m86",
+      "surface_form": "Outpatient",
+      "char_start": 33332,
+      "char_end": 33342,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-outpatient"
+    },
+    {
+      "mention_id": "m87",
+      "surface_form": "Prescription drug or prescription medication",
+      "char_start": 34452,
+      "char_end": 34496,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-prescription-drug-or-prescription-medication"
+    },
+    {
+      "mention_id": "m88",
+      "surface_form": "Primary diagnosis",
+      "char_start": 35245,
+      "char_end": 35262,
+      "proposed_type": "Concept",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-primary-diagnosis"
+    },
+    {
+      "mention_id": "m89",
+      "surface_form": "Mental Health, United States, 2010",
+      "char_start": 25759,
+      "char_end": 25793,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m90",
+      "surface_form": "Office on Disability, HHS",
+      "char_start": 48026,
+      "char_end": 48051,
+      "proposed_type": "Organization",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-office-on-disability-hhs"
+    },
+    {
+      "mention_id": "m91",
+      "surface_form": "Virginia Trotter Betts",
+      "char_start": 48052,
+      "char_end": 48074,
+      "proposed_type": "Person",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-virginia-trotter-betts"
+    },
+    {
+      "mention_id": "m92",
+      "surface_form": "Mohini Venkatesh",
+      "char_start": 48193,
+      "char_end": 48209,
+      "proposed_type": "Person",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m93",
+      "surface_form": "Samuel Zuvekas",
+      "char_start": 48328,
+      "char_end": 48342,
+      "proposed_type": "Person",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-samuel-zuvekas"
+    },
+    {
+      "mention_id": "m94",
+      "surface_form": "Agency for Healthcare Research and Quality",
+      "char_start": 48369,
+      "char_end": 48411,
+      "proposed_type": "Organization",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m95",
+      "surface_form": "Mental Health, United States, 2010",
+      "char_start": 48420,
+      "char_end": 48454,
+      "proposed_type": "Document",
+      "resolution_status": "ambiguous",
+      "canonical_id": ""
+    },
+    {
+      "mention_id": "m96",
+      "surface_form": "HHS Pub. No. (SMA) 12-4681",
+      "char_start": 48457,
+      "char_end": 48483,
+      "proposed_type": "Document",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-hhs-pub-no-sma-12-4681"
+    },
+    {
+      "mention_id": "m97",
+      "surface_form": "2012",
+      "char_start": 48492,
+      "char_end": 48496,
+      "proposed_type": "Time",
+      "resolution_status": "resolved",
+      "canonical_id": "entity-2012"
+    }
+  ],
+  "relationships": [
+    {
+      "subject_id": "m2",
+      "predicate": "related_to",
+      "object_id": "m1",
+      "evidence_span_start": 3489,
+      "evidence_span_end": 3532
+    },
+    {
+      "subject_id": "m7",
+      "predicate": "related_to",
+      "object_id": "m6",
+      "evidence_span_start": 5808,
+      "evidence_span_end": 6368
+    },
+    {
+      "subject_id": "m9",
+      "predicate": "related_to",
+      "object_id": "m8",
+      "evidence_span_start": 6824,
+      "evidence_span_end": 6884
+    },
+    {
+      "subject_id": "m12",
+      "predicate": "related_to",
+      "object_id": "m11",
+      "evidence_span_start": 9341,
+      "evidence_span_end": 9479
+    },
+    {
+      "subject_id": "m13",
+      "predicate": "related_to",
+      "object_id": "m11",
+      "evidence_span_start": 9379,
+      "evidence_span_end": 9479
+    },
+    {
+      "subject_id": "m15",
+      "predicate": "related_to",
+      "object_id": "m14",
+      "evidence_span_start": 10226,
+      "evidence_span_end": 10371
+    },
+    {
+      "subject_id": "m16",
+      "predicate": "uses",
+      "object_id": "m17",
+      "evidence_span_start": 10944,
+      "evidence_span_end": 11215
+    },
+    {
+      "subject_id": "m20",
+      "predicate": "same_as",
+      "object_id": "m25",
+      "evidence_span_start": 2528,
+      "evidence_span_end": 2580
+    },
+    {
+      "subject_id": "m21",
+      "predicate": "same_as",
+      "object_id": "m23",
+      "evidence_span_start": 2707,
+      "evidence_span_end": 2742
+    },
+    {
+      "subject_id": "m22",
+      "predicate": "same_as",
+      "object_id": "m24",
+      "evidence_span_start": 2912,
+      "evidence_span_end": 2956
+    },
+    {
+      "subject_id": "m19",
+      "predicate": "has_component",
+      "object_id": "m20",
+      "evidence_span_start": 2528,
+      "evidence_span_end": 3267
+    },
+    {
+      "subject_id": "m19",
+      "predicate": "has_component",
+      "object_id": "m21",
+      "evidence_span_start": 2707,
+      "evidence_span_end": 3267
+    },
+    {
+      "subject_id": "m19",
+      "predicate": "has_component",
+      "object_id": "m22",
+      "evidence_span_start": 2912,
+      "evidence_span_end": 3267
+    },
+    {
+      "subject_id": "m36",
+      "predicate": "documents",
+      "object_id": "m37",
+      "evidence_span_start": 12183,
+      "evidence_span_end": 12334
+    },
+    {
+      "subject_id": "m38",
+      "predicate": "related_to",
+      "object_id": "m37",
+      "evidence_span_start": 12294,
+      "evidence_span_end": 12730
+    },
+    {
+      "subject_id": "m42",
+      "predicate": "related_to",
+      "object_id": "m43",
+      "evidence_span_start": 15022,
+      "evidence_span_end": 15077
+    },
+    {
+      "subject_id": "m54",
+      "predicate": "related_to",
+      "object_id": "m55",
+      "evidence_span_start": 21432,
+      "evidence_span_end": 21658
+    },
+    {
+      "subject_id": "m58",
+      "predicate": "related_to",
+      "object_id": "m60",
+      "evidence_span_start": 23402,
+      "evidence_span_end": 23965
+    },
+    {
+      "subject_id": "m59",
+      "predicate": "related_to",
+      "object_id": "m60",
+      "evidence_span_start": 23548,
+      "evidence_span_end": 23965
+    },
+    {
+      "subject_id": "m65",
+      "predicate": "discussed_in",
+      "object_id": "m66",
+      "evidence_span_start": 25828,
+      "evidence_span_end": 31953
+    },
+    {
+      "subject_id": "m83",
+      "predicate": "discussed_in",
+      "object_id": "m66",
+      "evidence_span_start": 30863,
+      "evidence_span_end": 31953
+    },
+    {
+      "subject_id": "m77",
+      "predicate": "related_to",
+      "object_id": "m73",
+      "evidence_span_start": 27300,
+      "evidence_span_end": 30827
+    },
+    {
+      "subject_id": "m73",
+      "predicate": "related_to",
+      "object_id": "m77",
+      "evidence_span_start": 27989,
+      "evidence_span_end": 28015
+    },
+    {
+      "subject_id": "m93",
+      "predicate": "related_to",
+      "object_id": "m94",
+      "evidence_span_start": 48251,
+      "evidence_span_end": 48327
+    },
+    {
+      "subject_id": "m96",
+      "predicate": "documents",
+      "object_id": "m95",
+      "evidence_span_start": 48333,
+      "evidence_span_end": 48393
+    }
+  ]
+}

@@ -23,29 +23,35 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.jwt.JwtVerifier;
 import org.synanton.common.tenant.TenantContextFilter;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.relix.graph.EntityNeighborhood;
-import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.graph.GraphReadPort;
+import org.synanton.relix.identity.GraphIdentityResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class EntityNeighborhoodControllerTest {
 
     private static final String SECRET = "relix-test-jwt-secret-at-least-32-bytes";
-    private GraphConnector graph;
+    private GraphReadPort graph;
+    private GraphIdentityResolver resolver;
     private MockMvc mvc;
+    private final GraphIdentity identity = GraphIdentity.canonical("tenant-a", "v1");
 
     @BeforeEach
     void setUp() {
-        graph = mock(GraphConnector.class);
+        graph = mock(GraphReadPort.class);
+        resolver = mock(GraphIdentityResolver.class);
+        when(resolver.resolveCanonical("tenant-a")).thenReturn(identity);
         TenantContextFilter filter = new TenantContextFilter(new JwtVerifier(SECRET), "", "/health");
-        mvc = MockMvcBuilders.standaloneSetup(new EntityNeighborhoodController(graph))
+        mvc = MockMvcBuilders.standaloneSetup(new EntityNeighborhoodController(graph, resolver))
                 .addFilters(filter)
                 .build();
     }
 
     @Test
     void returnsBoundedNeighborhoodAndEvidence() throws Exception {
-        when(graph.neighborhood("tenant-a", "entity-1", 50)).thenReturn(Optional.of(
+        when(graph.neighborhood(identity, "entity-1", 50)).thenReturn(Optional.of(
                 new EntityNeighborhood("entity-1", "Halcyon-7", "MaintenanceSystem",
                         List.of(new EntityNeighborhood.Neighbor("entity-2", "Protocol-A", "Protocol",
                                 "requires", "OUTGOING")),
@@ -66,7 +72,7 @@ class EntityNeighborhoodControllerTest {
 
     @Test
     void clientLimitCannotExpandTheServerBound() throws Exception {
-        when(graph.neighborhood("tenant-a", "entity-1", 50)).thenReturn(Optional.of(
+        when(graph.neighborhood(identity, "entity-1", 50)).thenReturn(Optional.of(
                 new EntityNeighborhood("entity-1", "Halcyon-7", "MaintenanceSystem",
                         List.of(), List.of(), true)));
 
@@ -76,12 +82,12 @@ class EntityNeighborhoodControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.truncated").value(true));
 
-        verify(graph).neighborhood("tenant-a", "entity-1", 50);
+        verify(graph).neighborhood(identity, "entity-1", 50);
     }
 
     @Test
     void unknownEntityIs404() throws Exception {
-        when(graph.neighborhood("tenant-a", "missing", 50)).thenReturn(Optional.empty());
+        when(graph.neighborhood(identity, "missing", 50)).thenReturn(Optional.empty());
         mvc.perform(get("/v1/entities/missing/neighbors")
                         .header("Authorization", "Bearer " + token("tenant-a")))
                 .andExpect(status().isNotFound());
@@ -89,7 +95,7 @@ class EntityNeighborhoodControllerTest {
 
     @Test
     void clientTenantHeaderAndQueryCannotOverrideTheVerifiedTenant() throws Exception {
-        when(graph.neighborhood("tenant-a", "entity-1", 50)).thenReturn(Optional.of(
+        when(graph.neighborhood(identity, "entity-1", 50)).thenReturn(Optional.of(
                 new EntityNeighborhood("entity-1", "Halcyon-7", "MaintenanceSystem",
                         List.of(), List.of(), false)));
 
@@ -99,7 +105,7 @@ class EntityNeighborhoodControllerTest {
                         .header("Authorization", "Bearer " + token("tenant-a")))
                 .andExpect(status().isOk());
 
-        verify(graph).neighborhood("tenant-a", "entity-1", 50);
+        verify(graph).neighborhood(identity, "entity-1", 50);
     }
 
     @Test

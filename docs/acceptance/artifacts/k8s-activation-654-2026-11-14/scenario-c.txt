@@ -1,0 +1,37 @@
+scenario C uses the already-CURRENT Scenario B revision: source=acceptance-654-b-1794687466 version=e394a4d8-d65b-56ba-9c82-721e9211baa8
+
+--- baseline ---
+
+ state   | generation | revision_id
+---------+------------+--------------------------------------
+ CURRENT |          1 | e394a4d8-d65b-56ba-9c82-721e9211baa8
+
+(1 rows)
+
+ current_generation | active_revision_id
+--------------------+--------------------------------------
+                  1 | e394a4d8-d65b-56ba-9c82-721e9211baa8
+
+(1 rows)
+evidence, canonical_relations
+2, 2
+
+--- re-deliver: set activation_event_published=false ---
+[1] published=False
+[2] published=True
+
+--- after redelivery (no-op expected) ---
+
+ state   | generation | revision_id
+---------+------------+--------------------------------------
+ CURRENT |          1 | e394a4d8-d65b-56ba-9c82-721e9211baa8
+
+(1 rows)
+
+ current_generation | accepted_generation | active_revision_id
+--------------------+---------------------+--------------------------------------
+                  1 |                   1 | e394a4d8-d65b-56ba-9c82-721e9211baa8
+
+(1 rows)
+evidence, canonical_relations
+2, 2

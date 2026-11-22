@@ -24,6 +24,7 @@ import org.synanton.common.resolution.ResolutionOutcome;
 import org.synanton.common.resolution.ResolutionPolicy;
 import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.ingestioncache.claim.ClaimService;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.synquest.config.ResolutionConsumerProperties;
 
@@ -80,11 +81,19 @@ public final class ResolutionConsumer {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Resolution consumer is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), claims);
+        } catch (Exception e) {
+            log.warn("Resolution tenant discovery failed: {}", e.toString());
             return;
         }
+        for (String tenant : tenants) {
+            pollTenant(tenant);
+        }
+    }
+
+    private void pollTenant(String tenant) {
         Instant now = clock.instant();
         try {
             claims.reclaimExpiredResolutions(tenant, now, properties.batchMentionsOrDefault());
@@ -99,7 +108,11 @@ public final class ResolutionConsumer {
             return;
         }
         for (ResolutionWorkRow row : pending) {
-            process(row);
+            try {
+                process(row);
+            } catch (Exception e) {
+                log.warn("Resolution processing failed tenant={}: {}", tenant, e.toString());
+            }
         }
     }
 

@@ -3,11 +3,12 @@ package org.synanton.relix.service;
 import org.jgrapht.graph.DirectedMultigraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.relix.adapter.out.graph.memory.InMemoryGraphConnector;
 import org.synanton.relix.api.dto.GraphQueryRequest;
 import org.synanton.relix.config.RelixProperties;
 import org.synanton.relix.graph.EntityCanonicalizer;
-import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.graph.GraphReadPort;
 import org.synanton.relix.graph.GraphEdge;
 import org.synanton.relix.graph.GraphLoader;
 import org.synanton.relix.graph.GraphNode;
@@ -23,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ExecutorTest {
 
-    private GraphConnector connector;
+    private GraphReadPort connector;
+    private final GraphIdentity identity = GraphIdentity.canonical("demo", "v1");
     private GraphNode nodeA;
     private GraphNode nodeB;
     private GraphNode nodeC;
@@ -78,7 +80,7 @@ class ExecutorTest {
         EntityLookupExecutor executor = new EntityLookupExecutor();
         var req = new GraphQueryRequest("demo", "entity_lookup",
                 Map.of("label", "Acme Corp", "type", "Org", "limit", 10));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.entities()).hasSize(1);
         assertThat(result.entities().getFirst().label()).isEqualTo("Acme Corp");
         assertThat(result.entities().getFirst().sourceRefs()).isNotEmpty();
@@ -89,7 +91,7 @@ class ExecutorTest {
         EntityLookupExecutor executor = new EntityLookupExecutor();
         var req = new GraphQueryRequest("demo", "entity_lookup",
                 Map.of("label", "ACME CORP", "type", "Org", "limit", 10));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.entities()).hasSize(1);
     }
 
@@ -98,7 +100,7 @@ class ExecutorTest {
         EntityLookupExecutor executor = new EntityLookupExecutor();
         var req = new GraphQueryRequest("demo", "entity_lookup",
                 Map.of("label", "Acme Corp", "limit", 10));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.entities()).hasSize(1);
     }
 
@@ -106,7 +108,7 @@ class ExecutorTest {
     void shouldReturnEmptyWhenLookupLabelMissing() {
         EntityLookupExecutor executor = new EntityLookupExecutor();
         var req = new GraphQueryRequest("demo", "entity_lookup", Map.of("limit", 5));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.entities()).isEmpty();
     }
 
@@ -115,7 +117,7 @@ class ExecutorTest {
         OneHopExecutor executor = new OneHopExecutor();
         var req = new GraphQueryRequest("demo", "one_hop",
                 Map.of("entity_id", nodeA.entityId().toString(), "direction", "OUT", "limit", 50));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.edges()).hasSize(2);
         assertThat(result.entities()).hasSize(2);
     }
@@ -128,7 +130,7 @@ class ExecutorTest {
                         "direction", "OUT",
                         "edge_types", List.of("supplies_to"),
                         "limit", 50));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.edges()).hasSize(1);
         assertThat(result.edges().getFirst().verb()).isEqualTo("supplies_to");
     }
@@ -138,7 +140,7 @@ class ExecutorTest {
         OneHopExecutor executor = new OneHopExecutor();
         var req = new GraphQueryRequest("demo", "one_hop",
                 Map.of("entity_id", UUID.randomUUID().toString(), "direction", "OUT", "limit", 50));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.edges()).isEmpty();
     }
 
@@ -150,7 +152,7 @@ class ExecutorTest {
                         "to_entity_id", nodeC.entityId().toString(),
                         "max_hops", 4,
                         "max_paths", 10));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.paths()).hasSizeGreaterThanOrEqualTo(2);
     }
 
@@ -162,7 +164,7 @@ class ExecutorTest {
                         "to_entity_id", nodeC.entityId().toString(),
                         "max_hops", 4,
                         "max_paths", 1));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.paths()).hasSize(1);
     }
 
@@ -174,7 +176,7 @@ class ExecutorTest {
                         "to_entity_id", nodeD.entityId().toString(),
                         "max_hops", 4,
                         "max_paths", 10));
-        var result = executor.execute(connector, req);
+        var result = executor.execute(connector, identity, req);
         assertThat(result.paths()).isEmpty();
     }
 }

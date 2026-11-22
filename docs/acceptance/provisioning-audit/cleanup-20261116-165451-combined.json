@@ -1,0 +1,53 @@
+{
+  "scope": "stale-test",
+  "confirmed": [
+    "demo-v2",
+    "iso-a-6e7eb1ab",
+    "iso-a-765f7bcf",
+    "iso-b-6e7eb1ab",
+    "iso-b-765f7bcf",
+    "slice-a"
+  ],
+  "operator": "aminin",
+  "deleted_at": "2026-11-16T16:54:54.812684+00:00",
+  "tenants": [
+    {
+      "tenant_id": "demo-v2",
+      "source_versions": 3,
+      "bucket": 6,
+      "deleted_in": "attempt-1"
+    },
+    {
+      "tenant_id": "iso-a-6e7eb1ab",
+      "source_versions": 1,
+      "bucket": 1,
+      "deleted_in": "attempt-2"
+    },
+    {
+      "tenant_id": "iso-a-765f7bcf",
+      "source_versions": 1,
+      "bucket": 18,
+      "deleted_in": "attempt-2"
+    },
+    {
+      "tenant_id": "iso-b-6e7eb1ab",
+      "source_versions": 1,
+      "bucket": 0,
+      "deleted_in": "attempt-2"
+    },
+    {
+      "tenant_id": "iso-b-765f7bcf",
+      "source_versions": 1,
+      "bucket": 17,
+      "deleted_in": "attempt-2"
+    },
+    {
+      "tenant_id": "slice-a",
+      "source_versions": 15,
+      "bucket": 6,
+      "deleted_in": "attempt-2"
+    }
+  ],
+  "provider_table_deleted": false,
+  "note": "demo-v2 was deleted in the first attempt before the script tolerated the pre-V33 missing tenant_provider_config; ontology/graph orphan cleanup deferred to #732"
+}

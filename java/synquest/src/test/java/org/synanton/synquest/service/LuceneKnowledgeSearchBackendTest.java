@@ -1,5 +1,6 @@
 package org.synanton.synquest.service;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -11,6 +12,7 @@ import org.synanton.synquest.config.SynquestProperties;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.synanton.synquest.engine.lucene.LuceneIndexBuilder;
 
@@ -194,5 +198,51 @@ class LuceneKnowledgeSearchBackendTest {
     void wireCacheCursors() {
         CacheCursorStubs.wire(cache);
     }
+    @Test
+    void projectUsesSerializedReindexPath() throws Exception {
+        String tenant = "tenant-reindex-lock-" + UUID.randomUUID();
+        LuceneIndexBuilder builder = mock(LuceneIndexBuilder.class);
+        SearchService search = mock(SearchService.class);
+        when(builder.lastReport(tenant)).thenReturn(Optional.empty());
+        LuceneKnowledgeSearchBackend backend = new LuceneKnowledgeSearchBackend(
+                builder, search, cache, new SynquestProperties(
+                        new SynquestProperties.Index(indexRoot.toString(), false, 30), null, null, null));
+
+        assertThat(backend.project(tenant)).isZero();
+
+        verify(search).reindex(tenant);
+        verify(builder, never()).build(tenant);
+    }
+
+    @Test
+    void failClosedHidesUnmappedChunksAndCountsThem() throws Exception {
+        String tenant = "tenant-fail-closed-" + UUID.randomUUID();
+        UUID contentRefId = UUID.randomUUID();
+        UUID unmappedVersion = UUID.randomUUID();
+        seedCanonical(tenant, contentRefId, "doc.md", TEXT, unmappedVersion);
+
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        LuceneIndexBuilder failClosedBuilder = new LuceneIndexBuilder(cache, props());
+        SearchService failClosedSearch = new SearchService(
+                failClosedBuilder, mock(QueryEmbedder.class), props());
+        LuceneKnowledgeSearchBackend failClosed = new LuceneKnowledgeSearchBackend(
+                failClosedBuilder, failClosedSearch, cache, props(), false, registry);
+        failClosed.project(tenant);
+
+        assertThat(failClosed.candidates(tenant, TERM, 10))
+                .as("an unmapped chunk must be hidden under fail-closed")
+                .isEmpty();
+        var hidden = registry.find("search.visibility.hidden_unmapped")
+                .tag("reason", "unmapped").counter();
+        assertThat(hidden).isNotNull();
+        assertThat(hidden.count()).isEqualTo(1.0d);
+    }
+
+    private org.synanton.synquest.config.SynquestProperties props() {
+        return new org.synanton.synquest.config.SynquestProperties(
+                new org.synanton.synquest.config.SynquestProperties.Index(
+                        indexRoot.toString(), false, 30), null, null, null);
+    }
+
 
 }

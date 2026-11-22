@@ -30,6 +30,7 @@ dependencies {
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.micrometer.prometheus)
     implementation(libs.mustache.compiler)
     implementation(libs.caffeine)
     implementation(libs.tika.core)

@@ -15,16 +15,110 @@ import org.synanton.relix.adapter.out.graph.nebula.UnconfiguredNebulaSession;
 import org.synanton.relix.adapter.out.graph.neo4j.CypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.adapter.out.graph.neo4j.Neo4jGraphConnector;
+import org.synanton.relix.adapter.out.graph.neo4j.Neo4jSchemaVerifier;
+import org.synanton.relix.adapter.out.metadata.InMemoryCanonicalGraphMetadataStore;
+import org.synanton.relix.adapter.out.metadata.CassandraSourceGenerationAuthority;
+import org.synanton.relix.adapter.out.metadata.Neo4jCanonicalGraphMetadataStore;
+import org.synanton.relix.adapter.out.metadata.Neo4jSourceFenceStore;
 import org.synanton.relix.graph.GraphConnector;
+import org.synanton.relix.identity.CanonicalGraphIdentityResolver;
+import org.synanton.relix.identity.CanonicalGraphMetadataBootstrap;
+import org.synanton.relix.identity.CanonicalGraphMetadataStore;
+import org.synanton.relix.identity.GraphIdentityResolver;
+import org.synanton.relix.identity.ProjectionProvisioner;
+import org.synanton.relix.identity.SourceFenceReconciler;
+import org.synanton.relix.identity.SourceFenceStore;
+import org.synanton.relix.identity.ActivateRevision;
+import org.synanton.relix.identity.SourceGenerationAuthority;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.syntology.HttpSyntologyActiveVersionClient;
+import org.synanton.relix.syntology.SyntologyActiveVersionClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Clock;
 
 @Configuration
-@EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class, ReconciliationProperties.class})
+@EnableConfigurationProperties({RelixProperties.class, PromotionConsumerProperties.class,
+        ReconciliationProperties.class, ActivationRecoveryProperties.class, PromotionCompletionProperties.class})
 public class RelixConfig {
 
     @Bean
+    @ConditionalOnMissingBean(Clock.class)
+    Clock relixClock() {
+        return Clock.systemUTC();
+    }
+
+    @Bean
+    SyntologyActiveVersionClient syntologyActiveVersionClient(
+            @org.springframework.beans.factory.annotation.Value("${SYNTOLOGY_BASE_URL:http://syntology:8080}")
+            String syntologyBaseUrl,
+            @org.springframework.beans.factory.annotation.Value("${SYNANTON_JWT_SECRET}")
+            String jwtSecret) {
+        ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        return new HttpSyntologyActiveVersionClient(syntologyBaseUrl,
+                new org.synanton.common.jwt.ServiceTokenMinter(jwtSecret), mapper);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    CanonicalGraphMetadataStore neo4jCanonicalGraphMetadataStore(CypherExecutor cypherExecutor) {
+        return new Neo4jCanonicalGraphMetadataStore(cypherExecutor);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(CanonicalGraphMetadataStore.class)
+    CanonicalGraphMetadataStore inMemoryCanonicalGraphMetadataStore(GraphConnector graphConnector) {
+        return new InMemoryCanonicalGraphMetadataStore(graphConnector);
+    }
+
+    @Bean
+    CanonicalGraphMetadataBootstrap canonicalGraphMetadataBootstrap(
+            CanonicalGraphMetadataStore store, SyntologyActiveVersionClient syntology) {
+        return new CanonicalGraphMetadataBootstrap(store, syntology, java.time.Clock.systemUTC());
+    }
+
+    @Bean
+    GraphIdentityResolver graphIdentityResolver(CanonicalGraphMetadataStore store,
+                                                CanonicalGraphMetadataBootstrap bootstrap) {
+        return new CanonicalGraphIdentityResolver(store, bootstrap);
+    }
+
+    @Bean
+    ProjectionProvisioner projectionProvisioner(CanonicalGraphMetadataStore store,
+                                                SyntologyActiveVersionClient syntology) {
+        return new ProjectionProvisioner(store, syntology);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    SourceGenerationAuthority sourceGenerationAuthority(
+            org.synanton.ingestioncache.client.IngestionCacheClient cache) {
+        return new CassandraSourceGenerationAuthority(cache);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    SourceFenceStore sourceFenceStore(CypherExecutor cypherExecutor) {
+        return new Neo4jSourceFenceStore(cypherExecutor);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    SourceFenceReconciler sourceFenceReconciler(SourceGenerationAuthority authority,
+                                                SourceFenceStore store) {
+        return new SourceFenceReconciler(authority, store);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
+    ActivateRevision activateRevision(org.synanton.ingestioncache.activation.SourceActivationStore activations,
+                                      SourceFenceStore fences) {
+        return new ActivateRevision(activations, fences);
+    }
+
+    @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "memory", matchIfMissing = true)
-    GraphConnector inMemoryGraphConnector(GraphLoader graphLoader) {
+    InMemoryGraphConnector inMemoryGraphConnector(GraphLoader graphLoader) {
         return new InMemoryGraphConnector(graphLoader);
     }
 
@@ -47,7 +141,8 @@ public class RelixConfig {
 
     @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "neo4j")
-    GraphConnector neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypherExecutor) {
+    Neo4jGraphConnector neo4jGraphConnector(GraphLoader graphLoader, CypherExecutor cypherExecutor) {
+        new Neo4jSchemaVerifier(cypherExecutor).verify();
         return new Neo4jGraphConnector(graphLoader, cypherExecutor);
     }
 
@@ -60,7 +155,7 @@ public class RelixConfig {
 
     @Bean
     @ConditionalOnProperty(name = "relix.graph.connector", havingValue = "nebula")
-    GraphConnector nebulaGraphConnector(GraphLoader graphLoader, NebulaSession nebulaSession, RelixProperties props) {
+    NebulaGraphConnector nebulaGraphConnector(GraphLoader graphLoader, NebulaSession nebulaSession, RelixProperties props) {
         return new NebulaGraphConnector(graphLoader, nebulaSession, props.graph().nebula().space());
     }
 

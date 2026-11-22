@@ -1,0 +1,48 @@
+{
+  "tenantId" : "eval-smoke",
+  "providerRequested" : "regex",
+  "cliVersion" : "1.0.0",
+  "gitSha" : "e1af206c",
+  "operator" : "deploy-smoke",
+  "startedAt" : "2026-11-16T19:33:26.225595940Z",
+  "completedAt" : "2026-11-16T19:33:26.593942920Z",
+  "outcome" : "SUCCESS",
+  "steps" : [ {
+    "name" : "validate_request",
+    "outcome" : "PASSED",
+    "durationMs" : 0,
+    "details" : { }
+  }, {
+    "name" : "bind_ontology",
+    "outcome" : "CREATED",
+    "durationMs" : 103,
+    "details" : {
+      "ontology_version" : "1.0.0-eval-smoke"
+    }
+  }, {
+    "name" : "init_graph",
+    "outcome" : "CREATED",
+    "durationMs" : 121,
+    "details" : { }
+  }, {
+    "name" : "set_provider",
+    "outcome" : "CREATED",
+    "durationMs" : 27,
+    "details" : {
+      "provider" : "regex"
+    }
+  }, {
+    "name" : "verify_empty_state",
+    "outcome" : "PASSED",
+    "durationMs" : 28,
+    "details" : {
+      "source_versions_count" : 0
+    }
+  }, {
+    "name" : "register_tenant",
+    "outcome" : "CREATED",
+    "durationMs" : 86,
+    "details" : { }
+  } ],
+  "failureReason" : null
+}
