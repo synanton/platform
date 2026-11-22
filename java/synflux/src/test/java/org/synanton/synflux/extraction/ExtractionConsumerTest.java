@@ -28,10 +28,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionContext;
+import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
+import org.synanton.extraction.engine.QuarantinedLine;
 import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
@@ -210,6 +212,30 @@ class ExtractionConsumerTest {
                     assertThat(event.nextAttemptAt()).isNull();
                     assertThat(event.lastError()).contains("INCOMPLETE_LLM_OUTPUT")
                             .contains("finish_reason=length");
+                });
+    }
+
+    @Test
+    void corruptedJsonlIsFailedAndNotPersistedAsSuccess() {
+        String tenant = "tenant-corrupted-jsonl";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(), List.of(), LlmUsage.NONE,
+                List.of(new QuarantinedLine(2, "{bad}", "JSON_PARSE", "bad line", "STRUCTURAL")),
+                ExtractionIntegrity.CORRUPTED));
+
+        consumer(tenant, adapter).poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("EXTRACTION_FAILED");
+        assertThat(cache.listExtractionResults(tenant, fixture.contentRefId())).isEmpty();
+        assertThat(cache.listExtractionOutbox(tenant, CONNECTOR, SOURCE, RESOURCE))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.published()).isFalse();
+                    assertThat(event.attemptCount()).isEqualTo(1);
+                    assertThat(event.lastError()).contains("CORRUPTED_RESPONSE");
                 });
     }
 

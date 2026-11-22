@@ -1,6 +1,8 @@
 package org.synanton.extraction.engine.llm;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
+import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
@@ -61,8 +64,8 @@ import org.synanton.extraction.engine.jsonl.JsonlWriter;
 public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     public static final String PROMPT_VERSION = "extraction-v2";
-    private static final String PROMPT_RESOURCE = "/prompts/extraction-v2.txt";
     private static final int DEFAULT_MAX_TOKENS = 2048;
+    private static final int MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
     private static final JsonlLineParser JSONL_PARSER = new JsonlLineParser();
 
     static final String DEFAULT_TYPES = String.join(", ",
@@ -96,7 +99,13 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     private final String model;
     private final Duration timeout;
     private final int maxTokens;
+    /**
+     * Shared diagnostic capture directory. This is process-wide, not
+     * tenant-scoped; it is disabled by default and must not be enabled in
+     * production without extending the D5 tenant-isolation/retention controls.
+     */
     private final Path captureDir;
+    private final String promptVersion;
     private final String promptTemplate;
 
     public LlmExtractionAdapter(String endpoint, String model) {
@@ -118,6 +127,13 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 endpoint, model, timeout, maxTokens, captureDir);
     }
 
+    public LlmExtractionAdapter(String endpoint, String model, Duration timeout, int maxTokens,
+                                Path captureDir, String promptVersion) {
+        this(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
+                        .connectTimeout(Duration.ofSeconds(10)).build(),
+                endpoint, model, timeout, maxTokens, captureDir, promptVersion);
+    }
+
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model, Duration timeout) {
         this(client, endpoint, model, timeout, DEFAULT_MAX_TOKENS, null);
     }
@@ -129,6 +145,12 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
                                 Duration timeout, int maxTokens, Path captureDir) {
+        this(client, endpoint, model, timeout, maxTokens, captureDir, PROMPT_VERSION);
+    }
+
+    public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
+                                Duration timeout, int maxTokens, Path captureDir,
+                                String promptVersion) {
         if (endpoint == null || endpoint.isBlank()) {
             throw new IllegalArgumentException("LLM extraction endpoint is required");
         }
@@ -138,7 +160,12 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         this.timeout = timeout == null ? Duration.ofSeconds(120) : timeout;
         this.maxTokens = Math.max(1, maxTokens);
         this.captureDir = captureDir;
-        this.promptTemplate = loadPrompt();
+        this.promptVersion = normalizePromptVersion(promptVersion);
+        this.promptTemplate = loadPrompt(this.promptVersion);
+    }
+
+    public String promptVersion() {
+        return promptVersion;
     }
 
     @Override
@@ -177,7 +204,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         List<QuarantinedLine> quarantined = new ArrayList<>();
         for (JsonlRejectedLine rejected : parsed.rejected()) {
             quarantined.add(new QuarantinedLine(rejected.lineNumber(), rejected.raw(),
-                    rejected.reason().name(), rejected.detail()));
+                    rejected.reason().name(), rejected.detail(),
+                    rejected.reason().category().name()));
         }
         for (JsonlLine line : parsed.accepted()) {
             Map<String, Object> item = line.value();
@@ -194,7 +222,26 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             captureQuarantine(segment, context, call, quarantined);
         }
         return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
-                List.copyOf(quarantined));
+                List.copyOf(quarantined), integrity(quarantined));
+    }
+
+    private static ExtractionIntegrity integrity(List<QuarantinedLine> quarantined) {
+        boolean truncated = false;
+        boolean corrupted = false;
+        for (QuarantinedLine line : quarantined) {
+            if (!"STRUCTURAL".equals(line.category())) {
+                continue;
+            }
+            if ("TRUNCATED".equals(line.reasonCode())) {
+                truncated = true;
+            } else {
+                corrupted = true;
+            }
+        }
+        if (corrupted) {
+            return ExtractionIntegrity.CORRUPTED;
+        }
+        return truncated ? ExtractionIntegrity.TRUNCATED : ExtractionIntegrity.CLEAN;
     }
 
     private void mapEntity(Map<String, Object> item, int lineNumber, String raw,
@@ -288,13 +335,21 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     private static void quarantine(List<QuarantinedLine> quarantined, int lineNumber, String raw,
                                    JsonlFailureReason reason, String detail) {
-        quarantined.add(new QuarantinedLine(lineNumber, raw, reason.name(), detail));
+        quarantined.add(new QuarantinedLine(lineNumber, raw, reason.name(), detail,
+                reason.category().name()));
     }
 
     private static boolean looksLikeLegacyObject(String content) {
-        return content != null
-                && content.contains("\"preEntities\"")
-                && content.contains("\"relations\"");
+        if (content == null) {
+            return false;
+        }
+        boolean legacyKeys = content.contains("\"preEntities\"") && content.contains("\"relations\"");
+        boolean jsonlShaped = content.contains("\"type\":\"entity\"")
+                || content.contains("\"type\":\"relation\"");
+        // Fallback is intentional only when the response is not JSONL-shaped but
+        // carries both legacy top-level keys. A malformed legacy object still
+        // reaches parseLegacyObject so its specific parse error is captured.
+        return legacyKeys && !jsonlShaped;
     }
 
     private ExtractionResult parseLegacyObject(TextSegment segment, ExtractionContext context,
@@ -330,7 +385,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             captureQuarantine(segment, context, call, quarantined);
         }
         return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
-                List.copyOf(quarantined));
+                List.copyOf(quarantined), integrity(quarantined));
     }
 
     private void throwIncompleteOrParseFailure(LlmCallResult call, RuntimeException failure) {
@@ -451,13 +506,17 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                 .build();
         try {
-            HttpResponse<String> response = client.send(request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<InputStream> response = client.send(request,
+                    HttpResponse.BodyHandlers.ofInputStream());
+            String responseBody;
+            try (InputStream responseStream = response.body()) {
+                responseBody = new String(readBounded(responseStream, MAX_RESPONSE_BYTES),
+                        StandardCharsets.UTF_8);
+            }
             if (response.statusCode() / 100 != 2) {
                 throw new IllegalStateException("LLM extraction returned HTTP " + response.statusCode()
-                        + ": " + truncate(response.body()));
+                        + ": " + truncate(responseBody));
             }
-            String responseBody = response.body();
             Map<String, Object> envelope = Json.parseObject(responseBody);
             List<Map<String, Object>> choices = Json.objectList(envelope, "choices");
             if (choices.isEmpty()) {
@@ -479,6 +538,22 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         } catch (IOException e) {
             throw new IllegalStateException("LLM extraction request failed: " + endpoint, e);
         }
+    }
+
+    private static byte[] readBounded(InputStream input, int maxBytes) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int total = 0;
+        int read;
+        while ((read = input.read(buffer)) >= 0) {
+            total += read;
+            if (total > maxBytes) {
+                throw new IllegalStateException(
+                        "LLM extraction response exceeds " + maxBytes + " bytes");
+            }
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
     }
 
     private static String sha256(String value) {
@@ -513,6 +588,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 event.put("finish_reason", call.usage().finishReason());
                 event.put("line", line.lineNumber());
                 event.put("reason", line.reasonCode());
+                event.put("category", line.category());
                 event.put("detail", line.detail());
                 event.put("raw", line.raw());
                 records.add(event);
@@ -623,14 +699,23 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         return value.length() <= 300 ? value : value.substring(0, 300) + "...";
     }
 
-    private static String loadPrompt() {
-        try (var stream = LlmExtractionAdapter.class.getResourceAsStream(PROMPT_RESOURCE)) {
+    private static String normalizePromptVersion(String version) {
+        String value = version == null || version.isBlank() ? PROMPT_VERSION : version.strip();
+        if (!value.matches("[a-z0-9-]+")) {
+            throw new IllegalArgumentException("invalid prompt version: " + value);
+        }
+        return value;
+    }
+
+    private static String loadPrompt(String version) {
+        String resource = "/prompts/" + version + ".txt";
+        try (var stream = LlmExtractionAdapter.class.getResourceAsStream(resource)) {
             if (stream == null) {
-                throw new IllegalStateException("missing prompt resource: " + PROMPT_RESOURCE);
+                throw new IllegalStateException("missing prompt resource: " + resource);
             }
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new UncheckedIOException("failed to load " + PROMPT_RESOURCE, e);
+            throw new UncheckedIOException("failed to load " + resource, e);
         }
     }
 }

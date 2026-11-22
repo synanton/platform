@@ -1,17 +1,34 @@
 package org.synanton.extraction.engine.jsonl;
 
-/** Stable reason codes for a rejected JSONL line. */
+/** Stable reason codes for a rejected JSONL line, grouped by remediation class. */
 public enum JsonlFailureReason {
-    JSON_PARSE,
-    TRUNCATED,
-    LINE_TOO_LARGE,
-    CONCATENATED_RECORDS,
-    SCHEMA,
-    UNKNOWN_RECORD_TYPE,
-    EMPTY_FIELD,
-    UNKNOWN_ENTITY_TYPE,
-    UNKNOWN_PREDICATE,
-    UNANCHORED,
-    SELF_RELATION,
-    DUPLICATE
+    JSON_PARSE(Category.STRUCTURAL),
+    TRUNCATED(Category.STRUCTURAL),
+    LINE_TOO_LARGE(Category.STRUCTURAL),
+    CONCATENATED_RECORDS(Category.STRUCTURAL),
+    SCHEMA(Category.STRUCTURAL),
+    EMPTY_FIELD(Category.STRUCTURAL),
+    UNKNOWN_RECORD_TYPE(Category.STRUCTURAL),
+    UNKNOWN_ENTITY_TYPE(Category.SEMANTIC),
+    UNKNOWN_PREDICATE(Category.SEMANTIC),
+    UNANCHORED(Category.SEMANTIC),
+    SELF_RELATION(Category.SEMANTIC),
+    DUPLICATE(Category.SEMANTIC);
+
+    public enum Category {
+        /** Framing/serialization/schema failure; fix with prompt or enforcement. */
+        STRUCTURAL,
+        /** Model drifted from the ontology/anchoring contract; fix with ontology work. */
+        SEMANTIC
+    }
+
+    private final Category category;
+
+    JsonlFailureReason(Category category) {
+        this.category = category;
+    }
+
+    public Category category() {
+        return category;
+    }
 }

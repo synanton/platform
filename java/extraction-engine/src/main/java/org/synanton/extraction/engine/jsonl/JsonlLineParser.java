@@ -13,6 +13,12 @@ import org.synanton.extraction.engine.json.Json;
  * parser records 1-based line numbers and stable reason codes, and the caller
  * keeps the raw evidence. It is deliberately non-streaming: the full response is
  * split on {@code \n} so record boundaries are explicit and auditable.
+ *
+ * <p><b>Recovery policy.</b> A valid prefix is labelled as truncation only when
+ * the final non-blank line is incomplete and {@code finish_reason=length}. A
+ * malformed line with any other finish reason is {@code JSON_PARSE}; valid
+ * neighbours are still accepted for containment, but the response is not
+ * presented as a clean truncation. A response with no valid lines is a failure.
  */
 public final class JsonlLineParser {
 
@@ -40,6 +46,7 @@ public final class JsonlLineParser {
         List<JsonlLine> accepted = new ArrayList<>();
         List<JsonlRejectedLine> rejected = new ArrayList<>();
         int blankLines = 0;
+        boolean priorStructuralRejection = false;
         for (int index = 0; index < lines.length; index++) {
             String raw = lines[index];
             int lineNumber = index + 1;
@@ -50,6 +57,7 @@ public final class JsonlLineParser {
             if (raw.getBytes(StandardCharsets.UTF_8).length > maxLineBytes) {
                 rejected.add(new JsonlRejectedLine(lineNumber, raw, JsonlFailureReason.LINE_TOO_LARGE,
                         "line exceeds " + maxLineBytes + " UTF-8 bytes"));
+                priorStructuralRejection = true;
                 continue;
             }
             String trimmed = raw.strip();
@@ -59,25 +67,32 @@ public final class JsonlLineParser {
                 if (!(parsed instanceof Map<?, ?> map)) {
                     rejected.add(new JsonlRejectedLine(lineNumber, raw, JsonlFailureReason.SCHEMA,
                             "line is not a JSON object"));
+                    priorStructuralRejection = true;
                     continue;
                 }
                 @SuppressWarnings("unchecked")
                 Map<String, Object> typed = (Map<String, Object>) map;
                 value = typed;
             } catch (RuntimeException parseFailure) {
-                JsonlFailureReason reason = index == lastNonBlank && lengthFinish
+                boolean cleanPrefix = !priorStructuralRejection;
+                boolean incompleteFinal = index == lastNonBlank && isIncompleteRecord(trimmed);
+                JsonlFailureReason reason = index == lastNonBlank
+                        && cleanPrefix
+                        && (lengthFinish || incompleteFinal)
                         ? JsonlFailureReason.TRUNCATED
                         : hasMultipleTopLevelObjects(trimmed)
                                 ? JsonlFailureReason.CONCATENATED_RECORDS
                                 : JsonlFailureReason.JSON_PARSE;
                 rejected.add(new JsonlRejectedLine(lineNumber, raw, reason,
                         parseFailure.getMessage() == null ? parseFailure.toString() : parseFailure.getMessage()));
+                priorStructuralRejection = true;
                 continue;
             }
             JsonlFailureReason shapeFailure = shapeFailure(value);
             if (shapeFailure != null) {
                 rejected.add(new JsonlRejectedLine(lineNumber, raw, shapeFailure,
                         "record does not match the JSONL message shape"));
+                priorStructuralRejection = true;
                 continue;
             }
             accepted.add(new JsonlLine(lineNumber, raw, value));
@@ -154,14 +169,41 @@ public final class JsonlLineParser {
                 if (!Character.isWhitespace(c)) {
                     return c == '{';
                 }
-            } else if (c == '{') {
+            } else if (c == '{' || c == '[') {
                 depth++;
-            } else if (c == '}') {
+            } else if (c == '}' || c == ']') {
                 depth--;
                 completed = depth == 0;
             }
         }
         return false;
+    }
+
+    static boolean isIncompleteRecord(String line) {
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == '"') {
+                    inString = false;
+                }
+                continue;
+            }
+            if (c == '"') {
+                inString = true;
+            } else if (c == '{' || c == '[') {
+                depth++;
+            } else if (c == '}' || c == ']') {
+                depth--;
+            }
+        }
+        return inString || depth > 0;
     }
 
     private static FenceResult stripFences(String content) {
