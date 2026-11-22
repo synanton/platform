@@ -217,8 +217,8 @@ dependent on code changes rather than ontology releases.
 | Dimension | Synanton today | TrustGraph | Assessment |
 |---|---|---|---|
 | Retrieval chunking | Structure-aware 512 tokens; table/list atomic; sectionPath/pages; fallback | Recursive character splitter, default 2000 chars / 100 overlap | Keep Synanton's chunker. |
-| Internal text unit for ontology matching | Whole chunk | Sentence split (NLTK) | Adopt sentence-level matching inside a window. |
-| Extraction unit | One retrieval chunk per LLM call | One retrieval chunk per LLM call | Both fan out. Synanton must add extraction windows and budgets. |
+| Internal text unit for ontology matching | Whole chunk | Sentence split (NLTK) | Adopt sentence-level matching inside an extraction segment. |
+| Extraction unit | One retrieval chunk per LLM call | One retrieval chunk per LLM call | Both fan out. Synanton splits each retrieval chunk into smaller extraction segments and adds budgets. |
 | Document aggregation | Legacy Pass 2: all chunk outputs in one prompt | None | Replace with bounded deterministic consolidation. Do not copy either extreme. |
 | Large-document handling | Async consumer, sequential per chunk | Streaming/chunked upload; still per chunk extraction | Add per-document window budget, not just upload streaming. |
 
@@ -640,14 +640,14 @@ When a budget is reached, finish and persist completed segments, stop scheduling
 | C3 | Schema validation | Add a JSON Schema validator dependency and compile a line schema from the selected subset. | `java/extraction-engine` |
 | C4 | Ontology compiler | New Syntology component and endpoint producing `ExtractionSchema` + digest from a release. | `java/syntology/.../domain/service`, `api/rest/OntologyController.java` |
 | C5 | Subset selector | Lexical + embedding selector with dependency closure, bounds, cache, and miss metrics. | `java/syntology` or shared ontology client; `java/extraction-engine` |
-| C6 | Segment planner | Split each 512-token retrieval chunk into sentence/paragraph-aware 256–384-token segments; preserve offsets, overlap, and coverage. | New `java/synflux/.../extraction/ExtractionWindowPlanner.java` |
+| C6 | Segment planner | Split each 512-token retrieval chunk into sentence/paragraph-aware 256–384-token segments; preserve offsets, overlap, and coverage. | Extend `java/synflux/.../extraction/ExtractionConsumer.java` with an in-process segment planner. |
 | C7 | Consumer | Replace sequential per-chunk loop with window batches, global/per-tenant semaphores, per-document budgets, partial status. | `java/synflux/.../extraction/ExtractionConsumer.java` |
-| C8 | Consolidation | Deterministic merge of window results into document candidates; bounded optional LLM conflict resolution. | New `java/synflux/.../extraction/CandidateConsolidator.java` |
+| C8 | Consolidation | Deterministic merge of segment results into document candidates; no LLM conflict-resolution pass in the first release. | New `java/synflux/.../extraction/CandidateConsolidator.java` |
 | C9 | Quarantine | Persist rejected lines with reason codes and raw line; metrics. | `java/ingestion-cache` schema + client; new table/migration |
 | C10 | Legacy path | Stop using `EnrichStage` Pass 1/Pass 2 for knowledge extraction; fix the cache bug if retained for summaries; use the mustache templates or delete them. | `java/synflux/.../pipeline/stage/EnrichStage.java`, resources |
 | C11 | Parser | Remove silent defaults (`type="Unknown"`, `confidence=1.0`); require schema-valid fields; keep tolerant-but-counted behavior. | `java/relix/.../loader/Pass2AnalysisParser.java` |
 | C12 | Validation | Batch `validate-relation` calls; add entity class validation and promotion-time SHACL. | `java/syntology`, `java/synflux/.../extraction/graph/GraphWriter.java` |
-| C13 | Provenance | Carry window/schema/ontology digests and per-line evidence through to `extraction_results` and graph commit. | `java/synflux`, `java/ingestion-cache`, `java/relix` |
+| C13 | Provenance | Carry segment/schema/ontology digests and per-line evidence through to `extraction_results` and graph commit. | `java/synflux`, `java/ingestion-cache`, `java/relix` |
 
 Do not put ontology parsing or SHACL logic in the extraction engine. Syntology
 compiles; the engine consumes an artifact.
@@ -682,21 +682,14 @@ below are experiment starting points, not production promises.
 | \`synflux.extraction.quarantine.retention-days\` | 30 | Default; hard maximum 90 absent approved exception. |
 | \`synflux.extraction.prefilter.enabled\` | true | Skip only deterministic/high-confidence boilerplate with recorded reason. |
 
-For a document with \(N\) 512-token retrieval chunks, approximate segment/call
-count is:
-
-\[
-C(S,O) \approx \sum_{i=1}^{N}
-\left\lceil \frac{\max(0,L_i-O)}{S-O} \right\rceil
-\]
-
-where \(L_i\) is the actual token count of retrieval chunk \(i\), \(S\) is the
-segment ceiling/target used by the experiment, and \(O\) is overlap. The exact
-planner count (not this approximation) is recorded per document. For 200
-near-full 512-token chunks, 256-token segments with 32-token overlap are
-approximately 400 calls; 384-token segments are generally around 400 calls
-when chunks exceed 384 tokens; 512-token mode is approximately 200 calls.
-Structure-aware boundaries can change these counts.
+For a 50-page document with approximately 200 near-full 512-token retrieval
+chunks, the planning estimate is approximately 400 extraction calls when each
+chunk is split into two segments (256-token target with a 384-token hard ceiling,
+or a 384-token target where the final tail is separate), versus approximately
+200 calls in 512-token mode. This is an illustration, not a fixed prediction:
+actual counts depend on sentence/paragraph/table boundaries, short chunks, and
+overlap. The segment planner's exact count is authoritative and is recorded
+per document.
 
 The cost model must report model prompt/completion tokens, calls, GPU-seconds,
 queue wait, wall-clock p50/p95, and energy/cost where the runtime exposes it.
