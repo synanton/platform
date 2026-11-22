@@ -7,6 +7,7 @@ Synanton explores how enterprise knowledge can be ingested, structured, secured,
 The platform is developed through versioned designs, incremental implementations, runnable demos, contract tests, benchmarks, and security/failure tests. **Architecture approval is not implementation or production-readiness approval.**
 
 - **Architecture:** [Platform Architecture 1.0](docs/architecture/synanton-platform-architecture-1.0.md) — capstone for Designs 1.22–1.34; implementation status is tracked in [§15](docs/architecture/synanton-platform-architecture-1.0.md#15-current-implementation-status).
+- **OGCE decision:** [ADR-044](docs/architecture/decisions/adr-044-ontology-grounded-chunk-extraction.md) — Accepted (design), implementation pending; status mirrors ADR-044; see ADR-044 for transition criteria.
 - **Implementation index:** [Architecture index](docs/architecture/INDEX.md) · [Documentation inventory](docs/DOCUMENTATION-INVENTORY.md)
 - **License:** [Apache 2.0](LICENSE)
 
