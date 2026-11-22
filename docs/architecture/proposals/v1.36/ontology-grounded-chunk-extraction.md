@@ -170,6 +170,23 @@ extraction cost.
 
 The defect is that **retrieval granularity is being reused as extraction
 granularity**, and document-level aggregation is unbounded.
+**Illustrative fan-out arithmetic (not a throughput forecast):** for 200 near-full
+512-token retrieval chunks, one extraction call per chunk is approximately 200
+calls. Splitting each chunk into two approximately 256-token extraction segments
+is approximately 400 calls before retries. This is roughly a 2x call-count
+increase for that workload; actual planner output varies with sentence,
+paragraph, table boundaries, short final segments, and overlap. The smaller
+segments are therefore a quality/evidence trade-off, not a presumed cost
+reduction. Compare both modes at equal GPU-time/token budgets and report actual
+planned calls, retries, tokens, and GPU-seconds per document.
+
+| Illustrative mode | Retrieval chunks | Extraction calls per chunk | Approx. calls/document |
+|---|---:|---:|---:|
+| Existing 512-token extraction unit | 200 | 1 | 200 |
+| Two ~256-token segments within each chunk | 200 | 2 | 400 |
+
+The arithmetic excludes retries and assumes each retrieval chunk is near full;
+it must not be used as a production capacity estimate.
 
 ### 2.4 Ontology is not actually in the loop
 
@@ -724,18 +741,18 @@ Re-baseline all metrics on the exact frozen ADR-022 gold revision and pinned
 model/runtime before rollout. Evaluate on the same split and report confidence
 intervals; do not tune on the hold-out test set.
 
-| Metric | ADR-022 baseline | Proposed gate | Measurement / interpretation |
+| Metric | Baseline | Proposed gate | Operational definition and measurement |
 |---|---:|---:|---|
-| Entity F1 | 0.618 | >=0.70 | Frozen gold; no precision collapse. |
-| Relation F1 | 0.078 | >=0.15 minimum; >=0.20 stretch | Frozen gold; relation F1 is the primary quality gate. |
-| JSONL valid-line rate | Not measured | >=98% | Valid records / non-empty emitted lines, before schema rejection. |
-| Truncation recovery | Whole response lost today | 100% complete preceding lines retained | Synthetic truncation fixtures + provider finish reason. |
-| Unexplained quarantine | Not measured | <=5% of emitted lines | Excludes expected duplicates; report each reason separately. |
-| Subset miss rate | Not measured | <=2% after one widening/full-schema retry | At least 500 schema-valid candidates per release before gating. |
-| Cross-boundary relation recall | Not measured | >= baseline full-context boundary recall - 2 percentage points; target >=80% of gold boundary relations | Frozen boundary subset; compare overlap-only and reconciliation pass. |
-| Evidence anchoring | Not measured | >=99% exact deterministic anchors for promoted candidates | Gold spans + exact quote anchoring. |
-| Coverage | Not measured | 100% for \`KNOWLEDGE_READY\`; otherwise \`PARTIAL\` | Eligible vs processed segment ledger. |
-| Cost/latency | Not measured | No production gate until reference profile is pinned; compare against 512-token baseline | GPU-seconds/document, token/call counts, p95 wall clock. |
+| Entity F1 | 0.618 (ADR-022) | >=0.70 | Use the frozen ADR-022 averaging protocol; report precision, recall, F1, confidence interval, and annotation ceiling. |
+| Relation F1 | 0.078 (ADR-022) | >=0.15 minimum; >=0.20 stretch | Same frozen gold/protocol; report relation-type breakdown and precision/recall. Primary quality gate. |
+| JSONL valid-line rate | Not measured | >=98% | Syntactically valid single JSON objects / all non-empty emitted lines, before ontology/schema-semantic rejection; report protocol violations separately. |
+| Truncation recovery | Whole response lost today | 100% complete preceding lines retained | Inject truncation at line boundaries and within lines; every complete valid line preceding the cut must survive, while only the incomplete tail is quarantined as `TRUNCATED`. Include provider length-finish cases. |
+| Unexplained quarantine | Not measured | <=5% of emitted lines | Quarantined lines without an expected/recognized reason / emitted non-empty lines; duplicates and expected invalid fixtures are reported separately. |
+| Subset miss rate | Not measured | <=2% after one widening/full-schema retry | Gold-required class/predicate IDs absent from the final selected subset / all gold-required class/predicate IDs for schema-valid gold candidates; minimum 500 candidates per release, report pre-retry and post-retry rates separately. |
+| Cross-boundary relation recall | Not measured | >=80% of gold boundary relations and no more than 2 percentage points below full-context baseline | Recovered gold relations whose supporting spans cross a segment boundary / all gold boundary relations in a frozen annotated boundary subset. Report A: overlap only, B: overlap + deterministic reconciliation, C: bounded adjacent-segment semantic reconciliation; include precision and relation F1. |
+| Evidence anchoring | Not measured | >=99% exact deterministic anchors for promoted candidates | Correct exact source-span anchors / all promoted candidate evidence spans, measured against gold spans; ambiguous/unanchored candidates cannot be promoted. |
+| Coverage completeness | Not measured | 100% for `KNOWLEDGE_READY`; otherwise `PARTIAL` | Successfully completed eligible segments / all eligible segments. Empty-but-successful model output counts as processed; pending, failed, budget-skipped, or silently omitted segments do not. `KNOWLEDGE_READY` requires 100% and no unresolved segment failures. |
+| Cost/latency | Not measured | No absolute production gate until reference profile is pinned; no regression beyond agreed equal-budget baseline | Record calls/document, prompt/completion tokens, retries, GPU-seconds/document, queue wait, p50/p95 wall time, throughput, peak KV cache, coverage, and quality on pinned hardware/model/runtime. |
 
 The 0.70 entity / 0.15 relation thresholds are initial engineering gates to
 review against inter-annotator agreement and baseline variance. If the frozen
@@ -837,12 +854,21 @@ confidence intervals and repeat runs to expose model nondeterminism.
 
 ## 9. Phased rollout and legacy migration
 
-| Phase | Goal | Main work | Rollback |
+| Phase | Goal | Main work | Rollback / safe fallback |
 |---|---|---|---|
-| P0 | Stop losing facts to JSON fragility | JSONL adapter, per-line validation/quarantine, deterministic anchoring | Feature flag routes new jobs to legacy adapter; RAKG remains canonical |
-| P1 | Pin ontology contract | Consume static schema artifact, then add Syntology compiler/API | Fall back to last known-good pinned schema artifact, not an unversioned vocabulary |
-| P2 | Bound segmentation and scheduling | Smaller segments, budgets, deterministic consolidation, partial coverage | Disable segment splitting for new jobs and return to one 512-token chunk per call |
-| P3 | Add ontology subset + batched validation | Selector, fallback, miss-rate feedback, semantic batch validation | Disable subset; use full schema within context budget |
+| P0 | Stop losing facts to JSON fragility | JSONL adapter, per-line validation/quarantine, deterministic anchoring | Disable the OGCE JSONL rollout for affected tenants and pause/re-enqueue work to the last-known-good RAKG adapter if one is available. Do **not** route new RAKG jobs through the known-buggy legacy Pass-2 path. If no safe RAKG fallback exists, pause extraction rather than silently change semantics. |
+| P1 | Pin ontology contract | Consume static schema artifact, then add Syntology compiler/API | Fall back to the last-known-good immutable, digest-pinned schema artifact; never use an unversioned vocabulary. |
+| P2 | Bound segmentation and scheduling | Smaller segments, budgets, deterministic consolidation, partial coverage | Disable sub-chunk segmentation for new RAKG work and use one 512-token retrieval chunk per call under the JSONL contract; preserve budgets, provenance, and partial status. |
+| P3 | Add ontology subset + batched validation | Selector, fallback, miss-rate feedback, semantic batch validation | Disable subset selection and use the full pinned schema within the context budget; if it cannot fit, fail closed or report partial rather than dropping constraints. |
+
+**Authoritative path during transition:** RAKG is authoritative for all newly
+scheduled extraction jobs from the start of migration. The legacy EnrichStage
+Pass-2 path is compatibility-only for already-running legacy jobs; it is not a
+fallback for new RAKG work and its results are never promoted into the RAKG
+candidate generation. During a rollback, the safe fallback is a last-known-good
+RAKG adapter/configuration. If none is available, pause affected extraction and
+re-enqueue after remediation; do not reactivate the defective Pass-2 aggregation
+path.
 
 **Legacy Pass-2 migration**
 
@@ -859,11 +885,15 @@ confidence intervals and repeat runs to expose model nondeterminism.
    delete historical rows before the retention period. Reprocess selected source
    versions from persisted chunks under the new schema. Preserve old results
    for audit but mark them non-replayable under the new contract.
-5. Roll back by disabling the new feature flag for affected tenants and
-   re-enqueueing source versions. Do not route new jobs back through the buggy
-   Pass-2 cache path. Trigger rollback if relation F1 falls below 0.078 on two
-   consecutive frozen-gold evaluation runs, promoted-anchor accuracy falls
-   below 99%, or any tenant-isolation/provenance invariant fails.
+5. Roll back by disabling the OGCE feature flag for affected tenants and
+   re-enqueueing source versions to the last-known-good RAKG adapter/configuration.
+   If no safe RAKG fallback is available, pause extraction for those tenants
+   rather than routing to legacy Pass 2. Trigger rollback if relation F1 falls
+   below 0.078 on two consecutive frozen-gold evaluation runs, promoted-anchor
+   accuracy falls below 99%, the post-retry subset miss rate exceeds 2% after
+   the minimum 500-candidate sample, or any tenant-isolation/provenance invariant
+   fails. Also halt promotion immediately on any non-100% coverage reported as
+   `KNOWLEDGE_READY`.
 6. Remove the legacy Pass-2 code and cache reader only after the dual-run window
    completes, no in-flight jobs remain, and the owner signs off on migration
    metrics. Decommissioning is a separate implementation PR.
