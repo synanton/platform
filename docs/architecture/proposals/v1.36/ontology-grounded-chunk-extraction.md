@@ -334,34 +334,27 @@ Ownership boundaries:
 | `CandidateConsolidator` | Synflux | Input: window results; output: document candidate set with merged evidence and provenance. |
 | Semantic validation | Syntology + Relix | Existing `validate-relation` path, extended to batched entity/relation validation. |
 
-### 4.3 Extraction windows: decouple retrieval from extraction
+### 4.3 Extraction segments: smaller than retrieval chunks
 
-The planner converts persisted `ChunkRow`s into extraction windows:
+The extraction segmenter operates **inside each persisted retrieval chunk**. It does not combine adjacent retrieval chunks into larger LLM inputs.
 
-- Start from the document's section/chunk order and `sectionId` where available.
-- Pack consecutive chunks until `window.max-tokens` (default 2000) or a section
-  boundary.
-- Preserve `overlap-tokens` (default 100) between windows so relations that
-  cross a boundary are visible; de-duplicate later by span.
-- Never split a table chunk. A table larger than the window budget becomes its
-  own window; if still too large, extract its caption/headers plus row groups,
-  and mark `table_split=true`.
-- Record `window_id`, `chunk_ids`, `document_offset_start/end`, and a text digest.
-- Prefilter boilerplate (table of contents, index, repeated legal footer) using
-  structure and lexical signals. A skipped chunk is recorded with a reason; it
-  is not deleted from retrieval.
-- Enforce `window.max-per-document` (default 256). Beyond the cap, switch to the
-  deterministic regex/dictionary provider for the remainder and mark
-  `coverage=PARTIAL`; never silently truncate.
+- Keep \`SemanticChunker\` and its 512-token retrieval contract unchanged: section paths, page provenance, atomic structural units, and table/list semantics remain owned by retrieval chunking.
+- Split each retrieval chunk at sentence and paragraph boundaries. Start with a **256-token target**, a **384-token hard content ceiling**, and **32–48 tokens** of overlap. Benchmark 256/384/512-token units with 32/48/64-token overlap on the frozen gold before fixing production defaults.
+- Never concatenate multiple 512-token retrieval chunks to reach a target size. A short final segment is valid. Do not split inside a sentence unless a single sentence exceeds the hard ceiling; record that exceptional split.
+- Tables remain structurally aware: segment by header plus bounded row groups. Never force an oversized table into one prompt. Preserve row-group provenance and mark exceptional splits.
+- Each segment records \`segment_id\`, parent \`chunk_id\`, chunk-local character range, document offsets when available, token count, overlap range, and text digest. The model never supplies these values.
+- Overlap is context only. Deduplicate by deterministic source anchoring and span, retaining all supporting chunk/segment references.
+- Do not silently switch the unprocessed tail to regex/dictionary extraction when a budget is exhausted. Stop scheduling, persist the reason, and report \`PARTIAL\` with exact processed/eligible segment counts and coverage.
 
-Why windows help:
+This deliberately trades more small calls for narrower semantic context and better evidence localization. Throughput must come from bounded GPU batching and admission control, not from making each extraction prompt larger.
 
-- They reduce call count by packing multiple retrieval chunks into one prompt.
-- They keep prompts bounded and make output budgets predictable.
-- They preserve exact per-chunk provenance because each candidate is anchored to
-  a character span, and the span maps back to a chunk ordinal.
-- They let the ontology subset cover the window's topics rather than one
-  arbitrary 512-token slice.
+### 4.3.1 Token accounting and scheduling
+
+Token counts are computed by the configured model tokenizer (or a documented conservative estimator when tokenizer access is unavailable). The planner and scheduler own all token arithmetic. Track separately segment content tokens, ontology/system-prompt tokens, reserved completion tokens, queued prompt tokens, in-flight requests, and per-document/per-tenant budgets.
+
+Admit a request only when both context capacity and GPU/KV-cache admission permit it. Use a bounded queue and backpressure; do not equate a fixed thread-pool size with GPU capacity. Record model, tokenizer, and runtime revisions.
+
+Recover cross-segment relations through overlap and deterministic anchoring. Do not enlarge every segment to solve rare boundary cases; measure cross-boundary relation recall explicitly.
 
 ### 4.4 Compile the ontology into an extraction schema
 
@@ -455,83 +448,52 @@ service), not rebuilt per extraction worker.
 
 ### 4.6 JSONL output contract
 
-Every extraction call returns zero or more lines. No wrapper object, no array, no
-Markdown fence.
+**JSONL is the canonical multi-fact LLM output contract.** Each non-empty line is exactly one UTF-8 JSON object. A response is zero or more newline-delimited records; it is never a JSON array or wrapper object. This applies to every knowledge-extraction path, including any retained legacy path. Provider-native structured output may be used only if the adapter normalizes it to this same JSONL contract before validation and persistence.
 
-```text
-{"type":"entity","surface":"Acme Corporation","type_id":"Organization","char_start":14,"char_end":30,"confidence":0.91}
+\`\`\`text
+{"type":"entity","surface":"Acme Corporation","type_id":"Organization"}
 {"type":"entity","surface":"Beta Ltd","type_id":"Supplier"}
 {"type":"relation","subject":"Acme Corporation","subject_type":"Organization","predicate":"hasSupplier","object":"Beta Ltd","object_type":"Supplier","evidence":"Acme Corporation is supplied by Beta Ltd."}
 {"type":"attribute","subject":"Acme Corporation","subject_type":"Organization","predicate":"foundedYear","value":"1999","evidence":"Acme was founded in 1999."}
-```
+\`\`\`
 
-Contract notes:
+Contract rules:
 
-- `type` is the discriminator: `entity`, `relation`, `attribute`.
-- `type_id` and `predicate` must come from the compiled subset. The LLM must not
-  invent identifiers.
-- `char_start`/`char_end` are **hints**. Per ADR-022, the adapter anchors
-  `surface` in the window text deterministically and drops unanchorable mentions.
-  If omitted, the adapter searches for the surface.
-- `confidence` is optional and treated as a model hint, not calibrated truth.
-  Do not gate acceptance on it.
-- `evidence` is required for relations and attributes and is anchored to the
-  window. If the evidence quote cannot be found, fall back to the endpoint span
-  union, as the current adapter does.
-- Self-relations, blank surfaces, duplicate spans, and relations whose endpoints
-  are missing are rejected with reason codes.
+- \`type\` is the discriminator: \`entity\`, \`relation\`, or \`attribute\`.
+- \`type_id\` and \`predicate\` must be identifiers from the pinned compiled ontology subset. The model must not invent identifiers or IRIs.
+- The model returns exact surface strings and verbatim evidence quotes. It does **not** return character offsets, chunk IDs, segment IDs, mention IDs, relation IDs, canonical IDs, or graph IRIs.
+- Deterministic code anchors each surface/evidence quote in segment text, calculates offsets, maps them to the parent retrieval chunk/document, and creates deterministic identities. Ambiguous or absent anchors are quarantined; never guess an offset.
+- \`confidence\` is optional and informational only. It is not calibrated truth and must not independently gate acceptance.
+- A relation requires both endpoints and evidence. An attribute requires a subject, predicate, value, and evidence.
+- Each line is independently schema-validated. One malformed line must not discard valid neighboring lines.
+- The final valid JSON object is accepted even without a trailing newline. If the provider reports a length/token-limit finish reason, complete preceding lines are retained; an incomplete final line is quarantined as \`TRUNCATED\`. A parseable complete final object remains valid.
+- Blank lines may be ignored and counted. Markdown fences, prose prefixes, wrapper arrays, and wrapper objects are protocol violations; do not silently strip prose or reinterpret monolithic JSON as JSONL.
+- Enforce a configurable UTF-8 byte limit per line. Start with **8 KiB** and test long evidence/Unicode cases; the previous 2 KiB proposal is too tight for legitimate relation evidence.
 
-JSON Schema (Appendix B) is compiled per subset: the `type_id` and `predicate`
-enums, string limits, and required fields are exact. Relation domain/range is
-validated in code because JSON Schema is a poor fit for cross-field type
-contracts.
+JSON Schema (Appendix B) is compiled per ontology subset. The adapter returns a typed \`ExtractionResult\` to consumers; JSONL is the model/adapter interchange format, not a requirement that downstream graph APIs store raw text.
 
 ### 4.7 Validation, quarantine, and consolidation
 
-Validation order for each line:
+Process the response as a stream of independent lines:
 
-| Step | Check | Failure code |
+| Step | Check | Failure code / behavior |
 |---:|---|---|
-| 1 | Line size and UTF-8 validity | `LINE_TOO_LARGE`, `LINE_INVALID_UTF8` |
-| 2 | JSON parse (allow code fences only around the whole response) | `JSON_PARSE` |
-| 3 | JSON Schema validation | `SCHEMA` |
-| 4 | `type_id`/`predicate` in selected subset | `OUT_OF_SUBSET` |
-| 5 | Surface/evidence anchoring in the window | `UNANCHORED` |
-| 6 | Endpoint presence, no self-relation | `ENDPOINT_MISSING` |
-| 7 | Window-local dedup by `(kind, surface/endpoints, span, type_id/predicate)` | `DUPLICATE` (counted, not quarantined) |
-| 8 | Document consolidation dedup | `DUPLICATE` (merged evidence) |
-| 9 | Batch semantic validation (TBox domain/range + predicate SHACL) | `DOMAIN_RANGE`, `SHACL` |
-| 10 | Promotion/canonicalization policy | policy-specific |
+| 1 | UTF-8 decode and per-line byte limit | \`LINE_INVALID_UTF8\`, \`LINE_TOO_LARGE\` |
+| 2 | Parse one JSON object from one line | \`JSON_PARSE\`; incomplete tail with provider truncation = \`TRUNCATED\` |
+| 3 | Validate against the compiled line schema | \`SCHEMA\` |
+| 4 | Check \`type_id\`/\`predicate\` against the pinned subset | \`OUT_OF_SUBSET\` |
+| 5 | Deterministically anchor surface and evidence | \`UNANCHORED\`, \`AMBIGUOUS_ANCHOR\` |
+| 6 | Check endpoint presence and relation shape | \`ENDPOINT_MISSING\`, \`SELF_RELATION\` |
+| 7 | Segment-local dedup by anchored span and ontology IDs | \`DUPLICATE\` (counted) |
+| 8 | Document-level deterministic merge | Merge evidence and source references |
+| 9 | Batch semantic validation (TBox domain/range + predicate SHACL) | \`DOMAIN_RANGE\`, \`SHACL\` |
+| 10 | Promotion/canonicalization policy | Policy-specific result |
 
-Quarantine record:
+A response-level protocol error (for example, a wrapper array or leading prose) is recorded separately from line-level failures. Never convert a protocol error into an empty successful extraction.
 
-```json
-{
-  "tenant_id": "demo",
-  "content_ref_id": "...",
-  "window_id": "w-0007",
-  "line_number": 12,
-  "code": "SCHEMA",
-  "detail": "type_id must be one of the selected subset",
-  "raw_line": "...",
-  "ontology_version": "1.0.0",
-  "schema_digest": "sha256:...",
-  "model_id": "...",
-  "prompt_version": "ogce-v1",
-  "created_at": "..."
-}
-```
+Quarantine records include tenant/source/segment identity, line number, reason code, bounded raw line, provider finish reason, ontology release/schema digest, model and prompt revisions, and timestamp. Raw prompts/responses and quarantined lines require tenant isolation, access control, bounded retention, and deletion with the source generation. Do not put unbounded raw responses into ordinary application logs.
 
-Consolidation:
-
-- Default is deterministic: union accepted candidates, merge evidence spans and
-  source chunk IDs, keep the highest `type_id` confidence only as a hint, and
-  never merge across class IDs.
-- No LLM sees the raw concatenation of all window outputs. If alias/conflict
-  resolution needs an LLM, it runs over a bounded batch (e.g. 200 candidate
-  labels) with its own JSON schema and its own cache key.
-- Consolidation output is idempotent: rerunning it over the same window results
-  produces the same document candidate set.
+Consolidation remains deterministic: union accepted candidates, merge evidence spans and source chunk IDs, and never merge across ontology class IDs. No LLM sees a concatenation of all segment outputs. If alias/conflict resolution later requires a model, it runs as a separate bounded task with its own JSONL schema, budget, and cache key.
 
 ### 4.8 Identity and resolution boundary
 
@@ -649,33 +611,30 @@ compiles; the engine consumes an artifact.
 
 ## 6. Suggested configuration
 
-All tunables belong in `application.yml` with env overrides, not Java defaults.
+All tunables belong in \`application.yml\` with environment overrides, not scattered Java defaults. Values below are initial experiment settings; the frozen-gold benchmark decides the production profile.
 
-| Property | Default | Purpose |
+| Property | Initial value | Purpose |
 |---|---:|---|
-| `synflux.extraction.window.max-tokens` | 2000 | Extraction window budget. |
-| `synflux.extraction.window.overlap-tokens` | 100 | Cross-window recall. |
-| `synflux.extraction.window.max-per-document` | 256 | Hard fan-out cap. |
-| `synflux.extraction.window.max-output-tokens` | 1024 | JSONL response budget. |
-| `synflux.extraction.document.max-prompt-tokens` | 500000 | Cost cap. |
-| `synflux.extraction.document.max-completion-tokens` | 100000 | Cost cap. |
-| `synflux.extraction.document.max-llm-calls` | 256 | Call cap. |
-| `synflux.extraction.concurrency.per-tenant` | 4 | Fairness. |
-| `synflux.extraction.concurrency.global` | 16 | GPU protection. |
-| `synflux.extraction.ontology.subset.top-k` | 12 | Similarity matches. |
-| `synflux.extraction.ontology.subset.threshold` | 0.35 | Similarity floor. |
-| `synflux.extraction.ontology.subset.max-classes` | 40 | Prompt bound. |
-| `synflux.extraction.ontology.subset.max-properties` | 80 | Prompt bound. |
-| `synflux.extraction.ontology.subset.bypass-class-count` | 20 | Use full schema for small ontologies. |
-| `synflux.extraction.validation.max-line-bytes` | 2048 | Line cap. |
-| `synflux.extraction.validation.repair-attempts` | 1 | Tail repair. |
-| `synflux.extraction.prefilter.enabled` | true | Skip boilerplate. |
-| `synflux.extraction.prefilter.min-confidence` | 0.8 | Skip only high-confidence boilerplate. |
+| \`synflux.extraction.segment.target-tokens\` | 256 | Preferred extraction segment size. |
+| \`synflux.extraction.segment.max-tokens\` | 384 | Hard content-token ceiling, except recorded structural edge cases. |
+| \`synflux.extraction.segment.overlap-tokens\` | 32 | Initial overlap; benchmark 32/48/64. |
+| \`synflux.extraction.segment.max-per-document\` | 1024 | Safety cap for smaller segments; budget exhaustion is explicit. |
+| \`synflux.extraction.segment.max-output-tokens\` | 512 | Per-segment completion reservation; calibrate against JSONL line yield. |
+| \`synflux.extraction.document.max-prompt-tokens\` | 500000 | Per-document prompt-token budget; tune from measured workload. |
+| \`synflux.extraction.document.max-completion-tokens\` | 100000 | Per-document completion-token budget. |
+| \`synflux.extraction.document.max-llm-calls\` | 1024 | Hard call cap; exhaustion produces \`PARTIAL\`. |
+| \`synflux.extraction.concurrency.per-tenant\` | 1 | Initial fairness limit; scheduler may admit more when capacity allows. |
+| \`synflux.extraction.concurrency.global\` | capacity-aware | Bounded by measured GPU/KV-cache capacity, not a fixed thread count. |
+| \`synflux.extraction.ontology.subset.top-k\` | 12 | Similarity matches before dependency closure. |
+| \`synflux.extraction.ontology.subset.threshold\` | 0.35 | Initial similarity floor; tune on subset recall. |
+| \`synflux.extraction.ontology.subset.max-classes\` | 40 | Prompt bound after required dependency closure. |
+| \`synflux.extraction.ontology.subset.max-properties\` | 80 | Prompt bound after required dependency closure. |
+| \`synflux.extraction.ontology.subset.bypass-class-count\` | 20 | Use full schema for small ontologies. |
+| \`synflux.extraction.validation.max-line-bytes\` | 8192 | UTF-8 JSONL line limit; test evidence and Unicode. |
+| \`synflux.extraction.validation.repair-attempts\` | 0 | No automatic whole-response repair; retry at segment granularity only under explicit policy. |
+| \`synflux.extraction.prefilter.enabled\` | true | Skip only deterministic/high-confidence boilerplate, with a recorded reason. |
 
-Calibrate these on the demo corpus and the frozen gold; treat the table as a
-starting point, not a contract.
-
----
+The 256/384-token segment sizes, overlap, and budgets are hypotheses to test, not claims of an established optimum. Never increase segment size solely to reduce call count without measuring relation recall and evidence localization.
 
 ## 7. Metrics and acceptance gates
 
@@ -824,16 +783,20 @@ committed:
 
 ## Appendix A — Example JSONL response
 
-```text
-{"type":"entity","surface":"Halcyon-7","type_id":"MaintenanceSystem","char_start":14,"char_end":23,"confidence":0.94}
-{"type":"entity","surface":"coolant pump","type_id":"Component","char_start":64,"char_end":76}
+No model-generated offsets or IDs are part of the wire contract:
+
+\`\`\`text
+{"type":"entity","surface":"Halcyon-7","type_id":"MaintenanceSystem"}
+{"type":"entity","surface":"coolant pump","type_id":"Component"}
 {"type":"relation","subject":"Halcyon-7","subject_type":"MaintenanceSystem","predicate":"requires","object":"coolant pump","object_type":"Component","evidence":"Halcyon-7 requires a coolant pump replacement every ninety days."}
 {"type":"attribute","subject":"Halcyon-7","subject_type":"MaintenanceSystem","predicate":"maintenanceInterval","value":"ninety days","evidence":"... every ninety days."}
-```
+\`\`\`
 
 ## Appendix B — Line schema (illustrative, compiled per subset)
 
-```json
+The schema is a discriminated union with \`additionalProperties: false\`. The example shows the entity line; relation and attribute variants follow the same closed-object rule. No offset, ID, provenance, or graph-identity field is accepted from the model.
+
+\`\`\`json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "synanton.extraction.line.v1",
@@ -851,8 +814,6 @@ committed:
         "type": { "const": "entity" },
         "surface": { "type": "string", "minLength": 1, "maxLength": 200 },
         "type_id": { "type": "string", "enum": ["Organization", "Supplier", "Product", "Component", "MaintenanceSystem"] },
-        "char_start": { "type": "integer", "minimum": 0 },
-        "char_end": { "type": "integer", "minimum": 0 },
         "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     },
@@ -874,53 +835,45 @@ committed:
     "attribute": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "subject", "subject_type", "predicate", "value"],
+      "required": ["type", "subject", "subject_type", "predicate", "value", "evidence"],
       "properties": {
         "type": { "const": "attribute" },
         "subject": { "type": "string", "minLength": 1, "maxLength": 200 },
         "subject_type": { "type": "string", "enum": ["Organization", "Supplier", "Product", "Component", "MaintenanceSystem"] },
         "predicate": { "type": "string", "enum": ["foundedYear", "maintenanceInterval"] },
         "value": { "type": "string", "minLength": 1, "maxLength": 500 },
-        "evidence": { "type": "string", "maxLength": 1000 },
+        "evidence": { "type": "string", "minLength": 1, "maxLength": 1000 },
         "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     }
   }
 }
-```
+\`\`\`
 
-Domain/range is intentionally absent from this schema. Compile it into code-level
-checks or per-predicate `if/then` clauses only if the validator remains fast and
-readable; the existing Syntology `validate-relation` path is the semantic
-authority.
+Actual enum values are generated from the pinned ontology subset. The adapter validates each line independently and produces typed candidates; this is not a persistence schema.
 
 ## Appendix C — Prompt skeleton (generated, not hand-maintained)
 
-```text
+\`\`\`text
 You extract ontology-grounded knowledge from TEXT.
 
 Ontology: {{ontology_id}} version {{ontology_version}} ({{release_digest}})
-Allowed entity types (use the exact type_id):
-{{#each classes}}
-- {{id}} ({{labels}}): {{description}}
-{{/each}}
-
-Allowed relations (use the exact predicate):
-{{#each object_properties}}
-- {{id}} ({{labels}}): {{domain}} -> {{range}} — {{description}}
-{{/each}}
+Allowed entity types and predicates are listed below. Use exact identifiers.
+{{compiled_subset}}
 
 Rules:
-- Output one JSON object per line. Never output a JSON array or a wrapper object.
-- Use only identifiers from the lists above. Do not invent types or predicates.
-- surface/subject/object must be text that appears in TEXT.
-- evidence must be a short verbatim quote that supports the relation or attribute.
+- Output one JSON object per line. Never output an array or wrapper object.
+- Do not output Markdown fences or explanatory prose.
+- Use only identifiers from the supplied ontology subset.
+- Return exact surface strings and short verbatim evidence quotes from TEXT.
+- Do not return offsets, IDs, IRIs, chunk/segment metadata, or provenance fields.
 - If nothing is extractable, output nothing.
-- Do not output Markdown fences.
 
 TEXT:
-{{window_text}}
-```
+{{segment_text}}
+\`\`\`
+
+
 
 ## Appendix D — Comparison sources
 
