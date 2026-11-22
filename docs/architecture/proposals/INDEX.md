@@ -15,6 +15,7 @@ last_reviewed: "2026-11-22"
 | Proposal             | Status                                                                  |
 |----------------------|-------------------------------------------------------------------------|
 | [`v1.36/`](v1.36/) | **Accepted (design) — ADR-044; implementation pending** - Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE); numerical gates remain provisional |
+| [`v1.36/roadmap.md`](v1.36/roadmap.md) | **Current roadmap — status mirrors ADR-044** - P0–P3 exit criteria and release notes; no gate or release claim |
 | [`v1.34/`](v1.34/) | Folded into architecture 1.34 - Temporal Versioned Knowledge and Retrieval |
 | [`v1.33/`](v1.33/) | Folded into architecture 1.33 - Kubernetes readiness and independent operators |
 | [`v1.32/`](v1.32/) | Folded into architecture 1.32 - Stable Platform API and compatibility |
