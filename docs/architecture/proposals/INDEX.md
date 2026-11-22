@@ -1,14 +1,14 @@
 ---
 title: "Proposals"
 status: "current"
-last_reviewed: "2026-09-12"
+last_reviewed: "2026-11-22"
 ---
 
 # Proposals
 
 **Purpose:** Versioned change proposals and their approval records. Proposals are pre-design documents - they become part of the authoritative design once accepted and folded into the main design document.
 **Audience:** Architects, approvers
-**Last Updated:** 2026-09-12
+**Last Updated:** 2026-11-22
 
 ## Quick Links
 
