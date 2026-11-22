@@ -56,8 +56,12 @@ TrustGraph solves the schema and ontology-context parts well:
 
 TrustGraph does not solve chunk fan-out: it still performs one LLM call per
 chunk, and it does no document-level consolidation. Synanton should adopt
-TrustGraph's ontology-selection and JSONL ideas, but not its chunker, and should
-add extraction windows, budgets, consolidation, and quarantine on top.
+TrustGraph's ontology-selection and JSONL ideas, but not its chunker. The design
+below keeps extraction segmentation local to each retrieval chunk and adds
+bounded scheduling, deterministic consolidation, and quarantine. The operational
+surface is intentionally kept inside the existing Syntology, Synflux consumer,
+and extraction-engine services; it does not require a new service per logical
+component.
 
 **Revision 2026-11-22:** JSONL is mandatory for multi-fact extraction and the 2,000-token extraction-window proposal is withdrawn. The authoritative segmenting rule is §4.3: preserve 512-token retrieval chunks and split within them into 256–384-token extraction segments, benchmarked against 512. No model-generated offsets or IDs are accepted.
 
@@ -293,53 +297,54 @@ dependent on code changes rather than ontology releases.
    `ExtractedMention`/`EXTRACTED_RELATION` candidates; canonical identity and
    mapping remain downstream (v0.3, ADR-030).
 
-### 4.2 Components
+### 4.2 Components and ownership (logical modules, not new services)
 
-```text
-Syntology (ontology owner)
-  HCL/TBox/SHACL release
-        |
-        v
-  ExtractionSchemaCompiler  -->  ExtractionSchema (classes, aliases,
-        |                          properties, domain/range, digest)
-        v
-  GET /ontologies/{id}/versions/{v}/extraction-schema
-        |
-        v
-Synflux extraction consumer
-  ExtractionWindowPlanner  (chunks -> bounded windows + coverage)
-        |
-        v
-  OntologySubsetSelector  (lexical + embedding + dependency closure)
-        |
-        v
-  ExtractionEngineAdapter (LLM; JSONL; schema-aware prompt)
-        |
-        v
-  LineValidator  (JSON -> schema -> IDs -> evidence -> dedup)
-        |
-        v
-  CandidateConsolidator  (deterministic merge; bounded conflict resolution)
-        |
-        v
-  extraction_results / quarantine  -->  GraphWriter / Relix
-                                              |
-                                              v
-                                     batch semantic validation
-                                     (TBox domain/range + SHACL)
-```
+The boxes below are responsibilities and interfaces, not a proposal to deploy
+six new services. P0/P2 should reuse the existing extraction-engine adapter,
+Synflux asynchronous consumer, candidate persistence, and GraphWriter path.
+Only the ontology schema artifact/API is a new Syntology capability in P1.
 
-Ownership boundaries:
+\`\`\`text
+Syntology (existing service)
+  pinned ontology release
+       |
+  compile ExtractionSchema (pure, deterministic library operation)
+       |
+  versioned schema artifact + digest
+       v
+Synflux extraction consumer (existing worker)
+  plan segments + coverage + budgets
+       |
+  retrieve/cache ontology subset (optional P3 module)
+       |
+  ExtractionEngineAdapter (existing port; JSONL contract)
+       |
+  LineValidator (adapter/library module)
+       |
+  deterministic candidate consolidation
+       |
+  existing candidate store + quarantine store
+       |
+  GraphWriter / Relix (existing path)
+       |
+  batched TBox/domain-range + SHACL validation
+\`\`\`
 
-| Component | Owner | Contract |
+| Responsibility | Initial owner | Boundary / implementation constraint |
 |---|---|---|
-| `ExtractionSchemaCompiler` | Syntology | Pure function of a pinned ontology release; outputs a versioned JSON artifact + digest. |
-| `ExtractionWindowPlanner` | Synflux extraction consumer | Input: persisted chunks + document structure; output: windows with chunk IDs, offsets, token estimates, skip reasons. |
-| `OntologySubsetSelector` | Extraction engine (or Syntology client) | Input: window text + compiled schema; output: self-contained subset + digest. |
-| `ExtractionEngineAdapter` | Extraction engine | Input: `TextSegment`/window + `ExtractionContext` including schema/subset; output: JSONL lines + usage. |
-| `LineValidator` | Extraction engine | Input: JSONL + schema; output: accepted candidates + quarantined lines with reason codes. |
-| `CandidateConsolidator` | Synflux | Input: window results; output: document candidate set with merged evidence and provenance. |
-| Semantic validation | Syntology + Relix | Existing `validate-relation` path, extended to batched entity/relation validation. |
+| Extraction schema compilation | Syntology library + existing API | Pure function of immutable ontology release; no new runtime service. |
+| Segment planning and budget accounting | Synflux extraction consumer | Extend the existing consumer; do not create a second scheduler. |
+| Ontology subset selection | Optional Syntology library | Keep disabled/full-schema fallback until recall is measured. |
+| JSONL parsing, schema and anchoring | extraction-engine adapter | One shared implementation for all multi-fact extraction paths. |
+| Candidate consolidation | extraction-engine / consumer library | Deterministic in-process operation; no model call in the default path. |
+| Batched semantic validation | Existing Syntology validation API | Extend/batch existing validation; do not create a parallel validator. |
+
+The implementation may keep these as packages/classes with unit-testable
+contracts. A new deployable, database, queue, or public API requires a separate
+decision backed by measured need. The compiler and subset selector are not P0
+prerequisites: P0 can use a pinned static schema artifact generated offline.
+This reduces the first delivery to JSONL correctness and deterministic anchoring
+before ontology automation is introduced.
 
 ### 4.3 Extraction segments: smaller than retrieval chunks
 
@@ -425,33 +430,48 @@ of HCL/SHACL parsing.
 
 ### 4.5 Select a small, self-contained ontology subset
 
-For each extraction window:
+Subset selection is an optimization, never a correctness boundary. The initial
+top-k/threshold/bounds are experimental defaults and must be tuned against the
+frozen gold rather than promoted directly to production.
 
-1. Match lexically: class labels, aliases, and known glossary terms in the
-   window. This is cheap and catches exact vocabulary that embeddings miss.
-2. Match semantically: embed sentences (or window segments) and retrieve top-k
-   classes/properties from a precomputed ontology embedding index. Start with
-   `top_k=12`, `similarity_threshold=0.35`.
-3. Close dependencies:
-   - add parent classes up to the root (bounded by `max_depth`);
-   - add domain and range classes for every selected property;
-   - add all properties whose domain or range includes a selected class;
-   - add inverse properties where declared.
-4. Bound the subset: `max_classes=40`, `max_properties=80`. If the closure
-   exceeds the bound, keep the highest-scoring elements plus required closure,
-   and record `subset_truncated=true`.
-5. Bypass: if the whole ontology has at most `bypass_class_count` (default 20)
-   classes, use the full schema. The selector is an optimization, not a
-   correctness requirement for small ontologies.
-6. Cache the subset by
-   `sha256(ontology_release|schema_digest|embedding_model|window_text_sha256)`.
-7. Log misses: if the model returns a class or predicate outside the subset,
-   quarantine the line with `OUT_OF_SUBSET` and increment
-   `extraction_ontology_subset_miss_total`. This is the signal that the selector
-   needs tuning or the subset bound is too small.
+1. Lexical match class labels, aliases, and glossary terms in the segment.
+2. Semantic match segment sentences against a precomputed, release-pinned
+   ontology embedding index. Start with top-k 12 and threshold 0.35.
+3. Close dependencies: parent classes, property domains/ranges, applicable
+   properties, and declared inverse properties.
+4. Enforce class/property prompt budgets. If dependency closure exceeds the
+   budget, do not silently drop required domain/range elements. Mark the subset
+   incomplete and use the full-schema fallback for that segment, or stop with
+   an explicit \`SUBSET_BUDGET_EXCEEDED\` if the full schema also exceeds the
+   model context budget.
+5. Bypass selection for small ontologies (initially <=20 classes).
+6. Cache by ontology release, schema digest, embedding model revision, selector
+   revision, and segment text digest.
 
-The ontology embedding index belongs in Syntology (or a shared, versioned
-service), not rebuilt per extraction worker.
+**Feedback and remediation loop**
+
+- Record selected IDs, selector scores, closure additions, truncation/fallback
+  status, and every \`OUT_OF_SUBSET\` candidate.
+- Report out-of-subset counts and rates by ontology release, class/predicate,
+  selector revision, and tenant (without exposing tenant data in aggregate
+  dashboards).
+- A single miss is not an automatic threshold adjustment. First determine
+  whether the gold fact is absent from the compiled schema, lexical/semantic
+  retrieval missed it, or dependency closure/budgeting removed it.
+- If a valid ontology identifier is outside the selected subset, retry that
+  segment once with a widened subset (for example top-k doubled) or the full
+  schema if it fits. Keep the original and retry outcomes linked; never silently
+  rewrite the first result.
+- If the miss rate exceeds the provisional 2% of otherwise schema-valid
+  candidates for a release over a minimum sample of 500 candidates, pause
+  subset rollout for that release and route a sample to the ontology steward.
+  The steward decides whether to add aliases/definitions, revise selector
+  settings, or increase prompt budgets. No online self-tuning of thresholds.
+- If full-schema fallback is too large, fail closed with explicit partial
+  coverage and create a review item; do not omit ontology constraints.
+
+The ontology embedding index is built once per release and reused. Its model
+revision and vector-generation configuration are part of the cache key.
 
 ### 4.6 JSONL output contract
 
@@ -481,26 +501,68 @@ JSON Schema (Appendix B) is compiled per ontology subset. The adapter returns a 
 
 ### 4.7 Validation, quarantine, and consolidation
 
-Process the response as a stream of independent lines:
+Process the response as independent JSONL lines:
 
 | Step | Check | Failure code / behavior |
 |---:|---|---|
 | 1 | UTF-8 decode and per-line byte limit | \`LINE_INVALID_UTF8\`, \`LINE_TOO_LARGE\` |
-| 2 | Parse one JSON object from one line | \`JSON_PARSE\`; incomplete tail with provider truncation = \`TRUNCATED\` |
-| 3 | Validate against the compiled line schema | \`SCHEMA\` |
-| 4 | Check \`type_id\`/\`predicate\` against the pinned subset | \`OUT_OF_SUBSET\` |
+| 2 | Parse one JSON object from one line | \`JSON_PARSE\`; incomplete final line with provider truncation = \`TRUNCATED\` |
+| 3 | Validate against compiled line schema | \`SCHEMA\` |
+| 4 | Check IDs against pinned schema/subset | \`OUT_OF_SUBSET\` |
 | 5 | Deterministically anchor surface and evidence | \`UNANCHORED\`, \`AMBIGUOUS_ANCHOR\` |
-| 6 | Check endpoint presence and relation shape | \`ENDPOINT_MISSING\`, \`SELF_RELATION\` |
+| 6 | Check endpoints and relation shape | \`ENDPOINT_MISSING\`, \`SELF_RELATION\` |
 | 7 | Segment-local dedup by anchored span and ontology IDs | \`DUPLICATE\` (counted) |
 | 8 | Document-level deterministic merge | Merge evidence and source references |
-| 9 | Batch semantic validation (TBox domain/range + predicate SHACL) | \`DOMAIN_RANGE\`, \`SHACL\` |
+| 9 | Batch TBox/domain-range and predicate SHACL checks | \`DOMAIN_RANGE\`, \`SHACL\` |
 | 10 | Promotion/canonicalization policy | Policy-specific result |
 
-A response-level protocol error (for example, a wrapper array or leading prose) is recorded separately from line-level failures. Never convert a protocol error into an empty successful extraction.
+A response-level protocol error (wrapper array/object, Markdown fence, or
+leading prose) is distinct from line-level failures. Never coerce it into
+JSONL or report an empty successful extraction.
 
-Quarantine records include tenant/source/segment identity, line number, reason code, bounded raw line, provider finish reason, ontology release/schema digest, model and prompt revisions, and timestamp. Raw prompts/responses and quarantined lines require tenant isolation, access control, bounded retention, and deletion with the source generation. Do not put unbounded raw responses into ordinary application logs.
+**Line-size and evidence policy**
 
-Consolidation remains deterministic: union accepted candidates, merge evidence spans and source chunk IDs, and never merge across ontology class IDs. No LLM sees a concatenation of all segment outputs. If alias/conflict resolution later requires a model, it runs as a separate bounded task with its own JSONL schema, budget, and cache key.
+- Start with a configurable **16 KiB UTF-8 line limit**, not 8 KiB. This is a
+  defensive transport bound, not a claim about corpus evidence length.
+- Measure the gold-corpus evidence-quote byte-length distribution (p50/p95/p99,
+  maximum, Unicode-heavy cases) before fixing the production limit. The target
+  is zero legitimate gold evidence lines rejected by the limit.
+- The model should return a concise, verbatim, independently anchorable evidence
+  excerpt, not an entire page/table/legal section. A line over the limit gets
+  one bounded retry requesting a shorter quote while preserving the same fact.
+- Do not truncate JSON bytes or silently truncate evidence after generation:
+  either operation can corrupt syntax or invalidate exact anchoring. If the
+  retry still exceeds the limit, quarantine as \`LINE_TOO_LARGE\` with size
+  metadata and retain the candidate only as an unpromoted diagnostic if policy
+  permits. The source remains available for a later segment-level retry.
+- Table evidence should be a bounded header + row/cell excerpt that anchors to
+  the source, not a serialized full table.
+
+**Quarantine storage and review**
+
+Quarantine is an operational work queue, not a write-only log. Store bounded raw
+lines and metadata encrypted at rest using the platform's tenant-scoped key
+management/envelope-encryption facility. Enforce tenant isolation in storage
+and authorization; log every read, export, replay, and disposition with actor,
+time, reason, and source/segment identity. Default retention is 30 days, with a
+hard maximum of 90 days unless an approved legal/security retention policy
+requires otherwise. Source-generation deletion cascades to quarantine payloads
+and derived raw prompts/responses. Retention expiry is enforced automatically.
+
+- Extraction/runtime owner reviews transport/schema/truncation spikes daily
+  during rollout and weekly after stabilization.
+- Ontology steward reviews \`OUT_OF_SUBSET\` and \`DOMAIN_RANGE\` samples weekly,
+  and immediately when a release-level threshold trips.
+- \`LINE_TOO_LARGE\` is reviewed as a prompt/evidence-contract issue; repeated
+  instances trigger schema/prompt revision, not an increased limit by default.
+- Every disposition is one of: fix source/schema, add ontology alias/definition,
+  tune selector, revise prompt, retry segment, accept as non-promotable, or
+  close as expected invalid output. Decisions feed regression fixtures.
+
+Consolidation remains deterministic: union accepted candidates, merge evidence
+spans and source chunk references, and never merge across ontology class IDs.
+No LLM sees a concatenation of all segment outputs. Raw quarantine data is not
+copied into ordinary application logs.
 
 ### 4.8 Identity and resolution boundary
 
@@ -594,152 +656,282 @@ compiles; the engine consumes an artifact.
 
 ## 6. Suggested configuration
 
-All tunables belong in \`application.yml\` with environment overrides, not scattered Java defaults. Values below are initial experiment settings; the frozen-gold benchmark decides the production profile.
+All tunables belong in \`application.yml\` with environment overrides. Values
+below are experiment starting points, not production promises.
 
 | Property | Initial value | Purpose |
 |---|---:|---|
-| \`synflux.extraction.segment.target-tokens\` | 256 | Preferred extraction segment size. |
+| \`synflux.extraction.segment.target-tokens\` | 256 | Preferred segment size. |
 | \`synflux.extraction.segment.max-tokens\` | 384 | Hard content-token ceiling, except recorded structural edge cases. |
 | \`synflux.extraction.segment.overlap-tokens\` | 32 | Initial overlap; benchmark 32/48/64. |
-| \`synflux.extraction.segment.max-per-document\` | 1024 | Safety cap for smaller segments; budget exhaustion is explicit. |
-| \`synflux.extraction.segment.max-output-tokens\` | 512 | Per-segment completion reservation; calibrate against JSONL line yield. |
-| \`synflux.extraction.document.max-prompt-tokens\` | 500000 | Per-document prompt-token budget; tune from measured workload. |
+| \`synflux.extraction.segment.max-per-document\` | 1024 | Safety cap; exhaustion is explicit. |
+| \`synflux.extraction.segment.max-output-tokens\` | 512 | Completion reservation; calibrate to line yield. |
+| \`synflux.extraction.document.max-prompt-tokens\` | 500000 | Per-document prompt-token budget. |
 | \`synflux.extraction.document.max-completion-tokens\` | 100000 | Per-document completion-token budget. |
 | \`synflux.extraction.document.max-llm-calls\` | 1024 | Hard call cap; exhaustion produces \`PARTIAL\`. |
-| \`synflux.extraction.concurrency.per-tenant\` | 1 | Initial fairness limit; scheduler may admit more when capacity allows. |
-| \`synflux.extraction.concurrency.global\` | capacity-aware | Bounded by measured GPU/KV-cache capacity, not a fixed thread count. |
-| \`synflux.extraction.ontology.subset.top-k\` | 12 | Similarity matches before dependency closure. |
-| \`synflux.extraction.ontology.subset.threshold\` | 0.35 | Initial similarity floor; tune on subset recall. |
-| \`synflux.extraction.ontology.subset.max-classes\` | 40 | Prompt bound after required dependency closure. |
-| \`synflux.extraction.ontology.subset.max-properties\` | 80 | Prompt bound after required dependency closure. |
+| \`synflux.extraction.concurrency.per-tenant\` | 1 | Initial fairness limit. |
+| \`synflux.extraction.concurrency.global\` | capacity-aware | Measured GPU/KV-cache admission, not fixed thread count. |
+| \`synflux.extraction.ontology.subset.top-k\` | 12 | Similarity matches before closure. |
+| \`synflux.extraction.ontology.subset.threshold\` | 0.35 | Initial similarity floor; tune on recall. |
+| \`synflux.extraction.ontology.subset.max-classes\` | 40 | Prompt budget; overflow uses full-schema fallback or explicit stop. |
+| \`synflux.extraction.ontology.subset.max-properties\` | 80 | Prompt budget; overflow uses full-schema fallback or explicit stop. |
 | \`synflux.extraction.ontology.subset.bypass-class-count\` | 20 | Use full schema for small ontologies. |
-| \`synflux.extraction.validation.max-line-bytes\` | 8192 | UTF-8 JSONL line limit; test evidence and Unicode. |
-| \`synflux.extraction.validation.repair-attempts\` | 0 | No automatic whole-response repair; retry at segment granularity only under explicit policy. |
-| \`synflux.extraction.prefilter.enabled\` | true | Skip only deterministic/high-confidence boilerplate, with a recorded reason. |
+| \`synflux.extraction.validation.max-line-bytes\` | 16384 | Initial UTF-8 line bound; validate against gold distribution. |
+| \`synflux.extraction.validation.evidence-retry-attempts\` | 1 | One bounded retry for overlong evidence. |
+| \`synflux.extraction.validation.repair-attempts\` | 0 | No whole-response repair. |
+| \`synflux.extraction.quarantine.retention-days\` | 30 | Default; hard maximum 90 absent approved exception. |
+| \`synflux.extraction.prefilter.enabled\` | true | Skip only deterministic/high-confidence boilerplate with recorded reason. |
 
-The 256/384-token segment sizes, overlap, and budgets are hypotheses to test, not claims of an established optimum. Never increase segment size solely to reduce call count without measuring relation recall and evidence localization.
+For a document with \(N\) 512-token retrieval chunks, approximate segment/call
+count is:
+
+\[
+C(S,O) \approx \sum_{i=1}^{N}
+\left\lceil \frac{\max(0,L_i-O)}{S-O} \right\rceil
+\]
+
+where \(L_i\) is the actual token count of retrieval chunk \(i\), \(S\) is the
+segment ceiling/target used by the experiment, and \(O\) is overlap. The exact
+planner count (not this approximation) is recorded per document. For 200
+near-full 512-token chunks, 256-token segments with 32-token overlap are
+approximately 400 calls; 384-token segments are generally around 400 calls
+when chunks exceed 384 tokens; 512-token mode is approximately 200 calls.
+Structure-aware boundaries can change these counts.
+
+The cost model must report model prompt/completion tokens, calls, GPU-seconds,
+queue wait, wall-clock p50/p95, and energy/cost where the runtime exposes it.
+Do not publish a dollar target without a declared model/provider price or
+hardware amortization profile. The reference benchmark must pin GPU model and
+memory, model quantization/revision, runtime, batch size, concurrency, tokenizer,
+and tenant workload mix.
 
 ## 7. Metrics and acceptance gates
 
 ### 7.1 Metrics
 
-```text
-extraction_windows_total{tenant,status}
-extraction_window_skipped_total{tenant,reason}
-extraction_llm_calls_total{tenant,provider,outcome}
-extraction_prompt_tokens_total{tenant,provider}
-extraction_completion_tokens_total{tenant,provider}
-extraction_jsonl_lines_total{tenant,kind}
-extraction_schema_invalid_lines_total{tenant,code}
-extraction_truncated_windows_total{tenant,provider}
-extraction_quarantined_lines_total{tenant,code}
-extraction_ontology_subset_size{tenant}
-extraction_ontology_subset_miss_total{tenant,kind}
-extraction_entities_merged_total{tenant,reason}
-extraction_document_coverage_ratio{tenant}
-extraction_document_partial_total{tenant,reason}
-extraction_validation_rejected_total{tenant,code}
-```
+In addition to existing counters, record:
 
-Keep the existing `extraction_completed` structured log; add window count,
-subset size, schema-valid rate, truncation count, and coverage.
+- segment/call counts, prompt and completion tokens, queue wait, in-flight
+  requests, GPU-seconds, KV-cache pressure, wall-clock duration;
+- JSONL valid-line rate, parse/schema/protocol failures, truncation recovery,
+  quarantine rate by reason, line-byte distribution;
+- selected ontology IDs, selector score/closure, subset fallback, and
+  \`OUT_OF_SUBSET\` rates by release and selector revision;
+- per-document eligible/processed segments, coverage ratio, and partial reason;
+- cross-segment relation candidates, reconciliations, and gold boundary outcomes;
+- quarantine reads/exports/replays/dispositions for audit.
 
-### 7.2 Phase gates
+Avoid tenant labels as high-cardinality metric dimensions; use tenant-scoped
+logs/traces and aggregate metrics with privacy-safe dimensions.
+
+### 7.2 Provisional quality gates
+
+The following are proposed acceptance gates, not claims of achieved results.
+Re-baseline all metrics on the exact frozen ADR-022 gold revision and pinned
+model/runtime before rollout. Evaluate on the same split and report confidence
+intervals; do not tune on the hold-out test set.
+
+| Metric | ADR-022 baseline | Proposed gate | Measurement / interpretation |
+|---|---:|---:|---|
+| Entity F1 | 0.618 | >=0.70 | Frozen gold; no precision collapse. |
+| Relation F1 | 0.078 | >=0.15 minimum; >=0.20 stretch | Frozen gold; relation F1 is the primary quality gate. |
+| JSONL valid-line rate | Not measured | >=98% | Valid records / non-empty emitted lines, before schema rejection. |
+| Truncation recovery | Whole response lost today | 100% complete preceding lines retained | Synthetic truncation fixtures + provider finish reason. |
+| Unexplained quarantine | Not measured | <=5% of emitted lines | Excludes expected duplicates; report each reason separately. |
+| Subset miss rate | Not measured | <=2% after one widening/full-schema retry | At least 500 schema-valid candidates per release before gating. |
+| Cross-boundary relation recall | Not measured | >= baseline full-context boundary recall - 2 percentage points; target >=80% of gold boundary relations | Frozen boundary subset; compare overlap-only and reconciliation pass. |
+| Evidence anchoring | Not measured | >=99% exact deterministic anchors for promoted candidates | Gold spans + exact quote anchoring. |
+| Coverage | Not measured | 100% for \`KNOWLEDGE_READY\`; otherwise \`PARTIAL\` | Eligible vs processed segment ledger. |
+| Cost/latency | Not measured | No production gate until reference profile is pinned; compare against 512-token baseline | GPU-seconds/document, token/call counts, p95 wall clock. |
+
+The 0.70 entity / 0.15 relation thresholds are initial engineering gates to
+review against inter-annotator agreement and baseline variance. If the frozen
+gold's annotation ceiling makes a target unattainable, record the ceiling and
+approve a revised threshold before looking at hold-out results. A phase cannot
+pass on average F1 alone if evidence anchoring, coverage, or safety gates fail.
+
+### 7.3 Phase gates
 
 **P0 — JSONL and schema safety**
 
-- Every multi-fact knowledge-extraction path uses JSONL as its canonical model/adapter interchange format; no monolithic JSON arrays/objects.
-- Each line is independently parsed and schema-validated. Invalid lines are quarantined without losing valid neighboring records.
-- A truncated response preserves every complete record; only an incomplete tail is quarantined as \`TRUNCATED\`.
-- Wrapper arrays/objects, Markdown fences, and prose prefixes are protocol violations, not accepted/normalized responses.
-- The model emits no offsets or IDs; deterministic code anchors exact surfaces and evidence and computes all offsets/identities.
-- The legacy Pass-2 cache bug is fixed or the knowledge-extraction path retired.
+- JSONL is canonical for every multi-fact extraction path.
+- Complete lines survive truncation; malformed lines are quarantined.
+- No model offsets/IDs; deterministic anchoring and provenance.
+- Legacy Pass-2 reads are disabled for new RAKG jobs; migration plan in §9.
 
 **P1 — ontology contract**
 
-- Syntology returns an \`ExtractionSchema\` with release + schema digests.
-- The prompt contains only identifiers from the compiled schema; changing the ontology release changes the prompt and cache key without code changes.
-- A fixture ontology with a broken domain/range fails compilation closed.
+- A pinned static schema artifact is consumed first; compiler/API is added only
+  after schema digest and replay tests pass.
+- Syntology compilation is deterministic and release-addressed.
+- A broken domain/range fixture fails closed.
 
-**P2 — smaller segments and bounded fan-out**
+**P2 — bounded segmentation and scheduling**
 
-- Ordinary extraction segments are at most 384 content tokens and never combine multiple retrieval chunks.
-- The 256/384/512 comparison reports entity F1, relation F1, evidence-anchor accuracy, valid-line rate, cost, p95 latency, throughput, and GPU utilization.
-- A 200-chunk document respects per-segment, per-document token, and call budgets; no unbounded prompt is constructed.
-- Budget exhaustion produces \`PARTIAL\` + exact coverage, not \`KNOWLEDGE_READY\`.
-- Throughput is compared at equal GPU-time/token budgets; consolidation is deterministic across reruns.
+- Compare 256/384/512 segments at equal GPU-time/token budgets.
+- Segment and call budgets are enforced; 200-chunk fixtures have bounded
+  scheduling and explicit partial coverage.
+- Cross-boundary relation gate passes with overlap and reconciliation policy.
+- No fixed hardware throughput claim until reference GPU profile is recorded.
 
-**P3 — ontology subsetting and validation**
+**P3 — subset and semantic validation**
 
-- Subset selection reduces prompt tokens by a measured margin with no more than an agreed recall loss on the gold.
-- Out-of-subset identifiers are quarantined and measurable.
-- Domain/range + SHACL rejections at commit are reduced compared with P0.
-- \`validate-relation\` is called in batches, not per relation.
+- Subset recall and miss-rate gates pass; fallback is exercised.
+- Batch domain/range + SHACL validation reduces invalid promoted relations.
+- No subset rollout if the miss-rate threshold is exceeded.
 
 ## 8. Evaluation plan
 
-Reuse the ADR-022 harness and frozen gold. Compare extraction segment sizes **256, 384, and 512 tokens** and overlaps **32, 48, and 64 tokens**. Keep the 512-token retrieval chunker fixed so the experiment isolates extraction granularity.
+Use the ADR-022 frozen gold with a pinned source revision, model, tokenizer,
+runtime, ontology release, prompt, and validator. Compare 256/384/512-token
+segments and 32/48/64-token overlap while holding retrieval chunks at 512 tokens.
 
-Report:
+**Cross-segment relation experiment**
 
-1. Entity precision/recall/F1 and relation precision/recall/F1.
-2. Evidence quote and deterministic anchor exactness; false/ambiguous anchor rates.
-3. JSONL valid-line rate, per-line schema failures, truncation recovery, and quarantined records by reason.
-4. Prompt/completion tokens, calls/document, p50/p95 latency, throughput, GPU utilization/KV-cache pressure, and cost/document.
-5. Cross-segment relation recall and duplicate/false-merge rates.
-6. Coverage-quality trade-off under equal GPU-time and token budgets.
-7. Ontology subset recall: gold entities/relations whose class/predicate was absent from the selected subset.
-8. Ontology conformance before/after domain/range and SHACL validation.
-9. Reproducibility with pinned source, ontology/schema, prompt, model, tokenizer, and validator revisions; explicitly report residual model nondeterminism.
+Create a gold boundary subset where the subject, predicate cue, or object lies
+on opposite sides of a segment boundary. Report:
 
-Do not select a segment size on throughput alone. A larger segment is not an improvement if relation recall, evidence localization, or extraction precision regresses.
+\[
+\text{cross-boundary relation recall} =
+\frac{\text{gold boundary relations recovered}}
+{\text{all gold boundary relations}}
+\]
 
-Fixtures include: truncated final JSONL line with preceding complete records, mixed valid/invalid lines, wrapper-array/prose protocol violations, unknown type, out-of-domain relation, Unicode and long-evidence lines near the byte limit, 256/384/512-token segments, table row groups, cross-segment relation, empty document, 1,000-chunk synthetic document, provider timeout, and budget exhaustion.
+Report precision as well as recall, split by relation type and distance between
+supporting spans. Compare (A) overlap only, (B) overlap + deterministic
+candidate reconciliation, and (C) overlap + a bounded adjacent-segment
+semantic reconciliation pass. The bounded pass may run only when both endpoint
+mentions are independently anchored in adjacent segments and the predicate is
+allowed by the pinned schema. It receives the two local contexts and candidate
+endpoints, not a document-wide summary. No unconstrained coreference inference
+is added to the first release. A later coreference pass requires a separate
+gold set and ADR. Adopt the semantic pass only if it improves boundary recall
+without violating precision/F1 and GPU-budget gates.
 
-## 9. Phased rollout
+**Cost/latency experiment**
+
+For each segment/overlap pair report: exact calls/document, prompt and
+completion tokens, GPU-seconds/document, queue wait, wall-clock p50/p95,
+throughput, peak KV-cache use, energy/cost where measurable, entity/relation F1,
+and coverage. Run on a pinned reference profile: GPU model/VRAM, model
+revision/quantization, inference runtime, batch size, concurrency, tokenizer,
+and workload mix. Run both isolated-document and multi-tenant contention
+scenarios. Do not infer a dollar amount from local GPU use without an explicit
+amortization/energy model.
+
+**Ontology subset experiment**
+
+Measure gold class/predicate recall before and after dependency closure,
+closure overflow, full-schema fallback frequency, \`OUT_OF_SUBSET\` rate, and
+quality impact. Sweep top-k, similarity threshold, and budgets on development
+data only. Keep the hold-out test split untouched.
+
+**Line-size experiment**
+
+Measure evidence quote bytes on the gold and synthetic long-table/legal-clause
+fixtures, including UTF-8 expansion. Report p50/p95/p99/max and the fraction
+above 16 KiB. The acceptance goal is zero gold evidence records rejected by the
+transport bound; any exception must be reviewed before production rollout.
+
+**Fixtures and reproducibility**
+
+Include truncation with complete preceding lines, mixed valid/invalid lines,
+wrapper-array/prose protocol violations, unknown IDs, Unicode/long evidence,
+table row groups, cross-segment relations, subset fallback, ontology release
+change, legacy-cache invalidation, source deletion, quarantine access audit,
+provider timeout, budget exhaustion, and deterministic replay. Report
+confidence intervals and repeat runs to expose model nondeterminism.
+
+## 9. Phased rollout and legacy migration
 
 | Phase | Goal | Main work | Rollback |
 |---|---|---|---|
-| P0 | Stop losing facts to JSON fragility | JSONL, schema lines, quarantine, fix legacy cache | Keep current adapter behind `extraction.output=legacy-json` |
-| P1 | Make the ontology the prompt source | Syntology compiler + digest + generated prompt; remove duplicated vocab | `extraction.ontology.source=static-v1` |
-| P2 | Bound fan-out and cost | Window planner, budgets, consolidation, backpressure, partial coverage | `extraction.windowing.enabled=false` falls back to per-chunk |
-| P3 | Constrain generation | Subset selector, per-line ID checks, batch semantic validation, SHACL at promotion | `extraction.ontology.subset.enabled=false` uses full schema |
+| P0 | Stop losing facts to JSON fragility | JSONL adapter, per-line validation/quarantine, deterministic anchoring | Feature flag routes new jobs to legacy adapter; RAKG remains canonical |
+| P1 | Pin ontology contract | Consume static schema artifact, then add Syntology compiler/API | Fall back to last known-good pinned schema artifact, not an unversioned vocabulary |
+| P2 | Bound segmentation and scheduling | Smaller segments, budgets, deterministic consolidation, partial coverage | Disable segment splitting for new jobs and return to one 512-token chunk per call |
+| P3 | Add ontology subset + batched validation | Selector, fallback, miss-rate feedback, semantic batch validation | Disable subset; use full schema within context budget |
 
-P0 and P1 are independent of the GPU provider and can land first. P2 changes
-throughput behavior; gate it behind a tenant flag and compare against the
-baseline. P3 is quality work; hold it until the window/budget path is stable.
+**Legacy Pass-2 migration**
 
----
+1. Stop creating new legacy Pass-2 cache entries for RAKG jobs. Mark cache rows
+   with a legacy namespace/version and make new readers refuse them by default.
+2. Add an explicit feature flag for the legacy EnrichStage path. New RAKG jobs
+   never invoke Pass 2. Existing in-flight legacy jobs may finish under the old
+   path during the migration window, but their results remain tagged
+   \`legacy-pass2\` and cannot be silently mixed with RAKG candidate results.
+3. Run a shadow comparison on a sampled, isolated corpus: legacy output and
+   RAKG JSONL output are stored separately and compared against gold. Shadow
+   mode must not dual-write canonical graph facts.
+4. Invalidate cache reads by changing the cache namespace/key version; do not
+   delete historical rows before the retention period. Reprocess selected source
+   versions from persisted chunks under the new schema. Preserve old results
+   for audit but mark them non-replayable under the new contract.
+5. Roll back by disabling the new feature flag for affected tenants and
+   re-enqueueing source versions. Do not route new jobs back through the buggy
+   Pass-2 cache path. Trigger rollback if relation F1 falls below 0.078 on two
+   consecutive frozen-gold evaluation runs, promoted-anchor accuracy falls
+   below 99%, or any tenant-isolation/provenance invariant fails.
+6. Remove the legacy Pass-2 code and cache reader only after the dual-run window
+   completes, no in-flight jobs remain, and the owner signs off on migration
+   metrics. Decommissioning is a separate implementation PR.
+
+**Ontology evolution and replay**
+
+Every candidate and quarantine item pins ontology release, schema digest,
+prompt/model/tokenizer/validator revisions. A new ontology release does not
+mutate historical results. Revalidate existing candidates against the new
+release in a separate replay generation; if class IDs or domain/range semantics
+change incompatibly, re-extract affected source versions from persisted chunks.
+Quarantined lines may be replayed only after schema/selector remediation and
+must retain links to the original disposition. Promotion uses the new generation
+only after full validation; never silently rewrite the prior graph generation.
+
+**Partial coverage contract**
+
+Persist eligible, processed, skipped, failed, and pending segment counts plus
+coverage ratio and reason codes. Expose \`coverage=PARTIAL\` and these counts
+through the extraction result/status consumed by downstream APIs and UI.
+Partial candidate sets are queryable for diagnostics but **do not promote by
+default** and must not report \`KNOWLEDGE_READY\`. A tenant/domain policy may
+explicitly allow partial promotion with a visible coverage annotation and
+auditable override. Budget exhaustion or transient failures schedule retry of
+only missing segments using idempotent segment keys.
 
 ## 10. Risks and mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Subset selector misses a relevant class | Recall loss | Lexical union + parent closure + `OUT_OF_SUBSET` metric + evaluate on gold; bypass for small ontologies. |
-| Strict schema rejects acceptable variants | Lost facts | Quarantine rather than drop; one bounded repair call; allow aliases in the compiled schema. |
-| JSONL produces duplicates | Graph noise | Deterministic window/doc dedup; merge evidence. |
-| Prefilter drops real knowledge | Silent recall loss | Only skip high-confidence boilerplate; record skipped chunks; coverage metric; sample audit. |
-| Model confidence is miscalibrated | False precision | Treat as hint; never use alone for acceptance. |
-| Ontology release changes under a replay | Non-reproducible results | Pin release + schema digest in cache key and result. |
-| Windowing breaks relations across boundaries | Missing edges | Overlap windows; merge by span; measure cross-boundary gold relations. |
-| Cost of ontology embeddings | Startup/latency | Build once per release in Syntology; cache subsets. |
-| More moving parts | Complexity | Keep compiler deterministic, selector optional, consolidation deterministic; incremental rollout. |
-| Provider-specific structured output differences | Portability | JSONL is the common contract; structured output is an optimization, not a requirement. |
-
----
+| Too many logical components | Delivery and operational burden | Implement as modules in existing services; no new deployables or stores without ADR/evidence. |
+| Subset selector misses relevant class | Recall loss | Miss-rate telemetry, one widened/full-schema retry, steward review; pause release rollout above threshold. |
+| Smaller segments increase calls | GPU saturation and latency | Exact call/token/GPU-seconds benchmark, bounded batching/admission, per-document budgets. |
+| Cross-segment relation loss | Relation F1 regression | Gold boundary metric and bounded adjacent-segment reconciliation experiment. |
+| Evidence line exceeds byte bound | Legitimate candidate rejected | 16 KiB initial limit, gold byte distribution, one shorter-evidence retry; never byte-truncate JSON. |
+| Quarantine contains tenant data | Confidentiality/retention risk | Tenant-key encryption, read audit, 30-day default/90-day max, source deletion cascade. |
+| Strict schema rejects valid output | Candidate loss | Explicit quarantine, schema/prompt review; no silent coercion. |
+| Ontology release changes | Historical result drift | Immutable release/schema digests; new replay generation and explicit backfill. |
+| Partial extraction mistaken for complete | Invalid promotion | PARTIAL is surfaced end-to-end and blocks promotion by default. |
+| Model confidence is miscalibrated | False precision | Confidence is informational; validation/anchoring gate acceptance. |
+| Provider structured-output differences | Contract fragmentation | Normalize to canonical JSONL at adapter boundary. |
 
 ## 11. Open decisions
 
-These need ADRs or explicit design decisions before implementation is treated as committed:
-
-1. **New ADR: ontology-grounded extraction contract.** Freeze JSONL, line schema, segment metadata, quarantine codes, and version/digest fields.
-2. **Schema compiler ownership.** Recommended: Syntology owns compilation; extraction engine only consumes the artifact.
-3. **Candidate store.** Reuse \`ingestion_cache.extraction_results\` with a new quarantine table, or introduce a dedicated extraction-candidate store.
-4. **Provider structured output.** It may be an internal optimization only if the adapter emits the same canonical JSONL records; it must not create a second public extraction contract.
-5. **Segment defaults.** Benchmark 256/384/512-token extraction segments with 32/48/64-token overlap. Keep retrieval chunks at 512 tokens; do not introduce 2,000-token extraction windows.
-6. **Legacy Pass-1 summaries.** Summaries may remain a separate summarization/hierarchy feature, but must not feed knowledge extraction.
-7. **Confidence policy.** Decide whether model confidence is stored as a hint, ignored, or combined with validation-derived confidence.
-8. **Per-tenant budgets and GPU admission.** Confirm quota policy and runtime capacity signals; budget exhaustion must not silently switch providers.
+1. Confirm the ADR-022 gold revision, annotation ceiling, and proposed quality
+   gates (entity F1 >=0.70; relation F1 >=0.15 minimum / >=0.20 stretch).
+2. Pin the reference GPU/model/runtime profile before setting p95 wall-clock or
+   monetary cost targets. Until then, GPU-seconds/document and relative
+   256/384/512 comparisons are the acceptance measures.
+3. Decide whether the bounded adjacent-segment semantic reconciliation pass
+   clears the boundary recall/precision and equal-budget gates.
+4. Confirm tenant key-management integration and quarantine retention exceptions
+   with the security owner.
+5. Confirm the partial-promotion policy; default is no promotion when coverage
+   is PARTIAL.
+6. Confirm legacy Pass-2 decommission date after the dual-run and rollback
+   gates pass.
+7. Decide whether a small-model-first tier is justified by measured segment
+   complexity and cost. It must use the same JSONL contract, and escalation
+   must be based on deterministic routing signals or validated failure codes,
+   not raw uncalibrated model confidence.
 
 ## Appendix A — Example JSONL response
 
