@@ -14,6 +14,7 @@ last_reviewed: "2026-09-12"
 
 | Proposal             | Status                                                                  |
 |----------------------|-------------------------------------------------------------------------|
+| [`v1.36/`](v1.36/) | **Draft for review** - Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE); not approved |
 | [`v1.34/`](v1.34/) | Folded into architecture 1.34 - Temporal Versioned Knowledge and Retrieval |
 | [`v1.33/`](v1.33/) | Folded into architecture 1.33 - Kubernetes readiness and independent operators |
 | [`v1.32/`](v1.32/) | Folded into architecture 1.32 - Stable Platform API and compatibility |
@@ -38,6 +39,7 @@ last_reviewed: "2026-09-12"
 
 | Directory | Purpose |
 |-----------|---------|
+| `v1.36/` | **Draft** - ontology-grounded, budget-bounded LLM extraction over text chunks |
 | `v1.34/` | v1.34 proposal - Temporal Versioned Knowledge and Retrieval |
 | `v1.33/` | v1.33 proposal - Kubernetes readiness and independent operators |
 | `v1.32/` | v1.32 proposal - Stable Platform API and compatibility |
