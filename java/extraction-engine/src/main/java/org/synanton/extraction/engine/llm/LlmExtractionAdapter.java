@@ -221,8 +221,12 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         if (!quarantined.isEmpty()) {
             captureQuarantine(segment, context, call, quarantined);
         }
+        ExtractionIntegrity integrity = integrity(quarantined);
+        if (call.usage().isIncomplete() && integrity == ExtractionIntegrity.CLEAN) {
+            integrity = ExtractionIntegrity.TRUNCATED;
+        }
         return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
-                List.copyOf(quarantined), integrity(quarantined));
+                List.copyOf(quarantined), integrity);
     }
 
     private static ExtractionIntegrity integrity(List<QuarantinedLine> quarantined) {
@@ -384,8 +388,12 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         if (!quarantined.isEmpty()) {
             captureQuarantine(segment, context, call, quarantined);
         }
+        ExtractionIntegrity integrity = integrity(quarantined);
+        if (call.usage().isIncomplete() && integrity == ExtractionIntegrity.CLEAN) {
+            integrity = ExtractionIntegrity.TRUNCATED;
+        }
         return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
-                List.copyOf(quarantined), integrity(quarantined));
+                List.copyOf(quarantined), integrity);
     }
 
     private void throwIncompleteOrParseFailure(LlmCallResult call, RuntimeException failure) {

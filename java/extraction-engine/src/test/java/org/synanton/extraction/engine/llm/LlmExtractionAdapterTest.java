@@ -410,6 +410,17 @@ class LlmExtractionAdapterTest {
     }
 
     @Test
+    void lengthFinishAtARecordBoundaryIsStillMarkedTruncated() {
+        responseContent = JSONL_OUTPUT;
+        finishReason = "length";
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.quarantined()).isEmpty();
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.TRUNCATED);
+    }
+
+    @Test
     void concatenatedJsonlLineIsQuarantinedWithoutKillingTheNextLine() {
         String[] lines = JSONL_OUTPUT.split("\n");
         responseContent = lines[0] + lines[1] + "\n" + lines[2];
