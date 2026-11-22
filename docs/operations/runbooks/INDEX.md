@@ -27,6 +27,12 @@ last_reviewed: "2026-07-21"
 | R9 | `HelperDestructiveOpsRate` | Unexpected burst of helper delete operations |
 | R10 | `HelperAuthFailureSpike` | Helper auth failure spike - possible credential issue |
 
+## Operational Definitions
+
+| Definition | Description |
+|------------|-------------|
+| [OGCE legacy Pass-2 drain](./ogce-legacy-drain.md) | Observable completion and rollback rule for retiring the legacy Pass-2 path (ADR-044) |
+
 ## How to Contribute
 
 Create runbooks as `R{N}-{alert-slug}.md`. Each runbook should contain:
