@@ -1,19 +1,20 @@
 ---
 title: "Architecture Decision Records"
 status: "current"
-last_reviewed: "2026-11-16"
+last_reviewed: "2026-11-22"
 ---
 
 # Architecture Decision Records (ADRs)
 
 **Purpose:** Captures significant architectural decisions with their context, rationale, and consequences.
 **Audience:** Architects, module owners
-**Last Updated:** 2026-11-16
+**Last Updated:** 2026-11-22
 
 ## Quick Links
 
 | Document | Decision |
 |----------|---------|
+| [ADR-044: Ontology-Grounded Chunk Extraction (OGCE)](./adr-044-ontology-grounded-chunk-extraction.md) | **Accepted (design) 2026-11-22** — JSONL, ontology-derived schema, bounded extraction segmentation/scheduling; implementation pending; numerical gates provisional |
 | [ADR-043: vLLM extraction provider status](./adr-043-vllm-provider-status.md) | **Accepted 2026-11-16** — broad rollout permitted; `regex` remains default; default switch deferred |
 | [ADR-042: Mapping path composition and provenance](./adr-042-mapping-path-composition.md) | **Proposed** — ONT-ADR-013; before agent reasoning |
 | [ADR-041: Mapping experiment reproducibility](./adr-041-mapping-experiment-reproducibility.md) | **Proposed** — ONT-ADR-012; Phase 2 gate |
