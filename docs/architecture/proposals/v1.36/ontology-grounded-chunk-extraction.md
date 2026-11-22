@@ -1,14 +1,15 @@
 # Synanton Design 1.36 Proposal: Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE)
 
-**Status:** Draft for review — 2026-11-21. Not an accepted design.
-The `v1.36` slot is provisional; this document is a technical proposal, not an
-implementation commitment.
+**Status:** Accepted (design) — 2026-11-22. Implementation pending; no runtime implementation is claimed.
+The `v1.36` slot remains provisional; acceptance of this design does not constitute a release or implementation commitment.
 
 **Scope:** How Synanton should combine text chunks, the active ontology, and LLM
 extraction without the current JSON-schema fragility and chunk-fan-out problems.
 
 **Related decisions and plans:**
 
+- [ADR-044: Ontology-Grounded Chunk Extraction](../../decisions/adr-044-ontology-grounded-chunk-extraction.md)
+- [OGCE acceptance-gate register](../../../quality/ogce-gates.md)
 - [ADR-022 Pluggable Knowledge Extraction Pipeline](../../decisions/adr-022-extraction-engine-architecture.md)
 - [RAKG Phase 2 asynchronous extraction consumer](../../../planning/extraction-consumer-phase2.md)
 - [Extracted-mention graph contract](../../../planning/extracted-mention-graph-contract.md)
