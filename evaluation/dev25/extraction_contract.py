@@ -50,7 +50,8 @@ class ValidatedExtraction:
     rejected: tuple[dict, ...] = field(default_factory=tuple)
 
 def validate_proposal(proposal: ModelProposal, chunk_text, *, chunk_start=0,
-                      allowed_types=frozenset(), allowed_predicates=frozenset(), chunk_id=None):
+                      allowed_types=frozenset(), allowed_predicates=frozenset(), chunk_id=None,
+                      ontology_context=None):
     if not isinstance(proposal, ModelProposal):
         raise TypeError('validate_proposal requires ModelProposal')
     entities=[]; rejected=[]; by_surface={}
@@ -78,7 +79,14 @@ def validate_proposal(proposal: ModelProposal, chunk_text, *, chunk_start=0,
             if i<0: break
             positions.append(i); start=i+1
         if len(positions)!=1:
-            rejected.append({'kind':'relation','reason':'AMBIGUOUS_EVIDENCE' if positions else 'EVIDENCE_NOT_FOUND'}); continue
+            ontology_only = bool(ontology_context) and r.evidence in ontology_context
+            rejected.append({'kind':'relation','reason':'AMBIGUOUS_EVIDENCE' if positions else ('ONTOLOGY_CONTEXT_NOT_EVIDENCE' if ontology_only else 'EVIDENCE_NOT_FOUND')}); continue
         p=positions[0]
         rels.append(ValidatedRelationship(ss[0].mention_id,norm_predicate(r.predicate),oo[0].mention_id,chunk_start+p,chunk_start+p+len(r.evidence),r.evidence))
     return ValidatedExtraction(tuple(entities),tuple(rels),tuple(rejected))
+
+def summarize_rejections(validated):
+    """Count rejection reasons for per-attempt evaluation output."""
+    from collections import Counter
+    counts=Counter((x.get('kind'),x.get('reason')) for x in validated.rejected)
+    return [{'kind':k,'reason':r,'count':n} for (k,r),n in sorted(counts.items())]
