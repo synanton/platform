@@ -28,8 +28,8 @@ The slice tested the **JSONL line contract and extraction-window planner**, not 
 ## 2. Provenance and contamination control
 
 - `evaluation/gold/doc-1.json`–`doc-5.json` is the **ADR-022 frozen 5-document gold**. It is reserved for P2-3 and was not used for slice development, prompt tuning, E6, or latency evidence.
-- `evaluation/dev25/g7-dev-006..025` is a separate 20-document DEV set. Only its **document texts** were used for the multi-document variance runs.
-- The DEV-25 annotation status is contradictory: `evaluation/dev25/README.md` says the 20 are `UNLABELED`; `gold-release.md` says all 25 are annotated/released; `manifest.tsv` marks all 25 `VALIDATED_GOLD`. Because of that conflict, **no DEV labels were consumed**, and **E6 gold-span alignment is deferred** until the status is reconciled.
+- `evaluation/dev25/g7-dev-006..025` is a separate 20-document DEV set. Only its **document texts** were used for the multi-document variance runs (`g7-dev-011`, `013`, `016`, `018`, `023`; 3 passes each). **No DEV labels were consumed.**
+- The DEV-25 annotation status is contradictory: `evaluation/dev25/README.md` says the 20 are `UNLABELED`; `gold-release.md` says all 25 are annotated/released; `manifest.tsv` marks all 25 `VALIDATED_GOLD`. Because of that conflict, **no DEV labels were consumed**, and **E6 gold-span alignment is deferred** to [#821](https://github.com/synanton/platform/issues/821). The five slice-used DEV docs are flagged there as development-touched for traceability.
 - **F1 is not measured.** Spike modules lack subset selection, consolidation, and the full validation ladder. F1 on this code would not be gate evidence and would misstate the design. Quality measurement belongs to P2-3 on production modules against held-out gold.
 
 ## 3. T3/T4 — document and chunking
@@ -94,13 +94,15 @@ All probes returned HTTP 200. “Enforced” means the output matched the reques
 |---|---|
 | Calls | 12 |
 | Lines returned | 164 |
-| Lines accepted | 128 |
-| Lines quarantined | 36 |
+| Lines accepted | **128 (78%)** |
+| Lines quarantined | **36 (22%)** |
 | JSON parse failures | 1 |
 | Code-fenced responses | 0 |
 | Quarantine reasons | `AMBIGUOUS_ANCHOR`: 14; `SURFACE_NOT_IN_EVIDENCE`: 11; `CLASS_MISMATCH`: 5; `UNANCHORED`: 5; `JSON_PARSE`: 1 |
 
-The contract held: every non-blank line was parsed independently; the single malformed line was quarantined without affecting its neighbours. The 22% quarantine rate is a **model-adherence finding**, not a parser failure. The model reused evidence that appears twice in a segment, cited evidence that did not contain the claimed surface, or chose the wrong class. Prompt-only mode needs few-shot examples and/or a stricter unique-evidence instruction before production promotion; lowering the validator would hide the problem.
+**78% of model output lines were schema-valid and accepted; 22% were quarantined with reason codes.** Every one of the 36 failures was contained to a single line; a monolithic JSON parser on the same 164 lines would have lost all 164. That is the C2/C3 contract working.
+
+This is a **spike-prompt baseline, not a quality signal**: hand-written prompt, no ontology subset selection, no consolidation. It is a finding for P0-4, not a target. The gate register's G-05 measures *unexplained* quarantine (≤5%); every line here has an explicit reason, so the unexplained rate is 0. The 22% is total quarantine, useful as a P0-4 reference point (recorded in the gate register) rather than a gate result. If the production prompt does not materially reduce it, the 22% becomes a real quarantine-storage/review cost and possible extraction misses.
 
 ## 6. T8 — proof experiments (expanded document)
 
@@ -135,6 +137,10 @@ All three seeds produced the same output hash (`dc4ff1a8…`) and the same forma
 
 `structured_outputs.grammar` with `root ::= line "\n" line` produced exactly two newline-delimited objects. **Enforced: true.** This is the strongest runtime result in the slice.
 
+**Runtime feed-back:** R2.1 go/no-go is **yes, via `structured_outputs.grammar`**. R2.4 must use that parameter name, not the vLLM-style `guided_*`. The API contract ADR should record the `guided_*` fields as accepted-but-ignored on this backend version. See [gpu-runtime #30](https://github.com/synanton/gpu-runtime/issues/30).
+
+**Not measured:** E1/E2 with grammar enforcement (a Tier 2 follow-up for P1), and a controlled prompt-only vs grammar-enforced latency A/B. The probe latencies are not comparable because the outputs differ; do not infer the 5–25% estimate from this slice.
+
 ### Five DEV documents (text only; no labels)
 
 | Doc | Stratum | Tokens | Chunks | Segments | Accepted | Quarantined | E1 | E2 | E3 | E5 | p50 | p95 |
@@ -149,7 +155,7 @@ Aggregate exploratory latency over 34 calls: **p50 8.1994 s, p95 18.2551 s**. Th
 
 **E7 coverage:** three strata were exercised with five documents. The `entity_dense_technical`, `ambiguous_or_contradictory`, and `ontology_definition` strata were not exercised because the frozen 3-class/2-relation slice schema does not match their label vocabularies, and the five `ontology_definition` documents are the reserved ADR-022 gold. This is a deliberate scope boundary, not an oversight.
 
-**E9 coverage:** 5 DEV documents × 3 passes plus the primary n=10. This is a representative subset, not the full 25-document × 3 matrix. The full E9 remains P2-3/P1 work on the real modules.
+**E9 coverage:** measured = n=10 latency on the primary document plus 5 DEV documents × 3 passes (E1/E2/E3/E5). Not measured = the 25-document latency distribution by structure stratum. Reason: the DEV-25 provenance conflict ([#821](https://github.com/synanton/platform/issues/821)) makes labels unsafe, and the frozen five are reserved. G-10 remains provisional. The 18.25 s p50/p95 is a **first observed latency for a ~3,000-token document on node2**, not a benchmark figure or a defensible p95; full 25×3 is deferred to P2-3 prep once #821 closes.
 
 ## 8. Recommendation
 
@@ -162,6 +168,7 @@ Aggregate exploratory latency over 34 calls: **p50 8.1994 s, p95 18.2551 s**. Th
 5. **Add list-aware segmentation in P1-1.** Two of three lists split mid-list; atomic-list preservation is not implemented by the spike chunker.
 6. **Keep the short-tail rule explicit.** Flag undersized tails with `segment_undersized` and a reason; do not pad or merge across chunk boundaries.
 7. **Re-run on the pinned Blackwell RTX 5060 Ti** only through a separately approved isolated window. The Ada result is contract evidence, not profile qualification.
+8. **Record the Tier 2 parameter finding in the runtime API ADR** (`structured_outputs.grammar`; `guided_*` accepted-but-ignored). P0-1 tracking is opened as [#822](https://github.com/synanton/platform/issues/822).
 
 ## 9. What this does not prove
 
@@ -174,3 +181,16 @@ Aggregate exploratory latency over 34 calls: **p50 8.1994 s, p95 18.2551 s**. Th
 ## 10. Reproduce
 
 The run is reproducible from [`run_slice.py`](./run_slice.py), [`run_variance.py`](./run_variance.py), [`fixtures/sample-doc.md`](./fixtures/sample-doc.md), and [`fixtures/dev/`](./fixtures/dev/) against an OpenAI-compatible vLLM endpoint with the model mounted at `/models`. The pod spec is [`pod.yaml`](./pod.yaml). Raw model responses are in [`results/raw_responses.jsonl`](./results/raw_responses.jsonl); they are synthetic or DEV text and contain no production data.
+
+**Raw log note:** the repository policy ignores `*.log`, so the raw vLLM log is not committed. Model-load evidence is preserved in [`results/results.json`](./results/results.json) and [`results/nvidia-smi.txt`](./results/nvidia-smi.txt).
+
+## 11. Close-out
+
+| Item | Status |
+|---|---|
+| DEV-25 provenance reconciliation | [#821](https://github.com/synanton/platform/issues/821) — E6 and full 25×3 blocked until closed; five slice-used DEV docs flagged there. |
+| Runtime JSONL parameter finding | [gpu-runtime #30](https://github.com/synanton/gpu-runtime/issues/30) — R2.1 yes via `structured_outputs.grammar`; `guided_*` ignored; latency delta unmeasured. |
+| P0-1 schema compiler | [#822](https://github.com/synanton/platform/issues/822) — no GPU/gold dependency; next engineering step. |
+| E9 full 25×3 | Deferred to P2-3 prep after #821; current 5×3 + n=10 is the qualification distribution. |
+| Profile qualification | Validated for slice qualification only; **not** P2-3 and not the Blackwell profile. |
+| ADR-044 status | Unchanged. |
