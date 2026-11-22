@@ -1,0 +1,24 @@
+Gate 1 image-cache delivery probe — 2026-11-18T16:09Z
+Target node: node3
+Image: local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
+Scheduling: nodeName: node3; runtimeClassName: nvidia
+GPU request: none
+
+Credential path (gate1-registry-cred in synanton-gate1):
+  imagePullPolicy: Always
+  imagePullSecrets: gate1-registry-cred
+  Result: PASS
+  Status: Completed, exit 0
+  Image ID: local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
+  Output: gate1-image-ok
+
+No-secret cached path (same image, node3, IfNotPresent, no imagePullSecrets):
+  Result: FAIL
+  Status: ImagePullBackOff
+  Kubelet: Pulling image ... failed to pull / resolve image; authorization required
+
+Decision:
+Gate 1 must use the dedicated scoped secret `gate1-registry-cred`. The
+no-secret digest/cache path is NOT approved. Do not copy local-registry-cred.
+
+No benchmark, model load, HOLDOUT access, or production change occurred.

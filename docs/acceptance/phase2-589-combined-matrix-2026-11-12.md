@@ -52,3 +52,39 @@ This artifact proves the combined local real-store matrix on the post-#592 tree.
 - #592 reconciliation migration (closed)
 - #638 capability composition/lint
 - #639 promotion lost-response regression
+
+## Live K8s rerun — 2026-11-12
+
+**Result:** PASS (29.0s) after recovering the cluster data layer.
+**Deployed tree:** `8c56ea1d9d0fe064199ad6d77681af9d9f47560a` (images rebuilt and pushed with `IMAGE_TAG=local-real-demo`).
+**Cluster:** `kubernetes-admin@kubernetes`, namespace `synanton`.
+**UI:** deployed NodePort `http://192.168.10.31:30080`.
+**APIs:** port-forwarded Synflux (`18090`) and Relix (`18084`); no mocked graph writes.
+
+### Infrastructure recovery
+
+- Cassandra headless Service now has `publishNotReadyAddresses: true`; the readiness probe timeout is 10s. Without this, cassandra-1/2 could not resolve the seed endpoint before cassandra-0 became Ready.
+- Neo4j Service now publishes not-ready addresses so Relix can reach Bolt even while the Neo4j pod readiness probe is still false. Neo4j is otherwise healthy and the graph journey passed.
+- `deploy-demo.sh` completed the data-layer and overlay rollout, and the consumer flags were enabled:
+  - Synflux: `EXTRACTION_PROVIDER=llm`, `EXTRACTION_CONSUMER_ENABLED=true`, `EXTRACTION_GRAPH_ENABLED=true`, `PROMOTION_PRODUCER_ENABLED=true`
+  - Synquest: `RESOLUTION_CONSUMER_ENABLED=true`
+  - Relix: `PROMOTION_CONSUMER_ENABLED=true`, `RECONCILIATION_ENABLED=true`
+
+### Live E2E
+
+Command (from `test/e2e`):
+
+```bash
+SYNFLUX_URL=http://127.0.0.1:18090 \
+VITE_RELIX_URL=http://127.0.0.1:18084 \
+BASE_URL=http://192.168.10.31:30080 \
+LOCAL_REAL_DEMO_TENANT=demo \
+SYNANTON_JWT_SECRET=<secret> \
+npm run test:entity-graph-live
+```
+
+Observed: `1 passed (29.0s)` — upload → extraction → graph commit → resolution → validation → promotion → Entity Graph with `tested_every` edge and evidence.
+
+Artifact: [`artifacts/k8s-activation-2026-11-12/playwright-live.txt`](artifacts/k8s-activation-2026-11-12/playwright-live.txt).
+
+This is the live HTTP/K8s activation rerun on the `8c56ea1d` tree. Store-level evidence above remains valid; the combined gate now has both local and live evidence.

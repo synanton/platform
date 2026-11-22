@@ -1,0 +1,143 @@
+{
+  "model": "deepseek-v4-pro",
+  "documents": 5,
+  "chunks": 26,
+  "valid_chunks": 18,
+  "entities": 955,
+  "relations": 429,
+  "entity": {
+    "tp": 528,
+    "pred": 955,
+    "gold": 993,
+    "p": 0.5528795811518324,
+    "r": 0.5317220543806647,
+    "f1": 0.5420944558521561
+  },
+  "relation": {
+    "tp": 0,
+    "pred": 429,
+    "gold": 321,
+    "p": 0.0,
+    "r": 0.0,
+    "f1": 0
+  },
+  "input_tokens": 78752,
+  "output_tokens": 140841,
+  "results": [
+    {
+      "doc_id": "g7-dev-010",
+      "chunks": 22,
+      "valid_chunks": 14,
+      "entities": 754,
+      "relations": 310,
+      "entity": {
+        "tp": 432,
+        "pred": 754,
+        "gold": 853,
+        "p": 0.5729442970822282,
+        "r": 0.5064478311840562,
+        "f1": 0.537647790914748
+      },
+      "relation": {
+        "tp": 0,
+        "pred": 310,
+        "gold": 273,
+        "p": 0.0,
+        "r": 0.0,
+        "f1": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-011",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 34,
+      "relations": 10,
+      "entity": {
+        "tp": 14,
+        "pred": 34,
+        "gold": 15,
+        "p": 0.4117647058823529,
+        "r": 0.9333333333333333,
+        "f1": 0.5714285714285713
+      },
+      "relation": {
+        "tp": 0,
+        "pred": 10,
+        "gold": 7,
+        "p": 0.0,
+        "r": 0.0,
+        "f1": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-012",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 41,
+      "relations": 32,
+      "entity": {
+        "tp": 33,
+        "pred": 41,
+        "gold": 59,
+        "p": 0.8048780487804879,
+        "r": 0.559322033898305,
+        "f1": 0.6599999999999999
+      },
+      "relation": {
+        "tp": 0,
+        "pred": 32,
+        "gold": 9,
+        "p": 0.0,
+        "r": 0.0,
+        "f1": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-013",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 70,
+      "relations": 20,
+      "entity": {
+        "tp": 20,
+        "pred": 70,
+        "gold": 23,
+        "p": 0.2857142857142857,
+        "r": 0.8695652173913043,
+        "f1": 0.4301075268817204
+      },
+      "relation": {
+        "tp": 0,
+        "pred": 20,
+        "gold": 6,
+        "p": 0.0,
+        "r": 0.0,
+        "f1": 0
+      }
+    },
+    {
+      "doc_id": "g7-dev-014",
+      "chunks": 1,
+      "valid_chunks": 1,
+      "entities": 56,
+      "relations": 57,
+      "entity": {
+        "tp": 29,
+        "pred": 56,
+        "gold": 43,
+        "p": 0.5178571428571429,
+        "r": 0.6744186046511628,
+        "f1": 0.5858585858585859
+      },
+      "relation": {
+        "tp": 0,
+        "pred": 57,
+        "gold": 26,
+        "p": 0.0,
+        "r": 0.0,
+        "f1": 0
+      }
+    }
+  ]
+}

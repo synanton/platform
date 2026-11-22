@@ -20,6 +20,7 @@ import org.synanton.common.resolution.ResolutionKey;
 import org.synanton.common.resolution.ResolutionWriteOutcome;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
+import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.relix.config.ReconciliationProperties;
@@ -78,11 +79,20 @@ public final class ResolutionReconciler {
         if (!properties.enabled()) {
             return;
         }
-        String tenant = properties.tenant();
-        if (tenant == null || tenant.isBlank()) {
-            log.warn("Reconciliation is enabled without a tenant; skipping poll");
+        List<String> tenants;
+        try {
+            tenants = TenantPolling.resolve(properties.tenant(), cache);
+        } catch (Exception e) {
+            errors.increment();
+            log.warn("Reconciliation tenant discovery failed: {}", e.toString());
             return;
         }
+        for (String tenant : tenants) {
+            pollTenant(tenant);
+        }
+    }
+
+    private void pollTenant(String tenant) {
         // ResolutionGraphPort capability is validated at wiring/startup.
         List<ResolutionWorkRow> work;
         try {
@@ -113,7 +123,13 @@ public final class ResolutionReconciler {
             if (!"COMPLETED".equals(row.claimStatus()) && !"PROCESSING".equals(row.claimStatus())) {
                 continue;
             }
-            reconcile(row, result, now);
+            try {
+                reconcile(row, result, now);
+            } catch (Exception e) {
+                errors.increment();
+                log.warn("Reconciliation failed tenant={} version={}: {}",
+                        tenant, row.sourceVersionId(), e.toString());
+            }
         }
     }
 

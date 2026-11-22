@@ -19,4 +19,16 @@ public record ExtractionRequestRow(
         int attemptCount,
         String lastError,
         Instant nextAttemptAt,
-        boolean deadLettered) {}
+        boolean deadLettered,
+        long generation) {
+
+    public ExtractionRequestRow(String tenantId, String connectorId, String sourceId,
+                                String resourceId, UUID eventId, UUID versionId,
+                                UUID contentRefId, String payloadJson, Instant requestedAt,
+                                Instant searchProjectedAt, String status, int attemptCount,
+                                String lastError, Instant nextAttemptAt, boolean deadLettered) {
+        this(tenantId, connectorId, sourceId, resourceId, eventId, versionId, contentRefId,
+                payloadJson, requestedAt, searchProjectedAt, status, attemptCount, lastError,
+                nextAttemptAt, deadLettered, 0);
+    }
+}

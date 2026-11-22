@@ -178,6 +178,9 @@ public class SourceController {
         if (!statuses.isEmpty() && statuses.stream().allMatch("GRAPH_COMMITTED"::equals)) {
             return "GRAPH_COMMITTED";
         }
+        if (statuses.contains("MENTIONS_COMMITTED")) {
+            return "MENTIONS_COMMITTED";
+        }
         return "PENDING";
     }
 

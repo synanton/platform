@@ -4,13 +4,18 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
+import org.synanton.ingestioncache.activation.ActivationRecord;
+import org.synanton.ingestioncache.activation.ActivationState;
+import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
@@ -31,30 +36,44 @@ public final class GraphWriter {
     private final GraphWriteClient graphClient;
     private final ExtractionGraphProperties properties;
     private final Clock clock;
+    private final SourceActivationStore activations;
 
     public GraphWriter(IngestionCacheClient cacheClient, RelationValidator validator,
                        GraphWriteClient graphClient, ExtractionGraphProperties properties, Clock clock) {
+        this(cacheClient, validator, graphClient, properties, clock, null);
+    }
+
+    public GraphWriter(IngestionCacheClient cacheClient, RelationValidator validator,
+                       GraphWriteClient graphClient, ExtractionGraphProperties properties, Clock clock,
+                       SourceActivationStore activations) {
         this.cacheClient = cacheClient;
         this.validator = validator;
         this.graphClient = graphClient;
         this.properties = properties;
         this.clock = clock;
+        this.activations = activations;
     }
 
-    public void commit(ExtractionRequestRow request, List<ChunkRow> chunks,
-                       Map<Integer, ExtractionResult> resultsByOrdinal) {
-        commit(request, chunks, resultsByOrdinal, 0);
+    public GraphCommitResult commit(ExtractionRequestRow request, List<ChunkRow> chunks,
+                                    Map<Integer, ExtractionResult> resultsByOrdinal) {
+        return commit(request, chunks, resultsByOrdinal, 0);
     }
 
-    public void commit(ExtractionRequestRow request, List<ChunkRow> chunks,
-                       Map<Integer, ExtractionResult> resultsByOrdinal, int graphAttempt) {
+    public GraphCommitResult commit(ExtractionRequestRow request, List<ChunkRow> chunks,
+                                    Map<Integer, ExtractionResult> resultsByOrdinal, int graphAttempt) {
         if (!properties.enabled()) {
-            return;
+            return new GraphCommitResult(0, 0, 0, List.of(), "GRAPH_DISABLED");
         }
         if (!cacheClient.claimGraphCommit(request)) {
-            return;
+            return new GraphCommitResult(0, 0, 0, List.of(), "NOT_CLAIMED");
         }
         Map<String, Integer> counters = counters(0, 0, 0, 0);
+        Set<String> rejectionCodes = new LinkedHashSet<>();
+        Map<String, Integer> rejectionCounts = new LinkedHashMap<>();
+        Map<String, Integer> rejectionPredicateCounts = new LinkedHashMap<>();
+        Map<String, Integer> rejectionSubjectTypeCounts = new LinkedHashMap<>();
+        Map<String, Integer> rejectionObjectTypeCounts = new LinkedHashMap<>();
+        int relationCandidates = 0;
         try {
             Map<Integer, ChunkRow> chunkByOrdinal = new LinkedHashMap<>();
             for (ChunkRow chunk : chunks) {
@@ -99,10 +118,25 @@ public final class GraphWriter {
                     continue;
                 }
                 for (RelationCandidate relation : entry.getValue().relations()) {
+                    relationCandidates++;
                     GraphMention subject = byRawMention.get(ordinal + "|" + relation.subjectMentionId());
                     GraphMention object = byRawMention.get(ordinal + "|" + relation.objectMentionId());
                     if (subject == null || object == null) {
                         rejected++;
+                        rejectionCodes.add("MISSING_ENDPOINT");
+                        rejectionCounts.merge("MISSING_ENDPOINT", 1, Integer::sum);
+                        rejectionPredicateCounts.merge(relation.predicate(), 1, Integer::sum);
+                        rejectionSubjectTypeCounts.merge(
+                                subject == null ? "missing" : subject.proposedType(), 1, Integer::sum);
+                        rejectionObjectTypeCounts.merge(
+                                object == null ? "missing" : object.proposedType(), 1, Integer::sum);
+                        log.debug("Relation rejected tenant={} version={} chunk={} predicate={} "
+                                        + "reason=MISSING_ENDPOINT subjectMention={} objectMention={} "
+                                        + "subjectType={} objectType={}",
+                                request.tenantId(), request.versionId(), ordinal, relation.predicate(),
+                                relation.subjectMentionId(), relation.objectMentionId(),
+                                subject == null ? "missing" : subject.proposedType(),
+                                object == null ? "missing" : object.proposedType());
                         continue;
                     }
                     RelationValidation validation = validator.validate(request.tenantId(),
@@ -110,8 +144,22 @@ public final class GraphWriter {
                             properties.ontologyVersionOrDefault());
                     if (!validation.conformant()) {
                         rejected++;
-                        log.debug("Relation rejected tenant={} predicate={} violations={}",
-                                request.tenantId(), relation.predicate(), validation.violations());
+                        String terminalReason = validation.violations().isEmpty()
+                                ? "ONTOLOGY_INVALID" : validation.violations().get(0).code();
+                        rejectionCounts.merge(terminalReason, 1, Integer::sum);
+                        rejectionPredicateCounts.merge(relation.predicate(), 1, Integer::sum);
+                        rejectionSubjectTypeCounts.merge(subject.proposedType(), 1, Integer::sum);
+                        rejectionObjectTypeCounts.merge(object.proposedType(), 1, Integer::sum);
+                        if (validation.violations().isEmpty()) {
+                            rejectionCodes.add("ONTOLOGY_INVALID");
+                        } else {
+                            validation.violations().forEach(violation ->
+                                    rejectionCodes.add(violation.code()));
+                        }
+                        log.debug("Relation rejected tenant={} version={} chunk={} predicate={} "
+                                        + "subjectType={} objectType={} violations={}",
+                                request.tenantId(), request.versionId(), ordinal, relation.predicate(),
+                                subject.proposedType(), object.proposedType(), validation.violations());
                         continue;
                     }
                     String relationId = StableIds.relationId(request.tenantId(),
@@ -128,12 +176,19 @@ public final class GraphWriter {
                             request.versionId().toString(), relation.predicate(), subject.mentionId(),
                             object.mentionId(), evidenceChunkId,
                             relation.evidenceCharStart(), relation.evidenceCharEnd(),
-                            evidenceDocumentStart, evidenceDocumentEnd, now));
+                            evidenceDocumentStart, evidenceDocumentEnd, now,
+                            request.sourceId(), request.versionId().toString(), request.generation(), null));
                 }
             }
             List<GraphRelation> accepted = new ArrayList<>(acceptedById.values());
             counters.put("relations_accepted", accepted.size());
             counters.put("relations_rejected", rejected);
+            counters.put("relation_candidates", relationCandidates);
+            if (relationCandidates != accepted.size() + rejected) {
+                log.warn("Relation accounting mismatch tenant={} version={} candidates={} accepted={} rejected={} reasons={}",
+                        request.tenantId(), request.versionId(), relationCandidates,
+                        accepted.size(), rejected, rejectionCounts);
+            }
 
             if (!mentions.isEmpty()) {
                 int persistedMentions = graphClient.upsertMentions(mentions);
@@ -160,11 +215,24 @@ public final class GraphWriter {
                         mention.documentOffsetEnd(), mention.surfaceForm(), mention.proposedType(),
                         "PENDING", null, null, 0, null, null, now, null, null, null));
             }
-            String graphStatus = rejected > 0 ? "PARTIAL" : "GRAPH_COMMITTED";
-            cacheClient.markGraphCommitted(request, graphStatus, counters, graphAttempt, clock.instant());
-            log.info("Graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
+            String graphStatus = rejected > 0 ? "PARTIAL" : "MENTIONS_COMMITTED";
+            // A partial validation still commits the mention graph and its accepted
+            // relations. Only retirement is gated on a complete extraction (ADR-029
+            // §5); promotion and activation must continue for the accepted facts.
+            boolean mentionsCommitted = ("MENTIONS_COMMITTED".equals(graphStatus)
+                    || "PARTIAL".equals(graphStatus)) && request.generation() >= 1;
+            boolean statusWritten = cacheClient.markGraphCommitted(request, graphStatus, counters,
+                    graphAttempt, clock.instant(), null, null, null);
+            if (statusWritten && mentionsCommitted) {
+                advanceActivationToMentionsCommitted(request);
+            }
+            log.info("Mention graph commit tenant={} version={} status={} mentions={} relations={} rejected={}",
                     request.tenantId(), request.versionId(), graphStatus, mentions.size(),
                     accepted.size(), rejected);
+            return new GraphCommitResult(mentions.size(), accepted.size(), rejected,
+                    List.copyOf(rejectionCodes), graphStatus, relationCandidates,
+                    Map.copyOf(rejectionCounts), Map.copyOf(rejectionPredicateCounts),
+                    Map.copyOf(rejectionSubjectTypeCounts), Map.copyOf(rejectionObjectTypeCounts));
         } catch (Exception e) {
             int attempt = graphAttempt + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempt));
@@ -176,6 +244,11 @@ public final class GraphWriter {
             }
             log.warn("Graph commit failed tenant={} version={}: {}",
                     request.tenantId(), request.versionId(), e.toString());
+            return new GraphCommitResult(
+                    counters.getOrDefault("mentions_accepted", 0),
+                    counters.getOrDefault("relations_accepted", 0),
+                    counters.getOrDefault("relations_rejected", 0),
+                    List.copyOf(rejectionCodes), "FAILED");
         }
     }
 
@@ -197,6 +270,36 @@ public final class GraphWriter {
     private static long backoffSeconds(int attempt) {
         long multiplier = 1L << Math.min(Math.max(0, attempt - 1), 5);
         return Math.min(300, 30 * multiplier);
+    }
+
+    private void advanceActivationToMentionsCommitted(ExtractionRequestRow request) {
+        if (activations == null) {
+            return;
+        }
+        ActivationRecord record = activations.read(request.tenantId(), request.sourceId(),
+                request.generation()).orElse(null);
+        record = move(record, ActivationState.REVISION_ACCEPTED, ActivationState.EXTRACTING);
+        record = move(record, ActivationState.EXTRACTING, ActivationState.EXTRACTION_COMPLETE);
+        record = move(record, ActivationState.EXTRACTION_COMPLETE, ActivationState.GRAPH_COMMITTING);
+        if (record != null && record.state() == ActivationState.GRAPH_COMMITTING) {
+            activations.transition(record.tenantId(), record.sourceId(), record.generation(),
+                    ActivationState.GRAPH_COMMITTING, ActivationState.MENTIONS_COMMITTED,
+                    new SourceActivationStore.ProjectionMarkers(request.generation(), "MENTIONS_COMMITTED",
+                            record.searchAppliedGeneration(), record.searchAppliedState()),
+                    null, true, clock.instant());
+        }
+    }
+
+    private ActivationRecord move(ActivationRecord record, ActivationState expected,
+                                  ActivationState next) {
+        if (record == null || record.state() != expected) {
+            return record;
+        }
+        activations.transition(record.tenantId(), record.sourceId(), record.generation(),
+                expected, next, SourceActivationStore.ProjectionMarkers.none(record),
+                null, true, clock.instant());
+        return activations.read(record.tenantId(), record.sourceId(), record.generation())
+                .orElse(null);
     }
 
     private static Map<String, Integer> counters(int mentionsAccepted, int mentionsRejected,

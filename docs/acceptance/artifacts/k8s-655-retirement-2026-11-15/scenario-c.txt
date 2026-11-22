@@ -1,0 +1,39 @@
+Scenario C — reconciliation drift repair and idempotency (fixed image, 2026-11-15T17:10:26Z)
+
+Pre-corruption:
+Defaulted container "neo4j" out of: neo4j, schema-init
+r.status, r.active, r.review_required, r.updated_at
+"ACTIVE", TRUE, FALSE, "2026-11-15T17:09:55.632018965Z"
+
+Watermark before:
+Defaulted container "neo4j" out of: neo4j, schema-init
+w.last_sweep_at
+"2026-11-15T17:09:52.857007745Z"
+
+Corrupt derived state and touch one evidence timestamp to 2026-11-15T17:10:26.109565526Z:
+Defaulted container "neo4j" out of: neo4j, schema-init
+corrupted
+"CONFLICTED"
+
+Waiting for the scheduled RelationRetirementReconciler (10s poll)...
+Post-repair:
+Defaulted container "neo4j" out of: neo4j, schema-init
+r.status, r.active, r.review_required, r.updated_at
+"ACTIVE", TRUE, FALSE, "2026-11-15T17:10:40.694751430Z"
+
+Watermark after repair:
+Defaulted container "neo4j" out of: neo4j, schema-init
+w.last_sweep_at
+"2026-11-15T17:10:26.109565526Z"
+
+Repair log:
+2026-11-15T17:10:40.765Z  INFO 1 --- [relix] [   scheduling-1] o.s.r.a.o.g.neo4j.Neo4jGraphConnector    : retirement reconciled tenant=demo relation=2195d2931827440e00968ca4a6c7d5520769367486a36f45b6c45e1d52fd2d8b CONFLICTED -> ACTIVE
+
+Waiting for a second scheduled cycle...
+After second cycle:
+Defaulted container "neo4j" out of: neo4j, schema-init
+r.status, r.active, r.review_required, r.updated_at
+"ACTIVE", TRUE, FALSE, "2026-11-15T17:10:40.694751430Z"
+
+Second-cycle repair log (expected empty, no drift):
+(end)

@@ -1,0 +1,54 @@
+{
+  "result": {
+    "elapsed_s": 1.95,
+    "finish_reason": "stop",
+    "content": "<think>\nOkay, the user wants me to reply with exactly \"ready\". Let me check the instructions again. They said to reply with exactly \"ready\" and nothing else. I need to make sure I don't add any extra text or explanations. Just the word \"ready\" in lowercase. Alright, I'll go with that. Let me confirm there's no hidden characters or spaces. Yep, looks good. Ready to send.\n</think>\n\nready",
+    "usage": {
+      "prompt_tokens": 13,
+      "total_tokens": 104,
+      "completion_tokens": 91,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": null
+    }
+  },
+  "response": {
+    "id": "chatcmpl-a6afbaa5bbb52856",
+    "object": "chat.completion",
+    "created": 1794994824,
+    "model": "qwen3-extraction-8b-fp8",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "<think>\nOkay, the user wants me to reply with exactly \"ready\". Let me check the instructions again. They said to reply with exactly \"ready\" and nothing else. I need to make sure I don't add any extra text or explanations. Just the word \"ready\" in lowercase. Alright, I'll go with that. Let me confirm there's no hidden characters or spaces. Yep, looks good. Ready to send.\n</think>\n\nready",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.29.0-64a36551",
+    "usage": {
+      "prompt_tokens": 13,
+      "total_tokens": 104,
+      "completion_tokens": 91,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

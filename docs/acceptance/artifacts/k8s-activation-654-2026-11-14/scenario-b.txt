@@ -1,0 +1,56 @@
+source=acceptance-654-b-1794687466
+create=201
+submit=202
+{"run_id":"9f243f7f-d8d6-3923-8c7a-6ad047086a0d","operation_id":"fa4e6762-2f25-4abc-82af-3f5a418b5fb6","status":"SCHEDULED"}
+[28] GRAPH_COMMITTED detected at 20:18:15
+pod deleted at 20:18:16
+version=e394a4d8-d65b-56ba-9c82-721e9211baa8
+--- pre-recovery cassandra ---
+
+ graph_status    | generation | activation_event_published | activation_event_id
+-----------------+------------+----------------------------+--------------------------------------
+ GRAPH_COMMITTED |          1 |                      False | 9a07417c-b17d-3016-9778-1394e4601e9f
+
+(1 rows)
+
+ current_generation | accepted_generation
+--------------------+---------------------
+                  0 |                   1
+
+(1 rows)
+
+ state
+-----------------
+ GRAPH_COMMITTED
+
+(1 rows)
+--- pre-recovery neo4j ---
+evidence
+2
+--- waiting for relix replacement ---
+Waiting for deployment "relix" rollout to finish: 0 of 1 updated replicas are available...
+deployment "relix" successfully rolled out
+--- waiting for activation recovery ---
+[1] activation=CURRENT
+--- post-recovery cassandra ---
+
+ graph_status    | generation | activation_event_published
+-----------------+------------+----------------------------
+ GRAPH_COMMITTED |          1 |                       True
+
+(1 rows)
+
+ current_generation | accepted_generation | active_revision_id
+--------------------+---------------------+--------------------------------------
+                  1 |                   1 | e394a4d8-d65b-56ba-9c82-721e9211baa8
+
+(1 rows)
+
+ state   | generation | revision_id                          | graph_applied_generation | search_applied_generation
+---------+------------+--------------------------------------+--------------------------+---------------------------
+ CURRENT |          1 | e394a4d8-d65b-56ba-9c82-721e9211baa8 |                        1 |                         1
+
+(1 rows)
+--- post-recovery neo4j (no duplicates) ---
+evidence, canonical_relations
+2, 2

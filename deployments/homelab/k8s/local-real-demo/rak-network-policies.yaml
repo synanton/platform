@@ -54,7 +54,7 @@ spec:
             matchExpressions:
               - key: app
                 operator: In
-                values: [synflux, ui]
+                values: [synflux, ui, relix]
       ports:
         - protocol: TCP
           port: 8080

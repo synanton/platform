@@ -7,20 +7,34 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
+import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
+import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
 import org.synanton.extraction.engine.RelationCandidate;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ChunkRow;
@@ -32,6 +46,10 @@ import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
 import org.synanton.synflux.extraction.graph.GraphWriter;
+import org.synanton.synflux.extraction.provider.ExtractionAdapterResolver;
+import org.synanton.synflux.extraction.provider.ExtractionProvider;
+import org.synanton.synflux.extraction.provider.ProviderConfigInvalidException;
+import org.synanton.synflux.extraction.provider.ResolvedExtractionAdapter;
 import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -97,6 +115,105 @@ class ExtractionConsumerTest {
     }
 
     @Test
+    void completionLogCarriesBoundedTenantClassAndPerStageDurations() throws Exception {
+        String tenant = "eval-log-schema";
+        seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of()));
+
+        Logger logger = (Logger) LoggerFactory.getLogger(ExtractionConsumer.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            consumer(tenant, adapter).poll();
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        String message = appender.list.stream()
+                .map(ILoggingEvent::getFormattedMessage)
+                .filter(line -> line.contains("\"event\":\"extraction_completed\""))
+                .findFirst()
+                .orElseThrow();
+        JsonNode event = new ObjectMapper().readTree(message.substring(message.indexOf('{')));
+        assertThat(event.path("tenant_class").asText()).isEqualTo("eval");
+        assertThat(event.path("tenant_id").asText()).isEqualTo(tenant);
+        assertThat(event.path("rejection_reason_codes").isArray()).isTrue();
+        JsonNode durations = event.path("durations_ms");
+        for (String stage : List.of("extraction", "indexing", "promotion", "activation")) {
+            assertThat(durations.path(stage).asLong()).isGreaterThanOrEqualTo(0);
+        }
+    }
+
+    @Test
+    void registryPollProcessesTwoTenantsConcurrentlyWithoutCrossContamination() throws Exception {
+        String tenantA = "tenant-concurrent-a";
+        String tenantB = "tenant-concurrent-b";
+        Fixture a = seed(tenantA, "Halcyon-7 requires a helium leak check.");
+        Fixture b = seed(tenantB, "A second tenant needs an independent extraction.");
+        CountDownLatch entered = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicInteger calls = new AtomicInteger();
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenAnswer(invocation -> {
+            ExtractionContext context = invocation.getArgument(1);
+            assertThat(context.tenantId()).isIn(tenantA, tenantB);
+            calls.incrementAndGet();
+            entered.countDown();
+            if (!release.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("concurrent tenant did not enter");
+            }
+            return new ExtractionResult(List.of(), List.of());
+        });
+        ExtractionConsumer consumer = new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, "", 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC());
+
+        Thread poller = new Thread(consumer::poll, "registry-poll");
+        poller.start();
+        try {
+            assertThat(entered.await(10, TimeUnit.SECONDS))
+                    .as("both tenants must be processed concurrently")
+                    .isTrue();
+        } finally {
+            release.countDown();
+        }
+        poller.join(10_000);
+        assertThat(poller.isAlive()).isFalse();
+
+        assertThat(calls).hasValue(2);
+        assertThat(cache.readExtractionStatus(tenantA, CONNECTOR, SOURCE, RESOURCE,
+                a.versionId())).contains("KNOWLEDGE_READY");
+        assertThat(cache.readExtractionStatus(tenantB, CONNECTOR, SOURCE, RESOURCE,
+                b.versionId())).contains("KNOWLEDGE_READY");
+    }
+
+    @Test
+    void incompleteLlmOutputIsTerminalAndDeadLettered() {
+        String tenant = "tenant-incomplete-llm";
+        seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenThrow(new LlmIncompleteOutputException(
+                new LlmUsage("length", 1328, 2048, 3376), 6736, "a".repeat(64)));
+
+        consumer(tenant, adapter).poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                latestVersion(tenant))).contains("EXTRACTION_FAILED");
+        assertThat(cache.listExtractionOutbox(tenant, CONNECTOR, SOURCE, RESOURCE))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.deadLettered()).isTrue();
+                    assertThat(event.nextAttemptAt()).isNull();
+                    assertThat(event.lastError()).contains("INCOMPLETE_LLM_OUTPUT")
+                            .contains("finish_reason=length");
+                });
+    }
+
+    @Test
     void adapterFailureLeavesTheRequestRetryable() {
         seed("tenant-extraction-fail", "Halcyon-7 requires a helium leak check.");
         ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
@@ -117,6 +234,163 @@ class ExtractionConsumerTest {
     }
 
     @Test
+    void providerInvalidMarksTheDocumentTerminal() {
+        String tenant = "tenant-provider-invalid";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionAdapterResolver resolver = new ExtractionAdapterResolver() {
+            @Override
+            public ResolvedExtractionAdapter forTenant(String tenantId) {
+                throw new ProviderConfigInvalidException("bad provider");
+            }
+
+            @Override
+            public ResolvedExtractionAdapter forProvider(String provider) {
+                throw new ProviderConfigInvalidException("bad provider");
+            }
+        };
+        ExtractionConsumer consumer = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC());
+
+        consumer.poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("EXTRACTION_FAILED");
+        assertThat(cache.listExtractionOutbox(tenant, CONNECTOR, SOURCE, RESOURCE))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.deadLettered()).isTrue();
+                    assertThat(event.nextAttemptAt()).isNull();
+                    assertThat(event.lastError()).contains("PROVIDER_CONFIG_INVALID");
+                });
+    }
+
+    @Test
+    void resolvedProviderIsPersistedOnTheSourceVersion() {
+        String tenant = "tenant-provider-metadata";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of()));
+        ResolvedExtractionAdapter resolved = new ResolvedExtractionAdapter(
+                adapter, ExtractionProvider.LLM, "tenant-override");
+        ExtractionAdapterResolver resolver = new ExtractionAdapterResolver() {
+            @Override
+            public ResolvedExtractionAdapter forTenant(String tenantId) {
+                return resolved;
+            }
+
+            @Override
+            public ResolvedExtractionAdapter forProvider(String provider) {
+                return resolved;
+            }
+        };
+        ExtractionConsumer consumer = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC());
+
+        consumer.poll();
+
+        String provider = session.execute(
+                "SELECT extraction_provider FROM ingestion_cache.source_versions " +
+                        "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? " +
+                        "AND version_id=?",
+                tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId())
+                .one().getString("extraction_provider");
+        assertThat(provider).isEqualTo("llm");
+    }
+
+    @Test
+    void tenantProviderOverrideRoundTripsAndCanBeCleared() {
+        String tenant = "tenant-provider-config";
+        Instant now = Instant.now();
+        cache.setTenantProvider(tenant, "llm", now);
+        assertThat(cache.readTenantProvider(tenant)).contains("llm");
+        cache.clearTenantProvider(tenant);
+        assertThat(cache.readTenantProvider(tenant)).isEmpty();
+    }
+
+    @Test
+    void retryUsesPersistedProviderAfterConfigChange() {
+        String tenant = "tenant-provider-retry";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any()))
+                .thenThrow(new IllegalStateException("first attempt fails"))
+                .thenReturn(new ExtractionResult(List.of(), List.of()));
+        ResolvedExtractionAdapter llm = new ResolvedExtractionAdapter(
+                adapter, ExtractionProvider.LLM, "tenant-override");
+        ExtractionAdapterResolver resolver = mock(ExtractionAdapterResolver.class);
+        when(resolver.forTenant(tenant)).thenReturn(llm);
+        when(resolver.forProvider("llm")).thenReturn(
+                new ResolvedExtractionAdapter(adapter, ExtractionProvider.LLM, "persisted"));
+
+        Instant t0 = Instant.now();
+        ExtractionConsumer first = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.fixed(t0, ZoneOffset.UTC));
+        first.poll();
+        assertThat(cache.readExtractionProvider(new org.synanton.ingestioncache.domain.ExtractionRequestRow(
+                tenant, CONNECTOR, SOURCE, RESOURCE, UUID.randomUUID(), fixture.versionId(),
+                fixture.contentRefId(), "{}", t0, t0, "EXTRACTION_FAILED", 1, null,
+                t0.plusSeconds(30), false))).contains("llm");
+
+        ExtractionConsumer retry = new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.fixed(t0.plusSeconds(60), ZoneOffset.UTC));
+        retry.poll();
+
+        org.mockito.Mockito.verify(resolver, times(1)).forTenant(tenant);
+        org.mockito.Mockito.verify(resolver, times(1)).forProvider("llm");
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("KNOWLEDGE_READY");
+        assertThat(session.execute(
+                "SELECT extraction_provider FROM ingestion_cache.source_versions " +
+                        "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? " +
+                        "AND version_id=?",
+                tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId())
+                .one().getString("extraction_provider")).isEqualTo("llm");
+    }
+
+    @Test
+    void firstAttemptPersistsProviderBeforeExtraction() {
+        String tenant = "tenant-provider-before";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenAnswer(invocation -> {
+            String persisted = session.execute(
+                    "SELECT extraction_provider FROM ingestion_cache.source_versions " +
+                            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? " +
+                            "AND version_id=?",
+                    tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId())
+                    .one().getString("extraction_provider");
+            assertThat(persisted).isEqualTo("llm");
+            return new ExtractionResult(List.of(), List.of());
+        });
+        ResolvedExtractionAdapter llm = new ResolvedExtractionAdapter(
+                adapter, ExtractionProvider.LLM, "tenant-override");
+        ExtractionAdapterResolver resolver = new ExtractionAdapterResolver() {
+            @Override
+            public ResolvedExtractionAdapter forTenant(String tenantId) {
+                return llm;
+            }
+
+            @Override
+            public ResolvedExtractionAdapter forProvider(String provider) {
+                return llm;
+            }
+        };
+
+        new ExtractionConsumer(cache, resolver,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC()).poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("KNOWLEDGE_READY");
+    }
+
+    @Test
     void failedGraphCommitIsListedClaimableAndCompletable() {
         String tenant = "tenant-graph-retry";
         Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
@@ -132,7 +406,7 @@ class ExtractionConsumerTest {
 
         assertThat(cache.listPendingGraphCommits(tenant, 10, now.plusSeconds(31))).hasSize(1);
         assertThat(cache.claimGraphCommit(request)).isTrue();
-        cache.markGraphCommitted(request, "GRAPH_COMMITTED", java.util.Map.of("relations_accepted", 1),
+        cache.markGraphCommitted(request, "MENTIONS_COMMITTED", java.util.Map.of("relations_accepted", 1),
                 1, now.plusSeconds(32));
         assertThat(cache.listPendingGraphCommits(tenant, 10, now.plusSeconds(60))).isEmpty();
     }
@@ -152,10 +426,13 @@ class ExtractionConsumerTest {
         assertThat(resolutions.getFirst().outcome()).isEqualTo("RESOLVED");
         assertThat(resolutions.getFirst().bestScore()).isEqualTo(0.91);
 
-        cache.upsertRelationPromotionResult(new RelationPromotionResultRow(
+        PromotionOwnershipStore ownership = new PromotionOwnershipStore(session);
+        PromotionOwnershipStore.OwnershipToken token = ownership.acquire(tenant,
+                fixture.versionId(), "test-seed").orElseThrow();
+        ownership.insertPromotionResult(new RelationPromotionResultRow(
                 tenant, fixture.versionId(), "relation-1", "mention-1", "mention-2", "requires",
                 "PROMOTED", "entity-halcyon-7", "entity-helium", null, "{\"chunks\":[\"ref:0\"]}",
-                "resolution-v1", "1.0.0", now, null));
+                "resolution-v1", "1.0.0", now, null), token);
         assertThat(cache.listRelationPromotionResults(tenant, fixture.versionId()))
                 .singleElement()
                 .satisfies(row -> assertThat(row.promotionStatus()).isEqualTo("PROMOTED"));

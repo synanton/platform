@@ -26,3 +26,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.register<JavaExec>("runVisibilityBackfill") {
+    group = "application"
+    description = "Run the #699 search-visibility dry-run or backfill against Cassandra"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.synanton.ingestioncache.backfill.SourceVisibilityBackfill")
+}

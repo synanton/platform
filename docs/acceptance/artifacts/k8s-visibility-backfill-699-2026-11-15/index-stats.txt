@@ -1,0 +1,1 @@
+{"tenant":"demo","doc_count":38257,"index_generation":176,"status":"ready","embedding_model":"bge-base-en-v1.5","embedding_dim":768,"embedding_truncated":false,"vector_docs":9,"dim_mismatches":0,"missing_vectors":19118,"section_docs":15603}

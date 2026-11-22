@@ -1,0 +1,43 @@
+> Task :java:ingestion-cache:processResources UP-TO-DATE
+> Task :java:shared:common:compileJava UP-TO-DATE
+> Task :java:shared:common:processResources UP-TO-DATE
+> Task :java:shared:common:classes UP-TO-DATE
+> Task :java:shared:common:jar UP-TO-DATE
+> Task :java:ingestion-cache:compileJava UP-TO-DATE
+> Task :java:ingestion-cache:classes UP-TO-DATE
+
+> Task :java:ingestion-cache:runVisibilityBackfill
+12:20:28.474 [main] INFO com.datastax.oss.driver.internal.core.DefaultMavenCoordinates -- DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.17.0
+12:20:28.653 [main] INFO com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor -- Adding handler to invalidate cached prepared statements on type changes
+12:20:29.118 [s0-admin-0] INFO com.datastax.oss.driver.internal.core.time.Clock -- Using native clock for microsecond precision
+12:20:34.648 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=2c33a6c3-b7e2-4f12-a082-0fe40869f6cd}): failed to send request (java.nio.channels.NotYetConnectedException))
+12:20:34.649 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=2c33a6c3-b7e2-4f12-a082-0fe40869f6cd}): failed to send request (java.nio.channels.NotYetConnectedException))
+tenant=demo
+total_indexed_chunks=19127
+visible_current=4
+repairable_by_backfill=0
+would_hide_after_backfill=19123
+  hidden_unmapped=0
+  hidden_deleted=0
+  hidden_no_current=19121
+  hidden_superseded=2
+top_hidden_examples:
+  [no_current] 2382ec04-3e27-5ada-82c2-a374e0dc324a:0 source=c3-books reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:0 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:1 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:2 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:3 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:4 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:5 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:6 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:7 source=ui-upload-browser reason=source has no current revision pointer
+  [no_current] b7487374-ece9-5b89-be52-e895f40eb13d:8 source=ui-upload-browser reason=source has no current revision pointer
+  [superseded] fab654b2-30c5-5e07-a43c-848a3406c2aa:0 source=acceptance-695c-1794731388 reason=supporting revision is not current
+  [superseded] 6d7dae1c-c428-52a9-a790-382e4e1f21c0:0 source=acceptance-695e-1794732035 reason=supporting revision is not current
+
+dry-run only; no source_current rows written
+12:20:37.396 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=2c33a6c3-b7e2-4f12-a082-0fe40869f6cd}): failed to send request (io.netty.channel.StacklessClosedChannelException))
+12:20:37.396 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=2c33a6c3-b7e2-4f12-a082-0fe40869f6cd}): failed to send request (io.netty.channel.StacklessClosedChannelException))
+
+BUILD SUCCESSFUL in 14s
+6 actionable tasks: 1 executed, 5 up-to-date

@@ -1,0 +1,19 @@
+E1 API validation evidence — 2026-11-18
+
+E1 request metadata:
+- model: gate1-fp8-8b
+- max_tokens: 8192
+- temperature: 0
+- workload: frozen 18-chunk DEV diagnostic set
+- all 54 measured requests + warmup returned HTTP 400
+- exact client response body was not retained by the harness; server log records 400 only
+
+Representative exact API response reproduced against the same 8192-context configuration
+with a non-empty prompt and max_tokens=8192 (production 4B runtime; validation body is
+runtime-level, not model-quality evidence):
+{"error":{"message":"This model's maximum context length is 8192 tokens. However, you requested 8192 output tokens and your prompt contains 101 characters (more than 0 characters, which is the upper bound for 0 input tokens). Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_text, value=101)","type":"BadRequestError","param":"input_text","code":400}}
+
+Interpretation:
+prompt_tokens + max_tokens must be <= effective context limit (8192).
+E1's 8192 output budget left no room for the prompt; it did not exercise model
+quality or the intended truncation remediation.

@@ -1,0 +1,3 @@
+{"event": "warmup", "ordinal": 18, "http_status": 200, "latency_s": 38.72830309899973, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 18, "rep": 1, "latency_s": 40.4614844040002, "finish": "stop", "json_valid": true, "fatal": null}
+{"event": "request", "ordinal": 150, "rep": 1, "latency_s": 99.58435356200016, "finish": "stop", "json_valid": false, "fatal": null}

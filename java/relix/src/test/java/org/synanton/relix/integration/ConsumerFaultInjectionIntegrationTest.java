@@ -36,6 +36,7 @@ import org.synanton.common.resolution.ResolutionPolicy;
 import org.synanton.common.resolution.RetryableProcessingException;
 import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.ingestioncache.claim.ClaimService;
+import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
@@ -76,6 +77,7 @@ class ConsumerFaultInjectionIntegrationTest {
     private static CqlSession session;
     private static IngestionCacheClient cache;
     private static ClaimService claims;
+    private static PromotionOwnershipStore ownership;
     private static Driver driver;
     private static CypherExecutor cypher;
     private static Neo4jGraphConnector graph;
@@ -95,6 +97,7 @@ class ConsumerFaultInjectionIntegrationTest {
         SchemaInstaller.install(session);
         cache = new IngestionCacheClient(session);
         claims = new ClaimService(cache);
+        ownership = new PromotionOwnershipStore(session);
         seedSource();
 
         neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.26")).withoutAuthentication();
@@ -102,6 +105,10 @@ class ConsumerFaultInjectionIntegrationTest {
         driver = GraphDatabase.driver(neo4j.getBoltUrl(), AuthTokens.none());
         cypher = new SessionCypher(driver);
         graph = new Neo4jGraphConnector(mock(GraphLoader.class), cypher);
+        cypher.write("""
+                MERGE (f:SourceRevisionFence {tenant_id: $tenant, source_id: $sourceId})
+                SET f.accepted_generation = 1
+                """, Map.of("tenant", TENANT, "sourceId", "source-589"));
     }
 
     @AfterAll
@@ -312,20 +319,10 @@ class ConsumerFaultInjectionIntegrationTest {
         assertThat(activeEdgeCount(object)).isEqualTo(1);
 
         String relationId = "relation-589";
-        String evidenceJson = """
-                {"view":{"relationId":"%s","tenantId":"%s","sourceVersionId":"%s",
-                "subjectMentionId":"%s","objectMentionId":"%s","predicate":"requires",
-                "evidenceChunkId":"%s:0","evidenceChunkOffsetStart":0,
-                "evidenceChunkOffsetEnd":%d}}
-                """.formatted(relationId, TENANT, VERSION, subject, object, CONTENT_REF,
-                "Acme requires Protocol-A".length());
-        cache.upsertRelationPromotionResult(new RelationPromotionResultRow(
-                TENANT, VERSION, relationId, subject, object, "requires", "VALID",
-                subjectEntity, objectEntity, "VALID", evidenceJson, "relation-validation-v1",
-                "active", Instant.now(), null));
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
+                subjectEntity, objectEntity));
 
-        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
-                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        RelixCanonicalRelationPromoter promoter = promoter();
         PromotionConsumer promotion = new PromotionConsumer(claims, promoter,
                 new PromotionConsumerProperties(true, TENANT, 5, 5, 1, 60, 1000L),
                 new SimpleMeterRegistry());
@@ -357,7 +354,7 @@ class ConsumerFaultInjectionIntegrationTest {
         assertThat(work(object).claimStatus()).isEqualTo("COMPLETED");
 
         String relationId = "relation-589-promotion-lost";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
                 subjectEntity, objectEntity));
 
         AtomicReference<CanonicalRelation> firstAttempt = new AtomicReference<>();
@@ -386,8 +383,7 @@ class ConsumerFaultInjectionIntegrationTest {
 
         AtomicReference<CanonicalRelation> retryAttempt = new AtomicReference<>();
         AtomicReference<PromotionResult> retryResult = new AtomicReference<>();
-        RelixCanonicalRelationPromoter normal = new RelixCanonicalRelationPromoter(cache, graph,
-                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        RelixCanonicalRelationPromoter normal = promoter();
         CanonicalRelationPromotionPort recordingRetry = relation -> {
             retryAttempt.set(relation);
             PromotionResult result = normal.promoteRelation(relation);
@@ -449,10 +445,9 @@ class ConsumerFaultInjectionIntegrationTest {
                 .poll();
 
         String relationId = "relation-589-concurrent";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
                 subjectEntity, objectEntity));
-        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
-                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        RelixCanonicalRelationPromoter promoter = promoter();
         PromotionConsumerProperties properties = new PromotionConsumerProperties(
                 true, TENANT, 5, 5, 1, 60, 1000L);
         PromotionConsumer first = new PromotionConsumer(claims, promoter, properties, new SimpleMeterRegistry());
@@ -501,12 +496,11 @@ class ConsumerFaultInjectionIntegrationTest {
 
         String relationA = "relation-589-shared-a";
         String relationB = "relation-589-shared-b";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationA, subjectA, objectA,
+        insertPromotionRow(validPromotionRow(relationA, subjectA, objectA,
                 sharedEntity, objectEntityA));
-        cache.upsertRelationPromotionResult(validPromotionRow(relationB, subjectB, objectB,
+        insertPromotionRow(validPromotionRow(relationB, subjectB, objectB,
                 sharedEntity, objectEntityB));
-        RelixCanonicalRelationPromoter promoter = new RelixCanonicalRelationPromoter(cache, graph,
-                tenantId -> GraphIdentity.canonical(tenantId, "v1"));
+        RelixCanonicalRelationPromoter promoter = promoter();
         promoter.promoteRelation(canonicalRelation(relationA, subjectA, objectA, sharedEntity, objectEntityA));
         promoter.promoteRelation(canonicalRelation(relationB, subjectB, objectB, sharedEntity, objectEntityB));
 
@@ -542,10 +536,9 @@ class ConsumerFaultInjectionIntegrationTest {
                 .poll();
 
         String relationId = "relation-589-combined";
-        cache.upsertRelationPromotionResult(validPromotionRow(relationId, subject, object,
+        insertPromotionRow(validPromotionRow(relationId, subject, object,
                 subjectEntity, objectEntity));
-        new RelixCanonicalRelationPromoter(cache, graph,
-                tenantId -> GraphIdentity.canonical(tenantId, "v1"))
+        promoter()
                 .promoteRelation(canonicalRelation(relationId, subject, object, subjectEntity, objectEntity));
 
         ResolutionReconciler reconciler = new ResolutionReconciler(cache, claims, graph,
@@ -564,7 +557,8 @@ class ConsumerFaultInjectionIntegrationTest {
                                                         String objectEntity) {
         return new CanonicalRelation(TENANT, VERSION.toString(), relationId, subject,
                 subjectEntity, object, objectEntity, "requires", "active", CONTENT_REF + ":0", 0,
-                "Acme requires Protocol-A".length());
+                "Acme requires Protocol-A".length(),
+                "source-589", VERSION.toString(), 1, "run-589");
     }
 
     private static String canonicalRelationId(String relationId) {
@@ -599,6 +593,12 @@ class ConsumerFaultInjectionIntegrationTest {
                 TENANT, VERSION, relationId));
     }
 
+    private static void insertPromotionRow(RelationPromotionResultRow row) {
+        PromotionOwnershipStore.OwnershipToken token = ownership.acquire(row.tenantId(),
+                row.sourceVersionId(), "test-seed").orElseThrow();
+        ownership.insertPromotionResult(row, token);
+    }
+
     private static RelationPromotionResultRow validPromotionRow(String relationId, String subject,
                                                                  String object, String subjectEntity,
                                                                  String objectEntity) {
@@ -612,7 +612,13 @@ class ConsumerFaultInjectionIntegrationTest {
         return new RelationPromotionResultRow(
                 TENANT, VERSION, relationId, subject, object, "requires", "VALID",
                 subjectEntity, objectEntity, "VALID", evidenceJson, "relation-validation-v1",
-                "active", Instant.now(), null);
+                "active", Instant.now(), null, "source-589", VERSION, 1, "run-589", "CURRENT");
+    }
+
+    private static RelixCanonicalRelationPromoter promoter() {
+        return new RelixCanonicalRelationPromoter(cache, graph,
+                tenantId -> GraphIdentity.canonical(tenantId, "v1"),
+                key -> java.util.Optional.of(1L));
     }
 
     private static ResolutionConsumer consumer(ResolutionWriteClient writer,

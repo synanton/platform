@@ -17,4 +17,14 @@ public interface CypherExecutor {
         write(cypher, params);
         return List.of();
     }
+
+    /**
+     * Single write transaction with a checkpoint after staged writes and before commit.
+     * A throwing checkpoint must roll the transaction back.
+     */
+    default List<Map<String, Object>> writeReturning(String cypher, Map<String, Object> params,
+                                                     Runnable afterStagingBeforeCommit) {
+        throw new UnsupportedOperationException(
+                "writeReturning checkpoints require transaction-capable executor");
+    }
 }

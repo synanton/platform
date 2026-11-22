@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: synflux
   namespace: synanton
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8090"
+    prometheus.io/path: "/actuator/prometheus"
 spec:
   type: ClusterIP
   selector:
@@ -26,6 +30,10 @@ spec:
     metadata:
       labels:
         app: synflux
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8090"
+        prometheus.io/path: "/actuator/prometheus"
     spec:
       imagePullSecrets:
         - name: local-registry-cred
@@ -77,7 +85,7 @@ spec:
             - name: EXTRACTION_CONSUMER_ENABLED
               value: "false"
             - name: EXTRACTION_CONSUMER_TENANT
-              value: "demo"
+              value: "*"
             - name: EXTRACTION_GRAPH_ENABLED
               value: "false"
             - name: SYNTOLOGY_BASE_URL
@@ -89,7 +97,7 @@ spec:
             - name: PROMOTION_PRODUCER_ENABLED
               value: "false"
             - name: PROMOTION_PRODUCER_TENANT
-              value: "demo"
+              value: "*"
             - name: PROMOTION_PRODUCER_ONTOLOGY_VERSION
               value: "active"
             - name: MINIO_ENDPOINT

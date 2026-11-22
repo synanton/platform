@@ -1,0 +1,5 @@
+doc_id	document_id	category	sha256	annotation_status	annotator_1	annotator_2	adjudicator	entity_count	relation_count	ambiguous_count	unresolvable_count	review_status	notes
+g7-dev-016	supply-chain-overview.epub	cross_document_references	e245b86391f4ca1debe592fa94226c33a762d4f985531d655a8b722e30a35702	UNLABELED									new-entity candidate; EPUB
+g7-dev-017	vendor-agreements.epub	cross_document_references	aa87447a7272614b454c2791c961fa334b9604aada7cdf5b5ed2c93a1744130b	UNLABELED									new-entity candidate; EPUB
+g7-dev-018	acme-corp-profile.epub	cross_document_references	f184c179f41b3626d3c2500841a4beb85691babd09da83ff354f2bdfd76bcb78	UNLABELED									new-entity candidate; EPUB
+g7-dev-019	ext-27-Manning.gRPC.Microservices.in.Go.pdf	cross_document_references	d1f523ab1caad9d802a0ae3a3c62dd68c61fedf2a3dfd5bc8452881f04553a7b	UNLABELED									extended observation; technical library copy; ~2740 entities

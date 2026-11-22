@@ -1,0 +1,640 @@
+CONTENTS
+
+		
+ Acknowledgments. .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . iii
+
+		
+ Executive Summary. .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . xxi
+
+     Section 1               Introduction. .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 1
+
+     Section 2               Mental Health of the Population. .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 5
+
+     Section 3               Providers and Settings for Mental Health Services.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 21
+
+     Section 4               Payers and Payment Mechanisms.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 43
+
+     Section 5               States: People, Providers, and Payers. .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 61
+
+     Section 6               Data Gaps .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 81
+
+     Section 7               Tables.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 85
+		                           7.1	Mental Health of the Population .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 85
+
+		                           7.2	Providers and Settings for Mental Health Services. .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 125
+
+		                           7.3	Payers and Payment Mechanisms.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 193
+
+		                           7.4	States: People, Providers, and Payers .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 241
+
+		 7.5                                   References .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 335
+
+
+ Appendix A                  Data Source Descriptions .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 339
+
+	Appendix B                 Glossary.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 343
+
+ Appendix C                  Medication Lists .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 347
+
+
+
+
+                                                                                                                             Mental Health, United States, 2010                                                          i
+APPENDIX A:
+DATA SOURCE
+DESCRIPTIONS
+    Data Source (Sponsor)                                               Description
+                                    The American Hospital Association Annual Survey is completed online by most
+                                    U.S. hospitals and profiles more than 6,500 hospitals throughout the United
+American Hospital Association       States. The overall response rate for fiscal year 2007 was 78 percent, but this
+Annual Survey                       rate varied among subgroups of hospitals depending on size, ownership, service,
+(American Hospital Association)     geographical location, and membership status. The survey covers hospital
+                                    organization structure, service lines, staffing, expenses, physician organization
+                                    structures, beds, and utilization.
+Annual Census of Admission and      The Annual Census of Admission and Resident Patient Characteristics, State and
+Resident Patient Characteristics    County Mental Hospital 24-Hour Services, collects annual aggregate data from
+(Substance Abuse and Mental         each State on age, sex, race, and ethnicity, by diagnosis, for annual admissions
+Health Services Administration)     and year-end residents.
+                                    The Area Resource File (ARF) contains more than 6,000 variables for each of
+Area Resource File (ARF)
+                                    the Nation’s counties. ARF includes information on health facilities, health
+(Health Resources and Services
+                                    professions, measures of resource scarcity, health status, economic activity,
+Administration)
+                                    health training programs, and socioeconomic and environmental characteristics.
+                                    The Brandeis Health Plan Survey on Alcohol, Drug Abuse, and Mental Health
+Brandeis Health Plan Survey on
+                                    Services is a nationally representative survey that tracks trends in how alcohol,
+Alcohol, Drug Abuse, and Mental
+                                    drug abuse, and mental health services are provided for the more than 200 million
+Health Services
+                                    privately insured individuals in 1999 (n = 434; 92 percent response) and 2003
+(Brandeis University)
+                                    (n = 368; 83 percent response).
+                                    The 2005 Census of State and Federal Adult Correctional Facilities provides
+                                    information on facilities, inmates, programs, and staff of State and Federal
+                                    correctional facilities throughout the Nation, and of private correctional facilities
+Census of State and Federal Adult   housing State or Federal inmates. Data were gathered from 1,821 separate
+Correctional Facilities             institutions (prisons; prison boot camps; reception, diagnostic, and classification
+(Bureau of Justice Statistics)      centers; prison forestry camps and farms; prison hospitals; youthful offender
+                                    facilities [except in California]; facilities for alcohol and drug treatment; work
+                                    release and prerelease; and State-operated local detention facilities in Alaska,
+                                    Connecticut, Delaware, Hawaii, Rhode Island, and Vermont).
+                                    The Veterans Health Administration (VHA) Decision Support System is a
+Decision Support System             managerial cost accounting system that interacts with Department of Veterans
+(Veterans Health Administration)    Affairs’ national databases to provide data elements on VHA costs to VHA
+                                    products (goods and services provided during patient care).
+                                    The 2008 Department of Defense Survey of Health Related Behaviors Among
+                                    Active Duty Personnel provides representative estimates on substance use
+Department of Defense Survey
+                                    and abuse, mental well-being, stress and coping, combat exposure experience,
+of Health Related Behaviors
+                                    deployment experience, and selected general health topics for all active duty
+Among Active Duty Personnel
+                                    personnel. The final sample consisted of 28,546 military personnel (5,927 Army;
+(Department of Defense)
+                                    6,637 Navy; 5,117 Marine Corps; 7,009 Air Force; and 3,856 Coast Guard) who
+                                    completed self-administered questionnaires anonymously.
+                                                                                                                (continued)
+
+
+
+
+                                                                       Mental Health, United States, 2010 339
+    Data Source (Sponsor)                                              Description
+                                    The 2006 Department of Defense Survey of Health Related Behaviors Among the
+                                    Guard and Reserve Force provides representative estimates on substance use;
+Department of Defense Survey of     stress and mental health; healthy behaviors and lifestyles; and other specific
+Health Related Behaviors Among      issues, such as injuries and injury prevention, sleep habits, and risk taking for
+the Guard and Reserve Force         all Reserve component personnel. The final sample consisted of 18,342 military
+(Department of Defense)             personnel (2,796 Army National Guard; 1,665 Army Reserve; 3,215 Navy Reserve;
+                                    1,159 Marine Corps Reserve; 6,656 Air Force Reserve; and 2,851 Air National
+                                    Guard) who completed self-administered questionnaires anonymously.
+                                 The Henry J. Kaiser Family Foundation and Health Research & Educational Trust
+                                 Employer Health Benefits Survey is an annual survey of employers that provides
+Employer Health Benefits
+                                 a detailed look at trends in employer-sponsored health coverage, including
+Survey (Henry J. Kaiser Family
+                                 changes in premiums, employee contributions, cost-sharing policies, and other
+Foundation and Health Research &
+                                 relevant information. The 2008 survey included 2,832 randomly selected public
+Educational Trust)
+                                 and private firms with three or more employees, and the 2000 survey included
+                                 1,887 randomly selected public and private firms with three or more employees.
+                                   The International Survey of Clubhouses was conducted in 2010 by the
+                                   International Center for Clubhouse Development (ICCD). The survey contains
+International Survey of Clubhouses information about clubhouse characteristics, governance and administration,
+(International Center for          membership, staffing and staff credentials, unit structure, employment, housing
+Clubhouse Development)             activities, services, and participation in clubhouse training. In 2010, there were
+                                   197 ICCD clubhouses in the United States; however, data were only available for
+                                   114 of them.
+                                 The Medicaid Analytic eXtract (MAX) is a set of person-level data files on
+Medicaid Analytic eXtract (MAX) Medicaid eligibility, service utilization, and payments. The data are extracted
+(Centers for Medicare & Medicaid from the Medicaid Statistical Information System (MSIS). The MAX development
+Services)                        process combines MSIS initial claims, interim claims, voids, and adjustments for
+                                 a given service into final action events.
+                                 The Medical Expenditure Panel Survey (MEPS) is a set of large-scale surveys
+                                 of families and individuals, their medical providers (e.g., doctors, hospitals,
+Medical Expenditure Panel Survey pharmacies), and employers across the United States. Since 1996, MEPS has
+(MEPS) (Agency for Healthcare    collected data on the specific health services that Americans use, how frequently
+Research and Quality)            they use them, the cost of these services, and how they are paid for, as well as
+                                 data on the cost, scope, and breadth of health insurance held by and available to
+                                 U.S. workers.
+                                 The Medicare Cost Report is based on annual financial information reported
+Medicare Cost Report             to the Centers for Medicare & Medicaid Services. The Cost Report contains
+(Centers for Medicare & Medicaid provider information such as facility characteristics, utilization data, cost and
+Services)                        charges by cost center (in total and for Medicare), Medicare settlement data, and
+                                 financial statement data.
+                                    The Medicare Standard Analytical Files (SAF) is a nationally representative
+Medicare Standard Analytical        claims database that consists of a randomly selected 5 percent sample of U.S.
+Files (SAF) (Centers for Medicare   Medicare beneficiaries. The database includes claims across various care
+& Medicaid Services)                settings, including inpatient, outpatient, skilled nursing, home health, and hospice,
+                                    as well as for durable medical equipment.
+                                    Established in 1986, the Mercer National Survey of Employer-Sponsored Health
+Mercer National Survey of           Plans is an annual survey that collects information on a wide range of health care
+Employer-Sponsored Health Plans     issues regarding employer health plans, including costs, strategic planning, and
+(Mercer)                            the scope and limitations of coverage. Nearly 3,000 employers participated in the
+                                    2003 survey.
+National Vital Statistics Report    The National Vital Statistics Report presents detailed data on U.S. deaths
+(Centers for Disease Control and    and death rates according to a number of social, demographic, and medical
+Prevention)                         characteristics. In 2007, 2,423,712 deaths were reported in the United States.
+                                                                                                               (continued)
+
+
+
+
+340 Mental Health, United States, 2010
+    Data Source (Sponsor)                                                Description
+National Ambulatory Medical Care
+                                 The National Ambulatory Medical Care Survey is a national probability sample
+Survey (NAMCS) (Centers for
+                                 survey of visits to office-based physicians.
+Disease Control and Prevention)
+National Comorbidity Survey           The National Comorbidity Survey Replication (NCS-R) is a nationally
+Replication (NCS-R)                   representative household survey of 9,282 English speakers in 2001 aged 18 or
+(National Institute of Mental         older in the United States. The survey collected diagnostic and other information
+Health)                               on people with mental illness.
+                                      The Bureau of Labor Statistics National Compensation Survey provides
+                                      comprehensive measures of occupational wages, employment cost trends,
+                                      benefit incidence, and detailed plan provisions from more than 361 metropolitan
+                                      statistical areas and 573 micropolitan statistical areas in the United States, as
+                                      defined by the Office of Management and Budget. A component of the survey
+                                      in 1997 reports on benefits provided to employees in establishments with
+National Compensation Survey          100 or more workers in all private nonfarm industries. The survey included a
+(Bureau of Labor Statistics)          national sample of 1,945 U.S. employers with more than 100 workers. Because
+                                      smaller employers generally offer less generous health benefits packages, the
+                                      estimates likely represent the upper limits on rates of mental health coverage by
+                                      employer-based health insurance in the United States. Between 1979 and 1986,
+                                      the survey provided benefits data on full-time employees in medium and large
+                                      establishments, those with either 100 or 250 employees or more, depending on the
+                                      industry; coverage in the service industries was limited.
+                                      National Expenditures for Mental Health Services and Substance Abuse
+National Expenditures for Mental
+                                      Treatment (otherwise known as the Spending Estimates Project) presents a
+Health Services and Substance
+                                      broad overview of spending on mental health services and substance abuse
+Abuse Treatment
+                                      treatment. The project is modeled on the National Health Expenditures published
+(Substance Abuse and Mental
+                                      by the Centers for Medicare & Medicaid Services and uses data from 15 national
+Health Services Administration)
+                                      sources to produce estimates.
+National Health and Nutrition         The National Health and Nutrition Examination Survey (NHANES) is a nationally
+Examination Survey (NHANES)           representative probability sample of noninstitutionalized U.S. civilians. The survey
+(Centers for Disease Control and      contains detailed information on the health and nutritional status of adults and
+Prevention)                           children.
+                                      The National Health Interview Survey (NHIS) provides national estimates for
+National Health Interview Survey
+                                      a broad range of health measures for the U.S. civilian noninstitutionalized
+(NHIS) (Centers for Disease
+                                      population. It is an annual, ongoing survey. The interviewed sample for 2009
+Control and Prevention)
+                                      consisted of 33,856 households, which yielded 88,446 persons in 34,640 families.
+                                      The National Home and Hospice Care Survey is a continuing series of nationally
+National Home and Hospice Care        representative sample surveys of U.S. home health and hospice agencies. It
+Survey                                is designed to provide descriptive information on home health and hospice
+(Centers for Disease Control and      agencies, their staffs, their services, and their patients. The survey was first
+Prevention)                           conducted in 1992 and was repeated in 1993, 1994, 1996, 1998, and 2000, and most
+                                      recently in 2007.
+National Nursing Home Survey          The National Nursing Home Survey is a nationally representative probability
+(Centers for Disease Control and      sample of 1,500 nursing homes, their residents, and their staff. The survey is
+Prevention)                           continuing, and data are available for 1995, 1997, 1999, and 2004.
+National Survey of Child and          The National Survey of Child and Adolescent Well-Being II (NSCAW II) includes
+Adolescent Well-Being II (NSCAW II)   a longitudinal, national probability sample of 5,873 children from birth to 17 years
+(Administration for Children and      of age who became involved with the child welfare system in 2008 when reported
+Families)                             for child maltreatment.
+National Survey of Children’s         The National Survey of Children’s Health is a nationally representative survey of
+Health (Centers for Disease           91,642 noninstitutionalized children aged 0 to 17 and provides a range of children’s
+Control and Prevention)               health and well-being information.
+                                                                                                                (continued)
+
+
+
+
+                                                                         Mental Health, United States, 2010 341
+    Data Source (Sponsor)                                               Description
+National Survey of Mental Health
+                                     The National Survey of Mental Health Treatment Facilities includes approximately
+Treatment Facilities
+                                     15,000 point-of-contact facilities nationwide representing approximately 4,400
+(Substance Abuse and Mental
+                                     mental health organizations nationwide. Data are available for 2008.
+Health Services Administration)
+National Survey on Drug Use and      The National Survey on Drug Use and Health (NSDUH) is a nationally
+Health (NSDUH)                       representative survey of the civilian, noninstitutionalized population of the United
+(Substance Abuse and Mental          States aged 12 or older. The survey interviews approximately 67,500 persons each
+Health Services Administration)      year.
+Nationwide Emergency
+Department Sample (NEDS)             The Nationwide Emergency Department Sample (NEDS) database provides
+(Agency for Healthcare Research      national estimates of emergency department visits.
+and Quality)
+                                     NRI’s Revenues and Expenditures Study describes the major expenditures and
+Revenues and Expenditures Study
+                                     funding sources of State mental health agencies. NRI has conducted this survey
+(NRI Inc.)
+                                     every year since 1981.
+                                     The School Health Policies and Programs Study (SHPPS) is a nationally
+                                     representative survey of State education agency personnel in all 50 States plus
+School Health Policies and
+                                     the District of Columbia; school districts (n = 538); elementary, middle, and high
+Programs Study (SHPPS)
+                                     schools (n = 1,103); teachers of classes covering required health instruction in
+(Centers for Disease Control and
+                                     elementary schools and required health education courses in middle and high
+Prevention)
+                                     schools (n = 912); and teachers of required physical education classes and
+                                     courses (n = 1,194).
+State Inpatient Databases            The State Inpatient Databases consist of data from 43 States on the number of
+(Agency for Healthcare Research      community hospitals as well as discharges from those hospitals, accounting for
+and Quality)                         approximately 90 percent of all community hospital discharges.
+                                     The State Mental Health Agency (SMHA) Budget Reductions Survey is
+State Mental Health Agency
+                                     conducted by the National Association of State Mental Health Program Directors
+Budget Reductions Survey
+                                     (NASMHPD) and NRI Inc. The survey is a semiannual series on the impact of
+(NRI Inc.)
+                                     State budget shortages on SMHA systems.
+                                     The Survey of Inmates in State and Federal Correctional Facilities, 2004, and the
+Survey of Inmates in State and
+                                     Survey of Inmates in Local Jails, 2002, included a modified structured clinical
+Federal Correctional Facilities,
+                                     interview for the Diagnostic and Statistical Manual of Mental Disorders, Fourth
+and the Survey of Inmates in Local
+                                     Edition (DSM-IV). The interviewed sample included 681,600 State prison inmates,
+Jails (Bureau of Justice Statistics)
+                                     56,600 Federal prison inmates, and 398,800 local jail inmates.
+                                     The Survey of Mental Health Organizations (SMHO) was a biennial survey with
+Survey of Mental Health              two phases. In the first phase, limited data were collected from all mental health
+Organizations (SMHO)                 organizations. In the second phase, more detailed data were collected from a
+(Substance Abuse and Mental          sample of specialty mental health organizations. The survey changed names
+Health Services Administration)      during its course, and data are available for 1986, 1990, 1992, 1994, 1998, 2000,
+                                     2002, and 2004.
+Survey of Youth in Residential       The Survey of Youth in Residential Placement (SYRP) is a nationally
+Placement (SYRP)                     representative survey of offender youth aged 10 to 20 in State and local facilities.
+(Office of Juvenile Justice and      The final sample consisted of 7,073 youth who were interviewed using an audio
+Delinquency Placement)               computer-assisted self-interview system.
+                                     The Uniform Data System is a set of electronic files compiled by the Health
+Uniform Data System
+                                     Resources and Services Administration from reports submitted annually by
+(Health Resources and Services
+                                     all U.S. federally funded community health centers on administration, patient
+Administration)
+                                     population, demographic characteristics, utilization, and finances.
+                                                                                                                (continued)
+
+
+
+
+342 Mental Health, United States, 2010
+		
+ APPENDIX B:
+  GLOSSARY
+
+    Any mental illness (AMI). Among adults aged      Clubhouse. An organization hosting a specific
+    18 or older, defined as having a diagnosable     model of care that helps people with mental
+    mental, behavioral, or emotional disorder        illness participate in the broader community.
+    (excluding developmental and substance           A clubhouse provides a membership of
+    use disorders), regardless of functional         several people an array of nonmedical
+    impairment level. Estimates of AMI are           services, many of which focus on education
+    provided annually in the National Survey on      and employment. Members themselves often
+    Drug Use and Health.                             participate in service provision.
+
+    Behavioral health. A state of mental/emotional   Community health center (CHC). An
+    being and/or choices and actions that affect     organization that serves populations with
+    wellness. Behavioral health problems include     limited access to health care, usually because
+    substance abuse or misuse, alcohol and drug      of limited financial resources. These centers
+    addiction, serious psychological distress,       are public and private nonprofit health care
+    suicide, and mental and substance use            organizations that meet certain criteria under
+    disorders.                                       the Medicare and Medicaid programs.
+
+    Children’s Health Insurance Program (CHIP). A    Community hospital. Any non-Federal, short-
+    program by which States insure low-income        term general or other specialty hospital,
+    children who are ineligible for Medicaid         including academic medical centers or other
+    but whose families cannot afford private         teaching hospitals that are non-Federal short-
+    insurance. States receive Federal matching       term hospitals. The term typically excludes
+    dollars to help provide for this coverage.       hospitals not accessible by the general
+                                                     public, such as prison hospitals or college
+    Child welfare system. The social service         infirmaries. See also general hospital.
+    system that receives and investigates reports
+    of possible child abuse and neglect; provides    Complementary and alternative medicine
+    services to families that need assistance in     (CAM). A broad class of services that are not
+    the protection and care of their children;       traditionally provided as billable services in
+    arranges for children to live with kin or        the treatment system. Includes services from
+    with foster families when they are not safe      several types of healers, participation in
+    at home; and arranges for reunification,         an Internet support group, or participation
+    adoption, or other permanent family              in a self-help group. The most commonly
+    connections for children leaving foster care.    used CAM services are those from spiritual
+
+
+                                                            Mental Health, United States, 2010 343
+advisors, relaxation techniques, and use of         Home health care. A set of services provided
+multivitamins and herbs.                            in the patient’s residence by private and
+                                                    public freestanding agencies or home health
+Emergency department. A section of an               agencies. Freestanding means that the agency
+institution that is staffed and equipped to         is not based in a hospital, nursing home, or
+provide immediate care, particularly for            other type of provider whose primary mission
+sudden, acute illness and trauma.                   is something other than home health services.
+
+Emotional disturbance. An emotional or              Hospice. A form of care that provides
+behavioral health condition that prevents a         palliative and supportive care services,
+child or adolescent from performing everyday        including physical, psychological, social,
+tasks. This condition is characterized by an        and spiritual care for dying persons, their
+inability to build or maintain relationships,       families, and other loved ones. Hospice
+inappropriate behaviors or feelings under           services are available in home and inpatient
+normal circumstances, a pervasive mood of           settings.
+unhappiness or depression, or a tendency to
+develop physical symptoms or fears related to       Inpatient. Care provided in an acute medical
+personal or school problems.                        care unit, usually a hospital, and treatment
+                                                    typically requires an overnight stay.
+Functional impairment. A level of disability
+or distress in daily life that is attributable to   Insurance administration. The set of activities
+symptoms of mental illness.                         used to run health care insurance programs.
+
+General hospital. A community medical/              Major depressive episode (MDE). A period of
+surgical or specialty hospital (other than a        at least 2 weeks when a person experienced a
+mental health and substance abuse specialty         depressed mood or loss of interest or pleasure
+hospital) providing diagnostic and medical          in daily activities and had a majority of
+treatment to inpatients, including inpatient        specified depression symptoms. MDE is one
+psychiatric care in a specialized treatment         of the components of the diagnostic criteria
+unit of a general hospital and other mental         for major depressive disorder (MDD). MDD
+health treatment services. See also community       is a serious mental disorder that can result
+hospital.                                           in impairment and societal costs, including
+                                                    work disability and lost productivity.
+Health maintenance organization (HMO). A type       Estimates of MDE are provided annually in
+of managed care organization that provides          the National Survey on Drug Use and Health.
+a variety of services. Typically, services
+are provided for a set flat fee per patient.        Medicaid. A program jointly funded by
+In some HMOs, a primary care provider               Federal and State governments that provides
+directs access to other medical services.           health care coverage to certain classes of
+Usually, providers agree to treat patients in       persons with limited income and resources.
+accordance with the HMO’s guidelines and            Within Federal guidelines, State governments
+restrictions.                                       set eligibility standards, determine optional
+                                                    services provided, set reimbursement rates,
+                                                    and administer the program. Income and
+
+
+344 Mental Health, United States, 2010
+resources are only two factors in determining    including coinsurance, deductibles, and any
+eligibility, so not all persons with limited     amounts paid for health care services that are
+income in a State are necessarily covered by     not covered by insurance. Depending on the
+this program.                                    data source, health insurance premiums may
+                                                 or may not be included.
+Medicare. A Federal government program
+that provides health insurance coverage to       Outpatient. Care provided in an ambulatory
+eligible adults aged 65 or older and disabled    setting and treatment does not require an
+persons. It has four parts: Part A, which        overnight stay. Unless otherwise specified,
+covers institutional services, including         this setting may include a hospital outpatient
+inpatient hospital services, nursing home        department; an emergency room; physician’s
+care, initial home health visits, and hospice    or other medical professional’s (private
+care; Part B, which covers physicians and        therapist, psychologist, psychiatrist, social
+other professional services, outpatient clinic   worker, or counselor) office or clinic; mental
+or hospital services, laboratory services,       health clinic or center; partial day hospital
+rehabilitation therapy, and home health visits   or day treatment program; and in-home
+not covered by Part A, among other services;     therapist, counselor, or family preservation
+Part C, the Medicare Advantage program,          worker.
+which is managed by private companies for
+a flat fee per patient per month; and Part D,    Prescription drug or prescription medication.
+which began in 2006 and covers medication.       A medication available through primary
+                                                 or specialty providers; retail outlets, such
+Mood disorder. A collection of disorders         as community pharmacies; pharmacies in
+where a disturbance of mood is the main          mass merchandise stores, grocery stores, and
+underlying feature. Includes depressive or       department stores; mail order pharmacies;
+bipolar disorders as defined in the Diagnostic   hospitals; exclusive-to-patient health
+and Statistical Manual of Mental Disorders,      maintenance organizations; and nursing
+Fourth Edition (DSM-IV).                         home pharmacies.
+
+Nursing home care. A set of services provided    Primary diagnosis. The main or principal
+in private and public freestanding nursing       diagnosis that most typically has led to the
+home facilities. Freestanding means that         admission of an individual to a hospital or to
+the nursing home is not based in a hospital,     receive outpatient treatment. In an outpatient
+nursing home, or other type of provider          care setting, the condition may be referred to
+whose primary mission is something other         as the first-listed diagnosis. In an inpatient
+than nursing home care. The facility includes    setting, the condition may be the most
+nursing and rehabilitative services, generally   serious and/or resource intensive during that
+for an extended period of time by staff of       hospitalization.
+registered or licensed practical nurses with
+physician consultation or oversight.             Private health insurance. Third-party coverage
+                                                 not provided by government sources.
+Out-of-pocket payment. Direct expenditure by
+consumers for health care goods and services,    Psychiatric hospitals. Facilities that typically
+                                                 specialize in treating people with serious
+
+
+                                                        Mental Health, United States, 2010 345
+mental illness and vary widely in their           substantially interferes with or limits one or
+size and function. Many specialize in the         more major life activities. Estimates of SMI
+temporary or permanent care of residents          are provided annually in the National Survey
+who require routine assistance, treatment, or     on Drug Use and Health.
+a controlled environment.
+                                                  Serious psychological distress (SPD). The
+Psychiatrist. Independently billing private or    presence of mental health symptoms in
+group practice of health practitioners having     the past 30 days that may negatively affect
+the degree of M.D. or D.O. who are primarily      an adult’s ability to participate in family,
+engaged in the practice of psychiatry or          community, and work life. SPD is not a
+psychoanalysis.                                   diagnosis and does not represent a specific
+                                                  mental disorder. This construct is measured
+Psychotropic medication. Medication used          annually in the National Health Interview
+to treat mental health symptoms and               Survey.
+disorders. Although there are several ways
+to categorize such medications, this report       State Mental Health Agency (SMHA). A State
+includes the following categories: antianxiety,   government organization responsible for
+antidepressant, antimanic, antipsychotic,         directing resources for people in need of
+anticonvulsant, and stimulant.                    mental health services. For example, an
+                                                  SMHA typically applies for and administers
+Residential services. Services provided in a      Federal Community Mental Health Services
+24-hour care setting that provide therapeutic     Block Grant funding for its State.
+care to patients using licensed behavioral
+health professionals.                             Substance abuse. A pattern of substance
+                                                  use that leads to clinically significant
+Retail prescription drug or retail prescription   impairment and includes symptoms such as
+medication. Prescription medication that          failure to fulfill major role obligations, legal
+excludes prescription medication sold             problems, use in situations that are physically
+through hospitals, exclusive-to-patient health    hazardous, and continued use despite
+maintenance organizations, or nursing home        persistent social or interpersonal problems.
+pharmacies.
+                                                  Substance dependence. A pattern of substance
+Scatter bed. A general medical bed in a           use that leads to clinically significant
+hospital dedicated to providing inpatient         impairment and includes symptoms such as
+psychiatric care. Psychiatric care in scatter     drug taking in larger amounts than intended,
+beds may occur even in hospitals with             inability to cut down on drug use, a great
+separate psychiatric units.                       deal of time spent on activities necessary to
+                                                  obtain the drug, and continued use despite
+Serious mental illness (SMI). Among adults
+                                                  knowledge of health or social problems
+aged 18 or older, defined as having a
+                                                  caused by the drug.
+diagnosable mental, behavioral, or emotional
+disorder (excluding developmental and             Substance disorder/Substance use disorder.
+substance use disorders) that has resulted        Disorder that is characterized by substance
+in serious functional impairment, which           abuse and/or dependence.
+
+
+346 Mental Health, United States, 2010
+		
+ APPENDIX C:
+ MEDICATION LISTS
+
+    This appendix lists the mental health and/or substance abuse medications for each medication
+    class presented in Exhibits 9, 13, 19, and 20 and in Tables 30, 31, 62, 63, 95, and 96.
+
+    Medications for Mental Health Disorders
+
+                                     Antianxiety, Sedative, Hypnotic
+    Alprazolam                       Diazepam                          Methylprylon
+    Amobarbital                      Droperidol                        Oxazepam
+    Amobarbital-Secobarbital         Estazolam                         Pentobarbital
+    Buspirone                        Ethchlorvynol                     Phenobarbital
+    Butabarbital                     Flurazepam                        Prazepam
+    Butalbital                       Glutethimide                      Quazepam
+    Chloral hydrate                  Halazepam                         Secobarbital
+    Chlordiazepoxide                 Hexobarbital                      Temazepam
+    Chlordiazepoxide-Clidinium       Hydroxyzine                       Triazolam
+    Chlormezanone                    Lorazepam                         Zaleplon
+    Clonazepam                       Mephobarbital                     Zolpidem
+    Clorazepate                      Meprobamate
+
+
+                                             Antidepressant
+    Amitriptyline                    Duloxetine                        Nortriptyline
+    Amitriptyline-Chlordiazepoxide   Escitalopram                      Paroxetine
+    Amoxapine                        Fluoxetine                        Phenelzine
+    Bupropion                        Fluvoxamine                       Protriptyline
+    Citalopram                       Imipramine                        Sertraline
+    Clomipramine                     Isocarboxazid                     Tranylcypromine
+    Desipramine                      Maprotiline                       Trazodone
+    Desvenlafaxine                   Mirtazapine                       Trimipramine
+    Doxepin                          Nefazodone                        Venlafaxine
+
+
+
+
+                                                              Mental Health, United States, 2010 347
+Medications for Mental Health Disorders (continued)
+
+                                        Antimanic or Anticonvulsant
+Carbamazepine                          Lithium                               Topiramate
+Divalproex sodium                      Oxcarbazepine                         Valproate
+Gabapentin                             Tiagabine                             Valproic acid
+Lamotrigine
+
+
+                                                  Antipsychotic
+Amitriptyline-Chlordiazepoxide         Mesoridazine                          Quetiapine
+Amitriptyline-Perphenazine             Methotrimeprazine                     Risperidone
+Aripiprazole                           Molindone                             Thioridazine
+Chlorpromazine                         Olanzapine                            Thiothixene
+Clozapine                              Paliperidone                          Trifluoperazine
+Fluoxetine-Olanzapine                  Perphenazine                          Triflupromazine
+Fluphenazine                           Pimozide                              Ziprasidone
+Haloperidol                            Prochlorperazine
+Loxapine                               Promazine
+
+
+                                                    Stimulant
+Amphetamine                            Lisdexamfetamine                      Methylphenidate
+Amphetamine-                           Extroamphetamine                      Modafinil
+Dextroamphetamine
+Atomoxetine                            Methamphetamine                       Pemoline
+Dexmethylphenidate
+
+
+Medications for Substance Use Disorders
+Acamprosate                            Disulfiram                            Naltrexone
+Buprenorphine                          Methadone
+
+
+Medications for Alzheimer’s Disease
+Donepezil                              Memantine                             Rivastigmine
+Galantamine                            Physostigmine                         Tacrine
+
+
+
+SOURCE: National Institute on Mental Health. (2011). Mental health medications. Retrieved from http://www.nimh.
+   nih.gov/health/publications/mental-health-medications/alphabetical-list-of-medications.shtml
+
+
+
+348 Mental Health, United States, 2010
+ADDITIONAL
+ACKNOWLEDGMENTS
+The following people contributed to this edition of Mental Health, United States: Alexander
+Cowell (project director), Heather Ringeisen, Leyla Stambaugh, David Kaiser, Natalie Hodges,
+Justin Landwehr, and Valerie Hoffman (RTI International); Tami Mark, Elizabeth Stranges,
+and Katharine Levit (Thomson Reuters); Dominic Hodgkin and Elizabeth Merrick (Brandeis
+University); Ted Lutterman (NRI Inc.); Barbara Burns and Marvin Swartz (Duke University);
+and Carla Linkous (Cloudburst Consulting Group).
+   Additionally, a number of individuals prepared and contributed data that were crucial to the
+completion of Mental Health, United States, 2010: Anita Bercovitz (National Center for Health
+Statistics), Donald Cherry (National Center for Health Statistics), Joseph Gfroerer (CBHSQ),
+Lauren Glaze (Bureau of Justice Statistics), Sarra Hedden (CBHSQ), Art Hughes (CBHSQ),
+Michael Jones (CBHSQ), Colleen McKay (Center for Mental Health Services Research,
+University of Massachusetts Medical School), Laura Milazzo-Sayre (CBHSQ), Ryan Mutter
+(Agency for Healthcare Research and Quality), Catherine Simile (National Center for Health
+Statistics), Mark Smith (Veterans Health Administration), Peter Tice (CBHSQ), and Samuel
+Zuvekas (Agency for Healthcare Research and Quality).
+   The following individuals served as external reviewers for the volume: Lisa Colpe
+(National Institute of Mental Health), Rachel Garfield (Kaiser Commission on Medicaid and
+the Uninsured), Darcy Gruttadaro (National Alliance on Mental Illness), Kevin Hennessy
+(SAMHSA), Chris Koyanagi (Judge David L. Bazelon Center for Mental Health Law),
+Lisa Patton (Assistant Secretary for Planning & Evaluation, HHS), Marvin Swartz (Duke
+University), Mohini Venkatesh (National Council for Community Behavioral Healthcare), and
+Capt. Elise Young (Health Resources and Services Administration).
+   Finally, particular recognition is due to Marceline Murawski, Susan Murchie, Pamela
+Prevatt, and E. Andrew Jessup, along with other members of the publications staff at RTI
+International, who provided expert editorial services.
+
+
+
+
+                                                        Mental Health, United States, 2010 349
+
+
+
+The structure and content of the report were guided by the suggestions of an Expert Advisory
+Panel that was convened on February 24, 2010:
+
+Panel Member                             Affiliation
+Amy Bernstein                            Centers for Disease Control and Prevention
+William Clark                            Centers for Medicare & Medicaid Services
+Lisa Colpe                               National Institute of Mental Health
+John Drabek                              Assistant Secretary for Planning and Evaluation, HHS
+William Gardner                          Nationwide Children’s Hospital
+Olinda Gonzalez                          SAMHSA
+Kevin Martone                            New Jersey Department of Human Services
+Joseph Morrissey                         University of North Carolina at Chapel Hill
+Alexander Ross                           Health Resources and Services Administration
+David Shern                              Mental Health America
+Shawn Terrell                            Office on Disability, HHS
+Virginia Trotter Betts                   Department of Mental Health and Developmental
+                                         Disabilities
+Mohini Venkatesh                         National Council for Community Behavioral
+                                         Healthcare
+Samuel Zuvekas                           Agency for Healthcare Research and Quality
+
+
+
+
+350 Mental Health, United States, 2010
+HHS Pub. No. (SMA) 12-4681
+Printed 2012
+

@@ -84,6 +84,7 @@ The demo overlay (`local-real-demo`) adds:
 | relix | graph write/read + Entity Graph API; port **8084** |
 | syntology | ontology validation; Postgres DB init and TDB2 PVC |
 | platform | CrashLoopBackOff (#500, out of demo path) |
+| prometheus | Minimal scrape store for #736; scrapes `synflux:8090/actuator/prometheus`; 10Gi Longhorn history |
 
 Build/push the RAKG images with
 `IMAGE_TAG=local-real-demo ./scripts/mirror-images.sh`; the overlay uses matching

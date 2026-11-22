@@ -1,0 +1,67 @@
+> Task :java:ingestion-cache:processResources UP-TO-DATE
+> Task :java:shared:common:compileJava UP-TO-DATE
+> Task :java:shared:common:processResources UP-TO-DATE
+> Task :java:shared:common:classes UP-TO-DATE
+> Task :java:shared:common:jar UP-TO-DATE
+> Task :java:ingestion-cache:compileJava UP-TO-DATE
+> Task :java:ingestion-cache:classes UP-TO-DATE
+
+> Task :java:ingestion-cache:runVisibilityBackfill
+14:02:43.948 [main] INFO com.datastax.oss.driver.internal.core.DefaultMavenCoordinates -- DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.17.0
+14:02:44.091 [main] INFO com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor -- Adding handler to invalidate cached prepared statements on type changes
+14:02:44.557 [s0-admin-0] INFO com.datastax.oss.driver.internal.core.time.Clock -- Using native clock for microsecond precision
+14:02:49.880 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=1c378410-7eea-48da-a436-40ad045005b1}): failed to send request (java.nio.channels.NotYetConnectedException))
+14:02:49.880 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=1c378410-7eea-48da-a436-40ad045005b1}): failed to send request (java.nio.channels.NotYetConnectedException))
+14:02:55.902 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=1c378410-7eea-48da-a436-40ad045005b1}): failed to send request (java.nio.channels.NotYetConnectedException))
+14:02:56.026 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=1c378410-7eea-48da-a436-40ad045005b1}): failed to send request (java.nio.channels.NotYetConnectedException))
+tenant=demo
+sources_total=37
+sources_with_current=7
+non_latest_current=0
+repairable_sources=23
+total_indexed_chunks=19127
+visible_current=4
+repairable_by_backfill=27
+would_hide_after_backfill=19096
+  hidden_unmapped=0
+  hidden_deleted=0
+  hidden_no_current=0
+  hidden_superseded=19096
+top_hidden_examples:
+  [superseded] fab654b2-30c5-5e07-a43c-848a3406c2aa:0 source=acceptance-695c-1794731388 reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:0 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:1 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:2 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:3 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:4 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:5 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:6 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:7 source=ui-upload-browser reason=supporting revision is not current
+  [superseded] b7487374-ece9-5b89-be52-e895f40eb13d:8 source=ui-upload-browser reason=supporting revision is not current
+repaired source_current source=books-demo generation=0 revision=d93a61b4-8ac9-5138-8f31-154130f325d0
+repaired source_current source=c3-books generation=0 revision=e94c3c46-2e54-557a-b408-4e1fbeb3ce34
+repaired source_current source=c3b-books generation=0 revision=38f43ea1-cdbd-5439-97ef-2d2cd0393469
+repaired source_current source=combined-fault-1794425728 generation=0 revision=9701b42a-432f-5adb-ac91-ada459149fc2
+repaired source_current source=e650 generation=0 revision=513d45be-005b-50de-bb5f-f6cfe4723cbb
+repaired source_current source=entity-graph-live-1794415977310 generation=0 revision=3bf05435-4668-5b41-a7f6-85caf80d233b
+repaired source_current source=entity-graph-live-1794417948863 generation=0 revision=2e363066-20ae-5117-86a6-7b6eff0d2181
+repaired source_current source=entity-graph-live-1794419231507 generation=0 revision=a0b5d4e1-f9e3-57f2-8602-f3de0e9f91fc
+repaired source_current source=entity-graph-live-1794419350315 generation=0 revision=12788bf2-4721-5a25-ba33-e40a47569eb8
+repaired source_current source=entity-graph-live-1794421864922 generation=0 revision=3eb55681-6d9e-514d-86a6-d9a4a9ceb12b
+repaired source_current source=entity-graph-live-1794422064080 generation=0 revision=b7af80ef-57fc-53b6-ac6e-871fe7b526cd
+repaired source_current source=entity-graph-live-1794422195438 generation=0 revision=52fbaadb-3973-52ab-8a4b-65575267e257
+repaired source_current source=entity-graph-live-1794425838674 generation=0 revision=f747ed92-fd5b-5406-b181-c3525ae6a8a1
+repaired source_current source=entity-graph-live-1794509913003 generation=0 revision=5d8b5c42-ea27-53cb-900e-ce40f16df02f
+repaired source_current source=entity-graph-live-1794510041364 generation=0 revision=c354e87c-db83-5fe2-886f-de4a15d95590
+repaired source_current source=fault-injection-1794421490 generation=0 revision=eb222407-519b-56cd-8d86-e60f6dbc5f58
+repaired source_current source=gw-check generation=0 revision=b75c87cc-20c0-5c74-a509-d1e8a3ff32a0
+repaired source_current source=halcyon generation=0 revision=6da5d403-1b7e-5a1b-afda-3ad472bb4648
+repaired source_current source=p0-books generation=0 revision=f3c1cc0f-cb60-5602-9cc3-4888ec55c311
+repaired source_current source=p0-books-c1 generation=0 revision=11917f8d-f5df-586d-8264-bd9c61c361cb
+repaired source_current source=p0-books-c1-dup generation=0 revision=c5033de8-c3eb-5a8e-a6f9-4bbde0b6d076
+repaired source_current source=peregrine generation=0 revision=8fe414fd-2809-5e76-84d5-f23765f3ea13
+repaired source_current source=ui-upload-browser generation=0 revision=e8c44869-462a-5ec7-9856-260b2cdd2aa7
+repaired_sources=23
+
+BUILD SUCCESSFUL in 18s
+6 actionable tasks: 1 executed, 5 up-to-date

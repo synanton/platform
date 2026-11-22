@@ -1,0 +1,5 @@
+classification=INVALID_WORKLOAD_ORDER
+result=no result; stopped before completion
+cause=rebuilt workload sorted by ordinal instead of registered target-first order
+registered_hash=2160d5f058ee56ac23ca5f0777c272bcc81a550e61962fb8f01d85e32d548dea
+rebuilt_hash=7412b2ac851d2b746a6260f87f49be0acd94a4eec4bfb67c790ea71c92dc533e

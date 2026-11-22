@@ -12,7 +12,9 @@ import org.synanton.common.resolution.SourceRevisionIdentity;
 import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
+import org.synanton.relix.adapter.out.metadata.Neo4jSourceFenceStore;
 import org.synanton.relix.graph.GraphLoader;
+import org.synanton.relix.graph.PromotionIds;
 import org.synanton.relix.identity.UnsupportedGraphIdException;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -20,6 +22,12 @@ import org.testcontainers.utility.DockerImageName;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -230,7 +238,69 @@ class Neo4jGraphCanonicalPortIntegrationTest {
         return new Entity(id, label, type, 1.0, List.of());
     }
 
+    private static Map<String, Long> promotionArtifacts(String tenant, String canonicalId,
+                                                        String evidenceId, String extractedRelationId,
+                                                        CanonicalRelation relation) {
+        Map<String, Long> counts = new java.util.LinkedHashMap<>();
+        counts.put("assertions", count("""
+                MATCH (s:Entity {tenant: $tenant, id: $subjectEntityId})
+                      -[r:REL {tenant_id: $tenant, canonical_relation_id: $canonicalId, predicate: 'requires'}]->
+                      (o:Entity {tenant: $tenant, id: $objectEntityId})
+                RETURN count(r) AS c
+                """, Map.of("tenant", tenant, "canonicalId", canonicalId,
+                "subjectEntityId", relation.subjectEntityId(), "objectEntityId", relation.objectEntityId())));
+        counts.put("provenance_keyed", count("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId,
+                      source_version_id: $sourceVersionId, source_id: $sourceId,
+                      generation: $generation, extracted_relation_id: $extractedRelationId})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "evidenceId", evidenceId,
+                "sourceVersionId", relation.sourceVersionId(), "sourceId", relation.sourceId(),
+                "generation", relation.generation(), "extractedRelationId", extractedRelationId)));
+        counts.put("anchors", count("""
+                MATCH (a:CanonicalRelationAnchor {tenant_id: $tenant, canonical_relation_id: $canonicalId})
+                RETURN count(a) AS c
+                """, Map.of("tenant", tenant, "canonicalId", canonicalId)));
+        counts.put("relations", count("""
+                MATCH ()-[r:REL {tenant_id: $tenant, canonical_relation_id: $canonicalId}]->()
+                RETURN count(r) AS c
+                """, Map.of("tenant", tenant, "canonicalId", canonicalId)));
+        counts.put("evidence", count("""
+                MATCH (e:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
+                RETURN count(e) AS c
+                """, Map.of("tenant", tenant, "evidenceId", evidenceId)));
+        counts.put("extracted_relations", count("""
+                MATCH (r:ExtractedRelation {tenant_id: $tenant, relation_id: $extractedRelationId})
+                RETURN count(r) AS c
+                """, Map.of("tenant", tenant, "extractedRelationId", extractedRelationId)));
+        counts.put("supports", count("""
+                MATCH (:ExtractedRelation {tenant_id: $tenant, relation_id: $extractedRelationId})
+                      -[s:SUPPORTS]->(:RelationEvidence {tenant_id: $tenant, evidence_id: $evidenceId})
+                RETURN count(s) AS c
+                """, Map.of("tenant", tenant, "extractedRelationId", extractedRelationId,
+                "evidenceId", evidenceId)));
+        counts.put("slots", count("""
+                MATCH (s:ResolutionSlot {tenant_id: $tenant})
+                WHERE s.mention_id IN ['subject-abort', 'object-abort',
+                      'subject-abort-stale', 'object-abort-stale']
+                RETURN count(s) AS c
+                """, Map.of("tenant", tenant)));
+        return counts;
+    }
+
+    private static long count(String query, Map<String, Object> params) {
+        return ((Number) cypher.read(query, params).getFirst().get("c")).longValue();
+    }
+
     private static long count(String query, String tenant) {
-        return ((Number) cypher.read(query, Map.of("tenant", tenant)).getFirst().get("c")).longValue();
+        return count(query, Map.of("tenant", tenant));
+    }
+
+    private static final class InjectedAbort extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
+        private InjectedAbort() {
+            super("injected abort after fence check and staged writes");
+        }
     }
 }

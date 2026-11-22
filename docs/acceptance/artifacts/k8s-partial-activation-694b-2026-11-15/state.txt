@@ -1,0 +1,45 @@
+source=acceptance-695e-1794732035 resource=partial-activation.txt V1=b671fb2a-d9e1-5571-80a3-b39c18aa053e V2=1a27bc31-481d-5dd2-987f-458ceae2e13a
+
+--- synquest image ---
+local-registry:5000/synanton/synquest@sha256:d46f4bc4139c0a7e19204a3be17e998f18d8189f85c5886b349cd7bb92c3c8a8
+synquest-7b48b4fcbd-7jwwt local-registry:5000/synanton/synquest@sha256:d46f4bc4139c0a7e19204a3be17e998f18d8189f85c5886b349cd7bb92c3c8a8
+
+--- flags ---
+== synflux ==
+Defaulted container "synflux" out of: synflux, content-cache-perms (init)
+EXTRACTION_PROVIDER=regex
+PROMOTION_PRODUCER_ENABLED=true
+== relix ==
+ACTIVATION_RECOVERY_ENABLED=true
+PROMOTION_COMPLETION_ENABLED=true
+PROMOTION_CONSUMER_ENABLED=true
+RECONCILIATION_ENABLED=true
+== synquest ==
+Defaulted container "synquest" out of: synquest, index-perms (init)
+RESOLUTION_CONSUMER_ENABLED=true
+
+--- source_versions ---
+
+ version_id                           | generation | extraction_status | graph_status    | search_projected_at             | activation_event_published
+--------------------------------------+------------+-------------------+-----------------+---------------------------------+----------------------------
+ 1a27bc31-481d-5dd2-987f-458ceae2e13a |          2 |   KNOWLEDGE_READY | GRAPH_COMMITTED | 2026-11-15 08:42:24.330000+0000 |                       True
+ b671fb2a-d9e1-5571-80a3-b39c18aa053e |          1 |   KNOWLEDGE_READY | GRAPH_COMMITTED | 2026-11-15 08:40:45.471000+0000 |                       True
+
+(2 rows)
+
+--- source_current ---
+
+ accepted_generation | current_generation | active_revision_id
+---------------------+--------------------+--------------------------------------
+                   2 |                  2 | 1a27bc31-481d-5dd2-987f-458ceae2e13a
+
+(1 rows)
+
+--- source_activation ---
+
+ state   | generation | revision_id
+---------+------------+--------------------------------------
+ CURRENT |          2 | 1a27bc31-481d-5dd2-987f-458ceae2e13a
+ CURRENT |          1 | b671fb2a-d9e1-5571-80a3-b39c18aa053e
+
+(2 rows)

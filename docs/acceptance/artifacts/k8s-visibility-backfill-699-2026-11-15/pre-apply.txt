@@ -1,0 +1,30 @@
+> Task :java:ingestion-cache:processResources UP-TO-DATE
+> Task :java:shared:common:compileJava UP-TO-DATE
+> Task :java:shared:common:processResources UP-TO-DATE
+> Task :java:shared:common:classes UP-TO-DATE
+> Task :java:shared:common:jar UP-TO-DATE
+> Task :java:ingestion-cache:compileJava UP-TO-DATE
+> Task :java:ingestion-cache:classes UP-TO-DATE
+
+> Task :java:ingestion-cache:runVisibilityBackfill
+14:02:15.063 [main] INFO com.datastax.oss.driver.internal.core.DefaultMavenCoordinates -- DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.17.0
+14:02:15.230 [main] INFO com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor -- Adding handler to invalidate cached prepared statements on type changes
+14:02:15.785 [s0-admin-0] INFO com.datastax.oss.driver.internal.core.time.Clock -- Using native clock for microsecond precision
+14:02:21.145 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=111267e8-57da-4e8e-986e-ff4b4aa49600}): failed to send request (java.nio.channels.NotYetConnectedException))
+14:02:21.145 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=111267e8-57da-4e8e-986e-ff4b4aa49600}): failed to send request (java.nio.channels.NotYetConnectedException))
+14:02:27.158 [s0-admin-1] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.104.18:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=111267e8-57da-4e8e-986e-ff4b4aa49600}): failed to send request (java.nio.channels.NotYetConnectedException))
+14:02:27.159 [s0-admin-0] WARN com.datastax.oss.driver.internal.core.pool.ChannelPool -- [s0|/172.16.135.41:9042]  Error while opening new channel (ConnectionInitException: [s0|connecting...] Protocol initialization request, step 1 (STARTUP {CQL_VERSION=3.0.0, DRIVER_NAME=DataStax Java driver for Apache Cassandra(R), DRIVER_VERSION=4.17.0, CLIENT_ID=111267e8-57da-4e8e-986e-ff4b4aa49600}): failed to send request (java.nio.channels.NotYetConnectedException))
+tenant=demo
+sources_total=37
+sources_with_current=7
+non_latest_current=0
+repairable_sources=23
+total_indexed_chunks=19127
+visible_current=4
+repairable_by_backfill=27
+would_hide_after_backfill=19096
+  hidden_unmapped=0
+  hidden_deleted=0
+  hidden_no_current=0
+  hidden_superseded=19096
+top_hidden_examples:

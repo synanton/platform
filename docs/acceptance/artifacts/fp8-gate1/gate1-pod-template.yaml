@@ -1,0 +1,60 @@
+# Gate 1 isolated vLLM Pod template.
+# REQUIRED: nodeName must remain node3; use the scoped Gate 1 pull secret.
+# Do NOT copy or reference local-registry-cred.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gate1-MODEL
+  namespace: synanton-gate1
+spec:
+  nodeName: node3
+  runtimeClassName: nvidia
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  imagePullSecrets:
+    - name: gate1-registry-cred
+  containers:
+    - name: vllm
+      image: local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
+      imagePullPolicy: IfNotPresent
+      args:
+        - /models
+        - --served-model-name
+        - gate1-MODEL
+        - --host
+        - 0.0.0.0
+        - --port
+        - "8001"
+        - --gpu-memory-utilization
+        - "0.85"
+        - --max-model-len
+        - "8192"
+        - --max-num-seqs
+        - "1"
+      env:
+        - name: HF_HUB_OFFLINE
+          value: "1"
+        - name: TRANSFORMERS_OFFLINE
+          value: "1"
+      resources:
+        requests:
+          cpu: "4"
+          memory: 16Gi
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "8"
+          memory: 32Gi
+          nvidia.com/gpu: "1"
+      volumeMounts:
+        - name: model
+          mountPath: /models
+          readOnly: true
+        - name: vllm-cache
+          mountPath: /root/.cache/vllm
+  volumes:
+    - name: model
+      hostPath:
+        path: MODEL_HOST_PATH
+        type: Directory
+    - name: vllm-cache
+      emptyDir: {}

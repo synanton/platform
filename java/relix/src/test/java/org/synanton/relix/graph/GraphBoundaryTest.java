@@ -26,7 +26,8 @@ class GraphBoundaryTest {
                 String relative = MAIN.relativize(file).toString().replace('\\', '/');
                 if (relative.startsWith(ADAPTER)
                         || relative.equals("org/synanton/relix/config/RelixConfig.java")
-                        || relative.equals("org/synanton/relix/adapter/out/metadata/Neo4jCanonicalGraphMetadataStore.java")) {
+                        || relative.equals("org/synanton/relix/adapter/out/metadata/Neo4jCanonicalGraphMetadataStore.java")
+                        || relative.equals("org/synanton/relix/adapter/out/metadata/Neo4jSourceFenceStore.java")) {
                     continue;
                 }
                 String source = Files.readString(file);

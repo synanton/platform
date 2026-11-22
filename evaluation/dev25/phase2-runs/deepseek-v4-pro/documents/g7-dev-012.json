@@ -1,0 +1,27 @@
+{
+  "doc_id": "g7-dev-012",
+  "model_id": "deepseek-v4-pro",
+  "chunks": 1,
+  "valid_chunks": 1,
+  "entities": 62,
+  "relations": 51,
+  "rejected": 0,
+  "entity": {
+    "tp": 50,
+    "pred": 62,
+    "gold": 59,
+    "p": 0.8064516129032258,
+    "r": 0.847457627118644,
+    "f1": 0.8264462809917354
+  },
+  "relation": {
+    "tp": 2,
+    "predicted": 51,
+    "gold": 9,
+    "precision": 0.0392156862745098,
+    "recall": 0.2222222222222222,
+    "f1": 0.06666666666666667,
+    "direction_errors": 0,
+    "missing_endpoint_relations": 0
+  }
+}

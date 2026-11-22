@@ -1,0 +1,15 @@
+{
+  "provider_model": "qwen3.8-flash",
+  "tenant": "smoke-tenant",
+  "state": "FAILED",
+  "latency_s": 0.8336416509991977,
+  "usage": {
+    "input": 0,
+    "output": 0
+  },
+  "upstream_request_id": "",
+  "result_chars": 0,
+  "error_code": "invalid_request",
+  "error_message": "provider client error HTTP 400",
+  "result": ""
+}
