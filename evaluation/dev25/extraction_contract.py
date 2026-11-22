@@ -54,13 +54,13 @@ def validate_proposal(proposal: ModelProposal, chunk_text, *, chunk_start=0,
                       ontology_context=None):
     if not isinstance(proposal, ModelProposal):
         raise TypeError('validate_proposal requires ModelProposal')
-    entities=[]; rejected=[]; by_surface={}
+    entities=[]; rejected=[]; by_surface={}; rejected_surfaces=set()
     for e in proposal.entities:
         if e.proposed_type not in allowed_types:
-            rejected.append({'kind':'entity','surface':e.surface,'reason':'TYPE_NOT_ALLOWED'}); continue
+            rejected.append({'kind':'entity','surface':e.surface,'reason':'TYPE_NOT_ALLOWED'}); rejected_surfaces.add((e.surface or '').lower()); continue
         a=anchor_surface(chunk_text,e.surface,context=e.context,chunk_start=chunk_start)
         if a['status']!='RESOLVED':
-            rejected.append({'kind':'entity','surface':e.surface,'reason':a['reason']}); continue
+            rejected.append({'kind':'entity','surface':e.surface,'reason':a['reason']}); rejected_surfaces.add((e.surface or '').lower()); continue
         mid=f'm{len(entities)+1}'
         ve=ValidatedEntity(mid,a['surface'],e.proposed_type,a['chunk_char_start'],a['chunk_char_end'],a['char_start'],a['char_end'],chunk_id,e.surface)
         entities.append(ve); by_surface.setdefault(a['surface'].lower(),[]).append(ve)
@@ -68,9 +68,17 @@ def validate_proposal(proposal: ModelProposal, chunk_text, *, chunk_start=0,
     for r in proposal.relations:
         if norm_predicate(r.predicate) not in allowed_predicates:
             rejected.append({'kind':'relation','reason':'PREDICATE_NOT_ALLOWED','predicate':r.predicate}); continue
-        ss=by_surface.get((r.subject or '').lower(),[]); oo=by_surface.get((r.object or '').lower(),[])
+        subj=(r.subject or '').lower(); obj=(r.object or '').lower()
+        ss=by_surface.get(subj,[]); oo=by_surface.get(obj,[])
         if len(ss)!=1 or len(oo)!=1 or ss[0].mention_id==oo[0].mention_id:
-            rejected.append({'kind':'relation','reason':'AMBIGUOUS_OR_MISSING_ENDPOINT','subject':r.subject,'object':r.object}); continue
+            ctx=(ontology_context or '').lower()
+            if ctx and (subj in ctx or obj in ctx):
+                reason='ENDPOINT_ONLY_IN_ONTOLOGY'
+            elif subj in rejected_surfaces or obj in rejected_surfaces:
+                reason='ENDPOINT_PROPOSED_BUT_REJECTED'
+            else:
+                reason='ENDPOINT_UNRESOLVED'
+            rejected.append({'kind':'relation','reason':reason,'subject':r.subject,'object':r.object}); continue
         if not r.evidence:
             rejected.append({'kind':'relation','reason':'MISSING_EVIDENCE'}); continue
         positions=[]; start=0
@@ -90,3 +98,11 @@ def summarize_rejections(validated):
     from collections import Counter
     counts=Counter((x.get('kind'),x.get('reason')) for x in validated.rejected)
     return [{'kind':k,'reason':r,'count':n} for (k,r),n in sorted(counts.items())]
+
+def evaluation_record(*, doc_id, chunk_id, arm_id, validated):
+    return {
+        'doc_id': doc_id, 'chunk_id': chunk_id, 'arm_id': arm_id,
+        'accepted_entities': len(validated.entities),
+        'accepted_relations': len(validated.relationships),
+        'rejections': summarize_rejections(validated),
+    }

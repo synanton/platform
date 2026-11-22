@@ -33,7 +33,7 @@ class ContractTests(unittest.TestCase):
     def test_relation_missing_endpoint_rejected(self):
         p=ModelProposal(entities=(ModelEntityProposal('Acme','Organization'),),relations=(ModelRelationProposal('Acme','has_component','Widget','Acme supplies Widget'),))
         v=validate_proposal(p,'Acme supplies Widget',allowed_types=ALLOWED_TYPES,allowed_predicates=ALLOWED_PREDICATES)
-        self.assertEqual(len(v.relationships),0); self.assertEqual(v.rejected[0]['reason'],'AMBIGUOUS_OR_MISSING_ENDPOINT')
+        self.assertEqual(len(v.relationships),0); self.assertEqual(v.rejected[0]['reason'],'ENDPOINT_UNRESOLVED')
 
     def test_bad_type_rejected(self):
         p=ModelProposal(entities=(ModelEntityProposal('Acme','Alien'),),relations=())
