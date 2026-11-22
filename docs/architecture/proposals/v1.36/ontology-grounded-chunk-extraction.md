@@ -39,7 +39,7 @@ the LLM call**:
    "Pass 2" concatenates every Pass-1 response into one prompt. Prompt size and
    cost grow with chunk count, while the output budget stays fixed. That is the
    "chunk flood": too many calls, then one unbounded aggregation call.
-3. The ontology is only an allowed-type hint. There is no per-window subset, no
+3. The ontology is only an allowed-type hint. There is no per-segment subset, no
    property/domain/range information in the prompt, and no schema derived from
    the pinned ontology release.
 
@@ -231,7 +231,7 @@ dependent on code changes rather than ontology releases.
 | Truncation behavior | Whole response fails | Partial results survive; truncated final line discarded | Adopt. |
 | URI/ID construction | Code normalizes type strings; mention IDs deterministic downstream | LLM returns names/type IDs; code normalizes names, builds URIs, emits `rdf:type`/`rdfs:label` | Synanton already does most of this; make the LLM emit ontology IDs, not invented predicates. |
 | Semantic validation | `validate-relation` at graph commit (TBox + predicate SHACL) | Class/property existence, domain/range incl. subclass, cardinality, datatype; rejects invalid triples | Keep Synanton's commit validation; add lightweight per-line validation and batch semantic validation. |
-| Dedup | Relix canonicalizer + per-document local map; Pass-2 can duplicate | Entity registry during extraction | Add per-window registry and deterministic merge; keep canonical resolution downstream. |
+| Dedup | Relix canonicalizer + per-document local map; Pass-2 can duplicate | Entity registry during extraction | Add per-segment registry and deterministic merge; keep canonical resolution downstream. |
 | Provenance | Strong: chunk, page, section, offsets, evidence spans, mention graph contract | PROV-O document → page → chunk → edge; named graphs; retrieval traces | Synanton is competitive; preserve per-line provenance through consolidation. |
 | Fan-out control | No global budget; sequential or per-doc pool | Bounded prompts but no per-document budget | Synanton must go beyond TrustGraph here. |
 
@@ -495,7 +495,7 @@ Contract rules:
 - Each line is independently schema-validated. One malformed line must not discard valid neighboring lines.
 - The final valid JSON object is accepted even without a trailing newline. If the provider reports a length/token-limit finish reason, complete preceding lines are retained; an incomplete final line is quarantined as \`TRUNCATED\`. A parseable complete final object remains valid.
 - Blank lines may be ignored and counted. Markdown fences, prose prefixes, wrapper arrays, and wrapper objects are protocol violations; do not silently strip prose or reinterpret monolithic JSON as JSONL.
-- Enforce a configurable UTF-8 byte limit per line. Start with **8 KiB** and test long evidence/Unicode cases; the previous 2 KiB proposal is too tight for legitimate relation evidence.
+- Enforce a configurable UTF-8 byte limit per line. Start with **16 KiB**; measure p50/p95/p99/max evidence bytes on the frozen gold and require zero legitimate gold lines to exceed the bound. If a line is too large, retry once for a shorter verbatim evidence excerpt; never truncate serialized JSON or silently alter an evidence quote.
 
 JSON Schema (Appendix B) is compiled per ontology subset. The adapter returns a typed \`ExtractionResult\` to consumers; JSONL is the model/adapter interchange format, not a requirement that downstream graph APIs store raw text.
 
@@ -571,7 +571,7 @@ copied into ordinary application logs.
 - `mention_id` remains deterministic:
   `sha256(tenant | source_version | chunk_id | chunk_offset_start | chunk_offset_end | surface)`.
 - When a window spans chunks, compute the chunk and offset from the anchored
-  document span; do not assign the window ID as the chunk.
+  document span; do not assign the segment ID as the chunk.
 - `type_id` is an ontology class identifier, not a canonical instance ID.
 - Canonical entity creation and `:RESOLVES_TO` stay downstream (Equalix /
   Syntology per ADR-030 and v0.3). Do not merge same-surface mentions across
@@ -583,7 +583,7 @@ copied into ordinary application logs.
 
 Every accepted candidate retains:
 
-- window ID and prompt/schema/model digests;
+- segment ID and prompt/schema/model digests;
 - source chunk ID(s) and character offsets;
 - evidence quote and its span;
 - ontology release and schema digest;
@@ -591,7 +591,7 @@ Every accepted candidate retains:
 - for relations, subject/object mention IDs after anchoring.
 
 This preserves the chain
-`source → chunk → window → mention candidate → relation candidate → validation →
+`source → chunk → segment → mention candidate → relation candidate → validation →
 promotion`. It also lets a model/prompt/schema regression be replayed exactly.
 
 ### 4.10 Caching, idempotency, and budgets
@@ -636,7 +636,7 @@ When a budget is reached, finish and persist completed segments, stop scheduling
 | # | Area | Change | Files (indicative) |
 |---:|---|---|---|
 | C1 | Extraction output | Make JSONL canonical for all multi-fact extraction; per-line parse/schema/quarantine, truncation recovery, protocol errors. | `java/extraction-engine/.../llm/LlmExtractionAdapter.java`, `.../json/Json.java` |
-| C2 | Extraction contract | Extend `ExtractionResult`/usage with window ID, accepted lines, quarantine counts, truncation/coverage flags. | `java/extraction-engine/.../ExtractionResult.java`, `ExtractionContext.java` |
+| C2 | Extraction contract | Extend `ExtractionResult`/usage with segment ID, accepted lines, quarantine counts, truncation/coverage flags. | `java/extraction-engine/.../ExtractionResult.java`, `ExtractionContext.java` |
 | C3 | Schema validation | Add a JSON Schema validator dependency and compile a line schema from the selected subset. | `java/extraction-engine` |
 | C4 | Ontology compiler | New Syntology component and endpoint producing `ExtractionSchema` + digest from a release. | `java/syntology/.../domain/service`, `api/rest/OntologyController.java` |
 | C5 | Subset selector | Lexical + embedding selector with dependency closure, bounds, cache, and miss metrics. | `java/syntology` or shared ontology client; `java/extraction-engine` |
