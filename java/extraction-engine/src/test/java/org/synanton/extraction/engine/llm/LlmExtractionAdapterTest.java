@@ -40,6 +40,12 @@ class LlmExtractionAdapterTest {
             ]}
             """;
 
+    private static final String JSONL_OUTPUT = """
+            {"type":"entity","surfaceForm":"Halcyon-7","proposedType":"MaintenanceSystem"}
+            {"type":"entity","surfaceForm":"helium leak check","proposedType":"Concept"}
+            {"type":"relation","subjectForm":"Halcyon-7","predicate":"requires","objectForm":"helium leak check","evidenceQuote":"Halcyon-7 requires a helium leak check."}
+            """;
+
     private HttpServer server;
     private volatile String requestBody;
     private volatile int status = 200;
@@ -234,7 +240,7 @@ class LlmExtractionAdapterTest {
             assertThat(event.get("raw_response")).asString().contains("choices");
             assertThat(event.get("content")).isEqualTo(responseContent);
             assertThat(event.get("parser_input")).asString().isEmpty();
-            assertThat(event.get("parser_exception")).asString().contains("model output");
+            assertThat(event.get("parser_exception")).asString().contains("no valid JSONL records");
         } catch (Exception e) {
             throw new AssertionError(e);
         }
@@ -273,7 +279,7 @@ class LlmExtractionAdapterTest {
             Map<String, Object> event = Json.parseObject(Files.readString(captured));
             assertThat(event.get("raw_response")).asString().contains("preEntities");
             assertThat(event.get("parser_input")).asString().isEmpty();
-            assertThat(event.get("parser_exception")).asString().contains("model output");
+            assertThat(event.get("parser_exception")).asString().contains("no valid JSONL records");
             assertThat(event.get("source_version_id")).isEqualTo("version-1");
             assertThat(event.get("chunk_id")).isEqualTo("c1");
             assertThat(event.get("raw_response_sha256")).asString().hasSize(64);
@@ -356,5 +362,180 @@ class LlmExtractionAdapterTest {
                 + "\"relations\":[]}";
         ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
         assertThat(result.preEntities()).isEmpty();
+    }
+
+    @Test
+    void parsesJsonlRecordsIndependently() {
+        responseContent = JSONL_OUTPUT;
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.preEntities()).extracting(PreEntity::surfaceForm)
+                .contains("Halcyon-7", "helium leak check");
+        assertThat(result.relations()).hasSize(1);
+        assertThat(result.quarantined()).isEmpty();
+    }
+
+    @Test
+    void malformedJsonlMiddleLineDoesNotPoisonNeighbours() {
+        String[] lines = JSONL_OUTPUT.split("\n");
+        responseContent = lines[0] + "\n{broken}\n" + lines[2];
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.quarantined()).hasSize(1);
+        assertThat(result.quarantined().getFirst().lineNumber()).isEqualTo(2);
+        assertThat(result.quarantined().getFirst().reasonCode()).isEqualTo("JSON_PARSE");
+        assertThat(result.preEntities()).extracting(PreEntity::surfaceForm).contains("Halcyon-7");
+    }
+
+    @Test
+    void truncatedJsonlKeepsTheValidPrefixAndQuarantinesOnlyTheTail() {
+        String[] lines = JSONL_OUTPUT.split("\n");
+        responseContent = lines[0] + "\n" + lines[1] + "\n"
+                + "{\"type\":\"relation\",\"subjectForm\":\"Halcyon-7\"";
+        finishReason = "length";
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.preEntities()).hasSize(2);
+        assertThat(result.quarantined()).hasSize(1);
+        assertThat(result.quarantined().getFirst().lineNumber()).isEqualTo(3);
+        assertThat(result.quarantined().getFirst().reasonCode()).isEqualTo("TRUNCATED");
+        assertThat(result.llmUsage().finishReason()).isEqualTo("length");
+    }
+
+    @Test
+    void concatenatedJsonlLineIsQuarantinedWithoutKillingTheNextLine() {
+        String[] lines = JSONL_OUTPUT.split("\n");
+        responseContent = lines[0] + lines[1] + "\n" + lines[2];
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.quarantined()).extracting(line -> line.reasonCode())
+                .contains("CONCATENATED_RECORDS");
+        assertThat(result.preEntities()).extracting(PreEntity::surfaceForm)
+                .contains("helium leak check");
+    }
+
+    @Test
+    void capturesQuarantineEvidenceAsJsonl(@TempDir Path captureDir) throws Exception {
+        String[] lines = JSONL_OUTPUT.split("\n");
+        responseContent = lines[0] + "\n{broken}\n" + lines[2];
+
+        new LlmExtractionAdapter("http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
+                "test-model", Duration.ofSeconds(10), 2048, captureDir)
+                .extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        Path quarantine;
+        try (var files = Files.list(captureDir)) {
+            quarantine = files.filter(path -> path.getFileName().toString().startsWith("quarantine-"))
+                    .findFirst().orElseThrow();
+        }
+        List<String> rows = Files.readAllLines(quarantine);
+        assertThat(rows).hasSize(1);
+        Map<String, Object> event = Json.parseObject(rows.getFirst());
+        assertThat(((Number) event.get("line")).intValue()).isEqualTo(2);
+        assertThat(event.get("reason")).isEqualTo("JSON_PARSE");
+        assertThat(event.get("raw")).isEqualTo("{broken}");
+    }
+
+    @Test
+    void jsonlWithoutAnyValidLineStillThrowsIncompleteOnLength() {
+        responseContent = "{\"type\":\"entity\",\"surfaceForm\":";
+        finishReason = "length";
+
+        assertThatThrownBy(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .isInstanceOf(LlmIncompleteOutputException.class);
+    }
+
+    @Test
+    void promptAsksForJsonlRecords() {
+        adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        Map<String, Object> request = Json.parseObject(requestBody);
+        String prompt = Json.string(Json.objectList(request, "messages").getFirst(), "content", "");
+        assertThat(prompt)
+                .contains("Return JSONL")
+                .contains("\"type\":\"entity\"")
+                .contains("\"type\":\"relation\"")
+                .doesNotContain("\"preEntities\"");
+    }
+
+    @Test
+    void unknownEntityTypeIsQuarantined() {
+        responseContent = "{\"type\":\"entity\",\"surfaceForm\":\"Halcyon-7\","
+                + "\"proposedType\":\"Alien\"}";
+        ExtractionContext restricted = new ExtractionContext("tenant", "doc", Set.of("Organization"));
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), restricted);
+
+        assertThat(result.preEntities()).isEmpty();
+        assertThat(result.quarantined()).extracting(line -> line.reasonCode())
+                .containsExactly("UNKNOWN_ENTITY_TYPE");
+    }
+
+    @Test
+    void unknownPredicateIsQuarantined() {
+        responseContent = "{\"type\":\"relation\",\"subjectForm\":\"Halcyon-7\","
+                + "\"predicate\":\"invented\",\"objectForm\":\"helium leak check\","
+                + "\"evidenceQuote\":\"Halcyon-7 requires a helium leak check.\"}";
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.relations()).isEmpty();
+        assertThat(result.quarantined()).extracting(line -> line.reasonCode())
+                .containsExactly("UNKNOWN_PREDICATE");
+    }
+
+    @Test
+    void unanchorableSurfaceIsQuarantinedWithoutLosingValidNeighbours() {
+        responseContent = "{\"type\":\"entity\",\"surfaceForm\":\"Halcyon-7\","
+                + "\"proposedType\":\"MaintenanceSystem\"}\n"
+                + "{\"type\":\"entity\",\"surfaceForm\":\"not in the text\","
+                + "\"proposedType\":\"Concept\"}";
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.preEntities()).extracting(PreEntity::surfaceForm).containsExactly("Halcyon-7");
+        assertThat(result.quarantined()).extracting(line -> line.reasonCode())
+                .containsExactly("UNANCHORED");
+    }
+
+    @Test
+    void duplicateEntityIsQuarantined() {
+        String entity = "{\"type\":\"entity\",\"surfaceForm\":\"Halcyon-7\","
+                + "\"proposedType\":\"MaintenanceSystem\"}";
+        responseContent = entity + "\n" + entity;
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.preEntities()).hasSize(1);
+        assertThat(result.quarantined()).extracting(line -> line.reasonCode())
+                .containsExactly("DUPLICATE");
+    }
+
+    @Test
+    void selfRelationIsQuarantined() {
+        responseContent = "{\"type\":\"relation\",\"subjectForm\":\"Halcyon-7\","
+                + "\"predicate\":\"requires\",\"objectForm\":\"Halcyon-7\","
+                + "\"evidenceQuote\":\"Halcyon-7 requires a helium leak check.\"}";
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.relations()).isEmpty();
+        assertThat(result.quarantined()).extracting(line -> line.reasonCode())
+                .containsExactly("SELF_RELATION");
+    }
+
+    @Test
+    void emptyResponseForNoFactsIsAValidEmptyResult() {
+        responseContent = "";
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.preEntities()).isEmpty();
+        assertThat(result.relations()).isEmpty();
+        assertThat(result.quarantined()).isEmpty();
     }
 }

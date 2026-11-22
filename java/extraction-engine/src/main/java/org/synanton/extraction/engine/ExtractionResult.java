@@ -6,13 +6,19 @@ import java.util.List;
 public record ExtractionResult(
         List<PreEntity> preEntities,
         List<RelationCandidate> relations,
-        LlmUsage llmUsage) {
+        LlmUsage llmUsage,
+        List<QuarantinedLine> quarantined) {
 
     public ExtractionResult(List<PreEntity> preEntities, List<RelationCandidate> relations) {
-        this(preEntities, relations, LlmUsage.NONE);
+        this(preEntities, relations, LlmUsage.NONE, List.of());
+    }
+
+    public ExtractionResult(List<PreEntity> preEntities, List<RelationCandidate> relations,
+                            LlmUsage llmUsage) {
+        this(preEntities, relations, llmUsage, List.of());
     }
 
     public static ExtractionResult empty() {
-        return new ExtractionResult(List.of(), List.of(), LlmUsage.NONE);
+        return new ExtractionResult(List.of(), List.of(), LlmUsage.NONE, List.of());
     }
 }
