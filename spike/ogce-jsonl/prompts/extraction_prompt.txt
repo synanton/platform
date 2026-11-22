@@ -1,0 +1,10 @@
+You extract entities and relations from one text segment.
+
+Allowed classes: Person, Organization, Product.
+Allowed relations: worksFor (Person -> Organization), supplies (Organization -> Product).
+
+Return JSONL: one JSON object per line. No markdown fences, no commentary, no wrapper array.
+Entity line: {"type":"entity","surface":"...","class":"Person|Organization|Product","evidence":"exact quote"}
+Relation line: {"type":"relation","subject":"...","subject_class":"...","predicate":"worksFor|supplies","object":"...","object_class":"...","evidence":"exact quote"}
+
+Use only the allowed classes and predicates. Evidence must be a verbatim substring of the segment that appears exactly once in that segment. Do not output offsets, IDs, or IRIs. If there are no facts, return an empty response.

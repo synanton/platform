@@ -1,0 +1,1013 @@
+{
+  "run": {
+    "started_at": "2026-11-22T15:34:07Z",
+    "base_url": "http://127.0.0.1:8000",
+    "model": "qwen3-8b-fp8",
+    "model_path": "/models",
+    "doc": "/spike/ogce-jsonl/fixtures/sample-doc.md",
+    "doc_chars": 15305,
+    "doc_tokens": 2936,
+    "doc_lines": 150,
+    "doc_headings": 18,
+    "doc_list_items": 28
+  },
+  "gpu_before": {
+    "gpu": "NVIDIA GeForce RTX 4060 Ti, GPU-a004ce09-4df3-3098-a6dc-1d11175ecf30, 16380 MiB, 12601 MiB, 0 %",
+    "compute_apps": "351, VLLM::EngineCore, 12580 MiB"
+  },
+  "chunks": [
+    {
+      "index": 0,
+      "tokens": 507,
+      "span": [
+        0,
+        2747
+      ],
+      "segments": 2
+    },
+    {
+      "index": 1,
+      "tokens": 511,
+      "span": [
+        2747,
+        5410
+      ],
+      "segments": 2
+    },
+    {
+      "index": 2,
+      "tokens": 503,
+      "span": [
+        5410,
+        7978
+      ],
+      "segments": 2
+    },
+    {
+      "index": 3,
+      "tokens": 508,
+      "span": [
+        7980,
+        10730
+      ],
+      "segments": 2
+    },
+    {
+      "index": 4,
+      "tokens": 504,
+      "span": [
+        10731,
+        13148
+      ],
+      "segments": 2
+    },
+    {
+      "index": 5,
+      "tokens": 403,
+      "span": [
+        13150,
+        15304
+      ],
+      "segments": 2
+    }
+  ],
+  "segments": [
+    {
+      "index": 0,
+      "chunk": 0,
+      "tokens": 263,
+      "overlap_tokens": 43,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        0,
+        1420
+      ]
+    },
+    {
+      "index": 1,
+      "chunk": 0,
+      "tokens": 285,
+      "overlap_tokens": 40,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        1206,
+        2747
+      ]
+    },
+    {
+      "index": 2,
+      "chunk": 1,
+      "tokens": 263,
+      "overlap_tokens": 38,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        2747,
+        4175
+      ]
+    },
+    {
+      "index": 3,
+      "chunk": 1,
+      "tokens": 285,
+      "overlap_tokens": 44,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        3975,
+        5410
+      ]
+    },
+    {
+      "index": 4,
+      "chunk": 2,
+      "tokens": 270,
+      "overlap_tokens": 48,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        5410,
+        6868
+      ]
+    },
+    {
+      "index": 5,
+      "chunk": 2,
+      "tokens": 279,
+      "overlap_tokens": 42,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        6589,
+        7978
+      ]
+    },
+    {
+      "index": 6,
+      "chunk": 3,
+      "tokens": 265,
+      "overlap_tokens": 44,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        7980,
+        9488
+      ]
+    },
+    {
+      "index": 7,
+      "chunk": 3,
+      "tokens": 286,
+      "overlap_tokens": 48,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        9261,
+        10730
+      ]
+    },
+    {
+      "index": 8,
+      "chunk": 4,
+      "tokens": 261,
+      "overlap_tokens": 43,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        10731,
+        11948
+      ]
+    },
+    {
+      "index": 9,
+      "chunk": 4,
+      "tokens": 285,
+      "overlap_tokens": 36,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        11759,
+        13148
+      ]
+    },
+    {
+      "index": 10,
+      "chunk": 5,
+      "tokens": 261,
+      "overlap_tokens": 41,
+      "segment_undersized": false,
+      "segment_undersized_reason": "",
+      "span": [
+        13150,
+        14572
+      ]
+    },
+    {
+      "index": 11,
+      "chunk": 5,
+      "tokens": 181,
+      "overlap_tokens": 0,
+      "segment_undersized": true,
+      "segment_undersized_reason": "MERGE_WOULD_EXCEED_384",
+      "span": [
+        14337,
+        15304
+      ]
+    }
+  ],
+  "e5_chunk_boundary": {
+    "pass": true,
+    "violations": [],
+    "segments": 12,
+    "chunks": 6,
+    "overlaps": [
+      43,
+      40,
+      38,
+      44,
+      48,
+      42,
+      44,
+      48,
+      43,
+      36,
+      41,
+      0
+    ]
+  },
+  "t4_segment_size_histogram": [
+    {
+      "band": "<64",
+      "count": 0
+    },
+    {
+      "band": "64-127",
+      "count": 0
+    },
+    {
+      "band": "128-191",
+      "count": 1
+    },
+    {
+      "band": "192-255",
+      "count": 0
+    },
+    {
+      "band": "256-319",
+      "count": 11
+    },
+    {
+      "band": "320-383",
+      "count": 0
+    },
+    {
+      "band": "384-511",
+      "count": 0
+    },
+    {
+      "band": ">=512",
+      "count": 0
+    }
+  ],
+  "t4_undersized_tails": [
+    {
+      "segment": 11,
+      "tokens": 181,
+      "reason": "MERGE_WOULD_EXCEED_384"
+    }
+  ],
+  "t4_list_observation": [
+    {
+      "list_items": 10,
+      "span": [
+        7032,
+        7654
+      ],
+      "chunks": [
+        2
+      ],
+      "segments": [
+        5
+      ],
+      "atomic_in_one_chunk": true,
+      "atomic_in_one_segment": true
+    },
+    {
+      "list_items": 12,
+      "span": [
+        10390,
+        11166
+      ],
+      "chunks": [
+        3,
+        4
+      ],
+      "segments": [
+        7,
+        8
+      ],
+      "atomic_in_one_chunk": false,
+      "atomic_in_one_segment": false
+    },
+    {
+      "list_items": 6,
+      "span": [
+        14446,
+        14855
+      ],
+      "chunks": [
+        5
+      ],
+      "segments": [
+        10,
+        11
+      ],
+      "atomic_in_one_chunk": true,
+      "atomic_in_one_segment": false
+    }
+  ],
+  "t4_chunk_segment_ratio": 2.0,
+  "t1_no_op": {
+    "pass": true,
+    "error": null,
+    "content": "OK",
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 199,
+      "total_tokens": 201,
+      "completion_tokens": 2,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": null
+    },
+    "latency_s": 0.107,
+    "output_sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3"
+  },
+  "t2_capabilities": [
+    {
+      "probe": "baseline",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 3.195,
+      "lines_returned": 3,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": false,
+      "jsonl_grammar_ok": false,
+      "enforcement": "prompt-only",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}\n{\"type\":\"relation\",\"subject\":\"Elena Torres\",\"subject_class\":\"Person\",\"predicate\":\"worksFor\",\"object\":\"Acme Corporation\",\"object_class\":\"Organization\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres wo",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 302,
+        "completion_tokens": 100,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "response_format_json_object",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 0.894,
+      "lines_returned": 1,
+      "json_valid": true,
+      "single_json_object": true,
+      "required_keys_present": true,
+      "schema_semantics_ok": true,
+      "regex_match": true,
+      "jsonl_grammar_ok": false,
+      "enforcement": "single-object",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 229,
+        "completion_tokens": 27,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "response_format_json_schema",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 0.888,
+      "lines_returned": 1,
+      "json_valid": true,
+      "single_json_object": true,
+      "required_keys_present": true,
+      "schema_semantics_ok": true,
+      "regex_match": true,
+      "jsonl_grammar_ok": false,
+      "enforcement": "schema-object",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 229,
+        "completion_tokens": 27,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "response_format_json_schema_strict",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 0.892,
+      "lines_returned": 1,
+      "json_valid": true,
+      "single_json_object": true,
+      "required_keys_present": true,
+      "schema_semantics_ok": true,
+      "regex_match": true,
+      "jsonl_grammar_ok": false,
+      "enforcement": "schema-object",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 229,
+        "completion_tokens": 27,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "guided_json",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 3.187,
+      "lines_returned": 3,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": false,
+      "jsonl_grammar_ok": false,
+      "enforcement": "accepted-not-enforced",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}\n{\"type\":\"relation\",\"subject\":\"Elena Torres\",\"subject_class\":\"Person\",\"predicate\":\"worksFor\",\"object\":\"Acme Corporation\",\"object_class\":\"Organization\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres wo",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 302,
+        "completion_tokens": 100,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "guided_regex",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 3.195,
+      "lines_returned": 3,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": false,
+      "jsonl_grammar_ok": false,
+      "enforcement": "accepted-not-enforced",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}\n{\"type\":\"relation\",\"subject\":\"Elena Torres\",\"subject_class\":\"Person\",\"predicate\":\"worksFor\",\"object\":\"Acme Corporation\",\"object_class\":\"Organization\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres wo",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 302,
+        "completion_tokens": 100,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "guided_grammar",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 3.185,
+      "lines_returned": 3,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": false,
+      "jsonl_grammar_ok": false,
+      "enforcement": "accepted-not-enforced",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}\n{\"type\":\"relation\",\"subject\":\"Elena Torres\",\"subject_class\":\"Person\",\"predicate\":\"worksFor\",\"object\":\"Acme Corporation\",\"object_class\":\"Organization\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres wo",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 302,
+        "completion_tokens": 100,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "structured_outputs_json",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 0.887,
+      "lines_returned": 1,
+      "json_valid": true,
+      "single_json_object": true,
+      "required_keys_present": true,
+      "schema_semantics_ok": true,
+      "regex_match": true,
+      "jsonl_grammar_ok": false,
+      "enforcement": "schema-object",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 229,
+        "completion_tokens": 27,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "structured_outputs_regex",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 3.192,
+      "lines_returned": 1,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": true,
+      "jsonl_grammar_ok": false,
+      "enforcement": "regex-match",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}{\"type\":\"relation\",\"subject\":\"Elena Torres\",\"subject_class\":\"Person\",\"predicate\":\"worksFor\",\"object\":\"Acme Corporation\",\"object_class\":\"Organization\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres wor",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 302,
+        "completion_tokens": 100,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "structured_outputs_grammar",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 0.259,
+      "lines_returned": 1,
+      "json_valid": true,
+      "single_json_object": true,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": true,
+      "jsonl_grammar_ok": false,
+      "enforcement": "grammar-object",
+      "content": "{\"type\":\"entity\"}",
+      "content_prefix": "{\"type\":\"entity\"}",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 209,
+        "completion_tokens": 7,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "structured_outputs_jsonl_grammar",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 1.011,
+      "lines_returned": 2,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": false,
+      "jsonl_grammar_ok": true,
+      "enforcement": "jsonl-grammar",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}\n{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}\n{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 233,
+        "completion_tokens": 31,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "stop",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 3.193,
+      "lines_returned": 3,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": false,
+      "jsonl_grammar_ok": false,
+      "enforcement": "stop-accepted",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}\n{\"type\":\"relation\",\"subject\":\"Elena Torres\",\"subject_class\":\"Person\",\"predicate\":\"worksFor\",\"object\":\"Acme Corporation\",\"object_class\":\"Organization\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres wo",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 302,
+        "completion_tokens": 100,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "logit_bias",
+      "http_ok": true,
+      "error": null,
+      "finish_reason": "stop",
+      "latency_s": 3.187,
+      "lines_returned": 3,
+      "json_valid": false,
+      "single_json_object": false,
+      "required_keys_present": false,
+      "schema_semantics_ok": false,
+      "regex_match": false,
+      "jsonl_grammar_ok": false,
+      "enforcement": "accepted-not-observable",
+      "content": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}\n{\"type\":\"relation\",\"subject\":\"Elena Torres\",\"subject_class\":\"Person\",\"predicate\":\"worksFor\",\"object\":\"Acme Corporation\",\"object_class\":\"Organization\",\"evidence\":\"Elena Torres works for Acme Corporation.\"}",
+      "content_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"class\":\"Person\",\"evidence\":\"Elena Torres wo",
+      "usage": {
+        "prompt_tokens": 202,
+        "total_tokens": 302,
+        "completion_tokens": 100,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      }
+    },
+    {
+      "probe": "seed_repeat",
+      "http_ok": true,
+      "identical": true,
+      "enforcement": "deterministic",
+      "first_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"cla",
+      "second_prefix": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\",\"evidence\":\"Acme Corporation is a company.\"}\n{\"type\":\"entity\",\"surface\":\"Elena Torres\",\"cla"
+    }
+  ],
+  "t6_calls": [
+    {
+      "segment": 0,
+      "chunk": 0,
+      "segment_tokens": 263,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 453,
+        "total_tokens": 871,
+        "completion_tokens": 418,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 13.324,
+      "lines_total": 12,
+      "lines_accepted": 12,
+      "lines_quarantined": 0,
+      "error": null
+    },
+    {
+      "segment": 1,
+      "chunk": 0,
+      "segment_tokens": 285,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 472,
+        "total_tokens": 1044,
+        "completion_tokens": 572,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 18.249,
+      "lines_total": 15,
+      "lines_accepted": 15,
+      "lines_quarantined": 0,
+      "error": null
+    },
+    {
+      "segment": 2,
+      "chunk": 1,
+      "segment_tokens": 263,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 451,
+        "total_tokens": 954,
+        "completion_tokens": 503,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 16.045,
+      "lines_total": 13,
+      "lines_accepted": 12,
+      "lines_quarantined": 1,
+      "error": null
+    },
+    {
+      "segment": 3,
+      "chunk": 1,
+      "segment_tokens": 285,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 472,
+        "total_tokens": 759,
+        "completion_tokens": 287,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 9.15,
+      "lines_total": 8,
+      "lines_accepted": 8,
+      "lines_quarantined": 0,
+      "error": null
+    },
+    {
+      "segment": 4,
+      "chunk": 2,
+      "segment_tokens": 270,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 459,
+        "total_tokens": 1179,
+        "completion_tokens": 720,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 23.009,
+      "lines_total": 21,
+      "lines_accepted": 9,
+      "lines_quarantined": 12,
+      "error": null
+    },
+    {
+      "segment": 5,
+      "chunk": 2,
+      "segment_tokens": 279,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 466,
+        "total_tokens": 936,
+        "completion_tokens": 470,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 14.978,
+      "lines_total": 13,
+      "lines_accepted": 13,
+      "lines_quarantined": 0,
+      "error": null
+    },
+    {
+      "segment": 6,
+      "chunk": 3,
+      "segment_tokens": 265,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 454,
+        "total_tokens": 899,
+        "completion_tokens": 445,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 14.189,
+      "lines_total": 16,
+      "lines_accepted": 7,
+      "lines_quarantined": 9,
+      "error": null
+    },
+    {
+      "segment": 7,
+      "chunk": 3,
+      "segment_tokens": 286,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 473,
+        "total_tokens": 950,
+        "completion_tokens": 477,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 15.214,
+      "lines_total": 12,
+      "lines_accepted": 12,
+      "lines_quarantined": 0,
+      "error": null
+    },
+    {
+      "segment": 8,
+      "chunk": 4,
+      "segment_tokens": 261,
+      "finish_reason": "length",
+      "usage": {
+        "prompt_tokens": 449,
+        "total_tokens": 1217,
+        "completion_tokens": 768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 24.547,
+      "lines_total": 18,
+      "lines_accepted": 12,
+      "lines_quarantined": 6,
+      "error": null
+    },
+    {
+      "segment": 9,
+      "chunk": 4,
+      "segment_tokens": 285,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 472,
+        "total_tokens": 1009,
+        "completion_tokens": 537,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 17.115,
+      "lines_total": 16,
+      "lines_accepted": 8,
+      "lines_quarantined": 8,
+      "error": null
+    },
+    {
+      "segment": 10,
+      "chunk": 5,
+      "segment_tokens": 261,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 449,
+        "total_tokens": 736,
+        "completion_tokens": 287,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 9.226,
+      "lines_total": 9,
+      "lines_accepted": 9,
+      "lines_quarantined": 0,
+      "error": null
+    },
+    {
+      "segment": 11,
+      "chunk": 5,
+      "segment_tokens": 181,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 369,
+        "total_tokens": 716,
+        "completion_tokens": 347,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "latency_s": 11.12,
+      "lines_total": 11,
+      "lines_accepted": 11,
+      "lines_quarantined": 0,
+      "error": null
+    }
+  ],
+  "t7_validation": {
+    "lines_returned": 164,
+    "lines_accepted": 128,
+    "lines_quarantined": 36,
+    "quarantine_reasons": {
+      "SURFACE_NOT_IN_EVIDENCE": 11,
+      "AMBIGUOUS_ANCHOR": 14,
+      "CLASS_MISMATCH": 5,
+      "JSON_PARSE": 1,
+      "UNANCHORED": 5
+    },
+    "fence_stripped_segments": 0
+  },
+  "t5_repeat_format": {
+    "segment": 1,
+    "format_equal": true,
+    "first_lines": 15,
+    "repeat_lines": 15
+  },
+  "e1_truncation": {
+    "results": [
+      {
+        "percent": 25,
+        "cut_line": 4,
+        "expected_pre_cut": 3,
+        "jsonl_accepted": 3,
+        "jsonl_retention": 1.0,
+        "jsonl_quarantined": 1,
+        "monolithic_accepted": 0,
+        "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 154)"
+      },
+      {
+        "percent": 50,
+        "cut_line": 8,
+        "expected_pre_cut": 7,
+        "jsonl_accepted": 7,
+        "jsonl_retention": 1.0,
+        "jsonl_quarantined": 1,
+        "monolithic_accepted": 0,
+        "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 154)"
+      },
+      {
+        "percent": 75,
+        "cut_line": 11,
+        "expected_pre_cut": 10,
+        "jsonl_accepted": 10,
+        "jsonl_retention": 1.0,
+        "jsonl_quarantined": 1,
+        "monolithic_accepted": 0,
+        "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 154)"
+      }
+    ],
+    "pass": true,
+    "headline": {
+      "percent": 50,
+      "cut_line": 8,
+      "expected_pre_cut": 7,
+      "jsonl_accepted": 7,
+      "jsonl_retention": 1.0,
+      "jsonl_quarantined": 1,
+      "monolithic_accepted": 0,
+      "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 154)"
+    }
+  },
+  "e2_malformed_line": {
+    "pass": true,
+    "corrupted_line": 3,
+    "quarantined_lines": [
+      3
+    ],
+    "baseline_quarantined_lines": [],
+    "new_quarantines": [
+      3
+    ],
+    "expected_quarantine": [
+      3
+    ],
+    "accepted_before": 15,
+    "accepted_after": 14,
+    "others_unaffected": true
+  },
+  "e3_anchoring": {
+    "pass": true,
+    "accepted_before": 15,
+    "accepted_after": 15,
+    "anchors_identical": true
+  },
+  "experiment_source": {
+    "segment": 1,
+    "lines": 15,
+    "accepted": 15,
+    "quarantined": 0
+  },
+  "e4_coverage": {
+    "pass": true,
+    "forced_skip_report": {
+      "eligible_segments": 12,
+      "processed_segments": 11,
+      "skipped_segments": 1,
+      "lines_returned": 164,
+      "lines_accepted": 128,
+      "lines_quarantined": 36,
+      "coverage": "PARTIAL"
+    },
+    "full_report": {
+      "eligible_segments": 12,
+      "processed_segments": 12,
+      "skipped_segments": 0,
+      "lines_returned": 164,
+      "lines_accepted": 128,
+      "lines_quarantined": 36,
+      "coverage": "COMPLETE"
+    },
+    "no_silent_default": true
+  },
+  "gpu_after": {
+    "gpu": "NVIDIA GeForce RTX 4060 Ti, GPU-a004ce09-4df3-3098-a6dc-1d11175ecf30, 16380 MiB, 12601 MiB, 100 %",
+    "compute_apps": "351, VLLM::EngineCore, 12580 MiB"
+  },
+  "model_load_evidence": [
+    "(EngineCore pid=351) INFO 11-22 15:03:37 [model_runner.py:404] Model loading took 8.9 GiB memory and 2.926746 seconds",
+    "(EngineCore pid=351) INFO 11-22 15:04:12 [gpu_worker.py:625] Available KV cache memory: 3.11 GiB",
+    "(EngineCore pid=351) INFO 11-22 15:04:12 [kv_cache_utils.py:2032] GPU KV cache size: 22,640 tokens, Maximum concurrency for 8,192 tokens per request: 2.76x",
+    "(EngineCore pid=351) INFO 11-22 15:04:13 [gpu_worker.py:860] Free memory on device (15.52/15.66 GiB) on startup. Desired GPU memory utilization is (0.85, 13.31 GiB). Actual usage is 9.0 GiB for consumed memory (weights + non-torch), 1.2 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=3177553511` (2.96 GiB) to fit into requested memory, or `--kv-cache-memory=5551994880` (5.17 GiB) to fully utilize gpu memory. Current kv cache memory in use is 3.11 GiB.",
+    "(EngineCore pid=351) INFO 11-22 15:04:16 [core.py:361] init engine (profile, create kv cache, warmup model) took 39.65 s (compilation: 31.47 s)"
+  ]
+}
