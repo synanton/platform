@@ -27,6 +27,7 @@ last_reviewed: "2026-11-22"
 
 | Document | Description |
 |----------|-------------|
+| [ADR-044: Ontology-Grounded Chunk Extraction (OGCE)](./decisions/adr-044-ontology-grounded-chunk-extraction.md) | **Accepted (design); implementation pending** — JSONL extraction contract, ontology-derived schema, bounded segmentation and explicit partial coverage; all numerical gates provisional |
 | [`synanton-platform-architecture-1.0.md`](./synanton-platform-architecture-1.0.md) | **Approved (architecture) — capstone** — cumulative Synanton Platform Architecture 1.0, integrating 1.22–1.35 |
 | [Graph Storage Abstraction and Logical Projection Architecture](./proposals/v1.35/graph-storage-abstraction-logical-projection-architecture.md) | **Approved; integrated by reference into Design 1.25 §§15/18** - detailed graph contract and capability model; ADR-023; implementation #587 |
 | [`synanton-design-1.34.md`](./synanton-design-1.34.md) | **Approved (architecture)** - temporal versioned knowledge and retrieval; version series, point-in-time retrieval, correction model (v1.34) |
@@ -54,7 +55,7 @@ last_reviewed: "2026-11-22"
 
 | Document | Status | Scope |
 |---|---|---|
-| [Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE)](./proposals/v1.36/ontology-grounded-chunk-extraction.md) | **Draft for review** | JSONL/per-line schema output, ontology-compiled extraction schemas, smaller extraction segments, fan-out budgets, and explicit partial-coverage semantics; not approved. |
+| [Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE)](./proposals/v1.36/ontology-grounded-chunk-extraction.md) | **Accepted (design) — ADR-044; implementation pending** | JSONL/per-line schema output, ontology-compiled extraction schemas, smaller extraction segments, fan-out budgets, and explicit partial-coverage semantics; numerical gates remain provisional. |
 
 ## Research Architecture Baselines
 
