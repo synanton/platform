@@ -1,0 +1,184 @@
+{
+  "model": "local-8b-fp8",
+  "results": [
+    {
+      "doc_id": "g7-dev-001",
+      "model": "local-8b-fp8",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 330,
+        "total_tokens": 1567,
+        "completion_tokens": 1237,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "json_valid": true,
+      "proposal_entities": 5,
+      "accepted_entities": 3,
+      "validated_relations": 0,
+      "rejected": [
+        {
+          "kind": "entity",
+          "surface": "relief valve on the secondary manifold",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "entity",
+          "surface": "certified Halcyon-7 technicians",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Halcyon-7 auxiliary coolant loop",
+          "object": "pressure-tested every ninety days"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "relief valve on the secondary manifold",
+          "object": "two hundred seventy days"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "certified Halcyon-7 technicians",
+          "object": "pressure-test log"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "pressure-test",
+          "object": "ambient dew point"
+        }
+      ],
+      "entity_f1": 0.30769230769230765,
+      "relation_f1": 0,
+      "latency_s": 26.649061750999977,
+      "content_sha256": "a0ee15945926fd6b7ec0cd5173403d4f02ce558d6e691863f2bfdf592f89c575"
+    },
+    {
+      "doc_id": "g7-dev-002",
+      "model": "local-8b-fp8",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 340,
+        "total_tokens": 1253,
+        "completion_tokens": 913,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "json_valid": true,
+      "proposal_entities": 6,
+      "accepted_entities": 5,
+      "validated_relations": 0,
+      "rejected": [
+        {
+          "kind": "entity",
+          "surface": "helium leak check",
+          "reason": "SURFACE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Zephyr-9 Calibration Protocol (Revision B)",
+          "object": "quarterly torque audits"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Zephyr-9 Calibration Protocol (Revision B)",
+          "object": "helium leak check"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Zephyr-9 Calibration Protocol (Revision B)",
+          "object": "logging manifold pressure drift"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Zephyr-9 Calibration Protocol (Revision B)",
+          "object": "verifying titanium retaining fasteners"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Zephyr-9 Calibration Protocol (Revision B)",
+          "object": "replacing fastener"
+        }
+      ],
+      "entity_f1": 0.47058823529411764,
+      "relation_f1": 0,
+      "latency_s": 19.54806794600006,
+      "content_sha256": "a29684873247047de86756d18ab3021b3316dccdfaad31484f974f508e57396c"
+    },
+    {
+      "doc_id": "g7-dev-003",
+      "model": "local-8b-fp8",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 708,
+        "total_tokens": 3060,
+        "completion_tokens": 2352,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "json_valid": true,
+      "proposal_entities": 8,
+      "accepted_entities": 6,
+      "validated_relations": 0,
+      "rejected": [
+        {
+          "kind": "entity",
+          "surface": "Sorting",
+          "reason": "AMBIGUOUS_SURFACE"
+        },
+        {
+          "kind": "entity",
+          "surface": "data structures",
+          "reason": "AMBIGUOUS_SURFACE"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Sorting",
+          "object": "Chapter 4"
+        },
+        {
+          "kind": "relation",
+          "reason": "EVIDENCE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "EVIDENCE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "EVIDENCE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "EVIDENCE_NOT_FOUND"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "Sorting",
+          "object": "Section 17.1"
+        },
+        {
+          "kind": "relation",
+          "reason": "AMBIGUOUS_OR_MISSING_ENDPOINT",
+          "subject": "data structures",
+          "object": "Sorting"
+        }
+      ],
+      "entity_f1": 0.47619047619047616,
+      "relation_f1": 0,
+      "latency_s": 51.49482086900002,
+      "content_sha256": "0f685ae41580841ee8f7339a9e00e7d80823352f07a439347b9b83a68513cf2b"
+    }
+  ]
+}

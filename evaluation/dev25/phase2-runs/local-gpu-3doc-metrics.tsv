@@ -1,0 +1,7 @@
+model	doc_id	json_valid	finish	entity_f1	relation_f1	proposal_entities	accepted_entities	validated_relations	prompt_tokens	completion_tokens	latency_s	tokens_per_s
+local-4b	g7-dev-001	True	stop	0.4	0.25	7	5	1	330	464	9.75	47.6
+local-4b	g7-dev-002	True	stop	0.35294117647058826	0	7	5	0	340	639	13.3	48.04
+local-4b	g7-dev-003	True	stop	0.608695652173913	0	12	8	0	708	1233	26.08	47.28
+local-8b-fp8	g7-dev-001	True	stop	0.30769230769230765	0	5	3	0	330	1237	26.65	46.42
+local-8b-fp8	g7-dev-002	True	stop	0.47058823529411764	0	6	5	0	340	913	19.55	46.71
+local-8b-fp8	g7-dev-003	True	stop	0.47619047619047616	0	8	6	0	708	2352	51.49	45.67
