@@ -28,28 +28,42 @@ import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
+import org.synanton.extraction.engine.QuarantinedLine;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.extraction.engine.TextSegment;
 import org.synanton.extraction.engine.json.Json;
+import org.synanton.extraction.engine.jsonl.JsonlFailureReason;
+import org.synanton.extraction.engine.jsonl.JsonlLine;
+import org.synanton.extraction.engine.jsonl.JsonlLineParser;
+import org.synanton.extraction.engine.jsonl.JsonlParseResult;
+import org.synanton.extraction.engine.jsonl.JsonlRejectedLine;
+import org.synanton.extraction.engine.jsonl.JsonlWriter;
 
 /**
- * RAKG Phase B adapter: calls an OpenAI-compatible vLLM endpoint and maps the
- * JSON response to the engine-neutral extraction contract.
+ * RAKG Phase B adapter: calls an OpenAI-compatible vLLM endpoint and maps JSONL
+ * records to the engine-neutral extraction contract.
+ *
+ * <p>Each line is parsed independently. A malformed line is quarantined with a
+ * line number and reason code; valid neighbours still produce candidates. A
+ * truncated final line is recoverable when earlier lines are valid. The legacy
+ * monolithic object is accepted only as a compatibility fallback when no JSONL
+ * line is accepted.
  *
  * <p>The model is not asked to be authoritative about character offsets. Each
  * returned surface form is anchored in the segment (the requested offset is only
  * a hint), so invalid counts, repeated mentions, and missing endpoints are
  * handled deterministically. Unanchorable forms (typically pronouns) are
- * dropped; resolution remains downstream.
+ * quarantined; resolution remains downstream.
  *
- * <p>Prompt version: {@code prompts/extraction-v1.txt}. The module stays
+ * <p>Prompt version: {@code prompts/extraction-v2.txt}. The module stays
  * JDK-only so the evaluator CLI can run with the main class output.
  */
 public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
-    public static final String PROMPT_VERSION = "extraction-v1";
-    private static final String PROMPT_RESOURCE = "/prompts/extraction-v1.txt";
+    public static final String PROMPT_VERSION = "extraction-v2";
+    private static final String PROMPT_RESOURCE = "/prompts/extraction-v2.txt";
     private static final int DEFAULT_MAX_TOKENS = 2048;
+    private static final JsonlLineParser JSONL_PARSER = new JsonlLineParser();
 
     static final String DEFAULT_TYPES = String.join(", ",
             "Organization", "Supplier", "Customer", "Product", "Warehouse", "Order", "OrderLine",
@@ -60,6 +74,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     static final String DEFAULT_PREDICATES = String.join(", ",
             "hasSupplier", "hasCustomer", "locatedIn", "containsProduct", "partOfOrder",
             "shipsVia", "fulfillsOrder", "tested_every", "replaced_every", "records", "requires");
+
+    private static final Set<String> ALLOWED_PREDICATES = Set.of(DEFAULT_PREDICATES.split(",\\s*"));
 
     static final String RELATION_CONTRACT = """
             Product --hasSupplier--> Supplier
@@ -134,6 +150,155 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         int base = segment.charOffsetStart();
         LlmCallResult call = call(buildPrompt(context), text);
         String content = call.content();
+        JsonlParseResult parsed = JSONL_PARSER.parse(content, call.usage().finishReason());
+
+        if (!parsed.hasAccepted() && parsed.rejected().isEmpty()) {
+            if (call.usage().isIncomplete()) {
+                throwIncompleteOrParseFailure(call, new IllegalArgumentException("empty JSONL response"));
+            }
+            // The prompt allows an empty response when there are no facts.
+            return new ExtractionResult(List.of(), List.of(), call.usage(), List.of());
+        }
+        if (!parsed.hasAccepted() && looksLikeLegacyObject(content)) {
+            return parseLegacyObject(segment, context, call, content);
+        }
+        if (!parsed.hasAccepted()) {
+            RuntimeException failure = new IllegalArgumentException(
+                    "no valid JSONL records: " + summarizeRejections(parsed.rejected()));
+            captureParseFailure(segment, context, call, content, null, failure);
+            throwIncompleteOrParseFailure(call, failure);
+        }
+
+        List<PreEntity> entities = new ArrayList<>();
+        Map<String, PreEntity> bySurface = new LinkedHashMap<>();
+        Set<String> spans = new LinkedHashSet<>();
+        List<RelationCandidate> relations = new ArrayList<>();
+        Set<String> relationKeys = new LinkedHashSet<>();
+        List<QuarantinedLine> quarantined = new ArrayList<>();
+        for (JsonlRejectedLine rejected : parsed.rejected()) {
+            quarantined.add(new QuarantinedLine(rejected.lineNumber(), rejected.raw(),
+                    rejected.reason().name(), rejected.detail()));
+        }
+        for (JsonlLine line : parsed.accepted()) {
+            Map<String, Object> item = line.value();
+            String kind = Json.string(item, "type", "");
+            if ("entity".equals(kind)) {
+                mapEntity(item, line.lineNumber(), line.raw(), segment, context, text, base,
+                        entities, bySurface, spans, quarantined);
+            } else if ("relation".equals(kind)) {
+                mapRelation(item, line.lineNumber(), line.raw(), segment, text, base,
+                        entities, bySurface, spans, relations, relationKeys, quarantined);
+            }
+        }
+        if (!quarantined.isEmpty()) {
+            captureQuarantine(segment, context, call, quarantined);
+        }
+        return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
+                List.copyOf(quarantined));
+    }
+
+    private void mapEntity(Map<String, Object> item, int lineNumber, String raw,
+                           TextSegment segment, ExtractionContext context, String text, int base,
+                           List<PreEntity> entities, Map<String, PreEntity> bySurface,
+                           Set<String> spans, List<QuarantinedLine> quarantined) {
+        String surface = Json.string(item, "surfaceForm", "").strip();
+        if (surface.isEmpty()) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.EMPTY_FIELD, "surfaceForm is blank");
+            return;
+        }
+        int hint = Json.integer(item, "charStart", -1);
+        int local = locate(text, surface, hint);
+        if (local < 0) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.UNANCHORED, surface);
+            return;
+        }
+        surface = text.substring(local, local + surface.length());
+        int start = base + local;
+        int end = start + surface.length();
+        if (!spans.add(start + ":" + end)) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.DUPLICATE, surface);
+            return;
+        }
+        String type = Json.string(item, "proposedType", "Concept").strip();
+        if (type.isEmpty()) {
+            type = "Concept";
+        }
+        if (!context.allowedEntityTypes().isEmpty()
+                && !context.allowedEntityTypes().contains(type)) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.UNKNOWN_ENTITY_TYPE, type);
+            return;
+        }
+        addEntity(entities, bySurface, segment, text, surface, type, start, end, local);
+    }
+
+    private void mapRelation(Map<String, Object> item, int lineNumber, String raw,
+                             TextSegment segment, String text, int base,
+                             List<PreEntity> entities, Map<String, PreEntity> bySurface,
+                             Set<String> spans, List<RelationCandidate> relations,
+                             Set<String> relationKeys, List<QuarantinedLine> quarantined) {
+        String subjectForm = Json.string(item, "subjectForm", "").strip();
+        String objectForm = Json.string(item, "objectForm", "").strip();
+        String quote = Json.string(item, "evidenceQuote", "").strip();
+        String rawPredicate = Json.string(item, "predicate", "").strip();
+        if (subjectForm.isEmpty() || objectForm.isEmpty()) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.EMPTY_FIELD, "missing endpoint");
+            return;
+        }
+        if (!ALLOWED_PREDICATES.contains(rawPredicate)) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.UNKNOWN_PREDICATE, rawPredicate);
+            return;
+        }
+        String predicate = normalizePredicate(rawPredicate);
+        if (subjectForm.equalsIgnoreCase(objectForm)) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.SELF_RELATION, subjectForm);
+            return;
+        }
+        PreEntity subject = resolve(subjectForm, quote, text, base, segment,
+                entities, bySurface, spans);
+        PreEntity object = resolve(objectForm, quote, text, base, segment,
+                entities, bySurface, spans);
+        if (subject == null || object == null) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.UNANCHORED,
+                    subject == null ? subjectForm : objectForm);
+            return;
+        }
+        if (subject.mentionId().equals(object.mentionId())) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.SELF_RELATION, subjectForm);
+            return;
+        }
+        int evidenceStart;
+        int evidenceEnd;
+        int quoteAt = quote.isEmpty() ? -1 : text.indexOf(quote);
+        if (quoteAt >= 0) {
+            evidenceStart = base + quoteAt;
+            evidenceEnd = evidenceStart + quote.length();
+        } else {
+            evidenceStart = Math.min(subject.charStart(), object.charStart());
+            evidenceEnd = Math.max(subject.charEnd(), object.charEnd());
+        }
+        String key = subject.mentionId() + "|" + predicate + "|" + object.mentionId()
+                + "|" + evidenceStart + "|" + evidenceEnd;
+        if (!relationKeys.add(key)) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.DUPLICATE, key);
+            return;
+        }
+        relations.add(new RelationCandidate(subject.mentionId(), predicate, object.mentionId(),
+                segment.chunkId(), evidenceStart, evidenceEnd));
+    }
+
+    private static void quarantine(List<QuarantinedLine> quarantined, int lineNumber, String raw,
+                                   JsonlFailureReason reason, String detail) {
+        quarantined.add(new QuarantinedLine(lineNumber, raw, reason.name(), detail));
+    }
+
+    private static boolean looksLikeLegacyObject(String content) {
+        return content != null
+                && content.contains("\"preEntities\"")
+                && content.contains("\"relations\"");
+    }
+
+    private ExtractionResult parseLegacyObject(TextSegment segment, ExtractionContext context,
+                                               LlmCallResult call, String content) {
         String parserInput = null;
         Map<String, Object> raw;
         try {
@@ -141,76 +306,59 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             raw = Json.parseObject(parserInput);
         } catch (RuntimeException parseFailure) {
             captureParseFailure(segment, context, call, content, parserInput, parseFailure);
-            throw parseFailure;
+            throwIncompleteOrParseFailure(call, parseFailure);
+            return ExtractionResult.empty();
         }
 
         List<PreEntity> entities = new ArrayList<>();
         Map<String, PreEntity> bySurface = new LinkedHashMap<>();
         Set<String> spans = new LinkedHashSet<>();
+        List<QuarantinedLine> quarantined = new ArrayList<>();
         for (Map<String, Object> item : Json.objectList(raw, "preEntities")) {
-            String surface = Json.string(item, "surfaceForm", "").strip();
-            if (surface.isEmpty()) {
-                continue;
-            }
-            int hint = Json.integer(item, "charStart", -1);
-            int local = locate(text, surface, hint);
-            if (local < 0) {
-                continue;
-            }
-            surface = text.substring(local, local + surface.length());
-            int start = base + local;
-            int end = start + surface.length();
-            if (!spans.add(start + ":" + end)) {
-                continue;
-            }
-            String type = Json.string(item, "proposedType", "Concept").strip();
-            if (type.isEmpty()) {
-                type = "Concept";
-            }
-            if (!context.allowedEntityTypes().isEmpty()
-                    && !context.allowedEntityTypes().contains(type)) {
-                continue;
-            }
-            addEntity(entities, bySurface, segment, text, surface, type, start, end, local);
+            mapEntity(item, 0, JsonlWriter.write(item), segment, context,
+                    segment.text() == null ? "" : segment.text(), segment.charOffsetStart(),
+                    entities, bySurface, spans, quarantined);
         }
-
         List<RelationCandidate> relations = new ArrayList<>();
         Set<String> relationKeys = new LinkedHashSet<>();
         for (Map<String, Object> item : Json.objectList(raw, "relations")) {
-            String subjectForm = Json.string(item, "subjectForm", "").strip();
-            String objectForm = Json.string(item, "objectForm", "").strip();
-            String quote = Json.string(item, "evidenceQuote", "").strip();
-            String predicate = normalizePredicate(Json.string(item, "predicate", "related_to"));
-            if (subjectForm.isEmpty() || objectForm.isEmpty() || subjectForm.equalsIgnoreCase(objectForm)) {
-                continue;
-            }
-            PreEntity subject = resolve(subjectForm, quote, text, base, segment,
-                    entities, bySurface, spans);
-            PreEntity object = resolve(objectForm, quote, text, base, segment,
-                    entities, bySurface, spans);
-            if (subject == null || object == null || subject.mentionId().equals(object.mentionId())) {
-                continue;
-            }
-            int evidenceStart;
-            int evidenceEnd;
-            int quoteAt = quote.isEmpty() ? -1 : text.indexOf(quote);
-            if (quoteAt >= 0) {
-                evidenceStart = base + quoteAt;
-                evidenceEnd = evidenceStart + quote.length();
-            } else {
-                evidenceStart = Math.min(subject.charStart(), object.charStart());
-                evidenceEnd = Math.max(subject.charEnd(), object.charEnd());
-            }
-            String key = subject.mentionId() + "|" + predicate + "|" + object.mentionId()
-                    + "|" + evidenceStart + "|" + evidenceEnd;
-            if (!relationKeys.add(key)) {
-                continue;
-            }
-            relations.add(new RelationCandidate(subject.mentionId(), predicate, object.mentionId(),
-                    segment.chunkId(), evidenceStart, evidenceEnd));
+            mapRelation(item, 0, JsonlWriter.write(item), segment,
+                    segment.text() == null ? "" : segment.text(), segment.charOffsetStart(),
+                    entities, bySurface, spans, relations, relationKeys, quarantined);
         }
-        return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage());
+        if (!quarantined.isEmpty()) {
+            captureQuarantine(segment, context, call, quarantined);
+        }
+        return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
+                List.copyOf(quarantined));
     }
+
+    private void throwIncompleteOrParseFailure(LlmCallResult call, RuntimeException failure) {
+        if (call.usage().isIncomplete()) {
+            throw new LlmIncompleteOutputException(call.usage(), call.rawBody().length(),
+                    sha256(call.rawBody()));
+        }
+        throw failure;
+    }
+
+    private static String summarizeRejections(List<JsonlRejectedLine> rejected) {
+        if (rejected.isEmpty()) {
+            return "no records";
+        }
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < Math.min(3, rejected.size()); i++) {
+            JsonlRejectedLine line = rejected.get(i);
+            if (i > 0) {
+                out.append(", ");
+            }
+            out.append("line ").append(line.lineNumber()).append(' ').append(line.reason());
+        }
+        if (rejected.size() > 3) {
+            out.append(", …");
+        }
+        return out.toString();
+    }
+
 
     private PreEntity resolve(String surface, String quote, String text, int base, TextSegment segment,
                               List<PreEntity> entities, Map<String, PreEntity> bySurface,
@@ -324,13 +472,6 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                     Json.integer(usage, "completion_tokens", -1),
                     Json.integer(usage, "total_tokens", -1));
             String content = Json.string(Json.object(choice, "message"), "content", "");
-            if (llmUsage.isIncomplete()) {
-                throw new LlmIncompleteOutputException(llmUsage, responseBody.length(),
-                        sha256(responseBody));
-            }
-            if (content.isBlank()) {
-                throw new IllegalStateException("LLM extraction response has empty content");
-            }
             return new LlmCallResult(content, llmUsage, responseBody);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -354,10 +495,45 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         }
     }
 
+    private void captureQuarantine(TextSegment segment, ExtractionContext context,
+                                   LlmCallResult call, List<QuarantinedLine> quarantined) {
+        if (captureDir == null || quarantined.isEmpty()) {
+            return;
+        }
+        try {
+            Files.createDirectories(captureDir);
+            List<Map<String, Object>> records = new ArrayList<>(quarantined.size());
+            for (QuarantinedLine line : quarantined) {
+                Map<String, Object> event = new LinkedHashMap<>();
+                event.put("timestamp", Instant.now().toString());
+                event.put("tenant_id", context == null ? null : context.tenantId());
+                event.put("source_version_id", context == null ? null : context.sourceVersionId());
+                event.put("document_id", context == null ? null : context.documentId());
+                event.put("chunk_id", segment == null ? null : segment.chunkId());
+                event.put("finish_reason", call.usage().finishReason());
+                event.put("line", line.lineNumber());
+                event.put("reason", line.reasonCode());
+                event.put("detail", line.detail());
+                event.put("raw", line.raw());
+                records.add(event);
+            }
+            Path target = captureDir.resolve("quarantine-" + UUID.randomUUID() + ".jsonl");
+            Files.writeString(target, JsonlWriter.writeAll(records), StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+            try {
+                Files.setPosixFilePermissions(target,
+                        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+            } catch (UnsupportedOperationException ignored) {
+                // Non-POSIX filesystems still rely on the capture directory ACL.
+            }
+        } catch (Exception ignored) {
+            // Capture must never mask the extraction result.
+        }
+    }
+
     private void captureParseFailure(TextSegment segment, ExtractionContext context,
                                      LlmCallResult call, String content, String parserInput,
-                                     RuntimeException failure) {
-        if (captureDir == null) {
+                                     RuntimeException failure) {        if (captureDir == null) {
             return;
         }
         try {
