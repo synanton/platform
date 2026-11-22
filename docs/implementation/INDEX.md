@@ -23,6 +23,7 @@ last_reviewed: "2026-10-23"
 | [`annotations-analytics-plane/INDEX.md`](./annotations-analytics-plane/INDEX.md) | Annotation, Derived Knowledge, Recalculation, Analytics & Reporting Plane (v1.24/1.25) |
 | [`gpu-execution-plane/INDEX.md`](./gpu-execution-plane/INDEX.md) | GPU Execution Plane (v1.20) |
 | [`eventing-workflow-plane/INDEX.md`](./eventing-workflow-plane/INDEX.md) | Eventing and Workflow Plane (v1.27) - EWP-1 complete; EWP-2 #394 first publisher slice in progress |
+| [OGCE / ADR-044](../architecture/decisions/adr-044-ontology-grounded-chunk-extraction.md) | Ontology-Grounded Chunk Extraction — **Accepted (design), implementation pending**; status mirrors ADR-044; see ADR-044 for transition criteria |
 | [`platform-api-plane/INDEX.md`](./platform-api-plane/INDEX.md) | Platform API Plane (v1.32) - contracts frozen 2026-10-17 (#246); generation-A in progress |
 | [`folder-upload-328.md`](./folder-upload-328.md) | Tenant-scoped document folder uploads through the shared ingestion contract (#328) |
 | [`library-deployment-topology.md`](./library-deployment-topology.md) | Personal-library placement: UI in k8s, crawler on M70q, web upload with the platform |

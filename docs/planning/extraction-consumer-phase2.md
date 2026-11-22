@@ -3,6 +3,7 @@
 **Status:** PR #1 emission + PR #2 consumer + PR #3 validated graph persistence + PR #3.5 hardening landed (2026-11-08); canonical resolution is PR #4
 **Date:** 2026-11-08
 **Issue:** #560 (RAKG), follow-up to ADR-022
+**OGCE decision:** [ADR-044](../architecture/decisions/adr-044-ontology-grounded-chunk-extraction.md) — status mirrors ADR-044; see ADR-044 for transition criteria.
 **Preview seam:** `POST /api/v1/extraction/preview` (synchronous, diagnostic only)
 
 ## Problem

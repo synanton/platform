@@ -19,6 +19,7 @@ The project uses these status labels: **Proposed**, **Approved (design)**, **Con
 | [`architecture/synanton-platform-architecture-1.0.md`](./architecture/synanton-platform-architecture-1.0.md) | Approved architecture capstone; §15 records design vs implementation status |
 | [`architecture/proposals/ontology-domain-mapping-v0.3.md`](./architecture/proposals/ontology-domain-mapping-v0.3.md) | Approved ontology research architecture baseline; specification and ADR decisions remain open |
 | [`architecture/decisions/INDEX.md`](./architecture/decisions/INDEX.md) | Global ADR register, including ontology ADR-030–042 |
+| [ADR-044: Ontology-Grounded Chunk Extraction](./architecture/decisions/adr-044-ontology-grounded-chunk-extraction.md) | **Accepted (design), implementation pending** — status mirrors ADR-044; see ADR-044 for transition criteria |
 | [`glossary.md`](./glossary.md) | Shared ontology and semantic mapping terminology |
 | [`architecture/CHANGELOG.md`](./architecture/CHANGELOG.md) | Architecture baseline revision history |
 | [`acceptance/`](./acceptance/) | Dated acceptance records and evidence (including superseded run snapshots) |

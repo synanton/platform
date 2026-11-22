@@ -38,6 +38,8 @@ The Docling decoder is separable in principle and overlaps with a candidate alre
 
 Ontology-guided extraction is a potentially useful research question for RAKG, but it is **Defer** under this proposal. It must not be treated as a current P1 evaluation or prototype commitment. Promotion to Evaluate requires a named RAKG gap, an explicit owner, a baseline, and a bounded benchmark with acceptance and stop criteria.
 
+OGCE is recorded in [ADR-044](../architecture/decisions/adr-044-ontology-grounded-chunk-extraction.md); this evaluation does not change that decision. Status mirrors ADR-044; see ADR-044 for transition criteria.
+
 ### 2.3 Ontology and semantic modeling
 
 The reviewed documentation describes OWL ontology import and constraint checks over extracted triples, and states that TrustGraph is not a full OWL reasoner. These capabilities do not amount to Synanton's ontology governance, release lifecycle, or Syntology validation responsibilities.
