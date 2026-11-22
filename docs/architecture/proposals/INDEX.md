@@ -39,7 +39,7 @@ last_reviewed: "2026-11-22"
 
 | Directory | Purpose |
 |-----------|---------|
-| `v1.36/` | **Draft** - ontology-grounded, budget-bounded LLM extraction over text chunks |
+| `v1.36/` | **Draft** - ontology-grounded, budget-bounded LLM extraction over retrieval chunks |
 | `v1.34/` | v1.34 proposal - Temporal Versioned Knowledge and Retrieval |
 | `v1.33/` | v1.33 proposal - Kubernetes readiness and independent operators |
 | `v1.32/` | v1.32 proposal - Stable Platform API and compatibility |
