@@ -1,14 +1,14 @@
 ---
 title: "Architecture"
 status: "current"
-last_reviewed: "2026-11-09"
+last_reviewed: "2026-11-22"
 ---
 
 # Architecture
 
 **Purpose:** Long-lived design decisions, Architecture Decision Records (ADRs), and the current authoritative design document for the Synanton platform.
 **Audience:** Architects, module owners, security engineers
-**Last Updated:** 2026-11-14
+**Last Updated:** 2026-11-22
 
 `docs/VERSION` tracks the highest approved design number registered in this index (not a document-revision counter and not the current baseline pointer). The current baseline remains explicitly identified above; minor design numbers are not required to be contiguous. Designs 1.23–1.34 are registered below, so setting the highest approved design to 1.35 does not imply skipped or unpublished designs.
 
