@@ -34,6 +34,15 @@ Do not tune against held-out test data. If the annotation ceiling makes a propos
 
 **G-10 p95 dependency:** The single model load and single synthetic no-op extraction pass requested by [#814](https://github.com/synanton/platform/issues/814) can record observed latency only; it cannot establish a statistically defensible p95. The p95 component of G-10 is therefore **blocked pending repeated synthetic-request approval, tracked separately from #814**. Do not infer approval for repeated requests from approval of #814, and do not mark the p95 component measured or met until an approved repeated-request protocol has run. The remaining G-10 telemetry may be recorded at the scope actually authorized, without representing it as p95 evidence.
 
+## Spike references (not gate evidence)
+
+These numbers are recorded as reference points. They are **not** gate results, do not change any gate status, and must not be used as production targets.
+
+- **Total quarantine reference (2026-11-22):** 22% (36/164 lines) on a hand-written prompt, one 2,936-token synthetic document, spike-grade code. All 36 had explicit reason codes; the G-05 *unexplained* quarantine rate was 0. This is a P0-4 baseline, not a G-05 result. Production target pending the P0-4 prompt and P2-3 measurement.
+- **Latency reference (2026-11-22):** n=10 on one 285-token segment, p50/p95 18.25 s, node2 RTX 4060 Ti; 5 DEV documents × 3 passes. Exploratory only; not G-10 evidence.
+- **Tier 2 runtime reference (2026-11-22):** `structured_outputs.grammar` enforced a two-line JSONL grammar; the legacy `guided_*` parameters were accepted but ignored on vLLM 0.29. See [gpu-runtime #30](https://github.com/synanton/gpu-runtime/issues/30).
+- **Source:** [JSONL vertical slice #820](https://github.com/synanton/platform/pull/820), `spike/ogce-jsonl/T9-writeup.md`.
+
 ## Measurement record
 
 For every benchmark update, attach or link:
