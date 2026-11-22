@@ -567,6 +567,10 @@ hard maximum of 90 days unless an approved legal/security retention policy
 requires otherwise. Source-generation deletion cascades to quarantine payloads
 and derived raw prompts/responses. Retention expiry is enforced automatically.
 
+The required controls, implementation locations, verification methods, and
+owners are recorded in the [OGCE quarantine data-handling
+controls](../../../security/ogce-quarantine-controls.md).
+
 - Extraction/runtime owner reviews transport/schema/truncation spikes daily
   during rollout and weekly after stabilization.
 - Ontology steward reviews \`OUT_OF_SUBSET\` and \`DOMAIN_RANGE\` samples weekly,
