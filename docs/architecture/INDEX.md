@@ -1,14 +1,14 @@
 ---
 title: "Architecture"
 status: "current"
-last_reviewed: "2026-11-09"
+last_reviewed: "2026-11-22"
 ---
 
 # Architecture
 
 **Purpose:** Long-lived design decisions, Architecture Decision Records (ADRs), and the current authoritative design document for the Synanton platform.
 **Audience:** Architects, module owners, security engineers
-**Last Updated:** 2026-11-14
+**Last Updated:** 2026-11-22
 
 `docs/VERSION` tracks the highest approved design number registered in this index (not a document-revision counter and not the current baseline pointer). The current baseline remains explicitly identified above; minor design numbers are not required to be contiguous. Designs 1.23–1.34 are registered below, so setting the highest approved design to 1.35 does not imply skipped or unpublished designs.
 
@@ -48,7 +48,15 @@ last_reviewed: "2026-11-09"
 | [`decisions/`](./decisions/) | Architecture Decision Records (ADRs) |
 | [ADR-023](./decisions/adr-023-graph-storage-abstraction.md) | **Accepted** - graph storage abstraction and logical projection contracts; implementation tracked by #587 |
 
-| [External Engines and Stable Contracts](./external-engines-and-stable-contracts.md) | **Draft for review** — technology shortlist, adoption vocabulary, stable adapter principles, and open decisions; no new adoption approved. |\n\n## Research Architecture Baselines
+| [External Engines and Stable Contracts](./external-engines-and-stable-contracts.md) | **Draft for review** — technology shortlist, adoption vocabulary, stable adapter principles, and open decisions; no new adoption approved. |
+
+## Open Proposals
+
+| Document | Status | Scope |
+|---|---|---|
+| [Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE)](./proposals/v1.36/ontology-grounded-chunk-extraction.md) | **Draft for review** | JSONL/per-line schema output, ontology-compiled extraction schemas, smaller extraction segments, fan-out budgets, and explicit partial-coverage semantics; not approved. |
+
+## Research Architecture Baselines
 
 | Document | Status | Scope |
 |---|---|---|
