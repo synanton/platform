@@ -19,10 +19,4 @@ public record ExtractionEngineProperties(
         Integer maxTokens,
         String captureDir,
         Boolean captureEnabled) {
-
-    public ExtractionEngineProperties(String provider, String endpoint, String model,
-                                      Integer timeoutSeconds, Integer maxTokens,
-                                      String captureDir) {
-        this(provider, endpoint, model, timeoutSeconds, maxTokens, captureDir, false);
-    }
 }
