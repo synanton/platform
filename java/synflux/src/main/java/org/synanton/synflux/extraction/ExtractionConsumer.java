@@ -13,9 +13,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
+import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.LlmUsage;
+import org.synanton.extraction.engine.QuarantinedLine;
 import org.synanton.extraction.engine.TextSegment;
+import org.synanton.extraction.engine.llm.LlmCorruptedOutputException;
 import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.client.TenantPolling;
@@ -174,6 +177,16 @@ public class ExtractionConsumer {
                                 chunk.chunkText(), 0),
                         new ExtractionContext(request.tenantId(), request.contentRefId().toString(), Set.of(),
                                 request.versionId().toString()));
+                if (!result.quarantined().isEmpty()) {
+                    log.warn("Extraction quarantined {} line(s) tenant={} ref={} version={} chunk={} "
+                                    + "integrity={} reasons={}",
+                            result.quarantined().size(), request.tenantId(),
+                            request.contentRefId(), request.versionId(), chunk.chunkOrdinal(),
+                            result.integrity(), summarizeQuarantine(result.quarantined()));
+                }
+                if (result.integrity() == ExtractionIntegrity.CORRUPTED) {
+                    throw new LlmCorruptedOutputException(result);
+                }
                 resultsByOrdinal.put(chunk.chunkOrdinal(), result);
                 LlmUsage usage = result.llmUsage();
                 if (usage != null && usage.hasTokenCounts()) {
@@ -318,6 +331,21 @@ public class ExtractionConsumer {
         long base = properties.retryBackoffSecondsOrDefault();
         long multiplier = 1L << Math.min(Math.max(0, attempts - 1), 5);
         return Math.min(300, base * multiplier);
+    }
+
+    private static String summarizeQuarantine(List<QuarantinedLine> lines) {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < Math.min(5, lines.size()); i++) {
+            QuarantinedLine line = lines.get(i);
+            if (i > 0) {
+                out.append(',');
+            }
+            out.append(line.lineNumber()).append(':').append(line.reasonCode());
+        }
+        if (lines.size() > 5) {
+            out.append(",…");
+        }
+        return out.toString();
     }
 
     private static String truncate(String value) {

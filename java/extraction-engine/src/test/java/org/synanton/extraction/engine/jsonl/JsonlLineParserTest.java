@@ -46,9 +46,40 @@ class JsonlLineParserTest {
     }
 
     @Test
-    void truncatedFinalLineIsJsonParseWhenFinishReasonStop() {
+    void incompleteFinalLineIsTruncatedWithoutLengthFinishWhenPrefixIsClean() {
         JsonlParseResult result = new JsonlLineParser()
                 .parse(ENTITY_ACME + "\n{\"type\":\"entity\",\"surfaceForm\":\"Be", "stop");
+
+        assertThat(result.rejected().getFirst().reason()).isEqualTo(JsonlFailureReason.TRUNCATED);
+    }
+
+    @Test
+    void malformedCompleteFinalLineWithStopIsJsonParse() {
+        JsonlParseResult result = new JsonlLineParser()
+                .parse(ENTITY_ACME + "\n{\"type\":\"entity\",}", "stop");
+
+        assertThat(result.rejected().getFirst().reason()).isEqualTo(JsonlFailureReason.JSON_PARSE);
+    }
+
+    @Test
+    void incompleteFinalLineAfterPriorCorruptionIsNotTruncated() {
+        JsonlParseResult result = new JsonlLineParser()
+                .parse("{broken}\n{\"type\":\"entity\",\"surfaceForm\":\"Be", "stop");
+
+        assertThat(result.rejected()).extracting(JsonlRejectedLine::reason)
+                .containsExactly(JsonlFailureReason.JSON_PARSE, JsonlFailureReason.JSON_PARSE);
+    }
+
+    @Test
+    void bracesAndEscapedQuotesInsideStringsDoNotCauseFalseConcatenation() {
+        String valid = JsonlWriter.write(java.util.Map.of(
+                "type", "entity",
+                "surfaceForm", "a } { \" b",
+                "proposedType", "Concept"));
+        assertThat(new JsonlLineParser().parse(valid).accepted()).hasSize(1);
+
+        String malformed = valid.substring(0, valid.length() - 1) + ",}";
+        JsonlParseResult result = new JsonlLineParser().parse(malformed);
 
         assertThat(result.rejected().getFirst().reason()).isEqualTo(JsonlFailureReason.JSON_PARSE);
     }

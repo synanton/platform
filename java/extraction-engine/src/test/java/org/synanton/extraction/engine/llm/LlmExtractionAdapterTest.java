@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.synanton.extraction.engine.ExtractionContext;
+import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.TextSegment;
@@ -374,6 +375,7 @@ class LlmExtractionAdapterTest {
                 .contains("Halcyon-7", "helium leak check");
         assertThat(result.relations()).hasSize(1);
         assertThat(result.quarantined()).isEmpty();
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.CLEAN);
     }
 
     @Test
@@ -387,6 +389,7 @@ class LlmExtractionAdapterTest {
         assertThat(result.quarantined().getFirst().lineNumber()).isEqualTo(2);
         assertThat(result.quarantined().getFirst().reasonCode()).isEqualTo("JSON_PARSE");
         assertThat(result.preEntities()).extracting(PreEntity::surfaceForm).contains("Halcyon-7");
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.CORRUPTED);
     }
 
     @Test
@@ -402,7 +405,19 @@ class LlmExtractionAdapterTest {
         assertThat(result.quarantined()).hasSize(1);
         assertThat(result.quarantined().getFirst().lineNumber()).isEqualTo(3);
         assertThat(result.quarantined().getFirst().reasonCode()).isEqualTo("TRUNCATED");
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.TRUNCATED);
         assertThat(result.llmUsage().finishReason()).isEqualTo("length");
+    }
+
+    @Test
+    void lengthFinishAtARecordBoundaryIsStillMarkedTruncated() {
+        responseContent = JSONL_OUTPUT;
+        finishReason = "length";
+
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        assertThat(result.quarantined()).isEmpty();
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.TRUNCATED);
     }
 
     @Test
@@ -473,6 +488,7 @@ class LlmExtractionAdapterTest {
         assertThat(result.preEntities()).isEmpty();
         assertThat(result.quarantined()).extracting(line -> line.reasonCode())
                 .containsExactly("UNKNOWN_ENTITY_TYPE");
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.CLEAN);
     }
 
     @Test
@@ -486,6 +502,7 @@ class LlmExtractionAdapterTest {
         assertThat(result.relations()).isEmpty();
         assertThat(result.quarantined()).extracting(line -> line.reasonCode())
                 .containsExactly("UNKNOWN_PREDICATE");
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.CLEAN);
     }
 
     @Test
@@ -500,6 +517,7 @@ class LlmExtractionAdapterTest {
         assertThat(result.preEntities()).extracting(PreEntity::surfaceForm).containsExactly("Halcyon-7");
         assertThat(result.quarantined()).extracting(line -> line.reasonCode())
                 .containsExactly("UNANCHORED");
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.CLEAN);
     }
 
     @Test
@@ -513,6 +531,7 @@ class LlmExtractionAdapterTest {
         assertThat(result.preEntities()).hasSize(1);
         assertThat(result.quarantined()).extracting(line -> line.reasonCode())
                 .containsExactly("DUPLICATE");
+        assertThat(result.integrity()).isEqualTo(ExtractionIntegrity.CLEAN);
     }
 
     @Test
@@ -526,6 +545,37 @@ class LlmExtractionAdapterTest {
         assertThat(result.relations()).isEmpty();
         assertThat(result.quarantined()).extracting(line -> line.reasonCode())
                 .containsExactly("SELF_RELATION");
+    }
+
+    @Test
+    void malformedJsonlWithLegacyKeysDoesNotFallback() {
+        responseContent = "{\"type\":\"entity\",\"preEntities\":\"x\",\"relations\":";
+
+        assertThatThrownBy(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no valid JSONL records");
+    }
+
+    @Test
+    void selectsTheRequestedPromptVersionForReplay() {
+        new LlmExtractionAdapter("http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
+                "test-model", Duration.ofSeconds(10), 2048, null, "extraction-v1")
+                .extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        Map<String, Object> request = Json.parseObject(requestBody);
+        String prompt = Json.string(Json.objectList(request, "messages").getFirst(), "content", "");
+        assertThat(prompt)
+                .contains("\"preEntities\"")
+                .doesNotContain("Return JSONL");
+    }
+
+    @Test
+    void rejectsOversizedResponseBeforeParsing() {
+        responseContent = "x".repeat(2 * 1024 * 1024 + 1);
+
+        assertThatThrownBy(() -> adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("exceeds");
     }
 
     @Test
