@@ -9,7 +9,7 @@ last_reviewed: "2026-11-22"
 **Decision:** [ADR-044: Ontology-Grounded Chunk Extraction](../../decisions/adr-044-ontology-grounded-chunk-extraction.md)
 **Design source:** [v1.36 OGCE proposal](./ontology-grounded-chunk-extraction.md)
 **Gate register:** [OGCE acceptance gates](../../../quality/ogce-gates.md)
-**Owner:** aminin
+**Owner:** andreminin
 **Current status:** **Accepted (design) — implementation pending** (2026-11-22)
 
 Status mirrors ADR-044; see ADR-044 for transition criteria. This roadmap adds no acceptance claim, threshold, or gate status. Every numerical gate remains provisional and is owned by the gate register.
