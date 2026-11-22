@@ -1,0 +1,13 @@
+{
+  "classes": ["Person", "Organization", "Product"],
+  "relations": {
+    "worksFor": {
+      "subject_class": "Person",
+      "object_class": "Organization"
+    },
+    "supplies": {
+      "subject_class": "Organization",
+      "object_class": "Product"
+    }
+  }
+}

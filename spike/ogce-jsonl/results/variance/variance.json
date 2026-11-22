@@ -1,0 +1,883 @@
+{
+  "started_at": "2026-11-22T15:40:04Z",
+  "primary": {
+    "segment_index": 1,
+    "segment_tokens": 285,
+    "n": 10,
+    "latency": {
+      "p50": 18.2517,
+      "p95": 18.2585,
+      "min": 18.2459,
+      "max": 18.2585
+    },
+    "latencies": [
+      18.2551,
+      18.2523,
+      18.2459,
+      18.2487,
+      18.249,
+      18.2496,
+      18.2563,
+      18.2517,
+      18.2585,
+      18.2522
+    ],
+    "unique_output_hashes": 1,
+    "format_signatures_equal": true,
+    "seed_runs": [
+      {
+        "seed": 42,
+        "output_sha256": "dc4ff1a837cbd52ae3d2da44532f0459a1b94b7acae108b1faba71b06c4f59c4",
+        "format_equal_to_seed_42": true,
+        "latency_s": 18.2537
+      },
+      {
+        "seed": 43,
+        "output_sha256": "dc4ff1a837cbd52ae3d2da44532f0459a1b94b7acae108b1faba71b06c4f59c4",
+        "format_equal_to_seed_42": true,
+        "latency_s": 18.2509
+      },
+      {
+        "seed": 44,
+        "output_sha256": "dc4ff1a837cbd52ae3d2da44532f0459a1b94b7acae108b1faba71b06c4f59c4",
+        "format_equal_to_seed_42": true,
+        "latency_s": 18.2511
+      }
+    ],
+    "tier2_jsonl_grammar": {
+      "http_ok": true,
+      "error": null,
+      "expected_two_lines": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}\n{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}",
+      "observed": "{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}\n{\"type\":\"entity\",\"surface\":\"Acme Corporation\",\"class\":\"Organization\"}",
+      "enforced": true
+    }
+  },
+  "documents": [
+    {
+      "doc_id": "g7-dev-011",
+      "stratum": "relationship_heavy",
+      "truncated_to_3000_tokens": false,
+      "doc_tokens": 327,
+      "chunks": 1,
+      "segments": 1,
+      "segment_tokens": [
+        327
+      ],
+      "segment_undersized": [],
+      "calls": 3,
+      "lines_returned": 6,
+      "lines_accepted": 3,
+      "lines_quarantined": 3,
+      "coverage": {
+        "pass": true,
+        "forced_skip_report": {
+          "eligible_segments": 1,
+          "processed_segments": 0,
+          "skipped_segments": 1,
+          "lines_returned": 6,
+          "lines_accepted": 3,
+          "lines_quarantined": 3,
+          "coverage": "PARTIAL"
+        },
+        "full_report": {
+          "eligible_segments": 1,
+          "processed_segments": 1,
+          "skipped_segments": 0,
+          "lines_returned": 6,
+          "lines_accepted": 3,
+          "lines_quarantined": 3,
+          "coverage": "COMPLETE"
+        },
+        "no_silent_default": true
+      },
+      "experiments": {
+        "e1": {
+          "results": [
+            {
+              "percent": 25,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 160)"
+            },
+            {
+              "percent": 50,
+              "cut_line": 3,
+              "expected_pre_cut": 2,
+              "jsonl_accepted": 2,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 160)"
+            },
+            {
+              "percent": 75,
+              "cut_line": 4,
+              "expected_pre_cut": 3,
+              "jsonl_accepted": 3,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 160)"
+            }
+          ],
+          "pass": true,
+          "headline": {
+            "percent": 50,
+            "cut_line": 3,
+            "expected_pre_cut": 2,
+            "jsonl_accepted": 2,
+            "jsonl_retention": 1.0,
+            "jsonl_quarantined": 1,
+            "monolithic_accepted": 0,
+            "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 160)"
+          }
+        },
+        "e2": {
+          "pass": true,
+          "corrupted_line": 3,
+          "quarantined_lines": [
+            3,
+            4,
+            5,
+            6
+          ],
+          "baseline_quarantined_lines": [
+            4,
+            5,
+            6
+          ],
+          "new_quarantines": [
+            3
+          ],
+          "expected_quarantine": [
+            3
+          ],
+          "accepted_before": 3,
+          "accepted_after": 2,
+          "others_unaffected": true
+        },
+        "e3": {
+          "pass": true,
+          "accepted_before": 3,
+          "accepted_after": 3,
+          "anchors_identical": true
+        },
+        "source_segment": 0,
+        "source_lines": 6,
+        "e5": {
+          "pass": true,
+          "violations": [],
+          "segments": 1,
+          "chunks": 1,
+          "overlaps": [
+            0
+          ]
+        },
+        "e4": {
+          "pass": true,
+          "forced_skip_report": {
+            "eligible_segments": 1,
+            "processed_segments": 0,
+            "skipped_segments": 1,
+            "lines_returned": 6,
+            "lines_accepted": 3,
+            "lines_quarantined": 3,
+            "coverage": "PARTIAL"
+          },
+          "full_report": {
+            "eligible_segments": 1,
+            "processed_segments": 1,
+            "skipped_segments": 0,
+            "lines_returned": 6,
+            "lines_accepted": 3,
+            "lines_quarantined": 3,
+            "coverage": "COMPLETE"
+          },
+          "no_silent_default": true
+        }
+      },
+      "latency": {
+        "n": 3,
+        "p50": 4.8975,
+        "p95": 7.9085,
+        "min": 4.8858,
+        "max": 7.9085
+      },
+      "latencies": [
+        7.9085,
+        4.8858,
+        4.8975
+      ]
+    },
+    {
+      "doc_id": "g7-dev-013",
+      "stratum": "relationship_heavy",
+      "truncated_to_3000_tokens": false,
+      "doc_tokens": 521,
+      "chunks": 2,
+      "segments": 3,
+      "segment_tokens": [
+        278,
+        215,
+        54
+      ],
+      "segment_undersized": [
+        {
+          "segment": 1,
+          "tokens": 215,
+          "reason": "MERGE_WOULD_EXCEED_384"
+        },
+        {
+          "segment": 2,
+          "tokens": 54,
+          "reason": "SHORT_CHUNK_TAIL"
+        }
+      ],
+      "calls": 9,
+      "lines_returned": 11,
+      "lines_accepted": 7,
+      "lines_quarantined": 4,
+      "coverage": {
+        "pass": true,
+        "forced_skip_report": {
+          "eligible_segments": 3,
+          "processed_segments": 2,
+          "skipped_segments": 1,
+          "lines_returned": 11,
+          "lines_accepted": 7,
+          "lines_quarantined": 4,
+          "coverage": "PARTIAL"
+        },
+        "full_report": {
+          "eligible_segments": 3,
+          "processed_segments": 3,
+          "skipped_segments": 0,
+          "lines_returned": 11,
+          "lines_accepted": 7,
+          "lines_quarantined": 4,
+          "coverage": "COMPLETE"
+        },
+        "no_silent_default": true
+      },
+      "experiments": {
+        "e1": {
+          "results": [
+            {
+              "percent": 25,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 202)"
+            },
+            {
+              "percent": 50,
+              "cut_line": 3,
+              "expected_pre_cut": 2,
+              "jsonl_accepted": 2,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 202)"
+            },
+            {
+              "percent": 75,
+              "cut_line": 4,
+              "expected_pre_cut": 3,
+              "jsonl_accepted": 3,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 202)"
+            }
+          ],
+          "pass": true,
+          "headline": {
+            "percent": 50,
+            "cut_line": 3,
+            "expected_pre_cut": 2,
+            "jsonl_accepted": 2,
+            "jsonl_retention": 1.0,
+            "jsonl_quarantined": 1,
+            "monolithic_accepted": 0,
+            "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 202)"
+          }
+        },
+        "e2": {
+          "pass": true,
+          "corrupted_line": 3,
+          "quarantined_lines": [
+            3,
+            4,
+            5
+          ],
+          "baseline_quarantined_lines": [
+            4,
+            5
+          ],
+          "new_quarantines": [
+            3
+          ],
+          "expected_quarantine": [
+            3
+          ],
+          "accepted_before": 4,
+          "accepted_after": 3,
+          "others_unaffected": true
+        },
+        "e3": {
+          "pass": true,
+          "accepted_before": 4,
+          "accepted_after": 4,
+          "anchors_identical": true
+        },
+        "source_segment": 0,
+        "source_lines": 6,
+        "e5": {
+          "pass": true,
+          "violations": [],
+          "segments": 3,
+          "chunks": 2,
+          "overlaps": [
+            33,
+            0,
+            0
+          ]
+        },
+        "e4": {
+          "pass": true,
+          "forced_skip_report": {
+            "eligible_segments": 3,
+            "processed_segments": 2,
+            "skipped_segments": 1,
+            "lines_returned": 11,
+            "lines_accepted": 7,
+            "lines_quarantined": 4,
+            "coverage": "PARTIAL"
+          },
+          "full_report": {
+            "eligible_segments": 3,
+            "processed_segments": 3,
+            "skipped_segments": 0,
+            "lines_returned": 11,
+            "lines_accepted": 7,
+            "lines_quarantined": 4,
+            "coverage": "COMPLETE"
+          },
+          "no_silent_default": true
+        }
+      },
+      "latency": {
+        "n": 9,
+        "p50": 3.6492,
+        "p95": 10.1315,
+        "min": 2.9396,
+        "max": 10.1315
+      },
+      "latencies": [
+        10.1315,
+        3.7182,
+        2.9704,
+        10.0451,
+        3.6492,
+        2.9396,
+        10.0451,
+        3.6464,
+        2.9437
+      ]
+    },
+    {
+      "doc_id": "g7-dev-016",
+      "stratum": "cross_document_references",
+      "truncated_to_3000_tokens": false,
+      "doc_tokens": 334,
+      "chunks": 1,
+      "segments": 1,
+      "segment_tokens": [
+        332
+      ],
+      "segment_undersized": [],
+      "calls": 3,
+      "lines_returned": 3,
+      "lines_accepted": 3,
+      "lines_quarantined": 0,
+      "coverage": {
+        "pass": true,
+        "forced_skip_report": {
+          "eligible_segments": 1,
+          "processed_segments": 0,
+          "skipped_segments": 1,
+          "lines_returned": 3,
+          "lines_accepted": 3,
+          "lines_quarantined": 0,
+          "coverage": "PARTIAL"
+        },
+        "full_report": {
+          "eligible_segments": 1,
+          "processed_segments": 1,
+          "skipped_segments": 0,
+          "lines_returned": 3,
+          "lines_accepted": 3,
+          "lines_quarantined": 0,
+          "coverage": "COMPLETE"
+        },
+        "no_silent_default": true
+      },
+      "experiments": {
+        "e1": {
+          "results": [
+            {
+              "percent": 25,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 241)"
+            },
+            {
+              "percent": 50,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 241)"
+            },
+            {
+              "percent": 75,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 241)"
+            }
+          ],
+          "pass": true,
+          "headline": {
+            "percent": 50,
+            "cut_line": 2,
+            "expected_pre_cut": 1,
+            "jsonl_accepted": 1,
+            "jsonl_retention": 1.0,
+            "jsonl_quarantined": 1,
+            "monolithic_accepted": 0,
+            "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 241)"
+          }
+        },
+        "e2": {
+          "pass": true,
+          "corrupted_line": 3,
+          "quarantined_lines": [
+            3
+          ],
+          "baseline_quarantined_lines": [],
+          "new_quarantines": [
+            3
+          ],
+          "expected_quarantine": [
+            3
+          ],
+          "accepted_before": 3,
+          "accepted_after": 2,
+          "others_unaffected": true
+        },
+        "e3": {
+          "pass": true,
+          "accepted_before": 3,
+          "accepted_after": 3,
+          "anchors_identical": true
+        },
+        "source_segment": 0,
+        "source_lines": 3,
+        "e5": {
+          "pass": true,
+          "violations": [],
+          "segments": 1,
+          "chunks": 1,
+          "overlaps": [
+            0
+          ]
+        },
+        "e4": {
+          "pass": true,
+          "forced_skip_report": {
+            "eligible_segments": 1,
+            "processed_segments": 0,
+            "skipped_segments": 1,
+            "lines_returned": 3,
+            "lines_accepted": 3,
+            "lines_quarantined": 0,
+            "coverage": "PARTIAL"
+          },
+          "full_report": {
+            "eligible_segments": 1,
+            "processed_segments": 1,
+            "skipped_segments": 0,
+            "lines_returned": 3,
+            "lines_accepted": 3,
+            "lines_quarantined": 0,
+            "coverage": "COMPLETE"
+          },
+          "no_silent_default": true
+        }
+      },
+      "latency": {
+        "n": 3,
+        "p50": 4.9018,
+        "p95": 5.0117,
+        "min": 4.8991,
+        "max": 5.0117
+      },
+      "latencies": [
+        5.0117,
+        4.8991,
+        4.9018
+      ]
+    },
+    {
+      "doc_id": "g7-dev-018",
+      "stratum": "cross_document_references",
+      "truncated_to_3000_tokens": false,
+      "doc_tokens": 498,
+      "chunks": 1,
+      "segments": 2,
+      "segment_tokens": [
+        256,
+        235
+      ],
+      "segment_undersized": [
+        {
+          "segment": 1,
+          "tokens": 235,
+          "reason": "MERGE_WOULD_EXCEED_384"
+        }
+      ],
+      "calls": 6,
+      "lines_returned": 14,
+      "lines_accepted": 6,
+      "lines_quarantined": 8,
+      "coverage": {
+        "pass": true,
+        "forced_skip_report": {
+          "eligible_segments": 2,
+          "processed_segments": 1,
+          "skipped_segments": 1,
+          "lines_returned": 14,
+          "lines_accepted": 6,
+          "lines_quarantined": 8,
+          "coverage": "PARTIAL"
+        },
+        "full_report": {
+          "eligible_segments": 2,
+          "processed_segments": 2,
+          "skipped_segments": 0,
+          "lines_returned": 14,
+          "lines_accepted": 6,
+          "lines_quarantined": 8,
+          "coverage": "COMPLETE"
+        },
+        "no_silent_default": true
+      },
+      "experiments": {
+        "e1": {
+          "results": [
+            {
+              "percent": 25,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 164)"
+            },
+            {
+              "percent": 50,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 164)"
+            },
+            {
+              "percent": 75,
+              "cut_line": 4,
+              "expected_pre_cut": 3,
+              "jsonl_accepted": 3,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 164)"
+            }
+          ],
+          "pass": true,
+          "headline": {
+            "percent": 50,
+            "cut_line": 2,
+            "expected_pre_cut": 1,
+            "jsonl_accepted": 1,
+            "jsonl_retention": 1.0,
+            "jsonl_quarantined": 1,
+            "monolithic_accepted": 0,
+            "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 164)"
+          }
+        },
+        "e2": {
+          "pass": true,
+          "corrupted_line": 3,
+          "quarantined_lines": [
+            3,
+            4,
+            5
+          ],
+          "baseline_quarantined_lines": [
+            4,
+            5
+          ],
+          "new_quarantines": [
+            3
+          ],
+          "expected_quarantine": [
+            3
+          ],
+          "accepted_before": 3,
+          "accepted_after": 2,
+          "others_unaffected": true
+        },
+        "e3": {
+          "pass": true,
+          "accepted_before": 3,
+          "accepted_after": 3,
+          "anchors_identical": true
+        },
+        "source_segment": 1,
+        "source_lines": 5,
+        "e5": {
+          "pass": true,
+          "violations": [],
+          "segments": 2,
+          "chunks": 1,
+          "overlaps": [
+            0,
+            0
+          ]
+        },
+        "e4": {
+          "pass": true,
+          "forced_skip_report": {
+            "eligible_segments": 2,
+            "processed_segments": 1,
+            "skipped_segments": 1,
+            "lines_returned": 14,
+            "lines_accepted": 6,
+            "lines_quarantined": 8,
+            "coverage": "PARTIAL"
+          },
+          "full_report": {
+            "eligible_segments": 2,
+            "processed_segments": 2,
+            "skipped_segments": 0,
+            "lines_returned": 14,
+            "lines_accepted": 6,
+            "lines_quarantined": 8,
+            "coverage": "COMPLETE"
+          },
+          "no_silent_default": true
+        }
+      },
+      "latency": {
+        "n": 6,
+        "p50": 8.2757,
+        "p95": 15.1363,
+        "min": 8.1987,
+        "max": 15.1363
+      },
+      "latencies": [
+        15.1363,
+        8.2757,
+        15.0472,
+        8.1987,
+        15.05,
+        8.1994
+      ]
+    },
+    {
+      "doc_id": "g7-dev-023",
+      "stratum": "tables_structured",
+      "truncated_to_3000_tokens": false,
+      "doc_tokens": 66,
+      "chunks": 1,
+      "segments": 1,
+      "segment_tokens": [
+        61
+      ],
+      "segment_undersized": [
+        {
+          "segment": 0,
+          "tokens": 61,
+          "reason": "SHORT_CHUNK_TAIL"
+        }
+      ],
+      "calls": 3,
+      "lines_returned": 6,
+      "lines_accepted": 6,
+      "lines_quarantined": 0,
+      "coverage": {
+        "pass": true,
+        "forced_skip_report": {
+          "eligible_segments": 1,
+          "processed_segments": 0,
+          "skipped_segments": 1,
+          "lines_returned": 6,
+          "lines_accepted": 6,
+          "lines_quarantined": 0,
+          "coverage": "PARTIAL"
+        },
+        "full_report": {
+          "eligible_segments": 1,
+          "processed_segments": 1,
+          "skipped_segments": 0,
+          "lines_returned": 6,
+          "lines_accepted": 6,
+          "lines_quarantined": 0,
+          "coverage": "COMPLETE"
+        },
+        "no_silent_default": true
+      },
+      "experiments": {
+        "e1": {
+          "results": [
+            {
+              "percent": 25,
+              "cut_line": 2,
+              "expected_pre_cut": 1,
+              "jsonl_accepted": 1,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 86)"
+            },
+            {
+              "percent": 50,
+              "cut_line": 3,
+              "expected_pre_cut": 2,
+              "jsonl_accepted": 2,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 86)"
+            },
+            {
+              "percent": 75,
+              "cut_line": 4,
+              "expected_pre_cut": 3,
+              "jsonl_accepted": 3,
+              "jsonl_retention": 1.0,
+              "jsonl_quarantined": 1,
+              "monolithic_accepted": 0,
+              "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 86)"
+            }
+          ],
+          "pass": true,
+          "headline": {
+            "percent": 50,
+            "cut_line": 3,
+            "expected_pre_cut": 2,
+            "jsonl_accepted": 2,
+            "jsonl_retention": 1.0,
+            "jsonl_quarantined": 1,
+            "monolithic_accepted": 0,
+            "monolithic_error": "JSON_PARSE: Extra data: line 2 column 1 (char 86)"
+          }
+        },
+        "e2": {
+          "pass": true,
+          "corrupted_line": 3,
+          "quarantined_lines": [
+            3
+          ],
+          "baseline_quarantined_lines": [],
+          "new_quarantines": [
+            3
+          ],
+          "expected_quarantine": [
+            3
+          ],
+          "accepted_before": 6,
+          "accepted_after": 5,
+          "others_unaffected": true
+        },
+        "e3": {
+          "pass": true,
+          "accepted_before": 6,
+          "accepted_after": 6,
+          "anchors_identical": true
+        },
+        "source_segment": 0,
+        "source_lines": 6,
+        "e5": {
+          "pass": true,
+          "violations": [],
+          "segments": 1,
+          "chunks": 1,
+          "overlaps": [
+            0
+          ]
+        },
+        "e4": {
+          "pass": true,
+          "forced_skip_report": {
+            "eligible_segments": 1,
+            "processed_segments": 0,
+            "skipped_segments": 1,
+            "lines_returned": 6,
+            "lines_accepted": 6,
+            "lines_quarantined": 0,
+            "coverage": "PARTIAL"
+          },
+          "full_report": {
+            "eligible_segments": 1,
+            "processed_segments": 1,
+            "skipped_segments": 0,
+            "lines_returned": 6,
+            "lines_accepted": 6,
+            "lines_quarantined": 0,
+            "coverage": "COMPLETE"
+          },
+          "no_silent_default": true
+        }
+      },
+      "latency": {
+        "n": 3,
+        "p50": 6.0386,
+        "p95": 6.0625,
+        "min": 6.0341,
+        "max": 6.0625
+      },
+      "latencies": [
+        6.0625,
+        6.0341,
+        6.0386
+      ]
+    }
+  ],
+  "aggregate_latency": {
+    "n": 34,
+    "p50": 8.1994,
+    "p95": 18.2551,
+    "note": "Exploratory across the primary n=10 and five DEV documents \u00d7 3 passes; not G-10 evidence."
+  }
+}

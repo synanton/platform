@@ -1,0 +1,202 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cni.projectcalico.org/containerID: 95a408c849c49635d0a6997d5bf68a7962c6efca9d4c3d69fadc901a74ee5b4d
+    cni.projectcalico.org/podIP: 172.16.104.15/32
+    cni.projectcalico.org/podIPs: 172.16.104.15/32
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"labels":{"app":"ogce-slice","ogce.synanton.io/purpose":"jsonl-vertical-slice"},"name":"ogce-slice-node2","namespace":"gpu-plane"},"spec":{"containers":[{"command":["sleep","infinity"],"env":[{"name":"HF_HUB_OFFLINE","value":"1"},{"name":"TRANSFORMERS_OFFLINE","value":"1"}],"image":"local-registry:5000/vllm-openai:v0.29.0","imagePullPolicy":"IfNotPresent","name":"vllm","resources":{"limits":{"cpu":"8","memory":"32Gi","nvidia.com/gpu":"1"},"requests":{"cpu":"4","memory":"16Gi","nvidia.com/gpu":"1"}},"volumeMounts":[{"mountPath":"/models","name":"model","readOnly":true},{"mountPath":"/root/.cache/vllm","name":"vllm-cache"},{"mountPath":"/spike","name":"spike"}]}],"imagePullSecrets":[{"name":"local-registry-cred"}],"nodeSelector":{"kubernetes.io/hostname":"node2"},"restartPolicy":"Never","runtimeClassName":"nvidia","terminationGracePeriodSeconds":30,"volumes":[{"hostPath":{"path":"/mnt/local-fast/models/qwen3-8b-fp8","type":"Directory"},"name":"model"},{"emptyDir":{},"name":"vllm-cache"},{"emptyDir":{},"name":"spike"}]}}
+  creationTimestamp: "2026-11-22T15:01:49Z"
+  generation: 1
+  labels:
+    app: ogce-slice
+    ogce.synanton.io/purpose: jsonl-vertical-slice
+  name: ogce-slice-node2
+  namespace: gpu-plane
+  resourceVersion: "3722227"
+  uid: 299d66a6-5b08-4ffd-8349-3ae493ffa4bd
+spec:
+  containers:
+  - command:
+    - sleep
+    - infinity
+    env:
+    - name: HF_HUB_OFFLINE
+      value: "1"
+    - name: TRANSFORMERS_OFFLINE
+      value: "1"
+    image: local-registry:5000/vllm-openai:v0.29.0
+    imagePullPolicy: IfNotPresent
+    name: vllm
+    resources:
+      limits:
+        cpu: "8"
+        memory: 32Gi
+        nvidia.com/gpu: "1"
+      requests:
+        cpu: "4"
+        memory: 16Gi
+        nvidia.com/gpu: "1"
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /models
+      name: model
+      readOnly: true
+    - mountPath: /root/.cache/vllm
+      name: vllm-cache
+    - mountPath: /spike
+      name: spike
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-fbtjp
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  imagePullSecrets:
+  - name: local-registry-cred
+  nodeName: node2
+  nodeSelector:
+    kubernetes.io/hostname: node2
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Never
+  runtimeClassName: nvidia
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - hostPath:
+      path: /mnt/local-fast/models/qwen3-8b-fp8
+      type: Directory
+    name: model
+  - emptyDir: {}
+    name: vllm-cache
+  - emptyDir: {}
+    name: spike
+  - name: kube-api-access-fbtjp
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  allocatedResources:
+    cpu: "4"
+    memory: 16Gi
+    nvidia.com/gpu: "1"
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2026-11-22T15:01:49Z"
+    observedGeneration: 1
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2026-11-22T15:01:49Z"
+    observedGeneration: 1
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2026-11-22T15:01:50Z"
+    observedGeneration: 1
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2026-11-22T15:01:50Z"
+    observedGeneration: 1
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2026-11-22T15:01:49Z"
+    observedGeneration: 1
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - allocatedResources:
+      cpu: "4"
+      memory: 16Gi
+      nvidia.com/gpu: "1"
+    allocatedResourcesStatus:
+    - name: nvidia.com/gpu
+      resources:
+      - health: Healthy
+        resourceID: GPU-a004ce09-4df3-3098-a6dc-1d11175ecf30::0
+    containerID: containerd://127c97bcf0dd4d7ce2ede8d9d1196d202505151ac8b88425e9c51ab960ba8fd8
+    image: local-registry:5000/vllm-openai:v0.29.0
+    imageID: local-registry:5000/vllm-openai@sha256:082ca6f035279109041ffd3fe0695cb568b29bc580b35c4f297a66a08b216c1b
+    lastState: {}
+    name: vllm
+    ready: true
+    resources:
+      limits:
+        cpu: "8"
+        memory: 32Gi
+        nvidia.com/gpu: "1"
+      requests:
+        cpu: "4"
+        memory: 16Gi
+        nvidia.com/gpu: "1"
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2026-11-22T15:01:50Z"
+    user:
+      linux:
+        gid: 0
+        supplementalGroups:
+        - 0
+        uid: 0
+    volumeMounts:
+    - mountPath: /models
+      name: model
+      readOnly: true
+      recursiveReadOnly: Disabled
+    - mountPath: /root/.cache/vllm
+      name: vllm-cache
+    - mountPath: /spike
+      name: spike
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-fbtjp
+      readOnly: true
+      recursiveReadOnly: Disabled
+  hostIP: 192.168.10.32
+  hostIPs:
+  - ip: 192.168.10.32
+  observedGeneration: 1
+  phase: Running
+  podIP: 172.16.104.15
+  podIPs:
+  - ip: 172.16.104.15
+  qosClass: Burstable
+  resources:
+    limits:
+      cpu: "8"
+      memory: 32Gi
+    requests:
+      cpu: 3996m
+      memory: 16Gi
+  startTime: "2026-11-22T15:01:49Z"

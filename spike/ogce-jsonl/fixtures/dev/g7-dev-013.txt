@@ -1,0 +1,25 @@
+Supply Chain Risk Assessment Report - 2025
+
+Executive Summary
+
+This risk assessment evaluates the principal supply chain vulnerabilities facing organizations in the industrial manufacturing and distribution sector during 2025 and projects forward into 2026. The assessment draws on supplier performance data, geopolitical intelligence, commodity market analysis, and logistics capacity forecasts. Key risk themes include supply concentration, cross-border trade policy uncertainty, climate-related disruption, and cybersecurity exposure within supplier networks.
+
+Risk Factor 1: Supplier Concentration
+
+Organizations with significant revenue concentration in a small number of tier-one suppliers face elevated exposure to single-event failures. For example, Acme Corp sources approximately 62% of its inbound component volume from two suppliers: Globex Manufacturing and Initech Ltd. While both suppliers have strong track records and robust quality management systems, any prolonged disruption at either facility - whether from labor action, natural disaster, or equipment failure - would materially impact Acme Corp's production continuity within 10 to 14 days given current inventory positions.
+
+Risk Factor 2: Geopolitical and Trade Policy Uncertainty
+
+Ongoing trade policy volatility between major economic blocs continues to create uncertainty around tariff rates, import quotas, and rules of origin requirements. Suppliers with cross-border manufacturing footprints, including Initech Ltd with facilities in both Canada and Poland, face the additional complexity of managing compliance across multiple regulatory regimes simultaneously. Companies are advised to model tariff scenarios and maintain up-to-date landed cost calculations for their top 20 sourcing relationships.
+
+Risk Factor 3: Climate and Environmental Disruption
+
+Climate-related disruptions including flooding, extreme heat events, and drought-induced power rationing have directly impacted manufacturing operations and logistics networks in three of the past five years. Facilities located in flood-prone river corridors or regions with aging electrical grid infrastructure face elevated risk. Risk teams should assess the climate exposure of critical supplier locations and incorporate this into business continuity planning.
+
+Risk Factor 4: Cyber and Data Security
+
+The increasing connectivity of manufacturing systems, supplier portals, and logistics platforms creates expanded attack surfaces for cybersecurity threats. Ransomware incidents at tier-two and tier-three suppliers have cascaded into production stoppages at tier-one manufacturers. Organizations should require suppliers to demonstrate SOC 2 Type II compliance or equivalent controls as a condition of preferred supplier status.
+
+Recommendations
+
+Risk committees should prioritize dual-source qualification for components sourced exclusively from Globex Manufacturing or Initech Ltd, invest in near-real-time supply chain visibility platforms, develop and rehearse supplier-specific crisis response playbooks, and integrate climate risk scoring into supplier selection and annual review processes.
