@@ -25,7 +25,7 @@ Status mirrors ADR-044; see ADR-044 for transition criteria. This specification 
 
 ## D6 readiness
 
-D6 is a test-plan traceability entry, not test implementation. The source-deletion cleanup row is specific enough to author D6 assertions. **andreminin owns every control**, so D6 is ready to open after this PR merges; D6 ownership and traceability do not change this specification's status or ADR-044's status.
+D6 is now tracked as a traceability-only test plan: [OGCE quarantine control test plan](./ogce-quarantine-test-plan.md). **andreminin owns every control**; D6 ownership and traceability do not change this specification's status or ADR-044's status.
 
 ## Boundaries
 
