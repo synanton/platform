@@ -63,14 +63,18 @@ add extraction windows, budgets, consolidation, and quarantine on top.
 
 **Recommendation:** implement OGCE in four increments:
 
-1. **P0 — schema safety now.** JSONL output, per-line JSON Schema, truncation
-   resilience, quarantine, and the legacy Pass-2 cache fix.
+1. **P0 — JSONL contract safety.** Make JSONL mandatory for all multi-fact
+   extraction; validate each line independently, preserve complete lines on
+   truncation, quarantine invalid records, prohibit model-generated offsets/IDs,
+   and fix or retire the legacy Pass-2 path.
 2. **P1 — ontology contract.** Syntology compiles the pinned ontology release
-   into an extraction schema (classes, aliases, properties, domain/range) with a
-   digest; prompts are generated from it, not hand-maintained.
-3. **P2 — bounded fan-out.** Decouple retrieval chunks from extraction windows;
-   batch windows under a per-document budget; replace the monolithic Pass-2 call
-   with deterministic consolidation; add backpressure and coverage reporting.
+   into a versioned extraction schema (classes, aliases, properties,
+   domain/range, digest); prompts and line schemas are generated from it.
+3. **P2 — smaller extraction segments and bounded scheduling.** Keep 512-token
+   retrieval chunks unchanged; split within each chunk into sentence/paragraph-
+   aware 256–384-token extraction segments; benchmark against 512 tokens and
+   overlap variants. Use GPU-capacity-aware batching, per-document token/call
+   budgets, deterministic consolidation, and explicit partial coverage.
 4. **P3 — ontology subsetting and full validation.** Lexical + embedding subset
    selection, dependency closure, batch semantic validation, and promotion-time
    SHACL.
