@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.synanton.extraction.engine.ExtractionContext;
@@ -166,6 +167,11 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     public String promptVersion() {
         return promptVersion;
+    }
+
+    /** The diagnostic capture directory, or empty when capture is disabled. */
+    public Optional<Path> captureDirectory() {
+        return Optional.ofNullable(captureDir);
     }
 
     @Override
