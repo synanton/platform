@@ -26,10 +26,9 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate manifest, sources, and gold records
-        run: python3 evaluation/dev25/validate.py
-
-      - name: Validate provenance declarations
+      # Source documents are not checked into this repository's CI checkout.
+      # validate.py is the local/artifact step for source hashes and gold spans.
+      - name: Validate provenance declarations and record checksums
         run: python3 evaluation/dev25/check_provenance.py
 
       - name: Test the drift validator
