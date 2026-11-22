@@ -54,7 +54,7 @@ last_reviewed: "2026-11-22"
 
 | Document | Status | Scope |
 |---|---|---|
-| [Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE)](./proposals/v1.36/ontology-grounded-chunk-extraction.md) | **Draft for review** | JSONL/per-line schema output, ontology-compiled extraction schemas, extraction windows and fan-out budgets; not approved. |
+| [Ontology-Grounded, Budget-Bounded LLM Extraction (OGCE)](./proposals/v1.36/ontology-grounded-chunk-extraction.md) | **Draft for review** | JSONL/per-line schema output, ontology-compiled extraction schemas, smaller extraction segments, fan-out budgets, and explicit partial-coverage semantics; not approved. |
 
 ## Research Architecture Baselines
 
