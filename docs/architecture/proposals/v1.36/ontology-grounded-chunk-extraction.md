@@ -874,10 +874,14 @@ path.
 
 1. Stop creating new legacy Pass-2 cache entries for RAKG jobs. Mark cache rows
    with a legacy namespace/version and make new readers refuse them by default.
-2. Add an explicit feature flag for the legacy EnrichStage path. New RAKG jobs
-   never invoke Pass 2. Existing in-flight legacy jobs may finish under the old
-   path during the migration window, but their results remain tagged
-   \`legacy-pass2\` and cannot be silently mixed with RAKG candidate results.
+2. Use two separate tenant-scoped controls (exact configuration keys are
+   implementation details): an OGCE rollout flag gates the new RAKG JSONL
+   contract/segment planner for newly scheduled RAKG jobs; a legacy EnrichStage
+   drain/compatibility flag controls only already-running legacy jobs. The
+   legacy flag must not be used as a fallback route for new RAKG jobs. Existing
+   in-flight legacy jobs may finish during the migration window, but their
+   results remain tagged `legacy-pass2` and cannot be silently mixed with RAKG
+   candidate results.
 3. Run a shadow comparison on a sampled, isolated corpus: legacy output and
    RAKG JSONL output are stored separately and compared against gold. Shadow
    mode must not dual-write canonical graph facts.
