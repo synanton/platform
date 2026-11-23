@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
+import org.synanton.ingestioncache.cache.ExtractionCacheStore;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.quarantine.QuarantineStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -53,5 +54,11 @@ public class IngestionCacheAutoConfig {
     @ConditionalOnMissingBean
     public QuarantineStore quarantineStore(CqlSession session) {
         return new QuarantineStore(session);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ExtractionCacheStore extractionCacheStore(CqlSession session) {
+        return new ExtractionCacheStore(session);
     }
 }

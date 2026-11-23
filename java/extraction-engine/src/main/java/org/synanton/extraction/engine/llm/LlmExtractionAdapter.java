@@ -43,6 +43,7 @@ import org.synanton.extraction.engine.jsonl.JsonlLineParser;
 import org.synanton.extraction.engine.jsonl.JsonlParseResult;
 import org.synanton.extraction.engine.jsonl.JsonlRejectedLine;
 import org.synanton.extraction.engine.jsonl.JsonlWriter;
+import org.synanton.extraction.engine.provenance.ExtractionCacheKey;
 import org.synanton.extraction.engine.provenance.PromptDigest;
 
 /**
@@ -174,6 +175,25 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     /** The diagnostic capture directory, or empty when capture is disabled. */
     public Optional<Path> captureDirectory() {
         return Optional.ofNullable(captureDir);
+    }
+
+    @Override
+    public java.util.Optional<ExtractionCacheKey> cacheKey(TextSegment segment,
+                                                           ExtractionContext context) {
+        if (segment.text() == null || segment.text().isBlank()
+                || context.sourceVersionId() == null) {
+            return java.util.Optional.empty();
+        }
+        UUID sourceVersion;
+        try {
+            sourceVersion = UUID.fromString(context.sourceVersionId());
+        } catch (IllegalArgumentException e) {
+            return java.util.Optional.empty();
+        }
+        String compiled = buildPrompt(context);
+        return java.util.Optional.of(ExtractionCacheKey.forRequest(
+                context.tenantId(), sourceVersion, segment.text(),
+                PromptDigest.digest(compiled), null, model, null, 0.0, 1.0, null));
     }
 
     @Override

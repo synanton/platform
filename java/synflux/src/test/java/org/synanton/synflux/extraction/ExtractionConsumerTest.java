@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionContext;
+import org.synanton.extraction.engine.TextSegment;
 import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
@@ -37,8 +39,11 @@ import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.QuarantinedLine;
 import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
+import org.synanton.extraction.engine.provenance.ExtractionCacheKey;
 import org.synanton.extraction.engine.RelationCandidate;
+import org.synanton.ingestioncache.cache.ExtractionCacheStore;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
+import org.synanton.ingestioncache.quarantine.QuarantineGeneration;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ChunkRow;
@@ -50,6 +55,7 @@ import org.synanton.ingestioncache.quarantine.QuarantineStore;
 import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
+import org.synanton.synflux.extraction.cache.ExtractionCacheService;
 import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.synanton.synflux.extraction.provider.ExtractionAdapterResolver;
 import org.synanton.synflux.extraction.provider.ExtractionProvider;
@@ -539,6 +545,100 @@ class ExtractionConsumerTest {
                 "COMPLETED", now, now, java.util.Map.of("resolved", 1));
         assertThat(cache.readResolutionStatus(tenant, CONNECTOR, SOURCE, RESOURCE, fixture.versionId()))
                 .contains("COMPLETED");
+    }
+
+    @Test
+    void completeCacheHitSkipsAdapterAndDoesNotCreateOrPromoteAGeneration() {
+        String tenant = "tenant-cache-hit";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        QuarantineStore quarantine = new QuarantineStore(session);
+        ExtractionCacheStore cacheStore = new ExtractionCacheStore(session);
+        ExtractionCacheService cacheService = new ExtractionCacheService(cacheStore,
+                new ObjectMapper());
+        UUID originalGeneration = UUID.randomUUID();
+        quarantine.createGeneration(QuarantineGeneration.staged(tenant, fixture.versionId(),
+                originalGeneration, "doc", "extraction-v2", "a".repeat(64), null,
+                "qwen3-8b-fp8", "rev", Instant.now(), UUID.randomUUID()));
+        quarantine.promote(tenant, fixture.versionId(), originalGeneration, "reviewer", "promote");
+        ExtractionCacheKey key = ExtractionCacheKey.forRequest(tenant, fixture.versionId(),
+                "Halcyon-7 requires a helium leak check.", "a".repeat(64), null,
+                "qwen3-8b-fp8", "rev", 0.0, 1.0, "tok-v1");
+        cacheService.put(key, originalGeneration, new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
+                new LlmProvenance("extraction-v2", "a".repeat(64), null, null, null)));
+        AtomicInteger calls = new AtomicInteger();
+        ExtractionEngineAdapter adapter = new ExtractionEngineAdapter() {
+            @Override
+            public Optional<ExtractionCacheKey> cacheKey(TextSegment segment,
+                                                         ExtractionContext context) {
+                return Optional.of(key);
+            }
+
+            @Override
+            public ExtractionResult extract(TextSegment segment, ExtractionContext context) {
+                calls.incrementAndGet();
+                throw new AssertionError("cache hit must not invoke the adapter");
+            }
+        };
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC(), quarantine, cacheService).poll();
+
+        assertThat(calls).hasValue(0);
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("KNOWLEDGE_READY");
+        assertThat(quarantine.generations(tenant, fixture.versionId())).hasSize(1);
+        assertThat(quarantine.currentGeneration(tenant, fixture.versionId()))
+                .contains(originalGeneration);
+        assertThat(cache.listExtractionResults(tenant, fixture.contentRefId()))
+                .singleElement()
+                .satisfies(result -> assertThat(result.entitiesJson()).contains("Halcyon-7"));
+    }
+
+    @Test
+    void cacheMissRunsNormalLifecycleAndStoresTheNewResult() {
+        String tenant = "tenant-cache-miss";
+        String text = "Halcyon-7 requires a helium leak check.";
+        Fixture fixture = seed(tenant, text);
+        QuarantineStore quarantine = new QuarantineStore(session);
+        ExtractionCacheStore cacheStore = new ExtractionCacheStore(session);
+        ExtractionCacheService cacheService = new ExtractionCacheService(cacheStore,
+                new ObjectMapper());
+        ExtractionCacheKey key = ExtractionCacheKey.forRequest(tenant, fixture.versionId(), text,
+                "a".repeat(64), null, "qwen3-8b-fp8", "rev", 0.0, 1.0, "tok-v1");
+        AtomicInteger calls = new AtomicInteger();
+        ExtractionEngineAdapter adapter = new ExtractionEngineAdapter() {
+            @Override
+            public Optional<ExtractionCacheKey> cacheKey(TextSegment segment,
+                                                         ExtractionContext context) {
+                return Optional.of(key);
+            }
+
+            @Override
+            public ExtractionResult extract(TextSegment segment, ExtractionContext context) {
+                calls.incrementAndGet();
+                return new ExtractionResult(
+                        List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9,
+                                "Halcyon-7")),
+                        List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
+                        new LlmProvenance("extraction-v2", "a".repeat(64), null, null, null));
+            }
+        };
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC(), quarantine, cacheService).poll();
+
+        assertThat(calls).hasValue(1);
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("KNOWLEDGE_READY");
+        assertThat(quarantine.generations(tenant, fixture.versionId())).hasSize(1);
+        UUID generation = quarantine.generations(tenant, fixture.versionId()).getFirst()
+                .extractionGeneration();
+        assertThat(cacheService.lookup(key)).get()
+                .satisfies(hit -> assertThat(hit.generationId()).isEqualTo(generation));
     }
 
     private static ExtractionConsumer consumer(String tenant, ExtractionEngineAdapter adapter) {

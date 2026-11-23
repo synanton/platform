@@ -6,7 +6,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -24,6 +27,7 @@ import org.synanton.extraction.engine.QuarantinedLine;
 import org.synanton.extraction.engine.TextSegment;
 import org.synanton.extraction.engine.llm.LlmCorruptedOutputException;
 import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
+import org.synanton.extraction.engine.provenance.ExtractionCacheKey;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ChunkRow;
@@ -33,6 +37,7 @@ import org.synanton.ingestioncache.quarantine.QuarantineGeneration;
 import org.synanton.ingestioncache.quarantine.QuarantineRecord;
 import org.synanton.ingestioncache.quarantine.QuarantineStore;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
+import org.synanton.synflux.extraction.cache.ExtractionCacheService;
 import org.synanton.synflux.extraction.graph.GraphCommitResult;
 import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.synanton.synflux.extraction.provider.ExtractionAdapterFactory;
@@ -64,6 +69,7 @@ public class ExtractionConsumer {
     private final Clock clock;
     private final ExtractionMetrics metrics;
     private final QuarantineStore quarantineStore;
+    private final ExtractionCacheService cacheService;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public ExtractionConsumer(
@@ -88,6 +94,18 @@ public class ExtractionConsumer {
 
     public ExtractionConsumer(
             IngestionCacheClient cacheClient,
+            ExtractionEngineAdapter adapter,
+            ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
+            Clock clock,
+            QuarantineStore quarantineStore,
+            ExtractionCacheService cacheService) {
+        this(cacheClient, ExtractionAdapterFactory.fixed(adapter), properties, graphWriter, clock,
+                new ExtractionMetrics(new SimpleMeterRegistry()), quarantineStore, cacheService);
+    }
+
+    public ExtractionConsumer(
+            IngestionCacheClient cacheClient,
             ExtractionAdapterResolver adapters,
             ExtractionConsumerProperties properties,
             GraphWriter graphWriter,
@@ -106,7 +124,6 @@ public class ExtractionConsumer {
         this(cacheClient, adapters, properties, graphWriter, clock, metrics, null);
     }
 
-    @Autowired
     public ExtractionConsumer(
             IngestionCacheClient cacheClient,
             ExtractionAdapterResolver adapters,
@@ -115,6 +132,19 @@ public class ExtractionConsumer {
             Clock clock,
             ExtractionMetrics metrics,
             QuarantineStore quarantineStore) {
+        this(cacheClient, adapters, properties, graphWriter, clock, metrics, quarantineStore, null);
+    }
+
+    @Autowired
+    public ExtractionConsumer(
+            IngestionCacheClient cacheClient,
+            ExtractionAdapterResolver adapters,
+            ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
+            Clock clock,
+            ExtractionMetrics metrics,
+            QuarantineStore quarantineStore,
+            ExtractionCacheService cacheService) {
         this.cacheClient = cacheClient;
         this.adapters = adapters;
         this.properties = properties;
@@ -122,6 +152,7 @@ public class ExtractionConsumer {
         this.clock = clock;
         this.metrics = metrics;
         this.quarantineStore = quarantineStore;
+        this.cacheService = cacheService;
     }
 
     @Scheduled(fixedDelayString = "${synflux.extraction-engine.consumer.poll-delay-ms:5000}")
@@ -194,6 +225,8 @@ public class ExtractionConsumer {
         try {
             cacheClient.markExtractionStarted(request);
             List<ChunkRow> chunks = cacheClient.readChunks(request.tenantId(), request.contentRefId());
+            Map<Integer, ExtractionResult> cachedResults = preflightCache(request, chunks, adapter);
+            boolean cacheHit = !cachedResults.isEmpty();
             java.util.Map<Integer, ExtractionResult> resultsByOrdinal = new java.util.LinkedHashMap<>();
             java.util.Set<String> normalizedEntities = new java.util.LinkedHashSet<>();
             int entityMentions = 0;
@@ -205,11 +238,17 @@ public class ExtractionConsumer {
             boolean usageObserved = false;
             String finishReason = null;
             for (ChunkRow chunk : chunks) {
-                ExtractionResult result = adapter.extract(
-                        new TextSegment(request.contentRefId() + ":" + chunk.chunkOrdinal(),
-                                chunk.chunkText(), 0),
-                        new ExtractionContext(request.tenantId(), request.contentRefId().toString(), Set.of(),
-                                request.versionId().toString()));
+                TextSegment segment = new TextSegment(
+                        request.contentRefId() + ":" + chunk.chunkOrdinal(), chunk.chunkText(), 0);
+                ExtractionContext context = new ExtractionContext(request.tenantId(),
+                        request.contentRefId().toString(), Set.of(), request.versionId().toString());
+                ExtractionResult result = cacheHit
+                        ? cachedResults.get(chunk.chunkOrdinal())
+                        : adapter.extract(segment, context);
+                if (result == null) {
+                    throw new IllegalStateException("cache preflight did not provide chunk "
+                            + chunk.chunkOrdinal());
+                }
                 if (!result.quarantined().isEmpty()) {
                     log.warn("Extraction quarantined {} line(s) tenant={} ref={} version={} chunk={} "
                                     + "integrity={} reasons={}",
@@ -235,7 +274,7 @@ public class ExtractionConsumer {
                     normalizedEntities.add(entity.surfaceForm() + "|" + entity.proposedType());
                 }
                 var provenance = result.provenance();
-                if (quarantineStore != null) {
+                if (!cacheHit && quarantineStore != null) {
                     if (!generationCreated) {
                         QuarantineGeneration generation = QuarantineGeneration.staged(
                                 request.tenantId(), request.versionId(), extractionGeneration,
@@ -264,6 +303,19 @@ public class ExtractionConsumer {
                         provenance.promptVersion(), provenance.promptCompiledDigest(),
                         provenance.promptRenderedDigest(), provenance.schemaVersion(),
                         provenance.schemaDigest(), clock.instant());
+                if (!cacheHit && cacheService != null && quarantineStore != null
+                        && generationCreated) {
+                    try {
+                        Optional<ExtractionCacheKey> key = adapter.cacheKey(segment, context);
+                        if (key.isPresent()) {
+                            cacheService.put(key.get(), extractionGeneration, result);
+                        }
+                    } catch (Exception cacheFailure) {
+                        log.warn("Extraction cache write failed tenant={} ref={} version={}: {}",
+                                request.tenantId(), request.contentRefId(), request.versionId(),
+                                cacheFailure.toString());
+                    }
+                }
                 processed++;
             }
             long extractionEndNanos = System.nanoTime();
@@ -330,6 +382,58 @@ public class ExtractionConsumer {
                         request.contentRefId(), request.versionId(), attempts, nextAttemptAt, e.toString());
             }
         }
+    }
+
+    private Map<Integer, ExtractionResult> preflightCache(ExtractionRequestRow request,
+                                                          List<ChunkRow> chunks,
+                                                          ExtractionEngineAdapter adapter) {
+        if (cacheService == null || chunks.isEmpty()) {
+            return Map.of();
+        }
+        Map<Integer, ExtractionResult> cached = new LinkedHashMap<>();
+        UUID cachedGeneration = null;
+        for (ChunkRow chunk : chunks) {
+            TextSegment segment = new TextSegment(
+                    request.contentRefId() + ":" + chunk.chunkOrdinal(), chunk.chunkText(), 0);
+            ExtractionContext context = new ExtractionContext(request.tenantId(),
+                    request.contentRefId().toString(), Set.of(), request.versionId().toString());
+            final Optional<ExtractionCacheKey> key;
+            try {
+                key = adapter.cacheKey(segment, context);
+            } catch (Exception cacheFailure) {
+                log.warn("Extraction cache key failed tenant={} ref={} version={}: {}",
+                        request.tenantId(), request.contentRefId(), request.versionId(),
+                        cacheFailure.toString());
+                return Map.of();
+            }
+            if (key.isEmpty()) {
+                return Map.of();
+            }
+            final Optional<ExtractionCacheService.CachedExtractionResult> hit;
+            try {
+                hit = cacheService.lookup(key.get());
+            } catch (Exception cacheFailure) {
+                log.warn("Extraction cache lookup failed; using normal lifecycle "
+                                + "tenant={} ref={} version={}: {}",
+                        request.tenantId(), request.contentRefId(), request.versionId(),
+                        cacheFailure.toString());
+                return Map.of();
+            }
+            if (hit.isEmpty()) {
+                return Map.of();
+            }
+            UUID generation = hit.get().generationId();
+            if (cachedGeneration == null) {
+                cachedGeneration = generation;
+            } else if (!cachedGeneration.equals(generation)) {
+                log.warn("Extraction cache chunks span generations; using normal lifecycle "
+                                + "tenant={} ref={} version={}",
+                        request.tenantId(), request.contentRefId(), request.versionId());
+                return Map.of();
+            }
+            cached.put(chunk.chunkOrdinal(), hit.get().result());
+        }
+        return cached;
     }
 
     private void logStructuredEvent(ExtractionRequestRow request,
