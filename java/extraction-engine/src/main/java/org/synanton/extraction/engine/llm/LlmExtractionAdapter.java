@@ -30,6 +30,7 @@ import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.LlmProvenance;
 import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.QuarantinedLine;
@@ -181,7 +182,10 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             return ExtractionResult.empty();
         }
         int base = segment.charOffsetStart();
-        LlmCallResult call = call(buildPrompt(context), text);
+        String prompt = buildPrompt(context);
+        // Rendered digest is available now; the compiled/cache-key digest is a later #829 slice.
+        LlmProvenance provenance = new LlmProvenance(PROMPT_VERSION, null, sha256(prompt), null, null);
+        LlmCallResult call = call(prompt, text);
         String content = call.content();
         JsonlParseResult parsed = JSONL_PARSER.parse(content, call.usage().finishReason());
 
@@ -190,10 +194,11 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 throwIncompleteOrParseFailure(call, new IllegalArgumentException("empty JSONL response"));
             }
             // The prompt allows an empty response when there are no facts.
-            return new ExtractionResult(List.of(), List.of(), call.usage(), List.of());
+            return new ExtractionResult(List.of(), List.of(), call.usage(), List.of(),
+                    ExtractionIntegrity.CLEAN, provenance);
         }
         if (!parsed.hasAccepted() && looksLikeLegacyObject(content)) {
-            return parseLegacyObject(segment, context, call, content);
+            return parseLegacyObject(segment, context, call, content, provenance);
         }
         if (!parsed.hasAccepted()) {
             RuntimeException failure = new IllegalArgumentException(
@@ -232,7 +237,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             integrity = ExtractionIntegrity.TRUNCATED;
         }
         return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
-                List.copyOf(quarantined), integrity);
+                List.copyOf(quarantined), integrity, provenance);
     }
 
     private static ExtractionIntegrity integrity(List<QuarantinedLine> quarantined) {
@@ -363,7 +368,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     }
 
     private ExtractionResult parseLegacyObject(TextSegment segment, ExtractionContext context,
-                                               LlmCallResult call, String content) {
+                                               LlmCallResult call, String content,
+                                               LlmProvenance provenance) {
         String parserInput = null;
         Map<String, Object> raw;
         try {
@@ -399,7 +405,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             integrity = ExtractionIntegrity.TRUNCATED;
         }
         return new ExtractionResult(List.copyOf(entities), List.copyOf(relations), call.usage(),
-                List.copyOf(quarantined), integrity);
+                List.copyOf(quarantined), integrity, provenance);
     }
 
     private void throwIncompleteOrParseFailure(LlmCallResult call, RuntimeException failure) {
