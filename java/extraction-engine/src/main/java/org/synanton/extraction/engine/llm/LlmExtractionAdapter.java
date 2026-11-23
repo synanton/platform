@@ -43,6 +43,7 @@ import org.synanton.extraction.engine.jsonl.JsonlLineParser;
 import org.synanton.extraction.engine.jsonl.JsonlParseResult;
 import org.synanton.extraction.engine.jsonl.JsonlRejectedLine;
 import org.synanton.extraction.engine.jsonl.JsonlWriter;
+import org.synanton.extraction.engine.provenance.PromptDigest;
 
 /**
  * RAKG Phase B adapter: calls an OpenAI-compatible vLLM endpoint and maps JSONL
@@ -182,10 +183,12 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             return ExtractionResult.empty();
         }
         int base = segment.charOffsetStart();
-        String prompt = buildPrompt(context);
-        // Rendered digest is available now; the compiled/cache-key digest is a later #829 slice.
-        LlmProvenance provenance = new LlmProvenance(PROMPT_VERSION, null, sha256(prompt), null, null);
-        LlmCallResult call = call(prompt, text);
+        String compiledPrompt = buildPrompt(context);
+        String compiledDigest = PromptDigest.digest(compiledPrompt);
+        String renderedDigest = PromptDigest.verify(compiledPrompt, compiledPrompt);
+        LlmProvenance provenance = new LlmProvenance(
+                PROMPT_VERSION, compiledDigest, renderedDigest, null, null);
+        LlmCallResult call = call(compiledPrompt, text);
         String content = call.content();
         JsonlParseResult parsed = JSONL_PARSER.parse(content, call.usage().finishReason());
 
