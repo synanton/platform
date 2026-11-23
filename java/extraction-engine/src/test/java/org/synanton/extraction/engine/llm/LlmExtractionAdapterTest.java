@@ -589,7 +589,8 @@ class LlmExtractionAdapterTest {
                         .digest(prompt.getBytes(StandardCharsets.UTF_8)));
 
         assertThat(result.provenance().promptVersion()).isEqualTo("extraction-v2");
-        assertThat(result.provenance().promptDigest()).isEqualTo(expected);
+        assertThat(result.provenance().promptCompiledDigest()).isNull();
+        assertThat(result.provenance().promptRenderedDigest()).isEqualTo(expected);
         assertThat(result.provenance().schemaDigest()).isNull();
     }
 

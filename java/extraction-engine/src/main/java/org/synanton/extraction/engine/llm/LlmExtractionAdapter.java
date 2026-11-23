@@ -183,7 +183,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         }
         int base = segment.charOffsetStart();
         String prompt = buildPrompt(context);
-        LlmProvenance provenance = new LlmProvenance(PROMPT_VERSION, sha256(prompt), null, null);
+        // Rendered digest is available now; the compiled/cache-key digest is a later #829 slice.
+        LlmProvenance provenance = new LlmProvenance(PROMPT_VERSION, null, sha256(prompt), null, null);
         LlmCallResult call = call(prompt, text);
         String content = call.content();
         JsonlParseResult parsed = JSONL_PARSER.parse(content, call.usage().finishReason());

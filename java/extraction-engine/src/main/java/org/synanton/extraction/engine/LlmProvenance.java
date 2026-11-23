@@ -9,10 +9,11 @@ package org.synanton.extraction.engine;
  */
 public record LlmProvenance(
         String promptVersion,
-        String promptDigest,
+        String promptCompiledDigest,
+        String promptRenderedDigest,
         String schemaVersion,
         String schemaDigest) {
 
     public static final LlmProvenance NONE =
-            new LlmProvenance("unknown", null, null, null);
+            new LlmProvenance("unknown", null, null, null, null);
 }
