@@ -1,0 +1,30 @@
+name: Docker Leak Check
+
+on:
+  push:
+    paths:
+      - 'scripts/ci/check-docker-leaks.sh'
+      - 'scripts/ci/test-check-docker-leaks.sh'
+      - '.github/workflows/docker-leak-check.yml'
+  pull_request:
+    paths:
+      - 'scripts/ci/check-docker-leaks.sh'
+      - 'scripts/ci/test-check-docker-leaks.sh'
+      - '.github/workflows/docker-leak-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checker:
+    name: Run-scoped Docker leak detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Make scripts executable
+        run: chmod +x scripts/ci/check-docker-leaks.sh scripts/ci/test-check-docker-leaks.sh
+      - name: Synthetic labeled leak and unlabeled negative case
+        run: ./scripts/ci/test-check-docker-leaks.sh
