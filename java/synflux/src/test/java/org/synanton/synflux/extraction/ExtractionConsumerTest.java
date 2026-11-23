@@ -29,8 +29,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionIntegrity;
+import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.engine.LlmProvenance;
 import org.synanton.extraction.engine.LlmUsage;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.QuarantinedLine;
@@ -236,6 +238,27 @@ class ExtractionConsumerTest {
                     assertThat(event.published()).isFalse();
                     assertThat(event.attemptCount()).isEqualTo(1);
                     assertThat(event.lastError()).contains("CORRUPTED_RESPONSE");
+                });
+    }
+
+    @Test
+    void persistedExtractionCarriesPromptProvenance() {
+        String tenant = "tenant-provenance";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(), List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
+                new LlmProvenance("extraction-v2", "a".repeat(64), "b".repeat(64), null, null)));
+
+        consumer(tenant, adapter).poll();
+
+        assertThat(cache.listExtractionResults(tenant, fixture.contentRefId()))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.promptVersion()).isEqualTo("extraction-v2");
+                    assertThat(row.promptCompiledDigest()).isEqualTo("a".repeat(64));
+                    assertThat(row.promptRenderedDigest()).isEqualTo("b".repeat(64));
+                    assertThat(row.schemaDigest()).isNull();
                 });
     }
 
