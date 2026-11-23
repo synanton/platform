@@ -579,6 +579,21 @@ class LlmExtractionAdapterTest {
     }
 
     @Test
+    void promptProvenanceCarriesVersionAndRenderedDigest() throws Exception {
+        ExtractionResult result = adapter().extract(new TextSegment("c1", TEXT, 0), CONTEXT);
+
+        Map<String, Object> request = Json.parseObject(requestBody);
+        String prompt = Json.string(Json.objectList(request, "messages").getFirst(), "content", "");
+        String expected = java.util.HexFormat.of().formatHex(
+                java.security.MessageDigest.getInstance("SHA-256")
+                        .digest(prompt.getBytes(StandardCharsets.UTF_8)));
+
+        assertThat(result.provenance().promptVersion()).isEqualTo("extraction-v2");
+        assertThat(result.provenance().promptDigest()).isEqualTo(expected);
+        assertThat(result.provenance().schemaDigest()).isNull();
+    }
+
+    @Test
     void emptyResponseForNoFactsIsAValidEmptyResult() {
         responseContent = "";
 
