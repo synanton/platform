@@ -11,7 +11,7 @@ last_reviewed: "2026-11-22"
 **Gate register:** [OGCE acceptance gates](../quality/ogce-gates.md)
 **Owner:** andreminin
 
-Status mirrors ADR-044; see ADR-044 for transition criteria. This specification records required controls and verification methods. Implementation is pending, and no control is claimed implemented or verified.
+Status mirrors ADR-044; see ADR-044 for transition criteria. This specification records required controls and verification methods. A non-KMS capture slice is implemented: tenant/source-version-scoped filesystem paths, idempotent source deletion, an expiry primitive, and production refusal. Encryption/KMS, read/export audit, automatic retention scheduling, and compliance-cascade wiring remain pending. No gate or ADR-044 status is claimed.
 
 ## Control matrix
 
@@ -33,14 +33,14 @@ Status mirrors ADR-044; see ADR-044 for transition criteria. This specification 
 
 | Control | Required behavior | Current state | Verification |
 |---|---|---|---|
-| **Tenant isolation** | Capture storage/path is tenant-scoped; no shared production directory; cross-tenant read/export fails. | Pending; shared diagnostic directory was the pre-governance behavior. | Negative test: tenant B cannot read/export tenant A's capture. |
+| **Tenant isolation** | Capture storage/path is tenant-scoped; no shared production directory; cross-tenant read/export fails. | Implemented for filesystem write/delete paths (`tenant_id/source_version_id`); read/export authorization remains pending. | Path-scope and traversal tests in `FileSystemCaptureStoreTest`. |
 | **Encryption at rest** | Same tenant-scoped key management/envelope encryption as the quarantine controls; no plaintext production capture. | Pending; blocked on the platform KMS facility. | Ciphertext-at-rest and key-scope tests. |
 | **Audit** | Read/export/replay/disposition records actor, time, reason, and source/segment identity. Capture is write-only by default; raw content never enters ordinary logs. | Pending; filesystem-only diagnostic access. | Scripted access test; log scan. |
-| **Retention (30/90)** | Default 30 days; hard maximum 90 days absent an approved exception; automatic expiry. | Pending. | Clock-controlled expiry test. |
-| **Source-deletion cleanup** | Deleting the associated source generation cascades to capture payloads; cleanup is idempotent and does not touch other generations/tenants. Cleanup key is `(tenant_id, source_version_id)`; a re-extraction generation is an additional replacement dimension, not a deletion boundary. | Pending. | Delete-generation test with a second generation/tenant control. |
-| **Production enablement gate** | `LLM_EXTRACTION_CAPTURE_ENABLED` defaults to `false`; a path alone does not enable capture. A production-environment signal must additionally refuse activation. Production enablement requires the controls above and tests to pass. | Two-flag gate added; **code-enforced production-environment refusal is pending #830**. | Config test: path set + flag false -> capture disabled. Fourth test: enabled + path + production -> refuse activation. |
+| **Retention (30/90)** | Default 30 days; hard maximum 90 days absent an approved exception; automatic expiry. | Expiry primitive implemented (`expireOlderThan`); 30/90 policy and scheduled enforcement remain pending. | Cutoff-based expiry test in `FileSystemCaptureStoreTest`; scheduled 30/90 policy test pending. |
+| **Source-deletion cleanup** | Deleting the associated source generation cascades to capture payloads; cleanup is idempotent and does not touch other generations/tenants. Cleanup key is `(tenant_id, source_version_id)`; a re-extraction generation is an additional replacement dimension, not a deletion boundary. | Scoped idempotent `deleteSource` implemented; compliance-cascade wiring remains pending. | Cross-tenant/sibling-version and retry tests in `FileSystemCaptureStoreTest`. |
+| **Production enablement gate** | `LLM_EXTRACTION_CAPTURE_ENABLED` defaults to `false`; a path alone does not enable capture. A production-environment signal must additionally refuse activation. Production enablement requires the controls above and tests to pass. | Two-flag gate plus code-enforced production refusal added; production enablement still denied because encryption/audit/retention are incomplete. | Config tests: path alone disabled; enabled + path + production refused. |
 
-**Owner:** andreminin. **Implementation:** pending a tenant-scoped `CaptureStore`; this section is the control matrix that storage design must satisfy. #833 provides the two-flag gate only; environment-based production refusal is #830's fourth test.
+**Owner:** andreminin. **Implementation:** `FileSystemCaptureStore` provides the tenant/source-version-scoped filesystem slice, deletion, and expiry primitive; #833 provides the two-flag gate and #830 adds production refusal. Production enablement remains denied pending encryption/KMS, audit, automatic 30/90 retention, and compliance wiring.
 
 **Relationship to #826:** capture and quarantine must not become two ungoverned stores. #826 must link this section and use the same tenant, retention, audit, and source-deletion controls. Tests for capture controls will be added to the [quarantine test plan](./ogce-quarantine-test-plan.md) when the store exists.
 

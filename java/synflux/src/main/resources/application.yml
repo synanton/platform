@@ -63,6 +63,7 @@ synflux:
     # A path alone must not enable capture; see D5 capture controls.
     capture-dir: ${LLM_EXTRACTION_CAPTURE_DIR:}
     capture-enabled: ${LLM_EXTRACTION_CAPTURE_ENABLED:false}
+    capture-environment: ${LLM_EXTRACTION_CAPTURE_ENV:}
     consumer:
       # Safe default: disabled until the GPU plane and model are reachable.
       enabled: ${EXTRACTION_CONSUMER_ENABLED:false}

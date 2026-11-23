@@ -16,6 +16,12 @@ public final class ExtractionEngines {
         if (!Boolean.TRUE.equals(properties.captureEnabled())) {
             return null;
         }
+        if (properties.captureEnvironment() != null
+                && "production".equalsIgnoreCase(properties.captureEnvironment().trim())) {
+            throw new IllegalStateException(
+                    "diagnostic extraction capture is disabled in production; "
+                            + "D5 encryption/audit/retention controls are incomplete");
+        }
         return properties.captureDir() == null || properties.captureDir().isBlank()
                 ? null : Path.of(properties.captureDir());
     }
