@@ -88,9 +88,13 @@ public final class QuarantineStore {
         requireKey(tenantId, sourceVersionId);
         Objects.requireNonNull(generation, "generation");
         Instant now = Instant.now();
+        recordAudit(QuarantineAuditEvent.of(tenantId, sourceVersionId, generation,
+                "PROMOTION_ATTEMPTED", actor, reason, null, now));
         for (int attempt = 0; attempt < 4; attempt++) {
             Optional<UUID> current = currentGeneration(tenantId, sourceVersionId);
             if (current.isPresent() && current.get().equals(generation)) {
+                recordAudit(QuarantineAuditEvent.of(tenantId, sourceVersionId, generation,
+                        "PROMOTION_IDEMPOTENT", actor, reason, "already current", now));
                 return new PromotionResult(generation, true);
             }
             boolean applied;
@@ -117,9 +121,14 @@ public final class QuarantineStore {
                 if (current.isPresent()) {
                     markSuperseded(tenantId, sourceVersionId, current.get(), generation);
                 }
+                recordAudit(QuarantineAuditEvent.of(tenantId, sourceVersionId, generation,
+                        "PROMOTION_APPLIED", actor, reason,
+                        current.map(value -> "previous=" + value).orElse("first promotion"), now));
                 return new PromotionResult(generation, true);
             }
         }
+        recordAudit(QuarantineAuditEvent.of(tenantId, sourceVersionId, generation,
+                "PROMOTION_FAILED", actor, reason, "LWT did not converge", Instant.now()));
         throw new IllegalStateException("promotion did not converge for tenant=" + tenantId
                 + " version=" + sourceVersionId + " generation=" + generation);
     }
@@ -191,7 +200,44 @@ public final class QuarantineStore {
                 DELETE FROM ingestion_cache.quarantine_current_generation
                 WHERE tenant_id=? AND source_version_id=?
                 """, tenantId, sourceVersionId));
+        if (!generations.isEmpty()) {
+            QuarantineGeneration first = generations.getFirst();
+            recordAudit(QuarantineAuditEvent.of(tenantId, sourceVersionId,
+                    first.extractionGeneration(),
+                    mode == DeletionMode.TOMBSTONE ? "TOMBSTONE_APPLIED" : "HARD_DELETE_APPLIED",
+                    "system", reason, "generations=" + generations.size(), now));
+        }
         return generations.size();
+    }
+
+    public void recordAudit(QuarantineAuditEvent event) {
+        Objects.requireNonNull(event, "event");
+        session.execute(SimpleStatement.newInstance("""
+                INSERT INTO ingestion_cache.quarantine_audit
+                    (tenant_id, source_version_id, extraction_generation, event_time,
+                     event_id, event_type, actor, reason, detail)
+                VALUES (?,?,?,?,?,?,?,?,?)
+                """, event.tenantId(), event.sourceVersionId(), event.extractionGeneration(),
+                event.eventTime(), event.eventId(), event.eventType(), event.actor(),
+                event.reason(), event.detail()));
+    }
+
+    public List<QuarantineAuditEvent> auditEvents(String tenantId, UUID sourceVersionId,
+                                                  UUID generation) {
+        requireKey(tenantId, sourceVersionId);
+        Objects.requireNonNull(generation, "generation");
+        List<QuarantineAuditEvent> out = new ArrayList<>();
+        for (Row row : session.execute(SimpleStatement.newInstance("""
+                SELECT * FROM ingestion_cache.quarantine_audit
+                WHERE tenant_id=? AND source_version_id=? AND extraction_generation=?
+                """, tenantId, sourceVersionId, generation))) {
+            out.add(new QuarantineAuditEvent(
+                    row.getString("tenant_id"), row.getUuid("source_version_id"),
+                    row.getUuid("extraction_generation"), row.getUuid("event_id"),
+                    row.getInstant("event_time"), row.getString("event_type"),
+                    row.getString("actor"), row.getString("reason"), row.getString("detail")));
+        }
+        return out;
     }
 
     private void markPromotion(String tenantId, UUID sourceVersionId, UUID generation,

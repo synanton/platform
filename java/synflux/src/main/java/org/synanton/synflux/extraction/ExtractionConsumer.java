@@ -1,10 +1,14 @@
 package org.synanton.synflux.extraction;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -24,6 +28,10 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
+import org.synanton.ingestioncache.quarantine.QuarantineAuditEvent;
+import org.synanton.ingestioncache.quarantine.QuarantineGeneration;
+import org.synanton.ingestioncache.quarantine.QuarantineRecord;
+import org.synanton.ingestioncache.quarantine.QuarantineStore;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
 import org.synanton.synflux.extraction.graph.GraphCommitResult;
 import org.synanton.synflux.extraction.graph.GraphWriter;
@@ -55,6 +63,7 @@ public class ExtractionConsumer {
     private final GraphWriter graphWriter;
     private final Clock clock;
     private final ExtractionMetrics metrics;
+    private final QuarantineStore quarantineStore;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public ExtractionConsumer(
@@ -63,8 +72,18 @@ public class ExtractionConsumer {
             ExtractionConsumerProperties properties,
             GraphWriter graphWriter,
             Clock clock) {
+        this(cacheClient, adapter, properties, graphWriter, clock, null);
+    }
+
+    public ExtractionConsumer(
+            IngestionCacheClient cacheClient,
+            ExtractionEngineAdapter adapter,
+            ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
+            Clock clock,
+            QuarantineStore quarantineStore) {
         this(cacheClient, ExtractionAdapterFactory.fixed(adapter), properties, graphWriter, clock,
-                new ExtractionMetrics(new SimpleMeterRegistry()));
+                new ExtractionMetrics(new SimpleMeterRegistry()), quarantineStore);
     }
 
     public ExtractionConsumer(
@@ -74,7 +93,17 @@ public class ExtractionConsumer {
             GraphWriter graphWriter,
             Clock clock) {
         this(cacheClient, adapters, properties, graphWriter, clock,
-                new ExtractionMetrics(new SimpleMeterRegistry()));
+                new ExtractionMetrics(new SimpleMeterRegistry()), null);
+    }
+
+    public ExtractionConsumer(
+            IngestionCacheClient cacheClient,
+            ExtractionAdapterResolver adapters,
+            ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
+            Clock clock,
+            ExtractionMetrics metrics) {
+        this(cacheClient, adapters, properties, graphWriter, clock, metrics, null);
     }
 
     @Autowired
@@ -84,13 +113,15 @@ public class ExtractionConsumer {
             ExtractionConsumerProperties properties,
             GraphWriter graphWriter,
             Clock clock,
-            ExtractionMetrics metrics) {
+            ExtractionMetrics metrics,
+            QuarantineStore quarantineStore) {
         this.cacheClient = cacheClient;
         this.adapters = adapters;
         this.properties = properties;
         this.graphWriter = graphWriter;
         this.clock = clock;
         this.metrics = metrics;
+        this.quarantineStore = quarantineStore;
     }
 
     @Scheduled(fixedDelayString = "${synflux.extraction-engine.consumer.poll-delay-ms:5000}")
@@ -158,6 +189,8 @@ public class ExtractionConsumer {
         }
         ExtractionEngineAdapter adapter = resolved.adapter();
         long startedNanos = System.nanoTime();
+        UUID extractionGeneration = UUID.randomUUID();
+        boolean generationCreated = false;
         try {
             cacheClient.markExtractionStarted(request);
             List<ChunkRow> chunks = cacheClient.readChunks(request.tenantId(), request.contentRefId());
@@ -202,6 +235,28 @@ public class ExtractionConsumer {
                     normalizedEntities.add(entity.surfaceForm() + "|" + entity.proposedType());
                 }
                 var provenance = result.provenance();
+                if (quarantineStore != null) {
+                    if (!generationCreated) {
+                        QuarantineGeneration generation = QuarantineGeneration.staged(
+                                request.tenantId(), request.versionId(), extractionGeneration,
+                                request.sourceId() + ":" + request.resourceId(),
+                                provenance.promptVersion(), provenance.promptCompiledDigest(),
+                                provenance.schemaDigest(), null, null, clock.instant(),
+                                request.eventId());
+                        quarantineStore.createGeneration(generation);
+                        quarantineStore.recordAudit(QuarantineAuditEvent.of(
+                                request.tenantId(), request.versionId(), extractionGeneration,
+                                "GENERATION_CREATED", "system", null, null, clock.instant()));
+                        generationCreated = true;
+                    }
+                    for (QuarantinedLine line : result.quarantined()) {
+                        String raw = line.raw() == null ? "" : line.raw();
+                        quarantineStore.append(QuarantineRecord.open(
+                                request.tenantId(), request.versionId(), extractionGeneration,
+                                chunk.chunkOrdinal(), line.lineNumber(), line.reasonCode(),
+                                line.category(), line.detail(), sha256(raw), raw, clock.instant()));
+                    }
+                }
                 cacheClient.upsertExtractionResult(
                         request.tenantId(), request.contentRefId(), chunk.chunkOrdinal(), request.versionId(),
                         mapper.writeValueAsString(result.preEntities()),
@@ -254,6 +309,18 @@ public class ExtractionConsumer {
                     request.tenantId(), request.contentRefId(), request.versionId(),
                     incomplete.getMessage());
         } catch (Exception e) {
+            if (quarantineStore != null && generationCreated) {
+                try {
+                    quarantineStore.recordAudit(QuarantineAuditEvent.of(
+                            request.tenantId(), request.versionId(), extractionGeneration,
+                            "EXTRACTION_FAILED", "system", null, truncate(e.getMessage()),
+                            clock.instant()));
+                } catch (Exception auditFailure) {
+                    log.warn("Failed to persist extraction-failure audit tenant={} ref={} version={}: {}",
+                            request.tenantId(), request.contentRefId(), request.versionId(),
+                            auditFailure.toString());
+                }
+            }
             int attempts = request.attemptCount() + 1;
             Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempts));
             cacheClient.markExtractionFailed(request, attempts, truncate(e.getMessage()), nextAttemptAt);
@@ -335,6 +402,20 @@ public class ExtractionConsumer {
         long base = properties.retryBackoffSecondsOrDefault();
         long multiplier = 1L << Math.min(Math.max(0, attempts - 1), 5);
         return Math.min(300, base * multiplier);
+    }
+
+    private static String sha256(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder out = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                out.append(String.format("%02x", b));
+            }
+            return out.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable", e);
+        }
     }
 
     private static String summarizeQuarantine(List<QuarantinedLine> lines) {
