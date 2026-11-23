@@ -13,21 +13,21 @@ class ExtractionEngineSelectionTest {
 
     @Test
     void defaultsToRegexWithoutConfiguration() {
-        assertThat(config.extractionEngineAdapter(new ExtractionEngineProperties(null, null, null, null, null, null)))
+        assertThat(config.extractionEngineAdapter(new ExtractionEngineProperties(null, null, null, null, null, null, false)))
                 .isInstanceOf(RegexExtractorAdapter.class);
     }
 
     @Test
     void selectsTheLlmAdapterWhenRequested() {
         assertThat(config.extractionEngineAdapter(new ExtractionEngineProperties(
-                "llm", "http://localhost:8000/v1", "qwen3-extraction", 30, null, null)))
+                "llm", "http://localhost:8000/v1", "qwen3-extraction", 30, null, null, false)))
                 .isInstanceOf(LlmExtractionAdapter.class);
     }
 
     @Test
     void rejectsAnUnknownProvider() {
         assertThatThrownBy(() -> config.extractionEngineAdapter(
-                new ExtractionEngineProperties("magic", null, null, null, null, null)))
+                new ExtractionEngineProperties("magic", null, null, null, null, null, false)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("want regex|llm");
     }

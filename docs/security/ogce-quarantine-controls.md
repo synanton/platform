@@ -21,7 +21,26 @@ Status mirrors ADR-044; see ADR-044 for transition criteria. This specification 
 | **Tenant isolation** | Storage and authorization enforce tenant isolation; no cross-tenant read, export, or replay. | Pending; extraction-consumer authorization plus candidate-store partitioning. | Negative test: tenant B cannot read, export, or replay tenant A's quarantine item by ID, query, or export job. | andreminin |
 | **Audit** | Every read, export, replay, and disposition records actor, time, reason, and source/segment identity. | Pending; candidate-store audit events. | Replay a scripted read/export/replay/disposition sequence and assert one audit record each with all five fields; assert ordinary application logs contain no raw quarantine content. | andreminin |
 | **Retention (30/90)** | Default retention is 30 days; hard maximum is 90 days absent an approved legal/security exception; expiry is automatic. | Pending; scheduled retention job over quarantine metadata. | Clock-controlled test: the item remains readable through the approved default window and is expired/removed at its end; no item exceeds 90 days without a recorded exception. | andreminin |
-| **Source-deletion cleanup** | Deleting the associated source generation cascades to quarantine payloads and derived raw prompts/responses. | Pending; source-deletion consumer plus candidate-store cascade. | Test deletes a source generation and asserts: zero quarantine rows/payloads for that generation; derived raw prompts/responses gone; audit disposition preserved per policy; cleanup is idempotent; no other generation or tenant is affected. | andreminin |
+| **Source-deletion cleanup** | Deleting the associated source generation cascades to quarantine payloads and derived raw prompts/responses. Normal source deletion uses **tombstone** (hide from current queries, retain audit metadata); compliance deletion (DSAR/GDPR) uses **hard delete** per policy. | Pending; source-deletion consumer plus candidate-store cascade. | Test both modes: tombstone hides from current but remains auditable; hard delete removes payloads/metadata per policy; cleanup is idempotent; no other generation or tenant is affected. | andreminin |
+
+**Deletion mode policy:** normal source deletion = `TOMBSTONE`; compliance deletion (DSAR/GDPR or equivalent) = `HARD_DELETE`. The same mode applies to the associated capture payloads; audit metadata retention after hard delete follows legal/security policy. See [quarantine data model](./ogce-quarantine-data-model.md) §7.
+
+## Capture directory controls (diagnostic)
+
+`LLM_EXTRACTION_CAPTURE_DIR` writes raw model output for diagnosis. It is separate from the quarantine work queue but holds the same class of tenant-adjacent data. Until the controls below are implemented and tested, capture is **diagnostic-only and disabled by default**; a configured path alone must not enable it in production.
+
+| Control | Required behavior | Current state | Verification |
+|---|---|---|---|
+| **Tenant isolation** | Capture storage/path is tenant-scoped; no shared production directory; cross-tenant read/export fails. | Pending; shared diagnostic directory was the pre-governance behavior. | Negative test: tenant B cannot read/export tenant A's capture. |
+| **Encryption at rest** | Same tenant-scoped key management/envelope encryption as the quarantine controls; no plaintext production capture. | Pending; blocked on the platform KMS facility. | Ciphertext-at-rest and key-scope tests. |
+| **Audit** | Read/export/replay/disposition records actor, time, reason, and source/segment identity. Capture is write-only by default; raw content never enters ordinary logs. | Pending; filesystem-only diagnostic access. | Scripted access test; log scan. |
+| **Retention (30/90)** | Default 30 days; hard maximum 90 days absent an approved exception; automatic expiry. | Pending. | Clock-controlled expiry test. |
+| **Source-deletion cleanup** | Deleting the associated source generation cascades to capture payloads; cleanup is idempotent and does not touch other generations/tenants. Cleanup key is `(tenant_id, source_version_id)`; a re-extraction generation is an additional replacement dimension, not a deletion boundary. | Pending. | Delete-generation test with a second generation/tenant control. |
+| **Production enablement gate** | `LLM_EXTRACTION_CAPTURE_ENABLED` defaults to `false`; a path alone does not enable capture. A production-environment signal must additionally refuse activation. Production enablement requires the controls above and tests to pass. | Two-flag gate added; **code-enforced production-environment refusal is pending #830**. | Config test: path set + flag false -> capture disabled. Fourth test: enabled + path + production -> refuse activation. |
+
+**Owner:** andreminin. **Implementation:** pending a tenant-scoped `CaptureStore`; this section is the control matrix that storage design must satisfy. #833 provides the two-flag gate only; environment-based production refusal is #830's fourth test.
+
+**Relationship to #826:** capture and quarantine must not become two ungoverned stores. #826 must link this section and use the same tenant, retention, audit, and source-deletion controls. Tests for capture controls will be added to the [quarantine test plan](./ogce-quarantine-test-plan.md) when the store exists.
 
 ## D6 readiness
 
