@@ -53,12 +53,20 @@ public final class ExtractionCacheStore {
                 """, tenantId, sourceVersionId, cacheKey));
     }
 
-    public void deleteForSource(String tenantId, UUID sourceVersionId) {
+    public int deleteForSource(String tenantId, UUID sourceVersionId) {
         requireKey(tenantId, sourceVersionId, "source");
+        int rows = 0;
+        for (Row ignored : session.execute(SimpleStatement.newInstance("""
+                SELECT cache_key FROM ingestion_cache.extraction_cache_entries
+                WHERE tenant_id=? AND source_version_id=?
+                """, tenantId, sourceVersionId))) {
+            rows++;
+        }
         session.execute(SimpleStatement.newInstance("""
                 DELETE FROM ingestion_cache.extraction_cache_entries
                 WHERE tenant_id=? AND source_version_id=?
                 """, tenantId, sourceVersionId));
+        return rows;
     }
 
     private static ExtractionCacheEntry entry(Row row) {
