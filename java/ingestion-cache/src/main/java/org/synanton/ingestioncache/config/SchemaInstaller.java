@@ -47,6 +47,7 @@ public class SchemaInstaller {
         "cql/V31__promotion_ownership.cql",
         "cql/V32__consumer_ownership_heartbeat.cql",
         "cql/V33__extraction_provider_config.cql",
+        "cql/V34__quarantine_persistence.cql",
     };
 
     public static void install(CqlSession session) {

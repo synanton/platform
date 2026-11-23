@@ -25,6 +25,8 @@ Status mirrors ADR-044; see ADR-044 for transition criteria. This specification 
 
 **Deletion mode policy:** normal source deletion = `TOMBSTONE`; compliance deletion (DSAR/GDPR or equivalent) = `HARD_DELETE`. The same mode applies to the associated capture payloads; audit metadata retention after hard delete follows legal/security policy. See [quarantine data model](./ogce-quarantine-data-model.md) §7.
 
+**Dev-touched provenance:** `evaluation/dev25/development-touched.tsv` survives document hard-deletion. It records the document ID and provenance only, contains no source content, and never affects extraction, quarantine, or held-out policy.
+
 ## Capture directory controls (diagnostic)
 
 `LLM_EXTRACTION_CAPTURE_DIR` writes raw model output for diagnosis. It is separate from the quarantine work queue but holds the same class of tenant-adjacent data. Until the controls below are implemented and tested, capture is **diagnostic-only and disabled by default**; a configured path alone must not enable it in production.
