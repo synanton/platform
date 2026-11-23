@@ -10,6 +10,12 @@ Read-only. No model inference, no label changes. The authority model is:
 
 Run from the repository or CI:
   python3 evaluation/dev25/check_provenance.py
+
+Enforcement boundary: this script blocks metadata/checksum drift in CI. Source
+hashes and gold-span validation are performed by validate.py, which requires the
+external source corpus and is not available in the CI checkout. A PR that
+changes a gold record or the manifest source mapping must attach a validate.py
+result; this is a review requirement, not CI-enforced.
 """
 from __future__ import annotations
 
