@@ -1,6 +1,8 @@
 package org.synanton.ingestioncache.quarantine;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -117,10 +119,8 @@ public final class QuarantineStore {
                 applied = result.wasApplied();
             }
             if (applied) {
-                markPromotion(tenantId, sourceVersionId, generation, current.orElse(null), actor, reason, now);
-                if (current.isPresent()) {
-                    markSuperseded(tenantId, sourceVersionId, current.get(), generation);
-                }
+                markPromoted(tenantId, sourceVersionId, generation, current.orElse(null),
+                        actor, reason, now);
                 recordAudit(QuarantineAuditEvent.of(tenantId, sourceVersionId, generation,
                         "PROMOTION_APPLIED", actor, reason,
                         current.map(value -> "previous=" + value).orElse("first promotion"), now));
@@ -240,22 +240,36 @@ public final class QuarantineStore {
         return out;
     }
 
-    private void markPromotion(String tenantId, UUID sourceVersionId, UUID generation,
-                               UUID previous, String actor, String reason, Instant now) {
-        session.execute(SimpleStatement.newInstance("""
-                UPDATE ingestion_cache.quarantine_generations
-                SET promoted_at=?, promoted_by=?, promotion_reason=?, previous_generation=?
-                WHERE tenant_id=? AND source_version_id=? AND extraction_generation=?
-                """, now, actor, reason, previous, tenantId, sourceVersionId, generation));
+    private void markPromoted(String tenantId, UUID sourceVersionId, UUID generation,
+                              UUID previous, String actor, String reason, Instant now) {
+        BatchStatement batch = BatchStatement.newInstance(DefaultBatchType.LOGGED)
+                .add(SimpleStatement.newInstance("""
+                        UPDATE ingestion_cache.quarantine_generations
+                        SET promoted_at=?, promoted_by=?, promotion_reason=?, previous_generation=?
+                        WHERE tenant_id=? AND source_version_id=? AND extraction_generation=?
+                        """, now, actor, reason, previous, tenantId, sourceVersionId, generation));
+        if (previous != null) {
+            batch = batch.add(SimpleStatement.newInstance("""
+                    UPDATE ingestion_cache.quarantine_generations
+                    SET generation_status='SUPERSEDED', superseded_by=?
+                    WHERE tenant_id=? AND source_version_id=? AND extraction_generation=?
+                    """, generation, tenantId, sourceVersionId, previous));
+        }
+        session.execute(batch);
     }
 
-    private void markSuperseded(String tenantId, UUID sourceVersionId, UUID generation,
-                                UUID supersededBy) {
+    public void markFailed(String tenantId, UUID sourceVersionId, UUID generation,
+                           String actor, String reason) {
+        requireKey(tenantId, sourceVersionId);
+        Objects.requireNonNull(generation, "generation");
+        Instant now = Instant.now();
         session.execute(SimpleStatement.newInstance("""
                 UPDATE ingestion_cache.quarantine_generations
-                SET generation_status='SUPERSEDED', superseded_by=?
+                SET generation_status='FAILED'
                 WHERE tenant_id=? AND source_version_id=? AND extraction_generation=?
-                """, supersededBy, tenantId, sourceVersionId, generation));
+                """, tenantId, sourceVersionId, generation));
+        recordAudit(QuarantineAuditEvent.of(tenantId, sourceVersionId, generation,
+                "GENERATION_FAILED", actor, reason, null, now));
     }
 
     private static QuarantineGeneration generation(Row row) {

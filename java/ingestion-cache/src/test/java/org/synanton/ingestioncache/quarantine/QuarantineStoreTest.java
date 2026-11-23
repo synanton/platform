@@ -205,6 +205,23 @@ class QuarantineStoreTest {
     }
 
     @Test
+    void failedGenerationIsMarkedFailedAndAudited() {
+        String tenant = tenant();
+        UUID sourceVersion = UUID.randomUUID();
+        UUID generation = UUID.randomUUID();
+        store.createGeneration(staged(tenant, sourceVersion, generation));
+
+        store.markFailed(tenant, sourceVersion, generation, "system", "model failure");
+
+        QuarantineGeneration row = store.generations(tenant, sourceVersion).getFirst();
+        assertThat(row.generationStatus()).isEqualTo("FAILED");
+        assertThat(store.currentGeneration(tenant, sourceVersion)).isEmpty();
+        assertThat(store.auditEvents(tenant, sourceVersion, generation))
+                .extracting(QuarantineAuditEvent::eventType)
+                .contains("GENERATION_FAILED");
+    }
+
+    @Test
     void promotionAndDeletionWriteDurableAuditEvents() {
         String tenant = tenant();
         UUID sourceVersion = UUID.randomUUID();

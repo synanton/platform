@@ -311,12 +311,10 @@ public class ExtractionConsumer {
         } catch (Exception e) {
             if (quarantineStore != null && generationCreated) {
                 try {
-                    quarantineStore.recordAudit(QuarantineAuditEvent.of(
-                            request.tenantId(), request.versionId(), extractionGeneration,
-                            "EXTRACTION_FAILED", "system", null, truncate(e.getMessage()),
-                            clock.instant()));
+                    quarantineStore.markFailed(request.tenantId(), request.versionId(),
+                            extractionGeneration, "system", truncate(e.getMessage()));
                 } catch (Exception auditFailure) {
-                    log.warn("Failed to persist extraction-failure audit tenant={} ref={} version={}: {}",
+                    log.warn("Failed to mark extraction generation failed tenant={} ref={} version={}: {}",
                             request.tenantId(), request.contentRefId(), request.versionId(),
                             auditFailure.toString());
                 }
