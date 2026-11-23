@@ -8,7 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * OpenAI-compatible vLLM extraction endpoint.
  *
  * <p>Diagnostic capture requires both a path and {@code captureEnabled=true}.
- * A path alone must not enable capture; see D5 capture controls.
+ * A path alone must not enable capture; production environments must refuse
+ * activation even when both are set; see D5 capture controls.
  */
 @ConfigurationProperties(prefix = "synflux.extraction-engine")
 public record ExtractionEngineProperties(
@@ -18,5 +19,6 @@ public record ExtractionEngineProperties(
         Integer timeoutSeconds,
         Integer maxTokens,
         String captureDir,
-        Boolean captureEnabled) {
+        Boolean captureEnabled,
+        String captureEnvironment) {
 }

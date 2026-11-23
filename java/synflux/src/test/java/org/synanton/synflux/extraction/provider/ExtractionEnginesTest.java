@@ -10,8 +10,13 @@ import org.synanton.synflux.config.ExtractionEngineProperties;
 class ExtractionEnginesTest {
 
     private static ExtractionEngineProperties props(String captureDir, Boolean enabled) {
+        return props(captureDir, enabled, null);
+    }
+
+    private static ExtractionEngineProperties props(String captureDir, Boolean enabled,
+                                                    String environment) {
         return new ExtractionEngineProperties("llm", "http://localhost:8000/v1",
-                "qwen3-extraction", 120, 2048, captureDir, enabled);
+                "qwen3-extraction", 120, 2048, captureDir, enabled, environment);
     }
 
     @Test
@@ -28,6 +33,14 @@ class ExtractionEnginesTest {
                 ExtractionProvider.LLM, props("", true));
 
         assertThat(adapter.captureDirectory()).isEmpty();
+    }
+
+    @Test
+    void enabledCaptureRefusesProduction() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> ExtractionEngines.create(
+                        ExtractionProvider.LLM, props("/tmp/capture", true, "production")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("disabled in production");
     }
 
     @Test

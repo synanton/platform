@@ -27,6 +27,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.synanton.extraction.engine.ExtractionContext;
+import org.synanton.extraction.engine.capture.CaptureStore;
+import org.synanton.extraction.engine.capture.FileSystemCaptureStore;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionResult;
@@ -108,7 +110,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
      * tenant-scoped; it is disabled by default and must not be enabled in
      * production without extending the D5 tenant-isolation/retention controls.
      */
-    private final Path captureDir;
+    private final CaptureStore captureStore;
     private final String promptVersion;
     private final String promptTemplate;
 
@@ -155,6 +157,13 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
                                 Duration timeout, int maxTokens, Path captureDir,
                                 String promptVersion) {
+        this(client, endpoint, model, timeout, maxTokens,
+                captureDir == null ? null : new FileSystemCaptureStore(captureDir), promptVersion);
+    }
+
+    public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
+                                Duration timeout, int maxTokens, CaptureStore captureStore,
+                                String promptVersion) {
         if (endpoint == null || endpoint.isBlank()) {
             throw new IllegalArgumentException("LLM extraction endpoint is required");
         }
@@ -163,7 +172,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
         this.timeout = timeout == null ? Duration.ofSeconds(120) : timeout;
         this.maxTokens = Math.max(1, maxTokens);
-        this.captureDir = captureDir;
+        this.captureStore = captureStore;
         this.promptVersion = normalizePromptVersion(promptVersion);
         this.promptTemplate = loadPrompt(this.promptVersion);
     }
@@ -174,7 +183,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     /** The diagnostic capture directory, or empty when capture is disabled. */
     public Optional<Path> captureDirectory() {
-        return Optional.ofNullable(captureDir);
+        return captureStore == null ? Optional.empty() : captureStore.root();
     }
 
     @Override
@@ -615,36 +624,11 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     private void captureQuarantine(TextSegment segment, ExtractionContext context,
                                    LlmCallResult call, List<QuarantinedLine> quarantined) {
-        if (captureDir == null || quarantined.isEmpty()) {
+        if (captureStore == null) {
             return;
         }
         try {
-            Files.createDirectories(captureDir);
-            List<Map<String, Object>> records = new ArrayList<>(quarantined.size());
-            for (QuarantinedLine line : quarantined) {
-                Map<String, Object> event = new LinkedHashMap<>();
-                event.put("timestamp", Instant.now().toString());
-                event.put("tenant_id", context == null ? null : context.tenantId());
-                event.put("source_version_id", context == null ? null : context.sourceVersionId());
-                event.put("document_id", context == null ? null : context.documentId());
-                event.put("chunk_id", segment == null ? null : segment.chunkId());
-                event.put("finish_reason", call.usage().finishReason());
-                event.put("line", line.lineNumber());
-                event.put("reason", line.reasonCode());
-                event.put("category", line.category());
-                event.put("detail", line.detail());
-                event.put("raw", line.raw());
-                records.add(event);
-            }
-            Path target = captureDir.resolve("quarantine-" + UUID.randomUUID() + ".jsonl");
-            Files.writeString(target, JsonlWriter.writeAll(records), StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-            try {
-                Files.setPosixFilePermissions(target,
-                        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
-            } catch (UnsupportedOperationException ignored) {
-                // Non-POSIX filesystems still rely on the capture directory ACL.
-            }
+            captureStore.writeQuarantine(context, segment, call.usage(), quarantined);
         } catch (Exception ignored) {
             // Capture must never mask the extraction result.
         }
@@ -652,44 +636,13 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     private void captureParseFailure(TextSegment segment, ExtractionContext context,
                                      LlmCallResult call, String content, String parserInput,
-                                     RuntimeException failure) {        if (captureDir == null) {
+                                     RuntimeException failure) {
+        if (captureStore == null) {
             return;
         }
         try {
-            Files.createDirectories(captureDir);
-            String raw = call.rawBody();
-            String input = parserInput == null ? "" : parserInput;
-            StringBuilder json = new StringBuilder(256 + raw.length() + content.length());
-            json.append('{');
-            appendField(json, "timestamp", Instant.now().toString()).append(',');
-            appendField(json, "tenant_id", context == null ? null : context.tenantId()).append(',');
-            appendField(json, "source_version_id", context == null ? null : context.sourceVersionId()).append(',');
-            appendField(json, "document_id", context == null ? null : context.documentId()).append(',');
-            appendField(json, "chunk_id", segment == null ? null : segment.chunkId()).append(',');
-            appendField(json, "finish_reason", call.usage().finishReason()).append(',');
-            json.append("\"prompt_tokens\":").append(call.usage().promptTokens()).append(',');
-            json.append("\"completion_tokens\":").append(call.usage().completionTokens()).append(',');
-            json.append("\"total_tokens\":").append(call.usage().totalTokens()).append(',');
-            appendField(json, "raw_response_sha256", sha256(raw)).append(',');
-            json.append("\"raw_response_chars\":").append(raw.length()).append(',');
-            appendField(json, "content_sha256", sha256(content)).append(',');
-            json.append("\"content_chars\":").append(content.length()).append(',');
-            appendField(json, "parser_input_sha256", sha256(input)).append(',');
-            json.append("\"parser_input_chars\":").append(input.length()).append(',');
-            appendField(json, "parser_exception", failure.toString()).append(',');
-            appendField(json, "raw_response", raw).append(',');
-            appendField(json, "content", content).append(',');
-            appendField(json, "parser_input", input);
-            json.append('}');
-            Path target = captureDir.resolve("parse-failure-" + UUID.randomUUID() + ".json");
-            Files.writeString(target, json.toString(), StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-            try {
-                Files.setPosixFilePermissions(target,
-                        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
-            } catch (UnsupportedOperationException ignored) {
-                // Non-POSIX filesystems still rely on the capture directory ACL.
-            }
+            captureStore.writeParseFailure(context, segment, call.usage(), call.rawBody(),
+                    content, parserInput, failure);
         } catch (Exception ignored) {
             // Capture must never mask the parser failure.
         }

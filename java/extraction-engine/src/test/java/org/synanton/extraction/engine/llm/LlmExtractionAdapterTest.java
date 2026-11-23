@@ -264,7 +264,7 @@ class LlmExtractionAdapterTest {
     }
 
     private static Map<String, Object> onlyCapture(Path captureDir) throws Exception {
-        try (var files = Files.list(captureDir)) {
+        try (var files = Files.walk(captureDir).filter(Files::isRegularFile)) {
             Path captured = files.findFirst().orElseThrow();
             return Json.parseObject(Files.readString(captured));
         }
@@ -291,7 +291,7 @@ class LlmExtractionAdapterTest {
                 .extract(new TextSegment("c1", TEXT, 0), context))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        try (var files = Files.list(captureDir)) {
+        try (var files = Files.walk(captureDir).filter(Files::isRegularFile)) {
             Path captured = files.findFirst().orElseThrow();
             Map<String, Object> event = Json.parseObject(Files.readString(captured));
             assertThat(event.get("raw_response")).asString().contains("preEntities");
@@ -459,7 +459,7 @@ class LlmExtractionAdapterTest {
                 .extract(new TextSegment("c1", TEXT, 0), CONTEXT);
 
         Path quarantine;
-        try (var files = Files.list(captureDir)) {
+        try (var files = Files.walk(captureDir).filter(Files::isRegularFile)) {
             quarantine = files.filter(path -> path.getFileName().toString().startsWith("quarantine-"))
                     .findFirst().orElseThrow();
         }

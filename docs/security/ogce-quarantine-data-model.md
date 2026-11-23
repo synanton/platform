@@ -209,5 +209,5 @@ That decision belongs to P2-3 planning; the flag only preserves the #820 history
 
 - No F1, extraction-quality, gate status, profile qualification, or ADR-044 transition.
 - No DEV-label or frozen-gold consumption.
-- No capture-directory implementation (that is #830).
+- No fully governed capture implementation (that is #830); tenant-scoped filesystem write/delete and production refusal are partial only.
 - No prompt/schema digest contract definition (that is #831).
