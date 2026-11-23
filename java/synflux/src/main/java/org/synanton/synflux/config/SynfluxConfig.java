@@ -235,6 +235,13 @@ public class SynfluxConfig {
     }
 
     @Bean
+    public org.synanton.synflux.extraction.cache.ExtractionCacheService extractionCacheService(
+            org.synanton.ingestioncache.cache.ExtractionCacheStore store) {
+        return new org.synanton.synflux.extraction.cache.ExtractionCacheService(
+                store, new com.fasterxml.jackson.databind.ObjectMapper());
+    }
+
+    @Bean
     public PersistStage persistStage(IngestionCacheClient cacheClient) {
         return new PersistStage(cacheClient);
     }

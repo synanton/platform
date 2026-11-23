@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 import org.synanton.extraction.engine.ExtractionIntegrity;
@@ -45,22 +46,34 @@ public final class ExtractionCacheService {
         this.mapper = Objects.requireNonNull(mapper, "mapper");
     }
 
-    public CachedExtractionResult getOrLoad(ExtractionCacheKey key, UUID generationId,
-                                            Supplier<ExtractionResult> loader) {
+    public Optional<CachedExtractionResult> lookup(ExtractionCacheKey key) {
         Objects.requireNonNull(key, "key");
-        Objects.requireNonNull(loader, "loader");
-        var cached = store.get(key.tenantId(), key.sourceVersionId(), key.cacheKey());
-        if (cached.isPresent()) {
-            ExtractionCacheEntry entry = cached.get();
-            return new CachedExtractionResult(toResult(entry), entry.generationId(), true);
-        }
+        return store.get(key.tenantId(), key.sourceVersionId(), key.cacheKey())
+                .map(entry -> new CachedExtractionResult(toResult(entry), entry.generationId(), true));
+    }
+
+    public void put(ExtractionCacheKey key, UUID generationId, ExtractionResult result) {
+        Objects.requireNonNull(key, "key");
         Objects.requireNonNull(generationId, "generationId");
-        ExtractionResult result = Objects.requireNonNull(loader.get(), "loader result");
+        Objects.requireNonNull(result, "result");
         store.put(new ExtractionCacheEntry(key.tenantId(), key.sourceVersionId(), key.cacheKey(),
                 generationId, write(result.preEntities()), write(result.relations()),
                 result.provenance().promptVersion(), result.provenance().promptCompiledDigest(),
                 result.provenance().promptRenderedDigest(), result.provenance().schemaVersion(),
                 result.provenance().schemaDigest(), Instant.now()));
+    }
+
+    public CachedExtractionResult getOrLoad(ExtractionCacheKey key, UUID generationId,
+                                            Supplier<ExtractionResult> loader) {
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(loader, "loader");
+        Optional<CachedExtractionResult> cached = lookup(key);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+        Objects.requireNonNull(generationId, "generationId");
+        ExtractionResult result = Objects.requireNonNull(loader.get(), "loader result");
+        put(key, generationId, result);
         return new CachedExtractionResult(result, generationId, false);
     }
 

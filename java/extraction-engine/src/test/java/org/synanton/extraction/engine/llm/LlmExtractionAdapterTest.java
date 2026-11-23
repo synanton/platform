@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.TextSegment;
 import org.synanton.extraction.engine.json.Json;
+import org.synanton.extraction.engine.provenance.ExtractionCacheKey;
 
 class LlmExtractionAdapterTest {
 
@@ -94,6 +96,20 @@ class LlmExtractionAdapterTest {
     private LlmExtractionAdapter adapter() {
         return new LlmExtractionAdapter("http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
                 "test-model", Duration.ofSeconds(10));
+    }
+
+    @Test
+    void cacheKeyUsesTheSameCompiledPromptDigestAsExtraction() {
+        ExtractionContext context = new ExtractionContext("tenant", "doc", Set.of(),
+                UUID.randomUUID().toString());
+        LlmExtractionAdapter adapter = adapter();
+        TextSegment segment = new TextSegment("c1", TEXT, 0);
+
+        ExtractionCacheKey key = adapter.cacheKey(segment, context).orElseThrow();
+        ExtractionResult result = adapter.extract(segment, context);
+
+        assertThat(key.promptDigest()).isEqualTo(result.provenance().promptCompiledDigest());
+        assertThat(key.sourceVersionId().toString()).isEqualTo(context.sourceVersionId());
     }
 
     @Test
