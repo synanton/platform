@@ -180,6 +180,69 @@ class QuarantineStoreTest {
     }
 
     @Test
+    void generationRecordsAndAuditSurviveASecondSessionRead() {
+        String tenant = tenant();
+        UUID sourceVersion = UUID.randomUUID();
+        UUID generation = UUID.randomUUID();
+        store.createGeneration(staged(tenant, sourceVersion, generation));
+        store.append(record(tenant, sourceVersion, generation, 1));
+        store.promote(tenant, sourceVersion, generation, "reviewer", "promote");
+        store.recordAudit(QuarantineAuditEvent.of(tenant, sourceVersion, generation,
+                "REVIEW_NOTE", "reviewer", "checked", "durable", Instant.now()));
+
+        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(),
+                cassandra.getMappedPort(9042));
+        try (CqlSession restarted = CqlSession.builder().addContactPoint(contact)
+                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build()) {
+            QuarantineStore reopened = new QuarantineStore(restarted);
+            assertThat(reopened.generations(tenant, sourceVersion)).hasSize(1);
+            assertThat(reopened.records(tenant, sourceVersion, generation)).hasSize(1);
+            assertThat(reopened.currentGeneration(tenant, sourceVersion)).contains(generation);
+            assertThat(reopened.auditEvents(tenant, sourceVersion, generation))
+                    .extracting(QuarantineAuditEvent::eventType)
+                    .contains("PROMOTION_APPLIED", "REVIEW_NOTE");
+        }
+    }
+
+    @Test
+    void failedGenerationIsMarkedFailedAndAudited() {
+        String tenant = tenant();
+        UUID sourceVersion = UUID.randomUUID();
+        UUID generation = UUID.randomUUID();
+        store.createGeneration(staged(tenant, sourceVersion, generation));
+
+        store.markFailed(tenant, sourceVersion, generation, "system", "model failure");
+
+        QuarantineGeneration row = store.generations(tenant, sourceVersion).getFirst();
+        assertThat(row.generationStatus()).isEqualTo("FAILED");
+        assertThat(store.currentGeneration(tenant, sourceVersion)).isEmpty();
+        assertThat(store.auditEvents(tenant, sourceVersion, generation))
+                .extracting(QuarantineAuditEvent::eventType)
+                .contains("GENERATION_FAILED");
+    }
+
+    @Test
+    void promotionAndDeletionWriteDurableAuditEvents() {
+        String tenant = tenant();
+        UUID sourceVersion = UUID.randomUUID();
+        UUID generation = UUID.randomUUID();
+        store.createGeneration(staged(tenant, sourceVersion, generation));
+        store.append(record(tenant, sourceVersion, generation, 1));
+        store.promote(tenant, sourceVersion, generation, "reviewer", "promote");
+
+        assertThat(store.auditEvents(tenant, sourceVersion, generation))
+                .extracting(QuarantineAuditEvent::eventType)
+                .contains("PROMOTION_ATTEMPTED", "PROMOTION_APPLIED");
+
+        store.deleteSource(tenant, sourceVersion, QuarantineStore.DeletionMode.TOMBSTONE, "source deleted");
+
+        assertThat(store.auditEvents(tenant, sourceVersion, generation))
+                .extracting(QuarantineAuditEvent::eventType)
+                .contains("TOMBSTONE_APPLIED");
+        assertThat(store.records(tenant, sourceVersion)).hasSize(1);
+    }
+
+    @Test
     void deletionIsScopedToTenantAndSourceVersion() {
         String tenantA = tenant();
         String tenantB = tenant();

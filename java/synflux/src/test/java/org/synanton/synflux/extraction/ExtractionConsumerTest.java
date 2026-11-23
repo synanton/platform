@@ -46,6 +46,7 @@ import org.synanton.ingestioncache.domain.SourceIdentityRow;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
 import org.synanton.ingestioncache.domain.SourceVersionRow;
+import org.synanton.ingestioncache.quarantine.QuarantineStore;
 import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
@@ -242,6 +243,36 @@ class ExtractionConsumerTest {
     }
 
     @Test
+    void extractionCreatesStagedGenerationAndPersistsQuarantineAndAudit() {
+        String tenant = "tenant-generation-lifecycle";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        QuarantineStore quarantineStore = new QuarantineStore(session);
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(), List.of(), LlmUsage.NONE,
+                List.of(new QuarantinedLine(1, "{bad}", "UNKNOWN_ENTITY_TYPE", "Alien", "SEMANTIC")),
+                ExtractionIntegrity.CLEAN,
+                new LlmProvenance("extraction-v2", "a".repeat(64), "b".repeat(64), null, null)));
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC(), quarantineStore).poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("KNOWLEDGE_READY");
+        var generations = quarantineStore.generations(tenant, fixture.versionId());
+        assertThat(generations).hasSize(1);
+        UUID generationId = generations.getFirst().extractionGeneration();
+        assertThat(generations.getFirst().generationStatus()).isEqualTo("STAGED");
+        assertThat(generations.getFirst().promptDigest()).isEqualTo("a".repeat(64));
+        assertThat(quarantineStore.records(tenant, fixture.versionId(), generationId)).hasSize(1);
+        assertThat(quarantineStore.currentGeneration(tenant, fixture.versionId())).isEmpty();
+        assertThat(quarantineStore.auditEvents(tenant, fixture.versionId(), generationId))
+                .extracting(event -> event.eventType())
+                .contains("GENERATION_CREATED");
+    }
+
+    @Test
     void persistedExtractionCarriesPromptProvenance() {
         String tenant = "tenant-provenance";
         Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
@@ -260,6 +291,24 @@ class ExtractionConsumerTest {
                     assertThat(row.promptRenderedDigest()).isEqualTo("b".repeat(64));
                     assertThat(row.schemaDigest()).isNull();
                 });
+    }
+
+    @Test
+    void failedExtractionLeavesNoStagedGeneration() {
+        String tenant = "tenant-generation-failure";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        QuarantineStore quarantineStore = new QuarantineStore(session);
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenThrow(new IllegalStateException("model down"));
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC(), quarantineStore).poll();
+
+        assertThat(cache.readExtractionStatus(tenant, CONNECTOR, SOURCE, RESOURCE,
+                fixture.versionId())).contains("EXTRACTION_FAILED");
+        assertThat(quarantineStore.generations(tenant, fixture.versionId())).isEmpty();
+        assertThat(quarantineStore.currentGeneration(tenant, fixture.versionId())).isEmpty();
     }
 
     @Test

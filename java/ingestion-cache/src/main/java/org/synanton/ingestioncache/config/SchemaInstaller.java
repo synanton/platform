@@ -49,6 +49,7 @@ public class SchemaInstaller {
         "cql/V33__extraction_provider_config.cql",
         "cql/V34__quarantine_persistence.cql",
         "cql/V35__extraction_prompt_provenance.cql",
+        "cql/V36__quarantine_audit.cql",
     };
 
     public static void install(CqlSession session) {
