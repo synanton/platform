@@ -1,0 +1,35 @@
+name: DEV-25 Provenance
+
+on:
+  push:
+    paths:
+      - 'evaluation/dev25/**'
+      - '.github/workflows/dev25-provenance.yml'
+  pull_request:
+    paths:
+      - 'evaluation/dev25/**'
+      - '.github/workflows/dev25-provenance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  provenance:
+    name: DEV-25 provenance and drift checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Source documents are not checked into this repository's CI checkout.
+      # validate.py is the local/artifact step for source hashes and gold spans.
+      - name: Validate provenance declarations and record checksums
+        run: python3 evaluation/dev25/check_provenance.py
+
+      - name: Test the drift validator
+        run: python3 -m unittest discover -s evaluation/dev25 -p 'test_check_provenance.py' -v

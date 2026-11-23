@@ -1,0 +1,6 @@
+doc_id	document_id	used_in	date	scope	labels_consumed	note
+g7-dev-011	supply-chain-overview.txt	#820	2026-11-22	E1/E2/E3/E5 contract tests; 3 passes	none	Provenance only; status remains VALIDATED_GOLD. P2-3 planning decides held-out use.
+g7-dev-013	risk-factors-2025.txt	#820	2026-11-22	E1/E2/E3/E5 contract tests; 3 passes	none	Provenance only; status remains VALIDATED_GOLD. P2-3 planning decides held-out use.
+g7-dev-016	supply-chain-overview.epub	#820	2026-11-22	E1/E2/E3/E5 contract tests; 3 passes	none	Provenance only; status remains VALIDATED_GOLD. P2-3 planning decides held-out use.
+g7-dev-018	acme-corp-profile.epub	#820	2026-11-22	E1/E2/E3/E5 contract tests; 3 passes	none	Provenance only; status remains VALIDATED_GOLD. P2-3 planning decides held-out use.
+g7-dev-023	structured-supply-chain.md	#820	2026-11-22	E1/E2/E3/E5 contract tests; 3 passes	none	Provenance only; status remains VALIDATED_GOLD. P2-3 planning decides held-out use.
