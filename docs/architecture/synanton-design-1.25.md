@@ -282,6 +282,19 @@ If a derived object depends on another object, that dependency must be represent
 
 Resolutor determines impact. Equalix schedules and executes work under resource and priority controls.
 
+## 4.6 Ontology Evolution Is Governed and Versioned
+
+Ontology definitions are canonical semantic inputs, not model-generated transient output.
+
+- Models and deterministic discovery strategies may create ontology proposals, but cannot mutate an active ontology release.
+- Human review and editing are explicit governance operations. In the initial operating mode, every proposal requires human approval and automatic publication is disabled.
+- Deterministic validation and an expected-base-release check are required before publication.
+- Published ontology releases are immutable; changes create a new release with durable review, validation, and publication provenance.
+- Disabling dynamic discovery prevents new model-generated proposals; it does not disable reads or authorized manual ontology governance.
+- Ontology publication is a dependency change for derived knowledge. Resolutor impact analysis and controlled recalculation remain separate from ontology release publication.
+
+The detailed proposal/review/publication contracts and rollout gates are maintained in [Syntology Ontology Governance and Dynamic Evolution](./syntology/ontology-governance.md). This section establishes the cross-platform invariant; it does not claim those APIs or workflows are implemented.
+
 ---
 
 # 5. Semantic Chunks Are Knowledge Units
@@ -2477,6 +2490,10 @@ A Masked-only original representation is never persisted.
 ## Invariant 15
 
 Security-sensitive caches are invalidated when their authorization assumptions become stale.
+
+## Invariant 16
+
+Model-generated ontology content is a proposal, never an active ontology mutation. Published ontology releases are immutable and change only through authorized human approval, deterministic validation, and audited publication.
 
 ---
 

@@ -1,5 +1,7 @@
 # Syntology Ontology Management Module and UI – v1.17 (Standalone Demo Focus)
 
+> **Architecture status:** This is a historical v1.17 standalone-demo design, not the current production ontology-governance specification. For model-assisted discovery, human review/editing, validation, and immutable publication, see [Syntology Ontology Governance and Dynamic Evolution](./ontology-governance.md). Do not treat the demo's simplified login, single-tenant storage, stubbed validation, or direct create-entity examples as production governance contracts.
+
 **Version:** 1.17
 **Date:** 2026-07-04
 **Status:** Final – Design for Standalone Demo
