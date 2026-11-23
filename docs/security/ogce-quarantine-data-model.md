@@ -64,15 +64,17 @@ Each extraction attempt gets a generation key. The generation is the versioning 
 | `model_revision` | Immutable revision/artifact. |
 | `extraction_started_at` | Run timestamp. |
 | `extraction_run_id` | Durable run/correlation ID if distinct from the generation ID. |
-| `generation_status` | `STAGED`, `ACTIVE`, `SUPERSEDED`, `FAILED`, `DELETED`. |
+| `generation_status` | `STAGED`, `SUPERSEDED`, `FAILED`, `DELETED`. **`ACTIVE` is represented by the current pointer, not stored as a second status flag.** |
 | `superseded_by` | Nullable; later generation that superseded this one. |
-| `promoted_at` | Nullable; when the generation became `ACTIVE`. |
+| `promoted_at` | Nullable; when the generation became current. |
 | `promoted_by` | Nullable; actor/service that promoted it. |
 | `promotion_reason` | Nullable; audit rationale. |
-| `previous_generation` | Nullable; prior `ACTIVE` generation at promotion. |
+| `previous_generation` | Nullable; prior current generation at promotion. |
 | `deletion_mode` | `TOMBSTONE` or `HARD_DELETE`. |
 | `deleted_at` | Nullable; set on source deletion/retention/compliance. |
 | `deleted_reason` | Nullable; `SOURCE_DELETED`, `RETENTION`, `COMPLIANCE`, `OPERATOR`. |
+
+The current-generation pointer is authoritative. Generation rows never store a second `ACTIVE` flag, so pointer and status cannot race into two active generations.
 
 ### Cache identity vs record identity
 
@@ -116,20 +118,20 @@ A separate `quarantine_generations` metadata table carries the generation fields
 
 1. Mint a new `extraction_generation`.
 2. Write quarantine records for that generation.
-3. On success, mark the previous `ACTIVE` generation `SUPERSEDED` with `superseded_by`.
-4. On failure, keep the previous `ACTIVE` generation current; mark the failed attempt `FAILED`.
+3. On success, mark the previous current generation `SUPERSEDED` with `superseded_by`.
+4. On failure, keep the previous current generation current; mark the failed attempt `FAILED`.
 5. Old generations remain queryable until retention or source deletion. Their records are not overwritten.
 
 This preserves diagnostic history and keeps v2/v3 quarantines distinguishable. Replacement is limited to retention/source-deletion tombstones.
 
 ### Generation promotion
 
-**Decision: explicit promotion, not latest-wins.**
+**Decision: explicit promotion, not latest-wins. The current pointer is the ACTIVE designation.**
 
 - A completed generation is `STAGED`, not current.
-- Promotion sets `STAGED -> ACTIVE` and records `promoted_at`, `promoted_by`, `promotion_reason`, and `previous_generation`.
-- The previous `ACTIVE` generation becomes `SUPERSEDED`.
-- Exactly one generation is `ACTIVE` per `(tenant_id, source_version_id)`.
+- Promotion moves the current pointer to the generation and records `promoted_at`, `promoted_by`, `promotion_reason`, and `previous_generation`.
+- The previous current generation becomes `SUPERSEDED`.
+- Exactly one current pointer exists per `(tenant_id, source_version_id)`; `ACTIVE` is a view of that pointer, not a duplicate mutable status flag.
 - Latest-wins is rejected: a newer run that produces fewer candidates would silently remove current content.
 - If the first #826 implementation slice does not include promotion, it must not claim current-generation behavior; promotion is a named follow-up.
 
@@ -161,7 +163,7 @@ That decision belongs to P2-3 planning; the flag only preserves the #820 history
 3. **Tombstone scope:** source deletion applies only to `(tenant_id, source_version_id)` and all its generations; no other tenant or source version is affected.
 4. **Digest integrity:** prompt/schema digests follow #831; null means historical/unverified; a mismatch fails closed before cache use or promotion.
 5. **Retention and audit:** tombstone/hard-delete behavior remains compatible with #830 retention, encryption, and audit requirements.
-6. **Promotion:** exactly one `ACTIVE` generation per `(tenant_id, source_version_id)`; promotion is explicit and audited.
+6. **Promotion:** exactly one current pointer per `(tenant_id, source_version_id)`; the pointer is the ACTIVE designation; promotion is explicit and audited.
 
 ## 10. Aggregation and queries
 
@@ -190,10 +192,10 @@ That decision belongs to P2-3 planning; the flag only preserves the #820 history
 
 ## 13. Test plan (D6 traceability)
 
-- Re-extract v2 -> v3: old generation `SUPERSEDED`; new `STAGED` until explicit promotion; no overwrite.
-- Failed re-extraction: previous generation stays `ACTIVE`; failed attempt `FAILED`.
+- Re-extract v2 -> v3: old generation `SUPERSEDED` when the pointer moves; the new generation is `STAGED` until explicit promotion; no overwrite.
+- Failed re-extraction: previous generation remains current; failed attempt `FAILED`.
 - Cache hit/miss: generation ID is not part of the cache key; a hit reuses the cached generation's records.
-- Concurrent generation writes/promotion: no duplicate `ACTIVE` generation; idempotent records.
+- Concurrent generation writes/promotion: no duplicate current pointer; idempotent records.
 - Source deletion (tombstone): all generations tombstoned; raw payloads removed; historical/audit query still sees metadata; second source version/tenant untouched; idempotent.
 - Compliance deletion (hard): payloads and metadata removed per policy; audit ledger follows policy.
 - Retention: clock-controlled expiry at 30 days; no record beyond 90 days without an exception.
