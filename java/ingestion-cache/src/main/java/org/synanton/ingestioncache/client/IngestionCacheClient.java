@@ -1659,6 +1659,22 @@ public class IngestionCacheClient {
         return rows.stream().sorted(Comparator.comparingInt(ExtractionResultRow::chunkOrdinal)).toList();
     }
 
+    public int deleteExtractionResultsForVersion(
+            String tenantId, UUID contentRefId, UUID sourceVersionId) {
+        int deleted = 0;
+        for (ExtractionResultRow row : listExtractionResults(tenantId, contentRefId)) {
+            if (sourceVersionId.equals(row.sourceVersionId())) {
+                session.execute(SimpleStatement.newInstance(
+                    "DELETE FROM ingestion_cache.extraction_results " +
+                    "WHERE tenant_id=? AND content_ref_id=? AND chunk_ordinal=?",
+                    tenantId, contentRefId, row.chunkOrdinal()
+                ));
+                deleted++;
+            }
+        }
+        return deleted;
+    }
+
     public List<SourceOutboxRow> listSourceOutbox(
             String tenantId, String connectorId, String sourceId, String resourceId) {
         ResultSet versions = session.execute(SimpleStatement.newInstance(
