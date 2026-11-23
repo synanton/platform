@@ -64,12 +64,22 @@ Each extraction attempt gets a generation key. The generation is the versioning 
 | `model_revision` | Immutable revision/artifact. |
 | `extraction_started_at` | Run timestamp. |
 | `extraction_run_id` | Durable run/correlation ID if distinct from the generation ID. |
-| `generation_status` | `PENDING`, `ACTIVE`, `SUPERSEDED`, `FAILED`, `DELETED`. |
+| `generation_status` | `STAGED`, `ACTIVE`, `SUPERSEDED`, `FAILED`, `DELETED`. |
 | `superseded_by` | Nullable; later generation that superseded this one. |
-| `tombstoned_at` | Nullable; set on source deletion/retention tombstone. |
-| `tombstone_reason` | Nullable; `SOURCE_DELETED`, `RETENTION`, `OPERATOR`. |
+| `promoted_at` | Nullable; when the generation became `ACTIVE`. |
+| `promoted_by` | Nullable; actor/service that promoted it. |
+| `promotion_reason` | Nullable; audit rationale. |
+| `previous_generation` | Nullable; prior `ACTIVE` generation at promotion. |
+| `deletion_mode` | `TOMBSTONE` or `HARD_DELETE`. |
+| `deleted_at` | Nullable; set on source deletion/retention/compliance. |
+| `deleted_reason` | Nullable; `SOURCE_DELETED`, `RETENTION`, `COMPLIANCE`, `OPERATOR`. |
 
-The cache/provenance key must include the prompt and schema digests; the generation ID is the storage/version key (#829/#831).
+### Cache identity vs record identity
+
+- **Record identity:** `(tenant_id, source_version_id, extraction_generation, chunk_ordinal, line_number)`.
+- **Cache key:** `(tenant_id, source_version_id, segment_hash, prompt_digest, schema_digest, model_id, model_revision, temperature, top_p, tokenizer_version)`.
+
+`extraction_generation` is a **record identifier, not a cache input**. Cache lookup happens before a run; on a hit, reuse the records associated with the cached generation; on a miss, mint a new generation. Including the generation ID in the cache key would make every run a guaranteed cache miss and defeat replayability.
 
 ## 5. Quarantine record layer
 
@@ -112,9 +122,22 @@ A separate `quarantine_generations` metadata table carries the generation fields
 
 This preserves diagnostic history and keeps v2/v3 quarantines distinguishable. Replacement is limited to retention/source-deletion tombstones.
 
+### Generation promotion
+
+**Decision: explicit promotion, not latest-wins.**
+
+- A completed generation is `STAGED`, not current.
+- Promotion sets `STAGED -> ACTIVE` and records `promoted_at`, `promoted_by`, `promotion_reason`, and `previous_generation`.
+- The previous `ACTIVE` generation becomes `SUPERSEDED`.
+- Exactly one generation is `ACTIVE` per `(tenant_id, source_version_id)`.
+- Latest-wins is rejected: a newer run that produces fewer candidates would silently remove current content.
+- If the first #826 implementation slice does not include promotion, it must not claim current-generation behavior; promotion is a named follow-up.
+
 ## 7. Deletion, retention, and audit
 
-- **Source deletion:** key `(tenant_id, source_version_id)` tombstones all generations for that source version. Raw payloads are removed; generation/tombstone metadata and audit disposition remain per policy. The operation is idempotent and must not touch another generation or tenant.
+- **Deletion modes:** `TOMBSTONE` for normal source deletion; `HARD_DELETE` for compliance deletion (DSAR/GDPR or equivalent). D5 states which mode applies. A tombstone removes current-query visibility but retains audit metadata; a hard delete removes payloads and metadata, with any audit ledger retained only as permitted by policy.
+- **Source deletion:** key `(tenant_id, source_version_id)` applies the selected deletion mode to all generations for that source version. Normal mode tombstones; compliance mode hard-deletes. The operation is idempotent and must not touch another generation or tenant.
+- **Tombstoned visibility:** a tombstoned generation is excluded from current accepted-candidate retrieval but remains visible to historical diagnostics and audit queries until retention/audit policy removes it.
 - **Document identity:** owned by source lifecycle; this store does not delete or reuse it.
 - **Development-touched flag:** repository/document provenance; unaffected by extraction, re-extraction, or source deletion.
 - **Retention:** per-record `retention_expires_at`; default 30 days, hard max 90 days absent an exception. Expiry removes payloads; audit metadata may remain.
@@ -131,7 +154,16 @@ This preserves diagnostic history and keeps v2/v3 quarantines distinguishable. R
 
 That decision belongs to P2-3 planning; the flag only preserves the #820 history.
 
-## 9. Aggregation and queries
+## 9. Lifecycle invariants
+
+1. **Generation isolation:** every accepted or quarantined record resolves to exactly one `extraction_generation`; no cross-generation leakage.
+2. **Idempotency and concurrency:** writes keyed by `(extraction_generation, chunk_ordinal, line_number)` are idempotent. Generation IDs are unique; concurrent generation creation and promotion are conditional/serialized; retries cannot ambiguously reuse a generation.
+3. **Tombstone scope:** source deletion applies only to `(tenant_id, source_version_id)` and all its generations; no other tenant or source version is affected.
+4. **Digest integrity:** prompt/schema digests follow #831; null means historical/unverified; a mismatch fails closed before cache use or promotion.
+5. **Retention and audit:** tombstone/hard-delete behavior remains compatible with #830 retention, encryption, and audit requirements.
+6. **Promotion:** exactly one `ACTIVE` generation per `(tenant_id, source_version_id)`; promotion is explicit and audited.
+
+## 10. Aggregation and queries
 
 - By `(tenant, source_version, extraction_generation)`: record count, structural vs semantic split, reason-code histogram.
 - By disposition: open/reviewed/accepted/retry/closed counts.
@@ -139,14 +171,14 @@ That decision belongs to P2-3 planning; the flag only preserves the #820 history
 - By source deletion: tombstone all generations for a source version.
 - For #828: persisted histograms are required before a run is labelled a durable baseline.
 
-## 10. Security boundaries
+## 11. Security boundaries
 
 - Quarantine is governed by D5/D6; it is not controlled by `LLM_EXTRACTION_CAPTURE_ENABLED` (that gate governs the separate diagnostic capture directory).
 - Capture and quarantine share the source-deletion key but remain separate stores until #830 decides whether to unify them.
 - No cross-tenant read/export/replay; fail closed on missing tenant context.
 - No digest semantics are defined here; prompt/schema digests follow #831.
 
-## 11. Open decisions before implementation
+## 12. Open decisions before implementation
 
 1. **Raw line storage:** retain encrypted raw lines (proposed) or only hashes plus bounded metadata.
 2. **Generation ID source:** mint at extraction start in the consumer; expose it on `ExtractionResult` and persistence.
@@ -154,12 +186,16 @@ That decision belongs to P2-3 planning; the flag only preserves the #820 history
 4. **Store placement:** Cassandra `quarantine_records`/`quarantine_generations` vs candidate store; migration/backfill.
 5. **Replay:** whether replay creates a new generation and whether the original disposition remains linked.
 6. **Model identity fields:** exact model ID/revision source for the generation record.
+7. **Compliance deletion:** which audit metadata may remain after `HARD_DELETE`; this must match D5/legal policy.
 
-## 12. Test plan (D6 traceability)
+## 13. Test plan (D6 traceability)
 
-- Re-extract v2 -> v3: old generation `SUPERSEDED`; new `ACTIVE`; no overwrite.
+- Re-extract v2 -> v3: old generation `SUPERSEDED`; new `STAGED` until explicit promotion; no overwrite.
 - Failed re-extraction: previous generation stays `ACTIVE`; failed attempt `FAILED`.
-- Source deletion: all generations tombstoned; raw payloads removed; second source version/tenant untouched; idempotent.
+- Cache hit/miss: generation ID is not part of the cache key; a hit reuses the cached generation's records.
+- Concurrent generation writes/promotion: no duplicate `ACTIVE` generation; idempotent records.
+- Source deletion (tombstone): all generations tombstoned; raw payloads removed; historical/audit query still sees metadata; second source version/tenant untouched; idempotent.
+- Compliance deletion (hard): payloads and metadata removed per policy; audit ledger follows policy.
 - Retention: clock-controlled expiry at 30 days; no record beyond 90 days without an exception.
 - Cross-tenant access: tenant B cannot read/export/replay tenant A's record.
 - Encryption: ciphertext at rest; key-scope negative test.
@@ -167,7 +203,7 @@ That decision belongs to P2-3 planning; the flag only preserves the #820 history
 - Aggregation: structural/semantic counts and histogram match records.
 - Dev-touched: flag does not alter any quarantine lifecycle behavior.
 
-## 13. Non-goals
+## 14. Non-goals
 
 - No F1, extraction-quality, gate status, profile qualification, or ADR-044 transition.
 - No DEV-label or frozen-gold consumption.
