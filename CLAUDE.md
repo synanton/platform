@@ -31,6 +31,75 @@
 - `./gradlew checkBaseImages` (also part of `buildAll`) is the enforcement gate.
   See [ADR-024](docs/architecture/decisions/adr-024-glibc-runtime-images.md).
 
+## Docker Lifecycle Policy
+
+Local Docker resources created for development or testing must not outlive the
+operation that created them. This policy governs **labeled** resources created
+under it; unlabeled resources are outside its scope and need human review.
+"Docker-clean" under this policy means no labeled resources remain; unlabeled
+resources may still be present.
+
+### Scope and labels
+
+- Every test/dev container, network, and volume MUST carry `ogce.dev=true` and
+  an invocation-scoped `ogce.run` label.
+- `ogce.run` MUST be constant across every resource created by one invocation
+  and different between invocations (UUID, `$(date +%s)-$$`, or
+  `$GITHUB_RUN_ID-$GITHUB_JOB`). It is an invocation label, not a per-resource
+  identifier.
+- Label resources so cleanup can target `label=ogce.run=$INVOCATION_ID` and
+  recover the whole run, including partial failures.
+
+### Mandatory patterns
+
+1. **`docker run`:** use `--rm`, apply `ogce.dev=true`/`ogce.run`, and label and
+   remove any auxiliary networks and volumes.
+2. **Docker Compose:** set `restart: "no"` on every test/dev service, use a
+   deterministic project name, label services and explicitly created
+   networks/volumes, and run `docker compose -p <project> down -v` from
+   teardown that executes on success and failure.
+3. **Testcontainers:** keep Ryuk enabled on development machines and verify
+   teardown. Do not rely on Ryuk after forced JVM termination: Testcontainers
+   fixtures MUST also carry `ogce.dev=true`/`ogce.run` so the labeled sweep can
+   recover leftovers if Ryuk fails or is disabled.
+4. **Ports:** bind ephemeral/host-random ports (`--publish 127.0.0.1::5432` or an
+   allocation registry keyed by `ogce.run`). Never publish a fixed well-known
+   port from a fixture (for example `0.0.0.0:5432:5432`); this both collides with
+   shared services and exposes test data. Port collisions are functional defects
+   and a possible contributor to flaky CI (#836).
+
+### Running leftovers and cleanup
+
+- Every containerized fixture MUST enforce an outer timeout (JUnit `@Timeout`,
+  pytest timeout, `timeout 600`, etc.) that stops the container even if the test
+  body hangs. The timeout is the primary defense; the sweep is the backstop for
+  exited resources.
+- A running container left by a hung run may be removed manually only after
+  confirming via `ogce.run` and the parent process tree that the test is no
+  longer alive. Automated removal of running containers requires an explicit
+  human-invoked force flag; never kill running containers by status filter.
+- Automated cleanup targets only the run/project labels. Never use global
+  `docker system prune`; never remove unlabeled resources automatically.
+- Grace periods: pre-commit sweep = 0 minutes for labeled leftovers; CI
+  post-test sweep = `ogce.run=$GITHUB_RUN_ID` with no grace (fail with names);
+  daily developer sweep = `ogce.dev=true` older than 1 hour.
+- Keep cleanup and verification separate: cleanup removes owned leftovers;
+  CI verification reports and fails on remaining resources without deleting the
+  evidence first.
+- Audit existing resources before one-time cleanup. Present unlabeled resources
+  for human review; do not infer that an unlabeled stopped container is an
+  orphan, and never remove shared services/volumes without explicit verification.
+
+### Required verification
+
+- Teardown MUST run even when setup or tests fail.
+- CI MUST fail with resource names/identifiers if resources belonging to the run
+  remain after teardown.
+- A synthetic leak test MUST demonstrate that the cleanup detects a deliberately
+  leaked labeled resource.
+- PRs adding or changing containerized test/dev fixtures MUST document their
+  lifecycle policy and teardown behavior; use the PR template checklist.
+
 ## Git Hooks
 
 Runtime-data guard is checked in: run once per clone
