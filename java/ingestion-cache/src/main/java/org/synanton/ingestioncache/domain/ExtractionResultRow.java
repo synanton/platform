@@ -11,4 +11,17 @@ public record ExtractionResultRow(
         UUID sourceVersionId,
         String entitiesJson,
         String relationsJson,
-        Instant extractedAt) {}
+        Instant extractedAt,
+        String promptVersion,
+        String promptCompiledDigest,
+        String promptRenderedDigest,
+        String schemaVersion,
+        String schemaDigest) {
+
+    public ExtractionResultRow(String tenantId, UUID contentRefId, int chunkOrdinal,
+                               UUID sourceVersionId, String entitiesJson,
+                               String relationsJson, Instant extractedAt) {
+        this(tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson,
+                relationsJson, extractedAt, null, null, null, null, null);
+    }
+}

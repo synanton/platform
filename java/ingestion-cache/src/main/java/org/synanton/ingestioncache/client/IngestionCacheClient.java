@@ -1620,10 +1620,23 @@ public class IngestionCacheClient {
     public void upsertExtractionResult(
             String tenantId, UUID contentRefId, int chunkOrdinal, UUID sourceVersionId,
             String entitiesJson, String relationsJson, Instant extractedAt) {
+        upsertExtractionResult(tenantId, contentRefId, chunkOrdinal, sourceVersionId,
+                entitiesJson, relationsJson, null, null, null, null, null, extractedAt);
+    }
+
+    public void upsertExtractionResult(
+            String tenantId, UUID contentRefId, int chunkOrdinal, UUID sourceVersionId,
+            String entitiesJson, String relationsJson,
+            String promptVersion, String promptCompiledDigest, String promptRenderedDigest,
+            String schemaVersion, String schemaDigest, Instant extractedAt) {
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.extraction_results (tenant_id, content_ref_id, chunk_ordinal, " +
-            "source_version_id, entities_json, relations_json, extracted_at) VALUES (?,?,?,?,?,?,?)",
-            tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson, relationsJson, extractedAt
+            "source_version_id, entities_json, relations_json, extracted_at, prompt_version, " +
+            "prompt_compiled_digest, prompt_rendered_digest, schema_version, schema_digest) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson, relationsJson,
+            extractedAt, promptVersion, promptCompiledDigest, promptRenderedDigest,
+            schemaVersion, schemaDigest
         ));
     }
 
@@ -1637,7 +1650,10 @@ public class IngestionCacheClient {
             rows.add(new ExtractionResultRow(
                 row.getString("tenant_id"), row.getUuid("content_ref_id"), row.getInt("chunk_ordinal"),
                 row.getUuid("source_version_id"), row.getString("entities_json"),
-                row.getString("relations_json"), row.getInstant("extracted_at")
+                row.getString("relations_json"), row.getInstant("extracted_at"),
+                row.getString("prompt_version"), row.getString("prompt_compiled_digest"),
+                row.getString("prompt_rendered_digest"), row.getString("schema_version"),
+                row.getString("schema_digest")
             ));
         }
         return rows.stream().sorted(Comparator.comparingInt(ExtractionResultRow::chunkOrdinal)).toList();

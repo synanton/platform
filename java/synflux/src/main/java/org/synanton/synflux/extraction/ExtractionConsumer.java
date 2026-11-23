@@ -201,10 +201,14 @@ public class ExtractionConsumer {
                 for (var entity : result.preEntities()) {
                     normalizedEntities.add(entity.surfaceForm() + "|" + entity.proposedType());
                 }
+                var provenance = result.provenance();
                 cacheClient.upsertExtractionResult(
                         request.tenantId(), request.contentRefId(), chunk.chunkOrdinal(), request.versionId(),
                         mapper.writeValueAsString(result.preEntities()),
-                        mapper.writeValueAsString(result.relations()), clock.instant());
+                        mapper.writeValueAsString(result.relations()),
+                        provenance.promptVersion(), provenance.promptCompiledDigest(),
+                        provenance.promptRenderedDigest(), provenance.schemaVersion(),
+                        provenance.schemaDigest(), clock.instant());
                 processed++;
             }
             long extractionEndNanos = System.nanoTime();
