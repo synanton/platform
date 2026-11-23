@@ -44,12 +44,18 @@ class PromptReplayPolicyTest {
     void legacyNullRequiresExplicitMatchingVerification() {
         LlmProvenance legacy = new LlmProvenance("v1", null, null, null, null);
 
-        assertThat(PromptReplayPolicy.decide(legacy, RENDERED, RENDERED, false).mode())
-                .isEqualTo(PromptReplayPolicy.Mode.REJECTED);
-        assertThat(PromptReplayPolicy.decide(legacy, RENDERED, RENDERED, true).mode())
-                .isEqualTo(PromptReplayPolicy.Mode.VERIFICATION_ONLY);
-        assertThat(PromptReplayPolicy.decide(legacy, RENDERED, "c".repeat(64), true).mode())
-                .isEqualTo(PromptReplayPolicy.Mode.REJECTED);
+        PromptReplayPolicy.Decision rejected = PromptReplayPolicy.decide(legacy, RENDERED, RENDERED, false);
+        PromptReplayPolicy.Decision verified = PromptReplayPolicy.decide(legacy, RENDERED, RENDERED, true);
+        PromptReplayPolicy.Decision mismatch = PromptReplayPolicy.decide(legacy, RENDERED, "c".repeat(64), true);
+
+        assertThat(rejected.mode()).isEqualTo(PromptReplayPolicy.Mode.REJECTED);
+        assertThat(rejected.cacheEligible()).isFalse();
+        assertThat(verified.mode()).isEqualTo(PromptReplayPolicy.Mode.VERIFICATION_ONLY);
+        assertThat(verified.cacheEligible()).isFalse();
+        assertThat(mismatch.mode()).isEqualTo(PromptReplayPolicy.Mode.REJECTED);
+        assertThat(mismatch.cacheEligible()).isFalse();
+        assertThat(legacy.promptCompiledDigest()).isNull();
+        assertThat(legacy.promptRenderedDigest()).isNull();
     }
 
     @Test

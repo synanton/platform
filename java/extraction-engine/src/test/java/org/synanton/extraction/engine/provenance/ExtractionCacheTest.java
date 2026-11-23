@@ -26,6 +26,38 @@ class ExtractionCacheTest {
     }
 
     @Test
+    void everyContractInputChangesCacheIdentity() {
+        ExtractionCacheKey base = key(PROMPT_DIGEST);
+        assertThat(ExtractionCacheKey.forRequest("other", SOURCE_VERSION, "segment text",
+                PROMPT_DIGEST, "c".repeat(64), "qwen3-8b-fp8", "rev", 0.0, 0.0, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", UUID.randomUUID(), "segment text",
+                PROMPT_DIGEST, "c".repeat(64), "qwen3-8b-fp8", "rev", 0.0, 0.0, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", SOURCE_VERSION, "different segment",
+                PROMPT_DIGEST, "c".repeat(64), "qwen3-8b-fp8", "rev", 0.0, 0.0, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", SOURCE_VERSION, "segment text",
+                PROMPT_DIGEST, "d".repeat(64), "qwen3-8b-fp8", "rev", 0.0, 0.0, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", SOURCE_VERSION, "segment text",
+                PROMPT_DIGEST, "c".repeat(64), "other-model", "rev", 0.0, 0.0, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", SOURCE_VERSION, "segment text",
+                PROMPT_DIGEST, "c".repeat(64), "qwen3-8b-fp8", "other-rev", 0.0, 0.0, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", SOURCE_VERSION, "segment text",
+                PROMPT_DIGEST, "c".repeat(64), "qwen3-8b-fp8", "rev", 0.1, 0.0, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", SOURCE_VERSION, "segment text",
+                PROMPT_DIGEST, "c".repeat(64), "qwen3-8b-fp8", "rev", 0.0, 0.1, "tok").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+        assertThat(ExtractionCacheKey.forRequest("tenant", SOURCE_VERSION, "segment text",
+                PROMPT_DIGEST, "c".repeat(64), "qwen3-8b-fp8", "rev", 0.0, 0.0, "other-tokenizer").cacheKey())
+                .isNotEqualTo(base.cacheKey());
+    }
+
+    @Test
     void identicalInputsHitWithoutCreatingGenerationsOrCallingTheModel() {
         ExtractionCache cache = new ExtractionCache();
         ExtractionCacheKey key = key(PROMPT_DIGEST);
