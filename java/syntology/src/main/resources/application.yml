@@ -12,6 +12,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # #870: existing V4 installations must receive the V1.5 repair migration.
+    out-of-order: true
   servlet:
     multipart:
       max-file-size: 10MB

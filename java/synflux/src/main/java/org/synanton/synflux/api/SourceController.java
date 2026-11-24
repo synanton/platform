@@ -359,6 +359,7 @@ public class SourceController {
     public record SourceVersionResource(
         SourceIdentityResource sourceIdentity,
         UUID versionId,
+        @JsonProperty("source_version_id") UUID sourceVersionId,
         String contentDigest,
         String contentCacheReference,
         String sourceRevision,
@@ -367,7 +368,7 @@ public class SourceController {
         private static SourceVersionResource from(SourceVersionRow row) {
             return new SourceVersionResource(
                 new SourceIdentityResource(row.tenantId(), row.connectorId(), row.sourceId(), row.resourceId()),
-                row.versionId(), row.contentDigest(), row.contentCacheReference(), row.sourceRevision(),
+                row.versionId(), row.versionId(), row.contentDigest(), row.contentCacheReference(), row.sourceRevision(),
                 row.observedAt()
             );
         }
