@@ -46,6 +46,9 @@ export interface McpTool {
 
 export async function getTenants(): Promise<Tenant[]> {
   const r = await topologyAxios.get<Tenant[]>("/tenants");
+  if (!Array.isArray(r.data)) {
+    throw new Error("Tenant service returned an unexpected response");
+  }
   return r.data;
 }
 
@@ -64,6 +67,9 @@ export async function createTenant(
 
 export async function getApiKeys(): Promise<ApiKey[]> {
   const r = await authAxios.get<ApiKey[]>("/api-keys");
+  if (!Array.isArray(r.data)) {
+    throw new Error("API-key service returned an unexpected response");
+  }
   return r.data;
 }
 
@@ -81,5 +87,8 @@ export async function revokeApiKey(keyId: string): Promise<void> {
 
 export async function getMcpCapabilities(): Promise<{ tools: McpTool[]; protocolVersion?: string }> {
   const r = await mcpAxios.get<{ tools: McpTool[]; protocolVersion?: string }>("/mcp");
+  if (r.data == null || !Array.isArray(r.data.tools)) {
+    throw new Error("MCP service returned an unexpected response");
+  }
   return r.data;
 }
