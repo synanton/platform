@@ -19,7 +19,20 @@ public record ExtractedRelation(
         String sourceId,
         String revisionId,
         long generation,
-        String extractionRunId) {
+        String extractionRunId,
+        String extractionGeneration) {
+
+    public ExtractedRelation(String relationId, String tenantId, String sourceVersionId,
+                             String predicate, String subjectMentionId, String objectMentionId,
+                             String evidenceChunkId, int evidenceChunkOffsetStart,
+                             int evidenceChunkOffsetEnd, int evidenceDocumentOffsetStart,
+                             int evidenceDocumentOffsetEnd, Instant validatedAt, String sourceId,
+                             String revisionId, long generation, String extractionRunId) {
+        this(relationId, tenantId, sourceVersionId, predicate, subjectMentionId, objectMentionId,
+                evidenceChunkId, evidenceChunkOffsetStart, evidenceChunkOffsetEnd,
+                evidenceDocumentOffsetStart, evidenceDocumentOffsetEnd, validatedAt, sourceId,
+                revisionId, generation, extractionRunId, null);
+    }
 
     public ExtractedRelation(String relationId, String tenantId, String sourceVersionId,
                              String predicate, String subjectMentionId, String objectMentionId,
@@ -29,6 +42,6 @@ public record ExtractedRelation(
         this(relationId, tenantId, sourceVersionId, predicate, subjectMentionId, objectMentionId,
                 evidenceChunkId, evidenceChunkOffsetStart, evidenceChunkOffsetEnd,
                 evidenceDocumentOffsetStart, evidenceDocumentOffsetEnd, validatedAt,
-                null, sourceVersionId, 0, null);
+                null, sourceVersionId, 0, null, null);
     }
 }

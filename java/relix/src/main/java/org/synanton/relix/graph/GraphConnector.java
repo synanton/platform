@@ -2,6 +2,7 @@ package org.synanton.relix.graph;
 
 import org.synanton.relix.api.dto.Edge;
 import org.synanton.relix.api.dto.Entity;
+import org.synanton.relix.api.dto.DocumentGraphResponse;
 import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ResolutionGraphPort;
@@ -47,6 +48,11 @@ public interface GraphConnector extends ExtractedMentionGraphReadPort, Extracted
     /** 4c.3: atomic canonical promotion with evidence accumulation. */
     default PromotionResult promoteRelation(CanonicalRelation relation) {
         throw new UnsupportedOperationException("graph connector does not support relation promotion");
+    }
+
+    /** Document-scoped extraction graph (mentions + candidate relations + promotion/resolution state). */
+    default DocumentGraphResponse documentGraph(String tenant, String sourceVersionId) {
+        throw new UnsupportedOperationException("graph connector does not support document graph reads");
     }
 
     /** #508: bounded one-hop canonical neighborhood with evidence provenance. */

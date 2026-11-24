@@ -579,6 +579,38 @@ class Neo4jGraphWriteIntegrationTest {
     }
 
     @Test
+    void documentGraphReturnsScopedMentionsRelationsAndExtractionGeneration() {
+        String tenant = "tenant-document-graph";
+        String version = "doc-version-1";
+        Instant now = Instant.parse("2026-11-24T00:00:00Z");
+        ExtractedMention subject = new ExtractedMention("dm-1", tenant, version, "ref", "ref:0",
+                0, 4, 10, 14, "Acme", "Supplier", now, "gen-1");
+        ExtractedMention object = new ExtractedMention("dm-2", tenant, version, "ref", "ref:0",
+                8, 12, 18, 22, "Widget", "Product", now, "gen-1");
+        ExtractedRelation relation = new ExtractedRelation("dr-1", tenant, version, "supplies",
+                "dm-1", "dm-2", "ref:0", 0, 12, 10, 22, now, "source", version, 1, null, "gen-1");
+
+        connector.upsertMentions(List.of(subject, object));
+        connector.upsertRelations(List.of(relation));
+
+        var graph = connector.documentGraph(tenant, version);
+        assertThat(graph.documentId()).isEqualTo(version);
+        assertThat(graph.nodes()).extracting(node -> node.mentionId())
+                .containsExactly("dm-1", "dm-2");
+        assertThat(graph.nodes()).allSatisfy(node -> {
+            assertThat(node.resolutionState()).isEqualTo("UNRESOLVED");
+            assertThat(node.extractionGeneration()).isEqualTo("gen-1");
+        });
+        assertThat(graph.edges()).singleElement().satisfies(edge -> {
+            assertThat(edge.relationId()).isEqualTo("dr-1");
+            assertThat(edge.promotionState()).isEqualTo("UNPROMOTED");
+            assertThat(edge.extractionGeneration()).isEqualTo("gen-1");
+        });
+        assertThat(connector.documentGraph(tenant, "other-version").nodes()).isEmpty();
+        assertThat(connector.documentGraph("other-tenant", version).nodes()).isEmpty();
+    }
+
+    @Test
     void concurrentMentionWritesAreUnique() throws Exception {
         String tenant = TENANT + "-concurrent";
         ExtractedMention mention = new ExtractedMention(

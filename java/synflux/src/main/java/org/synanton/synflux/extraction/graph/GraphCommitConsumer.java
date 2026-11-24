@@ -78,9 +78,10 @@ public class GraphCommitConsumer {
         }
         for (GraphCommitRequestRow row : pending) {
             try {
-                Map<Integer, ExtractionResult> results = loadResults(row);
+                LoadedResults loaded = loadResults(row);
                 List<ChunkRow> chunks = cacheClient.readChunks(row.tenantId(), row.contentRefId());
-                graphWriter.commit(toRequest(row), chunks, results, row.graphAttemptCount());
+                graphWriter.commit(toRequest(row), chunks, loaded.results(),
+                        row.graphAttemptCount(), loaded.extractionGeneration());
             } catch (Exception e) {
                 log.warn("Graph retry failed ref={} version={}: {}",
                         row.contentRefId(), row.versionId(), e.toString());
@@ -88,14 +89,21 @@ public class GraphCommitConsumer {
         }
     }
 
-    private Map<Integer, ExtractionResult> loadResults(GraphCommitRequestRow row) throws Exception {
+    private record LoadedResults(Map<Integer, ExtractionResult> results,
+                                 java.util.UUID extractionGeneration) {}
+
+    private LoadedResults loadResults(GraphCommitRequestRow row) throws Exception {
         Map<Integer, ExtractionResult> results = new LinkedHashMap<>();
+        java.util.UUID extractionGeneration = null;
         for (ExtractionResultRow stored : cacheClient.listExtractionResults(row.tenantId(), row.contentRefId())) {
             List<PreEntity> entities = mapper.readValue(stored.entitiesJson(), ENTITIES);
             List<RelationCandidate> relations = mapper.readValue(stored.relationsJson(), RELATIONS);
             results.put(stored.chunkOrdinal(), new ExtractionResult(entities, relations));
+            if (extractionGeneration == null) {
+                extractionGeneration = stored.extractionGeneration();
+            }
         }
-        return results;
+        return new LoadedResults(results, extractionGeneration);
     }
 
     private static ExtractionRequestRow toRequest(GraphCommitRequestRow row) {

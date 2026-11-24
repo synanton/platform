@@ -18,4 +18,15 @@ public record GraphMention(
         int documentOffsetEnd,
         String surfaceForm,
         String proposedType,
-        Instant extractedAt) {}
+        Instant extractedAt,
+        String extractionGeneration) {
+
+    public GraphMention(String mentionId, String tenantId, String sourceVersionId,
+                        String contentRefId, String chunkId, int chunkOffsetStart,
+                        int chunkOffsetEnd, int documentOffsetStart, int documentOffsetEnd,
+                        String surfaceForm, String proposedType, Instant extractedAt) {
+        this(mentionId, tenantId, sourceVersionId, contentRefId, chunkId, chunkOffsetStart,
+                chunkOffsetEnd, documentOffsetStart, documentOffsetEnd, surfaceForm,
+                proposedType, extractedAt, null);
+    }
+}
