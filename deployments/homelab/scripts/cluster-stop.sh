@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
-# cluster-stop.sh — platform entry point for the full-cluster shutdown.
+# cluster-stop.sh — full-cluster shutdown entry point.
 #
-# Delegates to gpu-runtime's cluster-stop.sh, which quiesces gpu-plane and
-# synanton, cordons/drains workers, and optionally powers the nodes off.
-# Examples:
-#   ./scripts/cluster-stop.sh                # quiesce, do not power off
-#   ./scripts/cluster-stop.sh --poweroff     # quiesce + power off all nodes
-#   ./scripts/cluster-stop.sh --poweroff --yes --skip-snapshot
+# Normal platform stop is local and does not depend on a sibling checkout.
+# Full-cluster cordon/drain/poweroff is explicit via --full or --poweroff.
+# Without those flags this script only stops the Synanton namespace.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,10 +11,20 @@ PLATFORM_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 GPU_RUNTIME_ROOT="${GPU_RUNTIME_ROOT:-$PLATFORM_ROOT/../gpu-runtime}"
 TARGET="$GPU_RUNTIME_ROOT/deployments/homelab/scripts/cluster-stop.sh"
 
-if [[ ! -x "$TARGET" ]]; then
-    echo "error: cluster stop script not found or not executable: $TARGET" >&2
-    echo "set GPU_RUNTIME_ROOT to the gpu-runtime checkout" >&2
-    exit 1
+full=0
+for arg in "$@"; do
+    case "$arg" in
+        --full|--poweroff) full=1 ;;
+    esac
+done
+
+if [ "$full" = "1" ]; then
+    if [[ ! -x "$TARGET" ]]; then
+        echo "error: --full/--poweroff requires gpu-runtime cluster-stop.sh at $TARGET" >&2
+        echo "set GPU_RUNTIME_ROOT or run scripts/stop.sh for a platform-only stop" >&2
+        exit 1
+    fi
+    exec "$TARGET" "$@"
 fi
 
-exec "$TARGET" "$@"
+exec "$SCRIPT_DIR/stop.sh"
