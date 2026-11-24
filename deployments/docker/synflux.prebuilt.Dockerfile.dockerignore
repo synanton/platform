@@ -1,0 +1,6 @@
+**
+!java
+!java/synflux
+!java/synflux/build
+!java/synflux/build/libs
+!java/synflux/build/libs/*.jar

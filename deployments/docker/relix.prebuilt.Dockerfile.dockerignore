@@ -1,0 +1,6 @@
+**
+!java
+!java/relix
+!java/relix/build
+!java/relix/build/libs
+!java/relix/build/libs/*.jar
