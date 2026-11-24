@@ -130,6 +130,7 @@ class SourceControllerTenantTest {
             .andExpect(jsonPath("$[0].content_cache_reference").value(reference))
             .andExpect(jsonPath("$[0].source_revision").value("etag:123"))
             .andExpect(jsonPath("$[0].version_id").value(version.versionId().toString()))
+            .andExpect(jsonPath("$[0].source_version_id").value(version.versionId().toString()))
             .andExpect(jsonPath("$[0].contentDigest").doesNotExist())
             .andExpect(jsonPath("$[0].sourceIdentity").doesNotExist());
     }
