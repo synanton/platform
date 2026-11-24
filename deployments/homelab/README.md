@@ -6,28 +6,46 @@ namespace and never cordons nodes or touches other namespaces).
 
 ## Status
 
-**Vertical Slice — Demo Complete.** End-to-end ingestion (upload → canonical
-Cassandra store), asynchronous search projection (outbox consumer → Lucene), and
-UI search with BM25/lexical retrieval and full provenance (page/section mapping)
-all work. Hybrid semantic search (the Dense leg) requires the GPU plane (TEI) and
-is pending integration for live uploads. See
-[docs/planning/vertical-slice-execution.md](../../docs/planning/vertical-slice-execution.md)
+**Phase 5 engineering complete; deployed demo gated on #888.** The SPA workflow
+(submit → process → results/quarantine → provenance → explicit promote →
+document graph) and tenant/security hardening are merged. The deployed
+environment must still be updated and verified with `verify-demo.sh`; MCP
+(#887) and Search/Chat (#886) are explicitly deferred and are not advertised as
+working demo paths.
+
+See [docs/planning/vertical-slice-execution.md](../../docs/planning/vertical-slice-execution.md)
 for the roadmap to "Operationally Complete".
+
+## Lifecycle contract
+
+| Action | Command | Behavior |
+|---|---|---|
+| Fresh deploy | `./scripts/deploy-demo.sh` | Applies data layer, secrets, overlay, and waits for RAKG services. |
+| Resume | `./scripts/start.sh` | Preflights required workloads, uncordons only labelled Synanton workers, scales required workloads, waits for readiness. |
+| Stop | `./scripts/stop.sh` | Scales managed workloads to zero in reverse order; keeps PVCs/PVs/secrets; leaves nodes schedulable. |
+| Full cluster shutdown | `./scripts/cluster-stop.sh --full` | Explicitly delegates cordon/drain/poweroff to gpu-runtime; `--poweroff` also requires it. Plain `cluster-stop.sh` performs a platform-only stop. |
+| Verify | `./scripts/verify-demo.sh` | Read-only readiness/image/ingress report; required failures exit non-zero. |
+| Remove | `CONFIRM=yes ./scripts/remove.sh` | Deletes namespace and platform PVs; node-local data remains by policy. |
+
+`start.sh` and `stop.sh` fail if a required managed workload is missing; a
+partial lifecycle must not look successful. `start.sh` never cordons nodes and
+only uncordons nodes labelled `synanton.io/role`. `platform` is optional and is
+left stopped unless `START_PLATFORM=1` is set.
 
 ## Running the demo (K8s)
 
-1. **Start the cluster:** `./scripts/start.sh` (uncordons workers, scales the slice
-   back up, including the demo services).
-2. **Deploy the data layer + demo overlay:** `./scripts/deploy-demo.sh` (data layer
-   + secrets, including `security-htpasswd`, then
-   `kubectl apply -k k8s/local-real-demo/`). **Do not use `deploy.sh`** — that
-   deploys the base #253 slice, not the demo.
-3. **Access the UI:** `http://<worker-node-ip>:30080` (NodePort; `security` and
-   `synquest` stay ClusterIP behind the UI's `/v1/` nginx proxy).
-4. **Log in** with `DEMO_USER` / `DEMO_PASSWORD` from your local `config/.env`.
+1. **Deploy:** `./scripts/deploy-demo.sh` (data layer + secrets + demo overlay).
+   **Do not use `deploy.sh`** — that deploys the base #253 slice, not the demo.
+2. **Resume later:** `./scripts/start.sh`.
+3. **Verify:** `./scripts/verify-demo.sh`; record pod image IDs/digests and any
+   deferred warnings in the demo run note.
+4. **Access the UI:** `http://<worker-node-ip>:30080`.
+5. **Log in** with `DEMO_USER` / `DEMO_PASSWORD` from your local `config/.env`.
 
 On a fresh deploy, the outbox consumer builds the initial Lucene projection;
-search returns results once that finishes (see Known Limitations).
+search returns results once that finishes (see Known Limitations). The workflow
+does not depend on Search/Chat. Record the deployed image digests; a running pod
+alone is not proof that the Phase 5 UI bundle is deployed.
 
 ## Known limitations (vertical slice)
 
@@ -90,11 +108,18 @@ Build/push the RAKG images with
 `IMAGE_TAG=local-real-demo ./scripts/mirror-images.sh`; the overlay uses matching
 tags until the activation runbook pins digests.
 
-## Stop / remove
-```bash
-./scripts/stop.sh                # scale to 0, keep PVCs, nodes stay schedulable
-CONFIRM=yes ./scripts/remove.sh  # namespace + PVs
-```
+## Image provenance and deferred ingress
+
+- Overlay images use the `local-real-demo` tag; `imagePullPolicy: Always` means a
+  pushed rebuild is picked up on pod restart. `verify-demo.sh` prints image IDs
+  for the deployed pods.
+- Working ingress: auth, ontology, entity graph, document graph, topology,
+  synflux, workflow.
+- Deferred: MCP (#887, no deployed target) and Search/Chat (#886, envelope/auth/
+  proxy work). Do not advertise these paths as working until their tickets
+  close.
+- `verify-demo.sh` requires UI routes `/synflux/`, `/api/v1/documents/`, and
+  `/topology/`, plus the Workflow bundle. A stale UI image fails the check.
 
 ## Next steps & roadmap
 See [docs/planning/vertical-slice-execution.md](../../docs/planning/vertical-slice-execution.md)

@@ -1,21 +1,48 @@
 #!/usr/bin/env bash
-# stop.sh — scale the slice to zero WITHOUT cordoning nodes.
+# stop.sh — scale the managed slice to zero without cordoning nodes.
 #
-# Cordoning is cluster-wide and parks the gpu-plane / speech workloads too;
-# only the cluster-level stop (gpu-runtime's cluster-stop.sh) may cordon.
-# PVCs, PVs, and secrets are kept.
+# Reverse dependency order; PVCs/PVs/secrets are retained. Missing workloads
+# are an error so a partial stop cannot look successful.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NAMESPACE="${NAMESPACE:-synanton}"
 
 log() { printf '\033[1;34m[stop]\033[0m %s\n' "$*"; }
+die() { printf '\033[1;31m[stop]\033[0m %s\n' "$*" >&2; exit 1; }
 
-log "scaling the slice to zero (PVCs retained, nodes stay schedulable)"
-for d in security ui platform synflux synquest extraction-gateway minio; do
-    kubectl -n "$NAMESPACE" scale deployment/"$d" --replicas=0 2>/dev/null || true
+command -v kubectl >/dev/null || die "kubectl not found"
+kubectl get namespace "$NAMESPACE" >/dev/null 2>&1 \
+    || die "namespace $NAMESPACE missing — nothing to stop"
+
+DEPLOYMENTS=(ui security syntology relix synflux synquest extraction-gateway minio)
+OPTIONAL_DEPLOYMENTS=(platform)
+STATEFULSETS=(neo4j postgres cassandra)
+
+for d in "${DEPLOYMENTS[@]}"; do
+    kubectl -n "$NAMESPACE" get deployment "$d" >/dev/null 2>&1 \
+        || die "managed deployment missing: $d"
 done
-for s in cassandra postgres; do
-    kubectl -n "$NAMESPACE" scale statefulset/"$s" --replicas=0 2>/dev/null || true
+for d in "${OPTIONAL_DEPLOYMENTS[@]}"; do
+    kubectl -n "$NAMESPACE" get deployment "$d" >/dev/null 2>&1 \
+        || log "optional deployment absent: $d (not counted as success)"
 done
+for s in "${STATEFULSETS[@]}"; do
+    kubectl -n "$NAMESPACE" get statefulset "$s" >/dev/null 2>&1 \
+        || die "managed statefulset missing: $s"
+done
+
+log "scaling managed workloads to zero (PVCs retained, nodes stay schedulable)"
+for d in "${DEPLOYMENTS[@]}"; do
+    kubectl -n "$NAMESPACE" scale deployment/"$d" --replicas=0
+done
+for d in "${OPTIONAL_DEPLOYMENTS[@]}"; do
+    if kubectl -n "$NAMESPACE" get deployment "$d" >/dev/null 2>&1; then
+        kubectl -n "$NAMESPACE" scale deployment/"$d" --replicas=0
+    fi
+done
+for s in "${STATEFULSETS[@]}"; do
+    kubectl -n "$NAMESPACE" scale statefulset/"$s" --replicas=0
+done
+
 log "stopped — run scripts/start.sh to resume"
