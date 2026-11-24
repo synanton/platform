@@ -32,8 +32,19 @@ Status: first implementation slice for #882.
 | UI login/grants repairs | `authApi.ts` accepts `expiresIn`; grants path no longer double-prefixes. |
 | Dev/prod ingress for workflow | Vite `/synflux` + `/api/v1/documents`; nginx `/synflux/` + document graph route. |
 
+## Security and ingress hardening
+
+- API-key list/revoke/rotate are tenant-scoped to the verified caller; tests cover list/revoke SQL scoping and missing-context rejection.
+- Tenant switching is no longer cosmetic: the SPA displays the JWT-bound tenant and no longer writes a conflicting local tenant; `useTenant` and auth no longer fall back to `demo`.
+- Dev/prod topology ingress added; workflow and document graph proxies already present.
+- Login `expiresIn` fallback and grants double-prefix path fixed.
+
+Tests: `ApiKeyTenantRequiredTest`, `WorkflowPage.test.tsx`, UI lint, and the existing SPA test suite pass.
+
 ## Remaining Phase 5 work
 
-- Full existing-view/ingress regression sweep (search UI is Phase 6; topology/mcp/search ingress fixes remain assigned).
-- Build All and any UI lint/test gate.
+- Full existing-view regression sweep against #860.
+- MCP/search ingress and chat/search contract repairs (Phase 6 coordination).
+- API-key create-response UI type alignment if needed.
+- Build All/CI gate.
 - No F1/gold/gate/profile/ADR-044 claim.

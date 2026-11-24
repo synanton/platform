@@ -74,9 +74,10 @@ public class ApiKeyController {
     @GetMapping
     public ResponseEntity<List<ApiKeyListItem>> list(
             @RequestParam(defaultValue = "20") int limit) {
+        String tenantId = requireTenant();
         List<ApiKeyListItem> keys = jdbc.query(
                 "SELECT key_id, tenant_id, subject_id, label, scopes, created_at FROM security.api_keys " +
-                "WHERE tenant_id = 'demo' AND revoked_at IS NULL ORDER BY created_at DESC LIMIT ?",
+                "WHERE tenant_id = ? AND revoked_at IS NULL ORDER BY created_at DESC LIMIT ?",
                 (rs, i) -> {
                     String[] scopes = new String[0];
                     try {
@@ -92,25 +93,27 @@ public class ApiKeyController {
                             rs.getString("created_at")
                     );
                 },
-                limit
+                tenantId, limit
         );
         return ResponseEntity.ok(keys);
     }
 
     @DeleteMapping("/{keyId}")
     public ResponseEntity<Void> revoke(@PathVariable String keyId) {
+        String tenantId = requireTenant();
         int updated = jdbc.update(
-                "UPDATE security.api_keys SET revoked_at = now() WHERE key_id = ? AND revoked_at IS NULL",
-                UUID.fromString(keyId)
+                "UPDATE security.api_keys SET revoked_at = now() WHERE key_id = ? AND tenant_id = ? AND revoked_at IS NULL",
+                UUID.fromString(keyId), tenantId
         );
         return updated > 0 ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/{keyId}/rotate")
     public ResponseEntity<ApiKeyResponse> rotate(@PathVariable String keyId) {
+        String callerTenant = requireTenant();
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "SELECT tenant_id, subject_id, label, scopes FROM security.api_keys WHERE key_id = ? AND revoked_at IS NULL",
-                UUID.fromString(keyId)
+                "SELECT tenant_id, subject_id, label, scopes FROM security.api_keys WHERE key_id = ? AND tenant_id = ? AND revoked_at IS NULL",
+                UUID.fromString(keyId), callerTenant
         );
         if (rows.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -133,11 +136,12 @@ public class ApiKeyController {
 
         jdbc.execute((java.sql.Connection conn) -> {
             try (var ps1 = conn.prepareStatement(
-                    "UPDATE security.api_keys SET revoked_at = now() WHERE key_id = ?");
+                    "UPDATE security.api_keys SET revoked_at = now() WHERE key_id = ? AND tenant_id = ?");
                  var ps2 = conn.prepareStatement(
                     "INSERT INTO security.api_keys (key_id, tenant_id, subject_id, key_hash, key_lookup_hash, label, scopes, created_at) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
                 ps1.setObject(1, UUID.fromString(keyId));
+                ps1.setString(2, callerTenant);
                 ps1.executeUpdate();
                 ps2.setObject(1, newKeyId);
                 ps2.setString(2, tenantId);
@@ -153,6 +157,16 @@ public class ApiKeyController {
         });
 
         return ResponseEntity.ok(new ApiKeyResponse(newKeyId.toString(), rawKey, label, List.of(scopes), now.toString()));
+    }
+
+    private static String requireTenant() {
+        org.synanton.common.tenant.TenantContext context =
+                org.synanton.common.tenant.TenantContext.get();
+        if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
+            throw new org.synanton.common.tenant.MissingTenantContextException(
+                    "api-key management requires a verified caller identity");
+        }
+        return context.tenantId();
     }
 
     private static String generateKey() {
