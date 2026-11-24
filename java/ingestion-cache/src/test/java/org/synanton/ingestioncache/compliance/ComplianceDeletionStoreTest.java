@@ -7,6 +7,9 @@ import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.synanton.ingestioncache.cache.ExtractionCacheStore;
+import org.synanton.ingestioncache.cache.ExtractionCacheEntry;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -121,6 +124,56 @@ class ComplianceDeletionStoreTest {
         assertThat(audit.events(tenant, sourceVersion)).extracting(
                         ComplianceDeletionEvent::eventType)
                 .contains("HARD_DELETE_APPLIED", "HARD_DELETE_IDEMPOTENT");
+    }
+
+    @Test
+    void cascadeDeletesCacheAndCallsCaptureWithoutTouchingSiblings() {
+        String tenant = tenant();
+        String otherTenant = tenant();
+        UUID contentRef = UUID.randomUUID();
+        UUID targetVersion = UUID.randomUUID();
+        UUID siblingVersion = UUID.randomUUID();
+        UUID targetGeneration = UUID.randomUUID();
+        quarantine.createGeneration(generation(tenant, targetVersion, targetGeneration));
+        quarantine.createGeneration(generation(tenant, siblingVersion, UUID.randomUUID()));
+        quarantine.promote(tenant, targetVersion, targetGeneration, "reviewer", "promote");
+        ExtractionCacheStore cacheStore = new ExtractionCacheStore(session);
+        cacheStore.put(new ExtractionCacheEntry(tenant, targetVersion, "target-key",
+                targetGeneration, "[]", "[]", "extraction-v2", "a".repeat(64), null,
+                null, null, Instant.now()));
+        cacheStore.put(new ExtractionCacheEntry(tenant, siblingVersion, "sibling-key",
+                UUID.randomUUID(), "[]", "[]", "extraction-v2", "a".repeat(64), null,
+                null, null, Instant.now()));
+        cacheStore.put(new ExtractionCacheEntry(otherTenant, targetVersion, "other-key",
+                UUID.randomUUID(), "[]", "[]", "extraction-v2", "a".repeat(64), null,
+                null, null, Instant.now()));
+        AtomicInteger captureCalls = new AtomicInteger();
+        ComplianceDeletionStore cascade = new ComplianceDeletionStore(quarantine, cache,
+                cacheStore, (captureTenant, captureVersion) -> {
+                    assertThat(captureTenant).isEqualTo(tenant);
+                    assertThat(captureVersion).isEqualTo(targetVersion);
+                    captureCalls.incrementAndGet();
+                    return 1;
+                }, audit);
+
+        ComplianceDeletionStore.DeletionResult result = cascade.hardDeleteSource(
+                tenant, targetVersion, contentRef, "reviewer", "hard delete");
+
+        assertThat(result.generations()).isEqualTo(1);
+        assertThat(result.cacheEntries()).isEqualTo(1);
+        assertThat(result.captureArtifacts()).isEqualTo(1);
+        assertThat(result.idempotent()).isFalse();
+        assertThat(captureCalls).hasValue(1);
+        assertThat(cacheStore.get(tenant, targetVersion, "target-key")).isEmpty();
+        assertThat(cacheStore.get(tenant, siblingVersion, "sibling-key")).isPresent();
+        assertThat(cacheStore.get(otherTenant, targetVersion, "other-key")).isPresent();
+        assertThat(quarantine.generations(tenant, siblingVersion)).hasSize(1);
+        assertThat(audit.events(tenant, targetVersion)).filteredOn(
+                        event -> event.eventType().equals("HARD_DELETE_APPLIED"))
+                .singleElement().satisfies(event -> {
+                    assertThat(event.recordScope()).contains("EXTRACTION_CACHE", "CAPTURE");
+                    assertThat(event.detail()).contains("cacheEntries=1", "captureArtifacts=1");
+                });
     }
 
     private static QuarantineGeneration generation(String tenant, UUID sourceVersion,
