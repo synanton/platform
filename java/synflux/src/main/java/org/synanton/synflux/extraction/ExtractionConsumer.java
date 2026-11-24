@@ -32,6 +32,7 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.client.TenantPolling;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
+import org.synanton.ingestioncache.domain.OntologyReleaseRef;
 import org.synanton.ingestioncache.quarantine.QuarantineAuditEvent;
 import org.synanton.ingestioncache.quarantine.QuarantineGeneration;
 import org.synanton.ingestioncache.quarantine.QuarantineRecord;
@@ -40,6 +41,8 @@ import org.synanton.synflux.config.ExtractionConsumerProperties;
 import org.synanton.synflux.extraction.cache.ExtractionCacheService;
 import org.synanton.synflux.extraction.graph.GraphCommitResult;
 import org.synanton.synflux.extraction.graph.GraphWriter;
+import org.synanton.synflux.extraction.ontology.OntologyRelease;
+import org.synanton.synflux.extraction.ontology.OntologyReleaseResolver;
 import org.synanton.synflux.extraction.provider.ExtractionAdapterFactory;
 import org.synanton.synflux.extraction.provider.ExtractionAdapterResolver;
 import org.synanton.synflux.extraction.provider.ProviderConfigInvalidException;
@@ -70,6 +73,7 @@ public class ExtractionConsumer {
     private final ExtractionMetrics metrics;
     private final QuarantineStore quarantineStore;
     private final ExtractionCacheService cacheService;
+    private final OntologyReleaseResolver ontologyReleaseResolver;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public ExtractionConsumer(
@@ -106,6 +110,20 @@ public class ExtractionConsumer {
 
     public ExtractionConsumer(
             IngestionCacheClient cacheClient,
+            ExtractionEngineAdapter adapter,
+            ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
+            Clock clock,
+            QuarantineStore quarantineStore,
+            ExtractionCacheService cacheService,
+            OntologyReleaseResolver ontologyReleaseResolver) {
+        this(cacheClient, ExtractionAdapterFactory.fixed(adapter), properties, graphWriter, clock,
+                new ExtractionMetrics(new SimpleMeterRegistry()), quarantineStore, cacheService,
+                ontologyReleaseResolver);
+    }
+
+    public ExtractionConsumer(
+            IngestionCacheClient cacheClient,
             ExtractionAdapterResolver adapters,
             ExtractionConsumerProperties properties,
             GraphWriter graphWriter,
@@ -135,7 +153,6 @@ public class ExtractionConsumer {
         this(cacheClient, adapters, properties, graphWriter, clock, metrics, quarantineStore, null);
     }
 
-    @Autowired
     public ExtractionConsumer(
             IngestionCacheClient cacheClient,
             ExtractionAdapterResolver adapters,
@@ -145,6 +162,21 @@ public class ExtractionConsumer {
             ExtractionMetrics metrics,
             QuarantineStore quarantineStore,
             ExtractionCacheService cacheService) {
+        this(cacheClient, adapters, properties, graphWriter, clock, metrics, quarantineStore,
+                cacheService, null);
+    }
+
+    @Autowired
+    public ExtractionConsumer(
+            IngestionCacheClient cacheClient,
+            ExtractionAdapterResolver adapters,
+            ExtractionConsumerProperties properties,
+            GraphWriter graphWriter,
+            Clock clock,
+            ExtractionMetrics metrics,
+            QuarantineStore quarantineStore,
+            ExtractionCacheService cacheService,
+            OntologyReleaseResolver ontologyReleaseResolver) {
         this.cacheClient = cacheClient;
         this.adapters = adapters;
         this.properties = properties;
@@ -153,6 +185,7 @@ public class ExtractionConsumer {
         this.metrics = metrics;
         this.quarantineStore = quarantineStore;
         this.cacheService = cacheService;
+        this.ontologyReleaseResolver = ontologyReleaseResolver;
     }
 
     @Scheduled(fixedDelayString = "${synflux.extraction-engine.consumer.poll-delay-ms:5000}")
@@ -218,6 +251,20 @@ public class ExtractionConsumer {
                     providerFailure.toString());
             return;
         }
+        OntologyRelease ontologyRelease;
+        try {
+            ontologyRelease = resolveOntologyRelease(request);
+        } catch (Exception releaseFailure) {
+            int attempts = request.attemptCount() + 1;
+            Instant nextAttemptAt = clock.instant().plusSeconds(backoffSeconds(attempts));
+            cacheClient.markExtractionFailed(request, attempts,
+                    "ONTOLOGY_RELEASE_RESOLUTION_FAILED: " + truncate(releaseFailure.getMessage()),
+                    nextAttemptAt);
+            log.warn("Ontology release resolution failed tenant={} ref={} version={}: {}",
+                    request.tenantId(), request.contentRefId(), request.versionId(),
+                    releaseFailure.toString());
+            return;
+        }
         ExtractionEngineAdapter adapter = resolved.adapter();
         long startedNanos = System.nanoTime();
         UUID extractionGeneration = UUID.randomUUID();
@@ -225,8 +272,10 @@ public class ExtractionConsumer {
         try {
             cacheClient.markExtractionStarted(request);
             List<ChunkRow> chunks = cacheClient.readChunks(request.tenantId(), request.contentRefId());
-            Map<Integer, ExtractionResult> cachedResults = preflightCache(request, chunks, adapter);
-            boolean cacheHit = !cachedResults.isEmpty();
+            CachePreflight preflight = preflightCache(request, chunks, adapter);
+            boolean cacheHit = preflight.cacheHit();
+            Map<Integer, ExtractionResult> cachedResults = preflight.results();
+            UUID resultGeneration = cacheHit ? preflight.generationId() : extractionGeneration;
             java.util.Map<Integer, ExtractionResult> resultsByOrdinal = new java.util.LinkedHashMap<>();
             java.util.Set<String> normalizedEntities = new java.util.LinkedHashSet<>();
             int entityMentions = 0;
@@ -281,7 +330,9 @@ public class ExtractionConsumer {
                                 request.sourceId() + ":" + request.resourceId(),
                                 provenance.promptVersion(), provenance.promptCompiledDigest(),
                                 provenance.schemaDigest(), null, null, clock.instant(),
-                                request.eventId());
+                                request.eventId(),
+                                ontologyRelease == null ? null : ontologyRelease.releaseId(),
+                                ontologyRelease == null ? null : ontologyRelease.releaseDigest());
                         quarantineStore.createGeneration(generation);
                         quarantineStore.recordAudit(QuarantineAuditEvent.of(
                                 request.tenantId(), request.versionId(), extractionGeneration,
@@ -302,7 +353,7 @@ public class ExtractionConsumer {
                         mapper.writeValueAsString(result.relations()),
                         provenance.promptVersion(), provenance.promptCompiledDigest(),
                         provenance.promptRenderedDigest(), provenance.schemaVersion(),
-                        provenance.schemaDigest(), clock.instant());
+                        provenance.schemaDigest(), resultGeneration, clock.instant());
                 if (!cacheHit && cacheService != null && quarantineStore != null
                         && generationCreated) {
                     try {
@@ -384,11 +435,16 @@ public class ExtractionConsumer {
         }
     }
 
-    private Map<Integer, ExtractionResult> preflightCache(ExtractionRequestRow request,
-                                                          List<ChunkRow> chunks,
-                                                          ExtractionEngineAdapter adapter) {
+    private record CachePreflight(Map<Integer, ExtractionResult> results, UUID generationId) {
+        boolean cacheHit() {
+            return generationId != null;
+        }
+    }
+
+    private CachePreflight preflightCache(ExtractionRequestRow request, List<ChunkRow> chunks,
+                                          ExtractionEngineAdapter adapter) {
         if (cacheService == null || chunks.isEmpty()) {
-            return Map.of();
+            return new CachePreflight(Map.of(), null);
         }
         Map<Integer, ExtractionResult> cached = new LinkedHashMap<>();
         UUID cachedGeneration = null;
@@ -404,10 +460,10 @@ public class ExtractionConsumer {
                 log.warn("Extraction cache key failed tenant={} ref={} version={}: {}",
                         request.tenantId(), request.contentRefId(), request.versionId(),
                         cacheFailure.toString());
-                return Map.of();
+                return new CachePreflight(Map.of(), null);
             }
             if (key.isEmpty()) {
-                return Map.of();
+                return new CachePreflight(Map.of(), null);
             }
             final Optional<ExtractionCacheService.CachedExtractionResult> hit;
             try {
@@ -417,10 +473,10 @@ public class ExtractionConsumer {
                                 + "tenant={} ref={} version={}: {}",
                         request.tenantId(), request.contentRefId(), request.versionId(),
                         cacheFailure.toString());
-                return Map.of();
+                return new CachePreflight(Map.of(), null);
             }
             if (hit.isEmpty()) {
-                return Map.of();
+                return new CachePreflight(Map.of(), null);
             }
             UUID generation = hit.get().generationId();
             if (cachedGeneration == null) {
@@ -429,11 +485,28 @@ public class ExtractionConsumer {
                 log.warn("Extraction cache chunks span generations; using normal lifecycle "
                                 + "tenant={} ref={} version={}",
                         request.tenantId(), request.contentRefId(), request.versionId());
-                return Map.of();
+                return new CachePreflight(Map.of(), null);
             }
             cached.put(chunk.chunkOrdinal(), hit.get().result());
         }
-        return cached;
+        return new CachePreflight(cached, cachedGeneration);
+    }
+
+    private OntologyRelease resolveOntologyRelease(ExtractionRequestRow request) {
+        Optional<OntologyReleaseRef> persisted = cacheClient.readExtractionOntologyRelease(request);
+        if (persisted.isPresent()) {
+            return new OntologyRelease(persisted.get().releaseId(),
+                    persisted.get().releaseDigest());
+        }
+        if (ontologyReleaseResolver == null) {
+            return null;
+        }
+        OntologyRelease release = ontologyReleaseResolver.resolve(request.tenantId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "No active ontology release for tenant " + request.tenantId()));
+        cacheClient.markExtractionOntologyRelease(request,
+                new OntologyReleaseRef(release.releaseId(), release.releaseDigest()));
+        return release;
     }
 
     private void logStructuredEvent(ExtractionRequestRow request,

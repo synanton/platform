@@ -40,6 +40,8 @@ import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.QuarantinedLine;
 import org.synanton.extraction.engine.llm.LlmIncompleteOutputException;
 import org.synanton.extraction.engine.provenance.ExtractionCacheKey;
+import org.synanton.synflux.extraction.ontology.OntologyRelease;
+import org.synanton.synflux.extraction.ontology.OntologyReleaseResolver;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.ingestioncache.cache.ExtractionCacheStore;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
@@ -47,6 +49,8 @@ import org.synanton.ingestioncache.quarantine.QuarantineGeneration;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ChunkRow;
+import org.synanton.ingestioncache.domain.ExtractionRequestRow;
+import org.synanton.ingestioncache.domain.OntologyReleaseRef;
 import org.synanton.ingestioncache.domain.SourceIdentityRow;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
@@ -594,7 +598,66 @@ class ExtractionConsumerTest {
                 .contains(originalGeneration);
         assertThat(cache.listExtractionResults(tenant, fixture.contentRefId()))
                 .singleElement()
-                .satisfies(result -> assertThat(result.entitiesJson()).contains("Halcyon-7"));
+                .satisfies(result -> {
+                    assertThat(result.entitiesJson()).contains("Halcyon-7");
+                    assertThat(result.extractionGeneration()).isEqualTo(originalGeneration);
+                });
+    }
+
+    @Test
+    void ontologyReleaseIsPersistedOnGenerationAndLinkedFromResults() {
+        String tenant = "tenant-ontology-provenance";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        QuarantineStore quarantine = new QuarantineStore(session);
+        OntologyReleaseResolver resolver = tenantId -> Optional.of(
+                new OntologyRelease("release-1", "d".repeat(64)));
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
+                new LlmProvenance("extraction-v2", "a".repeat(64), null, null, null)));
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC(), quarantine, null, resolver).poll();
+
+        var generation = quarantine.generations(tenant, fixture.versionId()).getFirst();
+        assertThat(generation.ontologyReleaseId()).isEqualTo("release-1");
+        assertThat(generation.ontologyReleaseDigest()).isEqualTo("d".repeat(64));
+        assertThat(cache.listExtractionResults(tenant, fixture.contentRefId()))
+                .singleElement()
+                .satisfies(result -> assertThat(result.extractionGeneration())
+                        .isEqualTo(generation.extractionGeneration()));
+    }
+
+    @Test
+    void persistedOntologyReleaseWinsOverAChangedResolverOnRetry() {
+        String tenant = "tenant-ontology-retry";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        QuarantineStore quarantine = new QuarantineStore(session);
+        ExtractionRequestRow request = new ExtractionRequestRow(
+                tenant, CONNECTOR, SOURCE, RESOURCE, UUID.randomUUID(), fixture.versionId(),
+                fixture.contentRefId(), "{}", Instant.now(), Instant.now(), "PENDING", 0,
+                null, null, false);
+        cache.markExtractionOntologyRelease(request,
+                new OntologyReleaseRef("release-A", "a".repeat(64)));
+        OntologyReleaseResolver changedResolver = tenantId -> Optional.of(
+                new OntologyRelease("release-B", "b".repeat(64)));
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(), List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
+                new LlmProvenance("extraction-v2", "a".repeat(64), null, null, null)));
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC(), quarantine, null,
+                changedResolver).poll();
+
+        assertThat(quarantine.generations(tenant, fixture.versionId())).singleElement()
+                .satisfies(generation -> {
+                    assertThat(generation.ontologyReleaseId()).isEqualTo("release-A");
+                    assertThat(generation.ontologyReleaseDigest()).isEqualTo("a".repeat(64));
+                });
     }
 
     @Test
