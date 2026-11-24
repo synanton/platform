@@ -9,6 +9,7 @@ import { Login } from "./pages/Login";
 import { McpConfig } from "./pages/McpConfig";
 import { OntologyViewer } from "./pages/OntologyViewer";
 import { Chat } from "./pages/Chat";
+import { WorkflowPage } from "./pages/WorkflowPage";
 import { Settings } from "./pages/Settings";
 import { EntityGraphPage } from "./pages/EntityGraphPage";
 import { isAuthenticated } from "./services/auth";
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/mcp-config" element={<McpConfig />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/chat" element={<Chat />} />
+        <Route path="/workflow" element={<WorkflowPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

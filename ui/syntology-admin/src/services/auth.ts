@@ -4,7 +4,7 @@ import { loginApi, parseJwtPayload } from "./authApi";
 const STORAGE_KEY = "syntology-auth";
 
 export async function loginWithCredentials(username: string, password: string): Promise<AuthSession> {
-  const { token, expires_in } = await loginApi(username, password);
+  const { token, expires_in, expiresIn } = await loginApi(username, password);
   const payload = parseJwtPayload(token);
   const session: AuthSession = {
     username: (payload.sub as string) || username,
@@ -12,7 +12,7 @@ export async function loginWithCredentials(username: string, password: string): 
     token,
     uid: (payload.uid as number) || 0,
     gids: (payload.gid as number[]) || [],
-    exp: (payload.exp as number) || Math.floor(Date.now() / 1000) + expires_in,
+    exp: (payload.exp as number) || Math.floor(Date.now() / 1000) + (expires_in ?? expiresIn ?? 3600),
   };
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   return session;

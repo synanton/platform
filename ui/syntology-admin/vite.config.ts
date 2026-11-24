@@ -13,6 +13,16 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, "").split("?")[0],
       },
+      "/api/v1/documents": {
+        target: relixTarget,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, "").split("?")[0],
+      },
+      "/synflux": {
+        target: process.env.VITE_SYNFLUX_URL ?? "http://localhost:8090",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/synflux/, ""),
+      },
       "/api": "http://localhost:8080",
       "/mcp": "http://localhost:8091",
       "/auth": "http://localhost:8081",

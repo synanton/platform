@@ -100,6 +100,9 @@ export function Layout() {
             <Link to="/mcp-config" className="hover:text-brand-50 opacity-90">
               MCP
             </Link>
+            <Link to="/workflow" className="hover:text-brand-50 opacity-90">
+              Workflow
+            </Link>
             <Link to="/chat" className="hover:text-brand-50 opacity-90">
               Chat
             </Link>

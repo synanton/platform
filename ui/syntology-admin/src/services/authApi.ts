@@ -1,6 +1,7 @@
 export interface LoginResponse {
   token: string;
-  expires_in: number;
+  expires_in?: number;
+  expiresIn?: number;
 }
 
 export async function loginApi(username: string, password: string): Promise<LoginResponse> {
