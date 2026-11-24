@@ -25,7 +25,7 @@ The new Workflow route is additive. `Layout.test.tsx` asserts every existing nav
 | `/api/` | syntology | existing |
 | `/api/v1/entities/*` | relix | existing |
 | `/api/v1/documents/*` | relix | added in Phase 5 |
-| `/topology/` | topology | added in Phase 5 |
+| `/topology/` | topology | route excluded in deployed demo; no topology target |
 | `/synflux/` | synflux | added in Phase 5 |
 | `/mcp` | synanton-mcp | **deferred / no service in base compose** |
 | `/search` | synapt | **deferred to Phase 6 (envelope mismatch; Chat lacks auth)** |

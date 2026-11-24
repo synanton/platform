@@ -1,0 +1,16 @@
+# UI image build context. The root .dockerignore is a restrictive allowlist for
+# the Java service images; this file is scoped to the UI Dockerfile and takes
+# precedence for root-context builds.
+**
+!ui
+!ui/syntology-admin
+!ui/syntology-admin/**
+!deployments
+!deployments/docker
+!deployments/docker/nginx.conf
+
+# Local dependencies/artifacts never enter the image context.
+ui/syntology-admin/node_modules
+ui/syntology-admin/dist
+ui/syntology-admin/coverage
+ui/syntology-admin/.vite
