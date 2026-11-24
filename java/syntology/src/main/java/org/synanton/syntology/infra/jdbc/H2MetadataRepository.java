@@ -22,7 +22,9 @@ public class H2MetadataRepository implements MetadataRepository {
             rs.getString("description"),
             rs.getString("graph_uri"),
             rs.getString("status"),
-            rs.getTimestamp("created_at").toInstant()
+            rs.getTimestamp("created_at").toInstant(),
+            rs.getString("release_id"),
+            rs.getString("release_digest")
     );
 
     private final JdbcTemplate jdbcTemplate;
@@ -69,8 +71,9 @@ public class H2MetadataRepository implements MetadataRepository {
         jdbcTemplate.update(
                 """
                 INSERT INTO syntology.ontology_versions
-                (version_id, tenant_id, version, label, description, graph_uri, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (version_id, tenant_id, version, label, description, graph_uri, status, created_at,
+                 release_id, release_digest)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 version.versionId(),
                 version.tenantId(),
@@ -79,7 +82,9 @@ public class H2MetadataRepository implements MetadataRepository {
                 version.description(),
                 version.graphUri(),
                 version.status(),
-                Timestamp.from(version.createdAt())
+                Timestamp.from(version.createdAt()),
+                version.releaseId(),
+                version.releaseDigest()
         );
     }
 

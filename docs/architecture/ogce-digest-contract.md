@@ -36,6 +36,27 @@ Schema and prompt digests are both inputs to the extraction cache key and both a
 - Same ontology release and compiler version -> same digest. A release/compiler change -> a new digest.
 - The compiler emits the canonical artifact; the digest is computed from those exact bytes.
 
+## Ontology release digest (Phase 1 extension)
+
+This is an additive extension for ontology release identity. It does not change prompt or schema digest semantics.
+
+- `release_id` is the immutable ontology version UUID rendered as a string. It is the release identity; `version`/label remain mutable display names.
+- `release_digest` is SHA-256 of a canonical release manifest, not of a single ambiguous concatenation.
+- Manifest form, LF line endings, UTF-8, keys sorted lexicographically:
+
+```text
+ontology-release-v1
+format=<turtle|hcl>
+component.<name>=sha256:<lowercase hex>
+```
+
+- Component inputs:
+  - `turtle` format: `content` = exact uploaded or seeded Turtle bytes.
+  - `hcl` format: `tbox` = generated TBox Turtle bytes, `shapes` = generated SHACL Turtle bytes, `schema_ir` = canonical pretty-printed schema IR JSON bytes.
+- Component hashes are inputs to `release_digest`; they are not separate API fields in this phase.
+- Null semantics: legacy rows may have null `release_id`/`release_digest`; no backfill. New writes must produce both. Null means historical/unverified, never “same as current.”
+- A canonicalization change requires a new manifest version, not a silent digest change.
+
 ## Storage and cache identity
 
 Extraction results carry:

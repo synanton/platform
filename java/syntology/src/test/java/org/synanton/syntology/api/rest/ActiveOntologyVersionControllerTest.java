@@ -39,14 +39,17 @@ class ActiveOntologyVersionControllerTest {
         UUID versionId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         when(service.activeVersion("tenant-a")).thenReturn(Optional.of(new OntologyVersion(
                 versionId, "tenant-a", "v1.2.0", "Version 1.2", null, "/g", "ACTIVE",
-                Instant.parse("2026-11-11T00:00:00Z"))));
+                Instant.parse("2026-11-11T00:00:00Z"), versionId.toString(),
+                "a".repeat(64))));
 
         mvc.perform(get("/v1/tenants/tenant-a/active-ontology-version"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tenantId").value("tenant-a"))
                 .andExpect(jsonPath("$.activeVersion").value("v1.2.0"))
                 .andExpect(jsonPath("$.versionRef").value("uuid:" + versionId))
-                .andExpect(jsonPath("$.activatedAt").value("2026-11-11T00:00:00Z"));
+                .andExpect(jsonPath("$.activatedAt").value("2026-11-11T00:00:00Z"))
+                .andExpect(jsonPath("$.releaseId").value(versionId.toString()))
+                .andExpect(jsonPath("$.releaseDigest").value("a".repeat(64)));
     }
 
     @Test

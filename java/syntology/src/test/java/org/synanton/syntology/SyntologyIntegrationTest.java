@@ -34,7 +34,9 @@ class SyntologyIntegrationTest {
     void shouldSeedOntologyAndReturnGraph() throws Exception {
         mockMvc.perform(get("/api/v1/ontology/versions").header("X-Tenant-ID", "demo"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(greaterThan(0))));
+                .andExpect(jsonPath("$", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$[0].releaseId").isNotEmpty())
+                .andExpect(jsonPath("$[0].releaseDigest").isNotEmpty());
 
         mockMvc.perform(get("/api/v1/ontology/graph").param("version", "1.0.0"))
                 .andExpect(status().isOk())
@@ -146,7 +148,9 @@ class SyntologyIntegrationTest {
                         .param("entry", "schema.hcl"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.version").value("1.1.0"))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.releaseId").isNotEmpty())
+                .andExpect(jsonPath("$.releaseDigest").isNotEmpty());
 
         mockMvc.perform(get("/api/v1/admin/ontology/schemas/1.1.0"))
                 .andExpect(status().isOk())

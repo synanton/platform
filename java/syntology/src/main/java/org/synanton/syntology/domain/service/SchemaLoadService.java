@@ -98,22 +98,30 @@ public class SchemaLoadService {
             throws IOException {
         OntologySchemaIr ir = compile(bundleRoot, entryFile);
         String tenant = tenant();
+        byte[] tbox = tboxMapper.toTurtle(ir);
+        byte[] shapes = shaclMapper.toTurtle(ir);
+        byte[] schema = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(ir);
+        String releaseDigest = OntologyDigest.releaseDigest("hcl", Map.of(
+                "tbox", tbox, "shapes", shapes, "schema_ir", schema));
+        UUID versionId = UUID.randomUUID();
         metadataRepository.deprecateAllActive(tenant);
-        ontologyAdapter.persistTurtle(tenant, version, tboxMapper.toTurtle(ir));
-        ontologyAdapter.persistShapes(tenant, version, shaclMapper.toTurtle(ir));
-        ontologyAdapter.persistSchemaIr(tenant, version, objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(ir));
+        ontologyAdapter.persistTurtle(tenant, version, tbox);
+        ontologyAdapter.persistShapes(tenant, version, shapes);
+        ontologyAdapter.persistSchemaIr(tenant, version, schema);
         String graphUri = properties.storage().jena().path() + "/" + tenant + "/" + version;
         String resolvedLabel = label != null ? label : (ir.ontology() != null && ir.ontology().label() != null
                 ? ir.ontology().label() : version);
         OntologyVersion ontologyVersion = new OntologyVersion(
-                UUID.randomUUID(),
+                versionId,
                 tenant,
                 version,
                 resolvedLabel,
                 description != null ? description : ir.ontology() != null ? ir.ontology().description() : null,
                 graphUri,
                 "ACTIVE",
-                Instant.now()
+                Instant.now(),
+                versionId.toString(),
+                releaseDigest
         );
         metadataRepository.insert(ontologyVersion);
         entityCache.invalidateAll();

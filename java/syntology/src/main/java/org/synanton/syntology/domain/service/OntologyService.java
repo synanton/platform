@@ -88,18 +88,22 @@ public class OntologyService {
         String tenant = tenant();
         checkWritePermission(tenant);
         byte[] bytes = file.getBytes();
+        String releaseDigest = OntologyDigest.releaseDigest("turtle", Map.of("content", bytes));
+        UUID versionId = UUID.randomUUID();
         metadataRepository.deprecateAllActive(tenant);
         String graphUri = properties.storage().jena().path() + "/" + tenant + "/" + version;
         ontologyAdapter.persistTurtle(tenant, version, bytes);
         OntologyVersion ontologyVersion = new OntologyVersion(
-                UUID.randomUUID(),
+                versionId,
                 tenant,
                 version,
                 label != null ? label : version,
                 description,
                 graphUri,
                 "ACTIVE",
-                Instant.now()
+                Instant.now(),
+                versionId.toString(),
+                releaseDigest
         );
         metadataRepository.insert(ontologyVersion);
         entityCache.invalidateAll();
