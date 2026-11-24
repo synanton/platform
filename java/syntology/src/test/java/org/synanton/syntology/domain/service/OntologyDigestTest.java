@@ -18,6 +18,18 @@ class OntologyDigestTest {
     }
 
     @Test
+    void legacyConstructorLeavesDigestNullButKeepsReleaseId() {
+        java.util.UUID versionId = java.util.UUID.randomUUID();
+        org.synanton.syntology.domain.model.OntologyVersion version =
+                new org.synanton.syntology.domain.model.OntologyVersion(
+                        versionId, "tenant-a", "v1", "v1", null, "/g", "ACTIVE",
+                        java.time.Instant.now());
+
+        assertThat(version.releaseId()).isEqualTo(versionId.toString());
+        assertThat(version.releaseDigest()).isNull();
+    }
+
+    @Test
     void componentOrderDoesNotChangeReleaseDigest() {
         String first = OntologyDigest.releaseDigest("hcl", Map.of(
                 "tbox", "tbox".getBytes(StandardCharsets.UTF_8),
