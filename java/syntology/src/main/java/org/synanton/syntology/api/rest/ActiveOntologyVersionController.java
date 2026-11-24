@@ -59,13 +59,17 @@ public class ActiveOntologyVersionController {
                 tenantId,
                 version.version(),
                 "uuid:" + version.versionId(),
-                version.createdAt());
+                version.createdAt(),
+                version.releaseId(),
+                version.releaseDigest());
     }
 
     public record ActiveOntologyVersionResponse(
             @JsonProperty("tenantId") String tenantId,
             @JsonProperty("activeVersion") String activeVersion,
             @JsonProperty("versionRef") String versionRef,
-            @JsonProperty("activatedAt") Instant activatedAt) {
+            @JsonProperty("activatedAt") Instant activatedAt,
+            @JsonProperty("releaseId") String releaseId,
+            @JsonProperty("releaseDigest") String releaseDigest) {
     }
 }
