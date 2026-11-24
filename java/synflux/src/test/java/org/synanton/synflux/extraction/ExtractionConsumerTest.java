@@ -51,6 +51,7 @@ import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.ingestioncache.domain.OntologyReleaseRef;
+import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceIdentityRow;
 import org.synanton.ingestioncache.domain.SourceOutboxRow;
 import org.synanton.ingestioncache.domain.SourceRow;
@@ -628,6 +629,41 @@ class ExtractionConsumerTest {
                 .singleElement()
                 .satisfies(result -> assertThat(result.extractionGeneration())
                         .isEqualTo(generation.extractionGeneration()));
+    }
+
+    @Test
+    void ingestionTriggerCarriesIdentityThroughGenerationReleaseAndResult() {
+        String tenant = "tenant-trigger-provenance";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        QuarantineStore quarantine = new QuarantineStore(session);
+        OntologyReleaseResolver resolver = tenantId -> Optional.of(
+                new OntologyRelease("release-1", "d".repeat(64)));
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
+                new LlmProvenance("extraction-v2", "a".repeat(64), null, null, null)));
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                mock(GraphWriter.class), Clock.systemUTC(), quarantine, null, resolver).poll();
+
+        List<SourceOutboxRow> outbox = cache.listExtractionOutbox(
+                tenant, CONNECTOR, SOURCE, RESOURCE);
+        assertThat(outbox).singleElement()
+                .satisfies(event -> assertThat(event.sourceVersionId())
+                        .isEqualTo(fixture.versionId()));
+        QuarantineGeneration generation = quarantine.generations(tenant, fixture.versionId())
+                .getFirst();
+        assertThat(generation.sourceVersionId()).isEqualTo(fixture.versionId());
+        assertThat(generation.ontologyReleaseId()).isEqualTo("release-1");
+        assertThat(cache.listExtractionResults(tenant, fixture.contentRefId()))
+                .singleElement()
+                .satisfies(result -> {
+                    assertThat(result.sourceVersionId()).isEqualTo(fixture.versionId());
+                    assertThat(result.extractionGeneration())
+                            .isEqualTo(generation.extractionGeneration());
+                });
     }
 
     @Test
