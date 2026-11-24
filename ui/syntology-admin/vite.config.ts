@@ -1,7 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-const relixTarget = process.env.VITE_RELIX_URL ?? "http://localhost:8084";
+const runtimeEnv = (globalThis as { process?: { env?: Record<string, string> } }).process?.env ?? {};
+const relixTarget = runtimeEnv.VITE_RELIX_URL ?? "http://localhost:8084";
 
 export default defineConfig({
   plugins: [react()],
@@ -19,7 +20,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, "").split("?")[0],
       },
       "/synflux": {
-        target: process.env.VITE_SYNFLUX_URL ?? "http://localhost:8090",
+        target: runtimeEnv.VITE_SYNFLUX_URL ?? "http://localhost:8090",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/synflux/, ""),
       },

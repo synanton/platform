@@ -8,7 +8,7 @@ export async function loginWithCredentials(username: string, password: string): 
   const payload = parseJwtPayload(token);
   const session: AuthSession = {
     username: (payload.sub as string) || username,
-    tenantId: (payload.tenant_id as string) || "demo",
+    tenantId: (payload.tenant_id as string) || "",
     token,
     uid: (payload.uid as number) || 0,
     gids: (payload.gid as number[]) || [],
@@ -29,5 +29,6 @@ export function getSession(): AuthSession | null {
 }
 
 export function isAuthenticated(): boolean {
-  return getSession() !== null;
+  const session = getSession();
+  return session !== null && session.tenantId.trim().length > 0;
 }
