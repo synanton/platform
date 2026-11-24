@@ -1,6 +1,6 @@
 # P0 Baseline — Vertical Slice
 
-Status: **P0-1 and P0-2 merged; P0-3 draft**. P0-4 (gap list) and P0-5 (operational verification) are not yet complete. No implementation PR may open before all required artifacts are merged.
+Status: **P0-1, P0-2, and P0-3 merged; P0-4/P0-5 draft**. No implementation PR may open before the P0-4/P0-5 PR is merged and the P0 exit gate is reviewed.
 
 ## Artifacts
 
@@ -18,9 +18,9 @@ Status: **P0-1 and P0-2 merged; P0-3 draft**. P0-4 (gap list) and P0-5 (operatio
 | P0-2 Graph contract | `04-graph-contract.md` | merged (#861) |
 | P0-2 UI contract | `05-ui-contract.md` | merged (#861) |
 | P0-2 Search contract | `06-search-contract.md` | merged (#861) |
-| P0-3 Baseline test snapshot | `07-test-snapshot.md` | draft |
-| P0-4 Gap list | pending | not started |
-| P0-5 Operational verification | pending | not started |
+| P0-3 Baseline test snapshot | `07-test-snapshot.md` | merged (#862) |
+| P0-4 Gap list | `08-gap-list.md` | draft |
+| P0-5 Operational verification | `09-operational-verification.md` | draft |
 
 ## Evidence rules
 
