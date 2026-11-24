@@ -4,6 +4,7 @@ import org.jgrapht.graph.DirectedMultigraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.synanton.relix.api.dto.Edge;
+import org.synanton.relix.api.dto.DocumentGraphResponse;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.relix.api.dto.Path;
@@ -852,6 +853,83 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
     }
 
     @Override
+    public DocumentGraphResponse documentGraph(String tenant, String sourceVersionId) {
+        int limit = 5000;
+        List<Map<String, Object>> nodeRows = cypher.read("""
+                MATCH (m:ExtractedMention {tenant_id: $tenant})
+                WHERE m.source_version_id = $version
+                OPTIONAL MATCH (m)-[:RESOLVES_TO {active: true}]->(e:Entity {tenant: $tenant})
+                WITH m, head(collect(e)) AS e
+                RETURN m.mention_id AS mention_id, m.surface_form AS surface_form,
+                       m.proposed_type AS proposed_type, m.chunk_id AS chunk_id,
+                       m.chunk_offset_start AS chunk_offset_start,
+                       m.chunk_offset_end AS chunk_offset_end,
+                       m.document_offset_start AS document_offset_start,
+                       m.document_offset_end AS document_offset_end,
+                       m.extraction_generation AS extraction_generation,
+                       e.id AS resolved_entity_id
+                ORDER BY m.mention_id
+                LIMIT $limit
+                """, Map.of("tenant", tenant, "version", sourceVersionId, "limit", limit));
+        List<DocumentGraphResponse.Node> nodes = new ArrayList<>(nodeRows.size());
+        for (Map<String, Object> row : nodeRows) {
+            String resolved = row.get("resolved_entity_id") == null ? null
+                    : String.valueOf(row.get("resolved_entity_id"));
+            nodes.add(new DocumentGraphResponse.Node(
+                    String.valueOf(row.get("mention_id")),
+                    stringOrNull(row.get("surface_form")),
+                    stringOrNull(row.get("proposed_type")),
+                    stringOrNull(row.get("chunk_id")),
+                    intOr(row.get("chunk_offset_start"), -1),
+                    intOr(row.get("chunk_offset_end"), -1),
+                    intOr(row.get("document_offset_start"), -1),
+                    intOr(row.get("document_offset_end"), -1),
+                    resolved == null ? "UNRESOLVED" : "RESOLVED",
+                    resolved,
+                    stringOrNull(row.get("extraction_generation"))));
+        }
+
+        List<Map<String, Object>> edgeRows = cypher.read("""
+                MATCH (s:ExtractedMention {tenant_id: $tenant})
+                      -[r:EXTRACTED_RELATION {tenant_id: $tenant}]->
+                      (o:ExtractedMention {tenant_id: $tenant})
+                WHERE r.source_version_id = $version
+                OPTIONAL MATCH (xr:ExtractedRelation {tenant_id: $tenant, relation_id: r.relation_id})
+                      -[:SUPPORTS]->(ev:RelationEvidence {tenant_id: $tenant})
+                WITH r, head(collect(ev)) AS ev
+                RETURN r.relation_id AS relation_id, r.subject_mention_id AS subject_mention_id,
+                       r.object_mention_id AS object_mention_id, r.predicate AS predicate,
+                       r.evidence_chunk_id AS evidence_chunk_id,
+                       r.evidence_chunk_offset_start AS offset_start,
+                       r.evidence_chunk_offset_end AS offset_end,
+                       r.generation AS source_generation,
+                       r.extraction_generation AS extraction_generation,
+                       ev.status AS promotion_status,
+                       ev.canonical_relation_id AS canonical_relation_id
+                ORDER BY r.relation_id
+                LIMIT $limit
+                """, Map.of("tenant", tenant, "version", sourceVersionId, "limit", limit));
+        List<DocumentGraphResponse.Edge> edges = new ArrayList<>(edgeRows.size());
+        for (Map<String, Object> row : edgeRows) {
+            String status = stringOrNull(row.get("promotion_status"));
+            edges.add(new DocumentGraphResponse.Edge(
+                    String.valueOf(row.get("relation_id")),
+                    String.valueOf(row.get("subject_mention_id")),
+                    String.valueOf(row.get("object_mention_id")),
+                    stringOrNull(row.get("predicate")),
+                    stringOrNull(row.get("evidence_chunk_id")),
+                    intOr(row.get("offset_start"), -1),
+                    intOr(row.get("offset_end"), -1),
+                    status == null ? "UNPROMOTED" : status,
+                    stringOrNull(row.get("canonical_relation_id")),
+                    longOr(row.get("source_generation"), 0),
+                    stringOrNull(row.get("extraction_generation"))));
+        }
+        return new DocumentGraphResponse(sourceVersionId, sourceVersionId, nodes, edges,
+                nodeRows.size() >= limit || edgeRows.size() >= limit);
+    }
+
+    @Override
     public java.util.Optional<String> getActiveEntityType(String tenant, String entityId) {
         if (entityId == null || entityId.isBlank()) {
             return java.util.Optional.empty();
@@ -890,6 +968,7 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             row.put("surfaceForm", mention.surfaceForm());
             row.put("proposedType", mention.proposedType());
             row.put("extractedAt", mention.extractedAt() == null ? null : mention.extractedAt().toString());
+            row.put("extractionGeneration", mention.extractionGeneration());
             rows.add(row);
         }
         cypher.write("""
@@ -904,7 +983,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                     n.document_offset_end = row.documentOffsetEnd,
                     n.surface_form = row.surfaceForm,
                     n.proposed_type = row.proposedType,
-                    n.extracted_at = row.extractedAt
+                    n.extracted_at = row.extractedAt,
+                    n.extraction_generation = row.extractionGeneration
                 """, Map.of("tenant", tenant, "rows", rows));
         return countByIds(tenant, rows, "mentionId",
                 "MATCH (n:ExtractedMention {tenant_id: $tenant, mention_id: id}) RETURN count(n) AS c");
@@ -938,6 +1018,7 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             row.put("revisionId", relation.revisionId());
             row.put("generation", relation.generation());
             row.put("extractionRunId", relation.extractionRunId());
+            row.put("extractionGeneration", relation.extractionGeneration());
             rows.add(row);
         }
         cypher.write("""
@@ -956,7 +1037,8 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
                     e.source_id = row.sourceId,
                     e.revision_id = row.revisionId,
                     e.generation = row.generation,
-                    e.extraction_run_id = row.extractionRunId
+                    e.extraction_run_id = row.extractionRunId,
+                    e.extraction_generation = row.extractionGeneration
                 """, Map.of("tenant", tenant, "rows", rows));
         return countByIds(tenant, rows, "relationId",
                 "MATCH ()-[e:EXTRACTED_RELATION {tenant_id: $tenant, relation_id: id}]->() RETURN count(e) AS c");
@@ -1258,6 +1340,18 @@ public class Neo4jGraphConnector implements GraphConnector, GraphReadPort, Graph
             return maps;
         }
         return List.of();
+    }
+
+    private static String stringOrNull(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private static int intOr(Object value, int fallback) {
+        return value instanceof Number number ? number.intValue() : fallback;
+    }
+
+    private static long longOr(Object value, long fallback) {
+        return value instanceof Number number ? number.longValue() : fallback;
     }
 
     private static long toLong(Object value) {

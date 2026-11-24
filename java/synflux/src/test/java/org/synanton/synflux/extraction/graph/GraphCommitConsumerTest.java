@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,7 +58,7 @@ class GraphCommitConsumerTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<Integer, ExtractionResult>> results = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<ExtractionRequestRow> request = ArgumentCaptor.forClass(ExtractionRequestRow.class);
-        verify(graphWriter).commit(request.capture(), eq(List.of(chunk())), results.capture(), eq(2));
+        verify(graphWriter).commit(request.capture(), eq(List.of(chunk())), results.capture(), eq(2), isNull());
         assertThat(request.getValue().versionId()).isEqualTo(VERSION);
         assertThat(results.getValue()).containsKey(0);
         assertThat(results.getValue().get(0).preEntities()).hasSize(1);

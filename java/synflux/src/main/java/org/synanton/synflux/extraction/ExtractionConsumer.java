@@ -376,7 +376,8 @@ public class ExtractionConsumer {
             // validation/persistence stage and must not change extraction state.
             GraphCommitResult graphResult;
             try {
-                graphResult = graphWriter.commit(request, chunks, resultsByOrdinal);
+                graphResult = graphWriter.commit(request, chunks, resultsByOrdinal, 0,
+                        resultGeneration);
             } catch (Exception graphFailure) {
                 graphResult = new GraphCommitResult(0, 0, 0, List.of(), "FAILED");
                 log.warn("Graph writer failed after extraction tenant={} ref={} version={}: {}",

@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.synanton.extraction.engine.ExtractionResult;
@@ -61,6 +62,12 @@ public final class GraphWriter {
 
     public GraphCommitResult commit(ExtractionRequestRow request, List<ChunkRow> chunks,
                                     Map<Integer, ExtractionResult> resultsByOrdinal, int graphAttempt) {
+        return commit(request, chunks, resultsByOrdinal, graphAttempt, null);
+    }
+
+    public GraphCommitResult commit(ExtractionRequestRow request, List<ChunkRow> chunks,
+                                    Map<Integer, ExtractionResult> resultsByOrdinal, int graphAttempt,
+                                    UUID extractionGeneration) {
         if (!properties.enabled()) {
             return new GraphCommitResult(0, 0, 0, List.of(), "GRAPH_DISABLED");
         }
@@ -101,7 +108,8 @@ public final class GraphWriter {
                     GraphMention mention = new GraphMention(mentionId, request.tenantId(),
                             request.versionId().toString(), request.contentRefId().toString(), chunkId,
                             entity.charStart(), entity.charEnd(), documentStart, documentEnd,
-                            entity.surfaceForm(), entity.proposedType(), now);
+                            entity.surfaceForm(), entity.proposedType(), now,
+                            extractionGeneration == null ? null : extractionGeneration.toString());
                     uniqueMentions.putIfAbsent(mention.mentionId(), mention);
                     byRawMention.put(ordinal + "|" + entity.mentionId(), mention);
                 }
@@ -177,7 +185,8 @@ public final class GraphWriter {
                             object.mentionId(), evidenceChunkId,
                             relation.evidenceCharStart(), relation.evidenceCharEnd(),
                             evidenceDocumentStart, evidenceDocumentEnd, now,
-                            request.sourceId(), request.versionId().toString(), request.generation(), null));
+                            request.sourceId(), request.versionId().toString(), request.generation(), null,
+                            extractionGeneration == null ? null : extractionGeneration.toString()));
                 }
             }
             List<GraphRelation> accepted = new ArrayList<>(acceptedById.values());

@@ -3,6 +3,7 @@ package org.synanton.relix.adapter.out.graph.memory;
 import org.synanton.common.resolution.GraphCapabilities;
 import org.synanton.common.resolution.GraphIdentity;
 import org.synanton.relix.api.dto.Edge;
+import org.synanton.relix.api.dto.DocumentGraphResponse;
 import org.synanton.relix.api.dto.Entity;
 import org.synanton.relix.api.dto.GraphStats;
 import org.synanton.relix.graph.EntityNeighborhood;
@@ -163,6 +164,32 @@ public class InMemoryGraphConnector implements GraphConnector, GraphReadPort, Gr
     public KHopResult kHopPaths(String tenant, UUID fromEntityId, UUID toEntityId, int maxHops, int maxPaths) {
         InMemoryConnector connector = requireTenant(tenant);
         return connector.kHopPaths(fromEntityId, toEntityId, maxHops, maxPaths);
+    }
+
+    @Override
+    public DocumentGraphResponse documentGraph(String tenant, String sourceVersionId) {
+        var tenantMentions = mentions.getOrDefault(tenant, Map.of());
+        var tenantRelations = relations.getOrDefault(tenant, Map.of());
+        var nodes = tenantMentions.values().stream()
+                .filter(mention -> sourceVersionId.equals(mention.sourceVersionId()))
+                .sorted(java.util.Comparator.comparing(ExtractedMention::mentionId))
+                .map(mention -> new DocumentGraphResponse.Node(
+                        mention.mentionId(), mention.surfaceForm(), mention.proposedType(),
+                        mention.chunkId(), mention.chunkOffsetStart(), mention.chunkOffsetEnd(),
+                        mention.documentOffsetStart(), mention.documentOffsetEnd(),
+                        "UNRESOLVED", null, mention.extractionGeneration()))
+                .toList();
+        var edges = tenantRelations.values().stream()
+                .filter(relation -> sourceVersionId.equals(relation.sourceVersionId()))
+                .sorted(java.util.Comparator.comparing(ExtractedRelation::relationId))
+                .map(relation -> new DocumentGraphResponse.Edge(
+                        relation.relationId(), relation.subjectMentionId(),
+                        relation.objectMentionId(), relation.predicate(),
+                        relation.evidenceChunkId(), relation.evidenceChunkOffsetStart(),
+                        relation.evidenceChunkOffsetEnd(), "UNPROMOTED", null,
+                        relation.generation(), relation.extractionGeneration()))
+                .toList();
+        return new DocumentGraphResponse(sourceVersionId, sourceVersionId, nodes, edges, false);
     }
 
     @Override

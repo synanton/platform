@@ -646,7 +646,7 @@ class ExtractionConsumerTest {
                 List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
                 new LlmProvenance("extraction-v2", "a".repeat(64), null, null, null)));
         GraphWriter writer = mock(GraphWriter.class);
-        when(writer.commit(any(), any(), any())).thenReturn(
+        when(writer.commit(any(), any(), any(), any(Integer.class), any())).thenReturn(
                 new GraphCommitResult(1, 0, 0, List.of(), "MENTIONS_COMMITTED"));
 
         new ExtractionConsumer(cache, adapter,
@@ -656,7 +656,7 @@ class ExtractionConsumerTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<java.util.Map<Integer, ExtractionResult>> captured =
                 ArgumentCaptor.forClass(java.util.Map.class);
-        verify(writer).commit(any(), any(), captured.capture());
+        verify(writer).commit(any(), any(), captured.capture(), any(Integer.class), any());
         ExtractionResult consumed = captured.getValue().get(0);
         assertThat(consumed.preEntities()).hasSize(1);
         assertThat(consumed.provenance().promptVersion()).isEqualTo("extraction-v2");
