@@ -27,6 +27,8 @@ import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.synanton.synflux.extraction.graph.HttpRelixGraphWriteClient;
 import org.synanton.synflux.extraction.graph.GraphWriteTokenMinter;
 import org.synanton.synflux.extraction.graph.HttpSyntologyRelationValidator;
+import org.synanton.synflux.extraction.ontology.HttpSyntologyOntologyReleaseResolver;
+import org.synanton.synflux.extraction.ontology.OntologyReleaseResolver;
 import org.synanton.synflux.extraction.graph.RelationValidator;
 import org.synanton.synflux.resolution.CanonicalRelationValidator;
 import org.synanton.synflux.resolution.DefaultCanonicalRelationValidator;
@@ -125,6 +127,13 @@ public class SynfluxConfig {
                                                @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
         return new HttpSyntologyRelationValidator(properties.syntologyUrlOrDefault(), graphMapper(),
                 new ServiceTokenMinter(jwtSecret));
+    }
+
+    @Bean
+    public OntologyReleaseResolver ontologyReleaseResolver(ExtractionGraphProperties properties,
+                                                           @Value("${SYNANTON_JWT_SECRET}") String jwtSecret) {
+        return new HttpSyntologyOntologyReleaseResolver(properties.syntologyUrlOrDefault(),
+                new ObjectMapper(), new ServiceTokenMinter(jwtSecret));
     }
 
     @Bean

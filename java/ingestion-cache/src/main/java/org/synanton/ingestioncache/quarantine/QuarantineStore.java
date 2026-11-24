@@ -46,8 +46,9 @@ public final class QuarantineStore {
                      prompt_version, prompt_digest, schema_digest, model_id, model_revision,
                      extraction_started_at, extraction_run_id, generation_status,
                      superseded_by, promoted_at, promoted_by, promotion_reason,
-                     previous_generation, deletion_mode, deleted_at, deleted_reason)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                     previous_generation, deletion_mode, deleted_at, deleted_reason,
+                     ontology_release_id, ontology_release_digest)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """, generation.tenantId(), generation.sourceVersionId(),
                 generation.extractionGeneration(), generation.sourceDocumentId(),
                 generation.promptVersion(), generation.promptDigest(), generation.schemaDigest(),
@@ -55,7 +56,8 @@ public final class QuarantineStore {
                 generation.extractionRunId(), generation.generationStatus(),
                 generation.supersededBy(), generation.promotedAt(), generation.promotedBy(),
                 generation.promotionReason(), generation.previousGeneration(),
-                generation.deletionMode(), generation.deletedAt(), generation.deletedReason()));
+                generation.deletionMode(), generation.deletedAt(), generation.deletedReason(),
+                generation.ontologyReleaseId(), generation.ontologyReleaseDigest()));
     }
 
     public void append(QuarantineRecord record) {
@@ -293,7 +295,9 @@ public final class QuarantineStore {
                 row.getUuid("previous_generation"),
                 row.getString("deletion_mode"),
                 row.getInstant("deleted_at"),
-                row.getString("deleted_reason"));
+                row.getString("deleted_reason"),
+                row.getString("ontology_release_id"),
+                row.getString("ontology_release_digest"));
     }
 
     private static QuarantineRecord record(Row row) {

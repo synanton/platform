@@ -71,6 +71,21 @@ class QuarantineStoreTest {
     }
 
     @Test
+    void generationPersistsOntologyReleaseIdentity() {
+        String tenant = tenant();
+        UUID sourceVersion = UUID.randomUUID();
+        UUID generation = UUID.randomUUID();
+        store.createGeneration(QuarantineGeneration.staged(tenant, sourceVersion, generation,
+                "doc", "extraction-v2", "a".repeat(64), "b".repeat(64),
+                "qwen3-8b-fp8", "rev", Instant.now(), UUID.randomUUID(),
+                "release-1", "d".repeat(64)));
+
+        QuarantineGeneration row = store.generations(tenant, sourceVersion).getFirst();
+        assertThat(row.ontologyReleaseId()).isEqualTo("release-1");
+        assertThat(row.ontologyReleaseDigest()).isEqualTo("d".repeat(64));
+    }
+
+    @Test
     void promotionMakesGenerationCurrentAndSupersedesPrevious() {
         String tenant = tenant();
         UUID sourceVersion = UUID.randomUUID();

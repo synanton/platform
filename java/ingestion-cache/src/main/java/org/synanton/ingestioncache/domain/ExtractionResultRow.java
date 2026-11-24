@@ -16,12 +16,23 @@ public record ExtractionResultRow(
         String promptCompiledDigest,
         String promptRenderedDigest,
         String schemaVersion,
-        String schemaDigest) {
+        String schemaDigest,
+        UUID extractionGeneration) {
 
     public ExtractionResultRow(String tenantId, UUID contentRefId, int chunkOrdinal,
                                UUID sourceVersionId, String entitiesJson,
                                String relationsJson, Instant extractedAt) {
         this(tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson,
-                relationsJson, extractedAt, null, null, null, null, null);
+                relationsJson, extractedAt, null, null, null, null, null, null);
+    }
+
+    public ExtractionResultRow(String tenantId, UUID contentRefId, int chunkOrdinal,
+                               UUID sourceVersionId, String entitiesJson, String relationsJson,
+                               Instant extractedAt, String promptVersion,
+                               String promptCompiledDigest, String promptRenderedDigest,
+                               String schemaVersion, String schemaDigest) {
+        this(tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson,
+                relationsJson, extractedAt, promptVersion, promptCompiledDigest,
+                promptRenderedDigest, schemaVersion, schemaDigest, null);
     }
 }

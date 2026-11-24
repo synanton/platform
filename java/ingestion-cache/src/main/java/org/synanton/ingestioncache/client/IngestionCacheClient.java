@@ -1580,6 +1580,35 @@ public class IngestionCacheClient {
         ));
     }
 
+    public Optional<OntologyReleaseRef> readExtractionOntologyRelease(ExtractionRequestRow request) {
+        Row row = session.execute(SimpleStatement.newInstance(
+            "SELECT ontology_release_id, ontology_release_digest FROM ingestion_cache.source_versions " +
+            "WHERE tenant_id=? AND connector_id=? AND source_id=? AND resource_id=? AND version_id=?",
+            request.tenantId(), request.connectorId(), request.sourceId(), request.resourceId(),
+            request.versionId()
+        )).one();
+        if (row == null) {
+            return Optional.empty();
+        }
+        String releaseId = row.getString("ontology_release_id");
+        if (releaseId == null || releaseId.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(new OntologyReleaseRef(releaseId,
+                row.getString("ontology_release_digest")));
+    }
+
+    public void markExtractionOntologyRelease(ExtractionRequestRow request,
+                                              OntologyReleaseRef release) {
+        session.execute(SimpleStatement.newInstance(
+            "UPDATE ingestion_cache.source_versions SET ontology_release_id=?, " +
+            "ontology_release_digest=? WHERE tenant_id=? AND connector_id=? " +
+            "AND source_id=? AND resource_id=? AND version_id=?",
+            release.releaseId(), release.releaseDigest(), request.tenantId(),
+            request.connectorId(), request.sourceId(), request.resourceId(), request.versionId()
+        ));
+    }
+
     /** Terminal provider/config failure: no retry, visible to the operator. */
     public void markExtractionFailedTerminal(
             ExtractionRequestRow request, int attemptCount, String error) {
@@ -1629,14 +1658,25 @@ public class IngestionCacheClient {
             String entitiesJson, String relationsJson,
             String promptVersion, String promptCompiledDigest, String promptRenderedDigest,
             String schemaVersion, String schemaDigest, Instant extractedAt) {
+        upsertExtractionResult(tenantId, contentRefId, chunkOrdinal, sourceVersionId,
+                entitiesJson, relationsJson, promptVersion, promptCompiledDigest,
+                promptRenderedDigest, schemaVersion, schemaDigest, null, extractedAt);
+    }
+
+    public void upsertExtractionResult(
+            String tenantId, UUID contentRefId, int chunkOrdinal, UUID sourceVersionId,
+            String entitiesJson, String relationsJson,
+            String promptVersion, String promptCompiledDigest, String promptRenderedDigest,
+            String schemaVersion, String schemaDigest, UUID extractionGeneration,
+            Instant extractedAt) {
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.extraction_results (tenant_id, content_ref_id, chunk_ordinal, " +
             "source_version_id, entities_json, relations_json, extracted_at, prompt_version, " +
-            "prompt_compiled_digest, prompt_rendered_digest, schema_version, schema_digest) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "prompt_compiled_digest, prompt_rendered_digest, schema_version, schema_digest, " +
+            "extraction_generation) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
             tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson, relationsJson,
             extractedAt, promptVersion, promptCompiledDigest, promptRenderedDigest,
-            schemaVersion, schemaDigest
+            schemaVersion, schemaDigest, extractionGeneration
         ));
     }
 
@@ -1653,7 +1693,7 @@ public class IngestionCacheClient {
                 row.getString("relations_json"), row.getInstant("extracted_at"),
                 row.getString("prompt_version"), row.getString("prompt_compiled_digest"),
                 row.getString("prompt_rendered_digest"), row.getString("schema_version"),
-                row.getString("schema_digest")
+                row.getString("schema_digest"), row.getUuid("extraction_generation")
             ));
         }
         return rows.stream().sorted(Comparator.comparingInt(ExtractionResultRow::chunkOrdinal)).toList();

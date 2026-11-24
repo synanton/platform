@@ -52,6 +52,7 @@ public class SchemaInstaller {
         "cql/V36__quarantine_audit.cql",
         "cql/V37__extraction_cache_entries.cql",
         "cql/V38__compliance_deletion_audit.cql",
+        "cql/V39__generation_ontology_provenance.cql",
     };
 
     public static void install(CqlSession session) {
