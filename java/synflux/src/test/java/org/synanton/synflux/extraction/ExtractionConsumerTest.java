@@ -2,6 +2,7 @@ package org.synanton.synflux.extraction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,6 +62,7 @@ import org.synanton.ingestioncache.domain.ResolutionResultRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.synflux.config.ExtractionConsumerProperties;
 import org.synanton.synflux.extraction.cache.ExtractionCacheService;
+import org.synanton.synflux.extraction.graph.GraphCommitResult;
 import org.synanton.synflux.extraction.graph.GraphWriter;
 import org.synanton.synflux.extraction.provider.ExtractionAdapterResolver;
 import org.synanton.synflux.extraction.provider.ExtractionProvider;
@@ -629,6 +631,36 @@ class ExtractionConsumerTest {
                 .singleElement()
                 .satisfies(result -> assertThat(result.extractionGeneration())
                         .isEqualTo(generation.extractionGeneration()));
+    }
+
+    @Test
+    void extractionResultConsumerReceivesPinnedProvenance() {
+        String tenant = "tenant-result-consumer";
+        Fixture fixture = seed(tenant, "Halcyon-7 requires a helium leak check.");
+        QuarantineStore quarantine = new QuarantineStore(session);
+        OntologyReleaseResolver resolver = tenantId -> Optional.of(
+                new OntologyRelease("release-1", "d".repeat(64)));
+        ExtractionEngineAdapter adapter = mock(ExtractionEngineAdapter.class);
+        when(adapter.extract(any(), any())).thenReturn(new ExtractionResult(
+                List.of(new PreEntity("m1", "Halcyon-7", "MaintenanceSystem", 0, 9, "Halcyon-7")),
+                List.of(), LlmUsage.NONE, List.of(), ExtractionIntegrity.CLEAN,
+                new LlmProvenance("extraction-v2", "a".repeat(64), null, null, null)));
+        GraphWriter writer = mock(GraphWriter.class);
+        when(writer.commit(any(), any(), any())).thenReturn(
+                new GraphCommitResult(1, 0, 0, List.of(), "MENTIONS_COMMITTED"));
+
+        new ExtractionConsumer(cache, adapter,
+                new ExtractionConsumerProperties(true, tenant, 1, 5, 30, 5000L),
+                writer, Clock.systemUTC(), quarantine, null, resolver).poll();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.Map<Integer, ExtractionResult>> captured =
+                ArgumentCaptor.forClass(java.util.Map.class);
+        verify(writer).commit(any(), any(), captured.capture());
+        ExtractionResult consumed = captured.getValue().get(0);
+        assertThat(consumed.preEntities()).hasSize(1);
+        assertThat(consumed.provenance().promptVersion()).isEqualTo("extraction-v2");
+        assertThat(consumed.provenance().promptCompiledDigest()).isEqualTo("a".repeat(64));
     }
 
     @Test
