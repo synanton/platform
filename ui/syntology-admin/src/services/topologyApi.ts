@@ -15,6 +15,6 @@ topologyApi.interceptors.request.use((config) => {
 });
 
 export async function getGrants(uid: number): Promise<AclGrant[]> {
-  const resp = await topologyApi.get<AclGrant[]>(`/topology/users/${uid}/grants`);
+  const resp = await topologyApi.get<AclGrant[]>(`/users/${uid}/grants`);
   return resp.data;
 }
