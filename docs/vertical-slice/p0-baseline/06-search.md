@@ -1,0 +1,66 @@
+# P0-1 — Search do-not-remove inventory
+
+Status: draft for #859. Source/test-source inspection; tests were not executed. Paths are repo-relative.
+
+## Must be preserved
+
+| Capability | Code path | Test evidence | Status |
+|---|---|---|---|
+| Public canonical search `POST /v1/search`; tenant from verified JWT; 404 unknown tenant; 503 building projection + `Retry-After: 5` | `java/synquest/src/main/java/org/synanton/synquest/api/KnowledgeSearchController.java:52,65-92` | `KnowledgeSearchControllerTest#searchBindsTenantFromVerifiedJwtAndReturnsFrozenShape`, `#unknownTenantIs404NotA503RetrySignal`, `#knownTenantWithBuildingProjectionIs503WithRetryAfter`; `tests/integration/vertical-slice.sh:449` | verified-in-code |
+| Legacy `POST /search` (explicit body tenant) | `java/synquest/.../api/SearchController.java:24` | `LegacySearchTenantRequiredTest#searchWithoutExplicitTenantRejects`; response/ranking not controller-tested | verified-in-code |
+| Legacy ops `/reindex`, `/health`, `/index/stats` | `SearchController.java:39,49,56` | No controller test; reindex service coverage | verified-in-code |
+| Projection endpoints: rebuild, entities, status | `KnowledgeSearchController.java:107,125,143` | `tests/integration/vertical-slice.sh:445,612`; entity projection service test; no controller test for `/entities` | verified-in-code |
+| Provenance `GET /v1/knowledge/{objectId}/provenance` | `KnowledgeProvenanceController.java:49` | `KnowledgeProvenanceControllerTest#provenanceRefFromSearchHitResolves...`, `#crossTenantProvenanceReadsOnlyTheCallersTenant` | verified-in-code |
+| Demo search `POST /v1/demo/search` with two-leg RRF (K=20) | `demo/DemoSearchController.java:26`; `demo/DemoSearchService.java:37,99-106` | `DemoSearchControllerTest`; `DemoSearchServiceTest#twoLegContributionsAreDirectValuesAndSum`, `#bm25MissIsDenseOnlyWithZeroBm25Contribution` | verified-in-code |
+| Gateway `POST /query`; planner/search/graph/fusion | `java/gateway/.../api/QueryController.java:23`; `service/QueryService.java:54`; `plan/PlanExecutor.java:67,74,115` | `FusionEngineTest#promotesHitsFoundInGraphEntities`, `#promotesHitsFoundInGraphEdges`; no full E2E orchestration test | verified-in-code |
+| Synapt `POST /search` forwarding to gateway | `java/synapt/.../api/SearchController.java:28,41` | `SearchRequestValidationTest#validRequestPassesValidation`, `#topKExceedingMaxFailsValidation` | verified-in-code |
+| MCP search tool `POST /mcp` (`query`, `top_k`) | `java/synanton-mcp/.../tool/SearchToolHandler.java:32,55,62-65` | `McpSchemaValidationTest`; `McpEndpointScopeTest` | verified-in-code |
+| Relix graph query `POST /graph/query` (graph-backed retrieval input) | `java/relix/.../api/GraphController.java:20`; `gateway/.../client/RelixClient.java:27-31` | Executor tests; tenant guard; no controller E2E | verified-in-code |
+| Embedded Lucene: per-tenant BM25 + cosine KNN, chunk/entity docs sharing directory | `java/synquest/.../engine/lucene/LuceneIndexBuilder.java:30-58,300-370`; `HybridSearcher.java:45-70,81-104` | `LuceneKnowledgeSearchBackendTest#projectMakesCanonicalChunkSearchableWithStableReferences`, `#crossTenantCandidateGenerationIsDenied`; `LuceneEntityProjectionTest`; `LuceneIndexIdempotencyTest` | verified-in-code |
+| PostgreSQL/pgvector backend: lexical `ts_rank`, vector `<=>`, hybrid RRF, metadata/RLS/generation scope | `java/synquest-postgres/.../PostgresSynquestEngine.java:88,127,309,407`; `synvault-postgres/.../schema.sql:20,55,57,75,132` | `PostgresSynquestEngineTest`; `ScoreSemanticsTest`; `MetadataPushdownGuardTest`; `VectorPlanTopologyTest` | verified-in-code |
+| YDB backend: fulltext/filtered/plain vector indexes, generation pointer | `java/synquest-ydb/.../YdbSearchSchema.java:21-62`; `YdbSynquestEngine.java:246,276,340-380,622` | `YdbSynquestEngineTest`; `YdbSearchSchemaTest`; `YdbVectorIndexUsageTest`; `FilterPaginationTest` | verified-in-code |
+| Cassandra + Lucene backend | `java/synquest-cassandra/.../CassandraSynquestEngine.java:77,187,263,545`; `CassandraVectorRetriever.java:25` | `CassandraSynquestEngineTest`; `CassandraVectorRetrieverTest` | verified-in-code |
+| Milvus backend: cosine HNSW, tenant filter | `java/synquest-milvus/.../MilvusVectorRetriever.java:44,108-118,128` | `MilvusVectorRetrieverTest` | verified-in-code |
+| Qdrant backend: cosine collection, tenant filter | `java/synquest-qdrant/.../QdrantVectorRetriever.java:48,76-83,91,199-208` | `QdrantVectorRetrieverTest` | verified-in-code |
+| Standalone Lucene vector backend | `java/synquest-lucene/.../LuceneStandaloneVectorRetriever.java:55,80-93` | `LuceneStandaloneVectorRetrieverTest` | verified-in-code |
+| In-memory backend: brute-force lexical/vector/hybrid, generation-gated reads | `java/synquest-inmemory/.../InMemorySynquestEngine.java:45,124-181` | `InMemorySynquestEngineTest`; `InMemorySynquestGatingTest` | verified-in-code |
+| Vector-retriever routing: narrow vector requests route; wide fail loud | `synquest-api/.../VectorRetriever.java:15`; `RoutingSynquestEngine.java:56-66`; `SearchCapabilities.java:8` | `RoutingSynquestEngineTest#shouldRouteNarrowVectorRequestsToRetriever`, `#shouldFallThroughNonVectorRequests`; `VectorRetrieverContract`; `ApiBoundaryTest` | verified-in-code |
+| Ranking: dense+lexical RRF | `LuceneSearchEngine.java:212-216`; `RrfFusion.java:41-78` | `RrfFusionTest#combinesDisjointLists`, `#overlappingDocsScoreHigher`, `#rrfScoreFormula`; `SearchServiceSequentialTest` | verified-in-code |
+| Ranking: single-leg RRF boost, fail-closed below 1 | `RrfFusion.java:57-65` | `RrfFusionTest#defaultBoostOnePreservesClassicRrf`, `#boostTwoRestoresSingleLegParity`, `#boostBelowOneRejected` | verified-in-code |
+| Ranking: cross-encoder rerank after widened fusion, fail-closed | `LuceneSearchEngine.java:199-251`; `service/SearchReranker.java:10` | `SearchServiceRerankTest#rerankReordersWidensCandidatesAndReportsTrace`, `#withoutRerankNothingChanges`, `#rerankFailsClosedWhenUnconfiguredOrFailing` | verified-in-code |
+| Ranking: `expand=section` small-to-big expansion | `LuceneSearchEngine.java:253-258,273-308`; `HybridSearcher.java:118-131` | `SearchServiceHierarchyTest#headingHitPullsInItsTableSiblingsInReadingOrder`, `#expansionIsCappedPerSectionAndRespectsTopK` | verified-in-code |
+| Ranking: `execution_mode=parallel|sequential` | `LuceneSearchEngine.java:137-197,315-327` | `SearchServiceSequentialTest#shouldConstrainDenseLegToLexicalUniverse`, `#shouldHonorDeploymentDefaultSequential`, `#shouldRejectUnknownExecutionMode` | verified-in-code |
+| Ranking: PG/YDB hybrid RRF + deterministic tie-break | `PostgresSynquestEngine.java:407-463`; `YdbSynquestEngine.java:340-380` | `ScoreSemanticsTest#identicalTextTiesBreakByChunkId`; `EngineDeterminismTest#sameJvmTwiceByteIdentical`, `#subprocessDifferentHeapByteIdentical`; `SynquestEngineContract#hybridRetrievalCombinesLexicalAndVector` | verified-in-code |
+| Tenant isolation pre-ranking; no cross-tenant candidates | `search/SearchFilter.java`; `service/LuceneKnowledgeSearchBackend.java:107-135`; `synquest-api/.../EligibilityScope.java:21` | `LuceneKnowledgeSearchBackendTest#crossTenantCandidateGenerationIsDenied`; `SynquestEngineContract#tenantEligibilityIsPreRanking`; `KnowledgeSearchControllerTest#tenantIdInRequestBodyIsRejectedPerAdr0007`, `#tenantHeaderIsRejectedPerAdr0007` | verified-in-code |
+| Visibility/tombstone filtering + bounded refetch snapshot | `LuceneKnowledgeSearchBackend.java:110-135,147-278` | `TombstoneFilteringTest#tombstoneDominatedWindowRefetchesAndReusesOneSnapshot`, `#cleanWindowDoesNotTriggerARefetch`; `LuceneKnowledgeSearchBackendTest#failClosedHidesUnmappedChunksAndCountsThem`; `SourceReplacementSearchVisibilityTest` | verified-in-code |
+| Metadata filters in engine layer (PG pushdown, YDB post-filter, in-memory exact) | `PostgresSynquestEngine.java:155-160,334-343`; `YdbSynquestEngine.java:367,461,550`; `InMemorySynquestEngine.java:146,248-255` | `SynquestEngineContract#metadataFiltersApply`; `FilterPaginationTest`; `MetadataPushdownGuardTest` | verified-in-code |
+| Principal/policy eligibility beyond tenant | `EligibilityScope.java:21-30`; `InMemorySynquestEngine.java:134-135` | `SynquestEngineContract#serviceContextBroadeningIsRejected`, `#principalPolicyEligibilityIsEnforced` | verified-in-code; adapter-dependent |
+| Chunk-level results (default `SearchDocumentType.CHUNK`) | `search/SearchDocumentType.java:4`; `SearchFilter.java:6-8`; `KnowledgeSearchController.java:76-90` | `KnowledgeSearchControllerTest`; `tests/integration/vertical-slice.sh:454-463` | verified-in-code |
+| Entity/candidate search for resolution (never chunk docs) | `SearchDocumentType.java:4`; `resolution/SearchAdapterCandidateProvider.java:41-81`; `LuceneSearchEngine.java:553-621` | `SearchAdapterCandidateProviderTest#chunkDocumentsAreNeverCandidates`, `#tenantIsolationNeverLeaksCandidates`, `#staleProjectionIsDropped`; `LuceneEntityProjectionTest#entityAndChunkSearchesShareTheIndexButNeverCross` | verified-in-code |
+| Result fields: score/title/snippet/provenance/source versions/pages/section/metadata | `KnowledgeSearchController.java:79-92,186-200` | `KnowledgeSearchControllerTest`; `PublicResponseFixtureTest` | verified-in-code |
+| Generation fields: public `configuration_generation`, internal `index_generation`, resolution `search_generation` | `KnowledgeSearchController.java:92,184`; `SearchTrace.java:11`; `IndexStats.java:15`; `SearchAdapterCandidateProvider.java:79`; `V26__resolution_search_generation.cql` | `KnowledgeSearchControllerTest`; `SearchAdapterCandidateProviderTest#generationChangesWhenProjectionRefreshes`; integration script | verified-in-code |
+| Index rebuild flips active generation; no mixed generations | `PostgresSynquestEngine.java:741-765`; `YdbSynquestEngine.java:622-674`; `synvault-postgres/schema.sql:75,132` | `SynquestEngineContract#generationPromotionHidesPreviousGeneration`, `#noMixedGenerationsDuringPromotion`, `#generationScopedDelete`, `#outOfOrderProjectionCannotRegress` | verified-in-code |
+| Gateway graph-hit promotion (`graphPromoted`, score bonus) | `gateway/.../plan/FusionEngine.java:17-38`; `domain/Hit.java:12,20`; `config/GatewayProperties.java:19` | `FusionEngineTest#promotesHitsFoundInGraphEntities`, `#promotesHitsFoundInGraphEdges`, `#promotedHitsSortedBeforeRest` | verified-in-code |
+| Fixed page of 20; no `next_page_token` in Gen-A | `KnowledgeSearchController.java:42,77` | `KnowledgeSearchControllerTest` candidate limit 20 | verified-in-code |
+| Ranking metadata `metadata.strategy=bm25` | `KnowledgeSearchController.java:91-92`; `LuceneKnowledgeSearchBackend.java:40,72-74` | `KnowledgeSearchControllerTest`; integration script asserts `bm25` | verified-in-code |
+| Async projection consumer: outbox → incremental/full reindex; search-projected readiness | `service/SearchProjectionConsumer.java:72-147` | `SearchProjectionConsumerTest#pendingEventsRebuildProjectionAndMarkPublished`, `#concurrentTenantsProjectIntoTheirOwnIndexesWithoutCrossContamination`, `#sourceDeletedEventProjectsIncrementally`, `#sourceDeletedWithoutTombstoneFallsBackToRebuild` | verified-in-code |
+| Consumers: gateway, synapt, MCP, UI, resolution | `gateway/.../SynquestClient.java:25-29`; `synapt/.../SearchController.java:41`; `mcp/.../SearchToolHandler.java:60-65`; `ui/syntology-admin/src/pages/Chat.tsx:13`; `SearchAdapterCandidateProvider.java:46-51` | MCP scope tests; synapt validation; UI consumer untested | verified-in-code |
+| Capability advertisement/conformance gating | `synquest-api/.../SearchCapabilities.java:8-21`; `InMemorySynquestEngine.java:199-213`; `PostgresSynquestEngine.java:785-801` | `ConformanceGatingContract#claimedCapabilitiesHaveSupportedEvidence`, `#supportedEntriesNameLoadableEvidence` | verified-in-code |
+
+## Gaps / not wired
+
+| Capability | Evidence | Status |
+|---|---|---|
+| Document-scope search/ranking | No document-level ranked unit; public hits are chunks. Only lower-level `SearchHit.documentId` identity. | unknown |
+| Public `/v1/search` `filters`, `limit`, `profile`, `consistency`, `next_page_token` | Controller accepts only `query`; docs reserve others (Gen-B). | documented-only |
+| ACL/classification filtering | `CuckooAclFilter` only unit-tested/unwired; classification indexed but no query-time filter. | unknown |
+| Graph-backed search inside synquest engine | `SearchCapabilities.graph=false`; graph retrieval is gateway→Relix only. | verified absence |
+| Gateway full `/query` orchestration E2E | No QueryService/PlanExecutor integration test; only fusion/tenant tests. | unknown |
+| Legacy `/reindex`, `/health`, `/index/stats` controller tests | None found. | unknown |
+| `/v1/search-projection/entities` controller test | None found. | unknown |
+| Relix `/graph/query` controller E2E | None found. | unknown |
+| UI search consumer | `Chat.tsx` no auth/proxy and no test; response shape unverified. | unknown |
+| Vector metadata filters | `VectorSearchRequest` has no metadata-filter field; adapters advertise filters=false. | verified absence |
+| Public `document_id` / `promotion_state` fields | Not in public search response; `document_id` only lower-level `SearchHit`, promotion only gateway `graphPromoted`. | absent |
+
+Tests were not executed for this inventory; P0-3 owns execution status.
