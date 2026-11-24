@@ -121,6 +121,32 @@ SourceVersion {
 
 The version carries both `source_identity` and `content_digest` side by side —
 neither substitutes for the other (1.28 §10–§11).
+
+### Document identity policy (vertical slice)
+
+This slice does **not** introduce a separate persisted `document_id` entity. The
+stable logical document/resource identity is the existing `SourceIdentity`
+tuple `(tenant_id, connector_id, source_id, resource_id)`; a content revision is
+the immutable `SourceVersion.version_id`.
+
+- The API exposes `source_version_id` as an additive alias of `version_id`;
+  both are returned for compatibility. Future deprecation/removal requires a
+  versioned contract.
+- Re-ingesting unchanged bytes/revision converges on the existing version and
+  reports `UNCHANGED`; it does not create a new version. Changed content
+  creates a new immutable `version_id`.
+- The extraction trigger `ExtractionRequested@1` carries the same
+  `source_identity`, `version_id`, and `content_ref_id`; the consumer persists a
+  generation for that exact source version.
+- Existing upload paths, single-file semantics, deduplication, tombstoning, and
+  the legacy `/ingest` path are unchanged.
+
+Evidence: `SourceControllerTenantTest#sourceVersionResponseUsesFrozenSnakeCaseFields`
+(`source_version_id == version_id`), and
+`FixtureIngestionLifecycleTest#fixtureFirstUnchangedAndChangedIngest_preservesImmutableSourceHistory`
+(`UNCHANGED` retains one immutable version; changed content creates a new one).
+
+
 `content_cache_reference` is the opaque immutable reference returned by Content
 Cache 1.26 for the acquired source representation. It is stored alongside, not
 in place of, the digest; clients pass it back to Content Cache without parsing
