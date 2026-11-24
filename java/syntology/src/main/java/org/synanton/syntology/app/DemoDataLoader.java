@@ -54,7 +54,8 @@ public class DemoDataLoader {
     private void seed(String tenant) throws IOException {
         ClassPathResource resource = new ClassPathResource("sample-ontology.ttl");
         byte[] turtle = resource.getInputStream().readAllBytes();
-        String releaseDigest = org.synanton.syntology.domain.service.OntologyDigest.sha256(turtle);
+        String releaseDigest = org.synanton.syntology.domain.service.OntologyDigest.releaseDigest(
+                "turtle", java.util.Map.of("content", turtle));
         ontologyAdapter.persistTurtle(tenant, SEED_VERSION, turtle);
         String graphUri = properties.storage().jena().path() + "/" + tenant + "/" + SEED_VERSION;
         UUID versionId = UUID.randomUUID();

@@ -101,7 +101,8 @@ public class SchemaLoadService {
         byte[] tbox = tboxMapper.toTurtle(ir);
         byte[] shapes = shaclMapper.toTurtle(ir);
         byte[] schema = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(ir);
-        String releaseDigest = OntologyDigest.sha256(tbox, shapes, schema);
+        String releaseDigest = OntologyDigest.releaseDigest("hcl", Map.of(
+                "tbox", tbox, "shapes", shapes, "schema_ir", schema));
         UUID versionId = UUID.randomUUID();
         metadataRepository.deprecateAllActive(tenant);
         ontologyAdapter.persistTurtle(tenant, version, tbox);

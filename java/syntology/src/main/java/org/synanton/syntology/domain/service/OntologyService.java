@@ -88,7 +88,7 @@ public class OntologyService {
         String tenant = tenant();
         checkWritePermission(tenant);
         byte[] bytes = file.getBytes();
-        String releaseDigest = OntologyDigest.sha256(bytes);
+        String releaseDigest = OntologyDigest.releaseDigest("turtle", Map.of("content", bytes));
         UUID versionId = UUID.randomUUID();
         metadataRepository.deprecateAllActive(tenant);
         String graphUri = properties.storage().jena().path() + "/" + tenant + "/" + version;
