@@ -54,6 +54,7 @@ bboxes are explicitly `null` / `NOT_APPLICABLE`; source book page numbers are re
 
 ```bash
 ./gradlew :java:synflux:test --tests 'org.synanton.synflux.document.evidence.A2FixtureValidationTest'
+python3 -m unittest discover -s evaluation/it-books/a2-v1 -p 'test_*.py'
 ```
 
 The test verifies source hashes, excerpt hashes, license pins, element/chunk IDs, UTF-16 offsets,

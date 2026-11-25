@@ -1,6 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-NC-3.0 -->
 <!-- Source: Think Python, 2nd Edition, Version 2.4.1, Allen B. Downey. -->
 <!-- Derived excerpt; original PDF: samples/it-books/books/think-python-2e.pdf -->
+<!-- UTF-16 conformance probe: 😀 -->
 # Think Python: How to Think Like a Computer Scientist
 
 Author: Allen Downey

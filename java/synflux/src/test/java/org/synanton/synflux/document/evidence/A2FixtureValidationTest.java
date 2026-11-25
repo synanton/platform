@@ -81,6 +81,10 @@ class A2FixtureValidationTest {
                 Files.readAllBytes(excerpt))));
         }
 
+        assertThat(structures.get("think-python-2e").text())
+            .as("non-BMP UTF-16 conformance probe")
+            .contains("😀");
+
         Map<String, JsonNode> mentions = new HashMap<>();
         for (JsonNode mention : annotations.path("mentions")) {
             String sourceId = mention.path("sourceId").asText();

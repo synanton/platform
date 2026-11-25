@@ -95,6 +95,11 @@ def norm(text: str) -> str:
     return unicodedata.normalize("NFC", text).strip()
 
 
+def utf16_len(text: str) -> int:
+    """Number of UTF-16 code units in a Python (code-point) string."""
+    return len(text.encode("utf-16-le")) // 2
+
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -153,18 +158,19 @@ def parse_markdown(source_id: str, text: str) -> dict:
     flush()
 
     doc_text = "\n".join(e["text"] for e in elements)
+    cursor = 0
     for i, e in enumerate(elements):
         e["ordinal"] = i
         e["elementId"] = java_uuid(f"a2-{source_id}|element|{i}")
-        start = doc_text.find(e["text"])
-        # deterministic sequential search from the previous element end
-        start = 0 if i == 0 else elements[i - 1]["documentEndOffset"] + 1
-        while doc_text[start:start + len(e["text"])] != e["text"]:
-            start = doc_text.find(e["text"], start)
-            if start < 0:
-                raise RuntimeError(f"cannot locate element text: {e['text'][:40]}")
-        e["documentStartOffset"] = start
-        e["documentEndOffset"] = start + len(e["text"])
+        start = doc_text.find(e["text"], cursor)
+        if start < 0:
+            raise RuntimeError(f"cannot locate element text: {e['text'][:40]}")
+        cp_end = start + len(e["text"])
+        e["cpStart"] = start
+        e["cpEnd"] = cp_end
+        e["documentStartOffset"] = utf16_len(doc_text[:start])
+        e["documentEndOffset"] = utf16_len(doc_text[:cp_end])
+        cursor = cp_end + (1 if cp_end < len(doc_text) else 0)
 
     chunk_start = 0
     while chunk_start < len(elements):
@@ -175,10 +181,12 @@ def parse_markdown(source_id: str, text: str) -> dict:
         chunk_id = java_uuid(f"a2-{source_id}|chunk|{ordinal}")
         doc_start = elements[chunk_start]["documentStartOffset"]
         doc_end = elements[chunk_end - 1]["documentEndOffset"]
+        cp_start = elements[chunk_start]["cpStart"]
+        cp_end = elements[chunk_end - 1]["cpEnd"]
         chunk = {"chunkId": chunk_id, "ordinal": ordinal,
                  "sectionPath": elements[chunk_start]["sectionPath"],
                  "documentStartOffset": doc_start, "documentEndOffset": doc_end,
-                 "text": doc_text[doc_start:doc_end],
+                 "text": doc_text[cp_start:cp_end],
                  "elementIds": [e["elementId"] for e in elements[chunk_start:chunk_end]]}
         chunks.append(chunk)
         for e in elements[chunk_start:chunk_end]:
@@ -226,6 +234,8 @@ def main():
         if element is None:
             raise RuntimeError(f"mention not found: {mention_id} {quote!r} in {source_id}")
         offset = element["text"].find(quote)
+        if offset < 0:
+            raise RuntimeError(f"surface not found in element: {mention_id}")
         mention = {
             "id": mention_id,
             "sourceId": source_id,
@@ -234,10 +244,10 @@ def main():
             "space": "STRUCTURAL_DOCUMENT",
             "elementId": element["elementId"],
             "chunkId": element["chunkId"],
-            "documentStartOffset": element["documentStartOffset"] + offset,
-            "documentEndOffset": element["documentStartOffset"] + offset + len(quote),
-            "chunkStartOffset": element["chunkStartOffset"] + offset,
-            "chunkEndOffset": element["chunkStartOffset"] + offset + len(quote),
+            "documentStartOffset": element["documentStartOffset"] + utf16_len(element["text"][:offset]),
+            "documentEndOffset": element["documentStartOffset"] + utf16_len(element["text"][:offset + len(quote)]),
+            "chunkStartOffset": element["chunkStartOffset"] + utf16_len(element["text"][:offset]),
+            "chunkEndOffset": element["chunkStartOffset"] + utf16_len(element["text"][:offset + len(quote)]),
             "pageNumber": None,
             "sourcePage": page,
             "geometryStatus": "NOT_APPLICABLE",
