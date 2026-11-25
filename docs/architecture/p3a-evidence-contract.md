@@ -2,6 +2,7 @@
 
 **Status:** accepted scope decision after P1 exit evidence (#903/#909).
 **Inputs:** P1 structural contract (#904/#905), P0 compiled IT Books release, A2 independent fixture.
+**Implementation contract:** `docs/architecture/p3a-evidence-binding-implementation.md` (`p3a-evidence-binding-v1`).
 
 ## Three coordinate spaces
 
