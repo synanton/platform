@@ -103,8 +103,11 @@ public class SchemaLoadService {
         byte[] schema = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(ir);
         String releaseDigest = OntologyDigest.releaseDigest("hcl", Map.of(
                 "tbox", tbox, "shapes", shapes, "schema_ir", schema));
+        String ontologyId = ir.ontology() != null && ir.ontology().id() != null
+                && !ir.ontology().id().isBlank()
+                ? ir.ontology().id() : OntologyVersion.DEFAULT_ONTOLOGY_ID;
         UUID versionId = UUID.randomUUID();
-        metadataRepository.deprecateAllActive(tenant);
+        metadataRepository.deprecateAllActive(tenant, ontologyId);
         ontologyAdapter.persistTurtle(tenant, version, tbox);
         ontologyAdapter.persistShapes(tenant, version, shapes);
         ontologyAdapter.persistSchemaIr(tenant, version, schema);
@@ -121,7 +124,8 @@ public class SchemaLoadService {
                 "ACTIVE",
                 Instant.now(),
                 versionId.toString(),
-                releaseDigest
+                releaseDigest,
+                ontologyId
         );
         metadataRepository.insert(ontologyVersion);
         entityCache.invalidateAll();
@@ -146,7 +150,7 @@ public class SchemaLoadService {
 
     private String resolveVersion(String version) {
         if (version == null || version.isBlank() || "active".equalsIgnoreCase(version)) {
-            return metadataRepository.findActive(tenant())
+            return metadataRepository.findActive(tenant(), OntologyVersion.DEFAULT_ONTOLOGY_ID)
                     .map(OntologyVersion::version)
                     .orElseThrow(() -> new IllegalStateException("No active ontology version"));
         }

@@ -24,7 +24,8 @@ public class H2MetadataRepository implements MetadataRepository {
             rs.getString("status"),
             rs.getTimestamp("created_at").toInstant(),
             rs.getString("release_id"),
-            rs.getString("release_digest")
+            rs.getString("release_digest"),
+            rs.getString("ontology_id")
     );
 
     private final JdbcTemplate jdbcTemplate;
@@ -58,10 +59,19 @@ public class H2MetadataRepository implements MetadataRepository {
 
     @Override
     public Optional<OntologyVersion> findActive(String tenantId) {
+        return findActive(tenantId, OntologyVersion.DEFAULT_ONTOLOGY_ID);
+    }
+
+    @Override
+    public Optional<OntologyVersion> findActive(String tenantId, String ontologyId) {
+        String resolvedOntologyId = ontologyId == null || ontologyId.isBlank()
+                ? OntologyVersion.DEFAULT_ONTOLOGY_ID : ontologyId;
         List<OntologyVersion> results = jdbcTemplate.query(
-                "SELECT * FROM syntology.ontology_versions WHERE tenant_id = ? AND status = 'ACTIVE' ORDER BY created_at DESC LIMIT 1",
+                "SELECT * FROM syntology.ontology_versions WHERE tenant_id = ? AND ontology_id = ? "
+                        + "AND status = 'ACTIVE' ORDER BY created_at DESC LIMIT 1",
                 ROW_MAPPER,
-                tenantId
+                tenantId,
+                resolvedOntologyId
         );
         return results.stream().findFirst();
     }
@@ -72,8 +82,8 @@ public class H2MetadataRepository implements MetadataRepository {
                 """
                 INSERT INTO syntology.ontology_versions
                 (version_id, tenant_id, version, label, description, graph_uri, status, created_at,
-                 release_id, release_digest)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 release_id, release_digest, ontology_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 version.versionId(),
                 version.tenantId(),
@@ -84,7 +94,8 @@ public class H2MetadataRepository implements MetadataRepository {
                 version.status(),
                 Timestamp.from(version.createdAt()),
                 version.releaseId(),
-                version.releaseDigest()
+                version.releaseDigest(),
+                version.ontologyId()
         );
     }
 
@@ -93,6 +104,18 @@ public class H2MetadataRepository implements MetadataRepository {
         jdbcTemplate.update(
                 "UPDATE syntology.ontology_versions SET status = 'DEPRECATED' WHERE tenant_id = ? AND status = 'ACTIVE'",
                 tenantId
+        );
+    }
+
+    @Override
+    public void deprecateAllActive(String tenantId, String ontologyId) {
+        String resolvedOntologyId = ontologyId == null || ontologyId.isBlank()
+                ? OntologyVersion.DEFAULT_ONTOLOGY_ID : ontologyId;
+        jdbcTemplate.update(
+                "UPDATE syntology.ontology_versions SET status = 'DEPRECATED' WHERE tenant_id = ? "
+                        + "AND ontology_id = ? AND status = 'ACTIVE'",
+                tenantId,
+                resolvedOntologyId
         );
     }
 

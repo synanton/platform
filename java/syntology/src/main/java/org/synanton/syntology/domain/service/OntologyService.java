@@ -74,9 +74,14 @@ public class OntologyService {
         return metadataRepository.findAll(tenant());
     }
 
-    /** Active ontology version for the verified tenant, if one exists. */
+    /** Active Supply Chain ontology version for the verified tenant, if one exists. */
     public java.util.Optional<OntologyVersion> activeVersion(String tenantId) {
-        return metadataRepository.findActive(tenantId);
+        return metadataRepository.findActive(tenantId, OntologyVersion.DEFAULT_ONTOLOGY_ID);
+    }
+
+    /** Active release for an explicit ontology; does not affect other ontologies. */
+    public java.util.Optional<OntologyVersion> activeVersion(String tenantId, String ontologyId) {
+        return metadataRepository.findActive(tenantId, ontologyId);
     }
 
     public OntologyVersion createVersion(
@@ -89,8 +94,9 @@ public class OntologyService {
         checkWritePermission(tenant);
         byte[] bytes = file.getBytes();
         String releaseDigest = OntologyDigest.releaseDigest("turtle", Map.of("content", bytes));
+        String ontologyId = OntologyVersion.DEFAULT_ONTOLOGY_ID;
         UUID versionId = UUID.randomUUID();
-        metadataRepository.deprecateAllActive(tenant);
+        metadataRepository.deprecateAllActive(tenant, ontologyId);
         String graphUri = properties.storage().jena().path() + "/" + tenant + "/" + version;
         ontologyAdapter.persistTurtle(tenant, version, bytes);
         OntologyVersion ontologyVersion = new OntologyVersion(
@@ -103,7 +109,8 @@ public class OntologyService {
                 "ACTIVE",
                 Instant.now(),
                 versionId.toString(),
-                releaseDigest
+                releaseDigest,
+                ontologyId
         );
         metadataRepository.insert(ontologyVersion);
         entityCache.invalidateAll();
@@ -351,7 +358,7 @@ public class OntologyService {
 
     private String resolveVersion(String version) {
         if (version == null || version.isBlank() || "active".equalsIgnoreCase(version)) {
-            return metadataRepository.findActive(tenant())
+            return metadataRepository.findActive(tenant(), OntologyVersion.DEFAULT_ONTOLOGY_ID)
                     .map(OntologyVersion::version)
                     .orElseThrow(() -> new IllegalStateException("No active ontology version"));
         }

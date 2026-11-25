@@ -45,11 +45,29 @@ class ActiveOntologyVersionControllerTest {
         mvc.perform(get("/v1/tenants/tenant-a/active-ontology-version"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tenantId").value("tenant-a"))
+                .andExpect(jsonPath("$.ontologyId").value("supply-chain"))
                 .andExpect(jsonPath("$.activeVersion").value("v1.2.0"))
                 .andExpect(jsonPath("$.versionRef").value("uuid:" + versionId))
                 .andExpect(jsonPath("$.activatedAt").value("2026-11-11T00:00:00Z"))
                 .andExpect(jsonPath("$.releaseId").value(versionId.toString()))
                 .andExpect(jsonPath("$.releaseDigest").value("a".repeat(64)));
+    }
+
+    @Test
+    void selectsActiveReleaseByOntologyWithoutGlobalReplacement() throws Exception {
+        TenantContext.setAnonymous("tenant-a");
+        UUID versionId = UUID.fromString("33333333-3333-3333-3333-333333333333");
+        when(service.activeVersion("tenant-a", "it-books")).thenReturn(Optional.of(new OntologyVersion(
+                versionId, "tenant-a", "it-books-v1", "IT Books v1", null, "/g", "ACTIVE",
+                Instant.parse("2026-11-11T00:00:00Z"), versionId.toString(), "b".repeat(64),
+                "it-books")));
+
+        mvc.perform(get("/v1/tenants/tenant-a/active-ontology-version")
+                        .param("ontologyId", "it-books"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ontologyId").value("it-books"))
+                .andExpect(jsonPath("$.activeVersion").value("it-books-v1"))
+                .andExpect(jsonPath("$.releaseDigest").value("b".repeat(64)));
     }
 
     @Test
