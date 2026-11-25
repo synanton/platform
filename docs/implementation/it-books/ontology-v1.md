@@ -46,6 +46,22 @@ This preserves the proposed unions without accepting unrelated types. The
 validator follows `rdfs:subClassOf`, so a `Book` matches a `TopicBearing`
 domain and a `Concept` matches a `DefinedConcept` range.
 
+**Review reading rule:** every predicate below has one encoded domain and one
+encoded range. That single name is a marker whose member list above is the union
+from #894. The mapping is intentionally readable as
+`predicate domain = marker = {members}`; no second document is required.
+
+### Four-layer enforcement boundary
+
+- The schema **does not declare** a `Mention` class, and no canonical class may
+  be used as a source-mention type. This is schema-level absence.
+- The full four-layer prohibition is enforced by the extraction/resolution
+  contracts and this documentation, not by a runtime “reject mention typed as
+  Concept” check in Syntology. Do not describe it as an executable type
+  constraint.
+- A8 must preserve the layer separation in code; A1 only defines the ontology
+  vocabulary and records the boundary.
+
 ## Predicates and domain/range
 
 | Predicate | Encoded domain | Encoded range | Proposed union represented |
@@ -115,6 +131,8 @@ Additional range checks are expected for `COVERS_TOPIC` (Book → Concept) and
 ## Deferred
 
 - `PREREQUISITE_FOR` and a prerequisite entity type are explicitly deferred.
+  The deferral is also visible as a comment in `schema.hcl` so a future
+  contributor sees it before adding a predicate.
 - A2/A3/A5 implementation and release publication are out of scope.
 - No global activation of IT Books is performed by this artifact.
 
@@ -122,7 +140,13 @@ Additional range checks are expected for `COVERS_TOPIC` (Book → Concept) and
 
 - Uses the existing HCL schema bundle format and Syntology load/validation path.
 - Abstract marker classes are additive and do not alter Supply Chain.
-- Human review must confirm the marker-class mapping before A3 publication.
+- Human review must confirm all eight marker-class mappings before A3
+  publication. Reviewers should check the union member table against #894's
+  intended domains/ranges, not only against the HCL file.
+- A5 independence rule: test cases must be derived from #894's intended
+  domain/range text, not from this schema implementation. If the schema and the
+  issue text disagree, A5 must fail; otherwise A5 would tautologically validate
+  the implementation against itself.
 - The release identity will be the normal immutable ontology release ID/digest
   produced by the existing #868 mechanism; this document does not invent a
   parallel release format.

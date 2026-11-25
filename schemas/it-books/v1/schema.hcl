@@ -9,6 +9,15 @@ class "Thing" {
   label = "Thing"
 }
 
+# Mention is deliberately NOT declared as a class. Mentions are source spans,
+# not ontology entities; canonical types below must never be used to type them.
+# Enforcement boundary: this prohibition is schema-level by absence and
+# contract-level by documented layer separation (see ontology-v1.md), not a
+# runtime constraint on arbitrary input.
+
+# PREREQUISITE_FOR and a Prerequisite entity type are intentionally deferred.
+# Do not add them without an A1 review decision.
+
 # Abstract marker classes encode the union domains/ranges from #894 without
 # weakening any predicate to a broad or unconstrained type.
 class "TopicBearing" {
