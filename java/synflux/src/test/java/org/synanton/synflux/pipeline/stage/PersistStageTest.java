@@ -10,6 +10,9 @@ import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.SemanticChunk;
+import org.synanton.synflux.document.DocumentStructure;
+import org.synanton.synflux.document.DocumentStructureService;
+import org.synanton.synflux.document.SourceDocument;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synvault.domain.ContentRef;
 import org.mockito.ArgumentCaptor;
@@ -88,6 +91,35 @@ class PersistStageTest {
         ArgumentCaptor<ManifestRow> manifest = ArgumentCaptor.forClass(ManifestRow.class);
         verify(cache).upsertManifest(manifest.capture());
         assertThat(manifest.getValue().processingRunId()).isEqualTo(runId);
+    }
+
+    @Test
+    void writesStructuralProvenanceIntoProcessingRunInput() {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        PersistStage stage = new PersistStage(cache);
+        UUID refId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID versionId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        StageContext context = new StageContext("demo", "job", props()).withSourceVersionId(versionId);
+
+        ChunkedDocument base = doc(refId);
+        DocumentStructure structure = DocumentStructureService.defaults().process(
+            new SourceDocument("demo", "file:///tmp/a.md", versionId.toString(), refId.toString(),
+                "text/markdown", "hello".getBytes()));
+        ParsedDocument parsed = base.parsed().withStructure(structure,
+            Map.of("structural_status", "PARSED"));
+        ChunkedDocument withStructure = new ChunkedDocument(parsed, base.chunks());
+
+        stage.apply(withStructure, context);
+
+        ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
+        verify(cache, org.mockito.Mockito.times(3)).upsertKnowledgeProcessingRun(runs.capture());
+        assertThat(runs.getAllValues().getFirst().inputJson())
+            .contains("\"structural_status\":\"PARSED\"")
+            .contains("\"structural_parser_name\":\"Synanton Markdown Adapter\"")
+            .contains("\"structural_normalization_version\":\"NFC_UTF16_V1\"")
+            .contains("\"structural_chunking_config\":\"markdown-heading-v1\"")
+            .contains("\"text_projection\":\"EXTRACTION_TEXT\"")
+            .contains("\"structural_text_sha256\"");
     }
 
     @Test

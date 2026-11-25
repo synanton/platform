@@ -45,7 +45,7 @@ public final class MarkdownDocumentAdapter implements DocumentFormatAdapter {
             .replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
 
         DocumentStructureBuilder builder = new DocumentStructureBuilder(
-            source, NORMALIZATION_VERSION, PARSER_NAME, PARSER_VERSION, List.of());
+            source, NORMALIZATION_VERSION, "markdown-heading-v1", PARSER_NAME, PARSER_VERSION, List.of());
         Parser parser = new Parser(builder);
         for (String rawLine : rawLines) {
             parser.accept(rawLine);

@@ -4,6 +4,10 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +36,7 @@ import org.synanton.extraction.v1.PayloadDescriptor;
 import org.synanton.extraction.v1.StructuredPayload;
 import org.synanton.extraction.v1.SubmitExtractionRequest;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
@@ -102,7 +107,7 @@ class ExtractionStageGrpcTest {
         ExtractionStage stage = buildStage(objectStore, "sync", ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA);
 
         UUID contentRefId = UUID.randomUUID();
-        byte[] bytes = "irrelevant, plane response is mocked".getBytes();
+        byte[] bytes = pdfBytes();
         AcquiredDocument doc = new AcquiredDocument(
                 new ContentRef("file", "file:///tmp/report.pdf", "application/pdf", bytes.length, Instant.now()),
                 bytes, "sha", "application/pdf", "file:///tmp/report.pdf", contentRefId);
@@ -147,7 +152,7 @@ class ExtractionStageGrpcTest {
 
         ObjectStorePort objectStore = mock(ObjectStorePort.class);
         ExtractionStage stage = buildStage(objectStore, "sync", ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA);
-        byte[] bytes = "irrelevant, plane response is mocked".getBytes();
+        byte[] bytes = pdfBytes();
         AcquiredDocument doc = new AcquiredDocument(
                 new ContentRef("file", "file:///tmp/scan.pdf", "application/pdf", bytes.length, Instant.now()),
                 bytes, "sha", "application/pdf", "file:///tmp/scan.pdf", UUID.randomUUID());
@@ -183,6 +188,25 @@ class ExtractionStageGrpcTest {
 
         assertThat(parsed.documentPayload()).isNull();
         assertThat(parsed.text()).contains("hello from tika fallback");
+    }
+
+    private static byte[] pdfBytes() {
+        try (PDDocument document = new PDDocument();
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+            try (PDPageContentStream content = new PDPageContentStream(document, page)) {
+                content.beginText();
+                content.setFont(PDType1Font.HELVETICA, 12);
+                content.newLineAtOffset(72, 720);
+                content.showText("Mocked extraction source");
+                content.endText();
+            }
+            document.save(output);
+            return output.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private ExtractionStage buildStage(ObjectStorePort objectStore, String mode, ExtractionFallbackPolicy policy) {

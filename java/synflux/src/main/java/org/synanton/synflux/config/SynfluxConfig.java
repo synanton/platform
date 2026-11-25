@@ -37,6 +37,7 @@ import org.synanton.common.jwt.ServiceTokenMinter;
 import org.synanton.common.resolution.ExtractedMentionGraphReadPort;
 import org.synanton.common.resolution.ResolutionGraphLookup;
 import org.synanton.synflux.domain.ChunkerConfig;
+import org.synanton.synflux.document.DocumentStructureService;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.stage.*;
 import org.synanton.synflux.lifecycle.FilesystemFixturePolicy;
@@ -176,19 +177,26 @@ public class SynfluxConfig {
     }
 
     @Bean
+    public DocumentStructureService documentStructureService() {
+        return DocumentStructureService.defaults();
+    }
+
+    @Bean
     public ExtractionStage extractionStage(
             ExtractionPlaneClient extractionClient,
             LocalTikaFallbackExtractor fallbackExtractor,
             ExtractionClientProperties extractionClientProperties,
             ExtractionClientMetrics extractionClientMetrics,
-            ObjectStorePort objectStore) {
+            ObjectStorePort objectStore,
+            DocumentStructureService documentStructureService) {
         return new ExtractionStage(
                 extractionClient,
                 fallbackExtractor,
                 extractionClientProperties.fallbackPolicy(),
                 extractionClientMetrics,
                 objectStore,
-                HOT_BUCKET);
+                HOT_BUCKET,
+                documentStructureService);
     }
 
     /**

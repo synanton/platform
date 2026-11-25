@@ -7,6 +7,7 @@ import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
 import org.synanton.synflux.domain.ChunkedDocument;
+import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.ResourceUsage;
 import org.synanton.synflux.domain.SemanticChunk;
 import org.synanton.synflux.pipeline.PipelineStage;
@@ -87,7 +88,7 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         Instant startedAt = Instant.now();
         cacheClient.upsertKnowledgeProcessingRun(new KnowledgeProcessingRunRow(
             ctx.tenant(), processingRunId, PRODUCER, producerVersion(ctx), configurationJson,
-            inputJson(acquired, ctx), null, "RUNNING", startedAt, null, null, null, provenanceVersions
+            inputJson(doc.parsed(), ctx), null, "RUNNING", startedAt, null, null, null, provenanceVersions
         ));
         try {
             List<ChunkRow> chunkRows = doc.chunks().stream()
@@ -104,7 +105,7 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             // never published as successful.
             cacheClient.upsertKnowledgeProcessingRun(new KnowledgeProcessingRunRow(
                 ctx.tenant(), processingRunId, PRODUCER, producerVersion(ctx), configurationJson,
-                inputJson(acquired, ctx), null, "PUBLISHING", startedAt, null, null, null,
+                inputJson(doc.parsed(), ctx), null, "PUBLISHING", startedAt, null, null, null,
                 provenanceVersions
             ));
             cacheClient.upsertManifest(new ManifestRow(
@@ -121,7 +122,7 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             ));
             cacheClient.upsertKnowledgeProcessingRun(new KnowledgeProcessingRunRow(
                 ctx.tenant(), processingRunId, PRODUCER, producerVersion(ctx), configurationJson,
-                inputJson(acquired, ctx), outputJson, "COMPLETED", startedAt, Instant.now(), null, null,
+                inputJson(doc.parsed(), ctx), outputJson, "COMPLETED", startedAt, Instant.now(), null, null,
                 provenanceVersions
             ));
             log.info("Published {} canonical chunks for ref={} versions={} run={}",
@@ -130,7 +131,7 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             log.warn("Knowledge processing failed for ref={} run={}", acquired.contentRefId(), processingRunId, failure);
             cacheClient.upsertKnowledgeProcessingRun(new KnowledgeProcessingRunRow(
                 ctx.tenant(), processingRunId, PRODUCER, producerVersion(ctx), configurationJson,
-                inputJson(acquired, ctx), null, "FAILED", startedAt, Instant.now(),
+                inputJson(doc.parsed(), ctx), null, "FAILED", startedAt, Instant.now(),
                 failure.getClass().getSimpleName(), message(failure), provenanceVersions
             ));
             throw failure;
@@ -196,7 +197,8 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         return toJson(configuration);
     }
 
-    private static String inputJson(org.synanton.synflux.domain.AcquiredDocument artifact, StageContext ctx) {
+    private static String inputJson(ParsedDocument parsed, StageContext ctx) {
+        var artifact = parsed.acquired();
         Map<String, Object> input = new LinkedHashMap<>();
         input.put("content_ref_id", artifact.contentRefId().toString());
         input.put("content_cache_reference", artifact.contentCacheReference());
@@ -204,7 +206,35 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         input.put("source_sha256", artifact.sha256());
         input.put("size_bytes", artifact.bytes().length);
         input.put("mime_type", artifact.mimeType());
+        var structure = parsed.structure();
+        input.put("structural_contract_version", "R0.2");
+        input.put("structural_status", structure == null ? "UNSUPPORTED" : "PARSED");
+        if (structure != null) {
+            input.put("structural_document_id", structure.documentId());
+            input.put("structural_source_id", structure.sourceId());
+            input.put("structural_source_version_id", structure.sourceVersionId());
+            input.put("structural_media_type", structure.mediaType());
+            input.put("structural_normalization_version", structure.normalizationVersion());
+            input.put("structural_chunking_config", structure.chunkingConfig());
+            input.put("structural_parser_name", structure.parserName());
+            input.put("structural_parser_version", structure.parserVersion());
+            input.put("structural_element_count", structure.elements().size());
+            input.put("structural_chunk_count", structure.chunks().size());
+            input.put("structural_text_sha256", sha256(structure.text()));
+            input.put("extraction_text_sha256", sha256(parsed.text()));
+            input.put("text_projection", "EXTRACTION_TEXT");
+        }
         return toJson(input);
+    }
+
+    private static String sha256(String text) {
+        try {
+            return java.util.HexFormat.of().formatHex(
+                java.security.MessageDigest.getInstance("SHA-256")
+                    .digest((text == null ? "" : text).getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
     }
 
     private static String message(Exception failure) {
