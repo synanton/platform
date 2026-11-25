@@ -11,6 +11,8 @@ import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.extraction.engine.TextSegment;
 import org.synanton.extraction.engine.llm.LlmExtractionAdapter;
+import org.synanton.extraction.engine.contract.CompiledExtractionContract;
+import org.synanton.extraction.engine.contract.P0ContractLoader;
 import org.synanton.extraction.engine.capture.FileSystemCaptureStore;
 import org.synanton.gpu.client.GpuPlaneClientProperties;
 import org.synanton.gpu.client.GpuPlaneSynthesisClient;
@@ -63,7 +65,11 @@ public final class GpuSemanticEvaluation {
         Path a2 = root.resolve("evaluation/it-books/a2-v1");
         JsonNode a2Manifest = mapper.readTree(a2.resolve("manifest.json").toFile());
         JsonNode annotations = mapper.readTree(a2.resolve("annotations.json").toFile());
-        JsonNode p0 = mapper.readTree(root.resolve("docs/implementation/it-books/p0/it-books.report.json").toFile());
+        Path p0Dir = root.resolve("docs/implementation/it-books/p0");
+        JsonNode p0 = mapper.readTree(p0Dir.resolve("it-books.report.json").toFile());
+        CompiledExtractionContract contract = new P0ContractLoader().load(
+            p0Dir.resolve("it-books.spec.json"), p0Dir.resolve("it-books.template.json"),
+            p0Dir.resolve("it-books.report.json"));
         Set<String> types = new HashSet<>();
         p0.path("coverage").path("classes").forEach(c -> {
             if ("EXTRACTION".equals(c.path("role").asText())) types.add(c.path("id").asText());
@@ -117,6 +123,9 @@ public final class GpuSemanticEvaluation {
             manifest.put("model", model);
             manifest.put("modelRevision", modelRevision);
             manifest.put("promptVersion", PROMPT_VERSION);
+            manifest.put("compiledContractDigest", contract.contractDigest());
+            manifest.put("compiledContractReleaseId", contract.releaseId());
+            manifest.put("compiledContractReleaseDigest", contract.releaseDigest());
             manifest.put("tenant", tenant);
             manifest.put("temperature", 0.0);
             manifest.put("maxTokens", 4096);

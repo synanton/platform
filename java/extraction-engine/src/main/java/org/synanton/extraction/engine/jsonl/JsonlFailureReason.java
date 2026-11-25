@@ -11,6 +11,7 @@ public enum JsonlFailureReason {
     UNKNOWN_RECORD_TYPE(Category.STRUCTURAL),
     UNKNOWN_ENTITY_TYPE(Category.SEMANTIC),
     UNKNOWN_PREDICATE(Category.SEMANTIC),
+    DOMAIN_RANGE(Category.SEMANTIC),
     UNANCHORED(Category.SEMANTIC),
     SELF_RELATION(Category.SEMANTIC),
     DUPLICATE(Category.SEMANTIC);
