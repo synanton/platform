@@ -1,0 +1,441 @@
+{
+  "runId" : "it-books-gateway-evaluation-v1",
+  "a2Version" : "it-books-a2-v1",
+  "provider" : "LOCAL/SYNTHESIZE",
+  "model" : "synanton-qwen3-4b-synthesis",
+  "sources" : [ {
+    "sourceId" : "think-python-2e",
+    "structuralArtifactDigest" : "b21a6d2d8e1eae7a811f289bd607cec4a1f0f2ef03b41567a92cb225211c0bb0",
+    "chunks" : [ {
+      "chunkId" : "8a284faf-4407-3211-9a8e-1764d34f2651",
+      "entities" : 0,
+      "relations" : 0,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    }, {
+      "chunkId" : "ae82fb41-1f3d-3ca9-a779-fdd4304e507f",
+      "entities" : 2,
+      "relations" : 0,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    }, {
+      "chunkId" : "65a772c9-1331-3ec8-83ca-4d539894d80c",
+      "error" : "IllegalArgumentException",
+      "message" : "expected ':' at 97"
+    }, {
+      "chunkId" : "d5343005-2fb0-3866-b241-193a01cb56a5",
+      "entities" : 0,
+      "relations" : 0,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    }, {
+      "chunkId" : "39572740-3956-38d7-afc0-40f67b8c0caf",
+      "entities" : 1,
+      "relations" : 0,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    }, {
+      "chunkId" : "dca0aaba-cc6d-35ec-824e-cd2b96de0d83",
+      "entities" : 2,
+      "relations" : 1,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    } ]
+  }, {
+    "sourceId" : "computer-networks-6.1",
+    "structuralArtifactDigest" : "7a47cac6d68103c4422bdf88b42a319cf09662cf0b0cffc3303a13217ffe0df0",
+    "chunks" : [ {
+      "chunkId" : "614d016d-e877-3794-abbe-0c7b3b343d5c",
+      "entities" : 0,
+      "relations" : 0,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    }, {
+      "chunkId" : "cc025fd9-d0d7-3398-93e2-8226c5f3aa3a",
+      "entities" : 3,
+      "relations" : 2,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    }, {
+      "chunkId" : "b20d63ff-c397-3026-a544-275acc849761",
+      "entities" : 1,
+      "relations" : 0,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    }, {
+      "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+      "entities" : 7,
+      "relations" : 5,
+      "integrity" : "CLEAN",
+      "quarantined" : 0
+    } ]
+  } ],
+  "predictedMentions" : [ {
+    "id" : "709d20a9-ec73-3a70-bb96-1d496b92af2a",
+    "sourceId" : "think-python-2e",
+    "chunkId" : "ae82fb41-1f3d-3ca9-a779-fdd4304e507f",
+    "surface" : "Think Python: How to Think Like a Computer Scientist",
+    "type" : "Book",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 244,
+    "documentEndOffset" : 296,
+    "grounding" : "EXACT",
+    "elementIds" : [ "bc56c2ba-d7d7-3897-9047-b81dbc4fbcb0" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "ebe78e54-638f-3d87-a81b-b107fa2f78f0",
+    "sourceId" : "think-python-2e",
+    "chunkId" : "ae82fb41-1f3d-3ca9-a779-fdd4304e507f",
+    "surface" : "Allen Downey",
+    "type" : "Author",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 305,
+    "documentEndOffset" : 317,
+    "grounding" : "EXACT",
+    "elementIds" : [ "a60cf95c-3b9c-34a5-a493-8ac71a74d907" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "04a53c52-cc43-350a-ac08-4087496fb602",
+    "sourceId" : "think-python-2e",
+    "chunkId" : "39572740-3956-38d7-afc0-40f67b8c0caf",
+    "surface" : "Chapter",
+    "type" : "Chapter",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 460,
+    "documentEndOffset" : 467,
+    "grounding" : "EXACT",
+    "elementIds" : [ "bb313845-1808-3fc5-8514-871106eb731d" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "fc9e9b22-da5a-3ba6-a69c-0422d140bf9c",
+    "sourceId" : "think-python-2e",
+    "chunkId" : "dca0aaba-cc6d-35ec-824e-cd2b96de0d83",
+    "surface" : "Newton's method",
+    "type" : "Algorithm",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 496,
+    "documentEndOffset" : 511,
+    "grounding" : "EXACT",
+    "elementIds" : [ "e9b409e1-2949-33fc-90cd-de45954d6400" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "09d6192b-3769-3d00-a3d6-5c2fdcfe554f",
+    "sourceId" : "think-python-2e",
+    "chunkId" : "dca0aaba-cc6d-35ec-824e-cd2b96de0d83",
+    "surface" : "algorithm",
+    "type" : "Concept",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 532,
+    "documentEndOffset" : 541,
+    "grounding" : "EXACT",
+    "elementIds" : [ "e9b409e1-2949-33fc-90cd-de45954d6400" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "bdbd31b4-9ca6-32c1-a1de-a152aa0f1a90",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "cc025fd9-d0d7-3398-93e2-8226c5f3aa3a",
+    "surface" : "Computer Networks: A Systems Approach",
+    "type" : "Book",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 252,
+    "documentEndOffset" : 289,
+    "grounding" : "EXACT",
+    "elementIds" : [ "cc2e9a43-d0ca-332e-adcd-34e343e06a66" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "c664d8cf-409d-3909-866c-2a259449eb02",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "cc025fd9-d0d7-3398-93e2-8226c5f3aa3a",
+    "surface" : "Larry Peterson",
+    "type" : "Author",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 299,
+    "documentEndOffset" : 313,
+    "grounding" : "EXACT",
+    "elementIds" : [ "6f7d4f2c-dcc7-3265-8878-526fbc02820d" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "5eac6aef-807b-3ad0-af95-27e8338115b9",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "cc025fd9-d0d7-3398-93e2-8226c5f3aa3a",
+    "surface" : "Bruce Davie",
+    "type" : "Author",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 318,
+    "documentEndOffset" : 329,
+    "grounding" : "EXACT",
+    "elementIds" : [ "6f7d4f2c-dcc7-3265-8878-526fbc02820d" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "5ab3e010-35d9-39ce-9f17-087d3ba02f98",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "b20d63ff-c397-3026-a544-275acc849761",
+    "surface" : "Chapter",
+    "type" : "Chapter",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 330,
+    "documentEndOffset" : 337,
+    "grounding" : "EXACT",
+    "elementIds" : [ "41a05362-8496-3c10-8f37-3ebb3a165b69" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "ab53efea-fa0a-3d45-b6c3-faf23d15687e",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+    "surface" : "protocols",
+    "type" : "Concept",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 459,
+    "documentEndOffset" : 468,
+    "grounding" : "EXACT",
+    "elementIds" : [ "5d7ac2a6-1879-3954-813f-77530721a861" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "cb1cb9aa-0514-37d8-a0b5-99d59eb8a367",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+    "surface" : "network architecture",
+    "type" : "Concept",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 548,
+    "documentEndOffset" : 568,
+    "grounding" : "EXACT",
+    "elementIds" : [ "f3fde769-31cd-3a04-ba9f-a77b7e2a5f5f" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "2c91490a-9e69-36cc-a4c6-647bd8254c84",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+    "surface" : "RRP",
+    "type" : "Concept",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 584,
+    "documentEndOffset" : 587,
+    "grounding" : "EXACT",
+    "elementIds" : [ "5efb9c0b-0988-3184-a9fa-5f20f3b36e73" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "e140c57b-d99a-3fc7-b26d-dd5e30cae57a",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+    "surface" : "MSP",
+    "type" : "Concept",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 617,
+    "documentEndOffset" : 620,
+    "grounding" : "EXACT",
+    "elementIds" : [ "5efb9c0b-0988-3184-a9fa-5f20f3b36e73" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "ea0bdf22-439c-3d89-a650-b8c746e6ecfd",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+    "surface" : "HHP",
+    "type" : "Concept",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 755,
+    "documentEndOffset" : 758,
+    "grounding" : "EXACT",
+    "elementIds" : [ "5efb9c0b-0988-3184-a9fa-5f20f3b36e73" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "89c1f540-d939-3200-a380-a624ce18d66c",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+    "surface" : "routing algorithm",
+    "type" : "Concept",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 926,
+    "documentEndOffset" : 943,
+    "grounding" : "EXACT",
+    "elementIds" : [ "6232efd6-78cc-37a3-a3a7-f0c398448b35" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "dccede0c-f823-3ef0-9d8f-7182377c69f6",
+    "sourceId" : "computer-networks-6.1",
+    "chunkId" : "3a96f401-0b30-3274-8402-71abf6a6bc05",
+    "surface" : "forwarding table",
+    "type" : "UNKNOWN",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 856,
+    "documentEndOffset" : 872,
+    "grounding" : "EXACT",
+    "elementIds" : [ "6232efd6-78cc-37a3-a3a7-f0c398448b35" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  } ],
+  "predictedRelations" : [ {
+    "id" : "relation:think-python-2e:dca0aaba-cc6d-35ec-824e-cd2b96de0d83:0",
+    "sourceId" : "think-python-2e",
+    "predicate" : "partoforder",
+    "subjectMentionId" : "fc9e9b22-da5a-3ba6-a69c-0422d140bf9c",
+    "objectMentionId" : "09d6192b-3769-3d00-a3d6-5c2fdcfe554f",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 496,
+    "documentEndOffset" : 644,
+    "grounding" : "EXACT",
+    "elementIds" : [ "e9b409e1-2949-33fc-90cd-de45954d6400" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "relation:computer-networks-6.1:cc025fd9-d0d7-3398-93e2-8226c5f3aa3a:0",
+    "sourceId" : "computer-networks-6.1",
+    "predicate" : "hassupplier",
+    "subjectMentionId" : "bdbd31b4-9ca6-32c1-a1de-a152aa0f1a90",
+    "objectMentionId" : "c664d8cf-409d-3909-866c-2a259449eb02",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 252,
+    "documentEndOffset" : 313,
+    "grounding" : "EXACT",
+    "elementIds" : [ "cc2e9a43-d0ca-332e-adcd-34e343e06a66", "6f7d4f2c-dcc7-3265-8878-526fbc02820d" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "relation:computer-networks-6.1:cc025fd9-d0d7-3398-93e2-8226c5f3aa3a:1",
+    "sourceId" : "computer-networks-6.1",
+    "predicate" : "hassupplier",
+    "subjectMentionId" : "bdbd31b4-9ca6-32c1-a1de-a152aa0f1a90",
+    "objectMentionId" : "5eac6aef-807b-3ad0-af95-27e8338115b9",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 252,
+    "documentEndOffset" : 329,
+    "grounding" : "EXACT",
+    "elementIds" : [ "cc2e9a43-d0ca-332e-adcd-34e343e06a66", "6f7d4f2c-dcc7-3265-8878-526fbc02820d" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "relation:computer-networks-6.1:3a96f401-0b30-3274-8402-71abf6a6bc05:0",
+    "sourceId" : "computer-networks-6.1",
+    "predicate" : "partoforder",
+    "subjectMentionId" : "2c91490a-9e69-36cc-a4c6-647bd8254c84",
+    "objectMentionId" : "cb1cb9aa-0514-37d8-a0b5-99d59eb8a367",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 470,
+    "documentEndOffset" : 569,
+    "grounding" : "EXACT",
+    "elementIds" : [ "f3fde769-31cd-3a04-ba9f-a77b7e2a5f5f" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "relation:computer-networks-6.1:3a96f401-0b30-3274-8402-71abf6a6bc05:1",
+    "sourceId" : "computer-networks-6.1",
+    "predicate" : "partoforder",
+    "subjectMentionId" : "e140c57b-d99a-3fc7-b26d-dd5e30cae57a",
+    "objectMentionId" : "cb1cb9aa-0514-37d8-a0b5-99d59eb8a367",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 470,
+    "documentEndOffset" : 569,
+    "grounding" : "EXACT",
+    "elementIds" : [ "f3fde769-31cd-3a04-ba9f-a77b7e2a5f5f" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "relation:computer-networks-6.1:3a96f401-0b30-3274-8402-71abf6a6bc05:2",
+    "sourceId" : "computer-networks-6.1",
+    "predicate" : "requires",
+    "subjectMentionId" : "2c91490a-9e69-36cc-a4c6-647bd8254c84",
+    "objectMentionId" : "ea0bdf22-439c-3d89-a650-b8c746e6ecfd",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 570,
+    "documentEndOffset" : 811,
+    "grounding" : "EXACT",
+    "elementIds" : [ "5efb9c0b-0988-3184-a9fa-5f20f3b36e73" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "relation:computer-networks-6.1:3a96f401-0b30-3274-8402-71abf6a6bc05:3",
+    "sourceId" : "computer-networks-6.1",
+    "predicate" : "requires",
+    "subjectMentionId" : "e140c57b-d99a-3fc7-b26d-dd5e30cae57a",
+    "objectMentionId" : "ea0bdf22-439c-3d89-a650-b8c746e6ecfd",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 570,
+    "documentEndOffset" : 811,
+    "grounding" : "EXACT",
+    "elementIds" : [ "5efb9c0b-0988-3184-a9fa-5f20f3b36e73" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  }, {
+    "id" : "relation:computer-networks-6.1:3a96f401-0b30-3274-8402-71abf6a6bc05:4",
+    "sourceId" : "computer-networks-6.1",
+    "predicate" : "records",
+    "subjectMentionId" : "89c1f540-d939-3200-a380-a624ce18d66c",
+    "objectMentionId" : "dccede0c-f823-3ef0-9d8f-7182377c69f6",
+    "status" : "RESOLVED",
+    "reason" : "",
+    "documentStartOffset" : 812,
+    "documentEndOffset" : 944,
+    "grounding" : "EXACT",
+    "elementIds" : [ "6232efd6-78cc-37a3-a3a7-f0c398448b35" ],
+    "geometryStatus" : "NOT_APPLICABLE"
+  } ],
+  "metrics" : {
+    "entities" : {
+      "tp" : 12,
+      "fp" : 4,
+      "fn" : 10,
+      "precision" : 0.75,
+      "recall" : 0.5454545454545454,
+      "f1" : 0.631578947368421
+    },
+    "relations" : {
+      "tp" : 0,
+      "fp" : 8,
+      "fn" : 8,
+      "precision" : 0.0,
+      "recall" : 0.0,
+      "f1" : 0.0
+    },
+    "negativeAndUnjudged" : {
+      "rejectedPredicted" : 0,
+      "unjudgedPredicted" : 0,
+      "unknownRelations" : 8,
+      "acceptedExpected" : 8
+    },
+    "a2Mentions" : 22,
+    "a2Relations" : 17,
+    "predictedResolvedMentions" : 16
+  },
+  "binding" : {
+    "entity:RESOLVED" : 16,
+    "relation:RESOLVED" : 8
+  },
+  "emittedTypes" : {
+    "Algorithm" : 1,
+    "Author" : 3,
+    "Book" : 2,
+    "Chapter" : 2,
+    "Concept" : 7,
+    "UNKNOWN" : 1
+  },
+  "emittedPredicates" : {
+    "hassupplier" : 2,
+    "partoforder" : 3,
+    "records" : 1,
+    "requires" : 2
+  },
+  "unsupportedTypes" : {
+    "UNKNOWN" : 1
+  },
+  "unsupportedPredicates" : {
+    "hassupplier" : 2,
+    "partoforder" : 3,
+    "records" : 1,
+    "requires" : 2
+  }
+}
