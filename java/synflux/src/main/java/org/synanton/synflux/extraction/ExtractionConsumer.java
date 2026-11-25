@@ -353,7 +353,9 @@ public class ExtractionConsumer {
                         mapper.writeValueAsString(result.relations()),
                         provenance.promptVersion(), provenance.promptCompiledDigest(),
                         provenance.promptRenderedDigest(), provenance.schemaVersion(),
-                        provenance.schemaDigest(), resultGeneration, clock.instant());
+                        provenance.schemaDigest(), resultGeneration, clock.instant(),
+                        provenance.finishReason(), provenance.gatewayRequestId(),
+                        provenance.gatewayExecutionId());
                 if (!cacheHit && cacheService != null && quarantineStore != null
                         && generationCreated) {
                     try {

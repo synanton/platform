@@ -16,4 +16,19 @@ public record ExtractionCacheEntry(
         String promptRenderedDigest,
         String schemaVersion,
         String schemaDigest,
-        Instant createdAt) {}
+        Instant createdAt,
+        String finishReason,
+        String gatewayRequestId,
+        String gatewayExecutionId) {
+
+    /** Compatibility for historical cache callers/tests. */
+    public ExtractionCacheEntry(String tenantId, UUID sourceVersionId, String cacheKey,
+                                UUID generationId, String entitiesJson, String relationsJson,
+                                String promptVersion, String promptCompiledDigest,
+                                String promptRenderedDigest, String schemaVersion,
+                                String schemaDigest, Instant createdAt) {
+        this(tenantId, sourceVersionId, cacheKey, generationId, entitiesJson, relationsJson,
+                promptVersion, promptCompiledDigest, promptRenderedDigest, schemaVersion,
+                schemaDigest, createdAt, null, null, null);
+    }
+}

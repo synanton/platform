@@ -36,7 +36,7 @@ class GpuPlaneSynthesisClientTest {
         AtomicReference<ExecutionRequest> seen = new AtomicReference<>();
         start(request -> {
             seen.set(request);
-            String result = "{\"choices\":[{\"message\":{\"content\":\"OK\"}}],"
+            String result = "{\"choices\":[{\"message\":{\"content\":\"OK\"},\"finish_reason\":\"stop\"}],"
                 + "\"usage\":{\"prompt_tokens\":7,\"completion_tokens\":2}}";
             return response("r1", result.getBytes(StandardCharsets.UTF_8));
         });
@@ -47,11 +47,43 @@ class GpuPlaneSynthesisClientTest {
             assertThat(response.text()).isEqualTo("OK");
             assertThat(response.promptTokens()).isEqualTo(7);
             assertThat(response.completionTokens()).isEqualTo(2);
+            assertThat(response.finishReason()).isEqualTo("stop");
+            assertThat(response.requestId()).isEqualTo("r1");
+            assertThat(response.executionId()).isEqualTo("exec-r1");
             assertThat(seen.get().getOperation()).isEqualTo(Operation.SYNTHESIZE);
             assertThat(seen.get().getProvider()).isEqualTo(Provider.LOCAL);
             assertThat(seen.get().getTenantId()).isEqualTo("demo");
             assertThat(seen.get().getModel()).isEqualTo("synanton-qwen3-4b-synthesis");
             assertThat(seen.get().getPayload().toStringUtf8()).contains("\"messages\"");
+        }
+    }
+
+    @Test
+    void rejectsMissingFinishReason() throws Exception {
+        start(request -> response("r3", "{\"choices\":[{\"message\":{\"content\":\"OK\"}}]}"
+            .getBytes(StandardCharsets.UTF_8)));
+        try (GpuPlaneSynthesisClient client = client()) {
+            assertThatThrownBy(() -> client.complete(new CompletionRequest(
+                "synanton-qwen3-4b-synthesis", "system", "user", 0.0, 16), "demo"))
+                .isInstanceOf(GpuPlaneException.class)
+                .hasMessageContaining("finish_reason");
+        }
+    }
+
+    @Test
+    void rejectsMissingGatewayIdentifiers() throws Exception {
+        start(request -> ExecutionResponse.newBuilder()
+            .setRequestId("")
+            .setExecutionId("")
+            .setState(ExecutionState.SUCCESS)
+            .setResult(ByteString.copyFrom("{\"choices\":[{\"message\":{\"content\":\"OK\"},\"finish_reason\":\"stop\"}]}"
+                .getBytes(StandardCharsets.UTF_8)))
+            .build());
+        try (GpuPlaneSynthesisClient client = client()) {
+            assertThatThrownBy(() -> client.complete(new CompletionRequest(
+                "synanton-qwen3-4b-synthesis", "system", "user", 0.0, 16), "demo"))
+                .isInstanceOf(GpuPlaneException.class)
+                .hasMessageContaining("requestId");
         }
     }
 

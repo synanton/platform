@@ -98,20 +98,31 @@ public class GpuPlaneSynthesisClient implements TenantAwareLlmClient, AutoClosea
             .setPayload(ByteString.copyFrom(payload))
             .build();
         GpuPlaneExecutor.Outcome outcome = executor.execute(exec);
-        return parse(outcome.response().getResult().toByteArray());
+        return parse(outcome.response(), outcome.response().getResult().toByteArray());
     }
 
-    private CompletionResponse parse(byte[] result) {
+    private CompletionResponse parse(org.synanton.gpu.v1.ExecutionResponse response, byte[] result) {
         try {
+            if (response.getRequestId() == null || response.getRequestId().isBlank()) {
+                throw new GpuPlaneException("invalid_result", "SYNTHESIZE response missing requestId");
+            }
+            if (response.getExecutionId() == null || response.getExecutionId().isBlank()) {
+                throw new GpuPlaneException("invalid_result", "SYNTHESIZE response missing executionId");
+            }
             JsonNode root = mapper.readTree(result);
             JsonNode choice = root == null ? null : root.path("choices").path(0);
             JsonNode content = choice == null ? null : choice.path("message").path("content");
+            JsonNode finish = choice == null ? null : choice.path("finish_reason");
             if (content == null || !content.isTextual()) {
                 throw new GpuPlaneException("invalid_result", "SYNTHESIZE result has no message content");
             }
+            if (finish == null || !finish.isTextual() || finish.asText().isBlank()) {
+                throw new GpuPlaneException("invalid_result", "SYNTHESIZE result missing finish_reason");
+            }
             return new CompletionResponse(content.asText(),
                 root.path("usage").path("prompt_tokens").asInt(0),
-                root.path("usage").path("completion_tokens").asInt(0));
+                root.path("usage").path("completion_tokens").asInt(0),
+                finish.asText(), response.getRequestId(), response.getExecutionId());
         } catch (GpuPlaneException e) {
             throw e;
         } catch (Exception e) {
