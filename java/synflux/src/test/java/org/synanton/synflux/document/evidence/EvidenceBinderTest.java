@@ -148,6 +148,24 @@ class EvidenceBinderTest {
     }
 
     @Test
+    void mapsExtractionInputAcrossStructuralChunksWhenMappingSegmentsAreContiguous() {
+        DocumentStructure structure = twoChunkPdfLikeStructure();
+        String extractionText = structure.text();
+        EvidenceBinder.Mapping mapping = mapping(structure, extractionText, List.of(
+            new EvidenceBinder.Segment(0, 3, "chunk-1", 0, 3, EvidenceBinder.Grounding.EXACT),
+            new EvidenceBinder.Segment(3, 6, "chunk-2", 0, 3, EvidenceBinder.Grounding.EXACT)));
+
+        EvidenceBinder.Result result = binder.bind(structure, extractionText, mapping,
+            new EvidenceBinder.Candidate("cross-input", EvidenceBinder.Space.EXTRACTION_INPUT,
+                0, 6, null, EvidenceBinder.Grounding.EXACT, "template", "compilation"));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.RESOLVED);
+        assertThat(result.evidence().text()).isEqualTo("012345");
+        assertThat(result.evidence().chunkIds()).containsExactly("chunk-1", "chunk-2");
+        assertThat(result.evidence().elementIds()).containsExactly("element-1", "element-2");
+    }
+
+    @Test
     void rejectsAmbiguousOrDiscontinuousMappings() {
         DocumentStructure structure = twoChunkPdfLikeStructure();
         String extractionText = structure.text();
@@ -237,6 +255,13 @@ class EvidenceBinderTest {
         assertThat(report.silentDropRate()).isZero();
         assertThat(report.misbindingRate()).isEqualTo(1.0 / 3.0);
         assertThat(report.failureReasons()).containsKeys("NO_MAPPING_SEGMENT", "STRUCTURAL_SPAN_OUT_OF_RANGE");
+
+        EvidenceBinder.Report withMissingCandidate = EvidenceBinder.Report.from(
+            List.of(resolved, unmapped, misbound), 4);
+        assertThat(withMissingCandidate.total()).isEqualTo(4);
+        assertThat(withMissingCandidate.silentDrops()).isEqualTo(1);
+        assertThat(withMissingCandidate.silentDropRate()).isEqualTo(0.25);
+        assertThat(withMissingCandidate.misbindingRate()).isEqualTo(0.25);
     }
 
     private EvidenceBinder.Result bindSingle(DocumentStructure structure) {

@@ -222,6 +222,13 @@ public final class EvidenceBinder {
         }
 
         public static Report from(List<Result> results) {
+            return from(results, results.size());
+        }
+
+        public static Report from(List<Result> results, int expectedCandidates) {
+            if (expectedCandidates < 0) {
+                throw new IllegalArgumentException("expectedCandidates must be >= 0");
+            }
             int resolved = 0;
             int unmapped = 0;
             int misbound = 0;
@@ -249,8 +256,11 @@ public final class EvidenceBinder {
                     }
                 }
             }
-            return new Report(results.size(), resolved, unmapped, misbound, exact,
-                approximate, documentScope, 0, reasons);
+            int accounted = results.size();
+            int silentDrops = Math.max(0, expectedCandidates - accounted);
+            int total = Math.max(expectedCandidates, accounted);
+            return new Report(total, resolved, unmapped, misbound, exact,
+                approximate, documentScope, silentDrops, reasons);
         }
 
         public double misbindingRate() {
