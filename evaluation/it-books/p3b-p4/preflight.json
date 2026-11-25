@@ -1,0 +1,177 @@
+{
+  "evaluationId": "it-books-p3b-p4-preflight-v1",
+  "status": "PREFLIGHT_ONLY",
+  "a2": {
+    "fixtureVersion": "it-books-a2-v1",
+    "mergeCommit": "c790a2390404593f2807eaa53fa1ace04348bc17",
+    "manifestPath": "evaluation/it-books/a2-v1/manifest.json",
+    "manifestSha256": "cf1d7d5c6791ef5e9c04a21d6b320453fca4b0d1aa1b49a90f0c24b111669f89",
+    "annotationsPath": "evaluation/it-books/a2-v1/annotations.json",
+    "annotationsSha256": "d71ed367c7a46c453766c72b13a295c0cc7fd93ec85908a761a51f5a251b8a43",
+    "mentions": 22,
+    "relations": 17,
+    "accepted": 8,
+    "rejected": 8,
+    "unjudged": 1,
+    "predicates": [
+      "AUTHORED_BY",
+      "COVERS_TOPIC",
+      "DEFINES",
+      "DEPENDS_ON",
+      "HAS_CHAPTER",
+      "HAS_SECTION",
+      "PART_OF",
+      "USES"
+    ],
+    "sources": [
+      {
+        "sourceId": "think-python-2e",
+        "title": "Think Python: How to Think Like a Computer Scientist",
+        "edition": "2nd Edition, Version 2.4.1",
+        "authors": [
+          "Allen B. Downey"
+        ],
+        "originalPath": "samples/it-books/books/think-python-2e.pdf",
+        "originalSha256": "6033000bac3f9268ad75ee041bf8e5d9a3bc8a33bb156399cbd014918cb59f94",
+        "originalBytes": 907689,
+        "excerptPath": "evaluation/it-books/a2-v1/sources/think-python-2e-excerpt.md",
+        "excerptSha256": "21d4546c11aab5ba28ccb1c678b957886e99bcc34ed7ac85bc6477d860d4b8cd",
+        "excerptBytes": 872,
+        "license": "CC-BY-NC-3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-nc/3.0/",
+        "sourceUrl": "https://greenteapress.com/wp/think-python-2e/",
+        "rightsBasis": "Attribution required; non-commercial use only."
+      },
+      {
+        "sourceId": "computer-networks-6.1",
+        "title": "Computer Networks: A Systems Approach",
+        "edition": "6th Edition, Version 6.1",
+        "authors": [
+          "Larry Peterson",
+          "Bruce Davie"
+        ],
+        "originalPath": "samples/it-books/books/computer-networks-systems-approach-6.1.pdf",
+        "originalSha256": "e4ddb12a63f9ecebcc3504a0c3e8d9d5d4b89f1ffa600011f15efef5766ff90f",
+        "originalBytes": 22254526,
+        "excerptPath": "evaluation/it-books/a2-v1/sources/computer-networks-6.1-excerpt.md",
+        "excerptSha256": "a2b96db2a3664d6bfb215840da831033dab14f458434591be633b0e34c2f778e",
+        "excerptBytes": 961,
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "sourceUrl": "https://github.com/SystemsApproach/book/releases/tag/v6.1",
+        "rightsBasis": "Attribution required."
+      }
+    ],
+    "coordinateContract": {
+      "spaces": [
+        "STRUCTURAL_DOCUMENT",
+        "STRUCTURAL_CHUNK",
+        "EXTRACTION_INPUT"
+      ],
+      "normalization": "NFC_UTF16_V1",
+      "offsetUnit": "UTF-16 code units",
+      "geometryStates": [
+        "AVAILABLE",
+        "UNAVAILABLE",
+        "NOT_APPLICABLE"
+      ]
+    },
+    "limitations": [
+      "Markdown excerpts have geometry NOT_APPLICABLE; PDF AVAILABLE-bbox claims must use P1's PDF fixture.",
+      "sourcePage references are manually reviewed, not validator-enforced.",
+      "Manifest does not yet include mediaType, pageCount, or a structural-artifact digest."
+    ]
+  },
+  "p0": {
+    "mergeCommit": "5a781ef8e33ad294421fe3c2155b0afc01a9730d",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c",
+    "compilerVersion": "p0-1",
+    "exportProfile": "it-books-v1-default",
+    "schemaVersion": "1",
+    "specDigest": "8834d45a276792babbdf59ff6da43bf11ba5a8bdd43ca9755cfb159559694455",
+    "templateDigest": "333a900292eebabda75b4ed67ec909ecc5db450702e05ae23d108ed2cf2fb37b",
+    "compilationId": "cea21d1a4cebf9e45e2e6ebba9ae4c3899dfc336b2b098a959db6dd5a06f7e0b",
+    "artifacts": {
+      "it-books.spec.json": {
+        "path": "docs/implementation/it-books/p0/it-books.spec.json",
+        "sha256": "344869e2f248f26f1a5347ecb34dac827217679c94a6c422966d0bb08fab76b7"
+      },
+      "it-books.template.json": {
+        "path": "docs/implementation/it-books/p0/it-books.template.json",
+        "sha256": "c907f000ddbb0b34a33823f94a2d6c16d9ffb180ba919835fe9dcf93b073a435"
+      },
+      "it-books.report.json": {
+        "path": "docs/implementation/it-books/p0/it-books.report.json",
+        "sha256": "376f29777efcab4fb929a8f4b18879ee16d9ed33dfd78616aeb0bc6e337db84c"
+      }
+    }
+  },
+  "p1": {
+    "status": "accepted",
+    "structuralSliceMerge": "1b1a90e7",
+    "extractionIntegrationMerge": "15c88641",
+    "formalConformanceMerge": "5fa1df9d",
+    "pinnedEvidenceMerge": "99df0da7",
+    "contractPath": "docs/implementation/it-books/p1-structural-contract.md",
+    "normalization": [
+      "NFC_COLLAPSE_WHITESPACE_UTF16_V1",
+      "NFC_UTF16_V1"
+    ],
+    "chunking": [
+      "pdf-page-v1",
+      "markdown-heading-v1"
+    ],
+    "a2Adapter": "Synanton Markdown Adapter"
+  },
+  "p3a": {
+    "contractVersion": "p3a-evidence-binding-v1",
+    "mergeCommit": "66afc878d467f95cc997eeb0e9201aa263f9cc1c",
+    "contractPath": "docs/architecture/p3a-evidence-binding-implementation.md",
+    "spaces": [
+      "STRUCTURAL_DOCUMENT",
+      "STRUCTURAL_CHUNK",
+      "EXTRACTION_INPUT"
+    ]
+  },
+  "extraction": {
+    "status": "NOT_CONFIGURED",
+    "authorized": false,
+    "backend": null,
+    "provider": null,
+    "modelRevision": null,
+    "configurationDigest": null,
+    "gpuGatewayRequiredIfUsed": "synanton.gpu.v1",
+    "directVllmOrTeiCallsAllowed": false,
+    "automaticRegexFallbackAllowed": false
+  },
+  "evaluation": {
+    "status": "NOT_RUN",
+    "results": [],
+    "started": false,
+    "reason": "Preflight manifest requires review and an explicitly authorized extractor path before evaluation."
+  },
+  "isolation": {
+    "productionIndexes": false,
+    "customerData": false,
+    "supplyChainGenerations": false,
+    "graphPromotion": false,
+    "doclingDependency": false
+  },
+  "checks": {
+    "a2FixturePresent": true,
+    "a2SourceHashesMatch": true,
+    "a2MentionCount": 22,
+    "a2RelationCount": 17,
+    "a2PredicateCount": 8,
+    "a2AcceptCount": 8,
+    "a2RejectCount": 8,
+    "a2UnjudgedCount": 1,
+    "p0ArtifactsPresent": true,
+    "p0ReleaseMatchesA2": true,
+    "p1ContractPresent": true,
+    "p3aContractPresent": true,
+    "extractionAuthorized": false,
+    "evaluationStarted": false
+  }
+}
