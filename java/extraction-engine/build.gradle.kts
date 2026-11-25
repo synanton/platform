@@ -6,6 +6,7 @@ plugins {
 // its JSON) so the evaluator can run it without a framework classpath.
 dependencies {
     implementation(project(":java:synanton-llm-client"))
+    implementation(libs.jackson.databind)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

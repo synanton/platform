@@ -30,6 +30,7 @@ import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.capture.CaptureStore;
 import org.synanton.extraction.engine.capture.FileSystemCaptureStore;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
+import org.synanton.extraction.engine.contract.CompiledExtractionContract;
 import org.synanton.llm.CompletionRequest;
 import org.synanton.llm.CompletionResponse;
 import org.synanton.llm.LlmClient;
@@ -107,6 +108,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     private final HttpClient client;
     private final String endpoint;
     private final LlmClient llmClient;
+    private final CompiledExtractionContract contract;
     private final String model;
     private final Duration timeout;
     private final int maxTokens;
@@ -172,12 +174,19 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
      */
     public LlmExtractionAdapter(LlmClient llmClient, String model, int maxTokens,
                                 CaptureStore captureStore, String promptVersion) {
+        this(llmClient, model, maxTokens, captureStore, promptVersion, null);
+    }
+
+    public LlmExtractionAdapter(LlmClient llmClient, String model, int maxTokens,
+                                CaptureStore captureStore, String promptVersion,
+                                CompiledExtractionContract contract) {
         if (llmClient == null) {
             throw new IllegalArgumentException("LLM client is required");
         }
         this.client = null;
         this.endpoint = null;
         this.llmClient = llmClient;
+        this.contract = contract;
         this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
         this.timeout = Duration.ofSeconds(120);
         this.maxTokens = Math.max(1, maxTokens);
@@ -195,6 +204,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         this.client = client;
         this.endpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
         this.llmClient = null;
+        this.contract = null;
         this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
         this.timeout = timeout == null ? Duration.ofSeconds(120) : timeout;
         this.maxTokens = Math.max(1, maxTokens);
@@ -343,8 +353,9 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         if (type.isEmpty()) {
             type = "Concept";
         }
-        if (!context.allowedEntityTypes().isEmpty()
-                && !context.allowedEntityTypes().contains(type)) {
+        java.util.Set<String> allowedEntityTypes = contract == null
+                ? context.allowedEntityTypes() : contract.entityIds();
+        if (!allowedEntityTypes.isEmpty() && !allowedEntityTypes.contains(type)) {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.UNKNOWN_ENTITY_TYPE, type);
             return;
         }
@@ -364,7 +375,9 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.EMPTY_FIELD, "missing endpoint");
             return;
         }
-        if (!ALLOWED_PREDICATES.contains(rawPredicate)) {
+        java.util.Set<String> allowedPredicates = contract == null
+                ? ALLOWED_PREDICATES : contract.predicateIds();
+        if (!allowedPredicates.contains(rawPredicate)) {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.UNKNOWN_PREDICATE, rawPredicate);
             return;
         }
@@ -385,6 +398,16 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         if (subject.mentionId().equals(object.mentionId())) {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.SELF_RELATION, subjectForm);
             return;
+        }
+        if (contract != null) {
+            CompiledExtractionContract.RelationType definition = contract.relations().stream()
+                .filter(r -> r.id().equals(predicate)).findFirst().orElse(null);
+            if (definition == null || !definition.subjects().contains(subject.proposedType())
+                || !definition.objects().contains(object.proposedType())) {
+                quarantine(quarantined, lineNumber, raw, JsonlFailureReason.DOMAIN_RANGE,
+                    predicate + " " + subject.proposedType() + "->" + object.proposedType());
+                return;
+            }
         }
         int evidenceStart;
         int evidenceEnd;
@@ -699,12 +722,23 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
     }
 
     private String buildPrompt(ExtractionContext context) {
-        String types = context != null && !context.allowedEntityTypes().isEmpty()
-                ? String.join(", ", context.allowedEntityTypes())
-                : DEFAULT_TYPES;
+        String types = contract != null
+                ? contract.allowedTypes()
+                : context != null && !context.allowedEntityTypes().isEmpty()
+                    ? String.join(", ", context.allowedEntityTypes())
+                    : DEFAULT_TYPES;
+        String predicates = contract != null ? contract.allowedPredicates() : DEFAULT_PREDICATES;
+        String relationContract = contract != null ? contract.relationContract() : RELATION_CONTRACT;
+        String contractContext = contract == null ? "" : "\n\nCompiled ontology contract:\n"
+                + "releaseId=" + contract.releaseId() + "\n"
+                + "releaseDigest=" + contract.releaseDigest() + "\n"
+                + "compilerVersion=" + contract.compilerVersion() + "\n"
+                + "schemaVersion=" + contract.schemaVersion() + "\n"
+                + "contractDigest=" + contract.contractDigest();
         return promptTemplate.replace("{allowed_types}", types)
-                .replace("{allowed_predicates}", DEFAULT_PREDICATES)
-                .replace("{relation_contract}", RELATION_CONTRACT);
+                .replace("{allowed_predicates}", predicates)
+                .replace("{relation_contract}", relationContract)
+                + contractContext;
     }
 
     private static String normalizePredicate(String predicate) {
