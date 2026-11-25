@@ -52,6 +52,15 @@ tasks.named<BootJar>("bootJar") {
 }
 tasks.named<Jar>("jar") { enabled = false }
 
+tasks.register<JavaExec>("gpuSemanticEvaluation") {
+    group = "verification"
+    description = "Run the gateway-compliant IT Books semantic extraction evaluation"
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("org.synanton.synflux.evaluation.GpuSemanticEvaluation")
+    workingDir = rootProject.projectDir
+}
+
 tasks.register<JavaExec>("regexBaselineSmoke") {
     group = "verification"
     description = "Run the authorized regex-only IT Books baseline smoke"

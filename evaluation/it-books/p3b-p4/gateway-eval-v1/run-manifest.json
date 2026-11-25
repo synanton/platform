@@ -1,0 +1,121 @@
+{
+  "runId" : "it-books-gateway-evaluation-v1",
+  "startedAt" : "2026-11-25T17:16:09.731844055Z",
+  "gitCommit" : "3419447767193ee49ffd1f85e61db9b64019d198",
+  "a2Version" : "it-books-a2-v1",
+  "a2ManifestSha256" : "cf1d7d5c6791ef5e9c04a21d6b320453fca4b0d1aa1b49a90f0c24b111669f89",
+  "a2AnnotationsSha256" : "d71ed367c7a46c453766c72b13a295c0cc7fd93ec85908a761a51f5a251b8a43",
+  "p0ReleaseId" : "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+  "p0ReleaseDigest" : "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c",
+  "p0SpecDigest" : "8834d45a276792babbdf59ff6da43bf11ba5a8bdd43ca9755cfb159559694455",
+  "p0TemplateDigest" : "333a900292eebabda75b4ed67ec909ecc5db450702e05ae23d108ed2cf2fb37b",
+  "p0CompilationId" : "cea21d1a4cebf9e45e2e6ebba9ae4c3899dfc336b2b098a959db6dd5a06f7e0b",
+  "p1StructuralSliceMerge" : "1b1a90e7",
+  "p1ExtractionIntegrationMerge" : "15c88641",
+  "p1ConformanceMerge" : "5fa1df9d",
+  "p1PinnedEvidenceMerge" : "99df0da7",
+  "p3aContractVersion" : "p3a-evidence-binding-v1",
+  "p3aMergeCommit" : "66afc878d467f95cc997eeb0e9201aa263f9cc1c",
+  "gatewayContract" : "synanton.gpu.v1/SYNTHESIZE",
+  "gatewayEndpoint" : "localhost:19090",
+  "gatewayImage" : "local-registry:5000/gpu-gateway:0.1.0@sha256:8a747eb2c2d77bb7a39d3cb4400746183939d5899829c410c69a67c668e8ef13",
+  "provider" : "LOCAL",
+  "model" : "synanton-qwen3-4b-synthesis",
+  "modelRevision" : "qwen3-4b-instruct-2507/vllm-openai:v0.29.0",
+  "promptVersion" : "extraction-v1",
+  "tenant" : "it-books-eval",
+  "temperature" : 0.0,
+  "maxTokens" : 4096,
+  "timeoutMs" : 240000,
+  "retryPolicy" : "gateway transient retry; no provider fallback",
+  "directVllmOrTeiCalls" : false,
+  "automaticFallback" : false,
+  "graphWrites" : false,
+  "productionIndexes" : false,
+  "run1" : {
+    "runtimeMillis" : 26706,
+    "inputBytes" : 1833,
+    "quarantinedLines" : 0,
+    "failedChunks" : 1,
+    "promptTokens" : 4728,
+    "completionTokens" : 1195,
+    "predictedMentions" : 16,
+    "predictedRelations" : 8,
+    "metrics" : {
+      "entities" : {
+        "tp" : 12,
+        "fp" : 4,
+        "fn" : 10,
+        "precision" : 0.75,
+        "recall" : 0.5454545454545454,
+        "f1" : 0.631578947368421
+      },
+      "relations" : {
+        "tp" : 0,
+        "fp" : 8,
+        "fn" : 8,
+        "precision" : 0.0,
+        "recall" : 0.0,
+        "f1" : 0.0
+      },
+      "negativeAndUnjudged" : {
+        "rejectedPredicted" : 0,
+        "unjudgedPredicted" : 0,
+        "unknownRelations" : 8,
+        "acceptedExpected" : 8
+      },
+      "a2Mentions" : 22,
+      "a2Relations" : 17,
+      "predictedResolvedMentions" : 16
+    },
+    "binding" : {
+      "entity:RESOLVED" : 16,
+      "relation:RESOLVED" : 8
+    }
+  },
+  "run2" : {
+    "runtimeMillis" : 26173,
+    "inputBytes" : 1833,
+    "quarantinedLines" : 0,
+    "failedChunks" : 1,
+    "promptTokens" : 4728,
+    "completionTokens" : 1195,
+    "predictedMentions" : 16,
+    "predictedRelations" : 8,
+    "metrics" : {
+      "entities" : {
+        "tp" : 12,
+        "fp" : 4,
+        "fn" : 10,
+        "precision" : 0.75,
+        "recall" : 0.5454545454545454,
+        "f1" : 0.631578947368421
+      },
+      "relations" : {
+        "tp" : 0,
+        "fp" : 8,
+        "fn" : 8,
+        "precision" : 0.0,
+        "recall" : 0.0,
+        "f1" : 0.0
+      },
+      "negativeAndUnjudged" : {
+        "rejectedPredicted" : 0,
+        "unjudgedPredicted" : 0,
+        "unknownRelations" : 8,
+        "acceptedExpected" : 8
+      },
+      "a2Mentions" : 22,
+      "a2Relations" : 17,
+      "predictedResolvedMentions" : 16
+    },
+    "binding" : {
+      "entity:RESOLVED" : 16,
+      "relation:RESOLVED" : 8
+    }
+  },
+  "metricDefinitions" : "entity TP = same source/type and overlapping span, greedy one-to-one; relation TP = same predicate and matched endpoints against ACCEPTED; REJECTED/unknown predictions are FP; UNJUDGED predictions are excluded; unresolved spans are not counted as entity TP",
+  "run1ResultsSha256" : "f087ce6f4d5edb289c3a20e15cf0eedbc9aeaa03a99674341fd2689766bbcece",
+  "run2ResultsSha256" : "f087ce6f4d5edb289c3a20e15cf0eedbc9aeaa03a99674341fd2689766bbcece",
+  "resultsIdentical" : true
+}

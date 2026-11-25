@@ -13,6 +13,20 @@ public interface TenantAwareLlmClient extends LlmClient {
 
     EmbedResponse embed(EmbedRequest request, String tenantId);
 
+    /**
+     * Completion calls that must carry the tenant assertion (GPU Gateway). Clients without a
+     * tenant-aware path fall back to the plain interface.
+     */
+    default CompletionResponse complete(CompletionRequest request, String tenantId) {
+        return complete(request);
+    }
+
+    static CompletionResponse complete(LlmClient client, CompletionRequest request, String tenantId) {
+        return client instanceof TenantAwareLlmClient t
+                ? t.complete(request, tenantId)
+                : client.complete(request);
+    }
+
     static EmbedResponse embed(LlmClient client, EmbedRequest request, String tenantId) {
         return client instanceof TenantAwareLlmClient t ? t.embed(request, tenantId) : client.embed(request);
     }
