@@ -1,0 +1,17 @@
+{
+  "authorizedOperation": "regex-baseline-smoke",
+  "extractionAuthorized": "regex-baseline-smoke-only",
+  "provider": "RegexExtractorAdapter",
+  "configuration": "EXTRACTION_PROVIDER=regex",
+  "input": "it-books-a2-v1",
+  "evidenceSpace": "STRUCTURAL_CHUNK",
+  "environment": "isolated-it-books-evaluation-harness",
+  "preflight": "#916",
+  "llmAllowed": false,
+  "gpuAllowed": false,
+  "fallbackAllowed": false,
+  "fullEvaluationAuthorized": false,
+  "evaluationStarted": false,
+  "graphWritesAuthorized": false,
+  "productionIndexWritesAuthorized": false
+}

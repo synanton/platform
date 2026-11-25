@@ -60,3 +60,12 @@ tasks.register<JavaExec>("gpuSemanticEvaluation") {
     mainClass.set("org.synanton.synflux.evaluation.GpuSemanticEvaluation")
     workingDir = rootProject.projectDir
 }
+
+tasks.register<JavaExec>("regexBaselineSmoke") {
+    group = "verification"
+    description = "Run the authorized regex-only IT Books baseline smoke"
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("org.synanton.synflux.evaluation.RegexBaselineSmoke")
+    workingDir = rootProject.projectDir
+}
