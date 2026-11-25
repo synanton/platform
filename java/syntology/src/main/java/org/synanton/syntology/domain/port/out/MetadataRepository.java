@@ -12,6 +12,8 @@ public interface MetadataRepository {
 
     Optional<OntologyVersion> findByVersion(String tenantId, String version);
 
+    Optional<OntologyVersion> findByReleaseId(String tenantId, String releaseId);
+
     Optional<OntologyVersion> findActive(String tenantId);
 
     Optional<OntologyVersion> findActive(String tenantId, String ontologyId);

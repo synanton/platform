@@ -47,6 +47,7 @@ include(
     "java:extraction-contract",
     "java:extraction-client",
     "java:extraction-engine",
+    "java:extraction-compiler",
     "java:annotations",
     "java:content-cache-api",
     "java:eventing-contract",

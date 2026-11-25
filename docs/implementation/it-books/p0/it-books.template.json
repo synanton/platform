@@ -1,0 +1,110 @@
+{
+  "entityTargets" : [ {
+    "fields" : [ ],
+    "label" : "Book",
+    "type" : "Book"
+  }, {
+    "fields" : [ ],
+    "label" : "Author",
+    "type" : "Author"
+  }, {
+    "fields" : [ ],
+    "label" : "Chapter",
+    "type" : "Chapter"
+  }, {
+    "fields" : [ ],
+    "label" : "Section",
+    "type" : "Section"
+  }, {
+    "fields" : [ ],
+    "label" : "Algorithm",
+    "type" : "Algorithm"
+  }, {
+    "fields" : [ ],
+    "label" : "Data Structure",
+    "type" : "DataStructure"
+  }, {
+    "fields" : [ ],
+    "label" : "Concept",
+    "type" : "Concept"
+  }, {
+    "fields" : [ ],
+    "label" : "Database",
+    "type" : "Database"
+  }, {
+    "fields" : [ ],
+    "label" : "Distributed System",
+    "type" : "DistributedSystem"
+  }, {
+    "fields" : [ ],
+    "label" : "Topic",
+    "type" : "Topic"
+  }, {
+    "fields" : [ ],
+    "label" : "Definition",
+    "type" : "Definition"
+  } ],
+  "provenance" : {
+    "canonicalization" : "json-v1:sorted-keys,utf8,no-whitespace,sha256",
+    "compilerVersion" : "p0-1",
+    "exportProfile" : "it-books-v1-default",
+    "irDigest" : "e3aa7d0691f9e302a951ec347e333fa97568a7e14662f887e063da8d5d26ffc3",
+    "llmUsed" : false,
+    "ontologyId" : "it-books",
+    "releaseDigest" : "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c",
+    "releaseId" : "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "schemaVersion" : "1",
+    "tenantId" : "demo",
+    "version" : "it-books-v1"
+  },
+  "relationTargets" : [ {
+    "label" : "authored by",
+    "objects" : [ "Author" ],
+    "predicate" : "AUTHORED_BY",
+    "status" : "REPRESENTABLE",
+    "subjects" : [ "Book" ]
+  }, {
+    "label" : "has chapter",
+    "objects" : [ "Chapter" ],
+    "predicate" : "HAS_CHAPTER",
+    "status" : "REPRESENTABLE",
+    "subjects" : [ "Book" ]
+  }, {
+    "label" : "has section",
+    "objects" : [ "Section" ],
+    "predicate" : "HAS_SECTION",
+    "status" : "REPRESENTABLE",
+    "subjects" : [ "Chapter" ]
+  }, {
+    "label" : "covers topic",
+    "objects" : [ "Topic" ],
+    "predicate" : "COVERS_TOPIC",
+    "status" : "ADAPTED",
+    "subjects" : [ "Book", "Chapter", "Section" ]
+  }, {
+    "label" : "defines",
+    "objects" : [ "Concept", "Definition" ],
+    "predicate" : "DEFINES",
+    "status" : "ADAPTED",
+    "subjects" : [ "Chapter", "Section" ]
+  }, {
+    "label" : "uses",
+    "objects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ],
+    "predicate" : "USES",
+    "status" : "ADAPTED",
+    "subjects" : [ "Algorithm", "Chapter", "DataStructure", "Database", "DistributedSystem", "Section" ]
+  }, {
+    "label" : "depends on",
+    "objects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ],
+    "predicate" : "DEPENDS_ON",
+    "status" : "ADAPTED",
+    "subjects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ]
+  }, {
+    "label" : "part of",
+    "objects" : [ "Book", "Chapter", "Section" ],
+    "predicate" : "PART_OF",
+    "status" : "ADAPTED",
+    "subjects" : [ "Chapter", "Section", "Topic" ]
+  } ],
+  "templateVersion" : "synanton.extraction.template/v1"
+}

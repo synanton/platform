@@ -84,6 +84,11 @@ public class OntologyService {
         return metadataRepository.findActive(tenantId, ontologyId);
     }
 
+    /** Immutable release lookup by releaseId, independent of current active selection. */
+    public java.util.Optional<OntologyVersion> release(String tenantId, String releaseId) {
+        return metadataRepository.findByReleaseId(tenantId, releaseId);
+    }
+
     public OntologyVersion createVersion(
             String version,
             String label,
