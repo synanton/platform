@@ -1,0 +1,121 @@
+{
+  "entities" : [ {
+    "id" : "Book",
+    "label" : "Book",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "TopicBearing", "PartOfObject" ]
+  }, {
+    "id" : "Author",
+    "label" : "Author",
+    "properties" : [ ],
+    "superTypes" : [ "Thing" ]
+  }, {
+    "id" : "Chapter",
+    "label" : "Chapter",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "TopicBearing", "TextDivision", "UsesSubject", "PartOfSubject", "PartOfObject" ]
+  }, {
+    "id" : "Section",
+    "label" : "Section",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "TopicBearing", "TextDivision", "UsesSubject", "PartOfSubject", "PartOfObject" ]
+  }, {
+    "id" : "Algorithm",
+    "label" : "Algorithm",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+  }, {
+    "id" : "DataStructure",
+    "label" : "Data Structure",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+  }, {
+    "id" : "Concept",
+    "label" : "Concept",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "DefinedConcept", "UsesObject", "DependencyNode" ]
+  }, {
+    "id" : "Database",
+    "label" : "Database",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+  }, {
+    "id" : "DistributedSystem",
+    "label" : "Distributed System",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+  }, {
+    "id" : "Topic",
+    "label" : "Topic",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "PartOfSubject" ]
+  }, {
+    "id" : "Definition",
+    "label" : "Definition",
+    "properties" : [ ],
+    "superTypes" : [ "Thing", "DefinedConcept" ]
+  } ],
+  "provenance" : {
+    "canonicalization" : "json-v1:sorted-keys,utf8,no-whitespace,sha256",
+    "compilerVersion" : "p0-1",
+    "exportProfile" : "it-books-v1-default",
+    "irDigest" : "e3aa7d0691f9e302a951ec347e333fa97568a7e14662f887e063da8d5d26ffc3",
+    "llmUsed" : false,
+    "ontologyId" : "it-books",
+    "releaseDigest" : "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c",
+    "releaseId" : "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "schemaVersion" : "1",
+    "tenantId" : "demo",
+    "version" : "it-books-v1"
+  },
+  "relations" : [ {
+    "id" : "AUTHORED_BY",
+    "label" : "authored by",
+    "objects" : [ "Author" ],
+    "status" : "REPRESENTABLE",
+    "subjects" : [ "Book" ]
+  }, {
+    "id" : "HAS_CHAPTER",
+    "label" : "has chapter",
+    "objects" : [ "Chapter" ],
+    "status" : "REPRESENTABLE",
+    "subjects" : [ "Book" ]
+  }, {
+    "id" : "HAS_SECTION",
+    "label" : "has section",
+    "objects" : [ "Section" ],
+    "status" : "REPRESENTABLE",
+    "subjects" : [ "Chapter" ]
+  }, {
+    "id" : "COVERS_TOPIC",
+    "label" : "covers topic",
+    "objects" : [ "Topic" ],
+    "status" : "ADAPTED",
+    "subjects" : [ "Book", "Chapter", "Section" ]
+  }, {
+    "id" : "DEFINES",
+    "label" : "defines",
+    "objects" : [ "Concept", "Definition" ],
+    "status" : "ADAPTED",
+    "subjects" : [ "Chapter", "Section" ]
+  }, {
+    "id" : "USES",
+    "label" : "uses",
+    "objects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ],
+    "status" : "ADAPTED",
+    "subjects" : [ "Algorithm", "Chapter", "DataStructure", "Database", "DistributedSystem", "Section" ]
+  }, {
+    "id" : "DEPENDS_ON",
+    "label" : "depends on",
+    "objects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ],
+    "status" : "ADAPTED",
+    "subjects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ]
+  }, {
+    "id" : "PART_OF",
+    "label" : "part of",
+    "objects" : [ "Book", "Chapter", "Section" ],
+    "status" : "ADAPTED",
+    "subjects" : [ "Chapter", "Section", "Topic" ]
+  } ],
+  "specVersion" : "synanton.extraction.spec/v1"
+}

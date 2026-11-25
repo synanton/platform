@@ -1,0 +1,271 @@
+{
+  "canonicalization" : "json-v1:sorted-keys,utf8,no-whitespace,sha256",
+  "constructs" : {
+    "classesExtraction" : 11,
+    "classesRepresentable" : 11,
+    "classesSupport" : 9,
+    "classesTotal" : 20,
+    "classesUnsupported" : 0,
+    "relationsAdapted" : 5,
+    "relationsRepresentable" : 3,
+    "relationsTotal" : 8,
+    "relationsUnsupported" : 0
+  },
+  "coverage" : {
+    "classes" : [ {
+      "id" : "Thing",
+      "label" : "Thing",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ ]
+    }, {
+      "id" : "TopicBearing",
+      "label" : "Topic-Bearing Source",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "TextDivision",
+      "label" : "Text Division",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "DefinedConcept",
+      "label" : "Defined Concept",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "UsesSubject",
+      "label" : "Uses Subject",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "UsesObject",
+      "label" : "Uses Object",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "DependencyNode",
+      "label" : "Dependency Node",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "PartOfSubject",
+      "label" : "Part-Of Subject",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "PartOfObject",
+      "label" : "Part-Of Object",
+      "properties" : [ ],
+      "reason" : "Marker/supertype used for domain/range expansion; not an extraction target.",
+      "role" : "SUPPORT",
+      "status" : "SUPPORT",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "Book",
+      "label" : "Book",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "TopicBearing", "PartOfObject" ]
+    }, {
+      "id" : "Author",
+      "label" : "Author",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing" ]
+    }, {
+      "id" : "Chapter",
+      "label" : "Chapter",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "TopicBearing", "TextDivision", "UsesSubject", "PartOfSubject", "PartOfObject" ]
+    }, {
+      "id" : "Section",
+      "label" : "Section",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "TopicBearing", "TextDivision", "UsesSubject", "PartOfSubject", "PartOfObject" ]
+    }, {
+      "id" : "Algorithm",
+      "label" : "Algorithm",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+    }, {
+      "id" : "DataStructure",
+      "label" : "Data Structure",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+    }, {
+      "id" : "Concept",
+      "label" : "Concept",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "DefinedConcept", "UsesObject", "DependencyNode" ]
+    }, {
+      "id" : "Database",
+      "label" : "Database",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+    }, {
+      "id" : "DistributedSystem",
+      "label" : "Distributed System",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "UsesSubject", "UsesObject", "DependencyNode" ]
+    }, {
+      "id" : "Topic",
+      "label" : "Topic",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "PartOfSubject" ]
+    }, {
+      "id" : "Definition",
+      "label" : "Definition",
+      "properties" : [ ],
+      "reason" : "Concrete extraction type with supported or absent properties.",
+      "role" : "EXTRACTION",
+      "status" : "REPRESENTABLE",
+      "superTypes" : [ "Thing", "DefinedConcept" ]
+    } ],
+    "relations" : [ {
+      "domain" : "Book",
+      "id" : "AUTHORED_BY",
+      "label" : "authored by",
+      "objects" : [ "Author" ],
+      "range" : "Author",
+      "reason" : "Concrete one-to-one domain/range.",
+      "status" : "REPRESENTABLE",
+      "subjects" : [ "Book" ]
+    }, {
+      "domain" : "Book",
+      "id" : "HAS_CHAPTER",
+      "label" : "has chapter",
+      "objects" : [ "Chapter" ],
+      "range" : "Chapter",
+      "reason" : "Concrete one-to-one domain/range.",
+      "status" : "REPRESENTABLE",
+      "subjects" : [ "Book" ]
+    }, {
+      "domain" : "Chapter",
+      "id" : "HAS_SECTION",
+      "label" : "has section",
+      "objects" : [ "Section" ],
+      "range" : "Section",
+      "reason" : "Concrete one-to-one domain/range.",
+      "status" : "REPRESENTABLE",
+      "subjects" : [ "Chapter" ]
+    }, {
+      "domain" : "TopicBearing",
+      "id" : "COVERS_TOPIC",
+      "label" : "covers topic",
+      "objects" : [ "Topic" ],
+      "range" : "Topic",
+      "reason" : "Marker or multi-type domain/range expanded to concrete extraction types.",
+      "status" : "ADAPTED",
+      "subjects" : [ "Book", "Chapter", "Section" ]
+    }, {
+      "domain" : "TextDivision",
+      "id" : "DEFINES",
+      "label" : "defines",
+      "objects" : [ "Concept", "Definition" ],
+      "range" : "DefinedConcept",
+      "reason" : "Marker or multi-type domain/range expanded to concrete extraction types.",
+      "status" : "ADAPTED",
+      "subjects" : [ "Chapter", "Section" ]
+    }, {
+      "domain" : "UsesSubject",
+      "id" : "USES",
+      "label" : "uses",
+      "objects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ],
+      "range" : "UsesObject",
+      "reason" : "Marker or multi-type domain/range expanded to concrete extraction types.",
+      "status" : "ADAPTED",
+      "subjects" : [ "Algorithm", "Chapter", "DataStructure", "Database", "DistributedSystem", "Section" ]
+    }, {
+      "domain" : "DependencyNode",
+      "id" : "DEPENDS_ON",
+      "label" : "depends on",
+      "objects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ],
+      "range" : "DependencyNode",
+      "reason" : "Marker or multi-type domain/range expanded to concrete extraction types.",
+      "status" : "ADAPTED",
+      "subjects" : [ "Algorithm", "Concept", "DataStructure", "Database", "DistributedSystem" ]
+    }, {
+      "domain" : "PartOfSubject",
+      "id" : "PART_OF",
+      "label" : "part of",
+      "objects" : [ "Book", "Chapter", "Section" ],
+      "range" : "PartOfObject",
+      "reason" : "Marker or multi-type domain/range expanded to concrete extraction types.",
+      "status" : "ADAPTED",
+      "subjects" : [ "Chapter", "Section", "Topic" ]
+    } ]
+  },
+  "digests" : {
+    "compilationId" : "cea21d1a4cebf9e45e2e6ebba9ae4c3899dfc336b2b098a959db6dd5a06f7e0b",
+    "specDigest" : "8834d45a276792babbdf59ff6da43bf11ba5a8bdd43ca9755cfb159559694455",
+    "templateDigest" : "333a900292eebabda75b4ed67ec909ecc5db450702e05ae23d108ed2cf2fb37b"
+  },
+  "provenance" : {
+    "canonicalization" : "json-v1:sorted-keys,utf8,no-whitespace,sha256",
+    "compilerVersion" : "p0-1",
+    "deployedImage" : "local-registry:5000/synanton/syntology@sha256:09917a778b8eced6679a3c559460aa16bf59f2d3e3589cac432fda5114d39ede",
+    "exportProfile" : "it-books-v1-default",
+    "irDigest" : "e3aa7d0691f9e302a951ec347e333fa97568a7e14662f887e063da8d5d26ffc3",
+    "llmUsed" : false,
+    "ontologyId" : "it-books",
+    "releaseDigest" : "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c",
+    "releaseId" : "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "schemaVersion" : "1",
+    "tenantId" : "demo",
+    "version" : "it-books-v1"
+  },
+  "reportVersion" : "synanton.extraction.support/v1",
+  "unsupported" : [ ]
+}
