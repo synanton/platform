@@ -1,0 +1,69 @@
+{
+  "dataset": "synanton-it-books-samples-v1",
+  "purpose": "Rights-cleared IT book PDFs for structural extraction, chunking and local sample runs. Not part of the demo benchmark corpus.",
+  "licenseNote": "Each book keeps its original license. See NOTICE.md and licenses/.",
+  "books": [
+    {
+      "id": "pro-git-2e",
+      "title": "Pro Git",
+      "authors": [
+        "Scott Chacon",
+        "Ben Straub"
+      ],
+      "edition": "2nd",
+      "version": "2.1.436",
+      "file": "books/pro-git-2.1.436.pdf",
+      "pages": 501,
+      "license": "CC-BY-NC-SA-3.0",
+      "license_file": "licenses/CC-BY-NC-SA-3.0.txt",
+      "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "source_url": "https://github.com/progit/progit2/releases/tag/2.1.436",
+      "download_url": "https://github.com/progit/progit2/releases/download/2.1.436/progit.pdf",
+      "rights_basis": "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported; redistribution permitted with attribution, non-commercial use and share-alike.",
+      "bytes": 18834430,
+      "sha256": "6e2d6844b7af1f00624babea92c3f8134c1b72e1e173d85a026f218b8e0c2abd",
+      "mediaType": "application/pdf"
+    },
+    {
+      "id": "think-python-2e",
+      "title": "Think Python: How to Think Like a Computer Scientist",
+      "authors": [
+        "Allen B. Downey"
+      ],
+      "edition": "2nd",
+      "version": "2.4.1",
+      "file": "books/think-python-2e.pdf",
+      "pages": 244,
+      "license": "CC-BY-NC-3.0",
+      "license_file": "licenses/CC-BY-NC-3.0.txt",
+      "license_url": "https://creativecommons.org/licenses/by-nc/3.0/",
+      "source_url": "https://greenteapress.com/wp/think-python-2e/",
+      "download_url": "https://greenteapress.com/thinkpython2/thinkpython2.pdf",
+      "rights_basis": "Creative Commons Attribution-NonCommercial 3.0 Unported; redistribution permitted with attribution for non-commercial use.",
+      "bytes": 907689,
+      "sha256": "6033000bac3f9268ad75ee041bf8e5d9a3bc8a33bb156399cbd014918cb59f94",
+      "mediaType": "application/pdf"
+    },
+    {
+      "id": "computer-networks-systems-approach-6e",
+      "title": "Computer Networks: A Systems Approach",
+      "authors": [
+        "Larry Peterson",
+        "Bruce Davie"
+      ],
+      "edition": "6th",
+      "version": "6.1",
+      "file": "books/computer-networks-systems-approach-6.1.pdf",
+      "pages": 489,
+      "license": "CC-BY-4.0",
+      "license_file": "licenses/CC-BY-4.0.txt",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "source_url": "https://github.com/SystemsApproach/book/releases/tag/v6.1",
+      "download_url": "https://github.com/SystemsApproach/book/releases/download/v6.1/book.pdf",
+      "rights_basis": "Creative Commons Attribution 4.0 International; redistribution and adaptation permitted with attribution.",
+      "bytes": 22254526,
+      "sha256": "e4ddb12a63f9ecebcc3504a0c3e8d9d5d4b89f1ffa600011f15efef5766ff90f",
+      "mediaType": "application/pdf"
+    }
+  ]
+}
