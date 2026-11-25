@@ -1669,14 +1669,29 @@ public class IngestionCacheClient {
             String promptVersion, String promptCompiledDigest, String promptRenderedDigest,
             String schemaVersion, String schemaDigest, UUID extractionGeneration,
             Instant extractedAt) {
+        upsertExtractionResult(tenantId, contentRefId, chunkOrdinal, sourceVersionId,
+                entitiesJson, relationsJson, promptVersion, promptCompiledDigest,
+                promptRenderedDigest, schemaVersion, schemaDigest, extractionGeneration,
+                extractedAt, null, null, null);
+    }
+
+    public void upsertExtractionResult(
+            String tenantId, UUID contentRefId, int chunkOrdinal, UUID sourceVersionId,
+            String entitiesJson, String relationsJson,
+            String promptVersion, String promptCompiledDigest, String promptRenderedDigest,
+            String schemaVersion, String schemaDigest, UUID extractionGeneration,
+            Instant extractedAt, String finishReason, String gatewayRequestId,
+            String gatewayExecutionId) {
         session.execute(SimpleStatement.newInstance(
             "INSERT INTO ingestion_cache.extraction_results (tenant_id, content_ref_id, chunk_ordinal, " +
             "source_version_id, entities_json, relations_json, extracted_at, prompt_version, " +
             "prompt_compiled_digest, prompt_rendered_digest, schema_version, schema_digest, " +
-            "extraction_generation) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "extraction_generation, finish_reason, gateway_request_id, gateway_execution_id) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             tenantId, contentRefId, chunkOrdinal, sourceVersionId, entitiesJson, relationsJson,
             extractedAt, promptVersion, promptCompiledDigest, promptRenderedDigest,
-            schemaVersion, schemaDigest, extractionGeneration
+            schemaVersion, schemaDigest, extractionGeneration, finishReason, gatewayRequestId,
+            gatewayExecutionId
         ));
     }
 
@@ -1693,7 +1708,9 @@ public class IngestionCacheClient {
                 row.getString("relations_json"), row.getInstant("extracted_at"),
                 row.getString("prompt_version"), row.getString("prompt_compiled_digest"),
                 row.getString("prompt_rendered_digest"), row.getString("schema_version"),
-                row.getString("schema_digest"), row.getUuid("extraction_generation")
+                row.getString("schema_digest"), row.getUuid("extraction_generation"),
+                row.getString("finish_reason"), row.getString("gateway_request_id"),
+                row.getString("gateway_execution_id")
             ));
         }
         return rows.stream().sorted(Comparator.comparingInt(ExtractionResultRow::chunkOrdinal)).toList();

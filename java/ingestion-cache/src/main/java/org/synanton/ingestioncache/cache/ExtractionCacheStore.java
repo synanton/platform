@@ -37,12 +37,14 @@ public final class ExtractionCacheStore {
                 INSERT INTO ingestion_cache.extraction_cache_entries
                     (tenant_id, source_version_id, cache_key, generation_id, entities_json,
                      relations_json, prompt_version, prompt_compiled_digest,
-                     prompt_rendered_digest, schema_version, schema_digest, created_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                     prompt_rendered_digest, schema_version, schema_digest, created_at,
+                     finish_reason, gateway_request_id, gateway_execution_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """, entry.tenantId(), entry.sourceVersionId(), entry.cacheKey(),
                 entry.generationId(), entry.entitiesJson(), entry.relationsJson(),
                 entry.promptVersion(), entry.promptCompiledDigest(), entry.promptRenderedDigest(),
-                entry.schemaVersion(), entry.schemaDigest(), entry.createdAt()));
+                entry.schemaVersion(), entry.schemaDigest(), entry.createdAt(),
+                entry.finishReason(), entry.gatewayRequestId(), entry.gatewayExecutionId()));
     }
 
     public void invalidate(String tenantId, UUID sourceVersionId, String cacheKey) {
@@ -76,7 +78,9 @@ public final class ExtractionCacheStore {
                 row.getString("entities_json"), row.getString("relations_json"),
                 row.getString("prompt_version"), row.getString("prompt_compiled_digest"),
                 row.getString("prompt_rendered_digest"), row.getString("schema_version"),
-                row.getString("schema_digest"), row.getInstant("created_at"));
+                row.getString("schema_digest"), row.getInstant("created_at"),
+                row.getString("finish_reason"), row.getString("gateway_request_id"),
+                row.getString("gateway_execution_id"));
     }
 
     private static void requireKey(String tenantId, UUID sourceVersionId, String cacheKey) {

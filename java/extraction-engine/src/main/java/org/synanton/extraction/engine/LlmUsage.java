@@ -12,4 +12,9 @@ public record LlmUsage(String finishReason, int promptTokens, int completionToke
     public boolean isIncomplete() {
         return "length".equalsIgnoreCase(finishReason);
     }
+
+    /** Gateway/OpenAI success termination. Anything else must not be accepted as clean. */
+    public boolean isSuccessful() {
+        return "stop".equalsIgnoreCase(finishReason);
+    }
 }
