@@ -51,3 +51,12 @@ tasks.named<BootJar>("bootJar") {
     archiveBaseName.set("synflux")
 }
 tasks.named<Jar>("jar") { enabled = false }
+
+tasks.register<JavaExec>("regexBaselineSmoke") {
+    group = "verification"
+    description = "Run the authorized regex-only IT Books baseline smoke"
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("org.synanton.synflux.evaluation.RegexBaselineSmoke")
+    workingDir = rootProject.projectDir
+}
