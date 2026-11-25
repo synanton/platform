@@ -1,0 +1,73 @@
+{
+  "fixtureVersion": "it-books-a2-v1",
+  "artifactType": "A2 annotated IT Books evaluation fixture",
+  "status": "draft-for-review",
+  "coordinateContract": {
+    "spaces": [
+      "STRUCTURAL_DOCUMENT",
+      "STRUCTURAL_CHUNK",
+      "EXTRACTION_INPUT"
+    ],
+    "normalization": "NFC_UTF16_V1",
+    "offsetUnit": "UTF-16 code units",
+    "geometryStates": [
+      "AVAILABLE",
+      "UNAVAILABLE",
+      "NOT_APPLICABLE"
+    ]
+  },
+  "compiler": {
+    "ontologyId": "it-books",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c",
+    "specDigest": "8834d45a276792babbdf59ff6da43bf11ba5a8bdd43ca9755cfb159559694455",
+    "templateDigest": "333a900292eebabda75b4ed67ec909ecc5db450702e05ae23d108ed2cf2fb37b",
+    "compilationId": "cea21d1a4cebf9e45e2e6ebba9ae4c3899dfc336b2b098a959db6dd5a06f7e0b"
+  },
+  "evidenceContract": "p3a-evidence-binding-v1",
+  "sources": [
+    {
+      "sourceId": "think-python-2e",
+      "title": "Think Python: How to Think Like a Computer Scientist",
+      "edition": "2nd Edition, Version 2.4.1",
+      "authors": [
+        "Allen B. Downey"
+      ],
+      "originalPath": "samples/it-books/books/think-python-2e.pdf",
+      "originalSha256": "6033000bac3f9268ad75ee041bf8e5d9a3bc8a33bb156399cbd014918cb59f94",
+      "originalBytes": 907689,
+      "excerptPath": "evaluation/it-books/a2-v1/sources/think-python-2e-excerpt.md",
+      "excerptSha256": "1784020f8e33ea268f26934ebe1eede4dc1f6bbf3c599a15e2a05f28d94f7cf6",
+      "excerptBytes": 832,
+      "license": "CC-BY-NC-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-nc/3.0/",
+      "sourceUrl": "https://greenteapress.com/wp/think-python-2e/",
+      "rightsBasis": "Attribution required; non-commercial use only."
+    },
+    {
+      "sourceId": "computer-networks-6.1",
+      "title": "Computer Networks: A Systems Approach",
+      "edition": "6th Edition, Version 6.1",
+      "authors": [
+        "Larry Peterson",
+        "Bruce Davie"
+      ],
+      "originalPath": "samples/it-books/books/computer-networks-systems-approach-6.1.pdf",
+      "originalSha256": "e4ddb12a63f9ecebcc3504a0c3e8d9d5d4b89f1ffa600011f15efef5766ff90f",
+      "originalBytes": 22254526,
+      "excerptPath": "evaluation/it-books/a2-v1/sources/computer-networks-6.1-excerpt.md",
+      "excerptSha256": "a2b96db2a3664d6bfb215840da831033dab14f458434591be633b0e34c2f778e",
+      "excerptBytes": 961,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "https://github.com/SystemsApproach/book/releases/tag/v6.1",
+      "rightsBasis": "Attribution required."
+    }
+  ],
+  "annotationFile": "annotations.json",
+  "judgmentSemantics": {
+    "ACCEPTED": "Expected valid relation under the A1 intended domain/range.",
+    "REJECTED": "Judged-negative relation; explicitly not accepted.",
+    "UNJUDGED": "Candidate intentionally excluded from accepted/rejected judgment."
+  }
+}
