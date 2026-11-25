@@ -45,6 +45,13 @@ class P1ExitConformanceTest {
         DocumentStructure first = DocumentStructureService.defaults().process(source);
         DocumentStructure second = DocumentStructureService.defaults().process(source);
         assertThat(ids(first)).containsExactlyElementsOf(ids(second));
+        String artifactDigest = StructuralArtifactDigest.sha256(first);
+        assertThat(artifactDigest)
+            .isEqualTo(StructuralArtifactDigest.sha256(second))
+            .isEqualTo("f6137a158d6a4f5fd45bca4b75033e675435fe6bd00098f478d6cada6cb63147");
+        java.nio.file.Files.createDirectories(java.nio.file.Path.of("build/p1-exit"));
+        java.nio.file.Files.writeString(
+            java.nio.file.Path.of("build/p1-exit/structural-artifact-digest.txt"), artifactDigest);
 
         int resolved = 0;
         for (JsonNode expected : annotations.path("expected")) {
