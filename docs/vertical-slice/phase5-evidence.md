@@ -36,7 +36,7 @@ Status: first implementation slice for #882.
 
 - API-key list/revoke/rotate are tenant-scoped to the verified caller; tests cover list/revoke SQL scoping and missing-context rejection.
 - Tenant switching is no longer cosmetic: the SPA displays the JWT-bound tenant and no longer writes a conflicting local tenant; `useTenant` and auth no longer fall back to `demo`.
-- Dev/prod topology ingress added; workflow and document graph proxies already present.
+- Workflow/document graph/search proxies added; topology is explicitly excluded from the deployed demo because no target exists.
 - Login `expiresIn` fallback and grants double-prefix path fixed.
 
 Tests: `ApiKeyTenantRequiredTest`, `WorkflowPage.test.tsx`, UI lint, and the existing SPA test suite pass.

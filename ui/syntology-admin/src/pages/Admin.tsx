@@ -145,7 +145,14 @@ function TenantsTab() {
 
   function reload() {
     setLoading(true);
-    getTenants().then(setTenants).catch(() => setTenants([])).finally(() => setLoading(false));
+    setError(null);
+    getTenants()
+      .then(setTenants)
+      .catch(() => {
+        setTenants([]);
+        setError("Tenant service is unavailable in this deployment. The workflow does not require it.");
+      })
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => { reload(); }, []);
@@ -169,6 +176,8 @@ function TenantsTab() {
         <h2 className="text-xl font-semibold text-slate-900 mb-4">Tenants</h2>
         {loading ? (
           <p className="text-sm text-slate-400">Loading…</p>
+        ) : error ? (
+          <p className="text-sm text-amber-700">{error}</p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
             <table className="min-w-full text-sm">
@@ -230,7 +239,14 @@ function ApiKeysTab() {
 
   function reload() {
     setLoading(true);
-    getApiKeys().then(setKeys).catch(() => setKeys([])).finally(() => setLoading(false));
+    setError(null);
+    getApiKeys()
+      .then(setKeys)
+      .catch(() => {
+        setKeys([]);
+        setError("API-key service is unavailable in this deployment.");
+      })
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => { reload(); }, []);
@@ -267,6 +283,8 @@ function ApiKeysTab() {
         <h2 className="text-xl font-semibold text-slate-900 mb-4">API Keys</h2>
         {loading ? (
           <p className="text-sm text-slate-400">Loading…</p>
+        ) : error ? (
+          <p className="text-sm text-amber-700">{error}</p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
             <table className="min-w-full text-sm">

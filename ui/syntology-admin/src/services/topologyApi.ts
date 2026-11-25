@@ -16,5 +16,8 @@ topologyApi.interceptors.request.use((config) => {
 
 export async function getGrants(uid: number): Promise<AclGrant[]> {
   const resp = await topologyApi.get<AclGrant[]>(`/users/${uid}/grants`);
+  if (!Array.isArray(resp.data)) {
+    throw new Error("Grants service is unavailable in this deployment");
+  }
   return resp.data;
 }

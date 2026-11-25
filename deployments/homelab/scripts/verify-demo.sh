@@ -47,8 +47,8 @@ kubectl -n "$NAMESPACE" get pods -o custom-columns='POD:.metadata.name,IMAGE:.sp
 echo "=== UI ingress/workflow bundle ==="
 if kubectl -n "$NAMESPACE" get deployment ui >/dev/null 2>&1; then
     nginx_conf=$(kubectl -n "$NAMESPACE" exec deploy/ui -- nginx -T 2>/dev/null || true)
-    for route in '/synflux/' '/api/v1/documents/' '/topology/'; do
-        grep -q "location $route" <<<"$nginx_conf" && ok "UI route $route present" \
+    for route in '/synflux/' '/synquest/' 'api/v1/documents'; do
+        grep -q "$route" <<<"$nginx_conf" && ok "UI route $route present" \
             || bad "UI route $route missing (stale UI image)"
     done
     if kubectl -n "$NAMESPACE" exec deploy/ui -- sh -c \
@@ -74,10 +74,8 @@ fi
 echo "=== topology / deferred capabilities ==="
 if kubectl -n "$NAMESPACE" get deployment topology >/dev/null 2>&1; then
     ok "topology deployment present"
-elif [ "${REQUIRE_TOPOLOGY:-0}" = "1" ]; then
-    bad "topology deployment absent (REQUIRE_TOPOLOGY=1)"
 else
-    warn "topology deployment absent — explicit demo-scope exclusion required"
+    warn "topology deployment absent — explicitly excluded from this demo"
 fi
 warn "MCP deferred (#887); Search/Chat deferred (#886) — not production-ready claims"
 

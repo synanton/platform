@@ -113,11 +113,12 @@ tags until the activation runbook pins digests.
 - Overlay images use the `local-real-demo` tag; `imagePullPolicy: Always` means a
   pushed rebuild is picked up on pod restart. `verify-demo.sh` prints image IDs
   for the deployed pods.
-- Working ingress: auth, ontology, entity graph, document graph, topology,
-  synflux, workflow.
-- Deferred: MCP (#887, no deployed target) and Search/Chat (#886, envelope/auth/
-  proxy work). Do not advertise these paths as working until their tickets
-  close.
+- Working ingress: auth, ontology, entity graph, document graph, synflux, and
+  the workflow/search proxied through synquest.
+- Topology is explicitly excluded from the current demo ingress because no
+  topology target is deployed; Admin falls back to an unavailable message.
+- Deferred: MCP (#887, no deployed target) and full Search/Chat contract work
+  (#886). Do not advertise these paths as production-ready.
 - `verify-demo.sh` requires UI routes `/synflux/`, `/api/v1/documents/`, and
   `/topology/`, plus the Workflow bundle. A stale UI image fails the check.
 

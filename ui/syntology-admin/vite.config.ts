@@ -19,6 +19,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, "").split("?")[0],
       },
+      "/synquest": {
+        target: runtimeEnv.VITE_SYNQUEST_URL ?? "http://localhost:8083",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/synquest/, ""),
+      },
       "/synflux": {
         target: runtimeEnv.VITE_SYNFLUX_URL ?? "http://localhost:8090",
         changeOrigin: true,
