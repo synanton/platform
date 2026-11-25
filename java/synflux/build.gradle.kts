@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.caffeine)
     implementation(libs.tika.core)
     implementation(libs.tika.parsers)
+    implementation(libs.pdfbox)
     implementation(libs.logback.classic)
     implementation(libs.kafka.clients)
 

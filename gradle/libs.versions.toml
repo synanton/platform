@@ -23,6 +23,7 @@ argon2                = "2.11"
 micrometer            = "1.13.5"
 cassandraDriver       = "4.17.0"
 tika                  = "2.9.2"
+pdfbox                = "2.0.31"
 jgrapht               = "1.5.2"
 neo4jDriver           = "5.26.1"
 lucene                = "9.11.1"
@@ -103,6 +104,7 @@ cassandra-driver-core = { module = "com.datastax.oss:java-driver-core", version.
 # Apache Tika
 tika-core             = { module = "org.apache.tika:tika-core",          version.ref = "tika" }
 tika-parsers          = { module = "org.apache.tika:tika-parsers-standard-package", version.ref = "tika" }
+pdfbox                = { module = "org.apache.pdfbox:pdfbox",            version.ref = "pdfbox" }
 
 # JGraphT
 jgrapht-core          = { module = "org.jgrapht:jgrapht-core",           version.ref = "jgrapht" }
