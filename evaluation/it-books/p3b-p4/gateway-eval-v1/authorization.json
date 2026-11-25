@@ -1,0 +1,19 @@
+{
+  "authorizedOperation": "it-books-gateway-evaluation-v1",
+  "extractionAuthorized": "full-p3b-p4-gateway-only",
+  "gatewayContract": "synanton.gpu.v1/SYNTHESIZE",
+  "provider": "LOCAL",
+  "model": "synanton-qwen3-4b-synthesis",
+  "input": "it-books-a2-v1",
+  "evidenceContract": "p3a-evidence-binding-v1",
+  "tenant": "it-books-eval",
+  "directVllmOrTeiCalls": false,
+  "gatewayBypass": false,
+  "automaticFallback": false,
+  "graphPromotion": false,
+  "productionIndexWrites": false,
+  "a2Mutation": false,
+  "p2": false,
+  "docling": false,
+  "f1GoldGateProfileAdr044Changes": false
+}

@@ -30,6 +30,10 @@ import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.capture.CaptureStore;
 import org.synanton.extraction.engine.capture.FileSystemCaptureStore;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
+import org.synanton.llm.CompletionRequest;
+import org.synanton.llm.CompletionResponse;
+import org.synanton.llm.LlmClient;
+import org.synanton.llm.TenantAwareLlmClient;
 import org.synanton.extraction.engine.ExtractionIntegrity;
 import org.synanton.extraction.engine.ExtractionResult;
 import org.synanton.extraction.engine.LlmProvenance;
@@ -102,6 +106,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
 
     private final HttpClient client;
     private final String endpoint;
+    private final LlmClient llmClient;
     private final String model;
     private final Duration timeout;
     private final int maxTokens;
@@ -161,6 +166,26 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 captureDir == null ? null : new FileSystemCaptureStore(captureDir), promptVersion);
     }
 
+    /**
+     * Gateway-backed constructor. Completion is delegated to the supplied client (for example
+     * {@code GpuPlaneSynthesisClient}); no direct HTTP endpoint is used.
+     */
+    public LlmExtractionAdapter(LlmClient llmClient, String model, int maxTokens,
+                                CaptureStore captureStore, String promptVersion) {
+        if (llmClient == null) {
+            throw new IllegalArgumentException("LLM client is required");
+        }
+        this.client = null;
+        this.endpoint = null;
+        this.llmClient = llmClient;
+        this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
+        this.timeout = Duration.ofSeconds(120);
+        this.maxTokens = Math.max(1, maxTokens);
+        this.captureStore = captureStore;
+        this.promptVersion = normalizePromptVersion(promptVersion);
+        this.promptTemplate = loadPrompt(this.promptVersion);
+    }
+
     public LlmExtractionAdapter(HttpClient client, String endpoint, String model,
                                 Duration timeout, int maxTokens, CaptureStore captureStore,
                                 String promptVersion) {
@@ -169,6 +194,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         }
         this.client = client;
         this.endpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
+        this.llmClient = null;
         this.model = model == null || model.isBlank() ? "qwen3-extraction" : model;
         this.timeout = timeout == null ? Duration.ofSeconds(120) : timeout;
         this.maxTokens = Math.max(1, maxTokens);
@@ -217,7 +243,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         String renderedDigest = PromptDigest.verify(compiledPrompt, compiledPrompt);
         LlmProvenance provenance = new LlmProvenance(
                 PROMPT_VERSION, compiledDigest, renderedDigest, null, null);
-        LlmCallResult call = call(compiledPrompt, text);
+        LlmCallResult call = call(compiledPrompt, text, context.tenantId());
         String content = call.content();
         JsonlParseResult parsed = JSONL_PARSER.parse(content, call.usage().finishReason());
 
@@ -547,7 +573,17 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         return out;
     }
 
-    private LlmCallResult call(String prompt, String text) {
+    private LlmCallResult call(String prompt, String text, String tenantId) {
+        if (llmClient != null) {
+            CompletionRequest request = new CompletionRequest(
+                model, prompt, "TEXT:\n" + text, 0.0, maxTokens);
+            CompletionResponse response = TenantAwareLlmClient.complete(llmClient, request, tenantId);
+            int promptTokens = response.promptTokens();
+            int completionTokens = response.completionTokens();
+            LlmUsage usage = new LlmUsage("stop", promptTokens, completionTokens,
+                promptTokens < 0 || completionTokens < 0 ? -1 : promptTokens + completionTokens);
+            return new LlmCallResult(response.text(), usage, response.text());
+        }
         String body = "{\"model\":" + Json.quote(model)
                 + ",\"temperature\":0,\"max_tokens\":" + maxTokens
                 + ",\"messages\":[{\"role\":\"system\",\"content\":" + Json.quote(prompt)
