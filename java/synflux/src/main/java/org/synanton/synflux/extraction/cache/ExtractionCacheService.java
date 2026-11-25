@@ -60,7 +60,9 @@ public final class ExtractionCacheService {
                 generationId, write(result.preEntities()), write(result.relations()),
                 result.provenance().promptVersion(), result.provenance().promptCompiledDigest(),
                 result.provenance().promptRenderedDigest(), result.provenance().schemaVersion(),
-                result.provenance().schemaDigest(), Instant.now()));
+                result.provenance().schemaDigest(), Instant.now(),
+                result.provenance().finishReason(), result.provenance().gatewayRequestId(),
+                result.provenance().gatewayExecutionId()));
     }
 
     public CachedExtractionResult getOrLoad(ExtractionCacheKey key, UUID generationId,
@@ -80,7 +82,8 @@ public final class ExtractionCacheService {
     private ExtractionResult toResult(ExtractionCacheEntry entry) {
         LlmProvenance provenance = new LlmProvenance(entry.promptVersion(),
                 entry.promptCompiledDigest(), entry.promptRenderedDigest(),
-                entry.schemaVersion(), entry.schemaDigest());
+                entry.schemaVersion(), entry.schemaDigest(), entry.finishReason(),
+                entry.gatewayRequestId(), entry.gatewayExecutionId());
         return new ExtractionResult(read(entry.entitiesJson(), ENTITIES),
                 read(entry.relationsJson(), RELATIONS), LlmUsage.NONE, List.of(),
                 ExtractionIntegrity.CLEAN, provenance);

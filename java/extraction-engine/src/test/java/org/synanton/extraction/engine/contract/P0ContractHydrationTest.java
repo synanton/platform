@@ -29,7 +29,7 @@ class P0ContractHydrationTest {
         LlmClient client = new LlmClient() {
             @Override public CompletionResponse complete(CompletionRequest request) {
                 captured.set(request);
-                return new CompletionResponse("", 0, 0);
+                return new CompletionResponse("", 0, 0, "stop", "req", "exec");
             }
             @Override public EmbedResponse embed(EmbedRequest request) {
                 throw new UnsupportedOperationException();
@@ -57,7 +57,7 @@ class P0ContractHydrationTest {
                 String content = "{\"type\":\"entity\",\"surfaceForm\":\"Book\",\"proposedType\":\"Book\",\"charStart\":0,\"charEnd\":4}\n"
                     + "{\"type\":\"entity\",\"surfaceForm\":\"Author\",\"proposedType\":\"Author\",\"charStart\":5,\"charEnd\":11}\n"
                     + "{\"type\":\"relation\",\"subjectForm\":\"Book\",\"predicate\":\"hassupplier\",\"objectForm\":\"Author\",\"evidenceQuote\":\"Book Author\"}\n";
-                return new CompletionResponse(content, 10, 10);
+                return new CompletionResponse(content, 10, 10, "stop", "req", "exec");
             }
             @Override public EmbedResponse embed(EmbedRequest request) {
                 throw new UnsupportedOperationException();
@@ -84,7 +84,7 @@ class P0ContractHydrationTest {
                 String content = "{\"type\":\"entity\",\"surfaceForm\":\"Book\",\"proposedType\":\"Book\",\"charStart\":0,\"charEnd\":4}\n"
                     + "{\"type\":\"entity\",\"surfaceForm\":\"Author\",\"proposedType\":\"Author\",\"charStart\":5,\"charEnd\":11}\n"
                     + "{\"type\":\"relation\",\"subjectForm\":\"Book\",\"predicate\":\"HAS_CHAPTER\",\"objectForm\":\"Author\",\"evidenceQuote\":\"Book Author\"}\n";
-                return new CompletionResponse(content, 10, 10);
+                return new CompletionResponse(content, 10, 10, "stop", "req", "exec");
             }
             @Override public EmbedResponse embed(EmbedRequest request) {
                 throw new UnsupportedOperationException();

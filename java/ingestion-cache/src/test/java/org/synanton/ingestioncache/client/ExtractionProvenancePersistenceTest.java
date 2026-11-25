@@ -67,6 +67,23 @@ class ExtractionProvenancePersistenceTest {
     }
 
     @Test
+    void persistsGatewayFinishReasonAndIdentifiers() {
+        String tenant = tenant();
+        UUID contentRef = UUID.randomUUID();
+        UUID sourceVersion = UUID.randomUUID();
+
+        cache.upsertExtractionResult(tenant, contentRef, 0, sourceVersion, "[]", "[]",
+                "extraction-v2", "a".repeat(64), "b".repeat(64),
+                "schema-v1", "c".repeat(64), null, Instant.now(),
+                "stop", "req-42", "exec-42");
+
+        ExtractionResultRow row = onlyRow(tenant, contentRef);
+        assertThat(row.finishReason()).isEqualTo("stop");
+        assertThat(row.gatewayRequestId()).isEqualTo("req-42");
+        assertThat(row.gatewayExecutionId()).isEqualTo("exec-42");
+    }
+
+    @Test
     void legacyNullsRemainNullWithoutBackfill() {
         String tenant = tenant();
         UUID contentRef = UUID.randomUUID();

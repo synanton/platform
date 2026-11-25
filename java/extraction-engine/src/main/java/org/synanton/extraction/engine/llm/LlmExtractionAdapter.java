@@ -251,9 +251,19 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
         String compiledPrompt = buildPrompt(context);
         String compiledDigest = PromptDigest.digest(compiledPrompt);
         String renderedDigest = PromptDigest.verify(compiledPrompt, compiledPrompt);
-        LlmProvenance provenance = new LlmProvenance(
-                PROMPT_VERSION, compiledDigest, renderedDigest, null, null);
         LlmCallResult call = call(compiledPrompt, text, context.tenantId());
+        if (llmClient != null) {
+            if (call.usage().isIncomplete()) {
+                throw new LlmIncompleteOutputException(call.usage(), call.rawBody().length(),
+                    sha256(call.rawBody()));
+            }
+            if (!call.usage().isSuccessful()) {
+                throw new LlmNonSuccessCompletionException(call.usage(), sha256(call.rawBody()));
+            }
+        }
+        LlmProvenance provenance = new LlmProvenance(
+                PROMPT_VERSION, compiledDigest, renderedDigest, null, null,
+                call.usage().finishReason(), call.requestId(), call.executionId());
         String content = call.content();
         JsonlParseResult parsed = JSONL_PARSER.parse(content, call.usage().finishReason());
 
@@ -603,9 +613,12 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             CompletionResponse response = TenantAwareLlmClient.complete(llmClient, request, tenantId);
             int promptTokens = response.promptTokens();
             int completionTokens = response.completionTokens();
-            LlmUsage usage = new LlmUsage("stop", promptTokens, completionTokens,
+            String finishReason = response.finishReason() == null || response.finishReason().isBlank()
+                ? "unknown" : response.finishReason();
+            LlmUsage usage = new LlmUsage(finishReason, promptTokens, completionTokens,
                 promptTokens < 0 || completionTokens < 0 ? -1 : promptTokens + completionTokens);
-            return new LlmCallResult(response.text(), usage, response.text());
+            return new LlmCallResult(response.text(), usage, response.text(),
+                response.requestId(), response.executionId());
         }
         String body = "{\"model\":" + Json.quote(model)
                 + ",\"temperature\":0,\"max_tokens\":" + maxTokens
@@ -642,7 +655,7 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                     Json.integer(usage, "completion_tokens", -1),
                     Json.integer(usage, "total_tokens", -1));
             String content = Json.string(Json.object(choice, "message"), "content", "");
-            return new LlmCallResult(content, llmUsage, responseBody);
+            return new LlmCallResult(content, llmUsage, responseBody, null, null);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("LLM extraction interrupted", e);
@@ -712,7 +725,8 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
                 .append(value == null ? "null" : Json.quote(value));
     }
 
-    private record LlmCallResult(String content, LlmUsage usage, String rawBody) {
+    private record LlmCallResult(String content, LlmUsage usage, String rawBody,
+                                 String requestId, String executionId) {
     }
 
     private String chatCompletionsUrl() {
