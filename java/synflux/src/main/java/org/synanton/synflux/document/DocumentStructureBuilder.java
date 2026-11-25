@@ -28,15 +28,17 @@ public final class DocumentStructureBuilder {
 
     private final SourceDocument source;
     private final String normalizationVersion;
+    private final String chunkingConfig;
     private final String parserName;
     private final String parserVersion;
     private final List<DocumentStructure.Page> pages;
     private final List<Block> blocks = new ArrayList<>();
 
-    public DocumentStructureBuilder(SourceDocument source, String normalizationVersion, String parserName,
-                             String parserVersion, List<DocumentStructure.Page> pages) {
+    public DocumentStructureBuilder(SourceDocument source, String normalizationVersion, String chunkingConfig,
+                             String parserName, String parserVersion, List<DocumentStructure.Page> pages) {
         this.source = source;
         this.normalizationVersion = normalizationVersion;
+        this.chunkingConfig = chunkingConfig;
         this.parserName = parserName;
         this.parserVersion = parserVersion;
         this.pages = List.copyOf(pages);
@@ -91,7 +93,7 @@ public final class DocumentStructureBuilder {
 
         return new DocumentStructure(
             source.tenantId(), source.sourceId(), source.sourceVersionId(), source.documentId(),
-            source.mediaType(), normalizationVersion, parserName, parserVersion,
+            source.mediaType(), normalizationVersion, chunkingConfig, parserName, parserVersion,
             documentText.toString(), pages, elements, chunks);
     }
 

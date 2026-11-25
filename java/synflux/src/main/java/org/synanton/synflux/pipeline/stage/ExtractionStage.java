@@ -9,6 +9,10 @@ import org.synanton.extraction.client.StructuredExtractionRequiredException;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.StageUsage;
+import org.synanton.synflux.document.DocumentStructure;
+import org.synanton.synflux.document.DocumentStructureService;
+import org.synanton.synflux.document.SourceDocument;
+import org.synanton.synflux.document.UnsupportedDocumentFormatException;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synflux.pipeline.StageUsageTracker;
@@ -24,7 +28,11 @@ import org.synanton.extraction.v1.ObjectReference;
 import org.synanton.extraction.v1.SubmitExtractionRequest;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDocument> {
@@ -37,6 +45,7 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
     private final ExtractionClientMetrics metrics;
     private final ObjectStorePort objectStore;
     private final String hotBucket;
+    private final DocumentStructureService structureService;
 
     public ExtractionStage(
             ExtractionPlaneClient extractionClient,
@@ -45,12 +54,25 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
             ExtractionClientMetrics metrics,
             ObjectStorePort objectStore,
             String hotBucket) {
+        this(extractionClient, fallbackExtractor, fallbackPolicy, metrics, objectStore, hotBucket,
+            DocumentStructureService.defaults());
+    }
+
+    public ExtractionStage(
+            ExtractionPlaneClient extractionClient,
+            LocalTikaFallbackExtractor fallbackExtractor,
+            ExtractionFallbackPolicy fallbackPolicy,
+            ExtractionClientMetrics metrics,
+            ObjectStorePort objectStore,
+            String hotBucket,
+            DocumentStructureService structureService) {
         this.extractionClient = extractionClient;
         this.fallbackExtractor = fallbackExtractor;
         this.fallbackPolicy = fallbackPolicy;
         this.metrics = metrics;
         this.objectStore = objectStore;
         this.hotBucket = hotBucket;
+        this.structureService = structureService;
     }
 
     @Override
@@ -69,12 +91,13 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
     }
 
     private ParsedDocument extract(AcquiredDocument doc, StageContext ctx) {
+        DocumentStructure structure = parseStructure(doc, ctx);
         if (extractionClient.isEnabled()) {
             try {
                 ExtractionResult result = extractionClient.extract(buildRequest(doc, ctx));
                 ParsedDocument parsed = toParsedDocument(doc, result);
                 if (parsed != null) {
-                    return parsed;
+                    return attachStructure(parsed, structure);
                 }
                 log.warn("Structured extraction returned no payload for ref={}", doc.contentRefId());
             } catch (Exception e) {
@@ -93,7 +116,47 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
                             + doc.contentRefId());
         }
 
-        return applyFallback(doc, "plane_unavailable_or_empty");
+        return attachStructure(applyFallback(doc, "plane_unavailable_or_empty"), structure);
+    }
+
+    private DocumentStructure parseStructure(AcquiredDocument doc, StageContext ctx) {
+        try {
+            String sourceVersionId = ctx.sourceVersionId() != null
+                ? ctx.sourceVersionId().toString()
+                : doc.contentRefId().toString();
+            String sourceId = doc.sourceUri() == null || doc.sourceUri().isBlank()
+                ? doc.ref().uri()
+                : doc.sourceUri();
+            return structureService.process(new SourceDocument(
+                ctx.tenant(), sourceId, sourceVersionId, doc.contentRefId().toString(),
+                doc.mimeType(), doc.bytes()));
+        } catch (UnsupportedDocumentFormatException e) {
+            return null;
+        }
+    }
+
+    private ParsedDocument attachStructure(ParsedDocument parsed, DocumentStructure structure) {
+        Map<String, String> metadata = new LinkedHashMap<>();
+        metadata.put("structural_contract_version", "R0.2");
+        if (structure == null) {
+            metadata.put("structural_status", "UNSUPPORTED");
+            return parsed.withStructure(null, metadata);
+        }
+        metadata.put("structural_status", "PARSED");
+        metadata.put("structural_document_id", structure.documentId());
+        metadata.put("structural_source_id", structure.sourceId());
+        metadata.put("structural_source_version_id", structure.sourceVersionId());
+        metadata.put("structural_media_type", structure.mediaType());
+        metadata.put("structural_normalization_version", structure.normalizationVersion());
+        metadata.put("structural_chunking_config", structure.chunkingConfig());
+        metadata.put("structural_text_sha256", sha256(structure.text()));
+        metadata.put("extraction_text_sha256", sha256(parsed.text()));
+        metadata.put("text_projection", "EXTRACTION_TEXT");
+        metadata.put("structural_parser_name", structure.parserName());
+        metadata.put("structural_parser_version", structure.parserVersion());
+        metadata.put("structural_element_count", Integer.toString(structure.elements().size()));
+        metadata.put("structural_chunk_count", Integer.toString(structure.chunks().size()));
+        return parsed.withStructure(structure, metadata);
     }
 
     private ParsedDocument toParsedDocument(AcquiredDocument doc, ExtractionResult result) {
@@ -135,6 +198,15 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
         FallbackExtractionResult fallback = fallbackExtractor.extract(
                 doc.bytes(), doc.sourceUri(), includeMetadata);
         return new ParsedDocument(doc, fallback.flatText(), fallback.metadata(), null);
+    }
+
+    private static String sha256(String text) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest((text == null ? "" : text).getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
     }
 
     private SubmitExtractionRequest buildRequest(AcquiredDocument doc, StageContext ctx) {

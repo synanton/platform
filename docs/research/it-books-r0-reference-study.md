@@ -30,6 +30,7 @@ Cost/value are planning estimates to be revised by implementation evidence.
 | Skeleton-then-flesh | Adapt into RAKG | Staged extraction state and candidate representation | M | High | Harder to recover dense documents without losing evidence |
 | Deterministic provenance binding | Adopt | Evidence/source-location contract | M | High | Evidence cannot be verified or compared across backends |
 | Layout-aware processing | Adapt via selected libraries | Structural representation (R0.2) | L | High | Chunks ignore document structure; weak offsets/bboxes |
+| PDF table/figure reconstruction | Defer in P1 | Explicit deferred scope; no fabricated table/figure elements | M | Low for v1 | P4 must not treat absent structure as a regression |
 | Bounding-box grounding | Adopt selectively | Source-location geometry + explicit unavailable state | M | Medium–High | Spatial evidence cannot be measured; silent degradation risk |
 | Candidate graph fusion | Defer pending evaluation | Candidate preprocessing only | M | Uncertain | Possible duplicate candidates across documents; not required for per-document v1 |
 | Multi-format conversion | Adapt via selected libraries | Format-adapter boundary | L | Medium | Narrow format support; avoid writing parsers from scratch |

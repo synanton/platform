@@ -53,7 +53,7 @@ public final class PdfDocumentAdapter implements DocumentFormatAdapter {
 
             String parserVersion = Version.getVersion();
             DocumentStructureBuilder builder = new DocumentStructureBuilder(
-                source, NORMALIZATION_VERSION, PARSER_NAME, parserVersion, pages);
+                source, NORMALIZATION_VERSION, "pdf-page-v1", PARSER_NAME, parserVersion, pages);
             collector.lines.forEach(line -> builder.add(new DocumentStructureBuilder.Block(
                 line.pageNumber(), DocumentStructure.ElementType.PARAGRAPH, line.text(),
                 line.boundingBox(), DocumentStructure.GeometryStatus.AVAILABLE,

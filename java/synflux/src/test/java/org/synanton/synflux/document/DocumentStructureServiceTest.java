@@ -106,6 +106,30 @@ class DocumentStructureServiceTest {
     }
 
     @Test
+    void resolvesPdfEvidenceToPageGeometryAndProvenance() throws Exception {
+        DocumentStructure structure = service.process(source("application/pdf",
+            pdf("Alpha document", "Second line on page one", "Page two text")));
+        DocumentStructure.Element element = structure.elements().stream()
+            .filter(e -> e.text().contains("Alpha document"))
+            .findFirst().orElseThrow();
+
+        StructuralEvidenceResolver.Evidence evidence = new StructuralEvidenceResolver()
+            .resolveDocumentSpan(structure, element.documentStartOffset(), element.documentEndOffset());
+
+        assertThat(evidence.text()).isEqualTo(element.text());
+        assertThat(evidence.documentStartOffset()).isEqualTo(element.documentStartOffset());
+        assertThat(evidence.elements()).hasSize(1);
+        assertThat(evidence.elements().getFirst().pageNumber()).isEqualTo(1);
+        assertThat(evidence.elements().getFirst().geometryStatus())
+            .isEqualTo(DocumentStructure.GeometryStatus.AVAILABLE);
+        assertThat(evidence.elements().getFirst().boundingBox()).isNotNull();
+        assertThat(evidence.parserName()).isEqualTo("Apache PDFBox");
+        assertThat(evidence.parserVersion()).isNotBlank();
+        assertThat(evidence.normalizationVersion()).isEqualTo("NFC_COLLAPSE_WHITESPACE_UTF16_V1");
+        assertThat(evidence.chunkingConfig()).isEqualTo("pdf-page-v1");
+    }
+
+    @Test
     void rejectsUnsupportedMediaType() {
         SourceDocument source = source("application/msword", new byte[]{1, 2, 3});
         assertThatThrownBy(() -> service.process(source))

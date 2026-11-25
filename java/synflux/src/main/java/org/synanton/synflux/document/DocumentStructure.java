@@ -17,6 +17,7 @@ public record DocumentStructure(
     String documentId,
     String mediaType,
     String normalizationVersion,
+    String chunkingConfig,
     String parserName,
     String parserVersion,
     String text,
@@ -31,6 +32,7 @@ public record DocumentStructure(
         requireText(documentId, "documentId");
         requireText(mediaType, "mediaType");
         requireText(normalizationVersion, "normalizationVersion");
+        requireText(chunkingConfig, "chunkingConfig");
         requireText(parserName, "parserName");
         requireText(parserVersion, "parserVersion");
         Objects.requireNonNull(text, "text");
