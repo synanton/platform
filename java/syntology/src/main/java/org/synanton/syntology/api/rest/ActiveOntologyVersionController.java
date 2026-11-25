@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.syntology.domain.model.OntologyVersion;
@@ -29,7 +30,9 @@ public class ActiveOntologyVersionController {
     }
 
     @GetMapping("/{tenantId}/active-ontology-version")
-    public ResponseEntity<?> activeVersion(@PathVariable String tenantId) {
+    public ResponseEntity<?> activeVersion(
+            @PathVariable String tenantId,
+            @RequestParam(value = "ontologyId", required = false) String ontologyId) {
         TenantContext context = TenantContext.get();
         if (context == null || context.tenantId() == null || context.tenantId().isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -40,12 +43,18 @@ public class ActiveOntologyVersionController {
                     .body(java.util.Map.of("error", "tenant_scope_mismatch"));
         }
         try {
-            return ontologyService.activeVersion(tenantId)
+            String requestedOntology = ontologyId == null || ontologyId.isBlank()
+                    ? OntologyVersion.DEFAULT_ONTOLOGY_ID : ontologyId;
+            var active = OntologyVersion.DEFAULT_ONTOLOGY_ID.equals(requestedOntology)
+                    ? ontologyService.activeVersion(tenantId)
+                    : ontologyService.activeVersion(tenantId, requestedOntology);
+            return active
                     .<ResponseEntity<?>>map(version -> ResponseEntity.ok(toResponse(tenantId, version)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(java.util.Map.of(
                                     "error", "no_active_ontology",
-                                    "tenantId", tenantId)));
+                                    "tenantId", tenantId,
+                                    "ontologyId", requestedOntology)));
         } catch (RuntimeException failure) {
             log.error("Active ontology version lookup failed tenant={}", tenantId, failure);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -57,6 +66,7 @@ public class ActiveOntologyVersionController {
         // versionId is the immutable per-activation reference available today.
         return new ActiveOntologyVersionResponse(
                 tenantId,
+                version.ontologyId(),
                 version.version(),
                 "uuid:" + version.versionId(),
                 version.createdAt(),
@@ -66,6 +76,7 @@ public class ActiveOntologyVersionController {
 
     public record ActiveOntologyVersionResponse(
             @JsonProperty("tenantId") String tenantId,
+            @JsonProperty("ontologyId") String ontologyId,
             @JsonProperty("activeVersion") String activeVersion,
             @JsonProperty("versionRef") String versionRef,
             @JsonProperty("activatedAt") Instant activatedAt,
