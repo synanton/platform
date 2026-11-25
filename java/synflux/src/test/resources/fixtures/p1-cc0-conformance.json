@@ -1,0 +1,26 @@
+{
+  "fixture": "p1-cc0-it-books.md",
+  "license": "CC0-1.0",
+  "expected": [
+    {
+      "text": "Relational Storage Notes",
+      "elementType": "HEADING",
+      "geometry": "NOT_APPLICABLE"
+    },
+    {
+      "text": "This is a synthetic, original technical-book excerpt dedicated to the public domain under CC0-1.0. It is not copied from a copyrighted book.",
+      "elementType": "PARAGRAPH",
+      "geometry": "NOT_APPLICABLE"
+    },
+    {
+      "text": "A page is the unit of physical storage. A record is the unit of logical access. The storage engine maps records to pages and keeps that mapping stable for the lifetime of a table.",
+      "elementType": "PARAGRAPH",
+      "geometry": "NOT_APPLICABLE"
+    },
+    {
+      "text": "A write-ahead log records changes before pages are flushed. Recovery replays committed records and discards incomplete transactions.",
+      "elementType": "PARAGRAPH",
+      "geometry": "NOT_APPLICABLE"
+    }
+  ]
+}
