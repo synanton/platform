@@ -9,7 +9,7 @@
 | Path | Exists | Produces candidate entities/relations | GPU | P3a compatibility | A2 compatibility | Verdict |
 |---|---|---|---|---|---|---|
 | `RegexExtractorAdapter` | Yes, in-process | Identifier/Metric/Concept only; cue-based predicates | No | Direct chunk spans can be bound with P3a | Partial: cannot produce Book/Author/Chapter/Algorithm/etc. or A1 predicates reliably | Eligible only as a baseline smoke |
-| `LlmExtractionAdapter` | Yes, direct OpenAI-compatible HTTP | Typed candidates with prompt recovery | Direct vLLM/TEI HTTP; not `synanton.gpu.v1` | Requires extraction-input mapping; not currently persisted | Closest semantic fit | **Not eligible under current GPU Gateway rule** |
+| `LlmExtractionAdapter` | Yes, direct OpenAI-compatible HTTP | Typed candidates with prompt recovery | Direct vLLM/TEI HTTP; not `synanton.gpu.v1` | Requires extraction-input mapping; not currently persisted | Closest semantic fit | **Not eligible as-is; gateway path deferred** |
 | `ExtractionPlaneClient` / content extraction plane | Yes | Structured document text/layout, not knowledge candidates | No | Feeds document processing; not candidate extraction | No relation judgments | Not an A2 extractor |
 | `LocalTikaFallbackExtractor` | Yes | Document text only | No | Not candidate extraction | No | Not an A2 extractor |
 | Existing `ExtractionConsumer` pipeline | Yes | Consumes cached chunks and the selected adapter | Depends on adapter | Does not persist a P3a extraction-input→structural mapping | Can run regex but not A2-shaped | Not sufficient without an evaluation harness |
@@ -48,10 +48,13 @@ This is the only path that is presently compatible with the no-direct-vLLM/TEI c
 ## Deferred path
 
 `LlmExtractionAdapter` is the semantically closest existing path, but it calls an OpenAI-compatible
-vLLM/TEI endpoint directly. The current `synanton.gpu.v1` contract exposes only `EMBED` and `RERANK`,
-not generation/extraction. Authorizing it would require a separate, explicitly approved gateway
-path or contract change; this proposal does not authorize that. No direct vLLM/TEI call, automatic
-regex fallback, or new backend is permitted by this proposal.
+vLLM/TEI endpoint directly. The current `synanton.gpu.v1` contract **does** expose `SYNTHESIZE`
+(LLM generation via `/v1/chat/completions`), `RESPOND`, `EMBED`, and `RERANK`; the earlier
+EMBED/RERANK-only description was stale. The deployed `gpu-gateway` is currently scaled to zero
+(`0/0`), while `vllm-extraction` is running. No existing platform extraction adapter routes through
+the Gateway: `LlmExtractionAdapter` uses a direct HTTP endpoint instead. A compliant LLM path would
+therefore require a separately approved adapter/route using `SYNTHESIZE`, not a direct vLLM/TEI call.
+This proposal does not authorize that work, and direct vLLM/TEI calls remain prohibited.
 
 ## Decision requested
 
