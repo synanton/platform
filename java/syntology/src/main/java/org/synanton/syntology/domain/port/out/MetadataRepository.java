@@ -14,9 +14,13 @@ public interface MetadataRepository {
 
     Optional<OntologyVersion> findActive(String tenantId);
 
+    Optional<OntologyVersion> findActive(String tenantId, String ontologyId);
+
     void insert(OntologyVersion version);
 
     void deprecateAllActive(String tenantId);
+
+    void deprecateAllActive(String tenantId, String ontologyId);
 
     void updateStatus(UUID versionId, String status);
 
