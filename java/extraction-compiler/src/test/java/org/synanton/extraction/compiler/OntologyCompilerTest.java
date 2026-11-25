@@ -17,10 +17,7 @@ class OntologyCompilerTest {
     void compilesPublishedItBooksReleaseDeterministically() throws Exception {
         JsonNode active = resource("it-books-v1-active.json");
         JsonNode ir = resource("it-books-v1-ir.json");
-        ReleaseIdentity release = new ReleaseIdentity(
-            active.get("tenantId").asText(), active.get("ontologyId").asText(),
-            active.get("activeVersion").asText(), active.get("releaseId").asText(),
-            active.get("releaseDigest").asText());
+        ReleaseIdentity release = release(active);
         OntologyCompiler.CompileRequest request = new OntologyCompiler.CompileRequest(
             release, ir, "p0-1", "it-books-v1-default", "1", "sha256:test-image");
 
@@ -66,6 +63,41 @@ class OntologyCompilerTest {
     }
 
     @Test
+    void allPinnedDigestInputsAreInTheCanonicalSet() throws Exception {
+        JsonNode ir = resource("it-books-v1-ir.json");
+        ReleaseIdentity release = release(resource("it-books-v1-active.json"));
+        OntologyCompiler compiler = new OntologyCompiler();
+        OntologyCompiler.CompileResult base = compiler.compile(
+            new OntologyCompiler.CompileRequest(release, ir, "p0-1", "profile-a", "1", "image-a"));
+
+        OntologyCompiler.CompileResult otherCompiler = compiler.compile(
+            new OntologyCompiler.CompileRequest(release, ir, "p0-2", "profile-a", "1", "image-a"));
+        OntologyCompiler.CompileResult otherProfile = compiler.compile(
+            new OntologyCompiler.CompileRequest(release, ir, "p0-1", "profile-b", "1", "image-a"));
+        OntologyCompiler.CompileResult otherSchema = compiler.compile(
+            new OntologyCompiler.CompileRequest(release, ir, "p0-1", "profile-a", "2", "image-a"));
+        ReleaseIdentity otherRelease = new ReleaseIdentity(release.tenantId(), release.ontologyId(),
+            release.version(), release.releaseId(), "b".repeat(64));
+        OntologyCompiler.CompileResult changedRelease = compiler.compile(
+            new OntologyCompiler.CompileRequest(otherRelease, ir, "p0-1", "profile-a", "1", "image-a"));
+        OntologyCompiler.CompileResult otherImage = compiler.compile(
+            new OntologyCompiler.CompileRequest(release, ir, "p0-1", "profile-a", "1", "image-b"));
+
+        assertThat(otherCompiler.compilationId()).isNotEqualTo(base.compilationId());
+        assertThat(otherProfile.compilationId()).isNotEqualTo(base.compilationId());
+        assertThat(otherSchema.compilationId()).isNotEqualTo(base.compilationId());
+        assertThat(changedRelease.compilationId()).isNotEqualTo(base.compilationId());
+        assertThat(otherCompiler.specDigest()).isNotEqualTo(base.specDigest());
+        assertThat(otherProfile.specDigest()).isNotEqualTo(base.specDigest());
+        assertThat(otherSchema.specDigest()).isNotEqualTo(base.specDigest());
+        assertThat(changedRelease.specDigest()).isNotEqualTo(base.specDigest());
+        // Deployment image is provenance only; it must not perturb semantic digests.
+        assertThat(otherImage.specDigest()).isEqualTo(base.specDigest());
+        assertThat(otherImage.templateDigest()).isEqualTo(base.templateDigest());
+        assertThat(otherImage.compilationId()).isEqualTo(base.compilationId());
+    }
+
+    @Test
     void reportsUnsupportedConstructsInsteadOfSilentlyDroppingThem() throws Exception {
         JsonNode ir = resource("it-books-v1-ir.json").deepCopy();
         ((com.fasterxml.jackson.databind.node.ObjectNode) ir.path("classes").get(9)).withArray("properties")
@@ -81,6 +113,13 @@ class OntologyCompilerTest {
         assertThat(result.report().path("unsupported").get(0).path("kind").asText()).isEqualTo("class");
         assertThat(result.report().path("unsupported").get(0).path("reason").asText())
             .contains("xsd:binary");
+    }
+
+    private static ReleaseIdentity release(JsonNode active) {
+        return new ReleaseIdentity(
+            active.get("tenantId").asText(), active.get("ontologyId").asText(),
+            active.get("activeVersion").asText(), active.get("releaseId").asText(),
+            active.get("releaseDigest").asText());
     }
 
     private JsonNode relation(OntologyCompiler.CompileResult result, String id) {

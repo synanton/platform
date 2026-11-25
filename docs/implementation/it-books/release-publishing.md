@@ -37,6 +37,16 @@ GET /v1/tenants/{tenant}/active-ontology-version?ontologyId=it-books
 
 Without `ontologyId`, the endpoint continues to resolve the Supply Chain active release.
 
+The immutable compiler read path is separate from active selection:
+
+```text
+GET /v1/tenants/{tenant}/ontology-releases/{releaseId}
+```
+
+It returns the release's ontology, version, releaseId, releaseDigest, status and createdAt even
+after that release is no longer active. The P0 compiler addresses this endpoint by releaseId and
+never reads the active alias.
+
 ## Verify
 
 ```bash

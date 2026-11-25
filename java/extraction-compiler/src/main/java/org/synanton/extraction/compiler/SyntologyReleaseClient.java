@@ -36,17 +36,12 @@ public final class SyntologyReleaseClient {
         this.http = Objects.requireNonNull(http, "http");
     }
 
-    public ReleaseIdentity resolveActive(String ontologyId) {
-        String encodedOntology = URLEncoder.encode(require(ontologyId, "ontologyId"), StandardCharsets.UTF_8);
+    /** Immutable lookup by releaseId; never consults the active-ontology alias. */
+    public ReleaseIdentity resolveRelease(String releaseId) {
         JsonNode body = get("/v1/tenants/" + path(tenantId)
-            + "/active-ontology-version?ontologyId=" + encodedOntology);
-        String resolvedOntology = text(body, "ontologyId");
-        if (!ontologyId.equals(resolvedOntology)) {
-            throw new IllegalStateException("Syntology returned ontology " + resolvedOntology
-                + " for requested " + ontologyId);
-        }
+            + "/ontology-releases/" + path(require(releaseId, "releaseId")));
         return new ReleaseIdentity(
-            text(body, "tenantId"), resolvedOntology, text(body, "activeVersion"),
+            text(body, "tenantId"), text(body, "ontologyId"), text(body, "version"),
             text(body, "releaseId"), text(body, "releaseDigest"));
     }
 

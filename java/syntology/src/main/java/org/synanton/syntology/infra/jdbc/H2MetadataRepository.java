@@ -58,6 +58,17 @@ public class H2MetadataRepository implements MetadataRepository {
     }
 
     @Override
+    public Optional<OntologyVersion> findByReleaseId(String tenantId, String releaseId) {
+        List<OntologyVersion> results = jdbcTemplate.query(
+                "SELECT * FROM syntology.ontology_versions WHERE tenant_id = ? AND release_id = ?",
+                ROW_MAPPER,
+                tenantId,
+                releaseId
+        );
+        return results.stream().findFirst();
+    }
+
+    @Override
     public Optional<OntologyVersion> findActive(String tenantId) {
         return findActive(tenantId, OntologyVersion.DEFAULT_ONTOLOGY_ID);
     }

@@ -24,7 +24,8 @@ public final class Main {
             System.getenv().getOrDefault("SYNTOLOGY_URL", "http://localhost:8080"));
         String tenant = options.getOrDefault("tenant", "demo");
         String ontology = options.getOrDefault("ontology", "it-books");
-        String release = options.get("release");
+        String releaseId = options.get("release-id");
+        String releaseDigest = options.get("release-digest");
         String token = options.getOrDefault("token", System.getenv().getOrDefault("SYNANTON_TOKEN", ""));
         String output = options.getOrDefault("output", "build/p0");
         String compilerVersion = options.getOrDefault("compiler-version", OntologyCompiler.COMPILER_VERSION);
@@ -37,23 +38,34 @@ public final class Main {
             throw new IllegalArgumentException("--token or SYNANTON_TOKEN is required");
         }
 
-        SyntologyReleaseClient client = new SyntologyReleaseClient(baseUrl, tenant, token);
-        ReleaseIdentity active = client.resolveActive(ontology);
-        if (release != null && !release.isBlank() && !release.equals(active.version())) {
-            throw new IllegalStateException("requested release " + release
-                + " is not the active " + ontology + " release " + active.version());
+        if (releaseId == null || releaseId.isBlank()) {
+            throw new IllegalArgumentException("--release-id is required");
         }
-        var ir = client.fetchIr(active.version());
+        if (releaseDigest == null || releaseDigest.isBlank()) {
+            throw new IllegalArgumentException("--release-digest is required");
+        }
+
+        SyntologyReleaseClient client = new SyntologyReleaseClient(baseUrl, tenant, token);
+        ReleaseIdentity release = client.resolveRelease(releaseId);
+        if (!ontology.equals(release.ontologyId())) {
+            throw new IllegalStateException("release " + releaseId + " belongs to ontology "
+                + release.ontologyId() + ", not " + ontology);
+        }
+        if (!releaseDigest.equals(release.releaseDigest())) {
+            throw new IllegalStateException("release " + releaseId + " digest mismatch: expected "
+                + releaseDigest + " but API returned " + release.releaseDigest());
+        }
+        var ir = client.fetchIr(release.version());
         var result = new OntologyCompiler().compile(new OntologyCompiler.CompileRequest(
-            active, ir, compilerVersion, exportProfile, schemaVersion, deployedImage));
+            release, ir, compilerVersion, exportProfile, schemaVersion, deployedImage));
         Path outputDir = Path.of(output);
         result.writeTo(outputDir);
 
         Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("ontologyId", active.ontologyId());
-        summary.put("version", active.version());
-        summary.put("releaseId", active.releaseId());
-        summary.put("releaseDigest", active.releaseDigest());
+        summary.put("ontologyId", release.ontologyId());
+        summary.put("version", release.version());
+        summary.put("releaseId", release.releaseId());
+        summary.put("releaseDigest", release.releaseDigest());
         summary.put("specDigest", result.specDigest());
         summary.put("templateDigest", result.templateDigest());
         summary.put("compilationId", result.compilationId());

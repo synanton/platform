@@ -155,6 +155,11 @@ class SyntologyIntegrationTest {
                 .andExpect(jsonPath("$.releaseDigest").isNotEmpty());
 
         var stored = metadataRepository.findByVersion("demo", "it-books-v1").orElseThrow();
+        mockMvc.perform(get("/v1/tenants/demo/ontology-releases/" + stored.releaseId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ontologyId").value("it-books"))
+                .andExpect(jsonPath("$.version").value("it-books-v1"))
+                .andExpect(jsonPath("$.releaseDigest").value(stored.releaseDigest()));
         mockMvc.perform(get("/v1/tenants/demo/active-ontology-version")
                         .param("ontologyId", "it-books"))
                 .andExpect(status().isOk())

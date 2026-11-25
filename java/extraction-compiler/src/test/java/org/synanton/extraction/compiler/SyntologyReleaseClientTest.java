@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,16 +26,22 @@ class SyntologyReleaseClientTest {
     }
 
     @Test
-    void resolvesActiveReleaseAndFetchesIrThroughProductionApi() throws Exception {
+    void resolvesReleaseByIdAndFetchesIrWithoutActiveLookup() throws Exception {
         AtomicReference<String> auth = new AtomicReference<>();
+        AtomicInteger activeLookups = new AtomicInteger();
         server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
-        server.createContext("/v1/tenants/demo/active-ontology-version", exchange -> {
+        server.createContext("/v1/tenants/demo/ontology-releases/rel-1", exchange -> {
             auth.set(exchange.getRequestHeaders().getFirst("Authorization"));
             respond(exchange, 200, """
-                {"tenantId":"demo","ontologyId":"it-books","activeVersion":"it-books-v1",
+                {"tenantId":"demo","ontologyId":"it-books","version":"it-books-v1",
                  "releaseId":"47fe38f8-9f72-481b-826a-6c5b12a6027a",
-                 "releaseDigest":"3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"}
+                 "releaseDigest":"3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c",
+                 "status":"ACTIVE","createdAt":"2026-11-25T09:08:54Z"}
                 """);
+        });
+        server.createContext("/v1/tenants/demo/active-ontology-version", exchange -> {
+            activeLookups.incrementAndGet();
+            respond(exchange, 500, "{\"error\":\"active path must not be called\"}");
         });
         server.createContext("/api/v1/admin/ontology/schemas/it-books-v1", exchange ->
             respond(exchange, 200, "{\"ontology\":{\"id\":\"it-books\"},\"classes\":[],\"relations\":[]}"));
@@ -43,23 +50,22 @@ class SyntologyReleaseClientTest {
         SyntologyReleaseClient client = new SyntologyReleaseClient(
             "http://localhost:" + server.getAddress().getPort(), "demo", "test-token");
 
-        ReleaseIdentity active = client.resolveActive("it-books");
+        ReleaseIdentity release = client.resolveRelease("rel-1");
 
-        assertThat(active.version()).isEqualTo("it-books-v1");
-        assertThat(active.ontologyId()).isEqualTo("it-books");
-        assertThat(client.fetchIr(active.version()).path("ontology").path("id").asText())
+        assertThat(release.version()).isEqualTo("it-books-v1");
+        assertThat(release.ontologyId()).isEqualTo("it-books");
+        assertThat(release.releaseId()).isEqualTo("47fe38f8-9f72-481b-826a-6c5b12a6027a");
+        assertThat(client.fetchIr(release.version()).path("ontology").path("id").asText())
             .isEqualTo("it-books");
         assertThat(auth.get()).isEqualTo("Bearer test-token");
+        assertThat(activeLookups).hasValue(0);
     }
 
     @Test
-    void rejectsIdentityMismatchAndHttpFailures() throws Exception {
+    void rejectsMissingReleaseAndHttpFailures() throws Exception {
         server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
-        server.createContext("/v1/tenants/demo/active-ontology-version", exchange ->
-            respond(exchange, 200, """
-                {"tenantId":"demo","ontologyId":"supply-chain","activeVersion":"1.0.0",
-                 "releaseId":"id","releaseDigest":"3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"}
-                """));
+        server.createContext("/v1/tenants/demo/ontology-releases/missing", exchange ->
+            respond(exchange, 404, "{\"error\":\"no_release\"}"));
         server.createContext("/api/v1/admin/ontology/schemas/missing", exchange ->
             respond(exchange, 404, "{\"error\":\"missing\"}"));
         server.start();
@@ -67,9 +73,9 @@ class SyntologyReleaseClientTest {
         SyntologyReleaseClient client = new SyntologyReleaseClient(
             "http://localhost:" + server.getAddress().getPort(), "demo", "test-token");
 
-        assertThatThrownBy(() -> client.resolveActive("it-books"))
+        assertThatThrownBy(() -> client.resolveRelease("missing"))
             .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("supply-chain");
+            .hasMessageContaining("404");
         assertThatThrownBy(() -> client.fetchIr("missing"))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("404");

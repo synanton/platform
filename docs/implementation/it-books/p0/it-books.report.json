@@ -255,7 +255,7 @@
   "provenance" : {
     "canonicalization" : "json-v1:sorted-keys,utf8,no-whitespace,sha256",
     "compilerVersion" : "p0-1",
-    "deployedImage" : "local-registry:5000/synanton/syntology@sha256:09917a778b8eced6679a3c559460aa16bf59f2d3e3589cac432fda5114d39ede",
+    "deployedImage" : "local-registry:5000/synanton/syntology@sha256:f6e4784a1f6f8cbb580d90b4511a224728163dc22f75871a9de34b0e8528dfb7",
     "exportProfile" : "it-books-v1-default",
     "irDigest" : "e3aa7d0691f9e302a951ec347e333fa97568a7e14662f887e063da8d5d26ffc3",
     "llmUsed" : false,
