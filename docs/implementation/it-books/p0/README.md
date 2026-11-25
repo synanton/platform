@@ -13,3 +13,9 @@ Generated from the published `it-books-v1` release through the production Syntol
 
 The three JSON files are byte-identical across repeated runs. See
 `docs/implementation/it-books/extraction-compiler.md` for the command and canonicalization rules.
+
+See also:
+
+- `docs/implementation/it-books/p0/scope-decision.md` — durable 9 support / 11 extraction decision.
+- `docs/implementation/it-books/p0/a2-coverage-reconciliation.md` — required A2 scope alignment.
+- `docs/implementation/it-books/extraction-compiler.md` — canonicalization and release-by-ID read path.
