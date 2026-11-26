@@ -176,6 +176,19 @@ assert_status() {
     pass "$label (HTTP $expected)"
 }
 
+search_with_retry() {
+    local token="$1" query="$2" response="" attempt
+    for attempt in $(seq 1 15); do
+        response="$(http POST "$SYNQUEST_URL/v1/search" "$token" "{\"query\":\"$query\"}")"
+        case "$(status_of "$response")" in
+            200) printf '%s' "$response"; return 0 ;;
+            000|500|502|503) sleep 2 ;;
+            *) printf '%s' "$response"; return 0 ;;
+        esac
+    done
+    printf '%s' "$response"
+}
+
 wait_health() {
     local name="$1" url="$2" token="$3" deadline=$((SECONDS + 300))
     while (( SECONDS < deadline )); do
@@ -364,8 +377,7 @@ run_acceptance() {
         esac
     done
     assert_status 'build search projection' "$response" 200
-    search_response="$(http POST "$SYNQUEST_URL/v1/search" "$token" \
-        "{\"query\":\"$marker\"}")"
+    search_response="$(search_with_retry "$token" "$marker")"
     assert_status 'search the extracted PDF fact' "$search_response" 200
     hit_json="$(python3 - "$(body_of "$search_response")" <<'PY'
 import json
@@ -479,7 +491,7 @@ PY
         || fail 'idempotent replay created a duplicate source version'
     pass "repeat upload resolved to the same operation and exactly one source version ($repeated_operation)"
 
-    repeated_search="$(http POST "$SYNQUEST_URL/v1/search" "$token" "{\"query\":\"$marker\"}")"
+    repeated_search="$(search_with_retry "$token" "$marker")"
     assert_status 'repeat search after idempotent replay' "$repeated_search" 200
     repeated_hit="$(json_value "$(body_of "$repeated_search")" results.0.object_id)"
     [ "$repeated_hit" = "$object_id" ] \
