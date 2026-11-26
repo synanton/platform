@@ -27,7 +27,9 @@
       "requiredConcepts": [
         "gold:book:primer"
       ],
-      "allowedVariation": "WHITESPACE_ONLY"
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 0,
+      "documentEndOffset": 10
     },
     {
       "chunkId": "gold:chunk:chapter-1",
@@ -40,7 +42,9 @@
         "gold:concept:distributed-system",
         "gold:concept:node"
       ],
-      "allowedVariation": "WHITESPACE_ONLY"
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 10,
+      "documentEndOffset": 20
     },
     {
       "chunkId": "gold:chunk:section-1-2",
@@ -52,7 +56,9 @@
       "requiredConcepts": [
         "gold:concept:node"
       ],
-      "allowedVariation": "WHITESPACE_ONLY"
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 20,
+      "documentEndOffset": 30
     }
   ],
   "mentions": [
