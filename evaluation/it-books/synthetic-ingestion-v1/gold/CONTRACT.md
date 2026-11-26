@@ -103,3 +103,23 @@ python3 -m unittest discover -s tools/it-books-synthetic -p 'test_*.py'
 `manifest.schema.json` defines the JSON shape; `validate_gold.py` additionally enforces A1
 predicate/domain/range semantics, gold-local IDs, chunk references, metadata exclusions, negative
 assertions and retrieval references.
+
+## Ontology pin
+
+The manifest must contain the exact IT Books v1 pin:
+`ontologyId=it-books`,
+`releaseId=47fe38f8-9f72-481b-826a-6c5b12a6027a`,
+`releaseDigest=3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c`.
+The validator rejects any drift.
+
+## Evidence references
+
+- Mention and relation `evidence.kind` is `EXACT`, `PARTIAL`, or `UNAVAILABLE`.
+- `EXACT` mention evidence requires `elementId`.
+- `EXACT` relation evidence requires a known `chunkId` and `elementId`.
+- Unknown references fail validation.
+
+## Retrieval status
+
+`CONDITIONAL` and `NOT_RUN` are not passes. Only `SUPPORTED` retrieval counts as supported, and it
+requires expected chunk IDs. The validator reports `retrievalSupported` separately.

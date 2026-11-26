@@ -26,7 +26,8 @@
       "allowedOverlap": "NONE",
       "requiredConcepts": [
         "gold:book:primer"
-      ]
+      ],
+      "allowedVariation": "WHITESPACE_ONLY"
     },
     {
       "chunkId": "gold:chunk:chapter-1",
@@ -38,7 +39,8 @@
       "requiredConcepts": [
         "gold:concept:distributed-system",
         "gold:concept:node"
-      ]
+      ],
+      "allowedVariation": "WHITESPACE_ONLY"
     },
     {
       "chunkId": "gold:chunk:section-1-2",
@@ -49,7 +51,8 @@
       "allowedOverlap": "NONE",
       "requiredConcepts": [
         "gold:concept:node"
-      ]
+      ],
+      "allowedVariation": "WHITESPACE_ONLY"
     }
   ],
   "mentions": [
@@ -92,7 +95,8 @@
       "ontologyExpectation": "VALID",
       "evidence": {
         "kind": "EXACT",
-        "chunkId": "gold:chunk:book"
+        "chunkId": "gold:chunk:book",
+        "elementId": "gold:element:metadata"
       },
       "reason": "Book title has an explicit Author field."
     }
@@ -107,7 +111,7 @@
     {
       "id": "gold:negative:no-code-edge",
       "kind": "NO_RELATION",
-      "forbiddenPredicate": null,
+      "forbiddenPredicate": "ANY",
       "reason": "Code arrows are illustrative and are not ontology predicates."
     }
   ],
@@ -132,5 +136,10 @@
       "PART_OF"
     ],
     "mappingReview": []
+  },
+  "ontology": {
+    "ontologyId": "it-books",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"
   }
 }
