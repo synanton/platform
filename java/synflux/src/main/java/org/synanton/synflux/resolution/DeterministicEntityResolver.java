@@ -3,6 +3,7 @@ package org.synanton.synflux.resolution;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 /**
@@ -22,7 +23,7 @@ public final class DeterministicEntityResolver {
         for (CanonicalConcept concept : catalog.concepts()) {
             byLabel.computeIfAbsent(ResolutionText.normalize(concept.label()), ignored -> new ArrayList<>())
                 .add(concept);
-            for (String alias : concept.aliases()) {
+            for (String alias : new LinkedHashSet<>(concept.aliases())) {
                 byAlias.computeIfAbsent(ResolutionText.normalize(alias), ignored -> new ArrayList<>())
                     .add(concept);
             }
@@ -42,6 +43,8 @@ public final class DeterministicEntityResolver {
                 "MULTIPLE_CANONICAL_LABELS");
         }
         if (exact.size() == 1) {
+            // Canonical labels have explicit precedence over aliases. If a label
+            // and an alias collide, the canonical label wins deterministically.
             return resolveCandidate(mention, normalized, exact.getFirst(), "EXACT_LABEL");
         }
 

@@ -18,6 +18,17 @@ Normalization (`ResolutionText.normalize`):
 - collapse internal whitespace.
 
 Punctuation is not stripped, because stripping can turn distinct labels into accidental matches.
+NFC, case, and whitespace normalization are applied identically to catalog labels, aliases, and
+incoming mention surfaces.
+
+### Deterministic collision rules
+
+1. A canonical label match takes precedence over an alias match.
+2. Multiple canonical labels for the same normalized surface are `AMBIGUOUS`.
+3. Multiple alias targets are `AMBIGUOUS`, independent of catalog insertion order.
+4. Duplicate normalized aliases on the same concept are deduplicated, not treated as ambiguity.
+5. A canonical label or alias match with a different proposed type is `TYPE_MISMATCH`; it is not
+   silently resolved.
 
 ## Outcomes
 
@@ -63,7 +74,11 @@ No A2 gold annotations or A4 output are used to construct the resolver catalog.
 - explicit type mismatch;
 - metadata/license and near-miss hard negatives (`Data Structures`, `Authors`);
 - ambiguous alias (`Model` → two concepts) remaining unresolved;
-- catalog digest stability across concept order;
+- catalog digest stability across concept order, plus digest sensitivity to label/type/alias changes;
+- alias collisions independent of catalog order;
+- canonical-label precedence over an alias collision;
+- duplicate normalized aliases on one concept;
+- NFC equivalence on catalog and mention input; punctuation is not stripped;
 - independent resolution precision/recall: 4 resolved/correct, 0 incorrect, 4 unresolved,
   precision 1.0 and recall 1.0 on the small synthetic fixture.
 
