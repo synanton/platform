@@ -1,0 +1,21 @@
+{
+  "version": "a8-identity-judgments-v1",
+  "provenance": "Independent identity judgments over selected A4.1 candidates, based on source context and the canonical catalog; no A2 mention IDs or A2 relation judgments were used.",
+  "mentions": [
+    {"mentionId": "ebe78e54-638f-3d87-a81b-b107fa2f78f0", "sourceId": "think-python-2e", "expectedStatus": "TYPE_MISMATCH", "expectedCanonicalId": "canon:author:allen-b-downey", "rationale": "A4.1 proposes Concept; identity is the author."},
+    {"mentionId": "c664d8cf-409d-3909-866c-2a259449eb02", "sourceId": "computer-networks-6.1", "expectedStatus": "TYPE_MISMATCH", "expectedCanonicalId": "canon:author:larry-peterson", "rationale": "A4.1 proposes Concept; identity is the author."},
+    {"mentionId": "5eac6aef-807b-3ad0-af95-27e8338115b9", "sourceId": "computer-networks-6.1", "expectedStatus": "TYPE_MISMATCH", "expectedCanonicalId": "canon:author:bruce-davie", "rationale": "A4.1 proposes Concept; identity is the author."},
+    {"mentionId": "296435ec-5e09-376d-853e-8e71a04468a3", "sourceId": "computer-networks-6.1", "expectedStatus": "TYPE_MISMATCH", "expectedCanonicalId": "canon:book:computer-networks", "rationale": "A4.1 proposes Concept; identity is the book."},
+    {"mentionId": "9d34807b-1d9e-3232-bb39-837f58b5c8b4", "sourceId": "think-python-2e", "expectedStatus": "TYPE_MISMATCH", "expectedCanonicalId": "canon:book:think-python", "rationale": "A4.1 proposes Concept; identity is the book."},
+    {"mentionId": "2c91490a-9e69-36cc-a4c6-647bd8254c84", "sourceId": "computer-networks-6.1", "expectedStatus": "RESOLVED", "expectedCanonicalId": "canon:concept:rrp", "rationale": "Explicit alias RRP."},
+    {"mentionId": "ea0bdf22-439c-3d89-a650-b8c746e6ecfd", "sourceId": "computer-networks-6.1", "expectedStatus": "RESOLVED", "expectedCanonicalId": "canon:concept:hhp", "rationale": "Explicit alias HHP."},
+    {"mentionId": "e140c57b-d99a-3fc7-b26d-dd5e30cae57a", "sourceId": "computer-networks-6.1", "expectedStatus": "RESOLVED", "expectedCanonicalId": "canon:concept:msp", "rationale": "Explicit alias MSP."},
+    {"mentionId": "a6515ba6-50f1-316f-91ce-427586037129", "sourceId": "computer-networks-6.1", "expectedStatus": "RESOLVED", "expectedCanonicalId": "canon:concept:hhp", "rationale": "Full canonical label."},
+    {"mentionId": "aeb235cd-2992-3355-9c2c-3602f2e6d2c1", "sourceId": "computer-networks-6.1", "expectedStatus": "RESOLVED", "expectedCanonicalId": "canon:concept:msp", "rationale": "Full canonical label."},
+    {"mentionId": "a39e6f61-f8b3-30bc-952b-e5b0466d3bb0", "sourceId": "think-python-2e", "expectedStatus": "UNRESOLVED", "expectedCanonicalId": null, "rationale": "Metadata fragment."},
+    {"mentionId": "9d0f3ca8-728a-39f9-8d16-1ac908674f7a", "sourceId": "think-python-2e", "expectedStatus": "UNRESOLVED", "expectedCanonicalId": null, "rationale": "SPDX metadata, not knowledge."},
+    {"mentionId": "d01b5f50-4d1b-3b94-8d76-f87474785135", "sourceId": "think-python-2e", "expectedStatus": "UNRESOLVED", "expectedCanonicalId": null, "rationale": "Incomplete author fragment; no fuzzy fallback."},
+    {"mentionId": "255aebe3-258c-3031-8359-c84a0a6d537a", "sourceId": "think-python-2e", "expectedStatus": "UNRESOLVED", "expectedCanonicalId": null, "rationale": "Surname fragment; no fuzzy fallback."},
+    {"mentionId": "1a095b91-1c19-300a-9b05-a222c95674ad", "sourceId": "think-python-2e", "expectedStatus": "UNRESOLVED", "expectedCanonicalId": null, "rationale": "Generic function word."}
+  ]
+}
