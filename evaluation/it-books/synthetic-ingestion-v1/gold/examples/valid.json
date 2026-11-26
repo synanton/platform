@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "synthetic-gold-v1",
+  "fixture": {
+    "fixtureVersion": "synthetic-ingestion-v1",
+    "documentId": "synthetic-distributed-systems-primer-v1",
+    "sourcePath": "evaluation/it-books/synthetic-ingestion-v1/source/distributed-systems-primer.md",
+    "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mediaType": "text/markdown",
+    "license": "CC0-1.0",
+    "synthetic": true
+  },
+  "metadataPolicy": {
+    "authorField": "DOCUMENT_METADATA_AUTHOR_VALUE",
+    "editionField": "DOCUMENT_METADATA",
+    "documentIdField": "DOCUMENT_METADATA",
+    "metadataComments": "METADATA_COMMENT",
+    "unknownComments": "UNKNOWN_COMMENT_REVIEW"
+  },
+  "chunks": [
+    {
+      "chunkId": "gold:chunk:book",
+      "parentId": null,
+      "headingLevel": 1,
+      "sectionPath": "Distributed Systems: A Short Technical Primer",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "requiredConcepts": [
+        "gold:book:primer"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:chapter-1",
+      "parentId": "gold:chunk:book",
+      "headingLevel": 2,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "requiredConcepts": [
+        "gold:concept:distributed-system",
+        "gold:concept:node"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:section-1-2",
+      "parentId": "gold:chunk:chapter-1",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.2 Definition: Node",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "requiredConcepts": [
+        "gold:concept:node"
+      ]
+    }
+  ],
+  "mentions": [
+    {
+      "id": "gold:book:primer",
+      "surface": "Distributed Systems: A Short Technical Primer",
+      "type": "Book",
+      "chunkId": "gold:chunk:book",
+      "span": {
+        "start": 2,
+        "end": 47
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "gold:element:title"
+      }
+    },
+    {
+      "id": "gold:author:alex-morgan",
+      "surface": "Alex Morgan",
+      "type": "Author",
+      "chunkId": "gold:chunk:book",
+      "span": {
+        "start": 43,
+        "end": 54
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "gold:element:metadata"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "gold:relation:authored-by",
+      "subjectMentionId": "gold:book:primer",
+      "predicate": "AUTHORED_BY",
+      "objectMentionId": "gold:author:alex-morgan",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:book"
+      },
+      "reason": "Book title has an explicit Author field."
+    }
+  ],
+  "negativeAssertions": [
+    {
+      "id": "gold:negative:metadata-not-knowledge",
+      "kind": "NO_MENTION",
+      "forbiddenSurface": "SPDX-License-Identifier",
+      "reason": "Metadata comment must not become a domain concept."
+    },
+    {
+      "id": "gold:negative:no-code-edge",
+      "kind": "NO_RELATION",
+      "forbiddenPredicate": null,
+      "reason": "Code arrows are illustrative and are not ontology predicates."
+    }
+  ],
+  "retrieval": [
+    {
+      "query": "What is a node?",
+      "expectedChunkIds": [
+        "gold:chunk:section-1-2"
+      ],
+      "harnessStatus": "CONDITIONAL"
+    }
+  ],
+  "predicatePolicy": {
+    "allowedPredicates": [
+      "AUTHORED_BY",
+      "HAS_CHAPTER",
+      "HAS_SECTION",
+      "COVERS_TOPIC",
+      "DEFINES",
+      "USES",
+      "DEPENDS_ON",
+      "PART_OF"
+    ],
+    "mappingReview": []
+  }
+}

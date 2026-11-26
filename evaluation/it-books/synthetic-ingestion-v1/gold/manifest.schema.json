@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synanton.local/schemas/synthetic-gold-v1.json",
+  "title": "Synthetic IT Books gold manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "fixture", "metadataPolicy", "chunks", "mentions", "relations", "negativeAssertions", "retrieval", "predicatePolicy"],
+  "properties": {
+    "schemaVersion": {"const": "synthetic-gold-v1"},
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixtureVersion", "documentId", "sourcePath", "sourceSha256", "mediaType", "license", "synthetic"],
+      "properties": {
+        "fixtureVersion": {"type": "string"},
+        "documentId": {"type": "string"},
+        "sourcePath": {"type": "string"},
+        "sourceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "mediaType": {"type": "string"},
+        "license": {"const": "CC0-1.0"},
+        "synthetic": {"const": true}
+      }
+    },
+    "metadataPolicy": {"type": "object"},
+    "chunks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/chunk"}},
+    "mentions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/mention"}},
+    "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
+    "negativeAssertions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/negative"}},
+    "retrieval": {"type": "array", "items": {"$ref": "#/$defs/retrieval"}},
+    "predicatePolicy": {
+      "type": "object",
+      "required": ["allowedPredicates"],
+      "properties": {
+        "allowedPredicates": {"type": "array", "items": {"type": "string"}},
+        "mappingReview": {"type": "array"}
+      }
+    }
+  },
+  "$defs": {
+    "chunk": {
+      "type": "object",
+      "required": ["chunkId", "parentId", "headingLevel", "sectionPath", "boundaryPolicy", "allowedOverlap", "requiredConcepts"],
+      "properties": {
+        "chunkId": {"type": "string", "pattern": "^gold:"},
+        "parentId": {"type": ["string", "null"]},
+        "headingLevel": {"type": "integer", "minimum": 1, "maximum": 6},
+        "sectionPath": {"type": "string"},
+        "boundaryPolicy": {"enum": ["EXACT_HEADING_BOUNDARY", "ALLOWED_SPLIT"]},
+        "allowedOverlap": {"enum": ["NONE", "ALLOWED"]},
+        "requiredConcepts": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "mention": {
+      "type": "object",
+      "required": ["id", "surface", "type", "chunkId", "span", "evidence"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^gold:"},
+        "surface": {"type": "string", "minLength": 1},
+        "type": {"enum": ["Book", "Author", "Chapter", "Section", "Algorithm", "DataStructure", "Concept", "Database", "DistributedSystem", "Topic", "Definition"]},
+        "chunkId": {"type": "string"},
+        "span": {"type": "object", "required": ["start", "end"], "properties": {"start": {"type": "integer", "minimum": 0}, "end": {"type": "integer", "minimum": 1}}},
+        "evidence": {"type": "object"}
+      }
+    },
+    "relation": {
+      "type": "object",
+      "required": ["id", "subjectMentionId", "predicate", "objectMentionId", "judgment", "ontologyExpectation", "evidence", "reason"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^gold:"},
+        "subjectMentionId": {"type": "string"},
+        "predicate": {"type": "string"},
+        "objectMentionId": {"type": "string"},
+        "judgment": {"enum": ["ACCEPTED", "REJECTED", "UNJUDGED", "OMITTED"]},
+        "ontologyExpectation": {"enum": ["VALID", "INVALID", "REQUIRES_MAPPING_REVIEW"]},
+        "evidence": {"type": "object"},
+        "reason": {"type": "string"}
+      }
+    },
+    "negative": {
+      "type": "object",
+      "required": ["id", "kind", "reason"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^gold:"},
+        "kind": {"enum": ["NO_MENTION", "NO_RELATION"]},
+        "forbiddenSurface": {"type": ["string", "null"]},
+        "forbiddenPredicate": {"type": ["string", "null"]},
+        "reason": {"type": "string"}
+      }
+    },
+    "retrieval": {
+      "type": "object",
+      "required": ["query", "expectedChunkIds", "harnessStatus"],
+      "properties": {
+        "query": {"type": "string"},
+        "expectedChunkIds": {"type": "array", "items": {"type": "string"}},
+        "harnessStatus": {"enum": ["CONDITIONAL", "NOT_RUN", "SUPPORTED"]}
+      }
+    }
+  }
+}
