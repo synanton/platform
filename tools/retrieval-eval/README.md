@@ -30,7 +30,7 @@ cd ../..
 This starts Cassandra, MinIO, `synvault`, `synflux`, and `synquest`. It does
 **not** start the content extractor - `synflux` falls back to a local Tika
 extractor by default (`EXTRACTION_CLIENT_ENABLED=true`, fallback policy
-`FALLBACK_LOCAL_TIKA`), so the stack above is enough to run the benchmark.
+strict extraction), so the stack above is enough to run the benchmark.
 
 #### Optional: start the content extractor for structured extraction
 

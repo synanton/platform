@@ -9,7 +9,6 @@ import org.synanton.common.kafka.KafkaClientConfig;
 import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
 import org.synanton.extraction.client.ExtractionPlaneClient;
-import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.gpu.client.GpuPlaneEmbedClient;
 import org.synanton.llm.HttpLlmClient;
@@ -184,19 +183,9 @@ public class SynfluxConfig {
     @Bean
     public ExtractionStage extractionStage(
             ExtractionPlaneClient extractionClient,
-            LocalTikaFallbackExtractor fallbackExtractor,
-            ExtractionClientProperties extractionClientProperties,
-            ExtractionClientMetrics extractionClientMetrics,
             ObjectStorePort objectStore,
             DocumentStructureService documentStructureService) {
-        return new ExtractionStage(
-                extractionClient,
-                fallbackExtractor,
-                extractionClientProperties.fallbackPolicy(),
-                extractionClientMetrics,
-                objectStore,
-                HOT_BUCKET,
-                documentStructureService);
+        return new ExtractionStage(extractionClient, objectStore, HOT_BUCKET, documentStructureService);
     }
 
     /**
@@ -208,8 +197,7 @@ public class SynfluxConfig {
      */
     @Bean
     public PipelineStage<org.synanton.synflux.domain.ParsedDocument,
-            org.synanton.synflux.domain.ChunkedDocument> chunkStage(
-            SynfluxProperties props, ExtractionClientProperties extractionClientProperties) {
+            org.synanton.synflux.domain.ChunkedDocument> chunkStage(SynfluxProperties props) {
         SynfluxProperties.Ingest.Chunk chunk = props.ingest() != null ? props.ingest().chunk() : null;
         String strategy = chunk != null && chunk.strategy() != null ? chunk.strategy() : "semantic";
         int targetTokens = chunk != null ? chunk.targetTokens() : 512;
@@ -217,9 +205,7 @@ public class SynfluxConfig {
         return switch (strategy) {
             case "fixed-window" -> new ChunkStage(targetTokens, overlapTokens);
             case "hierarchical" -> new HierarchicalChunkStage();
-            case "semantic" -> new SemanticChunkStage(ChunkerConfig.of(targetTokens),
-                extractionClientProperties.fallbackPolicy()
-                    == org.synanton.extraction.client.ExtractionFallbackPolicy.STRUCTURED_REQUIRED);
+            case "semantic" -> new SemanticChunkStage(ChunkerConfig.of(targetTokens));
             case "sentence" -> new SentenceChunkStage(targetTokens, 1);
             default -> throw new IllegalStateException(
                     "unknown ingest.chunk.strategy: " + strategy + " (want fixed-window|semantic|hierarchical|sentence)");

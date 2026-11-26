@@ -51,8 +51,7 @@ class ExtractionPlaneClientTest {
         channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
 
         meterRegistry = new SimpleMeterRegistry();
-        ExtractionClientProperties props = new ExtractionClientProperties(
-                true, "in-process", "sync", 5, 1, "local-tika", "NORMAL");
+        ExtractionClientProperties props = new ExtractionClientProperties(true, "in-process", "sync", 5, 1, "NORMAL");
         client = new ExtractionPlaneClient(props, new ExtractionClientMetrics(meterRegistry), channel);
     }
 
@@ -83,8 +82,7 @@ class ExtractionPlaneClientTest {
 
     @Test
     void shouldPollAsyncOperationUntilComplete() {
-        ExtractionClientProperties asyncProps = new ExtractionClientProperties(
-                true, "in-process", "async", 10, 1, "local-tika", "NORMAL");
+        ExtractionClientProperties asyncProps = new ExtractionClientProperties(true, "in-process", "async", 10, 1, "NORMAL");
         client = new ExtractionPlaneClient(asyncProps, new ExtractionClientMetrics(meterRegistry), channel);
 
         mockService.asyncTerminalAfterPolls = 1;
@@ -99,8 +97,7 @@ class ExtractionPlaneClientTest {
 
     @Test
     void shouldReconcileSubmitTimeoutWithIdempotentResubmit() {
-        ExtractionClientProperties asyncProps = new ExtractionClientProperties(
-                true, "in-process", "async", 10, 1, "local-tika", "NORMAL");
+        ExtractionClientProperties asyncProps = new ExtractionClientProperties(true, "in-process", "async", 10, 1, "NORMAL");
         client = new ExtractionPlaneClient(asyncProps, new ExtractionClientMetrics(meterRegistry), channel);
 
         mockService.failFirstSubmitWithTimeout = true;

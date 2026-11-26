@@ -37,6 +37,7 @@ The platform does not treat one storage engine, message broker, model runtime, o
 - **AI execution is derived processing.** Record model and configuration identity, execution state, security context, and provenance. Runtime choice must not redefine knowledge semantics.
 - **Search is a derived plane.** Candidate generation, ranking, security filtering, projection generation, freshness, and deletion handling must follow the search contract.
 - **The API is a public contract.** Do not expose internal service routing as the resource model. Use explicit versioning, tenant scope, request identity, idempotency, pagination, and error semantics.
+- **Document extraction is externalized.** Platform must not embed, duplicate, or silently substitute document extraction implementations. All document extraction providers are accessed through the Content Extractor contract. This applies to Tika and any future PDF, OCR, HTML, office-document, or other provider.
 - **Kubernetes is a deployment substrate.** Operators manage lifecycle. Domain services remain authoritative. Do not leak Kubernetes types into domain APIs.
 - **Temporal knowledge is not a single “current” value.** Preserve publication, observation, and validity time where required. Historical answers must state their temporal basis and provenance.
 

@@ -15,12 +15,18 @@ The gRPC endpoint and HTTP health endpoint are different contracts. A healthy
 HTTP response does not prove that a submission returns a usable structured
 payload; the ingestion stage therefore validates the payload independently.
 
-## Strict extraction
+## Architectural invariant
 
-`EXTRACTION_CLIENT_ENABLED=true` and
-`EXTRACTION_FALLBACK=structured-required` are explicit in both local-real-demo
-manifests. In strict mode the following fail the item instead of using local
-Tika:
+Document extraction is an externalized platform capability provided by the
+Synanton Content Extraction Plane. Platform must not embed, duplicate, or
+silently substitute document extraction implementations. Tika, PDF, OCR, HTML,
+office-document, and future providers belong behind the Content Extractor
+contract; they are not a second platform extraction path.
+
+## Required extraction
+
+`EXTRACTION_CLIENT_ENABLED=true` is explicit in local-real-demo manifests. The
+platform has no provider fallback. The following fail the item:
 
 - client disabled;
 - service unavailable;
@@ -28,9 +34,6 @@ Tika:
 - missing inline payload;
 - malformed or empty structural payload;
 - structured chunking producing no chunks.
-
-`local-tika` remains available only when the fallback policy is explicitly set
-to `local-tika`.
 
 ## Lifecycle ownership
 

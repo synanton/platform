@@ -12,8 +12,6 @@ dependencies {
     api(libs.micrometer.core)
     api(libs.slf4j.api)
 
-    implementation(libs.tika.core)
-    implementation(libs.tika.parsers)
     implementation(libs.logback.classic)
 
     testImplementation(platform(libs.junit.bom))

@@ -169,7 +169,7 @@ class SemanticChunkStageTest {
 
     @Test
     void strictMode_rejectsMissingPayload() {
-        var stage = new SemanticChunkStage(ChunkerConfig.defaults(), true);
+        var stage = new SemanticChunkStage(ChunkerConfig.defaults());
 
         assertThatThrownBy(() -> stage.apply(parsedDocNoPayload("flat text"), ctx()))
             .isInstanceOf(StructuredChunkingRequiredException.class)
@@ -178,7 +178,7 @@ class SemanticChunkStageTest {
 
     @Test
     void strictMode_rejectsEmptyStructuredPayload() {
-        var stage = new SemanticChunkStage(ChunkerConfig.defaults(), true);
+        var stage = new SemanticChunkStage(ChunkerConfig.defaults());
 
         assertThatThrownBy(() -> stage.apply(parsedDocWithPayload(DocumentPayload.getDefaultInstance()), ctx()))
             .isInstanceOf(StructuredChunkingRequiredException.class)
@@ -191,7 +191,7 @@ class SemanticChunkStageTest {
             .addElements(heading("Title", 1))
             .addElements(paragraph("Some structured content."))
             .build();
-        var stage = new SemanticChunkStage(ChunkerConfig.defaults(), true);
+        var stage = new SemanticChunkStage(ChunkerConfig.defaults());
 
         var result = stage.apply(parsedDocWithPayload(payload), ctx());
 
@@ -200,29 +200,4 @@ class SemanticChunkStageTest {
             assertThat(c.type()).isNotEqualTo(SemanticChunk.ChunkType.FALLBACK));
     }
 
-    @Test
-    void noPayload_fallsBackToTokenSplit() {
-        String text = String.join(" ", java.util.Collections.nCopies(100, "word"));
-        var stage = new SemanticChunkStage(ChunkerConfig.of(20));
-        var result = stage.apply(parsedDocNoPayload(text), ctx());
-
-        assertThat(result.chunks().size()).isGreaterThan(1);
-        assertThat(result.chunks()).allSatisfy(c ->
-            assertThat(c.type()).isEqualTo(SemanticChunk.ChunkType.FALLBACK)
-        );
-    }
-
-    @Test
-    void noPayload_emptyTextProducesNoChunks() {
-        var stage = new SemanticChunkStage(ChunkerConfig.defaults());
-        var result = stage.apply(parsedDocNoPayload("   "), ctx());
-        assertThat(result.chunks()).isEmpty();
-    }
-
-    @Test
-    void noPayload_singleChunkWhenTextBelowBudget() {
-        var stage = new SemanticChunkStage(ChunkerConfig.defaults());
-        var result = stage.apply(parsedDocNoPayload("hello world this is a test"), ctx());
-        assertThat(result.chunks()).hasSize(1);
-    }
 }

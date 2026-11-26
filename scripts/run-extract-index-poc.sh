@@ -22,7 +22,7 @@ if ! docker ps --filter "name=^extraction-gateway$" --filter "status=running" --
   echo "      content_extractor repo (see the comment above the removed service in"
   echo "      deployments/docker/compose.yaml for the docker run command)."
   echo "      Without it, synflux falls back to the local Tika extractor"
-  echo "      (EXTRACTION_CLIENT_ENABLED=true, fallback=FALLBACK_LOCAL_TIKA by default)."
+  echo "      (EXTRACTION_CLIENT_ENABLED=true; Content Extractor is required)."
 fi
 
 wait_healthy() {

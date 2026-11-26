@@ -23,13 +23,6 @@ public class ExtractionClientMetrics {
         meterRegistry.counter("extraction_client_requests_total", "mode", mode, "outcome", outcome).increment();
     }
 
-    public void recordFallback(String reason) {
-        if (meterRegistry == null) {
-            return;
-        }
-        meterRegistry.counter("extraction_client_fallback_total", "reason", reason).increment();
-    }
-
     public Timer.Sample startLatencySample() {
         if (meterRegistry == null) {
             return null;

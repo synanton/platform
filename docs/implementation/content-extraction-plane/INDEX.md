@@ -145,7 +145,7 @@ Phases follow §31 of the proposal (Contract → Embedded → Async → External
 | Module | Type | Purpose |
 |---|---|---|
 | `java/extraction-contract` | library | Mirror of `synanton.extraction.v1` proto + generated stubs. No platform internals. |
-| `java/extraction-client` | library | `ExtractionPlaneClient` (gRPC), retry/reconcile logic, `ExtractionFallbackPolicy`, payload readers. |
+| `java/extraction-client` | library | `ExtractionPlaneClient` (gRPC), retry/reconcile logic, strict extraction errors, payload readers. |
 
 `java/extraction-contract` follows `java/gpu-contract`'s build file exactly (protobuf + grpc plugins, no Spring). `java/extraction-client` follows the existing gRPC client wiring in `java/gateway/src/main/java/org/synanton/gateway/gpu/` (`GpuExecutionClient` + `GpuExecutionClientProperties`).
 
@@ -409,9 +409,9 @@ extraction_idempotency
 |---|---|
 | 1 | `java/extraction-client`: `ExtractionPlaneClient`, `ExtractionClientProperties`, channel + deadline config |
 | 2 | Reconcile-after-timeout logic: a timed-out submit is resolved by polling, never by blind resubmission |
-| 3 | `ExtractionFallbackPolicy`: `STRUCTURED_REQUIRED` \| `FALLBACK_LOCAL_TIKA` \| `FAIL_OPEN_TEXT_ONLY`, per tenant, defaults in `application.yml` |
+| 3 | Strict extraction is mandatory; platform has no provider fallback policy. |
 | 4 | `StructuredDocument` domain record + `ParsedDocument` derived from it |
-| 5 | `ParseStage` rewritten to call the plane; existing Tika code moves to `LocalTikaFallbackExtractor` |
+| 5 | `ParseStage` calls the plane only; platform-local Tika extraction is removed. |
 | 6 | `ChunkStage` able to chunk on structure (heading/block boundaries) with the flat-text path retained |
 | 7 | `ObjectReference` in `synvault` + presigned-read path so the plane fetches bytes directly, not through the platform |
 | 8 | Platform-side metrics: `extraction_client_requests_total`, `..._fallback_total`, `..._latency` |
@@ -419,7 +419,7 @@ extraction_idempotency
 ### Definition of Done
 
 1. An ingestion job over the `demo-data` PDFs completes through the extraction plane, and chunks carry page provenance.
-2. With the plane stopped and policy `FALLBACK_LOCAL_TIKA`, ingestion still completes; `extraction_client_fallback_total` increments; a warning names the fallback.
+2. With the plane stopped, ingestion fails explicitly; the platform does not substitute a local extractor.
 3. With policy `STRUCTURED_REQUIRED` and the plane stopped, the job fails with a clear error and does **not** write partial chunks.
 4. A submit that times out client-side is reconciled by polling - asserted by a test where the server delays the response and the client observes exactly one server-side operation.
 5. Document bytes never transit the gRPC contract: the plane reads from object storage. Asserted by a test that the request carries only a reference.
@@ -537,7 +537,6 @@ SCEP-1 is the hard serialization point. After it, the platform client can be bui
 | `synanton.extraction.client.mode` | `EXTRACTION_CLIENT_MODE` | `sync` | `sync` or `async` |
 | `synanton.extraction.client.deadline-seconds` | `EXTRACTION_DEADLINE_SECONDS` | `120` | Sync call deadline |
 | `synanton.extraction.client.poll-interval-seconds` | `EXTRACTION_POLL_INTERVAL_SECONDS` | `5` | Async status polling |
-| `synanton.extraction.client.fallback` | `EXTRACTION_FALLBACK` | `structured-required` | `structured-required` (fail), `local-tika`, or `text-only` (§21) |
 | `synanton.extraction.client.default-priority` | `EXTRACTION_DEFAULT_PRIORITY` | `NORMAL` | Priority class for ingestion work |
 
 ---
