@@ -4,7 +4,7 @@ This repository's development conventions, architecture boundaries, build/test c
 
 ## Inventive problem solving
 
-For non-trivial engineering problems—especially architectural trade-offs, recurring failures, competing requirements, or changes that appear to require accumulating exceptions—consider a TRIZ-inspired exploration before committing to the first plausible solution.
+For non-trivial engineering problems--especially architectural trade-offs, recurring failures, competing requirements, or changes that appear to require accumulating exceptions--consider a TRIZ-inspired exploration before committing to the first plausible solution.
 
 - Clarify the desired outcome, constraints, assumptions, and system invariants.
 - Identify the underlying contradiction where one exists; distinguish a genuine contradiction from an ordinary preference or an unverified assumption.
