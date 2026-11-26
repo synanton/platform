@@ -127,6 +127,25 @@ independent backup target) must be created and a sample restore demonstrated bef
 persistence is relied upon. A directory, a provisioner Deployment, or a successful mount is
 not a restore proof.
 
+### Storage policy preparation and validation
+
+Prepared manifest:
+`deployments/observability/storage/longhorn-observability-storageclass.yaml`.
+
+The policy requests `numberOfReplicas: "2"` with `reclaimPolicy: Retain`; it does not
+claim HA. A temporary test StorageClass with the same replica policy and a 1Gi PVC was
+created and removed without applying the production class or deploying Stage 1.
+
+Validation result:
+
+- Longhorn volume reached `attached` and `robustness=healthy`;
+- requested replicas: 2;
+- replica placement: node2 and node3, both `running`;
+- test PVC/PV/volume, test StorageClass, and test namespace were deleted after the check.
+
+This validates the placement policy only. It does not validate Loki persistence, restart,
+backup, or restore.
+
 ### Stage 1 storage gate
 
 - Create/repair a dedicated 2-replica Longhorn policy for Loki; do not use the default
