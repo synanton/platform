@@ -1,0 +1,66 @@
+{
+  "version": "it-books-canonical-v1",
+  "provenance": "Independently curated for A8.1 from the two rights-cleared book excerpts and explicit canonical labels. Not derived from A2 annotations.",
+  "concepts": [
+    {
+      "canonicalId": "canon:book:think-python",
+      "label": "Think Python: How to Think Like a Computer Scientist",
+      "type": "Book",
+      "aliases": ["Think Python"]
+    },
+    {
+      "canonicalId": "canon:author:allen-b-downey",
+      "label": "Allen B. Downey",
+      "type": "Author",
+      "aliases": ["Allen Downey"]
+    },
+    {
+      "canonicalId": "canon:book:computer-networks",
+      "label": "Computer Networks: A Systems Approach",
+      "type": "Book",
+      "aliases": ["Computer Networks"]
+    },
+    {
+      "canonicalId": "canon:author:larry-peterson",
+      "label": "Larry Peterson",
+      "type": "Author",
+      "aliases": []
+    },
+    {
+      "canonicalId": "canon:author:bruce-davie",
+      "label": "Bruce Davie",
+      "type": "Author",
+      "aliases": []
+    },
+    {
+      "canonicalId": "canon:concept:rrp",
+      "label": "Request/Reply Protocol",
+      "type": "Concept",
+      "aliases": ["RRP"]
+    },
+    {
+      "canonicalId": "canon:concept:hhp",
+      "label": "Host-to-Host Protocol",
+      "type": "Concept",
+      "aliases": ["HHP"]
+    },
+    {
+      "canonicalId": "canon:concept:msp",
+      "label": "Message Stream Protocol",
+      "type": "Concept",
+      "aliases": ["MSP"]
+    },
+    {
+      "canonicalId": "canon:concept:program",
+      "label": "Program",
+      "type": "Concept",
+      "aliases": []
+    },
+    {
+      "canonicalId": "canon:algorithm:newtons-method",
+      "label": "Newton's method",
+      "type": "Algorithm",
+      "aliases": []
+    }
+  ]
+}

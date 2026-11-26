@@ -78,3 +78,12 @@ tasks.register<JavaExec>("a4RegexBaseline") {
     mainClass.set("org.synanton.synflux.evaluation.RegexBaselineA4")
     workingDir = rootProject.projectDir
 }
+
+tasks.register<JavaExec>("a8ResolutionEvaluation") {
+    group = "verification"
+    description = "Run the A8.1 isolated resolution evaluation"
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("org.synanton.synflux.evaluation.A8ResolutionEvaluation")
+    workingDir = rootProject.projectDir
+}
