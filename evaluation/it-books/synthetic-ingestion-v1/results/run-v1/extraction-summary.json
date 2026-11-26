@@ -1,0 +1,53 @@
+{
+  "chunks": 2,
+  "chunkType": "FALLBACK",
+  "fallbackChunks": 2,
+  "entities": 94,
+  "relations": 12,
+  "entityTypes": {
+    "Identifier": 9,
+    "Concept": 85
+  },
+  "relationPredicates": {
+    "is_a": 11,
+    "uses": 1
+  },
+  "metadataForbiddenSurfaces": [
+    "Author",
+    "Edition",
+    "Document ID",
+    "SPDX-License-Identifier"
+  ],
+  "surfacesSample": [
+    "1.0",
+    "1.1",
+    "1.2",
+    "1.3",
+    "1.4",
+    "2.1",
+    "2.2",
+    "2.3",
+    "2.4",
+    "Distributed Systems",
+    "A Short Technical Primer",
+    "A Short",
+    "Short Technical",
+    "Technical Primer",
+    "Author",
+    "Alex Morgan",
+    "Edition",
+    "Document ID",
+    "SPDX-License-Identifier",
+    "CC0-1",
+    "Source",
+    "Version",
+    "Preface This",
+    "It",
+    "Chapter",
+    "Nodes",
+    "Communication",
+    "Distributed Systems A",
+    "Distributed Systems",
+    "Systems A"
+  ]
+}

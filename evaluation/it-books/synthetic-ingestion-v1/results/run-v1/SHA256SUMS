@@ -1,0 +1,15 @@
+9da3fc6c0a76082701c1412c0c70cb046088d8c1032dd45b2776050a937fdfa6  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/chunks.json
+93358eabab9792c3592c4d29f8ec9a68fee0311af4013c060b2e2387281524b8  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/extraction.json
+cb38bc572222ebac649b2c407578f76bfdebef27fa437f1b4194e2caa83dd08e  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/extraction-summary.json
+34ead2a39f1b338ed55f6a27c0368dcf5ca489a1961fe7375481ed02985d0653  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/operation.json
+e02ed956f8659fa5ef84e9dbe42775def1d1b539bfdbcc31d94ddefa354fa79f  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/run-manifest.json
+4f0699edb43d36ae1b50225b5a1d7f2314dc71e19fe3b4ae0c0928affd761249  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/source.json
+abef7ab2514a9b706793fe1cad37de5a3bd032bc856e88c2d94044562c838e73  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/submit.json
+2cc91fa4b89c7344eab002859e0c08cf8e26db07ab621cea79c14c2490ccab25  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/versions.json
+75d19058531f73d5cc29a6d934e9a89e66451577fce0657f89c895d274af1c53  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/cassandra.txt
+f72020fe9a2f79cefa8247c1b178b3b4bf154eeea9a1c21aded545cfc8c8893c  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/chunks_extraction.txt
+9da3fc6c0a76082701c1412c0c70cb046088d8c1032dd45b2776050a937fdfa6  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/chunks-summary.txt
+93358eabab9792c3592c4d29f8ec9a68fee0311af4013c060b2e2387281524b8  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/extraction-raw.txt
+93358eabab9792c3592c4d29f8ec9a68fee0311af4013c060b2e2387281524b8  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/extraction-table.txt
+366609d9a8c3ecca5943fae467e3cd2e5fd5eb03a48f1b68580b0bfd018ac205  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/source_versions.txt
+fe535d89a2739a9fd73620ba5aa6955b9cb3dcd095c730643e7eec913e2b6607  evaluation/it-books/synthetic-ingestion-v1/results/run-v1/REPORT.md

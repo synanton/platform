@@ -1,0 +1,7 @@
+
+ chunk_ordinal | heading_level | heading | section_path | document_offset_start | document_offset_end | chunk_type | is_partial_section | chunk_sha256
+---------------+---------------+---------+--------------+-----------------------+---------------------+------------+--------------------+------------------------------------------------------------------
+             0 |             0 |         |              |                    -1 |                  -1 |   FALLBACK |              False | e332867269230c488d37c5db9e65a9d74f4b30330f0b16987192bc51a740f4da
+             1 |             0 |         |              |                    -1 |                  -1 |   FALLBACK |              False | 127d8238acb3444243e0a8e16ddbe59d50819a3321b5395805c5589d50828350
+
+(2 rows)
