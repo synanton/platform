@@ -5660,7 +5660,7 @@ DocumentPayload (elements, headings, tables, page boxes)
 synflux SemanticChunkStage → persist (page/section) → synquest
 ```
 
-**In scope for the current PoC:** `ExtractSync`, `GetCapabilities`, MinIO source reads, text + PDF adapters, fail-open Tika in synflux when the plane is down or declines a type.
+**In scope for the current PoC:** `ExtractSync`, `GetCapabilities`, MinIO source reads, text + PDF adapters, fail-closed behavior when the Content Extractor plane is down or declines a type.
 
 **Out of scope for the PoC (still planned):** async operations, PostgreSQL operation store, dedicated `extraction-client`, SCEP-6 topology proof.
 
@@ -6082,7 +6082,7 @@ exec "$SYNANTON_LIBEXEC/synanton-ops" "$@"
 
 ## Rolling upgrades
 
-- Rolling from 1.21: extraction client/URL unset keeps Tika-only ingest; when extraction succeeds, chunking uses structure when elements are present, flat-text fallback otherwise.
+- Rolling from 1.21: document extraction is externalized; when extraction succeeds, chunking uses the structured payload. Platform does not keep a Tika-only ingest path or flat-text FALLBACK chunk path.
 - Rolling from 1.20: GPU client remains off until `gateway.gpu.enabled=true` **and** a gpu-runtime that serves the mirrored `synanton.gpu.v1`.
 - Rolling from 1.19: Relix graph backends are selected with `relix.graph.connector` (`memory` | `neo4j` | `nebula`); this is an adapter swap, not a design-version break.
 
