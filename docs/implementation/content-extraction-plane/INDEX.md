@@ -532,12 +532,12 @@ SCEP-1 is the hard serialization point. After it, the platform client can be bui
 
 | Property | Env var | Default | Purpose |
 |---|---|---|---|
-| `synanton.extraction.client.enabled` | `EXTRACTION_CLIENT_ENABLED` | `false` | Off until SCEP-5 lands; `false` keeps in-process Tika |
+| `synanton.extraction.client.enabled` | `EXTRACTION_CLIENT_ENABLED` | `true` | Required in local-real-demo; disabled clients fail closed in strict mode |
 | `synanton.extraction.client.endpoint` | `EXTRACTION_ENDPOINT` | `extraction-gateway:9091` | Plane address |
 | `synanton.extraction.client.mode` | `EXTRACTION_CLIENT_MODE` | `sync` | `sync` or `async` |
 | `synanton.extraction.client.deadline-seconds` | `EXTRACTION_DEADLINE_SECONDS` | `120` | Sync call deadline |
 | `synanton.extraction.client.poll-interval-seconds` | `EXTRACTION_POLL_INTERVAL_SECONDS` | `5` | Async status polling |
-| `synanton.extraction.client.fallback` | `EXTRACTION_FALLBACK` | `local-tika` | `local-tika`, `partial`, or `fail` (§21) |
+| `synanton.extraction.client.fallback` | `EXTRACTION_FALLBACK` | `structured-required` | `structured-required` (fail), `local-tika`, or `text-only` (§21) |
 | `synanton.extraction.client.default-priority` | `EXTRACTION_DEFAULT_PRIORITY` | `NORMAL` | Priority class for ingestion work |
 
 ---

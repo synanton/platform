@@ -26,11 +26,17 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
     private static final Logger log = LoggerFactory.getLogger(SemanticChunkStage.class);
 
     private final ChunkerConfig config;
+    private final boolean requireStructured;
     private final DocumentStructureBuilder structureBuilder;
     private final SemanticChunker chunker;
 
     public SemanticChunkStage(ChunkerConfig config) {
+        this(config, false);
+    }
+
+    public SemanticChunkStage(ChunkerConfig config, boolean requireStructured) {
         this.config = config;
+        this.requireStructured = requireStructured;
         this.structureBuilder = new DocumentStructureBuilder();
         this.chunker = new SemanticChunker();
     }
@@ -63,10 +69,20 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
             List<SectionNode> sections = structureBuilder.build(payload.getElementsList());
             chunks = new ArrayList<>(chunker.chunk(sections, documentId, config));
 
-            if (chunks.isEmpty() && !doc.text().isBlank()) {
-                chunks = flatTextFallback(doc.text(), documentId);
+            if (chunks.isEmpty()) {
+                if (requireStructured) {
+                    throw new StructuredChunkingRequiredException(
+                        "Structured payload produced no usable chunks for ref=" + documentId);
+                }
+                if (!doc.text().isBlank()) {
+                    chunks = flatTextFallback(doc.text(), documentId);
+                }
             }
         } else {
+            if (requireStructured) {
+                throw new StructuredChunkingRequiredException(
+                    "Structured payload missing for ref=" + documentId);
+            }
             log.debug("No structured payload for ref={}; using flat-text fallback",
                 doc.acquired().contentRefId());
             chunks = flatTextFallback(doc.text(), documentId);

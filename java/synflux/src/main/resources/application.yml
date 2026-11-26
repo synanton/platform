@@ -84,12 +84,12 @@ synflux:
 synanton:
   extraction:
     client:
-      enabled: ${EXTRACTION_CLIENT_ENABLED:false}
+      enabled: ${EXTRACTION_CLIENT_ENABLED:true}
       endpoint: ${EXTRACTION_ENDPOINT:extraction-gateway:9091}
       mode: ${EXTRACTION_CLIENT_MODE:sync}
       deadline-seconds: ${EXTRACTION_DEADLINE_SECONDS:120}
       poll-interval-seconds: ${EXTRACTION_POLL_INTERVAL_SECONDS:5}
-      fallback: ${EXTRACTION_FALLBACK:local-tika}
+      fallback: ${EXTRACTION_FALLBACK:structured-required}
       default-priority: ${EXTRACTION_DEFAULT_PRIORITY:NORMAL}
   enrichment:
     model-id: llama-3.1-8b-instruct

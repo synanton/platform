@@ -13,7 +13,7 @@ public enum ExtractionFallbackPolicy {
 
     public static ExtractionFallbackPolicy fromConfig(String value) {
         if (value == null || value.isBlank()) {
-            return FALLBACK_LOCAL_TIKA;
+            return STRUCTURED_REQUIRED;
         }
         return switch (value.trim().toLowerCase()) {
             case "fail", "structured-required", "structured_required" -> STRUCTURED_REQUIRED;

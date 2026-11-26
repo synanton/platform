@@ -208,7 +208,8 @@ public class SynfluxConfig {
      */
     @Bean
     public PipelineStage<org.synanton.synflux.domain.ParsedDocument,
-            org.synanton.synflux.domain.ChunkedDocument> chunkStage(SynfluxProperties props) {
+            org.synanton.synflux.domain.ChunkedDocument> chunkStage(
+            SynfluxProperties props, ExtractionClientProperties extractionClientProperties) {
         SynfluxProperties.Ingest.Chunk chunk = props.ingest() != null ? props.ingest().chunk() : null;
         String strategy = chunk != null && chunk.strategy() != null ? chunk.strategy() : "semantic";
         int targetTokens = chunk != null ? chunk.targetTokens() : 512;
@@ -216,7 +217,9 @@ public class SynfluxConfig {
         return switch (strategy) {
             case "fixed-window" -> new ChunkStage(targetTokens, overlapTokens);
             case "hierarchical" -> new HierarchicalChunkStage();
-            case "semantic" -> new SemanticChunkStage(ChunkerConfig.of(targetTokens));
+            case "semantic" -> new SemanticChunkStage(ChunkerConfig.of(targetTokens),
+                extractionClientProperties.fallbackPolicy()
+                    == org.synanton.extraction.client.ExtractionFallbackPolicy.STRUCTURED_REQUIRED);
             case "sentence" -> new SentenceChunkStage(targetTokens, 1);
             default -> throw new IllegalStateException(
                     "unknown ingest.chunk.strategy: " + strategy + " (want fixed-window|semantic|hierarchical|sentence)");

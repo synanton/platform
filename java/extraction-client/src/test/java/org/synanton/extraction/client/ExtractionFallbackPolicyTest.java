@@ -14,6 +14,6 @@ class ExtractionFallbackPolicyTest {
         assertThat(ExtractionFallbackPolicy.fromConfig("partial"))
                 .isEqualTo(ExtractionFallbackPolicy.FAIL_OPEN_TEXT_ONLY);
         assertThat(ExtractionFallbackPolicy.fromConfig(null))
-                .isEqualTo(ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA);
+                .isEqualTo(ExtractionFallbackPolicy.STRUCTURED_REQUIRED);
     }
 }

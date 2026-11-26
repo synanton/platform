@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SemanticChunkStageTest {
 
@@ -165,6 +166,39 @@ class SemanticChunkStageTest {
     }
 
     // ─── Fallback (no payload) ────────────────────────────────────────────────
+
+    @Test
+    void strictMode_rejectsMissingPayload() {
+        var stage = new SemanticChunkStage(ChunkerConfig.defaults(), true);
+
+        assertThatThrownBy(() -> stage.apply(parsedDocNoPayload("flat text"), ctx()))
+            .isInstanceOf(StructuredChunkingRequiredException.class)
+            .hasMessageContaining("missing");
+    }
+
+    @Test
+    void strictMode_rejectsEmptyStructuredPayload() {
+        var stage = new SemanticChunkStage(ChunkerConfig.defaults(), true);
+
+        assertThatThrownBy(() -> stage.apply(parsedDocWithPayload(DocumentPayload.getDefaultInstance()), ctx()))
+            .isInstanceOf(StructuredChunkingRequiredException.class)
+            .hasMessageContaining("missing");
+    }
+
+    @Test
+    void strictMode_acceptsUsableStructuredPayload() {
+        DocumentPayload payload = DocumentPayload.newBuilder()
+            .addElements(heading("Title", 1))
+            .addElements(paragraph("Some structured content."))
+            .build();
+        var stage = new SemanticChunkStage(ChunkerConfig.defaults(), true);
+
+        var result = stage.apply(parsedDocWithPayload(payload), ctx());
+
+        assertThat(result.chunks()).isNotEmpty();
+        assertThat(result.chunks()).allSatisfy(c ->
+            assertThat(c.type()).isNotEqualTo(SemanticChunk.ChunkType.FALLBACK));
+    }
 
     @Test
     void noPayload_fallsBackToTokenSplit() {

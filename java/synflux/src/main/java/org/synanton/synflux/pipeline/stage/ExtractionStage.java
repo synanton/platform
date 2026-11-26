@@ -100,6 +100,12 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
                     return attachStructure(parsed, structure);
                 }
                 log.warn("Structured extraction returned no payload for ref={}", doc.contentRefId());
+                if (fallbackPolicy == ExtractionFallbackPolicy.STRUCTURED_REQUIRED) {
+                    throw new StructuredExtractionRequiredException(
+                        "Structured extraction returned no usable payload for ref=" + doc.contentRefId());
+                }
+            } catch (StructuredExtractionRequiredException e) {
+                throw e;
             } catch (Exception e) {
                 log.warn("Structured extraction failed for ref={}, policy={}: {}",
                         doc.contentRefId(), fallbackPolicy, e.getMessage());

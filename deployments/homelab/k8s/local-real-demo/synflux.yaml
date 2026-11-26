@@ -75,6 +75,8 @@ spec:
               value: "true"
             - name: EXTRACTION_ENDPOINT
               value: extraction-gateway:9091
+            - name: EXTRACTION_FALLBACK
+              value: "structured-required"
             # RAKG Phase B (ADR-022): flip to "llm" to use the GPU-plane extractor.
             - name: EXTRACTION_PROVIDER
               value: "regex"
