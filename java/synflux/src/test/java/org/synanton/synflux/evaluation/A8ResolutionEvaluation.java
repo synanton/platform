@@ -18,10 +18,12 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** A8.1: resolve A4.1 candidates against an independent canonical catalog. No graph writes. */
 public final class A8ResolutionEvaluation {
@@ -36,8 +38,13 @@ public final class A8ResolutionEvaluation {
         Path a8 = Path.of(argument(args, "--a8-dir",
             root.resolve("evaluation/it-books/a8-v1").toString()));
         Path out = Path.of(argument(args, "--out", outDefault(root).toString()));
+        Path inputsPath = Path.of(argument(args, "--inputs", a8.resolve("inputs.json").toString()));
         ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
 
+        JsonNode inputs = mapper.readTree(inputsPath.toFile());
+        verifyHash("A4.1 candidates", a4.resolve("candidates.json"), inputs.path("a4CandidatesSha256").asText());
+        verifyHash("A8 catalog", a8.resolve("catalog.json"), inputs.path("catalogSha256").asText());
+        verifyHash("A8 judgments", a8.resolve("judgments.json"), inputs.path("judgmentsSha256").asText());
         JsonNode candidates = mapper.readTree(a4.resolve("candidates.json").toFile());
         JsonNode catalogJson = mapper.readTree(a8.resolve("catalog.json").toFile());
         JsonNode judgmentsJson = mapper.readTree(a8.resolve("judgments.json").toFile());
@@ -48,8 +55,22 @@ public final class A8ResolutionEvaluation {
         CanonicalCatalog catalog = new CanonicalCatalog(
             catalogJson.path("version").asText(), concepts);
         DeterministicEntityResolver resolver = new DeterministicEntityResolver(catalog);
+        Set<String> candidateIds = new HashSet<>();
+        candidates.path("mentions").forEach(node -> candidateIds.add(node.path("mentionId").asText()));
         Map<String, JsonNode> judgments = new HashMap<>();
-        judgmentsJson.path("mentions").forEach(node -> judgments.put(node.path("mentionId").asText(), node));
+        judgmentsJson.path("mentions").forEach(node -> {
+            String id = node.path("mentionId").asText();
+            if (judgments.put(id, node) != null) {
+                throw new IllegalStateException("duplicate judgment for mention " + id);
+            }
+            if (!candidateIds.contains(id)) {
+                throw new IllegalStateException("judgment references unknown candidate " + id);
+            }
+            String expected = node.path("expectedStatus").asText();
+            if (!Set.of("RESOLVED", "UNRESOLVED", "AMBIGUOUS", "TYPE_MISMATCH").contains(expected)) {
+                throw new IllegalStateException("unknown expected status " + expected);
+            }
+        });
 
         ArrayNode results = mapper.createArrayNode();
         int resolved = 0;
@@ -60,10 +81,13 @@ public final class A8ResolutionEvaluation {
         int reviewedResolved = 0;
         int reviewedResolvedCorrect = 0;
         int reviewedOutcomeCorrect = 0;
+        int reviewedIdentityCorrect = 0;
         int identityEligible = 0;
         int identityCorrect = 0;
         int reviewedTypeMismatch = 0;
+        int reviewedTypeMismatchIdentityCorrect = 0;
         int reviewedAmbiguous = 0;
+        int reviewedUnresolvedCorrect = 0;
         for (JsonNode candidate : candidates.path("mentions")) {
             MentionRef mention = new MentionRef(candidate.path("mentionId").asText(),
                 candidate.path("surface").asText(), candidate.path("type").asText());
@@ -94,22 +118,36 @@ public final class A8ResolutionEvaluation {
             JsonNode judgment = judgments.get(result.mentionId());
             if (judgment != null) {
                 reviewed++;
-                boolean outcomeCorrect = judgment.path("expectedStatus").asText().equals(result.status().name());
+                String expectedStatus = judgment.path("expectedStatus").asText();
+                String expectedCanonicalId = judgment.path("expectedCanonicalId").asText(null);
+                boolean outcomeCorrect = expectedStatus.equals(result.status().name());
+                boolean identityMatched = switch (expectedStatus) {
+                    case "RESOLVED", "TYPE_MISMATCH" -> outcomeCorrect
+                        && expectedCanonicalId != null
+                        && expectedCanonicalId.equals(result.canonicalId());
+                    case "UNRESOLVED", "AMBIGUOUS" -> outcomeCorrect && result.canonicalId() == null;
+                    default -> throw new IllegalStateException("unknown expected status " + expectedStatus);
+                };
                 if (outcomeCorrect) reviewedOutcomeCorrect++;
+                if (identityMatched) reviewedIdentityCorrect++;
                 if (result.status() == ResolutionStatus.RESOLVED) reviewedResolved++;
-                if (judgment.path("expectedStatus").asText().equals("RESOLVED")) {
+                if (expectedStatus.equals("RESOLVED")) {
                     identityEligible++;
-                    if (result.status() == ResolutionStatus.RESOLVED
-                        && judgment.path("expectedCanonicalId").asText().equals(result.canonicalId())) {
+                    if (identityMatched) {
                         identityCorrect++;
                         reviewedResolvedCorrect++;
                     }
                 }
-                if (result.status() == ResolutionStatus.TYPE_MISMATCH) reviewedTypeMismatch++;
+                if (expectedStatus.equals("TYPE_MISMATCH")) {
+                    reviewedTypeMismatch++;
+                    if (identityMatched) reviewedTypeMismatchIdentityCorrect++;
+                }
                 if (result.status() == ResolutionStatus.AMBIGUOUS) reviewedAmbiguous++;
-                node.put("expectedStatus", judgment.path("expectedStatus").asText());
-                node.put("expectedCanonicalId", judgment.path("expectedCanonicalId").asText(null));
+                if (expectedStatus.equals("UNRESOLVED") && identityMatched) reviewedUnresolvedCorrect++;
+                node.put("expectedStatus", expectedStatus);
+                node.put("expectedCanonicalId", expectedCanonicalId);
                 node.put("outcomeCorrect", outcomeCorrect);
+                node.put("identityCorrect", identityMatched);
             }
         }
 
@@ -127,16 +165,23 @@ public final class A8ResolutionEvaluation {
         metrics.put("reviewedResolved", reviewedResolved);
         metrics.put("reviewedResolvedCorrect", reviewedResolvedCorrect);
         metrics.put("reviewedOutcomeCorrect", reviewedOutcomeCorrect);
+        metrics.put("reviewedIdentityCorrect", reviewedIdentityCorrect);
+        metrics.put("reviewedOutcomeAccuracy", ratio(reviewedOutcomeCorrect, reviewed));
+        metrics.put("reviewedIdentityAccuracy", ratio(reviewedIdentityCorrect, reviewed));
         metrics.put("reviewedPrecision", ratio(reviewedResolvedCorrect, reviewedResolved));
         metrics.put("reviewedRecall", ratio(identityCorrect, identityEligible));
         metrics.put("identityEligibleReviewed", identityEligible);
         metrics.put("reviewedTypeMismatch", reviewedTypeMismatch);
+        metrics.put("reviewedTypeMismatchIdentityCorrect", reviewedTypeMismatchIdentityCorrect);
+        metrics.put("reviewedUnresolvedCorrect", reviewedUnresolvedCorrect);
         metrics.put("reviewedAmbiguous", reviewedAmbiguous);
-        metrics.put("metricNote", "precision/recall use only independently judged candidates; unjudged candidates remain in coverage and are not filtered");
+        metrics.put("metricNote", "outcome and identity correctness are separate; precision/recall use only independently judged candidates; unjudged candidates remain in coverage and are not filtered");
 
         ObjectNode report = mapper.createObjectNode();
         report.put("runId", RUN_ID);
         report.put("a4CandidatesSha256", sha256(Files.readAllBytes(a4.resolve("candidates.json"))));
+        report.put("catalogSha256", sha256(Files.readAllBytes(a8.resolve("catalog.json"))));
+        report.put("judgmentsSha256", sha256(Files.readAllBytes(a8.resolve("judgments.json"))));
         report.put("catalogVersion", catalog.version());
         report.put("catalogDigest", catalog.digest());
         report.put("judgmentsVersion", judgmentsJson.path("version").asText());
@@ -154,6 +199,7 @@ public final class A8ResolutionEvaluation {
         run.put("a4CandidatesSha256", report.path("a4CandidatesSha256").asText());
         run.put("catalogDigest", catalog.digest());
         run.put("judgmentsSha256", sha256(Files.readAllBytes(a8.resolve("judgments.json"))));
+        run.put("inputsSha256", sha256(Files.readAllBytes(inputsPath)));
         run.put("resultsSha256", sha256(Files.readAllBytes(metricsPath)));
         run.put("productionGraphWrites", false);
         run.put("llmUsed", false);
@@ -205,6 +251,13 @@ public final class A8ResolutionEvaluation {
         String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
         if (process.waitFor() != 0) throw new IllegalStateException("git failed: " + output);
         return output;
+    }
+
+    private static void verifyHash(String label, Path path, String expected) throws Exception {
+        String actual = sha256(Files.readAllBytes(path));
+        if (expected == null || !expected.equals(actual)) {
+            throw new IllegalStateException(label + " hash mismatch: expected " + expected + " got " + actual);
+        }
     }
 
     private static String sha256(byte[] value) {

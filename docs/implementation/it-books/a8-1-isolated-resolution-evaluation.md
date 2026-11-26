@@ -15,8 +15,9 @@ release, A2 fixture, A4 metrics, or graph state.
 - Every result carries mention ID, source, proposed type, normalized surface, strategy version,
   catalog version/digest, match method, and reason.
 - 15 independently curated candidates were judged; all 15 outcomes matched.
-- Reviewed precision 1.0 and recall 1.0; this is a **reviewed-sample** result, not a general
-  extraction-quality claim.
+- Reviewed precision 1.0 and recall 1.0; outcome accuracy 15/15; identity accuracy 15/15,
+  including all five TYPE_MISMATCH canonical IDs. This is a **reviewed-sample** result, not a
+  general extraction-quality claim.
 - The unjudged 55 candidates remain in coverage and are not filtered.
 
 ## Why A2 cannot supply canonical gold

@@ -3,7 +3,7 @@
 **Run ID:** `it-books-a8-resolution-v1`
 **Status:** Evaluation complete; no production integration or graph writes
 **Inputs:** merged A4.1 candidate export + independent canonical catalog + independent identity judgments
-**Results SHA-256:** `31c81034414047c5456276bc4cb507793f4686fd65b632db9fcca8ce571a21b3`
+**Results SHA-256:** `89397a509967e9d92f8366c9b12a731fe9f2050fb7da9555ac2fdb98d7ab5fbf`
 **Catalog digest:** `f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8`
 
 ## Boundary
@@ -40,16 +40,20 @@ unjudged 55 candidates are included in coverage, not silently excluded.
 |---|---:|
 | Reviewed candidates | 15 |
 | Correct outcomes | 15 / 15 |
+| Outcome accuracy | 1.000 |
 | Reviewed resolved | 5 |
 | Correct resolved identities | 5 / 5 |
 | Reviewed precision | 1.000 |
 | Reviewed recall | 1.000 |
 | Reviewed type mismatches | 5 |
+| Type-mismatch canonical IDs correct | 5 / 5 |
+| Reviewed identity accuracy | 15 / 15 |
 | Reviewed ambiguities | 0 |
 
 The five resolved identities are RRP, MSP, Message Stream Protocol, HHP, and Host-to-Host Protocol.
 The five reviewed type mismatches are correct A8 refusals: A4.1 proposed `Concept` for book/author
-targets. The five reviewed unresolved mentions include metadata, fragments, and a generic word.
+targets. Their canonical IDs also match the independent judgments. The five reviewed unresolved
+mentions include metadata, fragments, and a generic word, and none received a canonical ID.
 
 ## Interpretation
 

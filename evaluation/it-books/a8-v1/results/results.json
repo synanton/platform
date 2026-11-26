@@ -1,6 +1,8 @@
 {
   "runId" : "it-books-a8-resolution-v1",
   "a4CandidatesSha256" : "b6a8798c07d4ac5f8b78b8db27a64aa18bf1fe1ec4520798949b2a04826be7f0",
+  "catalogSha256" : "6a15003bdca200a01f073fc36e6101f8bd99dbf7f65606968d8d4fdea41df3d7",
+  "judgmentsSha256" : "3e94ecf3520735f46454034f668b40397c5b497b1a9104015595659fb314f806",
   "catalogVersion" : "it-books-canonical-v1",
   "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
   "judgmentsVersion" : "a8-identity-judgments-v1",
@@ -20,12 +22,17 @@
     "reviewedResolved" : 5,
     "reviewedResolvedCorrect" : 5,
     "reviewedOutcomeCorrect" : 15,
+    "reviewedIdentityCorrect" : 15,
+    "reviewedOutcomeAccuracy" : 1.0,
+    "reviewedIdentityAccuracy" : 1.0,
     "reviewedPrecision" : 1.0,
     "reviewedRecall" : 1.0,
     "identityEligibleReviewed" : 5,
     "reviewedTypeMismatch" : 5,
+    "reviewedTypeMismatchIdentityCorrect" : 5,
+    "reviewedUnresolvedCorrect" : 5,
     "reviewedAmbiguous" : 0,
-    "metricNote" : "precision/recall use only independently judged candidates; unjudged candidates remain in coverage and are not filtered"
+    "metricNote" : "outcome and identity correctness are separate; precision/recall use only independently judged candidates; unjudged candidates remain in coverage and are not filtered"
   },
   "results" : [ {
     "mentionId" : "a39e6f61-f8b3-30bc-952b-e5b0466d3bb0",
@@ -45,7 +52,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "UNRESOLVED",
     "expectedCanonicalId" : null,
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "9b8f5b56-9cd0-39fb-9f6d-cbdf714a13d5",
     "sourceId" : "think-python-2e",
@@ -96,7 +104,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "UNRESOLVED",
     "expectedCanonicalId" : null,
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "36dc4108-0439-3acb-aff2-8c205fcf423a",
     "sourceId" : "think-python-2e",
@@ -147,7 +156,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "TYPE_MISMATCH",
     "expectedCanonicalId" : "canon:book:think-python",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "52493885-0214-37a4-8410-3e561c6f91e6",
     "sourceId" : "think-python-2e",
@@ -198,7 +208,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "UNRESOLVED",
     "expectedCanonicalId" : null,
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "255aebe3-258c-3031-8359-c84a0a6d537a",
     "sourceId" : "think-python-2e",
@@ -217,7 +228,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "UNRESOLVED",
     "expectedCanonicalId" : null,
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "e66a802b-ad2b-3ee2-88dc-204a60c76a43",
     "sourceId" : "think-python-2e",
@@ -300,7 +312,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "UNRESOLVED",
     "expectedCanonicalId" : null,
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "528462a2-e03a-344f-bd33-aa57aa35100c",
     "sourceId" : "think-python-2e",
@@ -383,7 +396,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "TYPE_MISMATCH",
     "expectedCanonicalId" : "canon:author:allen-b-downey",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "a4479feb-aff2-348a-a788-08aec7c6b05b",
     "sourceId" : "think-python-2e",
@@ -642,7 +656,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "TYPE_MISMATCH",
     "expectedCanonicalId" : "canon:book:computer-networks",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "c240ef91-0c08-36b5-870e-de3f839aa4cf",
     "sourceId" : "computer-networks-6.1",
@@ -885,7 +900,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "TYPE_MISMATCH",
     "expectedCanonicalId" : "canon:author:larry-peterson",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "5eac6aef-807b-3ad0-af95-27e8338115b9",
     "sourceId" : "computer-networks-6.1",
@@ -904,7 +920,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "TYPE_MISMATCH",
     "expectedCanonicalId" : "canon:author:bruce-davie",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "5ab3e010-35d9-39ce-9f17-087d3ba02f98",
     "sourceId" : "computer-networks-6.1",
@@ -1019,7 +1036,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "RESOLVED",
     "expectedCanonicalId" : "canon:concept:rrp",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "a4ceb56e-6fad-368d-9c19-e6ccd4860cb7",
     "sourceId" : "computer-networks-6.1",
@@ -1070,7 +1088,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "RESOLVED",
     "expectedCanonicalId" : "canon:concept:msp",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "aeb235cd-2992-3355-9c2c-3602f2e6d2c1",
     "sourceId" : "computer-networks-6.1",
@@ -1089,7 +1108,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "RESOLVED",
     "expectedCanonicalId" : "canon:concept:msp",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "6bcafa6b-7021-3e58-af35-3840e447b4cd",
     "sourceId" : "computer-networks-6.1",
@@ -1140,7 +1160,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "RESOLVED",
     "expectedCanonicalId" : "canon:concept:hhp",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "7544db15-d7ee-351b-b9e2-1970e4a1a012",
     "sourceId" : "computer-networks-6.1",
@@ -1175,7 +1196,8 @@
     "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
     "expectedStatus" : "RESOLVED",
     "expectedCanonicalId" : "canon:concept:hhp",
-    "outcomeCorrect" : true
+    "outcomeCorrect" : true,
+    "identityCorrect" : true
   }, {
     "mentionId" : "c90bccda-da9e-369d-966b-40454c8a0544",
     "sourceId" : "computer-networks-6.1",

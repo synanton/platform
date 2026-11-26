@@ -1,10 +1,11 @@
 {
   "runId" : "it-books-a8-resolution-v1",
-  "gitCommit" : "4e5032ce704e91fab20db9d1d23faf19521a8aad",
+  "gitCommit" : "6ab5310209d1707cb084e78e7c98da03f52fe5c9",
   "a4CandidatesSha256" : "b6a8798c07d4ac5f8b78b8db27a64aa18bf1fe1ec4520798949b2a04826be7f0",
   "catalogDigest" : "f79ac6715ae58b0d034f2c72aa1bb034da29bdb4c2deb061685f4a18afe389b8",
   "judgmentsSha256" : "3e94ecf3520735f46454034f668b40397c5b497b1a9104015595659fb314f806",
-  "resultsSha256" : "31c81034414047c5456276bc4cb507793f4686fd65b632db9fcca8ce571a21b3",
+  "inputsSha256" : "98b6e3486f9ce35ec27ad5fa4e98edc4cd8d9a0b892d4809808aa743783c8bae",
+  "resultsSha256" : "89397a509967e9d92f8366c9b12a731fe9f2050fb7da9555ac2fdb98d7ab5fbf",
   "productionGraphWrites" : false,
   "llmUsed" : false,
   "gpuUsed" : false
