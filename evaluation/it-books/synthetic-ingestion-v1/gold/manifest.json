@@ -1,0 +1,839 @@
+{
+  "schemaVersion": "synthetic-gold-v1",
+  "fixture": {
+    "fixtureVersion": "synthetic-ingestion-v1",
+    "documentId": "synthetic-distributed-systems-primer-v1",
+    "sourcePath": "evaluation/it-books/synthetic-ingestion-v1/source/distributed-systems-primer.md",
+    "sourceSha256": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "mediaType": "text/markdown",
+    "license": "CC0-1.0",
+    "synthetic": true
+  },
+  "ontology": {
+    "ontologyId": "it-books",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"
+  },
+  "metadataPolicy": {
+    "authorField": "DOCUMENT_METADATA_AUTHOR_VALUE",
+    "editionField": "DOCUMENT_METADATA",
+    "documentIdField": "DOCUMENT_METADATA",
+    "metadataComments": "METADATA_COMMENT",
+    "unknownComments": "UNKNOWN_COMMENT_REVIEW"
+  },
+  "chunks": [
+    {
+      "chunkId": "gold:chunk:book",
+      "parentId": null,
+      "headingLevel": 1,
+      "sectionPath": "Distributed Systems: A Short Technical Primer",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 0,
+      "documentEndOffset": 308,
+      "requiredConcepts": []
+    },
+    {
+      "chunkId": "gold:chunk:preface",
+      "parentId": "gold:chunk:book",
+      "headingLevel": 2,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Preface",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 309,
+      "documentEndOffset": 533,
+      "requiredConcepts": []
+    },
+    {
+      "chunkId": "gold:chunk:chapter-1",
+      "parentId": "gold:chunk:book",
+      "headingLevel": 2,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 534,
+      "documentEndOffset": 568,
+      "requiredConcepts": []
+    },
+    {
+      "chunkId": "gold:chunk:section-1-1",
+      "parentId": "gold:chunk:chapter-1",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.1 Distributed Systems",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 569,
+      "documentEndOffset": 751,
+      "requiredConcepts": [
+        "gold:concept:distributed-system"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:section-1-2",
+      "parentId": "gold:chunk:chapter-1",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.2 Definition: Node",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 752,
+      "documentEndOffset": 904,
+      "requiredConcepts": [
+        "gold:concept:node"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:section-1-3",
+      "parentId": "gold:chunk:chapter-1",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.3 Definition: Message",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 905,
+      "documentEndOffset": 1179,
+      "requiredConcepts": [
+        "gold:concept:message",
+        "gold:concept:message-passing"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:section-1-4",
+      "parentId": "gold:chunk:chapter-1",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.4 Acronym: RPC",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 1180,
+      "documentEndOffset": 1432,
+      "requiredConcepts": [
+        "gold:concept:rpc"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:chapter-2",
+      "parentId": "gold:chunk:book",
+      "headingLevel": 2,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 1433,
+      "documentEndOffset": 1472,
+      "requiredConcepts": []
+    },
+    {
+      "chunkId": "gold:chunk:section-2-1",
+      "parentId": "gold:chunk:chapter-2",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.1 Consensus",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 1473,
+      "documentEndOffset": 1626,
+      "requiredConcepts": [
+        "gold:concept:consensus"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:section-2-2",
+      "parentId": "gold:chunk:chapter-2",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.2 Raft",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 1627,
+      "documentEndOffset": 1772,
+      "requiredConcepts": [
+        "gold:algorithm:raft",
+        "gold:concept:leader-election",
+        "gold:concept:log-replication"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:section-2-3",
+      "parentId": "gold:chunk:chapter-2",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.3 Replicated Log",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 1773,
+      "documentEndOffset": 1995,
+      "requiredConcepts": [
+        "gold:concept:replicated-log"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:section-2-4",
+      "parentId": "gold:chunk:chapter-2",
+      "headingLevel": 3,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.4 Fault Tolerance",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 1996,
+      "documentEndOffset": 2234,
+      "requiredConcepts": [
+        "gold:concept:fault-tolerance"
+      ]
+    },
+    {
+      "chunkId": "gold:chunk:appendix-a",
+      "parentId": "gold:chunk:book",
+      "headingLevel": 2,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Appendix A: Compact Reference",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 2235,
+      "documentEndOffset": 2635,
+      "requiredConcepts": []
+    },
+    {
+      "chunkId": "gold:chunk:appendix-b",
+      "parentId": "gold:chunk:book",
+      "headingLevel": 2,
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Appendix B: Code Example",
+      "boundaryPolicy": "EXACT_HEADING_BOUNDARY",
+      "allowedOverlap": "NONE",
+      "allowedVariation": "WHITESPACE_ONLY",
+      "documentStartOffset": 2636,
+      "documentEndOffset": 2833,
+      "requiredConcepts": []
+    }
+  ],
+  "mentions": [
+    {
+      "id": "gold:book:primer",
+      "surface": "Distributed Systems: A Short Technical Primer",
+      "type": "Book",
+      "chunkId": "gold:chunk:book",
+      "span": {
+        "start": 0,
+        "end": 45
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "04f324ec-7af9-3150-ad25-188c536c8797"
+      }
+    },
+    {
+      "id": "gold:author:alex-morgan",
+      "surface": "Alex Morgan",
+      "type": "Author",
+      "chunkId": "gold:chunk:book",
+      "span": {
+        "start": 58,
+        "end": 69
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "5abd9cb3-e92a-3fa4-b100-81ad5556e9b1"
+      }
+    },
+    {
+      "id": "gold:chapter:1",
+      "surface": "Chapter 1: Nodes and Communication",
+      "type": "Chapter",
+      "chunkId": "gold:chunk:chapter-1",
+      "span": {
+        "start": 534,
+        "end": 568
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "691f0ff4-6b4b-343f-9483-7c1fb36048bb"
+      }
+    },
+    {
+      "id": "gold:chapter:2",
+      "surface": "Chapter 2: Coordination and Reliability",
+      "type": "Chapter",
+      "chunkId": "gold:chunk:chapter-2",
+      "span": {
+        "start": 1433,
+        "end": 1472
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "fb386e72-39ac-3545-9cee-0dcd04f0573a"
+      }
+    },
+    {
+      "id": "gold:section:1-1",
+      "surface": "1.1 Distributed Systems",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-1-1",
+      "span": {
+        "start": 569,
+        "end": 592
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "bc6a9f58-5dcd-3c77-8e70-610f450ab60c"
+      }
+    },
+    {
+      "id": "gold:section:1-2",
+      "surface": "1.2 Definition: Node",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-1-2",
+      "span": {
+        "start": 752,
+        "end": 772
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "d69930d6-6bae-3b00-b751-a6db31ac847b"
+      }
+    },
+    {
+      "id": "gold:section:1-3",
+      "surface": "1.3 Definition: Message",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-1-3",
+      "span": {
+        "start": 905,
+        "end": 928
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "353eca9d-49ee-39fb-a4fe-50278b03c63d"
+      }
+    },
+    {
+      "id": "gold:section:1-4",
+      "surface": "1.4 Acronym: RPC",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-1-4",
+      "span": {
+        "start": 1180,
+        "end": 1196
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "658ddfd2-5a98-3564-afd2-4d3fa75ce246"
+      }
+    },
+    {
+      "id": "gold:section:2-1",
+      "surface": "2.1 Consensus",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-2-1",
+      "span": {
+        "start": 1473,
+        "end": 1486
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "140c1aed-f7aa-3ba2-a1d5-ffeba180e1d7"
+      }
+    },
+    {
+      "id": "gold:section:2-2",
+      "surface": "2.2 Raft",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-2-2",
+      "span": {
+        "start": 1627,
+        "end": 1635
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "9f7c1319-2221-318c-8b46-91eda528e3b3"
+      }
+    },
+    {
+      "id": "gold:section:2-3",
+      "surface": "2.3 Replicated Log",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-2-3",
+      "span": {
+        "start": 1773,
+        "end": 1791
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "deaa9f6e-7da3-32ef-af86-313f3fb3b872"
+      }
+    },
+    {
+      "id": "gold:section:2-4",
+      "surface": "2.4 Fault Tolerance",
+      "type": "Section",
+      "chunkId": "gold:chunk:section-2-4",
+      "span": {
+        "start": 1996,
+        "end": 2015
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "9ce20cbb-06ba-3a69-9760-74d56bef2d43"
+      }
+    },
+    {
+      "id": "gold:appendix:a",
+      "surface": "Appendix A: Compact Reference",
+      "type": "Section",
+      "chunkId": "gold:chunk:appendix-a",
+      "span": {
+        "start": 2235,
+        "end": 2264
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "f0c81948-1a43-34fd-a685-da9182c05f56"
+      }
+    },
+    {
+      "id": "gold:appendix:b",
+      "surface": "Appendix B: Code Example",
+      "type": "Section",
+      "chunkId": "gold:chunk:appendix-b",
+      "span": {
+        "start": 2636,
+        "end": 2660
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "57374efa-e87c-3127-9282-760bc048b47c"
+      }
+    },
+    {
+      "id": "gold:concept:distributed-system",
+      "surface": "distributed system",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-1-1",
+      "span": {
+        "start": 597,
+        "end": 615
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "a5798571-456c-3e3a-8e81-ac3d81261dda"
+      }
+    },
+    {
+      "id": "gold:concept:node",
+      "surface": "node",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-1-2",
+      "span": {
+        "start": 777,
+        "end": 781
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "bddf285e-20e9-3cf4-9e37-7f80120e6ee9"
+      }
+    },
+    {
+      "id": "gold:concept:message",
+      "surface": "message",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-1-3",
+      "span": {
+        "start": 933,
+        "end": 940
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "448cb123-21fb-3e36-97f3-a6e703ee91b5"
+      }
+    },
+    {
+      "id": "gold:concept:message-passing",
+      "surface": "Message passing",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-1-3",
+      "span": {
+        "start": 993,
+        "end": 1008
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "448cb123-21fb-3e36-97f3-a6e703ee91b5"
+      }
+    },
+    {
+      "id": "gold:concept:rpc",
+      "surface": "RPC",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-1-4",
+      "span": {
+        "start": 1222,
+        "end": 1225
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "e85068d9-da3d-39f5-874b-77a94f9c5874"
+      }
+    },
+    {
+      "id": "gold:concept:consensus",
+      "surface": "Consensus",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-2-1",
+      "span": {
+        "start": 1489,
+        "end": 1498
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "ab0738d5-85e6-3879-869d-dc04b03809b0"
+      }
+    },
+    {
+      "id": "gold:algorithm:raft",
+      "surface": "Raft",
+      "type": "Algorithm",
+      "chunkId": "gold:chunk:section-2-2",
+      "span": {
+        "start": 1638,
+        "end": 1642
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "1091793e-100b-3240-9673-eb8602c7dfe6"
+      }
+    },
+    {
+      "id": "gold:concept:leader-election",
+      "surface": "leader election",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-2-2",
+      "span": {
+        "start": 1679,
+        "end": 1694
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "1091793e-100b-3240-9673-eb8602c7dfe6"
+      }
+    },
+    {
+      "id": "gold:concept:log-replication",
+      "surface": "log replication",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-2-2",
+      "span": {
+        "start": 1699,
+        "end": 1714
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "1091793e-100b-3240-9673-eb8602c7dfe6"
+      }
+    },
+    {
+      "id": "gold:concept:replicated-log",
+      "surface": "replicated log",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-2-3",
+      "span": {
+        "start": 1796,
+        "end": 1810
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "604a6a76-9d86-3047-9370-5f74620079c8"
+      }
+    },
+    {
+      "id": "gold:concept:fault-tolerance",
+      "surface": "fault tolerance",
+      "type": "Concept",
+      "chunkId": "gold:chunk:section-2-4",
+      "span": {
+        "start": 2173,
+        "end": 2188
+      },
+      "evidence": {
+        "kind": "EXACT",
+        "elementId": "7ec16bc5-6bad-3494-ba84-cb7dd43f6a3d"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "gold:relation:authored-by",
+      "subjectMentionId": "gold:book:primer",
+      "predicate": "AUTHORED_BY",
+      "objectMentionId": "gold:author:alex-morgan",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:book",
+        "elementId": "04f324ec-7af9-3150-ad25-188c536c8797"
+      },
+      "reason": "Book title has explicit Author metadata."
+    },
+    {
+      "id": "gold:relation:has-chapter-1",
+      "subjectMentionId": "gold:book:primer",
+      "predicate": "HAS_CHAPTER",
+      "objectMentionId": "gold:chapter:1",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:book",
+        "elementId": "04f324ec-7af9-3150-ad25-188c536c8797"
+      },
+      "reason": "Book contains Chapter 1."
+    },
+    {
+      "id": "gold:relation:has-chapter-2",
+      "subjectMentionId": "gold:book:primer",
+      "predicate": "HAS_CHAPTER",
+      "objectMentionId": "gold:chapter:2",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:book",
+        "elementId": "04f324ec-7af9-3150-ad25-188c536c8797"
+      },
+      "reason": "Book contains Chapter 2."
+    },
+    {
+      "id": "gold:relation:has-section-1-1",
+      "subjectMentionId": "gold:chapter:1",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:1-1",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-1",
+        "elementId": "691f0ff4-6b4b-343f-9483-7c1fb36048bb"
+      },
+      "reason": "Chapter 1 contains section 1.1."
+    },
+    {
+      "id": "gold:relation:has-section-1-2",
+      "subjectMentionId": "gold:chapter:1",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:1-2",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-1",
+        "elementId": "691f0ff4-6b4b-343f-9483-7c1fb36048bb"
+      },
+      "reason": "Chapter 1 contains section 1.2."
+    },
+    {
+      "id": "gold:relation:has-section-1-3",
+      "subjectMentionId": "gold:chapter:1",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:1-3",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-1",
+        "elementId": "691f0ff4-6b4b-343f-9483-7c1fb36048bb"
+      },
+      "reason": "Chapter 1 contains section 1.3."
+    },
+    {
+      "id": "gold:relation:has-section-1-4",
+      "subjectMentionId": "gold:chapter:1",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:1-4",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-1",
+        "elementId": "691f0ff4-6b4b-343f-9483-7c1fb36048bb"
+      },
+      "reason": "Chapter 1 contains section 1.4."
+    },
+    {
+      "id": "gold:relation:has-section-2-1",
+      "subjectMentionId": "gold:chapter:2",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:2-1",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-2",
+        "elementId": "fb386e72-39ac-3545-9cee-0dcd04f0573a"
+      },
+      "reason": "Chapter 2 contains section 2.1."
+    },
+    {
+      "id": "gold:relation:has-section-2-2",
+      "subjectMentionId": "gold:chapter:2",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:2-2",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-2",
+        "elementId": "fb386e72-39ac-3545-9cee-0dcd04f0573a"
+      },
+      "reason": "Chapter 2 contains section 2.2."
+    },
+    {
+      "id": "gold:relation:has-section-2-3",
+      "subjectMentionId": "gold:chapter:2",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:2-3",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-2",
+        "elementId": "fb386e72-39ac-3545-9cee-0dcd04f0573a"
+      },
+      "reason": "Chapter 2 contains section 2.3."
+    },
+    {
+      "id": "gold:relation:has-section-2-4",
+      "subjectMentionId": "gold:chapter:2",
+      "predicate": "HAS_SECTION",
+      "objectMentionId": "gold:section:2-4",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:chapter-2",
+        "elementId": "fb386e72-39ac-3545-9cee-0dcd04f0573a"
+      },
+      "reason": "Chapter 2 contains section 2.4."
+    },
+    {
+      "id": "gold:relation:defines-node",
+      "subjectMentionId": "gold:section:1-2",
+      "predicate": "DEFINES",
+      "objectMentionId": "gold:concept:node",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:section-1-2",
+        "elementId": "d69930d6-6bae-3b00-b751-a6db31ac847b"
+      },
+      "reason": "Section 1.2 defines Node."
+    },
+    {
+      "id": "gold:relation:defines-message",
+      "subjectMentionId": "gold:section:1-3",
+      "predicate": "DEFINES",
+      "objectMentionId": "gold:concept:message",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:section-1-3",
+        "elementId": "353eca9d-49ee-39fb-a4fe-50278b03c63d"
+      },
+      "reason": "Section 1.3 defines Message."
+    },
+    {
+      "id": "gold:relation:raft-uses-leader-election",
+      "subjectMentionId": "gold:algorithm:raft",
+      "predicate": "USES",
+      "objectMentionId": "gold:concept:leader-election",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:section-2-2",
+        "elementId": "9f7c1319-2221-318c-8b46-91eda528e3b3"
+      },
+      "reason": "Raft uses leader election."
+    },
+    {
+      "id": "gold:relation:raft-uses-log-replication",
+      "subjectMentionId": "gold:algorithm:raft",
+      "predicate": "USES",
+      "objectMentionId": "gold:concept:log-replication",
+      "judgment": "ACCEPTED",
+      "ontologyExpectation": "VALID",
+      "evidence": {
+        "kind": "EXACT",
+        "chunkId": "gold:chunk:section-2-2",
+        "elementId": "9f7c1319-2221-318c-8b46-91eda528e3b3"
+      },
+      "reason": "Raft uses log replication."
+    }
+  ],
+  "negativeAssertions": [
+    {
+      "id": "gold:negative:no-spdx-mention",
+      "kind": "NO_MENTION",
+      "forbiddenSurface": "SPDX-License-Identifier",
+      "reason": "Metadata comment is not a knowledge mention."
+    },
+    {
+      "id": "gold:negative:no-author-label",
+      "kind": "NO_MENTION",
+      "forbiddenSurface": "Author",
+      "reason": "Metadata field label is not a domain mention."
+    },
+    {
+      "id": "gold:negative:no-replication-fault-tolerance",
+      "kind": "NO_RELATION",
+      "forbiddenPredicate": "DEPENDS_ON",
+      "reason": "Text explicitly denies that replication alone guarantees fault tolerance."
+    },
+    {
+      "id": "gold:negative:no-code-arrows",
+      "kind": "NO_RELATION",
+      "forbiddenPredicate": "ANY",
+      "reason": "Code arrows and table rows are illustrative formatting."
+    }
+  ],
+  "retrieval": [
+    {
+      "query": "What is a node?",
+      "expectedChunkIds": [
+        "gold:chunk:section-1-2"
+      ],
+      "harnessStatus": "CONDITIONAL"
+    },
+    {
+      "query": "What does Raft use to coordinate a replicated log?",
+      "expectedChunkIds": [
+        "gold:chunk:section-2-2"
+      ],
+      "harnessStatus": "CONDITIONAL"
+    },
+    {
+      "query": "Does replication alone guarantee fault tolerance?",
+      "expectedChunkIds": [
+        "gold:chunk:section-2-4"
+      ],
+      "harnessStatus": "CONDITIONAL"
+    }
+  ],
+  "predicatePolicy": {
+    "allowedPredicates": [
+      "AUTHORED_BY",
+      "HAS_CHAPTER",
+      "HAS_SECTION",
+      "COVERS_TOPIC",
+      "DEFINES",
+      "USES",
+      "DEPENDS_ON",
+      "PART_OF"
+    ],
+    "mappingReview": []
+  }
+}

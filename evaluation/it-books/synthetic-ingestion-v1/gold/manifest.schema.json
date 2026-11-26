@@ -142,7 +142,9 @@
         "boundaryPolicy",
         "allowedOverlap",
         "requiredConcepts",
-        "allowedVariation"
+        "allowedVariation",
+        "documentStartOffset",
+        "documentEndOffset"
       ],
       "properties": {
         "chunkId": {
@@ -189,6 +191,14 @@
         },
         "splitJustification": {
           "type": "string"
+        },
+        "documentStartOffset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "documentEndOffset": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },

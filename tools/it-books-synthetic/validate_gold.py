@@ -46,7 +46,7 @@ def validate(doc):
     if f['license'] != 'CC0-1.0': raise GoldError('fixture.license must be CC0-1.0')
     chunks={}
     for c in doc['chunks']:
-        for key in ('chunkId','parentId','headingLevel','sectionPath','boundaryPolicy','allowedOverlap','allowedVariation','requiredConcepts'):
+        for key in ('chunkId','parentId','headingLevel','sectionPath','boundaryPolicy','allowedOverlap','allowedVariation','documentStartOffset','documentEndOffset','requiredConcepts'):
             req(c,key,'chunk')
         if not c['chunkId'].startswith('gold:'): raise GoldError('chunk IDs must be fixture-local gold:*')
         if c['chunkId'] in chunks: raise GoldError(f"duplicate chunk {c['chunkId']}")
@@ -56,7 +56,13 @@ def validate(doc):
         if c['boundaryPolicy'] == 'ALLOWED_SPLIT' and not c.get('splitJustification'):
             raise GoldError(f"chunk {c['chunkId']} ALLOWED_SPLIT requires splitJustification")
         if c['headingLevel'] not in range(1,7): raise GoldError('headingLevel must be 1..6')
+        if c['documentStartOffset'] < 0 or c['documentEndOffset'] <= c['documentStartOffset']:
+            raise GoldError(f"invalid document offsets for {c['chunkId']}")
         chunks[c['chunkId']]=c
+    ordered=sorted(chunks.values(),key=lambda c:(c['documentStartOffset'],c['documentEndOffset']))
+    for left,right in zip(ordered,ordered[1:]):
+        if right['documentStartOffset'] < left['documentEndOffset']:
+            raise GoldError(f"chunk overlap: {left['chunkId']} and {right['chunkId']}")
     for c in doc['chunks']:
         if c['parentId'] is not None and c['parentId'] not in chunks:
             raise GoldError(f"chunk {c['chunkId']} has unknown parent {c['parentId']}")
