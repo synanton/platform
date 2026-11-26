@@ -43,7 +43,7 @@ Write a short problem statement containing:
 - Hard constraints and project invariants.
 - Assumptions that still need validation.
 
-Avoid encoding a proposed solution into the problem statement. For example, “we need another filter” is a proposed remedy; “candidate extraction creates too many false positives while early canonicalization loses recall” is a problem description.
+Avoid encoding a proposed solution into the problem statement. For example, "we need another filter" is a proposed remedy; "candidate extraction creates too many false positives while early canonicalization loses recall" is a problem description.
 
 ### 2. Identify the contradiction
 
@@ -54,7 +54,7 @@ Ask:
 - Is the conflict technical (the same system or element must behave differently in incompatible ways), or is it a resource/architecture conflict?
 - Is the conflict fundamental, or does it arise only because of the current decomposition?
 
-Express it plainly, for example: “We want broader candidate generation to improve recall, but broadening candidates increases false positives and downstream resolution cost.”
+Express it plainly, for example: "We want broader candidate generation to improve recall, but broadening candidates increases false positives and downstream resolution cost."
 
 If there is no meaningful contradiction, do not invent one. The problem may be a straightforward defect, missing capability, or unclear requirement.
 
@@ -84,17 +84,17 @@ Use the principles below as prompts. Select only those that illuminate the probl
 | Universality (6) | Can one component serve multiple purposes without violating its contract? | Reuse a typed intermediate representation across evaluation and downstream processing where semantics align. |
 | Preliminary action (10) | Can preparation happen earlier, before the constrained step? | Precompute candidate features or provenance before entity resolution. |
 | Beforehand cushioning (11) | Can a reversible buffer or safety layer absorb uncertainty? | Keep extracted candidates provisional until validation and resolution complete. |
+| Dynamization (15) | Can a fixed structure or policy adapt to context or lifecycle state? | Select extraction strategy by document type, ontology, or processing stage. |
+| Transition to another dimension (17) | Can the problem be represented in a different structural dimension? | Move from a flat list of entities to a provenance-aware dependency or knowledge graph when relationships are essential. |
 | Feedback (23) | Can results influence upstream behavior through an explicit loop? | Use adjudicated extraction errors and benchmark results to guide later configuration changes. |
 | Intermediary (24) | Can an intermediate object or stage bridge incompatible concerns? | Introduce pre-entities between raw mentions and canonical entities. |
 | Self-service (25) | Can a component use its own outputs or signals to improve operation? | Use pipeline diagnostics to identify low-confidence stages and trigger targeted review. |
 | Copying (26) | Can a cheaper model or representation be used instead of the expensive original? | Use compact candidate features for broad filtering before expensive model or graph operations. |
-| Dynamization (15) | Can a fixed structure or policy adapt to context or lifecycle state? | Select extraction strategy by document type, ontology, or processing stage. |
 | Parameter changes (35) | Can a property be changed rather than redesigning the whole system? | Tune chunking, thresholds, batching, or retrieval parameters when evidence shows the architecture is sound. |
-| Transition to another dimension (17) | Can the problem be represented in a different structural dimension? | Move from a flat list of entities to a provenance-aware dependency or knowledge graph when relationships are essential. |
 
 The classical 40-principle set is larger than this practical selection. Consult the full set or a contradiction matrix when useful, but do not assume the historical matrix directly captures modern software, data, or distributed-systems trade-offs. Treat its suggestions as hypotheses.
 
-For a **physical contradiction**—where the same element appears to need incompatible properties—consider separation by time, space, condition, or scale. In software this may translate into lifecycle-specific states, context-specific policies, tenant/domain boundaries, or different representations at different stages. Use these analogies carefully; they are prompts, not formal equivalences.
+For a **physical contradiction**--where the same element appears to need incompatible properties--consider separation by time, space, condition, or scale. In software this may translate into lifecycle-specific states, context-specific policies, tenant/domain boundaries, or different representations at different stages. Use these analogies carefully; they are prompts, not formal equivalences.
 
 ### 5. Build a small option set
 
@@ -162,7 +162,7 @@ Possible approaches include measuring whether a signal contributes unique releva
 
 **Problem:** Sharing concepts across domains can improve interoperability but may leak assumptions or inferences between contexts.
 
-Explore separate domain-owned ontologies connected through explicit, governed mappings; context-scoped reasoning; and a minimal shared identity foundation. Validate that cross-domain mappings do not silently promote one domain's interpretation to universal truth. Use ontology and SHACL tests to make boundaries executable.
+Explore separate domain-owned ontologies connected through explicit, governed mappings; context-scoped reasoning; and a minimal shared identity foundation. Validate that cross-domain mappings do not silently promote one domain's interpretation to universal truth. Use ontology and SHACL tests to make boundaries executable. This is an exploration prompt only; it does not change the current decision to defer ontology v2.
 
 ### Example D: Flexibility versus operational simplicity
 
