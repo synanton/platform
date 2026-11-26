@@ -11,7 +11,7 @@
 | Grafana DNS/TLS identity | Decision recorded; operator DNS/cert issuance pending | `grafana.homelab.local`; internal CA; 1-year server cert; rotate 30 days before expiry |
 | LAN-only exposure | Design recorded; perimeter control pending | Traefik NodePort on private `192.168.10.0/24`; no public NAT/DNS evidence; firewall rule is external to cluster |
 | Backup target | Approved target chosen; export not configured | Dedicated WD6000 path exists and is writable; NFS export requires node1 root |
-| Backup/restore proof | **Blocked** | No Longhorn backup target or restore has been performed |
+| Backup/restore proof | **Blocked** | Backup target configured; test backup completed; restore fails on Longhorn NFS client ACL |
 | NetworkPolicy/RBAC | Proposed; not deployed/tested | No `observability` namespace exists; no traffic test possible without deployment |
 | Tenant-log isolation | Policy recorded; access model pending | no tenant-specific logs may be exposed before tenant-scoped access |
 | Retention/resource limits | Calculated; verification pending deployment | 2.7 MB/hour sample; 20Gi/14d Loki; CPU/memory table below |
@@ -87,48 +87,60 @@ Current evidence:
 
 - node1 `/mnt/WD6000` is `/dev/sdb1` ext4, mounted from `/etc/fstab` entry
   `UUID=b2cd5a9b-1a68-4152-b8fc-8cf0b29cd6d7 /mnt/WD6000 ext4 defaults 0 0`;
-- `/mnt/WD6000/longhorn-backup` created, mode `770`, owner `aminin:aminin`;
-- current user can write the directory;
-- the directory is **not yet NFS-exported**; `/etc/exports` has only the personal
-  `/mnt/WD6000/nfs_share` export.
+- `/mnt/WD6000/longhorn-backup` is mode `770`, owner `aminin:aminin`, writable by the user;
+- the dedicated path is NFS-exported to `192.168.10.0/24` and a host-side NFS mount/write test
+  passed (`784ddea4…`);
+- Longhorn backup target is configured:
+  `nfs://192.168.10.31:/mnt/WD6000/longhorn-backup`; target status `available=true`;
+- a disposable 1Gi volume with the 2-replica policy was created; the file
+  `longhorn-restore-proof` had SHA-256
+  `c45b6b87e6a000bf4c7b458472b28469a6cb6fbc59d3fa50da17f3b5bd7ed4b7`;
+- snapshot `lh-restore-proof-snap-1795682922` and backup
+  `lh-restore-proof-backup-1795682922` completed;
+- backup URL:
+  `nfs://192.168.10.31:/mnt/WD6000/longhorn-backup?backup=lh-restore-proof-backup-1795682922&volume=pvc-f0a37b79-c222-40cf-b240-59bdb81f07d4`.
 
 The personal share and the root-filesystem `nfs-cold` path remain forbidden as backup targets.
 
-### 3.2 Required operator action (root on node1)
+### 3.2 Restore blocker: pod-network NFS source
 
-```bash
-# Review before applying. Restrict to the trusted LAN.
-echo '/mnt/WD6000/longhorn-backup 192.168.10.0/24(rw,sync,no_subtree_check,no_root_squash)' \
-  | sudo tee -a /etc/exports
-sudo exportfs -ra
-sudo exportfs -v | grep longhorn-backup
-```
-
-Do not add a broader CIDR. Do not use `nfs_share`.
-
-### 3.3 Proposed Longhorn configuration
-
-After the export is verified:
+The restore attempt failed before data verification:
 
 ```text
-backupTargetURL = nfs://192.168.10.31:/mnt/WD6000/longhorn-backup
-credentialSecret = ""
+Mounting arguments: -t nfs4 ... 192.168.10.31:/mnt/WD6000/longhorn-backup ...
+Output: mount.nfs4: access denied by server while mounting
 ```
 
-Do not set this configuration until the export and network path are approved.
+Longhorn manager runs with pod-network addresses (for example `172.16.166.178` on node1), while
+the export currently allows only `192.168.10.0/24`. Host-side mount tests passed because they
+used a node address, not the pod-network source.
 
-### 3.4 Restore proof (required before any recoverability claim)
+### 3.3 Required operator action (root on node1)
 
-1. Configure the backup target.
-2. Create a 1Gi test volume using `longhorn-observability` (2 replicas).
-3. Attach a test pod; write a file and record its SHA-256.
-4. Take a Longhorn snapshot and create a backup; wait for completion.
-5. Delete the test PVC/PV/volume and verify the data is gone.
-6. Restore from the backup into a fresh test volume.
-7. Verify the file SHA-256 and the restored volume health.
-8. Delete all test resources, including the backup if retention permits.
+Back up the export file, remove the old dedicated line, and re-add it with the pod CIDR:
 
-**Status: BLOCKED.** None of steps 1–8 has been performed. Loki is not recoverable.
+```bash
+sudo cp -a /etc/exports "/etc/exports.bak.$(date +%Y%m%d-%H%M%S)"
+
+sudo sed -i '\|^/mnt/WD6000/longhorn-backup |d' /etc/exports
+
+EXPORT_LINE='/mnt/WD6000/longhorn-backup 192.168.10.0/24(rw,sync,no_subtree_check,no_root_squash) 172.16.0.0/16(rw,sync,no_subtree_check,no_root_squash)'
+printf '%s\n' "$EXPORT_LINE" | sudo tee -a /etc/exports >/dev/null
+
+sudo exportfs -ra
+sudo exportfs -s | grep -F '/mnt/WD6000/longhorn-backup'
+```
+
+`172.16.0.0/16` is required for the Calico pod network used by Longhorn managers/engines. Do
+not use `nfs_share`. After the export change, retry the restore test.
+
+### 3.4 Restore proof status
+
+Steps 1–4 succeeded (target, test volume, snapshot, backup). Steps 5–8 remain blocked by the
+NFS client ACL above. All disposable PVC/PV/volume, test pods, test StorageClasses, and the test
+namespace were deleted. The completed test backup remains in the target for retry.
+
+**Status: BLOCKED.** Loki is not recoverable.
 
 ## 4. NetworkPolicy, RBAC, and tenant-log isolation
 
