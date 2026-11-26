@@ -1,0 +1,41 @@
+{
+  "runManifestVersion": "synthetic-ingestion-run-v1",
+  "fixture": {
+    "fixtureVersion": "synthetic-ingestion-v1",
+    "sourcePath": "evaluation/it-books/synthetic-ingestion-v1/source/distributed-systems-primer.md",
+    "sourceSha256": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "goldPath": "evaluation/it-books/synthetic-ingestion-v1/gold/manifest.json",
+    "goldSha256": "9bd2d17dfddd3954b181e67546ad67a015cba482c944cf0199e3029c6a6b3888"
+  },
+  "ontology": {
+    "ontologyId": "it-books",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"
+  },
+  "pipeline": {
+    "source": "EXISTING_INGESTION_PATH_ONLY",
+    "composeProject": "synanton-local-real-demo",
+    "profile": "local-real-demo",
+    "tenant": "synthetic-ingestion",
+    "extractionProvider": "regex",
+    "semanticModelInvoked": false,
+    "graphEnabled": false,
+    "productionGraphWrites": false
+  },
+  "stages": {
+    "preflight": "NOT_RUN",
+    "sourceRegistration": "NOT_RUN",
+    "parsing": "NOT_RUN",
+    "chunking": "NOT_RUN",
+    "mentionExtraction": "NOT_RUN",
+    "canonicalResolution": "BLOCKED_AUTHORIZATION",
+    "relationExtraction": "NOT_RUN",
+    "ontologyValidation": "NOT_RUN",
+    "evidenceBinding": "NOT_RUN",
+    "graphProjection": "UNSUPPORTED",
+    "retrieval": "CONDITIONAL"
+  },
+  "outputs": {},
+  "errors": [],
+  "checksums": {}
+}
