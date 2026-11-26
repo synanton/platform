@@ -53,6 +53,7 @@ public final class RegexBaselineA4 {
         Path root = repositoryRoot();
         Path output = Path.of(argument(args, "--out",
             root.resolve("build/a4-regex-baseline").toString()));
+        String inspectionArg = argument(args, "--inspection-out", null);
         ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
         Path a2 = root.resolve("evaluation/it-books/a2-v1");
         JsonNode manifest = mapper.readTree(a2.resolve("manifest.json").toFile());
@@ -61,13 +62,19 @@ public final class RegexBaselineA4 {
             "docs/implementation/it-books/p0/it-books.report.json").toFile());
 
         long started = System.nanoTime();
-        ObjectNode first = build(mapper, root, manifest, annotations, p0);
-        byte[] firstBytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(first);
-        ObjectNode second = build(mapper, root, manifest, annotations, p0);
-        byte[] secondBytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(second);
+        Evaluation first = build(mapper, root, manifest, annotations, p0);
+        byte[] firstBytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(first.results);
+        Evaluation second = build(mapper, root, manifest, annotations, p0);
+        byte[] secondBytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(second.results);
 
         Files.createDirectories(output);
         Files.write(output.resolve("results.json"), firstBytes);
+        if (inspectionArg != null) {
+            Path inspection = Path.of(inspectionArg);
+            Files.createDirectories(inspection);
+            Files.write(inspection.resolve("candidates.json"),
+                mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(first.inspection));
+        }
         ObjectNode run = mapper.createObjectNode();
         run.put("runId", RUN_ID);
         run.put("startedAt", Instant.now().toString());
@@ -91,17 +98,17 @@ public final class RegexBaselineA4 {
         run.put("repeatResultsSha256", sha256(secondBytes));
         run.put("resultsIdentical", java.util.Arrays.equals(firstBytes, secondBytes));
         run.put("runtimeMillis", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started));
-        run.put("inputBytes", first.path("inputBytes").asLong());
+        run.put("inputBytes", first.results.path("inputBytes").asLong());
         Files.write(output.resolve("run-manifest.json"),
             mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(run));
         System.out.println("wrote " + output);
         System.out.println("resultsSha256=" + sha256(firstBytes)
             + " identical=" + java.util.Arrays.equals(firstBytes, secondBytes));
-        System.out.println("mentions=" + first.path("stages").path("mentionExtraction").path("predicted").asInt()
-            + " relations=" + first.path("stages").path("relationCandidates").path("predicted").asInt());
+        System.out.println("mentions=" + first.results.path("stages").path("mentionExtraction").path("predicted").asInt()
+            + " relations=" + first.results.path("stages").path("relationCandidates").path("predicted").asInt());
     }
 
-    private static ObjectNode build(ObjectMapper mapper, Path root, JsonNode manifest,
+    private static Evaluation build(ObjectMapper mapper, Path root, JsonNode manifest,
                                     JsonNode annotations, JsonNode p0) throws Exception {
         Map<String, JsonNode> a2MentionById = new LinkedHashMap<>();
         Map<String, String> a2MentionBySpan = new LinkedHashMap<>();
@@ -131,6 +138,8 @@ public final class RegexBaselineA4 {
         List<PredictedMention> predictedMentions = new ArrayList<>();
         List<PredictedRelation> predictedRelations = new ArrayList<>();
         Map<String, Integer> evidenceStatuses = new TreeMap<>();
+        Map<String, String> entityEvidenceStatuses = new LinkedHashMap<>();
+        Map<String, String> relationEvidenceStatuses = new LinkedHashMap<>();
         long inputBytes = 0;
         String templateDigest = manifest.path("compiler").path("templateDigest").asText();
         String compilationId = manifest.path("compiler").path("compilationId").asText();
@@ -163,6 +172,7 @@ public final class RegexBaselineA4 {
                             entity.charStart(), entity.charEnd(), chunk.chunkId(),
                             EvidenceBinder.Grounding.EXACT, templateDigest, compilationId));
                     evidenceStatuses.merge("entity:" + bound.status().name(), 1, Integer::sum);
+                    entityEvidenceStatuses.put(sourceId + "|" + entity.mentionId(), bound.status().name());
                 }
                 for (RelationCandidate relation : result.relations()) {
                     PredictedMention subject = byMentionId.get(relation.subjectMentionId());
@@ -176,6 +186,9 @@ public final class RegexBaselineA4 {
                             relation.evidenceChunkId(), EvidenceBinder.Grounding.EXACT,
                             templateDigest, compilationId));
                     evidenceStatuses.merge("relation:" + bound.status().name(), 1, Integer::sum);
+                    relationEvidenceStatuses.put(sourceId + "|" + chunk.chunkId() + "|"
+                        + relation.predicate() + "|" + relation.subjectMentionId() + "|"
+                        + relation.objectMentionId(), bound.status().name());
                 }
             }
         }
@@ -300,7 +313,70 @@ public final class RegexBaselineA4 {
             "rejected", rejectedKeys.size(),
             "unjudged", unjudgedKeys.size(),
             "judgmentEvaluation", relationPredicted > 0 ? "EVALUATED_SEPARATELY_BY_STAGE" : "NO_PREDICTIONS")));
-        return results;
+
+        ObjectNode inspection = mapper.createObjectNode();
+        inspection.put("runId", RUN_ID);
+        inspection.put("a2Version", A2_VERSION);
+        inspection.put("note", "Read-only A4.1 diagnostic export. Regex has no prompt or model response; those fields are explicitly unavailable.");
+        inspection.put("promptAvailable", false);
+        inspection.put("rawModelResponseAvailable", false);
+        ArrayNode mentionCandidates = inspection.putArray("mentions");
+        for (PredictedMention mention : predictedMentions) {
+            ObjectNode node = mentionCandidates.addObject();
+            node.put("sourceId", mention.sourceId);
+            node.put("chunkId", mention.chunkId);
+            node.put("mentionId", mention.mentionId);
+            node.put("surface", mention.surface);
+            node.put("type", mention.type);
+            node.put("documentStartOffset", mention.start);
+            node.put("documentEndOffset", mention.end);
+            String a2Id = predictedMentionToA2.get(mention.sourceId + "|" + mention.mentionId);
+            if (a2Id == null) {
+                node.putNull("a2MentionId");
+                node.putNull("a2Type");
+                node.put("typeMatchesA2", false);
+            } else {
+                JsonNode expected = a2MentionById.get(a2Id);
+                node.put("a2MentionId", a2Id);
+                node.put("a2Type", expected.path("type").asText());
+                node.put("typeMatchesA2", mention.type.equals(expected.path("type").asText()));
+            }
+            node.put("evidenceStatus", entityEvidenceStatuses.get(
+                mention.sourceId + "|" + mention.mentionId));
+        }
+        ArrayNode relationCandidates = inspection.putArray("relations");
+        for (PredictedRelation relation : predictedRelations) {
+            ObjectNode node = relationCandidates.addObject();
+            node.put("sourceId", relation.sourceId);
+            node.put("chunkId", relation.chunkId);
+            node.put("predicate", relation.predicate);
+            node.put("subjectMentionId", relation.subject == null ? null : relation.subject.mentionId);
+            node.put("subjectType", relation.subject == null ? null : relation.subject.type);
+            node.put("subjectSurface", relation.subject == null ? null : relation.subject.surface);
+            node.put("objectMentionId", relation.object == null ? null : relation.object.mentionId);
+            node.put("objectType", relation.object == null ? null : relation.object.type);
+            node.put("objectSurface", relation.object == null ? null : relation.object.surface);
+            node.put("evidenceStatus", relationEvidenceStatuses.get(relation.sourceId + "|"
+                + relation.chunkId + "|" + relation.predicate + "|"
+                + (relation.subject == null ? null : relation.subject.mentionId) + "|"
+                + (relation.object == null ? null : relation.object.mentionId)));
+            String subjectA2 = relation.subject == null ? null
+                : predictedMentionToA2.get(relation.sourceId + "|" + relation.subject.mentionId);
+            String objectA2 = relation.object == null ? null
+                : predictedMentionToA2.get(relation.sourceId + "|" + relation.object.mentionId);
+            String relationKey = subjectA2 == null || objectA2 == null ? null
+                : relationKey(relation.sourceId, subjectA2, relation.predicate, objectA2);
+            JsonNode judged = relationKey == null ? null : a2RelationByKey.get(relationKey);
+            if (judged == null) {
+                node.put("a2RelationId", "");
+                node.put("a2Judgment", "UNMATCHED");
+            } else {
+                node.put("a2RelationId", judged.path("id").asText());
+                node.put("a2Judgment", judged.path("judgment").asText());
+            }
+            node.put("a5Outcome", validationOutcome(relation));
+        }
+        return new Evaluation(results, inspection);
     }
 
     private static Map<String, RelationSpec> a5Matrix() {
@@ -319,6 +395,18 @@ public final class RegexBaselineA4 {
         m.put("PART_OF", new RelationSpec(
             Set.of("Chapter", "Section", "Topic"), Set.of("Book", "Chapter", "Section")));
         return Map.copyOf(m);
+    }
+
+    private static String validationOutcome(PredictedRelation relation) {
+        if (relation.subject == null || relation.object == null) {
+            return "MISSING_ENDPOINT";
+        }
+        RelationSpec spec = A5.get(relation.predicate);
+        if (spec == null) {
+            return "UNKNOWN_PREDICATE";
+        }
+        return spec.subjects.contains(relation.subject.type)
+            && spec.objects.contains(relation.object.type) ? "VALID" : "DOMAIN_RANGE";
     }
 
     private static String spanKey(String source, int start, int end) {
@@ -388,6 +476,7 @@ public final class RegexBaselineA4 {
         }
     }
 
+    private record Evaluation(ObjectNode results, ObjectNode inspection) {}
     private record RelationSpec(Set<String> subjects, Set<String> objects) {}
     private record PredictedMention(String sourceId, String chunkId, String mentionId,
                                     String surface, String type, int start, int end) {}
