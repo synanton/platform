@@ -49,6 +49,45 @@ The design remains:
 - Future SSO (oauth2-proxy/Authentik/Keycloak) is a separate change; no provider is installed
   today.
 
+### 2.2.1 Local authentication sufficiency decision
+
+**Decision: conditionally sufficient for a trusted-LAN-only exposure; not sufficient for
+public/WAN or shared/untrusted networks.**
+
+Observed exposure:
+
+- node addresses are private `192.168.10.30`–`192.168.10.33`;
+- Traefik is a NodePort service (`30443`/`30444`), not a LoadBalancer or public ingress;
+- no public IP/DNS/port-forward evidence was found in the cluster inventory;
+- a NodePort is still reachable by any host that can route to a node IP. Lodged allowlists
+  must therefore be enforced at the network perimeter; Grafana local auth alone is not an
+  internet-facing security control.
+
+Local Grafana auth is acceptable for Stage 1 **only if all** conditions hold:
+
+- exposure remains private LAN only; no public DNS, NAT, or firewall forwarding;
+- Grafana runs behind TLS with the correct hostname;
+- anonymous access and sign-up are disabled;
+- admin credentials are unique, generated out-of-band, stored in a Secret, and rotated;
+- operator accounts are least-privilege viewers; admin is limited to installation/troubleshooting;
+- secure cookies and HSTS are enabled; HTTP is redirected or rejected;
+- login throttling/rate limiting is provided at the proxy/network layer if available;
+- access is reviewed before adding any tenant-specific logs.
+
+Not sufficient when any of these are true:
+
+- the UI is reachable from the internet or an untrusted/shared network;
+- MFA, SSO, or centralized revocation is required;
+- tenant-specific logs would be exposed to shared local accounts;
+- the operator cannot enforce source-network restrictions outside Grafana.
+
+Residual risks accepted only under the LAN-only conditions: no SSO/MFA, password-only local
+accounts, self-signed/internal certificate trust, and no proxy-level rate limiting proved yet.
+For WAN/public exposure, Stage 1 is blocked until an authenticated front door (for example
+oauth2-proxy/SSO plus MFA) is separately designed and reviewed.
+
+Approval of this review is **not** deployment authorization.
+
 ### 2.3 TLS and ingress exposure
 
 Observed cluster state:
@@ -160,6 +199,8 @@ and a successful restore are demonstrated.
 - [ ] Final image/chart/app versions and digests pinned; no `latest`.
 - [ ] Grafana TLS hostname, certificate source, trust, and rotation approved.
 - [ ] Anonymous Grafana access disabled; admin secret out-of-band; viewer/admin roles defined.
+- [ ] Exposure is private-LAN-only, with evidence that no public DNS/NAT/firewall forwarding exists.
+- [ ] If public/WAN exposure is required, an SSO/MFA front door is approved; local auth alone is rejected.
 - [ ] HTTP→HTTPS behavior approved.
 - [ ] Loki/Alloy ClusterIP only; no direct ingress/NodePort.
 - [ ] Default-deny NetworkPolicy with only required paths verified.
@@ -180,7 +221,8 @@ and a successful restore are demonstrated.
 ## 7. Open decisions
 
 1. Actual Grafana DNS hostname and TLS issuance path.
-2. Local Grafana users vs. deferring Stage 1 until SSO is available.
+2. Confirm the trusted-LAN-only boundary and source-network controls. Local Grafana users are
+   conditionally approved only inside that boundary; SSO/MFA is required otherwise.
 3. Whether remote access is required; if yes, which authenticated layer.
 4. Exact Loki retention/compaction and disk-full behavior.
 5. Approved dedicated backup target and restore procedure.
