@@ -22,6 +22,9 @@ OVERLAP = {'NONE','ALLOWED'}
 JUDGMENT = {'ACCEPTED','REJECTED','UNJUDGED','OMITTED'}
 EXPECTATION = {'VALID','INVALID','REQUIRES_MAPPING_REVIEW'}
 RETRIEVAL = {'CONDITIONAL','NOT_RUN','SUPPORTED'}
+VARIATION = {'WHITESPACE_ONLY','NONE'}
+EVIDENCE = {'EXACT','PARTIAL','UNAVAILABLE'}
+A1_ONTOLOGY = {'ontologyId':'it-books','releaseId':'47fe38f8-9f72-481b-826a-6c5b12a6027a','releaseDigest':'3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c'}
 
 class GoldError(ValueError): pass
 
@@ -32,6 +35,8 @@ def validate(doc):
     for key in ('schemaVersion','fixture','metadataPolicy','chunks','mentions','relations','negativeAssertions','retrieval','predicatePolicy'):
         req(doc,key)
     if doc['schemaVersion'] != 'synthetic-gold-v1': raise GoldError('unsupported schemaVersion')
+    req(doc,'ontology')
+    if doc['ontology'] != A1_ONTOLOGY: raise GoldError('ontology pin must be the exact IT Books v1 release')
     f=doc['fixture']
     for key in ('fixtureVersion','documentId','sourcePath','sourceSha256','mediaType','license','synthetic'):
         req(f,key,'fixture')
@@ -41,12 +46,15 @@ def validate(doc):
     if f['license'] != 'CC0-1.0': raise GoldError('fixture.license must be CC0-1.0')
     chunks={}
     for c in doc['chunks']:
-        for key in ('chunkId','parentId','headingLevel','sectionPath','boundaryPolicy','allowedOverlap','requiredConcepts'):
+        for key in ('chunkId','parentId','headingLevel','sectionPath','boundaryPolicy','allowedOverlap','allowedVariation','requiredConcepts'):
             req(c,key,'chunk')
         if not c['chunkId'].startswith('gold:'): raise GoldError('chunk IDs must be fixture-local gold:*')
         if c['chunkId'] in chunks: raise GoldError(f"duplicate chunk {c['chunkId']}")
         if c['boundaryPolicy'] not in BOUNDARY: raise GoldError('invalid chunk boundaryPolicy')
         if c['allowedOverlap'] not in OVERLAP: raise GoldError('invalid chunk allowedOverlap')
+        if c['allowedVariation'] not in VARIATION: raise GoldError('invalid chunk allowedVariation')
+        if c['boundaryPolicy'] == 'ALLOWED_SPLIT' and not c.get('splitJustification'):
+            raise GoldError(f"chunk {c['chunkId']} ALLOWED_SPLIT requires splitJustification")
         if c['headingLevel'] not in range(1,7): raise GoldError('headingLevel must be 1..6')
         chunks[c['chunkId']]=c
     for c in doc['chunks']:
@@ -66,6 +74,11 @@ def validate(doc):
         req(s,'start','mention span'); req(s,'end','mention span')
         if not isinstance(s['start'],int) or not isinstance(s['end'],int) or s['start']<0 or s['end']<=s['start']:
             raise GoldError(f"invalid span for {m['id']}")
+        ev=m['evidence']
+        if not isinstance(ev,dict) or ev.get('kind') not in EVIDENCE:
+            raise GoldError(f"mention {m['id']} evidence.kind must be EXACT/PARTIAL/UNAVAILABLE")
+        if ev.get('kind') == 'EXACT' and not ev.get('elementId'):
+            raise GoldError(f"mention {m['id']} EXACT evidence requires elementId")
         mentions[m['id']]=m
     relations={}
     for r in doc['relations']:
@@ -79,6 +92,14 @@ def validate(doc):
         if r['subjectMentionId'] not in mentions or r['objectMentionId'] not in mentions:
             raise GoldError(f"relation {r['id']} references unknown mention")
         st=mentions[r['subjectMentionId']]['type']; ot=mentions[r['objectMentionId']]['type']
+        ev=r['evidence']
+        if not isinstance(ev,dict) or ev.get('kind') not in EVIDENCE:
+            raise GoldError(f"relation {r['id']} evidence.kind must be EXACT/PARTIAL/UNAVAILABLE")
+        if ev.get('kind') == 'EXACT':
+            if not ev.get('chunkId') or ev['chunkId'] not in chunks:
+                raise GoldError(f"relation {r['id']} EXACT evidence requires a known chunkId")
+            if not ev.get('elementId'):
+                raise GoldError(f"relation {r['id']} EXACT evidence requires elementId")
         if r['ontologyExpectation']=='VALID':
             domains,ranges=A1[r['predicate']]
             if st not in domains or ot not in ranges:
@@ -92,14 +113,20 @@ def validate(doc):
         if n['id'] in neg: raise GoldError(f"duplicate negative assertion {n['id']}")
         neg.add(n['id'])
         if n['kind'] not in {'NO_MENTION','NO_RELATION'}: raise GoldError('invalid negative assertion kind')
+        if n['kind'] == 'NO_MENTION' and not n.get('forbiddenSurface'):
+            raise GoldError(f"negative assertion {n['id']} NO_MENTION requires forbiddenSurface")
+        if n['kind'] == 'NO_RELATION' and not n.get('forbiddenPredicate'):
+            raise GoldError(f"negative assertion {n['id']} NO_RELATION requires forbiddenPredicate (use ANY for a formatting/source-region ban)")
     for q in doc['retrieval']:
         if q.get('harnessStatus') not in RETRIEVAL: raise GoldError('retrieval harnessStatus must be CONDITIONAL, NOT_RUN or SUPPORTED')
+        if q.get('harnessStatus') == 'SUPPORTED' and not q.get('expectedChunkIds'):
+            raise GoldError('SUPPORTED retrieval requires expectedChunkIds')
         for cid in q.get('expectedChunkIds',[]):
             if cid not in chunks: raise GoldError(f"retrieval references unknown chunk {cid}")
     pp=doc['predicatePolicy']
     allowed=pp.get('allowedPredicates')
     if set(allowed or []) != set(A1): raise GoldError('predicatePolicy.allowedPredicates must equal the pinned A1 set')
-    return {'chunks':len(chunks),'mentions':len(mentions),'relations':len(relations),'negativeAssertions':len(neg),'retrieval':len(doc['retrieval'])}
+    return {'chunks':len(chunks),'mentions':len(mentions),'relations':len(relations),'negativeAssertions':len(neg),'retrieval':len(doc['retrieval']),'retrievalSupported':sum(1 for q in doc['retrieval'] if q.get('harnessStatus')=='SUPPORTED')}
 
 def main():
     ap=argparse.ArgumentParser()
