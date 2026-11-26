@@ -385,13 +385,22 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.EMPTY_FIELD, "missing endpoint");
             return;
         }
-        java.util.Set<String> allowedPredicates = contract == null
-                ? ALLOWED_PREDICATES : contract.predicateIds();
-        if (!allowedPredicates.contains(rawPredicate)) {
+        CompiledExtractionContract.RelationType definition = null;
+        if (contract != null) {
+            definition = contract.relations().stream()
+                .filter(r -> r.id().equalsIgnoreCase(rawPredicate))
+                .findFirst().orElse(null);
+            if (definition == null) {
+                quarantine(quarantined, lineNumber, raw,
+                    JsonlFailureReason.UNKNOWN_PREDICATE, rawPredicate);
+                return;
+            }
+        } else if (!ALLOWED_PREDICATES.contains(rawPredicate)) {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.UNKNOWN_PREDICATE, rawPredicate);
             return;
         }
-        String predicate = normalizePredicate(rawPredicate);
+        String predicate = definition == null
+            ? normalizePredicate(rawPredicate) : definition.id();
         if (subjectForm.equalsIgnoreCase(objectForm)) {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.SELF_RELATION, subjectForm);
             return;
@@ -409,15 +418,12 @@ public final class LlmExtractionAdapter implements ExtractionEngineAdapter {
             quarantine(quarantined, lineNumber, raw, JsonlFailureReason.SELF_RELATION, subjectForm);
             return;
         }
-        if (contract != null) {
-            CompiledExtractionContract.RelationType definition = contract.relations().stream()
-                .filter(r -> r.id().equals(predicate)).findFirst().orElse(null);
-            if (definition == null || !definition.subjects().contains(subject.proposedType())
-                || !definition.objects().contains(object.proposedType())) {
-                quarantine(quarantined, lineNumber, raw, JsonlFailureReason.DOMAIN_RANGE,
-                    predicate + " " + subject.proposedType() + "->" + object.proposedType());
-                return;
-            }
+        if (definition != null
+            && (!definition.subjects().contains(subject.proposedType())
+                || !definition.objects().contains(object.proposedType()))) {
+            quarantine(quarantined, lineNumber, raw, JsonlFailureReason.DOMAIN_RANGE,
+                predicate + " " + subject.proposedType() + "->" + object.proposedType());
+            return;
         }
         int evidenceStart;
         int evidenceEnd;
