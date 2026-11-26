@@ -10,10 +10,11 @@
 The homelab can host a small Alloy + Loki + Grafana stack, but **Stage 1 must not be deployed
 until two storage/cleanup decisions are made**:
 
-1. **Longhorn is degraded.** Only node2 and node3 have Longhorn disks; node1 has no disk status.
-   Existing 3-replica volumes are attached but `degraded`. A new 3-replica Loki volume would
-   inherit that state. Use a dedicated 2-replica policy for Loki, or restore the node1 disk and
-   repair existing volumes first.
+1. **Longhorn is degraded.** Only node2 and node3 have Longhorn disks; node1 has no
+   registered disk. `/mnt/longhorn` exists on node1's root filesystem but is not a mountpoint
+   or Longhorn disk (see §1.1). Existing 3-replica volumes are attached but `degraded`. A new
+   3-replica Loki volume would inherit that state. Use a dedicated 2-replica policy for Loki,
+   or restore/register a verified node1 disk and repair existing volumes first.
 2. **The GPU plane is not in a clean running state after maintenance.** `gpu-plane` deployments
    are scaled to zero and 653 pod objects are `ContainerStatusUnknown`/`Unknown`. Do not size the
    first log stack against the historical GPU workload; clean up and re-establish the workload
@@ -29,6 +30,64 @@ With those caveats, the recommended Stage 1 shape is:
 - no Prometheus or Tempo as mandatory Stage 1 dependencies;
 - no raw prompts/responses, secrets, or full document text in Loki;
 - integration with #889 lifecycle conventions, without duplicating the Deployment Configurator.
+
+## 1.1 Material update — 2026-11-26
+
+The operational picture changed after the first Stage 0 draft. Recorded here so the
+design is not read as older than its evidence.
+
+### Node1 storage: path exists, durability is unproven
+
+`/mnt/longhorn` exists on node1, but it is **not** a Longhorn disk yet:
+
+- `findmnt -T /mnt/longhorn` resolves to `/` on `/dev/mapper/vgubuntu-root` (ext4),
+  not to a dedicated device or mount.
+- `mountpoint /mnt/longhorn` reports "not a mountpoint".
+- The directory is `root:root 0755`; the current non-root SSH user cannot write it.
+  Passwordless sudo is not available, so a root write test was not performed.
+- The root filesystem is 914G with 234G available; that is capacity on the OS
+  volume, not a verified dedicated Longhorn disk.
+- Longhorn Node `node1` still has `spec.disks: {}` and `diskStatus: {}`. Longhorn
+  manager logs report `disks are unavailable: no disks found on node node1`.
+- Reboot persistence of the directory was not tested; a directory surviving a
+  reboot is still not evidence of a dedicated, durable Longhorn disk.
+
+Conclusion: the path is a potential starting point, but node1 is **not** an
+eligible Longhorn disk and provides no additional failure tolerance today.
+
+### GPU runtime cleanup and lifecycle gate
+
+- 653 failed `vllm-extraction` pods were deleted; `gpu-plane` now has 0 pods and all
+  Deployments are at 0.
+- GPU-runtime PR #34 was merged as
+  `365209a39363911a6cdcc11ed4f0365ff1fa4e03`.
+- Fail-closed test: forced plugin-probe failure exits 1, does not restore GPU
+  workloads, and leaves Synanton unchanged.
+- Healthy-start test: `envoy`, `gpu-gateway`, `postgres`, and `vllm-synthesis`
+  reached Ready; no terminal pods remained.
+- A stale `prev-replicas=0` annotation initially scaled running Synanton down during
+  the healthy-start test. The start script was fixed to preserve running workloads;
+  Synanton was restored and is 14/14 Running.
+- Full cluster stop was **not** run because it stops Synanton and drains nodes.
+
+The GPU-cleanup blocker is de-risked but the lifecycle gate is not fully closed:
+the stop path's drain interaction and a full stop/start cycle remain untested.
+
+### Untracked extraction blueprint
+
+`deployments/homelab/blueprints/vllm/extraction-llm.yaml` remains untracked. It was
+not included in PR #34 and has no disposition yet. Do not pin or treat it as
+reviewed until it is either committed through review or explicitly excluded.
+
+### Still-open observability prerequisites
+
+- Longhorn is still degraded; node1 is not a disk; existing 3-replica volumes report
+  `degraded`.
+- No Longhorn backup target, backup volume, recurring job, or tested restore exists.
+- No Loki, Alloy, or Grafana is running in Kubernetes.
+- Prometheus is scaled to 0; the Metrics API is unavailable.
+- Traefik NodePort + manual TLS remains; no cert-manager or SSO.
+- Stage 1 has not been authorized.
 
 ## 2. Inventory scope and evidence
 
@@ -377,6 +436,20 @@ Future evidence must include:
 - behavior with Loki stopped (application unaffected);
 - no secrets/raw prompts in sampled logs;
 - no changes to #919, A2, IT Books v1, CSO, graph, or official metrics.
+
+Additional gate after the 2026-11-26 update:
+
+- node1 is either registered as a verified Longhorn disk (dedicated device/mount,
+  root-writable, capacity checked, reboot-tested) or Stage 1 explicitly uses a
+  2-replica Loki volume and makes no HA claim;
+- the Loki volume and all existing Longhorn volumes needed by the stack are
+  non-degraded before acceptance;
+- an independent backup target and a sample restore (or an explicit written
+  non-backed-up acceptance) exist before production reliance;
+- PR #34 is verified against its merged commit and the untracked extraction
+  blueprint has an explicit committed/excluded disposition;
+- full stop/start interaction is either tested in a maintenance window or
+  explicitly excluded from the Stage 1 gate.
 
 ## 14. Open questions / blockers
 
