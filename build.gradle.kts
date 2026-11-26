@@ -53,10 +53,34 @@ tasks.register<Exec>("checkBaseImages") {
     isIgnoreExitValue = false
 }
 
+tasks.register("checkNoPlatformDocumentExtraction") {
+    group = "verification"
+    description = "Fail when platform modules add direct document extraction providers such as Tika"
+    doLast {
+        val sourceOffenders = fileTree("java") {
+            include("**/src/main/**/*.java")
+        }.files.filter { file ->
+            file.readText().contains("import org.apache.tika")
+        }
+        val dependencyOffenders = fileTree("java") {
+            include("**/build.gradle.kts")
+        }.files.filter { file ->
+            val text = file.readText()
+            text.contains("org.apache.tika") || text.contains("libs.tika")
+        }
+        val offenders = (sourceOffenders + dependencyOffenders).distinct()
+        check(offenders.isEmpty()) {
+            "Document extraction must stay behind the Content Extractor contract. " +
+                "Direct platform extraction dependencies found: " +
+                offenders.joinToString { it.relativeTo(rootDir).path }
+        }
+    }
+}
+
 tasks.register("buildAll") {
     group = "synanton"
     description = "Build every active module"
-    dependsOn("checkBaseImages")
+    dependsOn("checkBaseImages", "checkNoPlatformDocumentExtraction")
     dependsOn(subprojects.map { it.tasks.named("build") })
 }
 
@@ -77,5 +101,5 @@ tasks.register<Exec>("verifyGpuContractMirror") {
 }
 
 tasks.named("check") {
-    dependsOn("checkBaseImages", "verifyContractMirror", "verifyGpuContractMirror")
+    dependsOn("checkBaseImages", "checkNoPlatformDocumentExtraction", "verifyContractMirror", "verifyGpuContractMirror")
 }

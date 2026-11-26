@@ -9,7 +9,6 @@ import org.synanton.common.kafka.KafkaClientConfig;
 import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
 import org.synanton.extraction.client.ExtractionPlaneClient;
-import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.gpu.client.GpuPlaneEmbedClient;
 import org.synanton.llm.HttpLlmClient;
@@ -184,19 +183,9 @@ public class SynfluxConfig {
     @Bean
     public ExtractionStage extractionStage(
             ExtractionPlaneClient extractionClient,
-            LocalTikaFallbackExtractor fallbackExtractor,
-            ExtractionClientProperties extractionClientProperties,
-            ExtractionClientMetrics extractionClientMetrics,
             ObjectStorePort objectStore,
             DocumentStructureService documentStructureService) {
-        return new ExtractionStage(
-                extractionClient,
-                fallbackExtractor,
-                extractionClientProperties.fallbackPolicy(),
-                extractionClientMetrics,
-                objectStore,
-                HOT_BUCKET,
-                documentStructureService);
+        return new ExtractionStage(extractionClient, objectStore, HOT_BUCKET, documentStructureService);
     }
 
     /**

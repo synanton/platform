@@ -1,10 +1,6 @@
 package org.synanton.synflux.pipeline.stage;
 
-import org.synanton.extraction.client.ExtractionClientMetrics;
-import org.synanton.extraction.client.ExtractionFallbackPolicy;
 import org.synanton.extraction.client.ExtractionPlaneClient;
-import org.synanton.extraction.client.FallbackExtractionResult;
-import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.extraction.client.StructuredExtractionRequiredException;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ParsedDocument;
@@ -40,36 +36,23 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
     private static final Logger log = LoggerFactory.getLogger(ExtractionStage.class);
 
     private final ExtractionPlaneClient extractionClient;
-    private final LocalTikaFallbackExtractor fallbackExtractor;
-    private final ExtractionFallbackPolicy fallbackPolicy;
-    private final ExtractionClientMetrics metrics;
     private final ObjectStorePort objectStore;
     private final String hotBucket;
     private final DocumentStructureService structureService;
 
     public ExtractionStage(
             ExtractionPlaneClient extractionClient,
-            LocalTikaFallbackExtractor fallbackExtractor,
-            ExtractionFallbackPolicy fallbackPolicy,
-            ExtractionClientMetrics metrics,
             ObjectStorePort objectStore,
             String hotBucket) {
-        this(extractionClient, fallbackExtractor, fallbackPolicy, metrics, objectStore, hotBucket,
-            DocumentStructureService.defaults());
+        this(extractionClient, objectStore, hotBucket, DocumentStructureService.defaults());
     }
 
     public ExtractionStage(
             ExtractionPlaneClient extractionClient,
-            LocalTikaFallbackExtractor fallbackExtractor,
-            ExtractionFallbackPolicy fallbackPolicy,
-            ExtractionClientMetrics metrics,
             ObjectStorePort objectStore,
             String hotBucket,
             DocumentStructureService structureService) {
         this.extractionClient = extractionClient;
-        this.fallbackExtractor = fallbackExtractor;
-        this.fallbackPolicy = fallbackPolicy;
-        this.metrics = metrics;
         this.objectStore = objectStore;
         this.hotBucket = hotBucket;
         this.structureService = structureService;
@@ -91,32 +74,28 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
     }
 
     private ParsedDocument extract(AcquiredDocument doc, StageContext ctx) {
-        DocumentStructure structure = parseStructure(doc, ctx);
-        if (extractionClient.isEnabled()) {
-            try {
-                ExtractionResult result = extractionClient.extract(buildRequest(doc, ctx));
-                ParsedDocument parsed = toParsedDocument(doc, result);
-                if (parsed != null) {
-                    return attachStructure(parsed, structure);
-                }
-                log.warn("Structured extraction returned no payload for ref={}", doc.contentRefId());
-            } catch (Exception e) {
-                log.warn("Structured extraction failed for ref={}, policy={}: {}",
-                        doc.contentRefId(), fallbackPolicy, e.getMessage());
-                if (fallbackPolicy == ExtractionFallbackPolicy.STRUCTURED_REQUIRED) {
-                    throw new StructuredExtractionRequiredException(
-                            "Structured extraction required but plane call failed for ref="
-                                    + doc.contentRefId(), e);
-                }
-            }
-        } else if (fallbackPolicy == ExtractionFallbackPolicy.STRUCTURED_REQUIRED) {
-            metrics.recordFallback("client_disabled");
+        if (!extractionClient.isEnabled()) {
             throw new StructuredExtractionRequiredException(
-                    "Structured extraction required but extraction client is disabled for ref="
+                    "Document extraction requires the Content Extractor client for ref="
                             + doc.contentRefId());
         }
-
-        return attachStructure(applyFallback(doc, "plane_unavailable_or_empty"), structure);
+        DocumentStructure structure = parseStructure(doc, ctx);
+        try {
+            ExtractionResult result = extractionClient.extract(buildRequest(doc, ctx));
+            ParsedDocument parsed = toParsedDocument(doc, result);
+            if (parsed == null) {
+                throw new StructuredExtractionRequiredException(
+                        "Content Extractor returned no usable structured payload for ref="
+                                + doc.contentRefId());
+            }
+            return attachStructure(parsed, structure);
+        } catch (StructuredExtractionRequiredException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("Content Extractor call failed for ref={}: {}", doc.contentRefId(), e.getMessage());
+            throw new StructuredExtractionRequiredException(
+                    "Content Extractor call failed for ref=" + doc.contentRefId(), e);
+        }
     }
 
     private DocumentStructure parseStructure(AcquiredDocument doc, StageContext ctx) {
@@ -189,15 +168,6 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
             log.warn("Failed to parse extraction payload for ref={}: {}", doc.contentRefId(), e.getMessage());
             return null;
         }
-    }
-
-    private ParsedDocument applyFallback(AcquiredDocument doc, String reason) {
-        metrics.recordFallback(reason);
-        log.warn("Using extraction fallback ({}) for ref={}", fallbackPolicy, doc.contentRefId());
-        boolean includeMetadata = fallbackPolicy != ExtractionFallbackPolicy.FAIL_OPEN_TEXT_ONLY;
-        FallbackExtractionResult fallback = fallbackExtractor.extract(
-                doc.bytes(), doc.sourceUri(), includeMetadata);
-        return new ParsedDocument(doc, fallback.flatText(), fallback.metadata(), null);
     }
 
     private static String sha256(String text) {

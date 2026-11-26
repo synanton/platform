@@ -54,7 +54,7 @@ These are derived from §30 (`§67.1`–`§67.18`) of the proposal and are enfor
 | Concern | Repository | Rationale |
 |---|---|---|
 | `synanton.extraction.v1` proto contract | **both** (mirrored, byte-identical) | Same pattern as `synanton.gpu.v1`: `java/gpu-contract` exists in `platform` and the server stubs live in `gpu-runtime`. |
-| Extraction client, fallback policy, ingestion wiring | `synanton/platform` | The platform owns *what* to extract and what to do when extraction is unavailable. |
+| Extraction client and ingestion wiring | `synanton/platform` | The platform owns *what* to extract; extraction execution is externalized. |
 | Extraction service, adapters, processors, operation store | `synanton/content_extractor` | The plane owns *how*. Must not depend on platform internals. |
 | Knowledge processing of the payload | `synanton/platform` | Downstream of the boundary. |
 
@@ -145,7 +145,7 @@ Phases follow §31 of the proposal (Contract → Embedded → Async → External
 | Module | Type | Purpose |
 |---|---|---|
 | `java/extraction-contract` | library | Mirror of `synanton.extraction.v1` proto + generated stubs. No platform internals. |
-| `java/extraction-client` | library | `ExtractionPlaneClient` (gRPC), retry/reconcile logic, `ExtractionFallbackPolicy`, payload readers. |
+| `java/extraction-client` | library | `ExtractionPlaneClient` (gRPC), retry/reconcile logic, strict extraction errors, payload readers. |
 
 `java/extraction-contract` follows `java/gpu-contract`'s build file exactly (protobuf + grpc plugins, no Spring). `java/extraction-client` follows the existing gRPC client wiring in `java/gateway/src/main/java/org/synanton/gateway/gpu/` (`GpuExecutionClient` + `GpuExecutionClientProperties`).
 
@@ -153,7 +153,7 @@ Phases follow §31 of the proposal (Contract → Embedded → Async → External
 
 | Module | Change |
 |---|---|
-| `java/synflux` | `ParseStage` is re-pointed at the extraction plane. It currently calls Tika in-process (`Tika.parseToString`, `ParseStage.java:29`) and returns `ParsedDocument(acquired, text, metadata)`. It becomes a contract client, with the in-process Tika path retained as the configured fallback. |
+| `java/synflux` | `ParseStage` is re-pointed at the extraction plane. It currently calls Tika in-process (`Tika.parseToString`, `ParseStage.java:29`) and returns `ParsedDocument(acquired, text, metadata)`. It becomes a contract client; platform-local Tika extraction is removed. |
 | `java/synflux` | New `StructuredDocument` record carries the structured payload alongside `flattenedText`, so `ChunkStage` can chunk on structure (headings/blocks) rather than a flat string. `ParsedDocument` is kept and derived from it for compatibility. |
 | `java/synvault` | `ObjectReference` (bucket/key/version/sha256/size) introduced next to `ContentRef`; `ObjectStorePort` gains the presigned-read path the extraction plane uses to fetch source bytes. |
 | `settings.gradle.kts` | Include the two new modules. |
@@ -409,18 +409,18 @@ extraction_idempotency
 |---|---|
 | 1 | `java/extraction-client`: `ExtractionPlaneClient`, `ExtractionClientProperties`, channel + deadline config |
 | 2 | Reconcile-after-timeout logic: a timed-out submit is resolved by polling, never by blind resubmission |
-| 3 | `ExtractionFallbackPolicy`: `STRUCTURED_REQUIRED` \| `FALLBACK_LOCAL_TIKA` \| `FAIL_OPEN_TEXT_ONLY`, per tenant, defaults in `application.yml` |
+| 3 | Strict extraction is mandatory; platform has no provider fallback policy. |
 | 4 | `StructuredDocument` domain record + `ParsedDocument` derived from it |
-| 5 | `ParseStage` rewritten to call the plane; existing Tika code moves to `LocalTikaFallbackExtractor` |
-| 6 | `ChunkStage` able to chunk on structure (heading/block boundaries) with the flat-text path retained |
+| 5 | `ParseStage` calls the plane only; platform-local Tika extraction is removed. |
+| 6 | `ChunkStage` chunks on the structured payload; no flat `FALLBACK` chunk path |
 | 7 | `ObjectReference` in `synvault` + presigned-read path so the plane fetches bytes directly, not through the platform |
-| 8 | Platform-side metrics: `extraction_client_requests_total`, `..._fallback_total`, `..._latency` |
+| 8 | Platform-side metrics: `extraction_client_requests_total`, `..._latency` |
 
 ### Definition of Done
 
 1. An ingestion job over the `demo-data` PDFs completes through the extraction plane, and chunks carry page provenance.
-2. With the plane stopped and policy `FALLBACK_LOCAL_TIKA`, ingestion still completes; `extraction_client_fallback_total` increments; a warning names the fallback.
-3. With policy `STRUCTURED_REQUIRED` and the plane stopped, the job fails with a clear error and does **not** write partial chunks.
+2. With the plane stopped, ingestion fails explicitly; the platform does not substitute a local extractor.
+3. With the plane stopped, the job fails with a clear error and does **not** write partial chunks.
 4. A submit that times out client-side is reconciled by polling - asserted by a test where the server delays the response and the client observes exactly one server-side operation.
 5. Document bytes never transit the gRPC contract: the plane reads from object storage. Asserted by a test that the request carries only a reference.
 6. A grep for `opendataloader` and for any worker/pool/device identifier in `platform` returns nothing.
@@ -532,12 +532,11 @@ SCEP-1 is the hard serialization point. After it, the platform client can be bui
 
 | Property | Env var | Default | Purpose |
 |---|---|---|---|
-| `synanton.extraction.client.enabled` | `EXTRACTION_CLIENT_ENABLED` | `false` | Off until SCEP-5 lands; `false` keeps in-process Tika |
+| `synanton.extraction.client.enabled` | `EXTRACTION_CLIENT_ENABLED` | `true` | Required in local-real-demo; disabled clients fail closed in strict mode |
 | `synanton.extraction.client.endpoint` | `EXTRACTION_ENDPOINT` | `extraction-gateway:9091` | Plane address |
 | `synanton.extraction.client.mode` | `EXTRACTION_CLIENT_MODE` | `sync` | `sync` or `async` |
 | `synanton.extraction.client.deadline-seconds` | `EXTRACTION_DEADLINE_SECONDS` | `120` | Sync call deadline |
 | `synanton.extraction.client.poll-interval-seconds` | `EXTRACTION_POLL_INTERVAL_SECONDS` | `5` | Async status polling |
-| `synanton.extraction.client.fallback` | `EXTRACTION_FALLBACK` | `local-tika` | `local-tika`, `partial`, or `fail` (§21) |
 | `synanton.extraction.client.default-priority` | `EXTRACTION_DEFAULT_PRIORITY` | `NORMAL` | Priority class for ingestion work |
 
 ---
@@ -555,10 +554,7 @@ extraction_expired_total
 extraction_duration_seconds
 extraction_queue_delay_seconds
 extraction_payload_bytes
-extraction_fallback_total
 ```
-
-`extraction_fallback_total` is the one the platform owns - it counts how often the plane was unavailable or incompatible and the platform fell back. A rising value means the plane is failing without anyone noticing, because ingestion still "succeeds."
 
 Cardinality guard: `processor_id` is a bounded adapter identifier, never a version string or worker identity.
 

@@ -4,9 +4,12 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
-import org.synanton.extraction.client.ExtractionFallbackPolicy;
 import org.synanton.extraction.client.ExtractionPlaneClient;
-import org.synanton.extraction.client.LocalTikaFallbackExtractor;
+import org.synanton.extraction.v1.DocumentPayload;
+import org.synanton.extraction.v1.ExtractionResult;
+import org.synanton.extraction.v1.ExtractionStatus;
+import org.synanton.extraction.v1.PriorityClass;
+import org.synanton.extraction.v1.StructuredPayload;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.pipeline.StageContext;
@@ -18,7 +21,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ExtractionStageStructureTest {
 
@@ -67,16 +72,18 @@ class ExtractionStageStructureTest {
     }
 
     private static ExtractionStage stage() {
-        ExtractionClientProperties props = new ExtractionClientProperties(
-            false, "localhost:9091", "sync", 120, 5, "local-tika", "NORMAL");
-        ExtractionPlaneClient client = new ExtractionPlaneClient(props, new ExtractionClientMetrics(null));
-        return new ExtractionStage(
-            client,
-            new LocalTikaFallbackExtractor(),
-            ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA,
-            new ExtractionClientMetrics(new SimpleMeterRegistry()),
-            mock(ObjectStorePort.class),
-            "synanton-hot");
+        ExtractionPlaneClient client = mock(ExtractionPlaneClient.class);
+        when(client.isEnabled()).thenReturn(true);
+        when(client.defaultPriorityClass()).thenReturn(PriorityClass.PRIORITY_NORMAL);
+        DocumentPayload payload = DocumentPayload.newBuilder()
+            .setFlattenedText("Body paragraph.")
+            .build();
+        when(client.extract(any())).thenReturn(ExtractionResult.newBuilder()
+            .setStatus(ExtractionStatus.STATUS_COMPLETED)
+            .setFlattenedText("Body paragraph.")
+            .setPayload(StructuredPayload.newBuilder().setInlineContent(payload.toByteString()))
+            .build());
+        return new ExtractionStage(client, mock(ObjectStorePort.class), "synanton-hot");
     }
 
     private static AcquiredDocument document(byte[] bytes, String mediaType) {

@@ -43,13 +43,14 @@ import org.synanton.common.resolution.PromotionResult;
 import org.synanton.common.resolution.StaleGenerationException;
 import org.synanton.common.tenant.TenantContext;
 import org.synanton.contentcache.FileSystemContentStore;
-import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
 import org.synanton.extraction.client.ExtractionPlaneClient;
-import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.extraction.engine.ExtractionContext;
 import org.synanton.extraction.engine.ExtractionEngineAdapter;
 import org.synanton.extraction.engine.ExtractionResult;
+import org.synanton.extraction.v1.DocumentPayload;
+import org.synanton.extraction.v1.PriorityClass;
+import org.synanton.extraction.v1.StructuredPayload;
 import org.synanton.extraction.engine.PreEntity;
 import org.synanton.extraction.engine.RelationCandidate;
 import org.synanton.extraction.engine.TextSegment;
@@ -128,6 +129,9 @@ import org.testcontainers.utility.DockerImageName;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * #654 real-store lifecycle: acceptance, durable graph-commit event, activation
@@ -188,16 +192,20 @@ class IngestionActivationIntegrationTest {
         ContentPullPort pullPort = new ContentPullPort(List.of());
         AcquireStage acquire = new AcquireStage(pullPort, contentStore);
         ExtractionClientProperties extractionProperties = new ExtractionClientProperties(
-                false, "", "sync", 30, 1, "fallback-local-tika", "normal");
-        SimpleMeterRegistry metricsRegistry = new SimpleMeterRegistry();
-        ExtractionClientMetrics metrics = new ExtractionClientMetrics(metricsRegistry);
-        ExtractionStage extraction = new ExtractionStage(
-                new ExtractionPlaneClient(extractionProperties, metrics),
-                new LocalTikaFallbackExtractor(),
-                extractionProperties.fallbackPolicy(),
-                metrics,
-                null,
-                "synanton-hot");
+                true, "in-process", "sync", 30, 1, "normal");
+        DocumentPayload payload = DocumentPayload.newBuilder()
+                .setFlattenedText("fixture content")
+                .build();
+        org.synanton.extraction.v1.ExtractionResult result = org.synanton.extraction.v1.ExtractionResult.newBuilder()
+                .setStatus(org.synanton.extraction.v1.ExtractionStatus.STATUS_COMPLETED)
+                .setFlattenedText("fixture content")
+                .setPayload(StructuredPayload.newBuilder().setInlineContent(payload.toByteString()))
+                .build();
+        ExtractionPlaneClient extractionClient = mock(ExtractionPlaneClient.class);
+        when(extractionClient.isEnabled()).thenReturn(true);
+        when(extractionClient.defaultPriorityClass()).thenReturn(PriorityClass.PRIORITY_NORMAL);
+        when(extractionClient.extract(any())).thenReturn(result);
+        ExtractionStage extraction = new ExtractionStage(extractionClient, mock(org.synanton.synvault.port.ObjectStorePort.class), "synanton-hot");
         PipelineStage<ParsedDocument, ChunkedDocument> chunk = new SentenceChunkStage(400, 0);
         SynfluxProperties properties = new SynfluxProperties(
                 new SynfluxProperties.Ingest(1, 1_000_000,

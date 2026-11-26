@@ -115,6 +115,9 @@ enum DocumentElementType {
     ELEMENT_FOOTER     = 13;
     ELEMENT_CODE_BLOCK = 14;
     ELEMENT_PAGE_BREAK = 15;
+    ELEMENT_SECTION    = 16;
+    ELEMENT_FIGURE     = 17;
+    ELEMENT_UNKNOWN    = 18;
 }
 
 // ContentProvenance records HOW an element's content was obtained (draft §30).
@@ -179,6 +182,19 @@ message DocumentElement {
     // For FORMULA: LaTeX. For IMAGE: a description when one was requested and
     // produced, in which case provenance is GENERATED.
     string alternate_representation = 9;
+
+    // Typed source-location records. Multiple records are allowed because an
+    // element may have both geometry and a text range.
+    repeated SourceLocation source_locations = 10;
+
+    // Canonical-text range. Separate from original-source locations.
+    CanonicalTextRange canonical_text_range = 11;
+
+    // Executions directly responsible for producing this element. Set
+    // semantics; order has no meaning. Merged elements reference the merge
+    // execution; MERGE links identify contributors.
+    repeated string execution_ids = 12;
+    ExecutionAttribution execution_attribution = 13;
 }
 
 // DocumentPayload is the normalized document result. Draft §7.2.
@@ -196,6 +212,270 @@ message DocumentPayload {
     // reparsing the source: a consumer that only wants text must not force a
     // second extraction (§67.17).
     string flattened_text = 4;
+
+    // Additive document identity/source/provenance/projection fields.
+    DocumentIdentity identity = 5;
+    SourceDescriptor source = 6;
+    ExtractionProvenance provenance = 7;
+    repeated DocumentProjection projections = 8;
+}
+
+// ─── Document identity and source ───────────────────────────────────────────
+
+message DocumentIdentity {
+    string document_id = 1;
+    DocumentClass document_class = 2;
+    string document_version = 3;
+}
+
+enum DocumentClass {
+    DOCUMENT_CLASS_UNSPECIFIED = 0;
+    DOCUMENT_CLASS_TEXT = 1;
+    DOCUMENT_CLASS_SPREADSHEET = 2;
+    DOCUMENT_CLASS_TRANSCRIPT = 3;
+    DOCUMENT_CLASS_STRUCTURED_DATA = 4;
+    DOCUMENT_CLASS_UNKNOWN = 5;
+}
+
+message SourceDescriptor {
+    string media_type = 1;
+    string source_format = 2;       // extensible: pdf, docx, markdown, ...
+    string source_digest = 3;       // immutable source digest
+    string source_version = 4;
+    string source_uri = 5;
+    string filename = 6;
+}
+
+// ─── Typed source locations ───────────────────────────────────────────────────
+
+message SourceLocation {
+    string location_id = 1;
+    SourceBinding source_binding = 2;
+    LocationPrecision precision = 3;
+    Reproducibility reproducibility = 4;
+
+    oneof location {
+        TextRange text_range = 10;
+        PdfGeometry pdf_geometry = 11;
+        FormatReference format_reference = 12;
+    }
+}
+
+message SourceBinding {
+    BindingKind kind = 1;
+    // Origin identity is always the original document, never a derived layer.
+    string origin_document_id = 2;
+    string origin_source_digest = 3;
+    string origin_source_version = 4;
+}
+
+enum BindingKind {
+    BINDING_KIND_UNSPECIFIED = 0;
+    BINDING_KIND_INHERIT_DOCUMENT = 1;
+    BINDING_KIND_EXPLICIT_ORIGIN = 2;
+    BINDING_KIND_DERIVED_REPRESENTATION = 3;
+}
+
+enum LocationPrecision {
+    LOCATION_PRECISION_UNSPECIFIED = 0;
+    LOCATION_PRECISION_EXACT = 1;
+    LOCATION_PRECISION_APPROXIMATE = 2;
+    LOCATION_PRECISION_UNAVAILABLE = 3;
+}
+
+enum Reproducibility {
+    REPRODUCIBILITY_UNSPECIFIED = 0;
+    REPRODUCIBILITY_EXACT_FROM_SOURCE = 1;
+    REPRODUCIBILITY_DEPENDS_ON_PARSER = 2;
+    REPRODUCIBILITY_DEPENDS_ON_NORMALIZATION = 3;
+    REPRODUCIBILITY_NOT_REPRODUCIBLE = 4;
+}
+
+message FormatReference {
+    string format = 1;
+    string reference = 2;
+    map<string, string> attributes = 3;
+    string representation_id = 4;
+    string representation_digest = 5;
+}
+
+message TextRange {
+    OffsetUnit unit = 1;
+    CoordinateSpace coordinate_space = 2;
+    int64 start = 3;                 // inclusive
+    int64 end = 4;                   // exclusive
+    TextNormalization normalization = 5;
+    LineEndingPolicy line_endings = 6;
+    TextLayerIdentity text_layer = 7;
+}
+
+enum OffsetUnit {
+    OFFSET_UNIT_UNSPECIFIED = 0;
+    OFFSET_UNIT_UTF8_BYTE = 1;
+    OFFSET_UNIT_UTF16_CODE_UNIT = 2;
+    OFFSET_UNIT_UNICODE_CODE_POINT = 3;
+}
+
+enum CoordinateSpace {
+    COORDINATE_SPACE_UNSPECIFIED = 0;
+    COORDINATE_SPACE_ORIGINAL_SOURCE = 1;
+    COORDINATE_SPACE_SOURCE_TEXT_LAYER = 2;
+}
+
+enum TextNormalization {
+    TEXT_NORMALIZATION_UNSPECIFIED = 0;
+    TEXT_NORMALIZATION_NONE = 1;
+    TEXT_NORMALIZATION_NFC = 2;
+    TEXT_NORMALIZATION_NFKC = 3;
+    TEXT_NORMALIZATION_CUSTOM = 4;
+}
+
+enum LineEndingPolicy {
+    LINE_ENDING_UNSPECIFIED = 0;
+    LINE_ENDING_ORIGINAL = 1;
+    LINE_ENDING_LF = 2;
+    LINE_ENDING_CRLF = 3;
+}
+
+message TextLayerIdentity {
+    string text_layer_id = 1;
+    string text_layer_digest = 2;
+    string encoding = 3;
+    string origin_document_id = 4;
+    string origin_source_digest = 5;
+    string origin_source_version = 6;
+    string derivation_execution_id = 7;
+    string extraction_layer_version = 8;
+}
+
+message PdfGeometry {
+    int32 page_number = 1;           // 1-based; 0 unavailable
+    BoundingBox bbox = 2;
+    string coordinate_system = 3;    // required
+    string unit = 4;                 // required
+    int32 rotation = 5;              // 0/90/180/270
+    string transform = 6;
+}
+
+message CanonicalTextRange {
+    CanonicalTextIdentity identity = 1;
+    OffsetUnit unit = 2;
+    int64 start = 3;                 // inclusive
+    int64 end = 4;                   // exclusive
+    TextNormalization normalization = 5;
+    LineEndingPolicy line_endings = 6;
+}
+
+message CanonicalTextIdentity {
+    string canonical_text_id = 1;
+    string canonical_text_digest = 2;
+    string encoding = 3;
+    string source_document_id = 4;
+    string source_digest = 5;
+    string source_version = 6;
+    string extraction_execution_id = 7;
+    string normalization_profile = 8;
+    string normalization_version = 9;
+    string projection_contract_id = 10;
+    string projection_contract_version = 11;
+    LineEndingPolicy line_endings = 12;
+    TextNormalization normalization = 13;
+}
+
+// ─── Execution provenance ─────────────────────────────────────────────────────
+
+message ExtractionProvenance {
+    string primary_execution_id = 1;
+    repeated ExtractionExecution executions = 2;
+}
+
+message ExtractionExecution {
+    string execution_id = 1;
+    string extractor_id = 2;
+    string extractor_version = 3;
+    string engine_id = 4;
+    string engine_version = 5;
+    string stage_id = 6;
+    string policy_id = 7;
+    string policy_version = 8;
+    ExecutionOutcome outcome = 9;
+    repeated ExecutionLink parents = 10;
+    QualityReport quality = 11;
+    map<string, string> attributes = 12;
+}
+
+enum ExecutionOutcome {
+    EXECUTION_OUTCOME_UNSPECIFIED = 0;
+    EXECUTION_OUTCOME_SUCCEEDED = 1;
+    EXECUTION_OUTCOME_PARTIAL = 2;
+    EXECUTION_OUTCOME_FAILED = 3;
+}
+
+message ExecutionLink {
+    string execution_id = 1;
+    ExecutionLinkKind kind = 2;
+}
+
+enum ExecutionLinkKind {
+    EXECUTION_LINK_UNSPECIFIED = 0;
+    EXECUTION_LINK_RETRY = 1;
+    EXECUTION_LINK_FALLBACK = 2;
+    EXECUTION_LINK_INPUT_DEPENDENCY = 3;
+    EXECUTION_LINK_MERGE = 4;
+}
+
+enum ExecutionAttribution {
+    EXECUTION_ATTRIBUTION_UNSPECIFIED = 0;
+    EXECUTION_ATTRIBUTION_INHERITED = 1;
+    EXECUTION_ATTRIBUTION_EXPLICIT = 2;
+    EXECUTION_ATTRIBUTION_UNKNOWN = 3;
+    EXECUTION_ATTRIBUTION_NONE_KNOWN = 4;
+}
+
+message QualityReport {
+    QualityStatus status = 1;
+    optional double completeness = 2; // unset = unknown; 0.0 = measured zero
+    optional double confidence = 3;   // unset = unknown; 0.0 = measured zero
+    repeated string warnings = 4;
+}
+
+enum QualityStatus {
+    QUALITY_STATUS_UNSPECIFIED = 0;
+    QUALITY_STATUS_COMPLETE = 1;
+    QUALITY_STATUS_DEGRADED = 2;
+    QUALITY_STATUS_PARTIAL = 3;
+    QUALITY_STATUS_UNKNOWN = 4;
+}
+
+// ─── Projections ─────────────────────────────────────────────────────────────
+
+message DocumentProjection {
+    string projection_id = 1;
+    string format = 2;
+    string contract_id = 3;
+    string contract_version = 4;
+    ProjectionOutcome outcome = 5;
+    string unsupported_reason = 6;
+    string digest = 7;
+    oneof content {
+        bytes inline_content = 8;
+        PayloadReference reference = 9;
+    }
+    LossReport loss = 10;
+}
+
+enum ProjectionOutcome {
+    PROJECTION_OUTCOME_UNSPECIFIED = 0;
+    PROJECTION_OUTCOME_SUCCESS_LOSSLESS = 1;
+    PROJECTION_OUTCOME_SUCCESS_WITH_LOSS = 2;
+    PROJECTION_OUTCOME_UNSUPPORTED = 3;
+}
+
+message LossReport {
+    repeated string dropped = 1;
+    repeated string approximated = 2;
+    repeated string unsupported = 3;
+    repeated string reasons = 4;
 }
 
 // ─── Reserved modality payloads (SCEP-7, post-v1.21) ─────────────────────────

@@ -33,8 +33,6 @@ dependencies {
     implementation(libs.micrometer.prometheus)
     implementation(libs.mustache.compiler)
     implementation(libs.caffeine)
-    implementation(libs.tika.core)
-    implementation(libs.tika.parsers)
     implementation(libs.pdfbox)
     implementation(libs.logback.classic)
     implementation(libs.kafka.clients)

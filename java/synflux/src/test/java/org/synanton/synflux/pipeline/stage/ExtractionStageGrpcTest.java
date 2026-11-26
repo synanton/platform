@@ -14,9 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
-import org.synanton.extraction.client.ExtractionFallbackPolicy;
 import org.synanton.extraction.client.ExtractionPlaneClient;
-import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.pipeline.StageContext;
@@ -104,7 +102,7 @@ class ExtractionStageGrpcTest {
                 .build();
 
         ObjectStorePort objectStore = mock(ObjectStorePort.class);
-        ExtractionStage stage = buildStage(objectStore, "sync", ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA);
+        ExtractionStage stage = buildStage(objectStore, "sync");
 
         UUID contentRefId = UUID.randomUUID();
         byte[] bytes = pdfBytes();
@@ -151,7 +149,7 @@ class ExtractionStageGrpcTest {
                 .build();
 
         ObjectStorePort objectStore = mock(ObjectStorePort.class);
-        ExtractionStage stage = buildStage(objectStore, "sync", ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA);
+        ExtractionStage stage = buildStage(objectStore, "sync");
         byte[] bytes = pdfBytes();
         AcquiredDocument doc = new AcquiredDocument(
                 new ContentRef("file", "file:///tmp/scan.pdf", "application/pdf", bytes.length, Instant.now()),
@@ -170,24 +168,23 @@ class ExtractionStageGrpcTest {
     }
 
     @Test
-    void shouldFallBackWhenPlaneReturnsTerminalFailureWithoutException() {
+    void shouldFailWhenPlaneReturnsTerminalFailureWithoutException() {
         mockService.syncResult = ExtractionResult.newBuilder()
                 .setOperationId("op-2")
                 .setStatus(ExtractionStatus.STATUS_FAILED)
                 .build();
 
         ObjectStorePort objectStore = mock(ObjectStorePort.class);
-        ExtractionStage stage = buildStage(objectStore, "sync", ExtractionFallbackPolicy.FALLBACK_LOCAL_TIKA);
+        ExtractionStage stage = buildStage(objectStore, "sync");
 
-        byte[] bytes = "hello from tika fallback".getBytes();
+        byte[] bytes = "plane failure input".getBytes();
         AcquiredDocument doc = new AcquiredDocument(
                 new ContentRef("file", "file:///tmp/note.txt", "text/plain", bytes.length, Instant.now()),
                 bytes, "sha", "text/plain", "file:///tmp/note.txt", UUID.randomUUID());
 
-        ParsedDocument parsed = stage.apply(doc, new StageContext(TENANT, "job-2", null));
-
-        assertThat(parsed.documentPayload()).isNull();
-        assertThat(parsed.text()).contains("hello from tika fallback");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> stage.apply(doc, new StageContext(TENANT, "job-2", null)))
+                .isInstanceOf(org.synanton.extraction.client.StructuredExtractionRequiredException.class);
     }
 
     private static byte[] pdfBytes() {
@@ -209,14 +206,11 @@ class ExtractionStageGrpcTest {
         }
     }
 
-    private ExtractionStage buildStage(ObjectStorePort objectStore, String mode, ExtractionFallbackPolicy policy) {
-        ExtractionClientProperties props = new ExtractionClientProperties(
-                true, endpoint, mode, 5, 1, "local-tika", "NORMAL");
+    private ExtractionStage buildStage(ObjectStorePort objectStore, String mode) {
+        ExtractionClientProperties props = new ExtractionClientProperties(true, endpoint, mode, 5, 1, "NORMAL");
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         ExtractionPlaneClient client = new ExtractionPlaneClient(props, new ExtractionClientMetrics(registry));
-        return new ExtractionStage(
-                client, new LocalTikaFallbackExtractor(), policy,
-                new ExtractionClientMetrics(registry), objectStore, HOT_BUCKET);
+        return new ExtractionStage(client, objectStore, HOT_BUCKET);
     }
 
     private static final class MockExtractionService extends ExtractionServiceGrpc.ExtractionServiceImplBase {

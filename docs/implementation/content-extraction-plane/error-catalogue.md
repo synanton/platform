@@ -31,7 +31,7 @@ last_reviewed: "2026-08-24"
 | `ERROR_INVALID_OBJECT_REFERENCE` | no | The object reference is structurally invalid: empty bucket or key, malformed sha256, non-positive size. | Fix the reference. |
 | `ERROR_OBJECT_NOT_FOUND` | no | Reference well-formed, object absent or unreadable by the plane. | Confirm the object exists and the plane has access. Do not retry unchanged. |
 | `ERROR_OBJECT_CHANGED` | no | The object no longer matches the supplied sha256. | Re-read the source and submit a new request with the current digest. Never silently accept the new bytes - the result would not match what the caller asked about. |
-| `ERROR_UNSUPPORTED_MEDIA_TYPE` | no | This plane cannot process the media type at all. | Consult `GetCapabilities`. Apply the caller's own fallback policy (`local-tika`, `partial`, or `fail`). |
+| `ERROR_UNSUPPORTED_MEDIA_TYPE` | no | This plane cannot process the media type at all. | Consult `GetCapabilities`. The platform fails the extraction item; it does not substitute a local extractor. |
 | `ERROR_UNSUPPORTED_OPTION` | no | A requested option cannot be supported for this content. | Prefer inspecting `feature_states`: an unsupported *feature* is reported per-feature without failing the whole operation. This code is for options that make the request itself unsatisfiable. |
 | `ERROR_REJECTED_CAPACITY` | **yes** | Admission refused. | Back off and retry **with the same idempotency key**. `GetCapacity` is advisory - a prior `CAPACITY_AVAILABLE` does not reserve anything. |
 | `ERROR_EXPIRED` | no | `expires_at` passed. | A lifecycle outcome, not a technical failure (§12). Resubmit with a new expiry if the result is still wanted. Auto-retry would re-run work whose deadline the caller declared passed. |

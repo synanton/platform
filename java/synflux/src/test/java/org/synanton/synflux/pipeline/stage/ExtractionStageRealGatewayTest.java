@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.synanton.extraction.client.ExtractionClientMetrics;
 import org.synanton.extraction.client.ExtractionClientProperties;
-import org.synanton.extraction.client.ExtractionFallbackPolicy;
 import org.synanton.extraction.client.ExtractionPlaneClient;
-import org.synanton.extraction.client.LocalTikaFallbackExtractor;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.pipeline.StageContext;
@@ -125,16 +123,13 @@ class ExtractionStageRealGatewayTest {
     }
 
     private ExtractionStage buildStage() {
-        ExtractionClientProperties props = new ExtractionClientProperties(
-                true, "localhost:" + GATEWAY_GRPC_PORT, "sync", 30, 1, "local-tika", "NORMAL");
+        ExtractionClientProperties props = new ExtractionClientProperties(true, "localhost:" + GATEWAY_GRPC_PORT, "sync", 30, 1, "NORMAL");
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         ExtractionPlaneClient client = new ExtractionPlaneClient(props, new ExtractionClientMetrics(registry));
         MinioObjectStoreAdapter objectStore = new MinioObjectStoreAdapter(
                 new SynvaultObjectStoreProperties(
                         "http://localhost:" + MINIO_PORT, "us-east-1", true, "minioadmin", "minioadmin", HOT_BUCKET));
-        return new ExtractionStage(
-                client, new LocalTikaFallbackExtractor(), ExtractionFallbackPolicy.STRUCTURED_REQUIRED,
-                new ExtractionClientMetrics(registry), objectStore, HOT_BUCKET);
+        return new ExtractionStage(client, objectStore, HOT_BUCKET);
     }
 
     private AcquiredDocument buildAcquiredDocumentFromRealFixture() throws Exception {
