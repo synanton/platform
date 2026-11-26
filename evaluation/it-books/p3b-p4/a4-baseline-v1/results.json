@@ -1,0 +1,65 @@
+{
+  "runId" : "regex-baseline-a4-v1",
+  "provider" : "regex",
+  "configuration" : "EXTRACTION_PROVIDER=regex",
+  "a2Version" : "it-books-a2-v1",
+  "inputBytes" : 1833,
+  "evidenceContract" : "p3a-evidence-binding-v1",
+  "evidenceBinding" : {
+    "entity:RESOLVED" : 70,
+    "relation:RESOLVED" : 3
+  },
+  "stages" : {
+    "mentionExtraction" : {
+      "predicted" : 70,
+      "expected" : 22,
+      "matchedExactSpan" : 6,
+      "missing" : 16,
+      "unmatchedPredicted" : 64,
+      "precision" : 0.08571428571428572,
+      "recall" : 0.2727272727272727,
+      "f1" : 0.13043478260869562,
+      "exactSpanAndType" : 2,
+      "typeAccuracyAmongMatched" : 0.3333333333333333,
+      "matchingRule" : "one-to-one exact source + document UTF-16 span; type is scored separately"
+    },
+    "canonicalResolution" : {
+      "available" : false,
+      "mapped" : 0,
+      "unresolved" : 70,
+      "incorrect" : 0,
+      "mentionToAnnotationMatches" : 6,
+      "reason" : "A8 deterministic canonical resolution is not implemented; A4 records the unresolved baseline only"
+    },
+    "relationCandidates" : {
+      "predicted" : 3,
+      "acceptedA2" : 8,
+      "matchedAccepted" : 0,
+      "matchedRejected" : 0,
+      "matchedUnjudged" : 0,
+      "falsePositives" : 3,
+      "falseNegatives" : 8,
+      "precision" : 0.0,
+      "recall" : 0.0,
+      "f1" : 0.0,
+      "ontologyValid" : 0,
+      "unknownPredicates" : 3,
+      "domainRangeViolations" : 0,
+      "missingEndpoints" : 0,
+      "judgmentRule" : "accepted matches require both A2 endpoint mentions and exact predicate; REJECTED and UNJUDGED remain distinct; missing predictions are not negative judgments"
+    },
+    "isolatedGraphPersistence" : {
+      "regexAcceptedCandidates" : 0,
+      "regexPersistedEdges" : 0,
+      "regexRejectedCandidates" : 3,
+      "productionGraphWrites" : false,
+      "note" : "A5-valid, endpoint-resolved regex candidates are persisted by the isolated GraphWriter test; this run produced none"
+    }
+  },
+  "a2Context" : {
+    "accepted" : 8,
+    "judgmentEvaluation" : "EVALUATED_SEPARATELY_BY_STAGE",
+    "rejected" : 8,
+    "unjudged" : 1
+  }
+}

@@ -69,3 +69,12 @@ tasks.register<JavaExec>("regexBaselineSmoke") {
     mainClass.set("org.synanton.synflux.evaluation.RegexBaselineSmoke")
     workingDir = rootProject.projectDir
 }
+
+tasks.register<JavaExec>("a4RegexBaseline") {
+    group = "verification"
+    description = "Run the reproducible A4 regex baseline evaluation"
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("org.synanton.synflux.evaluation.RegexBaselineA4")
+    workingDir = rootProject.projectDir
+}
