@@ -12,9 +12,9 @@ until two storage/cleanup decisions are made**:
 
 1. **Longhorn is degraded.** Only node2 and node3 have Longhorn disks; node1 has no
    registered disk. `/mnt/longhorn` exists on node1's root filesystem but is not a mountpoint
-   or Longhorn disk (see §1.1). Existing 3-replica volumes are attached but `degraded`. A new
-   3-replica Loki volume would inherit that state. Use a dedicated 2-replica policy for Loki,
-   or restore/register a verified node1 disk and repair existing volumes first.
+   or Longhorn disk (see §1.1). Existing 3-replica volumes are attached but `degraded`. Stage 1
+   will use a dedicated 2-replica policy on node2/node3 and will not claim HA; node1 is
+   excluded from the storage design.
 2. **The GPU plane is not in a clean running state after maintenance.** `gpu-plane` deployments
    are scaled to zero and 653 pod objects are `ContainerStatusUnknown`/`Unknown`. Do not size the
    first log stack against the historical GPU workload; clean up and re-establish the workload
@@ -88,6 +88,55 @@ reviewed until it is either committed through review or explicitly excluded.
 - Prometheus is scaled to 0; the Metrics API is unavailable.
 - Traefik NodePort + manual TLS remains; no cert-manager or SSO.
 - Stage 1 has not been authorized.
+
+## 1.2 Storage and recovery decision — 2026-11-26
+
+### Decision: do not use node1 for Stage 1 storage
+
+Stage 1 will deliberately use the existing node2/node3 Longhorn disks and will make **no
+high-availability claim**. node1 is not a storage node.
+
+Verified basis:
+
+| Node | Longhorn disk | Evidence |
+|---|---|---|
+| node2 | `/mnt/longhorn` on `/dev/nvme1n1p1` ext4 | mountpoint; 229G total, 212G available; Longhorn disk ready/schedulable |
+| node3 | `/mnt/longhorn` on `/dev/nvme1n1p1` ext4 | mountpoint; 229G total, 213G available; Longhorn disk ready/schedulable |
+| node1 | none | `/mnt/longhorn` is a root-owned directory on root ext4; not a mountpoint; Longhorn has no disk configured |
+
+The proposed Loki PVC is 20Gi plus a 2Gi Grafana PVC, with a dedicated **2-replica** Longhorn
+policy. Two replicas across node2/node3 tolerate one of those two disks failing; they do not
+provide full HA. Existing volumes that request 3 replicas remain degraded because only two
+Longhorn disks exist; Stage 1 must not inherit that failure state silently.
+
+### Backup decision: blocked, not satisfied by nfs-cold
+
+No Longhorn backup target is configured (`backupTargetURL` is empty). The existing
+`nfs-cold` provisioner is not evidence of a usable backup target:
+
+- it is configured for `192.168.10.31:/mnt/cold/nfs-cold`;
+- `/mnt/cold/nfs-cold` on node1 is a directory on the root ext4 filesystem, not the
+  WD6000 data disk;
+- the only observed NFS export is `/mnt/WD6000/nfs_share`, a 777 personal-data share with
+  `no_root_squash`, not a dedicated Synanton backup path;
+- `/mnt/WD6000` is a 5.5T ext4 disk with about 2.2T available, but its exported share
+  contains personal data and must not be used as a Longhorn backup target by default.
+
+Therefore Stage 1 backup is **not approved**. A dedicated, non-personal export (or another
+independent backup target) must be created and a sample restore demonstrated before Loki
+persistence is relied upon. A directory, a provisioner Deployment, or a successful mount is
+not a restore proof.
+
+### Stage 1 storage gate
+
+- Create/repair a dedicated 2-replica Longhorn policy for Loki; do not use the default
+  3-replica policy while only node2/node3 have disks.
+- Verify the Loki volume is `healthy` (not `degraded`) after creation and after restart.
+- Confirm total scheduled capacity, including existing volumes, remains within node2/node3
+  free space; 20Gi Loki + 2Gi Grafana is small, but the existing degraded volumes must be
+  accounted for.
+- Do not use node1 root filesystem as storage capacity.
+- Do not claim backup/recovery until a dedicated target and sample restore are demonstrated.
 
 ## 2. Inventory scope and evidence
 
@@ -453,14 +502,17 @@ Additional gate after the 2026-11-26 update:
 
 ## 14. Open questions / blockers
 
-1. Restore node1 Longhorn disk or accept 2-replica degraded durability for Loki?
+1. Stage 1 uses node2/node3 2-replica Longhorn; node1 root FS is excluded. Confirm the
+   dedicated 2-replica policy and repair/accept the existing degraded volumes.
 2. What hostname/DNS and TLS issuance convention should Grafana use?
 3. Is the Grafana admin account sufficient, or is an identity provider expected later?
 4. Which namespaces are in the initial collection scope?
 5. How should stale `gpu-plane` pods be cleaned up, and when will GPU workloads return?
 6. What is the approved retention/access model for tenant-specific logs?
 7. Should the existing Prometheus deployment be restored in Stage 1 or left for Stage 3?
-8. Is a Longhorn backup target planned, or is Loki explicitly non-backed-up operational data?
+8. Which dedicated backup target will be approved? The current `nfs-cold` path and the
+   personal WD6000 share are not acceptable. Loki is not to be treated as backed up until a
+   sample restore succeeds.
 
 ## 15. Boundaries
 
