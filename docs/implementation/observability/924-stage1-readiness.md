@@ -11,7 +11,7 @@
 | Grafana DNS/TLS identity | Decision recorded; operator DNS/cert issuance pending | `grafana.homelab.local`; internal CA; 1-year server cert; rotate 30 days before expiry |
 | LAN-only exposure | Design recorded; perimeter control pending | Traefik NodePort on private `192.168.10.0/24`; no public NAT/DNS evidence; firewall rule is external to cluster |
 | Backup target | Approved target chosen; export not configured | Dedicated WD6000 path exists and is writable; NFS export requires node1 root |
-| Backup/restore proof | **Blocked** | Backup target configured; test backup completed; restore fails on Longhorn NFS client ACL |
+| Backup/restore proof | **Verified for test volume; Loki not deployed** | Full backup + restore digest match; target and test cleanup completed |
 | NetworkPolicy/RBAC | Proposed; not deployed/tested | No `observability` namespace exists; no traffic test possible without deployment |
 | Tenant-log isolation | Policy recorded; access model pending | no tenant-specific logs may be exposed before tenant-scoped access |
 | Retention/resource limits | Calculated; verification pending deployment | 2.7 MB/hour sample; 20Gi/14d Loki; CPU/memory table below |
@@ -102,45 +102,33 @@ Current evidence:
 
 The personal share and the root-filesystem `nfs-cold` path remain forbidden as backup targets.
 
-### 3.2 Restore blocker: pod-network NFS source
+### 3.2 Restore result: verified
 
-The restore attempt failed before data verification:
+After adding the Calico pod CIDR to the NFS export, the backup-volume record synced and the
+restore completed.
 
-```text
-Mounting arguments: -t nfs4 ... 192.168.10.31:/mnt/WD6000/longhorn-backup ...
-Output: mount.nfs4: access denied by server while mounting
-```
+| Step | Evidence |
+|---|---|
+| Source file | `longhorn-restore-proof`, SHA-256 `c45b6b87e6a000bf4c7b458472b28469a6cb6fbc59d3fa50da17f3b5bd7ed4b7` |
+| Snapshot | `lh-restore-proof-snap-1795682922` |
+| Backup | `lh-restore-proof-backup-1795682922`, state `Completed`, target `nfs://192.168.10.31:/mnt/WD6000/longhorn-backup` |
+| Restore volume | `pvc-e758dd0a-6584-4f8e-872c-39354491ed72`, 2 replicas, reached `healthy` and attached |
+| Restored file | `longhorn-restore-proof
+` |
+| Restored SHA-256 | `c45b6b87e6a000bf4c7b458472b28469a6cb6fbc59d3fa50da17f3b5bd7ed4b7` — exact match |
+| Cleanup | Restore pod, PVC/PV/volume, StorageClasses, and test namespace deleted |
 
-Longhorn manager runs with pod-network addresses (for example `172.16.166.178` on node1), while
-the export currently allows only `192.168.10.0/24`. Host-side mount tests passed because they
-used a node address, not the pod-network source.
+The export currently allows `192.168.10.0/24` and the Calico pod CIDR `172.16.0.0/16` for the
+dedicated path only. The personal `nfs_share` and `nfs-cold` remains unused.
 
-### 3.3 Required operator action (root on node1)
+A single disposable test backup remains in the dedicated backup target for audit/review. It can
+be removed after review; it is not Loki data.
 
-Back up the export file, remove the old dedicated line, and re-add it with the pod CIDR:
+### 3.3 Recovery claim boundary
 
-```bash
-sudo cp -a /etc/exports "/etc/exports.bak.$(date +%Y%m%d-%H%M%S)"
-
-sudo sed -i '\|^/mnt/WD6000/longhorn-backup |d' /etc/exports
-
-EXPORT_LINE='/mnt/WD6000/longhorn-backup 192.168.10.0/24(rw,sync,no_subtree_check,no_root_squash) 172.16.0.0/16(rw,sync,no_subtree_check,no_root_squash)'
-printf '%s\n' "$EXPORT_LINE" | sudo tee -a /etc/exports >/dev/null
-
-sudo exportfs -ra
-sudo exportfs -s | grep -F '/mnt/WD6000/longhorn-backup'
-```
-
-`172.16.0.0/16` is required for the Calico pod network used by Longhorn managers/engines. Do
-not use `nfs_share`. After the export change, retry the restore test.
-
-### 3.4 Restore proof status
-
-Steps 1–4 succeeded (target, test volume, snapshot, backup). Steps 5–8 remain blocked by the
-NFS client ACL above. All disposable PVC/PV/volume, test pods, test StorageClasses, and the test
-namespace were deleted. The completed test backup remains in the target for retry.
-
-**Status: BLOCKED.** Loki is not recoverable.
+The backup/restore **mechanism** is verified with a test volume. Loki is not deployed, so the
+planned Loki service itself is not yet demonstrated recoverable. Stage 1 deployment remains
+unauthorized, and the production StorageClass remains unapplied.
 
 ## 4. NetworkPolicy, RBAC, and tenant-log isolation
 
