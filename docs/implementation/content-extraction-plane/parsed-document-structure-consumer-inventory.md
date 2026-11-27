@@ -6,7 +6,8 @@ PR #963 / merge `bda6ed72` migrated `PersistStage` to canonical SCEP evidence.
 
 ## 1. Repository-wide usage
 
-`ParsedDocument.structure()` has exactly one production caller:
+Before #963, `PersistStage.inputJson()` was the sole production caller of
+`ParsedDocument.structure()`. No production callers remain after the migration.
 
 | Consumer | Classification | Current behavior |
 |---|---|---|
