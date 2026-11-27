@@ -9,7 +9,7 @@ This is the first implementation slice of the R0.2 structural contract. It does 
 ```text
 bytes + source identity
         ↓
-DocumentStructureService        selects by media type
+DocumentStructureService        local conformance/evaluation only
         ↓
 DocumentFormatAdapter          PDFBox | native Markdown
         ↓
@@ -53,7 +53,7 @@ Every element records `parserName` and `parserVersion`; the document also record
 
 - PDF heading detection, tables, figures and multi-column reading order are deferred; PDF output is line-level and page-chunked.
 - Markdown page/bbox evidence is intentionally unavailable, not approximated.
-- The service is not yet wired into the existing extraction stage. Wiring and a rights-cleared fixture run remain P1 work.
+- `DocumentStructureService` remains a local conformance/evaluation tool. It is not part of the production extraction path.
 - A2 remains the independent evidence authority for P3/P4; this code does not derive fixtures from extraction output.
 
 ## Verification
@@ -62,27 +62,19 @@ Every element records `parserName` and `parserVersion`; the document also record
 
 Tests cover Markdown structure/offsets, deterministic IDs, generated-PDF pages/bboxes/offsets, media-type normalization, and unsupported formats.
 
-## Extraction-stage integration
+## Production extraction and local conformance
 
-`ExtractionStage` now parses supported PDF/Markdown through `DocumentStructureService` and attaches
-the parser-neutral `DocumentStructure` to `ParsedDocument`. Unsupported media types are explicit:
-`structural_status=UNSUPPORTED`; no synthetic structure is invented. Supported-format structural
-failure is fail-closed.
+Production `ExtractionStage` now consumes the canonical SCEP `DocumentPayload`. It does **not**
+invoke `DocumentStructureService`, construct a local parser, or attach local structural metadata
+to `ParsedDocument`. `ParsedDocument.structure()` remains null on the production path.
 
-The extraction record carries:
+The local structure service remains available for deterministic P1/A2/A4 conformance and evidence
+evaluation. It is not a production parser fallback.
 
-- structural contract version (`R0.2`)
-- source/document/version identity
-- parser name/version and normalization version
-- chunking configuration (`pdf-page-v1` or `markdown-heading-v1`)
-- element/chunk counts
-- canonical structural text SHA-256 and extraction text SHA-256
-- `text_projection=EXTRACTION_TEXT` when downstream semantic chunking operates on extraction text
-
-The hashes make the text projection explicit. Existing semantic chunk IDs are **not** structural
-chunk IDs. P3 evidence binding must use `StructuralEvidenceResolver` and the structural artifact,
-not assume semantic chunks are structural chunks. A future chunk-mapping layer can replace this
-projection record without changing R0.2.
+Production structural metadata is therefore absent from the existing record. Future consumers must
+use the canonical extraction payload and its evidence fields; they must not assume the legacy
+structural record is populated. The P1 structural artifact remains the evaluation reference used by
+the local conformance tests.
 
 ## Conformance evidence
 

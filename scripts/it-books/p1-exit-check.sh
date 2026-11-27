@@ -6,4 +6,4 @@ cd "$PLATFORM_ROOT"
 ./gradlew :java:synflux:test \
   --tests 'org.synanton.synflux.document.P1ExitConformanceTest' \
   --tests 'org.synanton.synflux.document.DocumentStructureServiceTest' \
-  --tests 'org.synanton.synflux.pipeline.stage.ExtractionStageStructureTest'
+  --tests 'org.synanton.synflux.pipeline.stage.ExtractionStageProductionPathTest'
