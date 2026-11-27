@@ -64,4 +64,7 @@ tasks.named<Test>("test") {
     // 028b.8 documented run holds 50 Lucene indexes + query fan-out in worker;
     // 10g cap (64G host). Cap only, not tuning.
     maxHeapSize = "10g"
+    // Shared Cassandra fixture uses one keyspace and class-level truncation.
+    maxParallelForks = 1
+    systemProperty("junit.jupiter.execution.parallel.enabled", "false")
 }
