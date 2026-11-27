@@ -50,6 +50,13 @@ dependencies {
     ))
 }
 
+tasks.test {
+    useJUnitPlatform()
+    // Shared Cassandra fixture uses one keyspace and class-level truncation.
+    maxParallelForks = 1
+    systemProperty("junit.jupiter.execution.parallel.enabled", "false")
+}
+
 tasks.named("compileTestJava") {
     dependsOn(":java:synflux:classes")
 }

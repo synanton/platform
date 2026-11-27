@@ -1,5 +1,6 @@
 package org.synanton.relix.identity;
 
+import org.synanton.relix.RelixCassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,14 +12,11 @@ import org.synanton.ingestioncache.activation.ActivationRecord;
 import org.synanton.ingestioncache.activation.ActivationState;
 import org.synanton.ingestioncache.activation.CassandraSourceActivationStore;
 import org.synanton.ingestioncache.activation.SourceActivationStore;
-import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.relix.adapter.out.graph.neo4j.DriverCypherExecutor;
 import org.synanton.relix.adapter.out.metadata.Neo4jSourceFenceStore;
-import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ActivateRevisionIntegrationTest {
 
-    private static CassandraContainer cassandra;
     private static Neo4jContainer<?> neo4j;
     private static CqlSession session;
     private static Driver driver;
@@ -36,17 +33,8 @@ class ActivateRevisionIntegrationTest {
 
     @BeforeAll
     static void startStores() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
-        cassandra.start();
-        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
-        try (CqlSession admin = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build();
-        SchemaInstaller.install(session);
+        session = RelixCassandraTestSupport.session();
+        RelixCassandraTestSupport.reset();
         activations = new CassandraSourceActivationStore(session);
 
         neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.26")).withoutAuthentication();
@@ -62,12 +50,6 @@ class ActivateRevisionIntegrationTest {
         }
         if (neo4j != null) {
             neo4j.stop();
-        }
-        if (session != null) {
-            session.close();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
         }
     }
 
