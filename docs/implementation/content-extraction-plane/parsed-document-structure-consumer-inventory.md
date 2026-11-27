@@ -1,20 +1,23 @@
 # ParsedDocument.structure() Consumer Inventory
 
-**Status:** Inventory and migration contract only. No production implementation.  
-**Baseline:** PR #961 / merge `9a8f6442` removes local parsing from production `ExtractionStage`.
+**Status:** Migration complete; local conformance/evaluation retained.
+**Baseline:** PR #961 / merge `9a8f6442` removed local parsing from production `ExtractionStage`.
+PR #963 / merge `bda6ed72` migrated `PersistStage` to canonical SCEP evidence.
 
 ## 1. Repository-wide usage
 
-`ParsedDocument.structure()` has exactly one production caller:
+Before #963, `PersistStage.inputJson()` was the sole production caller of
+`ParsedDocument.structure()`. No production callers remain after the migration.
 
 | Consumer | Classification | Current behavior |
 |---|---|---|
-| `PersistStage.inputJson()` | Production | Writes legacy `structural_*` fields. After #961 the field is null, so production records only `structural_status=UNSUPPORTED`. |
-| `PersistStageTest.writesStructuralProvenanceIntoProcessingRunInput` | Test | Constructs a local `DocumentStructure` to exercise the legacy JSON path. |
+| `PersistStage.inputJson()` | Production | Migrated in #963; writes canonical `extraction_*` fields and does not read `ParsedDocument.structure()`. |
+| `PersistStageTest.persistsCanonicalPayloadEvidenceWithoutLegacyStructure` | Test | Exercises canonical persistence and asserts legacy fields are absent. |
 | `P1ExitConformanceTest` | Conformance | Asserts production `parsed.structure()` is null; local structure is checked separately. |
 | `ExtractionStageProductionPathTest` | Production-path guard | Asserts no local `DocumentStructureService` construction and null structure. |
 
-`ParsedDocument.withStructure(...)` has no production caller and is used only by `PersistStageTest`.
+`ParsedDocument.withStructure(...)` has no production or test caller after #963; it remains as a
+compatibility method for local structural experiments.
 
 Direct `DocumentStructure`/`DocumentStructureService` consumers are evaluation/conformance only:
 
@@ -26,7 +29,7 @@ Direct `DocumentStructure`/`DocumentStructureService` consumers are evaluation/c
 | `EvidenceBinderTest` | Evaluation |
 | `RegexBaselineSmoke`, `RegexBaselineA4`, `GpuSemanticEvaluation` | Evaluation |
 | `StructuralEvidenceResolver`, `StructuralArtifactDigest`, `EvidenceBinder` | Evaluation library; no production caller |
-| `PersistStageTest` local structure fixture | Test only |
+| `PersistStageTest` | Canonical persistence tests; no local structure fixture |
 
 ## 2. Canonical evidence available
 
