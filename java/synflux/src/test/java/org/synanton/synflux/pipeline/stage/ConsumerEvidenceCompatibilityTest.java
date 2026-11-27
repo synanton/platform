@@ -68,7 +68,7 @@ class ConsumerEvidenceCompatibilityTest {
                 .setSource(org.synanton.extraction.v1.SourceDescriptor.newBuilder()
                         .setMediaType("text/markdown")
                         .setSourceFormat("markdown")
-                        .setSourceDigest("a".repeat(64)))
+                        .setSourceDigest(sha256(SOURCE_BYTES)))
                 .addElements(DocumentElement.newBuilder()
                         .setId("e1")
                         .setType(DocumentElementType.ELEMENT_HEADING)
