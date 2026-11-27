@@ -67,6 +67,12 @@ The source-span method reads only:
 
 It does not search parser text, flattened text, normalized text, or rendered output.
 
+Coordinate-space boundary:
+
+- This milestone supports only `ORIGINAL_SOURCE` with `UTF8_BYTE`.
+- Derived text layers are out of scope; they require their own identity, digest, and verified correspondence contract.
+- Unsupported coordinate spaces are rejected, not silently downgraded.
+
 ## 3. Evidence outcome contract
 
 ### EXACT
@@ -78,7 +84,7 @@ Return resolved evidence only when:
 - location precision is `LOCATION_PRECISION_EXACT`;
 - reproducibility is `REPRODUCIBILITY_EXACT_FROM_SOURCE` or a documented equivalent;
 - unit is `UTF8_BYTE`;
-- coordinate space is `ORIGINAL_SOURCE` (Markdown) or a valid derived text layer;
+- coordinate space is `ORIGINAL_SOURCE` only for this milestone;
 - start/end are in-bounds, half-open, non-empty, and slice the expected source bytes;
 - source digest/version match.
 
@@ -86,31 +92,40 @@ Return resolved evidence only when:
 
 Return approximate evidence only when:
 
-- the producer explicitly marks precision `APPROXIMATE`; or
-- reproducibility is explicitly `DEPENDS_ON_PARSER`/`DEPENDS_ON_NORMALIZATION` and the source range is still present and in-bounds.
+- the producer explicitly marks precision `APPROXIMATE`;
+- unit is `UTF8_BYTE` and coordinate space is `ORIGINAL_SOURCE`;
+- the range is in-bounds and non-empty;
+- a testable mapping exists between the declared approximate representation and the original source bytes;
+- the approximated portion is explicitly identified and validated; and
+- reproducibility/limitation is retained.
 
-Approximate evidence must retain the grounding/limitation; it must not be relabeled exact.
+`DEPENDS_ON_PARSER` or `DEPENDS_ON_NORMALIZATION` alone is not sufficient. An in-bounds range can still reference the wrong text. If the mapping cannot be validated, reject the candidate; do not downgrade it to approximate.
 
 ### UNAVAILABLE
 
-Return unavailable/unmapped when:
+Return unavailable/unmapped only when no usable source evidence exists:
 
-- source identity is missing;
 - no source location exists for the element;
 - location precision is `UNAVAILABLE`;
-- the range is out-of-bounds, empty, or unsupported coordinate unit/space;
-- the source digest/version does not match.
+- source evidence is absent without contradiction.
 
-### Rejection rules
+Unavailable is not an error path for malformed evidence.
 
-Reject rather than downgrade or infer when:
+### INVALID / REJECTED
 
-- a canonical-text offset is supplied as a source offset;
-- a range is derived from parser/flattened/normalized text;
-- the element has multiple source locations and the candidate does not identify one unambiguously;
+Return invalid/rejected when evidence is malformed, contradictory, or contract-violating:
+
 - source identity is missing while a location claims `INHERIT_DOCUMENT`;
-- digest/version mismatch occurs;
-- a text range is requested for a format/source lacking a verified text layer.
+- source digest/version mismatch;
+- out-of-bounds, empty, reversed, or non-half-open ranges;
+- unsupported unit/coordinate space;
+- canonical-text offset supplied as a source offset;
+- range derived from parser/flattened/normalized text;
+- multiple source locations without unambiguous selection;
+- approximate mapping cannot be validated against source bytes;
+- derived text-layer range in this milestone.
+
+Invalid evidence maps to `EvidenceBinder.Status.MISBOUND` with an explicit reason; it must not be silently mapped to `UNMAPPED`.
 
 Absent evidence, unknown provenance, and known absence remain distinct:
 
@@ -151,12 +166,15 @@ Source evidence must originate from producer-verified `SourceLocation` records a
 2. CRLF/CR source preserves original bytes while parser text remains normalized.
 3. Supplementary Unicode and combining marks preserve byte boundaries.
 4. Approximate location returns approximate grounding and retains limitation.
-5. Unavailable location returns unavailable/unmapped.
-6. Missing source identity is rejected.
-7. Out-of-bounds, empty, reversed, or unsupported unit/space ranges are rejected.
-8. Canonical offset supplied as source offset is rejected.
-9. Multiple locations require explicit unambiguous selection.
-10. Text search cannot recover a missing source range.
+5. Missing source location returns unavailable/unmapped.
+6. Location precision `UNAVAILABLE` returns unavailable/unmapped.
+7. Missing source identity with inherit binding is invalid/misbound.
+8. Digest/version mismatch is invalid/misbound, not unavailable.
+9. Out-of-bounds, empty, reversed, unsupported unit/space, and non-UTF8/derived-layer ranges are invalid/misbound.
+10. Canonical offset supplied as source offset is invalid.
+11. Approximate evidence requires a validated mapping; parser/normalization dependency alone is insufficient.
+12. Multiple locations require explicit unambiguous selection.
+13. Text search cannot recover a missing source range.
 
 ### Regression checks
 
@@ -185,7 +203,7 @@ It must not contain:
 ## 8. Exit criteria
 
 - One consumer is selected and exercised against verified Markdown source spans.
-- Exact/approximate/unavailable outcomes are explicit and tested.
+- Exact, approximate, unavailable, and invalid/rejected outcomes are explicit and tested.
 - Existing P1/A2/A4 evaluation outputs remain reproducible.
 - No source offset is reconstructed from text.
 - The implementation scope is narrow enough for a single coherent PR.
