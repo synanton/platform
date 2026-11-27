@@ -97,7 +97,8 @@ class SourceSpanEvidenceBinderTest {
                 candidate("u", "loc-unavailable", EvidenceBinder.Grounding.EXACT, null)).status())
             .isEqualTo(EvidenceBinder.Status.UNMAPPED);
         assertThat(binder.bindSourceSpan(absent, BYTES,
-                candidate("a", "missing", EvidenceBinder.Grounding.EXACT, null)).status())
+                new EvidenceBinder.SourceSpanCandidate("a", "e1", null,
+                    EvidenceBinder.Grounding.EXACT, null)).status())
             .isEqualTo(EvidenceBinder.Status.UNMAPPED);
     }
 
@@ -128,6 +129,32 @@ class SourceSpanEvidenceBinderTest {
         assertThat(binder.bindSourceSpan(wrongText, BYTES,
                 candidate("t", "loc", EvidenceBinder.Grounding.EXACT, "not the source")).reason())
             .isEqualTo("EXPECTED_SOURCE_TEXT_MISMATCH");
+    }
+
+    @Test
+    void suppliedLocationIdWithNoAvailableLocationsIsMisbound() {
+        var noLocations = payloadWithDigest(null, DIGEST);
+        var result = binder.bindSourceSpan(noLocations, BYTES,
+            new EvidenceBinder.SourceSpanCandidate("missing", "e1", "loc-missing",
+                EvidenceBinder.Grounding.EXACT, null));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("UNKNOWN_SOURCE_LOCATION");
+    }
+
+    @Test
+    void duplicateMatchingLocationIdsAreMisbound() {
+        SourceLocation first = location("loc-1", 0, 9,
+            LocationPrecision.LOCATION_PRECISION_EXACT, Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+            CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE);
+        SourceLocation second = location("loc-1", 0, 9,
+            LocationPrecision.LOCATION_PRECISION_EXACT, Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+            CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE);
+        var result = binder.bindSourceSpan(payload(first, second), BYTES,
+            candidate("duplicate", "loc-1", EvidenceBinder.Grounding.EXACT, "# Heading"));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("DUPLICATE_SOURCE_LOCATION_ID");
     }
 
     @Test

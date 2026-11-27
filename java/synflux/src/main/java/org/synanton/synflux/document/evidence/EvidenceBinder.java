@@ -394,11 +394,16 @@ public final class EvidenceBinder {
             return sourceMisbound(candidate, "UNKNOWN_ELEMENT");
         }
         List<SourceLocation> allLocations = element.getSourceLocationsList();
+        boolean suppliedLocationId = candidate.locationId() != null
+            && !candidate.locationId().isBlank();
         if (allLocations.isEmpty()) {
+            if (suppliedLocationId) {
+                return sourceMisbound(candidate, "UNKNOWN_SOURCE_LOCATION");
+            }
             return sourceUnmapped(candidate, "SOURCE_LOCATION_ABSENT");
         }
         List<SourceLocation> locations;
-        if (candidate.locationId() == null || candidate.locationId().isBlank()) {
+        if (!suppliedLocationId) {
             if (allLocations.size() > 1) {
                 return sourceMisbound(candidate, "AMBIGUOUS_SOURCE_LOCATION");
             }
@@ -409,6 +414,9 @@ public final class EvidenceBinder {
                 .toList();
             if (locations.isEmpty()) {
                 return sourceMisbound(candidate, "UNKNOWN_SOURCE_LOCATION");
+            }
+            if (locations.size() > 1) {
+                return sourceMisbound(candidate, "DUPLICATE_SOURCE_LOCATION_ID");
             }
         }
         SourceLocation location = locations.getFirst();
