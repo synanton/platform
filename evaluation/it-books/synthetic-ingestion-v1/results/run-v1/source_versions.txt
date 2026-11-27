@@ -1,0 +1,6 @@
+
+ version_id                           | content_ref_id                       | extraction_status | graph_status | resolution_status | search_projected_at
+--------------------------------------+--------------------------------------+-------------------+--------------+-------------------+---------------------------------
+ 6937e6eb-0f26-570d-aed0-76b37c91cde1 | 73ca6582-709d-5239-a870-16bf2a22f021 |   KNOWLEDGE_READY |      PENDING |              null | 2026-11-26 14:35:26.780000+0000
+
+(1 rows)

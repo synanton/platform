@@ -1,0 +1,83 @@
+{
+  "runManifestVersion": "synthetic-ingestion-run-v1",
+  "runId": "synthetic-ingestion-v1-run1",
+  "gitCommit": "dce7e969",
+  "startedAt": "2026-11-26T14:35:21Z",
+  "fixture": {
+    "fixtureVersion": "synthetic-ingestion-v1",
+    "sourcePath": "evaluation/it-books/synthetic-ingestion-v1/source/distributed-systems-primer.md",
+    "sourceSha256": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "goldPath": "evaluation/it-books/synthetic-ingestion-v1/gold/manifest.json",
+    "goldSha256": "9bd2d17dfddd3954b181e67546ad67a015cba482c944cf0199e3029c6a6b3888"
+  },
+  "ontology": {
+    "ontologyId": "it-books",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"
+  },
+  "pipeline": {
+    "source": "existing local-real-demo API",
+    "composeProject": "synanton-synthetic-ingestion",
+    "profile": "local-real-demo",
+    "tenant": "synthetic-ingestion",
+    "extractionProvider": "regex",
+    "semanticModelInvoked": false,
+    "graphEnabled": false,
+    "productionGraphWrites": false
+  },
+  "source": {
+    "sourceId": "synthetic-distributed-systems-primer-v1",
+    "runId": "76203fc4-7314-3c37-b5e4-30a9ef05566f",
+    "operationId": "8fe0f7f8-11c2-49ff-b438-4c526316648f",
+    "operationStatus": "SUCCEEDED",
+    "operationOutcome": "PARTIAL",
+    "versionId": "6937e6eb-0f26-570d-aed0-76b37c91cde1",
+    "contentDigest": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "contentCacheReference": "v1:tenant_id=synthetic-ingestion&artifact_id=d8529323-d95e-469a-a959-a2cf1407c308&digest=sha256%3Adb4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063&generation=1&serializer_version=1"
+  },
+  "stages": {
+    "preflight": "COMPLETED",
+    "sourceRegistration": "COMPLETED",
+    "parsing": "FAILED",
+    "chunking": "FAILED",
+    "mentionExtraction": "PARTIAL",
+    "canonicalResolution": "NOT_RUN",
+    "relationExtraction": "PARTIAL",
+    "ontologyValidation": "NOT_RUN",
+    "evidenceBinding": "NOT_RUN",
+    "graphProjection": "NOT_RUN",
+    "negativeAssertions": "FAILED",
+    "retrieval": "CONDITIONAL"
+  },
+  "counts": {
+    "goldChunks": 14,
+    "generatedChunks": 2,
+    "fallbackChunks": 2,
+    "goldMentions": 25,
+    "emittedEntities": 94,
+    "goldRelations": 15,
+    "emittedRelations": 12,
+    "emittedIsA": 11,
+    "emittedUses": 1,
+    "forbiddenMetadataSurfaces": [
+      "Author",
+      "Edition",
+      "Document ID",
+      "SPDX-License-Identifier"
+    ]
+  },
+  "errors": [
+    "Content extraction produced 2 FALLBACK chunks with heading_level=0 and document offsets -1/-1.",
+    "Emitted metadata labels/content as candidates: Author, Edition, Document ID, SPDX-License-Identifier",
+    "Graph validation and resolution were not run."
+  ],
+  "checksums": {
+    "source.json": "4f0699edb43d36ae1b50225b5a1d7f2314dc71e19fe3b4ae0c0928affd761249",
+    "submit.json": "abef7ab2514a9b706793fe1cad37de5a3bd032bc856e88c2d94044562c838e73",
+    "operation.json": "34ead2a39f1b338ed55f6a27c0368dcf5ca489a1961fe7375481ed02985d0653",
+    "versions.json": "2cc91fa4b89c7344eab002859e0c08cf8e26db07ab621cea79c14c2490ccab25",
+    "chunks-summary.txt": "9da3fc6c0a76082701c1412c0c70cb046088d8c1032dd45b2776050a937fdfa6",
+    "extraction-table.txt": "93358eabab9792c3592c4d29f8ec9a68fee0311af4013c060b2e2387281524b8",
+    "extraction-summary.json": "cb38bc572222ebac649b2c407578f76bfdebef27fa437f1b4194e2caa83dd08e"
+  }
+}
