@@ -143,6 +143,21 @@ class SourceSpanEvidenceBinderTest {
     }
 
     @Test
+    void selectedLocationWithBlankIdIsMisbound() {
+        var payload = payload(location("", 0, 9,
+            LocationPrecision.LOCATION_PRECISION_EXACT,
+            Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+            CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE));
+
+        var result = binder.bindSourceSpan(payload, BYTES,
+            new EvidenceBinder.SourceSpanCandidate("blank", "e1", null,
+                EvidenceBinder.Grounding.EXACT, "# Heading"));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("SOURCE_LOCATION_ID_MISSING");
+    }
+
+    @Test
     void duplicateMatchingLocationIdsAreMisbound() {
         SourceLocation first = location("loc-1", 0, 9,
             LocationPrecision.LOCATION_PRECISION_EXACT, Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,

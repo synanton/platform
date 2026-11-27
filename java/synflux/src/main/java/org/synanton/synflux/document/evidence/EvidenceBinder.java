@@ -420,6 +420,9 @@ public final class EvidenceBinder {
             }
         }
         SourceLocation location = locations.getFirst();
+        if (location.getLocationId().isBlank()) {
+            return sourceMisbound(candidate, "SOURCE_LOCATION_ID_MISSING");
+        }
         if (location.getSourceBinding().getKind()
                 != org.synanton.extraction.v1.BindingKind.BINDING_KIND_INHERIT_DOCUMENT) {
             return sourceMisbound(candidate, "UNSUPPORTED_SOURCE_BINDING");
