@@ -39,22 +39,30 @@ class ConsumerEvidenceCompatibilityTest {
         var withSpans = new SemanticChunkStage(ChunkerConfig.defaults())
                 .apply(parsed(withEvidence), ctx());
 
-        assertThat(withEvidence.getSource().getSourceFormat()).isEqualTo("markdown");
+        assertThat(withEvidence.getSource()).isEqualTo(withoutEvidence.getSource());
+        assertThat(withoutEvidence.getElements(1).getSourceLocationsCount()).isZero();
         assertThat(withEvidence.getElements(1).getSourceLocationsCount()).isEqualTo(2);
         assertThat(withEvidence.getElements(1).getCanonicalTextRange())
                 .isEqualTo(org.synanton.extraction.v1.CanonicalTextRange.getDefaultInstance());
         assertThat(withEvidence.getProvenance())
                 .isEqualTo(org.synanton.extraction.v1.ExtractionProvenance.getDefaultInstance());
+        assertThat(withEvidence.getProjectionsList()).isEmpty();
         assertThat(withSpans.chunks()).hasSameSizeAs(baseline.chunks());
         assertThat(withSpans.chunks()).usingRecursiveComparison()
                 .isEqualTo(baseline.chunks());
-        assertThat(withSpans.chunks()).allSatisfy(chunk ->
-                assertThat(chunk.content()).doesNotContain("source range"));
+        assertThat(withSpans.chunks()).singleElement().satisfies(chunk -> {
+            assertThat(chunk.sourceElements()).containsExactly("e2");
+            assertThat(chunk.content()).doesNotContain("source range");
+        });
     }
 
     private static DocumentPayload payload(boolean withEvidence) {
         var builder = DocumentPayload.newBuilder()
                 .setMediaType("text/markdown")
+                .setSource(org.synanton.extraction.v1.SourceDescriptor.newBuilder()
+                        .setMediaType("text/markdown")
+                        .setSourceFormat("markdown")
+                        .setSourceDigest("a".repeat(64)))
                 .addElements(DocumentElement.newBuilder()
                         .setId("e1")
                         .setType(DocumentElementType.ELEMENT_HEADING)
@@ -65,10 +73,6 @@ class ConsumerEvidenceCompatibilityTest {
                         .setType(DocumentElementType.ELEMENT_PARAGRAPH)
                         .setText("A paragraph with evidence."));
         if (withEvidence) {
-            builder.setSource(org.synanton.extraction.v1.SourceDescriptor.newBuilder()
-                    .setMediaType("text/markdown")
-                    .setSourceFormat("markdown")
-                    .setSourceDigest("a".repeat(64)));
             builder.getElementsBuilder(1)
                     .addSourceLocations(location("span-e2-a", 10, 20))
                     .addSourceLocations(location("span-e2-b", 20, 40));

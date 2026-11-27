@@ -35,9 +35,11 @@ Added `ConsumerEvidenceCompatibilityTest` to prove:
 
 - A partial Markdown payload with source identity and source locations but no canonical/execution/projection data is accepted.
 - Multiple source locations do not alter chunk content, ordering, or source-element attribution.
-- Chunk output is identical with and without source locations.
-- Absent optional evidence does not cause fabricated canonical identity or execution provenance.
+- Chunk output is identical with and without source locations; both payloads carry the same source descriptor so only locations differ.
+- Absent optional evidence does not cause fabricated canonical identity, execution provenance, or projection data.
 - Existing strict chunking behavior remains unchanged.
+
+Boundary: this test constructs `ParsedDocument` directly to verify `SemanticChunkStage`. It does not prove the full `ExtractionStage` mapping path or opaque-payload preservation end to end; those remain inventory findings, not regression evidence.
 
 ## 4. Findings
 
