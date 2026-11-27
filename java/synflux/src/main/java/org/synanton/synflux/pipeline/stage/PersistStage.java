@@ -221,6 +221,8 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             input.put("extraction_payload_digest", descriptor.getOrDefault("payload_digest", ""));
         }
         if (payload != null) {
+            putIfPresent(input, "extraction_media_type", payload.getMediaType());
+            input.put("extraction_metadata", new TreeMap<>(payload.getMetadataMap()));
             if (payload.hasIdentity()) {
                 var identity = payload.getIdentity();
                 input.put("extraction_document_id", identity.getDocumentId());

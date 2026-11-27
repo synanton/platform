@@ -54,7 +54,8 @@ Replace legacy structural metadata with canonical extraction metadata:
 | `structural_source_id` | `source.source_uri` / source descriptor fields |
 | n/a | `identity.document_class`, `identity.document_version` |
 | `structural_source_version_id` | `source.source_version` |
-| `structural_media_type` | `source.media_type` |
+| `structural_media_type` | `payload.media_type`; `source.media_type` is retained separately |
+| n/a | `payload.metadata` (opaque document metadata) |
 | `structural_parser_name/version` | payload descriptor `processor_id/version`, `format`, `schema_digest`, `payload_digest` |
 | `structural_element_count` | `documentPayload.elementsCount` |
 | `structural_chunk_count` | derived from canonical chunking, not local parser |

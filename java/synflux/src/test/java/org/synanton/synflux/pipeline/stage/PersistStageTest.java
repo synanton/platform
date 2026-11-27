@@ -17,6 +17,7 @@ import org.synanton.extraction.v1.ExecutionLinkKind;
 import org.synanton.extraction.v1.ExecutionOutcome;
 import org.synanton.extraction.v1.ExtractionExecution;
 import org.synanton.extraction.v1.ExtractionProvenance;
+import org.synanton.extraction.v1.LossReport;
 import org.synanton.extraction.v1.ProjectionOutcome;
 import org.synanton.extraction.v1.QualityReport;
 import org.synanton.extraction.v1.QualityStatus;
@@ -84,6 +85,7 @@ class PersistStageTest {
         return DocumentPayload.newBuilder()
                 .setMediaType("text/markdown")
                 .setFlattenedText("hello")
+                .putMetadata("title", "Test document")
                 .setIdentity(DocumentIdentity.newBuilder()
                         .setDocumentId("doc-1")
                         .setDocumentClass(DocumentClass.DOCUMENT_CLASS_TEXT)
@@ -130,7 +132,12 @@ class PersistStageTest {
                         .setContractVersion("2.0")
                         .setOutcome(ProjectionOutcome.PROJECTION_OUTCOME_UNSUPPORTED)
                         .setUnsupportedReason("tables flattened")
-                        .setDigest("sha256:proj"))
+                        .setDigest("sha256:proj")
+                        .setLoss(LossReport.newBuilder()
+                                .addDropped("table borders")
+                                .addApproximated("merged cells")
+                                .addUnsupported("embedded images")
+                                .addReasons("markdown limitations")))
                 .build();
     }
 
@@ -213,6 +220,8 @@ class PersistStageTest {
             .contains("\"extraction_payload_format\":\"SERIALIZATION_PROTOBUF\"")
             .contains("\"extraction_schema_digest\":\"sha256:schema\"")
             .contains("\"extraction_payload_digest\":\"sha256:payload\"")
+            .contains("\"extraction_media_type\":\"text/markdown\"")
+            .contains("\"extraction_metadata\":{\"title\":\"Test document\"}")
             .contains("\"extraction_document_id\":\"doc-1\"")
             .contains("\"extraction_document_class\":\"DOCUMENT_CLASS_TEXT\"")
             .contains("\"extraction_document_version\":\"dv-1\"")
@@ -233,6 +242,10 @@ class PersistStageTest {
             .contains("\"unsupported_reason\":\"tables flattened\"")
             .contains("\"digest\":\"sha256:proj\"")
             .contains("\"content_available\":false")
+            .contains("\"dropped\":[\"table borders\"]")
+            .contains("\"approximated\":[\"merged cells\"]")
+            .contains("\"unsupported\":[\"embedded images\"]")
+            .contains("\"reasons\":[\"markdown limitations\"]")
             .contains("\"extraction_execution_count\":1")
             .contains("\"extraction_primary_execution_id\":\"exec-1\"")
             .contains("\"engine_id\":\"markdown-engine\"")
