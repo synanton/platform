@@ -69,7 +69,8 @@ services:
            CREATE CONSTRAINT resolution_slot_unique IF NOT EXISTS FOR (s:ResolutionSlot) REQUIRE (s.tenant_id, s.mention_id) IS UNIQUE;
            CREATE CONSTRAINT relation_evidence_unique IF NOT EXISTS FOR (e:RelationEvidence) REQUIRE e.evidence_id IS UNIQUE;
            CREATE CONSTRAINT canonical_relation_anchor_unique IF NOT EXISTS FOR (a:CanonicalRelationAnchor) REQUIRE a.canonical_relation_id IS UNIQUE;
-           CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS FOR (r:ExtractedRelation) REQUIRE (r.tenant_id, r.relation_id) IS UNIQUE;"
+           CREATE CONSTRAINT extracted_relation_unique IF NOT EXISTS FOR (r:ExtractedRelation) REQUIRE (r.tenant_id, r.relation_id) IS UNIQUE;
+           CREATE CONSTRAINT source_revision_fence_unique IF NOT EXISTS FOR (f:SourceRevisionFence) REQUIRE (f.tenant_id, f.source_id) IS UNIQUE;"
     restart: "no"
 
   syntology-db-init:
