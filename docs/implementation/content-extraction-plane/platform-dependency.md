@@ -49,9 +49,8 @@ and are not part of the platform scripts.
 
 ## Source correspondence
 
-The #22 schema now defines optional typed source locations, canonical-text
-identity, execution provenance, and projection records, and that schema is
-implemented in the mirrored contract. Current adapters do not yet populate those
-fields. This platform work does not invent offsets from normalized or flattened
-text. Exact P1 evidence span correspondence is not claimed until adapter output
-is available and adapter-exercised validation is performed.
+The #22 schema defines optional typed source locations, canonical-text identity,
+execution provenance, and projection records, and that schema is implemented in
+the mirrored contract. The Markdown adapter now emits source identity and
+verified original-byte spans; PDF and other adapters remain unverified. This
+platform work does not invent offsets from normalized or flattened text.

@@ -8,12 +8,13 @@ last_reviewed: "2026-08-26"
 
 **Purpose:** Implementation plan for the v1.21 Structured Content Extraction Plane. Introduces a deployment-neutral extraction boundary between raw content storage and Synanton knowledge processing, connected to the primary platform through the versioned `synanton.extraction.v1` gRPC contract.
 
-> **Schema status (2026-11-26):** The approved #22 document evidence schema is
-> implemented in `java/extraction-contract` and mirrored byte-identically in
-> Content Extractor. Current adapters do not yet populate typed source
-> locations, canonical-text identity, execution provenance, or projections.
-> The schema is implemented but **not adapter-exercised**; #20/#21, #950, and
-> #947 remain frozen until separately authorized.
+> **Evidence status (2026-11-27):** The approved #22 schema is implemented in
+> `java/extraction-contract` and mirrored byte-identically in Content Extractor.
+> The Markdown adapter is exercised for source identity and verified
+> original-byte source spans. PDF and other adapters remain unverified; typed
+> canonical identity, execution provenance, and projections remain unpopulated
+> in the current Markdown payload. See the
+> [consumer compatibility assessment](consumer-compatibility-assessment.md).
 **Architecture reference:** `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane.md` (contract), `docs/proposals/v1.21/Synanton_v1.21_Structured_content_extraction_plane_draft.md` (multimodal design)
 **Target repositories:** `synanton/platform` (this repo - client side), `synanton/content_extractor` (new repo - extraction plane)
 **Audience:** Architects, module owners, extraction engineers, SREs
