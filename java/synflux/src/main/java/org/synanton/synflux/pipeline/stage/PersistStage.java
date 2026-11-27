@@ -206,25 +206,128 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         input.put("source_sha256", artifact.sha256());
         input.put("size_bytes", artifact.bytes().length);
         input.put("mime_type", artifact.mimeType());
-        var structure = parsed.structure();
-        input.put("structural_contract_version", "R0.2");
-        input.put("structural_status", structure == null ? "UNSUPPORTED" : "PARSED");
-        if (structure != null) {
-            input.put("structural_document_id", structure.documentId());
-            input.put("structural_source_id", structure.sourceId());
-            input.put("structural_source_version_id", structure.sourceVersionId());
-            input.put("structural_media_type", structure.mediaType());
-            input.put("structural_normalization_version", structure.normalizationVersion());
-            input.put("structural_chunking_config", structure.chunkingConfig());
-            input.put("structural_parser_name", structure.parserName());
-            input.put("structural_parser_version", structure.parserVersion());
-            input.put("structural_element_count", structure.elements().size());
-            input.put("structural_chunk_count", structure.chunks().size());
-            input.put("structural_text_sha256", sha256(structure.text()));
-            input.put("extraction_text_sha256", sha256(parsed.text()));
-            input.put("text_projection", "EXTRACTION_TEXT");
+        input.put("extraction_text_sha256", sha256(parsed.text()));
+
+        var payload = parsed.documentPayload();
+        input.put("extraction_payload_status", payload == null ? "ABSENT" : "PRESENT");
+        Map<String, String> descriptor = new TreeMap<>(parsed.payloadDescriptor());
+        if (!descriptor.isEmpty()) {
+            input.put("extraction_schema_id", descriptor.getOrDefault("schema_id", ""));
+            input.put("extraction_schema_version", descriptor.getOrDefault("schema_version", ""));
+            input.put("extraction_processor_id", descriptor.getOrDefault("processor_id", ""));
+            input.put("extraction_processor_version", descriptor.getOrDefault("processor_version", ""));
+            input.put("extraction_payload_format", descriptor.getOrDefault("format", ""));
+            input.put("extraction_schema_digest", descriptor.getOrDefault("schema_digest", ""));
+            input.put("extraction_payload_digest", descriptor.getOrDefault("payload_digest", ""));
         }
+        if (payload != null) {
+            putIfPresent(input, "extraction_media_type", payload.getMediaType());
+            input.put("extraction_metadata", new TreeMap<>(payload.getMetadataMap()));
+            if (payload.hasIdentity()) {
+                var identity = payload.getIdentity();
+                input.put("extraction_document_id", identity.getDocumentId());
+                input.put("extraction_document_version", identity.getDocumentVersion());
+                input.put("extraction_document_class", identity.getDocumentClass().name());
+            }
+            if (payload.hasSource()) {
+                var source = payload.getSource();
+                input.put("extraction_source_media_type", source.getMediaType());
+                input.put("extraction_source_format", source.getSourceFormat());
+                input.put("extraction_source_digest", source.getSourceDigest());
+                input.put("extraction_source_version", source.getSourceVersion());
+                input.put("extraction_source_uri", source.getSourceUri());
+                putIfPresent(input, "extraction_source_filename", source.getFilename());
+            }
+            input.put("extraction_element_count", payload.getElementsCount());
+            input.put("extraction_source_location_count", payload.getElementsList().stream()
+                .mapToInt(element -> element.getSourceLocationsCount())
+                .sum());
+            input.put("extraction_canonical_range_count", payload.getElementsList().stream()
+                .filter(org.synanton.extraction.v1.DocumentElement::hasCanonicalTextRange)
+                .count());
+            input.put("extraction_projection_count", payload.getProjectionsCount());
+            input.put("extraction_projection_formats", payload.getProjectionsList().stream()
+                .map(org.synanton.extraction.v1.DocumentProjection::getFormat)
+                .filter(format -> !format.isBlank())
+                .toList());
+            input.put("extraction_projections", payload.getProjectionsList().stream()
+                .map(PersistStage::projection)
+                .toList());
+            input.put("extraction_execution_count", payload.getProvenance().getExecutionsCount());
+            input.put("extraction_primary_execution_id", payload.getProvenance().getPrimaryExecutionId());
+            input.put("extraction_executions", payload.getProvenance().getExecutionsList().stream()
+                .map(PersistStage::execution)
+                .toList());
+            input.put("extraction_flattened_text_present", !payload.getFlattenedText().isEmpty());
+        }
+        input.put("extraction_feature_states", new TreeMap<>(parsed.featureStates()));
         return toJson(input);
+    }
+
+    private static Map<String, Object> execution(org.synanton.extraction.v1.ExtractionExecution execution) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("execution_id", execution.getExecutionId());
+        value.put("extractor_id", execution.getExtractorId());
+        value.put("extractor_version", execution.getExtractorVersion());
+        putIfPresent(value, "engine_id", execution.getEngineId());
+        putIfPresent(value, "engine_version", execution.getEngineVersion());
+        putIfPresent(value, "stage_id", execution.getStageId());
+        putIfPresent(value, "policy_id", execution.getPolicyId());
+        putIfPresent(value, "policy_version", execution.getPolicyVersion());
+        value.put("outcome", execution.getOutcome().name());
+        value.put("parents", execution.getParentsList().stream()
+            .map(parent -> {
+                Map<String, Object> link = new LinkedHashMap<>();
+                link.put("execution_id", parent.getExecutionId());
+                link.put("kind", parent.getKind().name());
+                return link;
+            })
+            .toList());
+        if (!execution.getAttributesMap().isEmpty()) {
+            value.put("attributes", new TreeMap<>(execution.getAttributesMap()));
+        }
+        if (execution.hasQuality()) {
+            var quality = execution.getQuality();
+            value.put("quality_status", quality.getStatus().name());
+            if (quality.hasCompleteness()) {
+                value.put("quality_completeness", quality.getCompleteness());
+            }
+            if (quality.hasConfidence()) {
+                value.put("quality_confidence", quality.getConfidence());
+            }
+            value.put("quality_warnings", quality.getWarningsList());
+        } else {
+            value.put("quality_status", "QUALITY_STATUS_UNSPECIFIED");
+        }
+        return value;
+    }
+
+    private static Map<String, Object> projection(org.synanton.extraction.v1.DocumentProjection projection) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("projection_id", projection.getProjectionId());
+        value.put("format", projection.getFormat());
+        value.put("contract_id", projection.getContractId());
+        value.put("contract_version", projection.getContractVersion());
+        value.put("outcome", projection.getOutcome().name());
+        value.put("digest", projection.getDigest());
+        value.put("unsupported_reason", projection.getUnsupportedReason());
+        value.put("content_available", projection.hasInlineContent() || projection.hasReference());
+        if (projection.hasLoss()) {
+            var loss = projection.getLoss();
+            Map<String, Object> lossValue = new LinkedHashMap<>();
+            lossValue.put("dropped", loss.getDroppedList());
+            lossValue.put("approximated", loss.getApproximatedList());
+            lossValue.put("unsupported", loss.getUnsupportedList());
+            lossValue.put("reasons", loss.getReasonsList());
+            value.put("loss", lossValue);
+        }
+        return value;
+    }
+
+    private static void putIfPresent(Map<String, Object> target, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            target.put(key, value);
+        }
     }
 
     private static String sha256(String text) {

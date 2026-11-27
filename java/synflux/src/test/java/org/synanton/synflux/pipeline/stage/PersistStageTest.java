@@ -5,14 +5,29 @@ import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
+import org.synanton.extraction.v1.CanonicalTextRange;
+import org.synanton.extraction.v1.DocumentClass;
+import org.synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentIdentity;
+import org.synanton.extraction.v1.DocumentPayload;
+import org.synanton.extraction.v1.DocumentProjection;
+import org.synanton.extraction.v1.ExecutionLink;
+import org.synanton.extraction.v1.ExecutionLinkKind;
+import org.synanton.extraction.v1.ExecutionOutcome;
+import org.synanton.extraction.v1.ExtractionExecution;
+import org.synanton.extraction.v1.ExtractionProvenance;
+import org.synanton.extraction.v1.LossReport;
+import org.synanton.extraction.v1.ProjectionOutcome;
+import org.synanton.extraction.v1.QualityReport;
+import org.synanton.extraction.v1.QualityStatus;
+import org.synanton.extraction.v1.SourceDescriptor;
+import org.synanton.extraction.v1.SourceLocation;
 import org.synanton.synflux.config.SynfluxProperties;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ChunkedDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.SemanticChunk;
-import org.synanton.synflux.document.DocumentStructure;
-import org.synanton.synflux.document.DocumentStructureService;
-import org.synanton.synflux.document.SourceDocument;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synvault.domain.ContentRef;
 import org.mockito.ArgumentCaptor;
@@ -46,15 +61,101 @@ class PersistStageTest {
     }
 
     private static ChunkedDocument doc(UUID refId) {
-        ContentRef contentRef = new ContentRef("file", "file:///tmp/a.md", "text/markdown", 10, Instant.now());
-        AcquiredDocument acquired = new AcquiredDocument(contentRef, new byte[]{1}, "aa", "text/markdown",
-                "file:///tmp/a.md", refId, "v1:tenant_id=demo&artifact_id=a1&digest=sha256%3Aaa");
-        ParsedDocument parsed = new ParsedDocument(acquired, "hello", Map.of(), null);
+        return doc(refId, parsed(refId, null, Map.of()));
+    }
+
+    private static ChunkedDocument doc(UUID refId, ParsedDocument parsed) {
         SemanticChunk chunk = new SemanticChunk(
                 "c0", refId.toString(), 0, SemanticChunk.ChunkType.SECTION, "hello", null,
                 List.of("Supply chain", "Europe"), "Europe", List.of("e1"), 2, 2, 1, false, Map.of(),
                 SemanticChunk.PUBLIC_ONLY, "bb");
         return new ChunkedDocument(parsed, List.of(chunk));
+    }
+
+    private static ParsedDocument parsed(UUID refId, DocumentPayload payload,
+                                         Map<String, String> descriptor) {
+        ContentRef contentRef = new ContentRef("file", "file:///tmp/a.md", "text/markdown", 10, Instant.now());
+        AcquiredDocument acquired = new AcquiredDocument(contentRef, new byte[]{1}, "aa", "text/markdown",
+                "file:///tmp/a.md", refId, "v1:tenant_id=demo&artifact_id=a1&digest=sha256%3Aaa");
+        return new ParsedDocument(acquired, "hello", Map.of(), payload, Map.of(), descriptor);
+    }
+
+    private static DocumentPayload canonicalPayload(UUID versionId, ExecutionOutcome outcome,
+                                                    QualityReport quality) {
+        return DocumentPayload.newBuilder()
+                .setMediaType("text/markdown")
+                .setFlattenedText("hello")
+                .putMetadata("title", "Test document")
+                .setIdentity(DocumentIdentity.newBuilder()
+                        .setDocumentId("doc-1")
+                        .setDocumentClass(DocumentClass.DOCUMENT_CLASS_TEXT)
+                        .setDocumentVersion("dv-1"))
+                .setSource(SourceDescriptor.newBuilder()
+                        .setMediaType("text/markdown")
+                        .setSourceFormat("markdown")
+                        .setSourceDigest("sha256:source")
+                        .setSourceVersion(versionId.toString())
+                        .setSourceUri("file:///tmp/a.md")
+                        .setFilename("a.md"))
+                .addElements(DocumentElement.newBuilder()
+                        .setId("e1")
+                        .setType(DocumentElementType.ELEMENT_PARAGRAPH)
+                        .setText("hello")
+                        .addSourceLocations(SourceLocation.newBuilder().setLocationId("loc-1"))
+                        .addSourceLocations(SourceLocation.newBuilder().setLocationId("loc-2")))
+                .addElements(DocumentElement.newBuilder()
+                        .setId("e2")
+                        .setType(DocumentElementType.ELEMENT_PARAGRAPH)
+                        .setText("world")
+                        .setCanonicalTextRange(CanonicalTextRange.newBuilder().setStart(0).setEnd(5)))
+                .setProvenance(ExtractionProvenance.newBuilder()
+                        .setPrimaryExecutionId("exec-1")
+                        .addExecutions(ExtractionExecution.newBuilder()
+                                .setExecutionId("exec-1")
+                                .setExtractorId("markdown-adapter")
+                                .setExtractorVersion("1.2.0")
+                                .setEngineId("markdown-engine")
+                                .setEngineVersion("9.1")
+                                .setStageId("normalize")
+                                .setPolicyId("markdown-policy")
+                                .setPolicyVersion("4")
+                                .setOutcome(outcome)
+                                .addParents(ExecutionLink.newBuilder()
+                                        .setExecutionId("exec-0")
+                                        .setKind(ExecutionLinkKind.EXECUTION_LINK_FALLBACK))
+                                .putAttributes("worker", "w1")
+                                .setQuality(quality)))
+                .addProjections(DocumentProjection.newBuilder()
+                        .setProjectionId("proj-1")
+                        .setFormat("markdown")
+                        .setContractId("markdown-projection")
+                        .setContractVersion("2.0")
+                        .setOutcome(ProjectionOutcome.PROJECTION_OUTCOME_UNSUPPORTED)
+                        .setUnsupportedReason("tables flattened")
+                        .setDigest("sha256:proj")
+                        .setLoss(LossReport.newBuilder()
+                                .addDropped("table borders")
+                                .addApproximated("merged cells")
+                                .addUnsupported("embedded images")
+                                .addReasons("markdown limitations")))
+                .build();
+    }
+
+    private static Map<String, String> descriptor() {
+        return Map.of(
+                "schema_id", "synanton.extraction.document",
+                "schema_version", "1.0",
+                "processor_id", "markdown-adapter",
+                "processor_version", "1.2.0",
+                "format", "SERIALIZATION_PROTOBUF",
+                "schema_digest", "sha256:schema",
+                "payload_digest", "sha256:payload");
+    }
+
+    private static String inputJson(IngestionCacheClient cache) {
+        ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
+        verify(cache, org.mockito.Mockito.times(3)).upsertKnowledgeProcessingRun(runs.capture());
+        return runs.getAllValues().getFirst().inputJson();
     }
 
     @Test
@@ -94,32 +195,116 @@ class PersistStageTest {
     }
 
     @Test
-    void writesStructuralProvenanceIntoProcessingRunInput() {
+    void persistsCanonicalPayloadEvidenceWithoutLegacyStructure() {
         IngestionCacheClient cache = mock(IngestionCacheClient.class);
         PersistStage stage = new PersistStage(cache);
         UUID refId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         UUID versionId = UUID.fromString("22222222-2222-2222-2222-222222222222");
         StageContext context = new StageContext("demo", "job", props()).withSourceVersionId(versionId);
+        ParsedDocument parsed = parsed(refId,
+            canonicalPayload(versionId, ExecutionOutcome.EXECUTION_OUTCOME_SUCCEEDED,
+                QualityReport.newBuilder()
+                    .setStatus(QualityStatus.QUALITY_STATUS_COMPLETE)
+                    .setCompleteness(0.0)
+                    .setConfidence(0.0)
+                    .build()), descriptor());
 
-        ChunkedDocument base = doc(refId);
-        DocumentStructure structure = DocumentStructureService.defaults().process(
-            new SourceDocument("demo", "file:///tmp/a.md", versionId.toString(), refId.toString(),
-                "text/markdown", "hello".getBytes()));
-        ParsedDocument parsed = base.parsed().withStructure(structure,
-            Map.of("structural_status", "PARSED"));
-        ChunkedDocument withStructure = new ChunkedDocument(parsed, base.chunks());
+        stage.apply(doc(refId, parsed), context);
 
-        stage.apply(withStructure, context);
+        assertThat(inputJson(cache))
+            .contains("\"extraction_payload_status\":\"PRESENT\"")
+            .contains("\"extraction_schema_id\":\"synanton.extraction.document\"")
+            .contains("\"extraction_schema_version\":\"1.0\"")
+            .contains("\"extraction_processor_id\":\"markdown-adapter\"")
+            .contains("\"extraction_processor_version\":\"1.2.0\"")
+            .contains("\"extraction_payload_format\":\"SERIALIZATION_PROTOBUF\"")
+            .contains("\"extraction_schema_digest\":\"sha256:schema\"")
+            .contains("\"extraction_payload_digest\":\"sha256:payload\"")
+            .contains("\"extraction_media_type\":\"text/markdown\"")
+            .contains("\"extraction_metadata\":{\"title\":\"Test document\"}")
+            .contains("\"extraction_document_id\":\"doc-1\"")
+            .contains("\"extraction_document_class\":\"DOCUMENT_CLASS_TEXT\"")
+            .contains("\"extraction_document_version\":\"dv-1\"")
+            .contains("\"extraction_source_media_type\":\"text/markdown\"")
+            .contains("\"extraction_source_format\":\"markdown\"")
+            .contains("\"extraction_source_digest\":\"sha256:source\"")
+            .contains("\"extraction_source_version\":\"" + versionId + "\"")
+            .contains("\"extraction_source_filename\":\"a.md\"")
+            .contains("\"extraction_element_count\":2")
+            .contains("\"extraction_source_location_count\":2")
+            .contains("\"extraction_canonical_range_count\":1")
+            .contains("\"extraction_projection_count\":1")
+            .contains("\"extraction_projection_formats\":[\"markdown\"]")
+            .contains("\"projection_id\":\"proj-1\"")
+            .contains("\"contract_id\":\"markdown-projection\"")
+            .contains("\"contract_version\":\"2.0\"")
+            .contains("\"outcome\":\"PROJECTION_OUTCOME_UNSUPPORTED\"")
+            .contains("\"unsupported_reason\":\"tables flattened\"")
+            .contains("\"digest\":\"sha256:proj\"")
+            .contains("\"content_available\":false")
+            .contains("\"dropped\":[\"table borders\"]")
+            .contains("\"approximated\":[\"merged cells\"]")
+            .contains("\"unsupported\":[\"embedded images\"]")
+            .contains("\"reasons\":[\"markdown limitations\"]")
+            .contains("\"extraction_execution_count\":1")
+            .contains("\"extraction_primary_execution_id\":\"exec-1\"")
+            .contains("\"engine_id\":\"markdown-engine\"")
+            .contains("\"engine_version\":\"9.1\"")
+            .contains("\"stage_id\":\"normalize\"")
+            .contains("\"policy_id\":\"markdown-policy\"")
+            .contains("\"policy_version\":\"4\"")
+            .contains("\"execution_id\":\"exec-0\"")
+            .contains("\"kind\":\"EXECUTION_LINK_FALLBACK\"")
+            .contains("\"worker\":\"w1\"")
+            .contains("\"outcome\":\"EXECUTION_OUTCOME_SUCCEEDED\"")
+            .contains("\"quality_status\":\"QUALITY_STATUS_COMPLETE\"")
+            .contains("\"quality_completeness\":0.0")
+            .contains("\"quality_confidence\":0.0")
+            .doesNotContain("structural_");
+    }
 
-        ArgumentCaptor<KnowledgeProcessingRunRow> runs = ArgumentCaptor.forClass(KnowledgeProcessingRunRow.class);
-        verify(cache, org.mockito.Mockito.times(3)).upsertKnowledgeProcessingRun(runs.capture());
-        assertThat(runs.getAllValues().getFirst().inputJson())
-            .contains("\"structural_status\":\"PARSED\"")
-            .contains("\"structural_parser_name\":\"Synanton Markdown Adapter\"")
-            .contains("\"structural_normalization_version\":\"NFC_UTF16_V1\"")
-            .contains("\"structural_chunking_config\":\"markdown-heading-v1\"")
-            .contains("\"text_projection\":\"EXTRACTION_TEXT\"")
-            .contains("\"structural_text_sha256\"");
+    @Test
+    void persistsAbsentPayloadExplicitlyWithoutReconstructingStructure() {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        PersistStage stage = new PersistStage(cache);
+        UUID refId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID versionId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+
+        stage.apply(doc(refId),
+            new StageContext("demo", "job", props()).withSourceVersionId(versionId));
+
+        assertThat(inputJson(cache))
+            .contains("\"extraction_payload_status\":\"ABSENT\"")
+            .contains("\"extraction_text_sha256\"")
+            .doesNotContain("extraction_element_count")
+            .doesNotContain("extraction_source_digest")
+            .doesNotContain("structural_");
+    }
+
+    @Test
+    void preservesPartialExecutionOutcomeAndQualitySeparately() {
+        IngestionCacheClient cache = mock(IngestionCacheClient.class);
+        PersistStage stage = new PersistStage(cache);
+        UUID refId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID versionId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        ParsedDocument parsed = parsed(refId,
+            canonicalPayload(versionId, ExecutionOutcome.EXECUTION_OUTCOME_PARTIAL,
+                QualityReport.newBuilder()
+                    .setStatus(QualityStatus.QUALITY_STATUS_PARTIAL)
+                    .setCompleteness(0.0)
+                    .addWarnings("page 2 skipped")
+                    .build()), descriptor());
+
+        stage.apply(doc(refId, parsed),
+            new StageContext("demo", "job", props()).withSourceVersionId(versionId));
+
+        assertThat(inputJson(cache))
+            .contains("\"extraction_payload_status\":\"PRESENT\"")
+            .contains("\"outcome\":\"EXECUTION_OUTCOME_PARTIAL\"")
+            .contains("\"quality_status\":\"QUALITY_STATUS_PARTIAL\"")
+            .contains("\"quality_completeness\":0.0")
+            .contains("\"quality_warnings\":[\"page 2 skipped\"]")
+            .doesNotContain("quality_confidence");
     }
 
     @Test

@@ -49,24 +49,34 @@ Replace legacy structural metadata with canonical extraction metadata:
 
 | Current field | Canonical replacement |
 |---|---|
-| `structural_status=PARSED/UNSUPPORTED` | `extraction_payload_status=CANONICAL` when a usable payload exists; `ABSENT` otherwise |
+| `structural_status=PARSED/UNSUPPORTED` | `extraction_payload_status=PRESENT` when a payload exists; `ABSENT` otherwise |
+| `structural_document_id` | `identity.document_id` |
 | `structural_source_id` | `source.source_uri` / source descriptor fields |
+| n/a | `identity.document_class`, `identity.document_version` |
 | `structural_source_version_id` | `source.source_version` |
-| `structural_media_type` | `source.media_type` |
-| `structural_parser_name/version` | payload descriptor `processor_id/version` |
+| `structural_media_type` | `payload.media_type`; `source.media_type` is retained separately |
+| n/a | `payload.metadata` (opaque document metadata) |
+| `structural_parser_name/version` | payload descriptor `processor_id/version`, `format`, `schema_digest`, `payload_digest` |
 | `structural_element_count` | `documentPayload.elementsCount` |
 | `structural_chunk_count` | derived from canonical chunking, not local parser |
 | `structural_text_sha256` | not derived from local `DocumentStructure` |
 | `extraction_text_sha256` | hash of canonical extraction text or flattened projection |
-| `text_projection` | retain only where the canonical projection actually exists |
+| `text_projection` | `projections[]` with ID, format, contract, outcome, digest, unsupported reason, content availability, and loss report |
 
 Rules:
 
-1. `PersistStage` reads only `documentPayload` and existing extraction metadata.
-2. Null `ParsedDocument.structure()` is expected and not an error.
-3. Missing canonical payload is explicit; do not reconstruct structure or search text for offsets.
-4. Preserve existing persisted-row compatibility; new canonical fields are additive.
-5. Do not change existing evaluation artifacts, annotations, or scoring.
+1. `PersistStage` reads only `documentPayload`, `payloadDescriptor`, and existing extraction metadata.
+2. Processor provenance comes from `PayloadDescriptor` on the enclosing `StructuredPayload`,
+   not from `DocumentPayload` itself.
+3. Null `ParsedDocument.structure()` is expected and not an error.
+4. Missing canonical payload is explicit; do not reconstruct structure or search text for offsets.
+5. Payload presence is separate from execution outcome and quality. A partial payload remains
+   `PRESENT`; execution `outcome`, `quality_status`, completeness, confidence, and warnings are
+   persisted independently. Unset completeness/confidence is omitted; a measured `0.0` is kept.
+6. Execution provenance preserves engine, stage, policy, parent links, and attributes in addition
+   to extractor identity.
+7. Preserve existing persisted-row compatibility; new canonical fields are additive.
+8. Do not change existing evaluation artifacts, annotations, or scoring.
 
 ## 4. Test contract
 

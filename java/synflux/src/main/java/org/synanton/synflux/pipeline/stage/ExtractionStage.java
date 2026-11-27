@@ -106,6 +106,9 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
                 payloadDescriptor.put("schema_version", descriptor.getSchemaVersion());
                 payloadDescriptor.put("processor_id", descriptor.getProcessorId());
                 payloadDescriptor.put("processor_version", descriptor.getProcessorVersion());
+                payloadDescriptor.put("format", descriptor.getFormat().name());
+                payloadDescriptor.put("schema_digest", descriptor.getSchemaDigest());
+                payloadDescriptor.put("payload_digest", descriptor.getPayloadDigest());
             }
             return new ParsedDocument(doc, flatText, metadata, documentPayload,
                     featureStates, payloadDescriptor);
