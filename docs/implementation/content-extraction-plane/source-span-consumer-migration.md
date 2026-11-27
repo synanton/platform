@@ -62,7 +62,7 @@ The source-span method reads only:
 
 - source identity/digest/version;
 - element ID;
-- `SourceLocation` with `SOURCE_TEXT_LAYER`/`ORIGINAL_SOURCE` as applicable;
+- `SourceLocation` with `ORIGINAL_SOURCE` only for this milestone;
 - precision, reproducibility, unit, coordinate space, and range.
 
 It does not search parser text, flattened text, normalized text, or rendered output.
@@ -156,7 +156,7 @@ Compatibility rules:
 
 **Source offsets must never be reconstructed by searching parser text, flattened text, normalized text, or rendered output.**
 
-Source evidence must originate from producer-verified `SourceLocation` records and be validated against the immutable source identity. A range that cannot be tied to a producer-verified location is unavailable, not inferred.
+Source evidence must originate from producer-verified `SourceLocation` records and be validated against the immutable source identity. An absent source location is unavailable. A supplied location that cannot be validated against the producer-verified source identity and bytes is invalid (`MISBOUND`), never inferred or downgraded to unavailable.
 
 ## 6. Focused validation plan
 
