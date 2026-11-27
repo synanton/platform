@@ -207,3 +207,14 @@ It must not contain:
 - Existing P1/A2/A4 evaluation outputs remain reproducible.
 - No source offset is reconstructed from text.
 - The implementation scope is narrow enough for a single coherent PR.
+
+## 9. Implementation status
+
+The evaluation-only path is implemented in `EvidenceBinder.bindSourceSpan`:
+
+- Existing canonical `bind(...)` behavior is unchanged.
+- Only `ORIGINAL_SOURCE` + `UTF8_BYTE` locations are accepted.
+- Exact, unmapped, and misbound outcomes are covered by `SourceSpanEvidenceBinderTest`.
+- Approximate source spans remain `MISBOUND` until an explicit approximate-mapping contract is implemented; matching a caller-supplied substring is not accepted as validation.
+- Source version is checked when the evaluation candidate supplies an authoritative expected version.
+- The path is not wired into production consumers, `GraphWriter`, or #947 migration.
