@@ -16,7 +16,8 @@ DocumentFormatAdapter          PDFBox | native Markdown
 DocumentStructure              parser-neutral pages/elements/chunks
 ```
 
-Public implementation: `org.synanton.synflux.document`.
+This diagram describes the local structural conformance/evaluation path only. It is not the
+production extraction path. Public implementation: `org.synanton.synflux.document`.
 
 ## Library decision
 
