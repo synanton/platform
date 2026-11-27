@@ -1,5 +1,6 @@
 package org.synanton.synquest.service;
 
+import org.synanton.synquest.SynquestCassandraTestSupport;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -65,23 +66,13 @@ class SearchProjectionLegacyCompatTest {
             .registerModule(new Jdk8Module())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    private static CassandraContainer cassandra;
     private static CqlSession session;
     private static IngestionCacheClient cache;
 
     @BeforeAll
     static void startCassandra() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
-        cassandra.start();
-        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
-        try (CqlSession admin = CqlSession.builder()
-                .addContactPoint(contact).withLocalDatacenter("datacenter1").build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build();
-        SchemaInstaller.install(session);
+        session = SynquestCassandraTestSupport.session();
+        SynquestCassandraTestSupport.reset();
         cache = new IngestionCacheClient(session);
 
         cache.createSourceIfAbsent(new SourceRow(TENANT, SOURCE, CONNECTOR, "filesystem", "fixture://legacy",
@@ -89,15 +80,6 @@ class SearchProjectionLegacyCompatTest {
         cache.createSourceIdentityIfAbsent(new SourceIdentityRow(TENANT, CONNECTOR, SOURCE, RESOURCE));
     }
 
-    @AfterAll
-    static void stopCassandra() {
-        if (session != null) {
-            session.close();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
-        }
-    }
 
     @Test
     void consumerProjectsLegacyAndTypedEnvelopeRowsWithoutParsingTheirPayloads() throws Exception {
