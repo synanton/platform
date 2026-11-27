@@ -1,0 +1,46 @@
+{
+  "runId": "synthetic-ingestion-v1-run2",
+  "operationId": "3b1b5c8a-47b9-488a-a958-63a7a7779070",
+  "sourceVersionId": "6937e6eb-0f26-570d-aed0-76b37c91cde1",
+  "scep": {
+    "payloadStatus": "PRESENT",
+    "descriptor": {
+      "schema_id": "synanton.extraction.document",
+      "processor_id": "text-adapter",
+      "processor_version": "1.0",
+      "schema_version": "1.0",
+      "payload_digest": "934c84b9ce6600a143ed49cfd823ec2dd13d6de1a90252e4bc299684fcdb98b3",
+      "format": "SERIALIZATION_PROTOBUF",
+      "schema_digest": ""
+    },
+    "featureStates": {
+      "text": "FEATURE_APPLIED",
+      "layout": "FEATURE_NOT_APPLICABLE",
+      "ocr": "FEATURE_NOT_APPLICABLE",
+      "transcription": "FEATURE_NOT_REQUESTED",
+      "embeddedImages": "FEATURE_UNSUPPORTED",
+      "tables": "FEATURE_APPLIED"
+    },
+    "mediaType": "text/markdown",
+    "elementCount": 51,
+    "sourceLocationCount": 51,
+    "canonicalRangeCount": 0,
+    "projectionCount": 0,
+    "executionCount": 0,
+    "flattenedTextPresent": true,
+    "extractionTextSha256": "fa35d31acb542609238c842b97572812634bc2ff194d4a2806274d9c76da9c68"
+  },
+  "persistence": {
+    "processingRunId": "6ef2df8a-663d-33b3-82b3-d159155094cb",
+    "status": "COMPLETED",
+    "chunkCount": 12,
+    "contentRefId": "73ca6582-709d-5239-a870-16bf2a22f021",
+    "contentCacheReference": "v1:tenant_id=synthetic-ingestion&artifact_id=6db4473b-bdc4-4e03-a4dd-4f120b687b1e&digest=sha256%3Adb4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063&generation=1&serializer_version=1"
+  },
+  "extractionResults": {
+    "rows": 0,
+    "consumerEnabled": false
+  },
+  "status": "PARTIAL",
+  "reason": "SCEP payload is present with 51 elements/source locations. The extraction consumer is disabled, so mention/relation rows are not materialized."
+}

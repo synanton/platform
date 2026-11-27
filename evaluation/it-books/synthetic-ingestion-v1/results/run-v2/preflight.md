@@ -2,8 +2,8 @@
 
 **Ticket:** #966  
 **Run:** `synthetic-ingestion-v1-run2`  
-**Status:** PASS — clean-start runtime readiness; fixture not ingested  
-**Captured:** 2026-11-27T19:35Z
+**Status:** PASS — clean-start runtime readiness; fixture run completed PARTIAL
+**Captured:** 2026-11-27T19:59Z
 
 ## Environment identities
 
@@ -31,7 +31,7 @@ The stack containers use these exact image references.
 
 | Check | Observation | Status |
 |---|---|---|
-| Fresh data root | `/tmp/opencode/synthetic-ingestion-run2-clean-2`; initially empty | PASS |
+| Fresh data root | `/tmp/opencode/synthetic-ingestion-run2-clean-3`; initially empty | PASS |
 | Compose project | `synanton-local-real-demo`; `local-real-demo` profile | PASS |
 | Production services/credentials | no remote production endpoints in resolved config | PASS |
 | Tenant | `synthetic-ingestion` | PASS |
@@ -117,15 +117,33 @@ Historical note: the immutable #944 `run-v1/run-manifest.json` records gold SHA-
 `9bd2d17d...`, while the frozen fixture checksum is `f12619bd...`. This run uses the current
 frozen `SHA256SUMS`; #944 has not been altered.
 
+## Fixture ingestion result
+
+One clean submission was executed through the existing API:
+
+- Operation: `3b1b5c8a-47b9-488a-a958-63a7a7779070`
+- Ingestion run: `583d92c7-0332-30a6-86ea-f8faa1dcb3d9`
+- Status: `SUCCEEDED`, outcome `PARTIAL`
+- Source version: `6937e6eb-0f26-570d-aed0-76b37c91cde1`
+- SCEP payload: `text-adapter`, 51 elements, 51 source locations
+- Generated chunks: 12
+
+Before this run, one submission failed with HTTP 500 before operation creation because a stale
+named `content-cache` volume was owned by `_apt`. That evidence is preserved under `attempts/`;
+the project-scoped volume was reset and the fixture was submitted once on the clean stack.
+
+Result: **PARTIAL**. The 2-chunk fallback failure is gone, but 12 chunks were generated against
+14 gold chunks, document offsets remain `-1`, and Appendix A is duplicated. See `REPORT.md` and
+`chunk-comparison.json`.
+
 ## Gate result
 
-**Assignment 1: PASS.**
+**Assignment 2: PARTIAL.**
 
-Clean-start runtime readiness is established on a fresh data root. SCEP connectivity, production
-path wiring, service health, and the complete Relix Neo4j constraint contract are verified.
+Clean-start runtime readiness is established, and SCEP extraction is reaching the canonical
+payload. Chunking and offsets are not fully conformant to the frozen gold. Downstream mention,
+resolution, relation, ontology, evidence, graph, and retrieval stages remain `NOT_RUN` or
+`CONDITIONAL` and are not counted as success.
 
-No fixture ingestion was performed. No production code, fixture, gold, ontology, schema,
-validator, baseline, or evaluation artifact was changed.
-
-**Next action:** request approval to ingest the frozen fixture once through the existing
-local-real-demo path.
+No production code, fixture, gold, ontology, schema, validator, baseline, or evaluation artifact
+was changed by the run.

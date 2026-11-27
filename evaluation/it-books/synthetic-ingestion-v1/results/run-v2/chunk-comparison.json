@@ -1,0 +1,247 @@
+{
+  "runId": "synthetic-ingestion-v1-run2",
+  "operationId": "3b1b5c8a-47b9-488a-a958-63a7a7779070",
+  "gold": {
+    "chunkCount": 14,
+    "uniqueSectionPaths": 14
+  },
+  "generated": {
+    "chunkCount": 12,
+    "uniqueSectionPaths": 11,
+    "allDocumentOffsetsNonNegative": false,
+    "headingLevels": [
+      2,
+      3
+    ],
+    "chunkTypes": {
+      "SUBSECTION": 11,
+      "TABLE": 1
+    }
+  },
+  "coverage": {
+    "matchedSectionPaths": 11,
+    "missingSectionPaths": [
+      "Distributed Systems: A Short Technical Primer",
+      "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication",
+      "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability"
+    ],
+    "unexpectedSectionPaths": [],
+    "duplicateSectionPaths": {
+      "Distributed Systems: A Short Technical Primer > Appendix A: Compact Reference": 2
+    }
+  },
+  "chunks": [
+    {
+      "ordinal": 0,
+      "headingLevel": 2,
+      "heading": "Preface",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Preface",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "766bea697b9b96f24344f0d9486dc971ac8afc75aaf23b00b8a699c6a7cc6e86",
+      "tokenCount": 70,
+      "sourceElements": [
+        "e3"
+      ]
+    },
+    {
+      "ordinal": 1,
+      "headingLevel": 3,
+      "heading": "1.1 Distributed Systems",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.1 Distributed Systems",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "701329a0c7564997db58efc7f35fe5a7dd4228920faa5bb125c5f5a195a7a4a9",
+      "tokenCount": 73,
+      "sourceElements": [
+        "e6"
+      ]
+    },
+    {
+      "ordinal": 2,
+      "headingLevel": 3,
+      "heading": "1.2 Definition: Node",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.2 Definition: Node",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "692f898139449f2fdb9bef2138a33a47f0e537db9c37a5e2fe91ea4899f26feb",
+      "tokenCount": 65,
+      "sourceElements": [
+        "e8"
+      ]
+    },
+    {
+      "ordinal": 3,
+      "headingLevel": 3,
+      "heading": "1.3 Definition: Message",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.3 Definition: Message",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "7e87a03054c6defe49d39e827bccf978600137b375d62e02103bd39b7da953ee",
+      "tokenCount": 96,
+      "sourceElements": [
+        "e10",
+        "e11"
+      ]
+    },
+    {
+      "ordinal": 4,
+      "headingLevel": 3,
+      "heading": "1.4 Acronym: RPC",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication > 1.4 Acronym: RPC",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "7487a409e189964cb654327d7a4270fae2b164e94a422c62280c5950bb49dccf",
+      "tokenCount": 89,
+      "sourceElements": [
+        "e13"
+      ]
+    },
+    {
+      "ordinal": 5,
+      "headingLevel": 3,
+      "heading": "2.1 Consensus",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.1 Consensus",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "37680a9354c0a70a7bfcbb31dee3d1a3a3f1219dd87bbb0ae2e761d3b7fed642",
+      "tokenCount": 64,
+      "sourceElements": [
+        "e16"
+      ]
+    },
+    {
+      "ordinal": 6,
+      "headingLevel": 3,
+      "heading": "2.2 Raft",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.2 Raft",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "f85e896ec0c35466f43232940ce411bcbec778175fe88d2ef1a2e526c4e18f6a",
+      "tokenCount": 61,
+      "sourceElements": [
+        "e18"
+      ]
+    },
+    {
+      "ordinal": 7,
+      "headingLevel": 3,
+      "heading": "2.3 Replicated Log",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.3 Replicated Log",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "e954ce4dc8936b1e8cce22a7a5b484ad00af4390905fce817fbfea6c51a6faab",
+      "tokenCount": 83,
+      "sourceElements": [
+        "e20"
+      ]
+    },
+    {
+      "ordinal": 8,
+      "headingLevel": 3,
+      "heading": "2.4 Fault Tolerance",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability > 2.4 Fault Tolerance",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "f3e0f86c308fc9701801c4a20b1ef804a6f658dcaa22ef6a29fab476ab8bc50c",
+      "tokenCount": 87,
+      "sourceElements": [
+        "e22"
+      ]
+    },
+    {
+      "ordinal": 9,
+      "headingLevel": 2,
+      "heading": "Appendix A: Compact Reference",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Appendix A: Compact Reference",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "TABLE",
+      "partialSection": "False",
+      "chunkSha256": "74207a131952aa5174f298c091f8f5c535f60b1fbdffb02e117f725ef11dd16e",
+      "tokenCount": 101,
+      "sourceElements": [
+        "e24"
+      ]
+    },
+    {
+      "ordinal": 10,
+      "headingLevel": 2,
+      "heading": "Appendix A: Compact Reference",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Appendix A: Compact Reference",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "cd4bda1133a886388332187e886b8f6aa19aa71945d7f420b948d9bbdcc7d8ba",
+      "tokenCount": 185,
+      "sourceElements": [
+        "e25",
+        "e26",
+        "e27",
+        "e28",
+        "e29",
+        "e30",
+        "e31",
+        "e32",
+        "e33",
+        "e34",
+        "e35",
+        "e36",
+        "e37",
+        "e38",
+        "e39",
+        "e40",
+        "e41",
+        "e42",
+        "e43",
+        "e44",
+        "e45",
+        "e46",
+        "e47",
+        "e48"
+      ]
+    },
+    {
+      "ordinal": 11,
+      "headingLevel": 2,
+      "heading": "Appendix B: Code Example",
+      "sectionPath": "Distributed Systems: A Short Technical Primer > Appendix B: Code Example",
+      "documentOffsetStart": -1,
+      "documentOffsetEnd": -1,
+      "chunkType": "SUBSECTION",
+      "partialSection": "False",
+      "chunkSha256": "bb8be15ed99a6b0f567955c4481e9cc18725677192eca4c46d0406fa678d76d3",
+      "tokenCount": 68,
+      "sourceElements": [
+        "e50",
+        "e51"
+      ]
+    }
+  ],
+  "findings": [
+    "Missing container chunks for book, Chapter 1, and Chapter 2 headings.",
+    "Appendix A is emitted twice: one TABLE chunk and one SUBSECTION chunk.",
+    "All generated document_offset_start/end values are -1.",
+    "Chunk text includes a section-path prefix and repeated heading before body text."
+  ],
+  "status": "PARTIAL"
+}
