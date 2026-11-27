@@ -1,5 +1,6 @@
 package org.synanton.ingestioncache.config;
 
+import org.synanton.ingestioncache.CassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -55,42 +56,14 @@ class SchemaInventoryTest {
                     "workflow_leases",
                     "workflow_steps");
 
-    private static CassandraContainer cassandra;
     private static CqlSession session;
 
     @BeforeAll
     static void startInfra() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
-        cassandra.start();
-        InetSocketAddress contact =
-                new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
-        try (CqlSession admin =
-                CqlSession.builder()
-                        .addContactPoint(contact)
-                        .withLocalDatacenter("datacenter1")
-                        .build()) {
-            admin.execute(
-                    "CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                            + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session =
-                CqlSession.builder()
-                        .addContactPoint(contact)
-                        .withLocalDatacenter("datacenter1")
-                        .withKeyspace("ingestion_cache")
-                        .build();
-        SchemaInstaller.install(session);
+        session = CassandraTestSupport.session();
+        CassandraTestSupport.reset();
     }
 
-    @AfterAll
-    static void stopInfra() {
-        if (session != null) {
-            session.close();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
-        }
-    }
 
     @Test
     void allMigrationTablesExist() {
