@@ -20,7 +20,10 @@ import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synvault.domain.ContentRef;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +31,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ConsumerEvidenceCompatibilityTest {
+
+    private static final String SOURCE = "# Title\nA paragraph with evidence.\n";
+    private static final byte[] SOURCE_BYTES = SOURCE.getBytes(StandardCharsets.UTF_8);
 
     @Test
     void partialMarkdownEvidenceDoesNotChangeChunkingOrInventOptionalData() {
@@ -74,8 +80,8 @@ class ConsumerEvidenceCompatibilityTest {
                         .setText("A paragraph with evidence."));
         if (withEvidence) {
             builder.getElementsBuilder(1)
-                    .addSourceLocations(location("span-e2-a", 10, 20))
-                    .addSourceLocations(location("span-e2-b", 20, 40));
+                    .addSourceLocations(location("span-e2-a", 8, 20))
+                    .addSourceLocations(location("span-e2-b", 20, 33));
         }
         return builder.build();
     }
@@ -99,12 +105,20 @@ class ConsumerEvidenceCompatibilityTest {
 
     private static ParsedDocument parsed(DocumentPayload payload) {
         var ref = new ContentRef("file", "file:///test.md", "text/markdown", 100, Instant.now());
-        var acquired = new AcquiredDocument(ref, new byte[0], "sha256", "text/markdown",
+        var acquired = new AcquiredDocument(ref, SOURCE_BYTES, sha256(SOURCE_BYTES), "text/markdown",
                 "file:///test.md", UUID.fromString("11111111-1111-1111-1111-111111111111"));
         return new ParsedDocument(acquired, "Title\nA paragraph with evidence.", Map.of(), payload);
     }
 
     private static StageContext ctx() {
         return new StageContext("demo", UUID.randomUUID().toString(), null);
+    }
+
+    private static String sha256(byte[] bytes) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
