@@ -1,7 +1,6 @@
 package org.synanton.ingestioncache.client;
 
 import org.synanton.ingestioncache.CassandraTestSupport;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
@@ -9,10 +8,7 @@ import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

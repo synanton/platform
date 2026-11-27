@@ -13,6 +13,12 @@ import java.util.List;
  *
  * <p>The Cassandra schema DDL dominates local test time. Start one container per
  * test task, install migrations once, and reset data between test classes.
+ *
+ * <p><strong>Sequential-class invariant:</strong> the shared keyspace and class-level
+ * truncation require one test class at a time. The ingestion-cache test task pins
+ * Gradle to one fork and disables JUnit parallel execution. Do not enable parallel
+ * test classes or multiple test forks without introducing per-class keyspaces or a
+ * stronger isolation mechanism.
  */
 public final class CassandraTestSupport {
 

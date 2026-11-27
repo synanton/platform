@@ -2,14 +2,10 @@ package org.synanton.ingestioncache.activation;
 
 import org.synanton.ingestioncache.CassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.config.SchemaInstaller;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.UUID;
 

@@ -4,14 +4,12 @@ import org.synanton.ingestioncache.CassandraTestSupport;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.synanton.ingestioncache.cache.ExtractionCacheStore;
 import org.synanton.ingestioncache.cache.ExtractionCacheEntry;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -19,8 +17,6 @@ import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.quarantine.QuarantineGeneration;
 import org.synanton.ingestioncache.quarantine.QuarantineRecord;
 import org.synanton.ingestioncache.quarantine.QuarantineStore;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
 class ComplianceDeletionStoreTest {
 

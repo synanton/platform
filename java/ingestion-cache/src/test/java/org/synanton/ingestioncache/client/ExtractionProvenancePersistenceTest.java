@@ -4,17 +4,13 @@ import org.synanton.ingestioncache.CassandraTestSupport;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ExtractionResultRow;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
 class ExtractionProvenancePersistenceTest {
 

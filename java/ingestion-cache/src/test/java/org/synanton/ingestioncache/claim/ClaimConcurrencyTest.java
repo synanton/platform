@@ -2,7 +2,6 @@ package org.synanton.ingestioncache.claim;
 
 import org.synanton.ingestioncache.CassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -13,14 +12,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ResolutionWorkRow;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
