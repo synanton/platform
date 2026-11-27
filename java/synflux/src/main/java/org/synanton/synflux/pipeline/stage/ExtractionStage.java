@@ -5,10 +5,6 @@ import org.synanton.extraction.client.StructuredExtractionRequiredException;
 import org.synanton.synflux.domain.AcquiredDocument;
 import org.synanton.synflux.domain.ParsedDocument;
 import org.synanton.synflux.domain.StageUsage;
-import org.synanton.synflux.document.DocumentStructure;
-import org.synanton.synflux.document.DocumentStructureService;
-import org.synanton.synflux.document.SourceDocument;
-import org.synanton.synflux.document.UnsupportedDocumentFormatException;
 import org.synanton.synflux.pipeline.PipelineStage;
 import org.synanton.synflux.pipeline.StageContext;
 import org.synanton.synflux.pipeline.StageUsageTracker;
@@ -38,24 +34,14 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
     private final ExtractionPlaneClient extractionClient;
     private final ObjectStorePort objectStore;
     private final String hotBucket;
-    private final DocumentStructureService structureService;
 
     public ExtractionStage(
             ExtractionPlaneClient extractionClient,
             ObjectStorePort objectStore,
             String hotBucket) {
-        this(extractionClient, objectStore, hotBucket, DocumentStructureService.defaults());
-    }
-
-    public ExtractionStage(
-            ExtractionPlaneClient extractionClient,
-            ObjectStorePort objectStore,
-            String hotBucket,
-            DocumentStructureService structureService) {
         this.extractionClient = extractionClient;
         this.objectStore = objectStore;
         this.hotBucket = hotBucket;
-        this.structureService = structureService;
     }
 
     @Override
@@ -79,7 +65,6 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
                     "Document extraction requires the Content Extractor client for ref="
                             + doc.contentRefId());
         }
-        DocumentStructure structure = parseStructure(doc, ctx);
         try {
             ExtractionResult result = extractionClient.extract(buildRequest(doc, ctx));
             ParsedDocument parsed = toParsedDocument(doc, result);
@@ -88,7 +73,7 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
                         "Content Extractor returned no usable structured payload for ref="
                                 + doc.contentRefId());
             }
-            return attachStructure(parsed, structure);
+            return parsed;
         } catch (StructuredExtractionRequiredException e) {
             throw e;
         } catch (Exception e) {
@@ -96,46 +81,6 @@ public class ExtractionStage implements PipelineStage<AcquiredDocument, ParsedDo
             throw new StructuredExtractionRequiredException(
                     "Content Extractor call failed for ref=" + doc.contentRefId(), e);
         }
-    }
-
-    private DocumentStructure parseStructure(AcquiredDocument doc, StageContext ctx) {
-        try {
-            String sourceVersionId = ctx.sourceVersionId() != null
-                ? ctx.sourceVersionId().toString()
-                : doc.contentRefId().toString();
-            String sourceId = doc.sourceUri() == null || doc.sourceUri().isBlank()
-                ? doc.ref().uri()
-                : doc.sourceUri();
-            return structureService.process(new SourceDocument(
-                ctx.tenant(), sourceId, sourceVersionId, doc.contentRefId().toString(),
-                doc.mimeType(), doc.bytes()));
-        } catch (UnsupportedDocumentFormatException e) {
-            return null;
-        }
-    }
-
-    private ParsedDocument attachStructure(ParsedDocument parsed, DocumentStructure structure) {
-        Map<String, String> metadata = new LinkedHashMap<>();
-        metadata.put("structural_contract_version", "R0.2");
-        if (structure == null) {
-            metadata.put("structural_status", "UNSUPPORTED");
-            return parsed.withStructure(null, metadata);
-        }
-        metadata.put("structural_status", "PARSED");
-        metadata.put("structural_document_id", structure.documentId());
-        metadata.put("structural_source_id", structure.sourceId());
-        metadata.put("structural_source_version_id", structure.sourceVersionId());
-        metadata.put("structural_media_type", structure.mediaType());
-        metadata.put("structural_normalization_version", structure.normalizationVersion());
-        metadata.put("structural_chunking_config", structure.chunkingConfig());
-        metadata.put("structural_text_sha256", sha256(structure.text()));
-        metadata.put("extraction_text_sha256", sha256(parsed.text()));
-        metadata.put("text_projection", "EXTRACTION_TEXT");
-        metadata.put("structural_parser_name", structure.parserName());
-        metadata.put("structural_parser_version", structure.parserVersion());
-        metadata.put("structural_element_count", Integer.toString(structure.elements().size()));
-        metadata.put("structural_chunk_count", Integer.toString(structure.chunks().size()));
-        return parsed.withStructure(structure, metadata);
     }
 
     private ParsedDocument toParsedDocument(AcquiredDocument doc, ExtractionResult result) {
