@@ -9,6 +9,9 @@ import org.synanton.synflux.document.StructuralArtifactDigest;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -216,8 +219,14 @@ public final class EvidenceBinder {
         String elementId,
         String locationId,
         Grounding grounding,
-        String expectedSourceText
+        String expectedSourceText,
+        String expectedSourceVersion
     ) {
+        public SourceSpanCandidate(String candidateId, String elementId, String locationId,
+                                   Grounding grounding, String expectedSourceText) {
+            this(candidateId, elementId, locationId, grounding, expectedSourceText, null);
+        }
+
         public SourceSpanCandidate {
             requireText(candidateId, "candidateId");
             requireText(elementId, "elementId");
@@ -378,11 +387,45 @@ public final class EvidenceBinder {
         if (candidate.grounding() == Grounding.DOCUMENT_SCOPE) {
             return sourceMisbound(candidate, "SOURCE_DOCUMENT_SCOPE_UNSUPPORTED");
         }
+        DocumentElement element = payload.getElementsList().stream()
+            .filter(e -> e.getId().equals(candidate.elementId()))
+            .findFirst().orElse(null);
+        if (element == null) {
+            return sourceMisbound(candidate, "UNKNOWN_ELEMENT");
+        }
+        List<SourceLocation> allLocations = element.getSourceLocationsList();
+        if (allLocations.isEmpty()) {
+            return sourceUnmapped(candidate, "SOURCE_LOCATION_ABSENT");
+        }
+        List<SourceLocation> locations;
+        if (candidate.locationId() == null || candidate.locationId().isBlank()) {
+            if (allLocations.size() > 1) {
+                return sourceMisbound(candidate, "AMBIGUOUS_SOURCE_LOCATION");
+            }
+            locations = allLocations;
+        } else {
+            locations = allLocations.stream()
+                .filter(l -> l.getLocationId().equals(candidate.locationId()))
+                .toList();
+            if (locations.isEmpty()) {
+                return sourceMisbound(candidate, "UNKNOWN_SOURCE_LOCATION");
+            }
+        }
+        SourceLocation location = locations.getFirst();
+        if (location.getSourceBinding().getKind()
+                != org.synanton.extraction.v1.BindingKind.BINDING_KIND_INHERIT_DOCUMENT) {
+            return sourceMisbound(candidate, "UNSUPPORTED_SOURCE_BINDING");
+        }
         if (!payload.hasSource() || payload.getSource().getSourceDigest().isBlank()) {
             return sourceMisbound(candidate, "SOURCE_IDENTITY_MISSING");
         }
         if (!"markdown".equals(payload.getSource().getSourceFormat())) {
             return sourceMisbound(candidate, "UNSUPPORTED_SOURCE_FORMAT");
+        }
+        if (candidate.expectedSourceVersion() != null
+                && !candidate.expectedSourceVersion().isBlank()
+                && !candidate.expectedSourceVersion().equals(payload.getSource().getSourceVersion())) {
+            return sourceMisbound(candidate, "SOURCE_VERSION_MISMATCH");
         }
         String sourceDigest = payload.getSource().getSourceDigest();
         if (sourceDigest.startsWith("sha256:")) {
@@ -392,26 +435,17 @@ public final class EvidenceBinder {
             return sourceMisbound(candidate, "SOURCE_DIGEST_MISMATCH");
         }
 
-        DocumentElement element = payload.getElementsList().stream()
-            .filter(e -> e.getId().equals(candidate.elementId()))
-            .findFirst().orElse(null);
-        if (element == null) {
-            return sourceMisbound(candidate, "UNKNOWN_ELEMENT");
+        if (location.getPrecision()
+                == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_UNAVAILABLE) {
+            return sourceUnmapped(candidate, "SOURCE_LOCATION_UNAVAILABLE");
         }
-        List<SourceLocation> locations = element.getSourceLocationsList().stream()
-            .filter(l -> candidate.locationId() == null || candidate.locationId().isBlank()
-                || l.getLocationId().equals(candidate.locationId()))
-            .toList();
-        if (locations.isEmpty()) {
-            return sourceUnmapped(candidate, "SOURCE_LOCATION_ABSENT");
+        if (location.getPrecision()
+                == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_UNSPECIFIED) {
+            return sourceMisbound(candidate, "PRECISION_UNSPECIFIED");
         }
-        if (locations.size() > 1) {
-            return sourceMisbound(candidate, "AMBIGUOUS_SOURCE_LOCATION");
-        }
-        SourceLocation location = locations.getFirst();
-        if (location.getSourceBinding().getKind()
-                != org.synanton.extraction.v1.BindingKind.BINDING_KIND_INHERIT_DOCUMENT) {
-            return sourceMisbound(candidate, "UNSUPPORTED_SOURCE_BINDING");
+        if (location.getReproducibility()
+                == org.synanton.extraction.v1.Reproducibility.REPRODUCIBILITY_UNSPECIFIED) {
+            return sourceMisbound(candidate, "REPRODUCIBILITY_UNSPECIFIED");
         }
         if (!location.hasTextRange()) {
             return sourceMisbound(candidate, "UNSUPPORTED_LOCATION_TYPE");
@@ -428,27 +462,20 @@ public final class EvidenceBinder {
                 || range.getEnd() > sourceBytes.length) {
             return sourceMisbound(candidate, "SOURCE_SPAN_OUT_OF_RANGE");
         }
-        if (location.getPrecision()
-                == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_UNAVAILABLE) {
-            return sourceUnmapped(candidate, "SOURCE_LOCATION_UNAVAILABLE");
-        }
-        if (location.getPrecision()
-                == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_UNSPECIFIED) {
-            return sourceMisbound(candidate, "PRECISION_UNSPECIFIED");
-        }
-        if (location.getReproducibility()
-                == org.synanton.extraction.v1.Reproducibility.REPRODUCIBILITY_UNSPECIFIED) {
-            return sourceMisbound(candidate, "REPRODUCIBILITY_UNSPECIFIED");
+        String sourceText;
+        try {
+            sourceText = StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(sourceBytes, (int) range.getStart(),
+                    (int) (range.getEnd() - range.getStart()))).toString();
+        } catch (CharacterCodingException e) {
+            return sourceMisbound(candidate, "INVALID_UTF8_BOUNDARY");
         }
 
-        String sourceText = new String(sourceBytes, (int) range.getStart(),
-            (int) (range.getEnd() - range.getStart()), StandardCharsets.UTF_8);
-        boolean exactLocation = location.getPrecision()
-            == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_EXACT;
-        boolean approximateLocation = location.getPrecision()
-            == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_APPROXIMATE;
         if (candidate.grounding() == Grounding.EXACT) {
-            if (!exactLocation
+            if (location.getPrecision()
+                    != org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_EXACT
                     || location.getReproducibility()
                     != org.synanton.extraction.v1.Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE) {
                 return sourceMisbound(candidate, "EXACT_GROUNDING_REQUIRES_EXACT_SOURCE");
@@ -458,10 +485,7 @@ public final class EvidenceBinder {
                 return sourceMisbound(candidate, "EXPECTED_SOURCE_TEXT_MISMATCH");
             }
         } else if (candidate.grounding() == Grounding.APPROXIMATE) {
-            if (!approximateLocation || candidate.expectedSourceText() == null
-                    || !candidate.expectedSourceText().equals(sourceText)) {
-                return sourceMisbound(candidate, "APPROXIMATE_MAPPING_UNVALIDATED");
-            }
+            return sourceMisbound(candidate, "APPROXIMATE_MAPPING_UNSUPPORTED");
         } else {
             return sourceMisbound(candidate, "UNSUPPORTED_GROUNDING");
         }

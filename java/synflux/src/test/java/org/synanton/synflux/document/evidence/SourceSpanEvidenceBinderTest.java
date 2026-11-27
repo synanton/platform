@@ -72,21 +72,17 @@ class SourceSpanEvidenceBinderTest {
     }
 
     @Test
-    void resolvesApproximateOnlyWithValidatedMapping() {
+    void approximateEvidenceIsMisboundUntilAMappingContractExists() {
         var approximate = payload(location("loc-approx", 0, 9,
                 LocationPrecision.LOCATION_PRECISION_APPROXIMATE,
                 Reproducibility.REPRODUCIBILITY_DEPENDS_ON_NORMALIZATION,
                 CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE));
 
-        var validated = binder.bindSourceSpan(approximate, BYTES,
+        var result = binder.bindSourceSpan(approximate, BYTES,
                 candidate("approx", "loc-approx", EvidenceBinder.Grounding.APPROXIMATE, "# Heading"));
-        var unvalidated = binder.bindSourceSpan(approximate, BYTES,
-                candidate("approx", "loc-approx", EvidenceBinder.Grounding.APPROXIMATE, null));
 
-        assertThat(validated.status()).isEqualTo(EvidenceBinder.Status.RESOLVED);
-        assertThat(validated.evidence().grounding()).isEqualTo(EvidenceBinder.Grounding.APPROXIMATE);
-        assertThat(unvalidated.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
-        assertThat(unvalidated.reason()).isEqualTo("APPROXIMATE_MAPPING_UNVALIDATED");
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("APPROXIMATE_MAPPING_UNSUPPORTED");
     }
 
     @Test
@@ -132,6 +128,81 @@ class SourceSpanEvidenceBinderTest {
         assertThat(binder.bindSourceSpan(wrongText, BYTES,
                 candidate("t", "loc", EvidenceBinder.Grounding.EXACT, "not the source")).reason())
             .isEqualTo("EXPECTED_SOURCE_TEXT_MISMATCH");
+    }
+
+    @Test
+    void suppliedUnknownLocationIdIsMisbound() {
+        var result = binder.bindSourceSpan(payload(location("loc-1", 0, 9,
+                LocationPrecision.LOCATION_PRECISION_EXACT,
+                Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+                CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE)), BYTES,
+            candidate("bad-location", "loc-missing", EvidenceBinder.Grounding.EXACT, "# Heading"));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("UNKNOWN_SOURCE_LOCATION");
+    }
+
+    @Test
+    void unavailableLocationWithoutTextRangeIsUnmapped() {
+        SourceLocation unavailable = SourceLocation.newBuilder()
+            .setLocationId("loc-unavailable")
+            .setSourceBinding(SourceBinding.newBuilder().setKind(BindingKind.BINDING_KIND_INHERIT_DOCUMENT))
+            .setPrecision(LocationPrecision.LOCATION_PRECISION_UNAVAILABLE)
+            .setReproducibility(Reproducibility.REPRODUCIBILITY_NOT_REPRODUCIBLE)
+            .build();
+
+        var result = binder.bindSourceSpan(payload(unavailable), BYTES,
+            candidate("u", "loc-unavailable", EvidenceBinder.Grounding.EXACT, null));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.UNMAPPED);
+        assertThat(result.reason()).isEqualTo("SOURCE_LOCATION_UNAVAILABLE");
+    }
+
+    @Test
+    void invalidUtf8BoundariesAreMisbound() {
+        String unicode = "# 😀 Distributed Systems\n";
+        byte[] bytes = unicode.getBytes(StandardCharsets.UTF_8);
+        String digest = sha256(bytes);
+        int emojiStart = unicode.indexOf("😀");
+        int byteStart = unicode.substring(0, emojiStart).getBytes(StandardCharsets.UTF_8).length;
+
+        var insideStart = withRange(bytes, digest, byteStart + 1, byteStart + 5);
+        var insideEnd = withRange(bytes, digest, byteStart, byteStart + 3);
+        byte[] malformedBytes = new byte[]{'#', ' ', (byte) 0xC3, 0x28};
+        var malformed = withRange(malformedBytes, sha256(malformedBytes), 0, 4);
+
+        assertThat(binder.bindSourceSpan(insideStart, bytes,
+                candidate("s", "loc", EvidenceBinder.Grounding.EXACT, null)).reason())
+            .isEqualTo("INVALID_UTF8_BOUNDARY");
+        assertThat(binder.bindSourceSpan(insideEnd, bytes,
+                candidate("e", "loc", EvidenceBinder.Grounding.EXACT, null)).reason())
+            .isEqualTo("INVALID_UTF8_BOUNDARY");
+        assertThat(binder.bindSourceSpan(malformed, malformedBytes,
+                candidate("m", "loc", EvidenceBinder.Grounding.EXACT, null)).reason())
+            .isEqualTo("INVALID_UTF8_BOUNDARY");
+    }
+
+    @Test
+    void sourceVersionMismatchIsMisbound() {
+        var result = binder.bindSourceSpan(payload(location("loc", 0, 9,
+                LocationPrecision.LOCATION_PRECISION_EXACT,
+                Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+                CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE)), BYTES,
+            new EvidenceBinder.SourceSpanCandidate("v", "e1", "loc",
+                EvidenceBinder.Grounding.EXACT, "# Heading", "v2"));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("SOURCE_VERSION_MISMATCH");
+    }
+
+    private static DocumentPayload withRange(byte[] source, String digest, int start, int end) {
+        return DocumentPayload.newBuilder()
+            .setSource(source(digest))
+            .addElements(element(location("loc", start, end,
+                LocationPrecision.LOCATION_PRECISION_EXACT,
+                Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+                CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE)))
+            .build();
     }
 
     @Test
