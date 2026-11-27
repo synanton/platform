@@ -15,6 +15,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -220,11 +221,19 @@ public final class EvidenceBinder {
         String locationId,
         Grounding grounding,
         String expectedSourceText,
-        String expectedSourceVersion
+        String expectedSourceVersion,
+        String expectedSourceSha256
     ) {
         public SourceSpanCandidate(String candidateId, String elementId, String locationId,
                                    Grounding grounding, String expectedSourceText) {
-            this(candidateId, elementId, locationId, grounding, expectedSourceText, null);
+            this(candidateId, elementId, locationId, grounding, expectedSourceText, null, null);
+        }
+
+        public SourceSpanCandidate(String candidateId, String elementId, String locationId,
+                                   Grounding grounding, String expectedSourceText,
+                                   String expectedSourceVersion) {
+            this(candidateId, elementId, locationId, grounding, expectedSourceText,
+                expectedSourceVersion, null);
         }
 
         public SourceSpanCandidate {
@@ -433,9 +442,13 @@ public final class EvidenceBinder {
         if (!"markdown".equals(payload.getSource().getSourceFormat())) {
             return sourceMisbound(candidate, "UNSUPPORTED_SOURCE_FORMAT");
         }
+        String sourceVersion = payload.getSource().getSourceVersion();
+        if (sourceVersion.isBlank()) {
+            return sourceMisbound(candidate, "SOURCE_VERSION_MISSING");
+        }
         if (candidate.expectedSourceVersion() != null
                 && !candidate.expectedSourceVersion().isBlank()
-                && !candidate.expectedSourceVersion().equals(payload.getSource().getSourceVersion())) {
+                && !candidate.expectedSourceVersion().equals(sourceVersion)) {
             return sourceMisbound(candidate, "SOURCE_VERSION_MISMATCH");
         }
         String sourceDigest = payload.getSource().getSourceDigest();
@@ -459,7 +472,7 @@ public final class EvidenceBinder {
             return sourceMisbound(candidate, "REPRODUCIBILITY_UNSPECIFIED");
         }
         if (!location.hasTextRange()) {
-            return sourceMisbound(candidate, "UNSUPPORTED_LOCATION_TYPE");
+            return sourceUnmapped(candidate, "SOURCE_RANGE_ABSENT");
         }
         TextRange range = location.getTextRange();
         if (range.getUnit() != org.synanton.extraction.v1.OffsetUnit.OFFSET_UNIT_UTF8_BYTE) {
@@ -496,7 +509,24 @@ public final class EvidenceBinder {
                 return sourceMisbound(candidate, "EXPECTED_SOURCE_TEXT_MISMATCH");
             }
         } else if (candidate.grounding() == Grounding.APPROXIMATE) {
-            return sourceMisbound(candidate, "APPROXIMATE_MAPPING_UNSUPPORTED");
+            if (location.getPrecision()
+                    != org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_APPROXIMATE) {
+                return sourceMisbound(candidate, "APPROXIMATE_GROUNDING_REQUIRES_APPROXIMATE_SOURCE");
+            }
+            if (candidate.expectedSourceSha256() == null
+                    || candidate.expectedSourceSha256().isBlank()) {
+                return sourceMisbound(candidate, "APPROXIMATE_MAPPING_UNVALIDATED");
+            }
+            String expectedRangeDigest = normalizedSha256(candidate.expectedSourceSha256());
+            String actualRangeDigest = sha256(Arrays.copyOfRange(
+                sourceBytes, (int) range.getStart(), (int) range.getEnd()));
+            if (!actualRangeDigest.equals(expectedRangeDigest)) {
+                return sourceMisbound(candidate, "APPROXIMATE_SOURCE_DIGEST_MISMATCH");
+            }
+            if (candidate.expectedSourceText() != null
+                    && !candidate.expectedSourceText().equals(sourceText)) {
+                return sourceMisbound(candidate, "EXPECTED_SOURCE_TEXT_MISMATCH");
+            }
         } else {
             return sourceMisbound(candidate, "UNSUPPORTED_GROUNDING");
         }
@@ -506,7 +536,7 @@ public final class EvidenceBinder {
                 ? payload.getIdentity().getDocumentId() : sourceDigest;
         return new SourceSpanResult(Status.RESOLVED, new SourceEvidence(
             candidate.candidateId(), "p3a-source-span-binding-v1",
-            documentId, payload.getSource().getSourceVersion(),
+            documentId, sourceVersion,
             sourceDigest, element.getId(), location.getLocationId(),
             (int) range.getStart(), (int) range.getEnd(), sourceText, candidate.grounding()), "");
     }
@@ -526,6 +556,10 @@ public final class EvidenceBinder {
         } catch (Exception e) {
             throw new IllegalStateException("SHA-256 unavailable", e);
         }
+    }
+
+    private static String normalizedSha256(String digest) {
+        return digest.startsWith("sha256:") ? digest.substring("sha256:".length()) : digest;
     }
 
     public static CanonicalBox canonicalBox(DocumentStructure.BoundingBox box) {
