@@ -41,8 +41,11 @@ This proposal relies on chunk captures plus the current producer/chunker code.
 - **PROPOSED:** heading provenance is retained:
   - the heading element ID is included in `sourceElements`;
   - the heading's source/canonical range contributes to the chunk boundary;
-  - container chunks are distinguishable from content chunks without changing the persistence
-    schema.
+  - structural container chunks use the existing `SemanticChunk.ChunkType.HEADING`
+    (`chunk_type="HEADING"` after persistence);
+  - content-section chunks remain `SECTION` or `SUBSECTION`;
+  - empty leaves emit no semantic chunk and are recorded only in evaluation diagnostics.
+  No new enum value, field, or persistence schema is required.
 
 ### Run-v2 mapping
 
@@ -191,7 +194,7 @@ References:
 
 | Area | Input | Expected | Failure condition |
 |---|---|---|---|
-| Hierarchy | Heading-only parent with child headings | Exactly one container chunk; heading provenance retained | No chunk or duplicate container chunk |
+| Hierarchy | Heading-only parent with child headings | Exactly one `HEADING` container chunk; heading provenance retained | No chunk, wrong `chunk_type`, or duplicate container chunk |
 | Empty sections | Empty leaf and empty structural parent | Empty parent follows container rule; empty leaf follows explicit approved rule | Silent drop without diagnostic, or invented body |
 | Provenance | Heading + body elements | Heading and body IDs retained; order preserved | Heading ID absent or body ID lost |
 | Tables | TABLE with child rows/cells | Exactly one atomic table chunk | Extra row/cell subsection chunk |
