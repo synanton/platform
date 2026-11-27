@@ -1,3 +1,4 @@
+705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/.gitattributes
 341ccc766383766b49672fdfb9837d24bf644adb1a8796cb7d39ebb873636fb5  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/REPORT.md
 05fe909f5273eb6f0a438c8e9b3816a8c38c131c9711eec2299598dc31cc76bc  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/attempts/attempt-1-failure.txt
 3835ab7431c3d6bd337fcd2b4c5595cb758b2f1371609b7b80570b996d30d6ff  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/attempts/attempt-1-source.json
@@ -10,7 +11,7 @@ de9add7d6b48f08333c29820d4daba2157e5ff4961b2443e26c258da57c4bf78  evaluation/it-
 f87c2654b5901cb6451f536547a8f3d459be140e5cdf5c1df5c049f5d88da488  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/negative-assertions.json
 ee58bf1876b8f460b99a6dcc64f0ea2d0007f8089213e9a4d4fbdf37fb954c21  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/operation.json
 c2bf299940ca3a011f418f74ca12416e0520804fd8f62129d064319e8689b2e2  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/preflight.md
-1e5558be9566cc477257e002bffbd8d49f5c3fe0fc890f164966b4fb83006c9c  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/run-manifest.json
+34af24643720fc201f65b28585cc8c5d7c8526965a05d7afcd2e9daf191f943e  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/run-manifest.json
 f4874de80148fd2e42aaaf2b3950f6368afd1b97e7ae60c1adcc159cebd2aa81  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/runs.csv
 f1b2f4af468fa890bfdde16adcde04575b799bfdcff34c7ad445ebe92201fbbc  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/source.json
 d30d899d95b7ab112eb9508e8236850ce29242d157a58792335c80d0dc119174  evaluation/it-books/synthetic-ingestion-v1/results/run-v2/source_versions.csv

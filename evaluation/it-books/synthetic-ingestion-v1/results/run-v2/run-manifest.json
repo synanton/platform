@@ -106,6 +106,7 @@
     "Metadata features include embeddedImages=FEATURE_UNSUPPORTED."
   ],
   "checksums": {
+    ".gitattributes": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
     "REPORT.md": "341ccc766383766b49672fdfb9837d24bf644adb1a8796cb7d39ebb873636fb5",
     "attempts/attempt-1-failure.txt": "05fe909f5273eb6f0a438c8e9b3816a8c38c131c9711eec2299598dc31cc76bc",
     "attempts/attempt-1-source.json": "3835ab7431c3d6bd337fcd2b4c5595cb758b2f1371609b7b80570b996d30d6ff",
