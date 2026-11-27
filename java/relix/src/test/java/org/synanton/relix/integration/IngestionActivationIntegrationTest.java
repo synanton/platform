@@ -1,8 +1,8 @@
 package org.synanton.relix.integration;
 
+import org.synanton.relix.RelixCassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -61,7 +61,6 @@ import org.synanton.ingestioncache.activation.SourceActivationStore;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
-import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.ActivationRequestRow;
 import org.synanton.ingestioncache.domain.ExtractionRequestRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
@@ -122,7 +121,6 @@ import org.synanton.synquest.resolution.DefaultResolutionPolicy;
 import org.synanton.synquest.resolution.ResolutionConsumer;
 import org.synanton.synvault.domain.ContentRef;
 import org.synanton.synvault.port.ContentPullPort;
-import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -139,7 +137,6 @@ import static org.mockito.Mockito.when;
  */
 class IngestionActivationIntegrationTest {
 
-    private static CassandraContainer cassandra;
     private static Neo4jContainer<?> neo4j;
     private static CqlSession session;
     private static Driver driver;
@@ -157,17 +154,8 @@ class IngestionActivationIntegrationTest {
 
     @BeforeAll
     static void startStores() throws java.io.IOException {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1.12"));
-        cassandra.start();
-        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
-        try (CqlSession admin = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build();
-        SchemaInstaller.install(session);
+        session = RelixCassandraTestSupport.session();
+        RelixCassandraTestSupport.reset();
         cache = new IngestionCacheClient(session);
         activations = new CassandraSourceActivationStore(session);
         ownership = new PromotionOwnershipStore(session);
@@ -238,12 +226,6 @@ class IngestionActivationIntegrationTest {
         }
         if (neo4j != null) {
             neo4j.stop();
-        }
-        if (session != null) {
-            session.close();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
         }
     }
 

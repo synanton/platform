@@ -1,9 +1,9 @@
 package org.synanton.relix.integration;
 
+import org.synanton.relix.RelixCassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,7 +38,6 @@ import org.synanton.common.resolution.StaleResolutionException;
 import org.synanton.ingestioncache.claim.ClaimService;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
-import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
 import org.synanton.ingestioncache.domain.ResolutionWorkRow;
 import org.synanton.relix.adapter.out.graph.neo4j.CypherExecutor;
@@ -54,7 +53,6 @@ import org.synanton.relix.reconciliation.ResolutionReconciler;
 import org.synanton.synquest.config.ResolutionConsumerProperties;
 import org.synanton.synquest.resolution.ResolutionConsumer;
 import org.synanton.synquest.resolution.ResolutionWriteClient;
-import org.testcontainers.cassandra.CassandraContainer;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -72,7 +70,6 @@ class ConsumerFaultInjectionIntegrationTest {
     private static final UUID VERSION = UUID.fromString("11111111-5890-5890-5890-111111111111");
     private static final UUID CONTENT_REF = UUID.fromString("22222222-5890-5890-5890-222222222222");
 
-    private static CassandraContainer cassandra;
     private static Neo4jContainer<?> neo4j;
     private static CqlSession session;
     private static IngestionCacheClient cache;
@@ -84,17 +81,8 @@ class ConsumerFaultInjectionIntegrationTest {
 
     @BeforeAll
     static void start() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
-        cassandra.start();
-        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
-        try (CqlSession admin = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build();
-        SchemaInstaller.install(session);
+        session = RelixCassandraTestSupport.session();
+        RelixCassandraTestSupport.reset();
         cache = new IngestionCacheClient(session);
         claims = new ClaimService(cache);
         ownership = new PromotionOwnershipStore(session);
@@ -116,14 +104,8 @@ class ConsumerFaultInjectionIntegrationTest {
         if (driver != null) {
             driver.close();
         }
-        if (session != null) {
-            session.close();
-        }
         if (neo4j != null) {
             neo4j.stop();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
         }
     }
 
