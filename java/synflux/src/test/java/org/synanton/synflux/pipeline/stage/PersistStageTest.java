@@ -6,13 +6,18 @@ import org.synanton.ingestioncache.domain.ChunkRow;
 import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
 import org.synanton.extraction.v1.CanonicalTextRange;
+import org.synanton.extraction.v1.DocumentClass;
 import org.synanton.extraction.v1.DocumentElement;
 import org.synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentIdentity;
 import org.synanton.extraction.v1.DocumentPayload;
 import org.synanton.extraction.v1.DocumentProjection;
+import org.synanton.extraction.v1.ExecutionLink;
+import org.synanton.extraction.v1.ExecutionLinkKind;
 import org.synanton.extraction.v1.ExecutionOutcome;
 import org.synanton.extraction.v1.ExtractionExecution;
 import org.synanton.extraction.v1.ExtractionProvenance;
+import org.synanton.extraction.v1.ProjectionOutcome;
 import org.synanton.extraction.v1.QualityReport;
 import org.synanton.extraction.v1.QualityStatus;
 import org.synanton.extraction.v1.SourceDescriptor;
@@ -75,16 +80,21 @@ class PersistStageTest {
     }
 
     private static DocumentPayload canonicalPayload(UUID versionId, ExecutionOutcome outcome,
-                                                    QualityStatus qualityStatus) {
+                                                    QualityReport quality) {
         return DocumentPayload.newBuilder()
                 .setMediaType("text/markdown")
                 .setFlattenedText("hello")
+                .setIdentity(DocumentIdentity.newBuilder()
+                        .setDocumentId("doc-1")
+                        .setDocumentClass(DocumentClass.DOCUMENT_CLASS_TEXT)
+                        .setDocumentVersion("dv-1"))
                 .setSource(SourceDescriptor.newBuilder()
                         .setMediaType("text/markdown")
                         .setSourceFormat("markdown")
                         .setSourceDigest("sha256:source")
                         .setSourceVersion(versionId.toString())
-                        .setSourceUri("file:///tmp/a.md"))
+                        .setSourceUri("file:///tmp/a.md")
+                        .setFilename("a.md"))
                 .addElements(DocumentElement.newBuilder()
                         .setId("e1")
                         .setType(DocumentElementType.ELEMENT_PARAGRAPH)
@@ -102,11 +112,25 @@ class PersistStageTest {
                                 .setExecutionId("exec-1")
                                 .setExtractorId("markdown-adapter")
                                 .setExtractorVersion("1.2.0")
+                                .setEngineId("markdown-engine")
+                                .setEngineVersion("9.1")
+                                .setStageId("normalize")
+                                .setPolicyId("markdown-policy")
+                                .setPolicyVersion("4")
                                 .setOutcome(outcome)
-                                .setQuality(QualityReport.newBuilder().setStatus(qualityStatus))))
+                                .addParents(ExecutionLink.newBuilder()
+                                        .setExecutionId("exec-0")
+                                        .setKind(ExecutionLinkKind.EXECUTION_LINK_FALLBACK))
+                                .putAttributes("worker", "w1")
+                                .setQuality(quality)))
                 .addProjections(DocumentProjection.newBuilder()
                         .setProjectionId("proj-1")
-                        .setFormat("markdown"))
+                        .setFormat("markdown")
+                        .setContractId("markdown-projection")
+                        .setContractVersion("2.0")
+                        .setOutcome(ProjectionOutcome.PROJECTION_OUTCOME_UNSUPPORTED)
+                        .setUnsupportedReason("tables flattened")
+                        .setDigest("sha256:proj"))
                 .build();
     }
 
@@ -115,7 +139,10 @@ class PersistStageTest {
                 "schema_id", "synanton.extraction.document",
                 "schema_version", "1.0",
                 "processor_id", "markdown-adapter",
-                "processor_version", "1.2.0");
+                "processor_version", "1.2.0",
+                "format", "SERIALIZATION_PROTOBUF",
+                "schema_digest", "sha256:schema",
+                "payload_digest", "sha256:payload");
     }
 
     private static String inputJson(IngestionCacheClient cache) {
@@ -169,7 +196,11 @@ class PersistStageTest {
         StageContext context = new StageContext("demo", "job", props()).withSourceVersionId(versionId);
         ParsedDocument parsed = parsed(refId,
             canonicalPayload(versionId, ExecutionOutcome.EXECUTION_OUTCOME_SUCCEEDED,
-                QualityStatus.QUALITY_STATUS_COMPLETE), descriptor());
+                QualityReport.newBuilder()
+                    .setStatus(QualityStatus.QUALITY_STATUS_COMPLETE)
+                    .setCompleteness(0.0)
+                    .setConfidence(0.0)
+                    .build()), descriptor());
 
         stage.apply(doc(refId, parsed), context);
 
@@ -179,19 +210,43 @@ class PersistStageTest {
             .contains("\"extraction_schema_version\":\"1.0\"")
             .contains("\"extraction_processor_id\":\"markdown-adapter\"")
             .contains("\"extraction_processor_version\":\"1.2.0\"")
+            .contains("\"extraction_payload_format\":\"SERIALIZATION_PROTOBUF\"")
+            .contains("\"extraction_schema_digest\":\"sha256:schema\"")
+            .contains("\"extraction_payload_digest\":\"sha256:payload\"")
+            .contains("\"extraction_document_id\":\"doc-1\"")
+            .contains("\"extraction_document_class\":\"DOCUMENT_CLASS_TEXT\"")
+            .contains("\"extraction_document_version\":\"dv-1\"")
             .contains("\"extraction_source_media_type\":\"text/markdown\"")
             .contains("\"extraction_source_format\":\"markdown\"")
             .contains("\"extraction_source_digest\":\"sha256:source\"")
             .contains("\"extraction_source_version\":\"" + versionId + "\"")
+            .contains("\"extraction_source_filename\":\"a.md\"")
             .contains("\"extraction_element_count\":2")
             .contains("\"extraction_source_location_count\":2")
             .contains("\"extraction_canonical_range_count\":1")
             .contains("\"extraction_projection_count\":1")
             .contains("\"extraction_projection_formats\":[\"markdown\"]")
+            .contains("\"projection_id\":\"proj-1\"")
+            .contains("\"contract_id\":\"markdown-projection\"")
+            .contains("\"contract_version\":\"2.0\"")
+            .contains("\"outcome\":\"PROJECTION_OUTCOME_UNSUPPORTED\"")
+            .contains("\"unsupported_reason\":\"tables flattened\"")
+            .contains("\"digest\":\"sha256:proj\"")
+            .contains("\"content_available\":false")
             .contains("\"extraction_execution_count\":1")
             .contains("\"extraction_primary_execution_id\":\"exec-1\"")
+            .contains("\"engine_id\":\"markdown-engine\"")
+            .contains("\"engine_version\":\"9.1\"")
+            .contains("\"stage_id\":\"normalize\"")
+            .contains("\"policy_id\":\"markdown-policy\"")
+            .contains("\"policy_version\":\"4\"")
+            .contains("\"execution_id\":\"exec-0\"")
+            .contains("\"kind\":\"EXECUTION_LINK_FALLBACK\"")
+            .contains("\"worker\":\"w1\"")
             .contains("\"outcome\":\"EXECUTION_OUTCOME_SUCCEEDED\"")
             .contains("\"quality_status\":\"QUALITY_STATUS_COMPLETE\"")
+            .contains("\"quality_completeness\":0.0")
+            .contains("\"quality_confidence\":0.0")
             .doesNotContain("structural_");
     }
 
@@ -221,7 +276,11 @@ class PersistStageTest {
         UUID versionId = UUID.fromString("22222222-2222-2222-2222-222222222222");
         ParsedDocument parsed = parsed(refId,
             canonicalPayload(versionId, ExecutionOutcome.EXECUTION_OUTCOME_PARTIAL,
-                QualityStatus.QUALITY_STATUS_PARTIAL), descriptor());
+                QualityReport.newBuilder()
+                    .setStatus(QualityStatus.QUALITY_STATUS_PARTIAL)
+                    .setCompleteness(0.0)
+                    .addWarnings("page 2 skipped")
+                    .build()), descriptor());
 
         stage.apply(doc(refId, parsed),
             new StageContext("demo", "job", props()).withSourceVersionId(versionId));
@@ -229,7 +288,10 @@ class PersistStageTest {
         assertThat(inputJson(cache))
             .contains("\"extraction_payload_status\":\"PRESENT\"")
             .contains("\"outcome\":\"EXECUTION_OUTCOME_PARTIAL\"")
-            .contains("\"quality_status\":\"QUALITY_STATUS_PARTIAL\"");
+            .contains("\"quality_status\":\"QUALITY_STATUS_PARTIAL\"")
+            .contains("\"quality_completeness\":0.0")
+            .contains("\"quality_warnings\":[\"page 2 skipped\"]")
+            .doesNotContain("quality_confidence");
     }
 
     @Test

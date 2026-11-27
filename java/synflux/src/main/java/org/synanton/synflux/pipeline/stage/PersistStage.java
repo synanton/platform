@@ -212,12 +212,21 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         input.put("extraction_payload_status", payload == null ? "ABSENT" : "PRESENT");
         Map<String, String> descriptor = new TreeMap<>(parsed.payloadDescriptor());
         if (!descriptor.isEmpty()) {
-            input.put("extraction_schema_id", descriptor.get("schema_id"));
-            input.put("extraction_schema_version", descriptor.get("schema_version"));
-            input.put("extraction_processor_id", descriptor.get("processor_id"));
-            input.put("extraction_processor_version", descriptor.get("processor_version"));
+            input.put("extraction_schema_id", descriptor.getOrDefault("schema_id", ""));
+            input.put("extraction_schema_version", descriptor.getOrDefault("schema_version", ""));
+            input.put("extraction_processor_id", descriptor.getOrDefault("processor_id", ""));
+            input.put("extraction_processor_version", descriptor.getOrDefault("processor_version", ""));
+            input.put("extraction_payload_format", descriptor.getOrDefault("format", ""));
+            input.put("extraction_schema_digest", descriptor.getOrDefault("schema_digest", ""));
+            input.put("extraction_payload_digest", descriptor.getOrDefault("payload_digest", ""));
         }
         if (payload != null) {
+            if (payload.hasIdentity()) {
+                var identity = payload.getIdentity();
+                input.put("extraction_document_id", identity.getDocumentId());
+                input.put("extraction_document_version", identity.getDocumentVersion());
+                input.put("extraction_document_class", identity.getDocumentClass().name());
+            }
             if (payload.hasSource()) {
                 var source = payload.getSource();
                 input.put("extraction_source_media_type", source.getMediaType());
@@ -225,6 +234,7 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
                 input.put("extraction_source_digest", source.getSourceDigest());
                 input.put("extraction_source_version", source.getSourceVersion());
                 input.put("extraction_source_uri", source.getSourceUri());
+                putIfPresent(input, "extraction_source_filename", source.getFilename());
             }
             input.put("extraction_element_count", payload.getElementsCount());
             input.put("extraction_source_location_count", payload.getElementsList().stream()
@@ -237,6 +247,9 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             input.put("extraction_projection_formats", payload.getProjectionsList().stream()
                 .map(org.synanton.extraction.v1.DocumentProjection::getFormat)
                 .filter(format -> !format.isBlank())
+                .toList());
+            input.put("extraction_projections", payload.getProjectionsList().stream()
+                .map(PersistStage::projection)
                 .toList());
             input.put("extraction_execution_count", payload.getProvenance().getExecutionsCount());
             input.put("extraction_primary_execution_id", payload.getProvenance().getPrimaryExecutionId());
@@ -254,7 +267,23 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         value.put("execution_id", execution.getExecutionId());
         value.put("extractor_id", execution.getExtractorId());
         value.put("extractor_version", execution.getExtractorVersion());
+        putIfPresent(value, "engine_id", execution.getEngineId());
+        putIfPresent(value, "engine_version", execution.getEngineVersion());
+        putIfPresent(value, "stage_id", execution.getStageId());
+        putIfPresent(value, "policy_id", execution.getPolicyId());
+        putIfPresent(value, "policy_version", execution.getPolicyVersion());
         value.put("outcome", execution.getOutcome().name());
+        value.put("parents", execution.getParentsList().stream()
+            .map(parent -> {
+                Map<String, Object> link = new LinkedHashMap<>();
+                link.put("execution_id", parent.getExecutionId());
+                link.put("kind", parent.getKind().name());
+                return link;
+            })
+            .toList());
+        if (!execution.getAttributesMap().isEmpty()) {
+            value.put("attributes", new TreeMap<>(execution.getAttributesMap()));
+        }
         if (execution.hasQuality()) {
             var quality = execution.getQuality();
             value.put("quality_status", quality.getStatus().name());
@@ -269,6 +298,34 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
             value.put("quality_status", "QUALITY_STATUS_UNSPECIFIED");
         }
         return value;
+    }
+
+    private static Map<String, Object> projection(org.synanton.extraction.v1.DocumentProjection projection) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("projection_id", projection.getProjectionId());
+        value.put("format", projection.getFormat());
+        value.put("contract_id", projection.getContractId());
+        value.put("contract_version", projection.getContractVersion());
+        value.put("outcome", projection.getOutcome().name());
+        value.put("digest", projection.getDigest());
+        value.put("unsupported_reason", projection.getUnsupportedReason());
+        value.put("content_available", projection.hasInlineContent() || projection.hasReference());
+        if (projection.hasLoss()) {
+            var loss = projection.getLoss();
+            Map<String, Object> lossValue = new LinkedHashMap<>();
+            lossValue.put("dropped", loss.getDroppedList());
+            lossValue.put("approximated", loss.getApproximatedList());
+            lossValue.put("unsupported", loss.getUnsupportedList());
+            lossValue.put("reasons", loss.getReasonsList());
+            value.put("loss", lossValue);
+        }
+        return value;
+    }
+
+    private static void putIfPresent(Map<String, Object> target, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            target.put(key, value);
+        }
     }
 
     private static String sha256(String text) {

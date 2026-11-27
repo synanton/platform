@@ -27,6 +27,7 @@ import org.synanton.extraction.v1.ExtractionResult;
 import org.synanton.extraction.v1.ExtractionServiceGrpc;
 import org.synanton.extraction.v1.ExtractionStatus;
 import org.synanton.extraction.v1.GetOperationsRequest;
+import org.synanton.extraction.v1.SerializationFormat;
 import org.synanton.extraction.v1.GetOperationsResponse;
 import org.synanton.extraction.v1.GetResultRequest;
 import org.synanton.extraction.v1.FeatureState;
@@ -142,6 +143,9 @@ class ExtractionStageGrpcTest {
                                 .setSchemaVersion("1.0")
                                 .setProcessorId("pdf-adapter")
                                 .setProcessorVersion("opendataloader-2.1.1")
+                                .setFormat(SerializationFormat.SERIALIZATION_PROTOBUF)
+                                .setSchemaDigest("sha256:schema")
+                                .setPayloadDigest("sha256:payload")
                                 .build())
                         .build())
                 .putFeatureStates("text", FeatureState.FEATURE_APPLIED)
@@ -164,7 +168,10 @@ class ExtractionStageGrpcTest {
         assertThat(parsed.payloadDescriptor())
                 .containsEntry("processor_id", "pdf-adapter")
                 .containsEntry("processor_version", "opendataloader-2.1.1")
-                .containsEntry("schema_id", "synanton.extraction.document");
+                .containsEntry("schema_id", "synanton.extraction.document")
+                .containsEntry("format", "SERIALIZATION_PROTOBUF")
+                .containsEntry("schema_digest", "sha256:schema")
+                .containsEntry("payload_digest", "sha256:payload");
     }
 
     @Test
