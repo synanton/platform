@@ -43,12 +43,18 @@ public final class CassandraTestSupport {
                 admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
                     + "{'class':'SimpleStrategy','replication_factor':1}");
             }
-            session = CqlSession.builder()
+            CqlSession initialised = CqlSession.builder()
                 .addContactPoint(contact)
                 .withLocalDatacenter("datacenter1")
                 .withKeyspace("ingestion_cache")
                 .build();
-            SchemaInstaller.install(session);
+            try {
+                SchemaInstaller.install(initialised);
+            } catch (RuntimeException e) {
+                initialised.close();
+                throw e;
+            }
+            session = initialised;
             installShutdownHook();
         }
         return session;
