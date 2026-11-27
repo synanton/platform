@@ -1,5 +1,9 @@
 package org.synanton.synflux.document.evidence;
 
+import org.synanton.extraction.v1.DocumentElement;
+import org.synanton.extraction.v1.DocumentPayload;
+import org.synanton.extraction.v1.SourceLocation;
+import org.synanton.extraction.v1.TextRange;
 import org.synanton.synflux.document.DocumentStructure;
 import org.synanton.synflux.document.StructuralArtifactDigest;
 
@@ -206,6 +210,63 @@ public final class EvidenceBinder {
         }
     }
 
+    /** Evaluation-only source-span candidate. */
+    public record SourceSpanCandidate(
+        String candidateId,
+        String elementId,
+        String locationId,
+        Grounding grounding,
+        String expectedSourceText
+    ) {
+        public SourceSpanCandidate {
+            requireText(candidateId, "candidateId");
+            requireText(elementId, "elementId");
+            Objects.requireNonNull(grounding, "grounding");
+        }
+    }
+
+    /** Resolved evidence in original Markdown source bytes. */
+    public record SourceEvidence(
+        String candidateId,
+        String contractVersion,
+        String documentId,
+        String sourceVersionId,
+        String sourceDigest,
+        String elementId,
+        String locationId,
+        int sourceStart,
+        int sourceEnd,
+        String sourceText,
+        Grounding grounding
+    ) {
+        public SourceEvidence {
+            requireText(candidateId, "candidateId");
+            requireText(contractVersion, "contractVersion");
+            requireText(documentId, "documentId");
+            requireText(sourceDigest, "sourceDigest");
+            requireText(elementId, "elementId");
+            requireText(locationId, "locationId");
+            if (sourceStart < 0 || sourceEnd <= sourceStart) {
+                throw new IllegalArgumentException("invalid source span");
+            }
+            requireText(sourceText, "sourceText");
+            Objects.requireNonNull(grounding, "grounding");
+        }
+    }
+
+    public record SourceSpanResult(Status status, SourceEvidence evidence, String reason) {
+        public SourceSpanResult {
+            Objects.requireNonNull(status, "status");
+            if (status == Status.RESOLVED && evidence == null) {
+                throw new IllegalArgumentException("RESOLVED requires source evidence");
+            }
+            if (status != Status.RESOLVED && evidence != null) {
+                throw new IllegalArgumentException("non-RESOLVED must not carry source evidence");
+            }
+            reason = reason == null ? "" : reason;
+        }
+    }
+
     public record Report(
         int total,
         int resolved,
@@ -303,6 +364,133 @@ public final class EvidenceBinder {
                 candidate.startOffset(), candidate.endOffset(), candidate.grounding(), "");
         }
         return bindStructuralChunk(structure, mapping, candidate);
+    }
+
+    /**
+     * Evaluation-only verification of a producer-declared Markdown source span.
+     * Only ORIGINAL_SOURCE + UTF8_BYTE is supported in this milestone.
+     */
+    public SourceSpanResult bindSourceSpan(DocumentPayload payload, byte[] sourceBytes,
+                                           SourceSpanCandidate candidate) {
+        Objects.requireNonNull(payload, "payload");
+        Objects.requireNonNull(sourceBytes, "sourceBytes");
+        Objects.requireNonNull(candidate, "candidate");
+        if (candidate.grounding() == Grounding.DOCUMENT_SCOPE) {
+            return sourceMisbound(candidate, "SOURCE_DOCUMENT_SCOPE_UNSUPPORTED");
+        }
+        if (!payload.hasSource() || payload.getSource().getSourceDigest().isBlank()) {
+            return sourceMisbound(candidate, "SOURCE_IDENTITY_MISSING");
+        }
+        if (!"markdown".equals(payload.getSource().getSourceFormat())) {
+            return sourceMisbound(candidate, "UNSUPPORTED_SOURCE_FORMAT");
+        }
+        String sourceDigest = payload.getSource().getSourceDigest();
+        if (sourceDigest.startsWith("sha256:")) {
+            sourceDigest = sourceDigest.substring("sha256:".length());
+        }
+        if (!sha256(sourceBytes).equals(sourceDigest)) {
+            return sourceMisbound(candidate, "SOURCE_DIGEST_MISMATCH");
+        }
+
+        DocumentElement element = payload.getElementsList().stream()
+            .filter(e -> e.getId().equals(candidate.elementId()))
+            .findFirst().orElse(null);
+        if (element == null) {
+            return sourceMisbound(candidate, "UNKNOWN_ELEMENT");
+        }
+        List<SourceLocation> locations = element.getSourceLocationsList().stream()
+            .filter(l -> candidate.locationId() == null || candidate.locationId().isBlank()
+                || l.getLocationId().equals(candidate.locationId()))
+            .toList();
+        if (locations.isEmpty()) {
+            return sourceUnmapped(candidate, "SOURCE_LOCATION_ABSENT");
+        }
+        if (locations.size() > 1) {
+            return sourceMisbound(candidate, "AMBIGUOUS_SOURCE_LOCATION");
+        }
+        SourceLocation location = locations.getFirst();
+        if (location.getSourceBinding().getKind()
+                != org.synanton.extraction.v1.BindingKind.BINDING_KIND_INHERIT_DOCUMENT) {
+            return sourceMisbound(candidate, "UNSUPPORTED_SOURCE_BINDING");
+        }
+        if (!location.hasTextRange()) {
+            return sourceMisbound(candidate, "UNSUPPORTED_LOCATION_TYPE");
+        }
+        TextRange range = location.getTextRange();
+        if (range.getUnit() != org.synanton.extraction.v1.OffsetUnit.OFFSET_UNIT_UTF8_BYTE) {
+            return sourceMisbound(candidate, "UNSUPPORTED_OFFSET_UNIT");
+        }
+        if (range.getCoordinateSpace()
+                != org.synanton.extraction.v1.CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE) {
+            return sourceMisbound(candidate, "UNSUPPORTED_COORDINATE_SPACE");
+        }
+        if (range.getStart() < 0 || range.getEnd() <= range.getStart()
+                || range.getEnd() > sourceBytes.length) {
+            return sourceMisbound(candidate, "SOURCE_SPAN_OUT_OF_RANGE");
+        }
+        if (location.getPrecision()
+                == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_UNAVAILABLE) {
+            return sourceUnmapped(candidate, "SOURCE_LOCATION_UNAVAILABLE");
+        }
+        if (location.getPrecision()
+                == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_UNSPECIFIED) {
+            return sourceMisbound(candidate, "PRECISION_UNSPECIFIED");
+        }
+        if (location.getReproducibility()
+                == org.synanton.extraction.v1.Reproducibility.REPRODUCIBILITY_UNSPECIFIED) {
+            return sourceMisbound(candidate, "REPRODUCIBILITY_UNSPECIFIED");
+        }
+
+        String sourceText = new String(sourceBytes, (int) range.getStart(),
+            (int) (range.getEnd() - range.getStart()), StandardCharsets.UTF_8);
+        boolean exactLocation = location.getPrecision()
+            == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_EXACT;
+        boolean approximateLocation = location.getPrecision()
+            == org.synanton.extraction.v1.LocationPrecision.LOCATION_PRECISION_APPROXIMATE;
+        if (candidate.grounding() == Grounding.EXACT) {
+            if (!exactLocation
+                    || location.getReproducibility()
+                    != org.synanton.extraction.v1.Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE) {
+                return sourceMisbound(candidate, "EXACT_GROUNDING_REQUIRES_EXACT_SOURCE");
+            }
+            if (candidate.expectedSourceText() != null
+                    && !candidate.expectedSourceText().equals(sourceText)) {
+                return sourceMisbound(candidate, "EXPECTED_SOURCE_TEXT_MISMATCH");
+            }
+        } else if (candidate.grounding() == Grounding.APPROXIMATE) {
+            if (!approximateLocation || candidate.expectedSourceText() == null
+                    || !candidate.expectedSourceText().equals(sourceText)) {
+                return sourceMisbound(candidate, "APPROXIMATE_MAPPING_UNVALIDATED");
+            }
+        } else {
+            return sourceMisbound(candidate, "UNSUPPORTED_GROUNDING");
+        }
+
+        String documentId = payload.hasIdentity()
+            && !payload.getIdentity().getDocumentId().isBlank()
+                ? payload.getIdentity().getDocumentId() : sourceDigest;
+        return new SourceSpanResult(Status.RESOLVED, new SourceEvidence(
+            candidate.candidateId(), "p3a-source-span-binding-v1",
+            documentId, payload.getSource().getSourceVersion(),
+            sourceDigest, element.getId(), location.getLocationId(),
+            (int) range.getStart(), (int) range.getEnd(), sourceText, candidate.grounding()), "");
+    }
+
+    private static SourceSpanResult sourceMisbound(SourceSpanCandidate candidate, String reason) {
+        return new SourceSpanResult(Status.MISBOUND, null, reason);
+    }
+
+    private static SourceSpanResult sourceUnmapped(SourceSpanCandidate candidate, String reason) {
+        return new SourceSpanResult(Status.UNMAPPED, null, reason);
+    }
+
+    private static String sha256(byte[] bytes) {
+        try {
+            return HexFormat.of().formatHex(
+                MessageDigest.getInstance("SHA-256").digest(bytes));
+        } catch (Exception e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
     }
 
     public static CanonicalBox canonicalBox(DocumentStructure.BoundingBox box) {
