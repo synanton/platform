@@ -3,7 +3,7 @@
 **Ticket:** #966  
 **Run:** `synthetic-ingestion-v1-run2`  
 **Status:** BLOCKED before stack startup / fixture ingestion  
-**Captured:** 2026-11-27T18:20Z (approximately)
+**Captured:** 2026-11-27T18:27Z
 
 ## Environment identities
 
@@ -98,7 +98,7 @@ Static verification:
 | Source SHA-256 | `db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063` | PASS |
 | Gold SHA-256 | `f12619bd00056e7e996c776f288c2c814840dae31549936e9cbb61b41f04411b` | PASS |
 | `sha256sum -c SHA256SUMS` | source and gold OK | PASS |
-| Gold validator | `{"chunks": 14, "mentions": 25, "negatives": 4, "relations": 15}` | PASS |
+| Gold validator | `{"chunks": 14, "mentions": 25, "negativeAssertions": 4, "relations": 15, "retrieval": 3, "retrievalSupported": 0}` | PASS |
 | Ontology release pin | `47fe38f8-9f72-481b-826a-6c5b12a6027a` | PASS |
 | Ontology release digest | `3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c` | PASS |
 | Deployed ontology identity | not observable; stack not started | BLOCKED |
