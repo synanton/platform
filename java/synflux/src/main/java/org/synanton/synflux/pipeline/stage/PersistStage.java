@@ -206,25 +206,69 @@ public class PersistStage implements PipelineStage<ChunkedDocument, ChunkedDocum
         input.put("source_sha256", artifact.sha256());
         input.put("size_bytes", artifact.bytes().length);
         input.put("mime_type", artifact.mimeType());
-        var structure = parsed.structure();
-        input.put("structural_contract_version", "R0.2");
-        input.put("structural_status", structure == null ? "UNSUPPORTED" : "PARSED");
-        if (structure != null) {
-            input.put("structural_document_id", structure.documentId());
-            input.put("structural_source_id", structure.sourceId());
-            input.put("structural_source_version_id", structure.sourceVersionId());
-            input.put("structural_media_type", structure.mediaType());
-            input.put("structural_normalization_version", structure.normalizationVersion());
-            input.put("structural_chunking_config", structure.chunkingConfig());
-            input.put("structural_parser_name", structure.parserName());
-            input.put("structural_parser_version", structure.parserVersion());
-            input.put("structural_element_count", structure.elements().size());
-            input.put("structural_chunk_count", structure.chunks().size());
-            input.put("structural_text_sha256", sha256(structure.text()));
-            input.put("extraction_text_sha256", sha256(parsed.text()));
-            input.put("text_projection", "EXTRACTION_TEXT");
+        input.put("extraction_text_sha256", sha256(parsed.text()));
+
+        var payload = parsed.documentPayload();
+        input.put("extraction_payload_status", payload == null ? "ABSENT" : "PRESENT");
+        Map<String, String> descriptor = new TreeMap<>(parsed.payloadDescriptor());
+        if (!descriptor.isEmpty()) {
+            input.put("extraction_schema_id", descriptor.get("schema_id"));
+            input.put("extraction_schema_version", descriptor.get("schema_version"));
+            input.put("extraction_processor_id", descriptor.get("processor_id"));
+            input.put("extraction_processor_version", descriptor.get("processor_version"));
         }
+        if (payload != null) {
+            if (payload.hasSource()) {
+                var source = payload.getSource();
+                input.put("extraction_source_media_type", source.getMediaType());
+                input.put("extraction_source_format", source.getSourceFormat());
+                input.put("extraction_source_digest", source.getSourceDigest());
+                input.put("extraction_source_version", source.getSourceVersion());
+                input.put("extraction_source_uri", source.getSourceUri());
+            }
+            input.put("extraction_element_count", payload.getElementsCount());
+            input.put("extraction_source_location_count", payload.getElementsList().stream()
+                .mapToInt(element -> element.getSourceLocationsCount())
+                .sum());
+            input.put("extraction_canonical_range_count", payload.getElementsList().stream()
+                .filter(org.synanton.extraction.v1.DocumentElement::hasCanonicalTextRange)
+                .count());
+            input.put("extraction_projection_count", payload.getProjectionsCount());
+            input.put("extraction_projection_formats", payload.getProjectionsList().stream()
+                .map(org.synanton.extraction.v1.DocumentProjection::getFormat)
+                .filter(format -> !format.isBlank())
+                .toList());
+            input.put("extraction_execution_count", payload.getProvenance().getExecutionsCount());
+            input.put("extraction_primary_execution_id", payload.getProvenance().getPrimaryExecutionId());
+            input.put("extraction_executions", payload.getProvenance().getExecutionsList().stream()
+                .map(PersistStage::execution)
+                .toList());
+            input.put("extraction_flattened_text_present", !payload.getFlattenedText().isEmpty());
+        }
+        input.put("extraction_feature_states", new TreeMap<>(parsed.featureStates()));
         return toJson(input);
+    }
+
+    private static Map<String, Object> execution(org.synanton.extraction.v1.ExtractionExecution execution) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("execution_id", execution.getExecutionId());
+        value.put("extractor_id", execution.getExtractorId());
+        value.put("extractor_version", execution.getExtractorVersion());
+        value.put("outcome", execution.getOutcome().name());
+        if (execution.hasQuality()) {
+            var quality = execution.getQuality();
+            value.put("quality_status", quality.getStatus().name());
+            if (quality.hasCompleteness()) {
+                value.put("quality_completeness", quality.getCompleteness());
+            }
+            if (quality.hasConfidence()) {
+                value.put("quality_confidence", quality.getConfidence());
+            }
+            value.put("quality_warnings", quality.getWarningsList());
+        } else {
+            value.put("quality_status", "QUALITY_STATUS_UNSPECIFIED");
+        }
+        return value;
     }
 
     private static String sha256(String text) {

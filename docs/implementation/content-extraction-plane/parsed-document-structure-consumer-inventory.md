@@ -49,7 +49,7 @@ Replace legacy structural metadata with canonical extraction metadata:
 
 | Current field | Canonical replacement |
 |---|---|
-| `structural_status=PARSED/UNSUPPORTED` | `extraction_payload_status=CANONICAL` when a usable payload exists; `ABSENT` otherwise |
+| `structural_status=PARSED/UNSUPPORTED` | `extraction_payload_status=PRESENT` when a payload exists; `ABSENT` otherwise |
 | `structural_source_id` | `source.source_uri` / source descriptor fields |
 | `structural_source_version_id` | `source.source_version` |
 | `structural_media_type` | `source.media_type` |
@@ -62,11 +62,16 @@ Replace legacy structural metadata with canonical extraction metadata:
 
 Rules:
 
-1. `PersistStage` reads only `documentPayload` and existing extraction metadata.
-2. Null `ParsedDocument.structure()` is expected and not an error.
-3. Missing canonical payload is explicit; do not reconstruct structure or search text for offsets.
-4. Preserve existing persisted-row compatibility; new canonical fields are additive.
-5. Do not change existing evaluation artifacts, annotations, or scoring.
+1. `PersistStage` reads only `documentPayload`, `payloadDescriptor`, and existing extraction metadata.
+2. Processor provenance comes from `PayloadDescriptor` on the enclosing `StructuredPayload`,
+   not from `DocumentPayload` itself.
+3. Null `ParsedDocument.structure()` is expected and not an error.
+4. Missing canonical payload is explicit; do not reconstruct structure or search text for offsets.
+5. Payload presence is separate from execution outcome and quality. A partial payload remains
+   `PRESENT`; execution `outcome`, `quality_status`, completeness, confidence, and warnings are
+   persisted independently.
+6. Preserve existing persisted-row compatibility; new canonical fields are additive.
+7. Do not change existing evaluation artifacts, annotations, or scoring.
 
 ## 4. Test contract
 
