@@ -1,9 +1,9 @@
 package org.synanton.ingestioncache.claim;
 
+import org.synanton.ingestioncache.CassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,51 +13,28 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.common.resolution.StaleOwnershipException;
 import org.synanton.common.resolution.TerminalOutcomeImmutableException;
 import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PromotionOwnershipStoreTest {
 
-    private static CassandraContainer cassandra;
     private static CqlSession session;
     private static PromotionOwnershipStore store;
 
     @BeforeAll
     static void startCassandra() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
-        cassandra.start();
-        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(),
-                cassandra.getMappedPort(9042));
-        try (CqlSession admin = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build();
-        SchemaInstaller.install(session);
+        session = CassandraTestSupport.session();
+        CassandraTestSupport.reset();
         store = new PromotionOwnershipStore(session);
     }
 
-    @AfterAll
-    static void stopCassandra() {
-        if (session != null) {
-            session.close();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
-        }
-    }
 
     @Test
     void initialAcquisitionRaceYieldsExactlyOneOwner() throws Exception {

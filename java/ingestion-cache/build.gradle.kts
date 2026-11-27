@@ -25,6 +25,9 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // The shared Cassandra fixture uses one keyspace and class-level truncation.
+    maxParallelForks = 1
+    systemProperty("junit.jupiter.execution.parallel.enabled", "false")
 }
 
 tasks.register<JavaExec>("runVisibilityBackfill") {

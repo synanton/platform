@@ -1,16 +1,15 @@
 package org.synanton.ingestioncache.compliance;
 
+import org.synanton.ingestioncache.CassandraTestSupport;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.synanton.ingestioncache.cache.ExtractionCacheStore;
 import org.synanton.ingestioncache.cache.ExtractionCacheEntry;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.client.IngestionCacheClient;
@@ -18,12 +17,9 @@ import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.quarantine.QuarantineGeneration;
 import org.synanton.ingestioncache.quarantine.QuarantineRecord;
 import org.synanton.ingestioncache.quarantine.QuarantineStore;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
 class ComplianceDeletionStoreTest {
 
-    private static CassandraContainer cassandra;
     private static CqlSession session;
     private static QuarantineStore quarantine;
     private static IngestionCacheClient cache;
@@ -32,33 +28,14 @@ class ComplianceDeletionStoreTest {
 
     @BeforeAll
     static void startCassandra() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
-        cassandra.start();
-        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(),
-                cassandra.getMappedPort(9042));
-        try (CqlSession admin = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build();
-        SchemaInstaller.install(session);
+        session = CassandraTestSupport.session();
+        CassandraTestSupport.reset();
         quarantine = new QuarantineStore(session);
         cache = new IngestionCacheClient(session);
         audit = new ComplianceDeletionAuditStore(session);
         deletion = new ComplianceDeletionStore(quarantine, cache, audit);
     }
 
-    @AfterAll
-    static void stopCassandra() {
-        if (session != null) {
-            session.close();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
-        }
-    }
 
     @Test
     void hardDeleteRemovesOnlyTargetVersionAndWritesDurableAudit() {

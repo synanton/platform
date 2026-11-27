@@ -1,6 +1,6 @@
 package org.synanton.ingestioncache.client;
 
-import org.junit.jupiter.api.AfterAll;
+import org.synanton.ingestioncache.CassandraTestSupport;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.synanton.ingestioncache.claim.PromotionOwnershipStore;
@@ -8,10 +8,7 @@ import org.synanton.ingestioncache.config.SchemaInstaller;
 import org.synanton.ingestioncache.domain.KnowledgeProcessingRunRow;
 import org.synanton.ingestioncache.domain.ManifestRow;
 import org.synanton.ingestioncache.domain.RelationPromotionResultRow;
-import org.testcontainers.cassandra.CassandraContainer;
-import org.testcontainers.utility.DockerImageName;
 
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -26,36 +23,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ManifestVisibilityGateTest {
 
-    private static final CassandraContainer cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
     private static IngestionCacheClient client;
     private static PromotionOwnershipStore ownership;
 
     @BeforeAll
     static void startInfra() {
-        cassandra.start();
-        InetSocketAddress contact =
-                new InetSocketAddress(cassandra.getHost(), cassandra.getMappedPort(9042));
-        try (var admin = com.datastax.oss.driver.api.core.CqlSession.builder()
-                .addContactPoint(contact)
-                .withLocalDatacenter("datacenter1")
-                .build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        var session = com.datastax.oss.driver.api.core.CqlSession.builder()
-                .addContactPoint(contact)
-                .withLocalDatacenter("datacenter1")
-                .withKeyspace("ingestion_cache")
-                .build();
-        SchemaInstaller.install(session);
+        var session = CassandraTestSupport.session();
+        CassandraTestSupport.reset();
         client = new IngestionCacheClient(session);
         ownership = new PromotionOwnershipStore(session);
     }
 
-    @AfterAll
-    static void stopInfra() {
-        cassandra.stop();
-    }
 
     private static void insertPromotionRow(RelationPromotionResultRow row) {
         PromotionOwnershipStore.OwnershipToken token = ownership.acquire(row.tenantId(),
