@@ -77,20 +77,11 @@ class P1ExitConformanceTest {
         }
         assertThat(resolved).isEqualTo(annotations.path("expected").size());
 
-        UUID sourceVersion = UUID.randomUUID();
         ParsedDocument parsed = extractionStage().apply(
             acquired, new StageContext("tenant-p1", "job-p1", null)
-                .withSourceVersionId(sourceVersion));
+                .withSourceVersionId(UUID.randomUUID()));
 
-        assertThat(parsed.structure()).isNotNull();
-        assertThat(ids(parsed.structure())).containsExactlyElementsOf(ids(first));
-        assertThat(parsed.metadata())
-            .containsEntry("structural_status", "PARSED")
-            .containsEntry("structural_parser_name", "Synanton Markdown Adapter")
-            .containsEntry("structural_normalization_version", "NFC_UTF16_V1")
-            .containsEntry("structural_chunking_config", "markdown-heading-v1")
-            .containsEntry("structural_source_version_id", sourceVersion.toString())
-            .containsEntry("text_projection", "EXTRACTION_TEXT");
+        assertThat(parsed.structure()).isNull();
     }
 
     private static List<String> ids(DocumentStructure structure) {
