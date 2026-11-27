@@ -72,7 +72,7 @@ class SourceSpanEvidenceBinderTest {
     }
 
     @Test
-    void approximateEvidenceIsMisboundUntilAMappingContractExists() {
+    void approximateEvidenceRequiresValidatedSourceMapping() {
         var approximate = payload(location("loc-approx", 0, 9,
                 LocationPrecision.LOCATION_PRECISION_APPROXIMATE,
                 Reproducibility.REPRODUCIBILITY_DEPENDS_ON_NORMALIZATION,
@@ -82,7 +82,42 @@ class SourceSpanEvidenceBinderTest {
                 candidate("approx", "loc-approx", EvidenceBinder.Grounding.APPROXIMATE, "# Heading"));
 
         assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
-        assertThat(result.reason()).isEqualTo("APPROXIMATE_MAPPING_UNSUPPORTED");
+        assertThat(result.reason()).isEqualTo("APPROXIMATE_MAPPING_UNVALIDATED");
+    }
+
+    @Test
+    void validatedApproximateMappingResolvesApproximateEvidence() {
+        String expected = "# Heading";
+        var approximate = payload(location("loc-approx", 0, 9,
+                LocationPrecision.LOCATION_PRECISION_APPROXIMATE,
+                Reproducibility.REPRODUCIBILITY_DEPENDS_ON_NORMALIZATION,
+                CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE));
+        String rangeDigest = sha256(java.util.Arrays.copyOfRange(BYTES, 0, 9));
+
+        var result = binder.bindSourceSpan(approximate, BYTES,
+                new EvidenceBinder.SourceSpanCandidate("approx", "e1", "loc-approx",
+                    EvidenceBinder.Grounding.APPROXIMATE, expected, "v1", rangeDigest));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.RESOLVED);
+        assertThat(result.evidence().grounding()).isEqualTo(EvidenceBinder.Grounding.APPROXIMATE);
+        assertThat(result.evidence().sourceText()).isEqualTo(expected);
+        assertThat(result.evidence().sourceStart()).isZero();
+        assertThat(result.evidence().sourceEnd()).isEqualTo(9);
+    }
+
+    @Test
+    void approximateMappingWithWrongSourceDigestIsMisbound() {
+        var approximate = payload(location("loc-approx", 0, 9,
+                LocationPrecision.LOCATION_PRECISION_APPROXIMATE,
+                Reproducibility.REPRODUCIBILITY_DEPENDS_ON_NORMALIZATION,
+                CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE));
+
+        var result = binder.bindSourceSpan(approximate, BYTES,
+                new EvidenceBinder.SourceSpanCandidate("approx", "e1", "loc-approx",
+                    EvidenceBinder.Grounding.APPROXIMATE, "# Heading", "v1", "b".repeat(64)));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("APPROXIMATE_SOURCE_DIGEST_MISMATCH");
     }
 
     @Test
@@ -222,6 +257,68 @@ class SourceSpanEvidenceBinderTest {
         assertThat(binder.bindSourceSpan(malformed, malformedBytes,
                 candidate("m", "loc", EvidenceBinder.Grounding.EXACT, null)).reason())
             .isEqualTo("INVALID_UTF8_BOUNDARY");
+    }
+
+    @Test
+    void missingSourceVersionIsMisbound() {
+        var noVersion = DocumentPayload.newBuilder()
+            .setSource(SourceDescriptor.newBuilder()
+                .setMediaType("text/markdown")
+                .setSourceFormat("markdown")
+                .setSourceDigest(DIGEST))
+            .addElements(element(location("loc", 0, 9,
+                LocationPrecision.LOCATION_PRECISION_EXACT,
+                Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+                CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE)))
+            .build();
+
+        var result = binder.bindSourceSpan(noVersion, BYTES,
+            candidate("v", "loc", EvidenceBinder.Grounding.EXACT, "# Heading"));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.MISBOUND);
+        assertThat(result.reason()).isEqualTo("SOURCE_VERSION_MISSING");
+    }
+
+    @Test
+    void missingTextRangeIsUnmapped() {
+        SourceLocation noRange = SourceLocation.newBuilder()
+            .setLocationId("loc-no-range")
+            .setSourceBinding(SourceBinding.newBuilder().setKind(BindingKind.BINDING_KIND_INHERIT_DOCUMENT))
+            .setPrecision(LocationPrecision.LOCATION_PRECISION_EXACT)
+            .setReproducibility(Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE)
+            .build();
+
+        var result = binder.bindSourceSpan(payload(noRange), BYTES,
+            candidate("n", "loc-no-range", EvidenceBinder.Grounding.EXACT, null));
+
+        assertThat(result.status()).isEqualTo(EvidenceBinder.Status.UNMAPPED);
+        assertThat(result.reason()).isEqualTo("SOURCE_RANGE_ABSENT");
+    }
+
+    @Test
+    void emptyReversedAndOutOfBoundsRangesAreMisbound() {
+        var empty = payload(location("loc", 9, 9,
+            LocationPrecision.LOCATION_PRECISION_EXACT,
+            Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+            CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE));
+        var reversed = payload(location("loc", 9, 0,
+            LocationPrecision.LOCATION_PRECISION_EXACT,
+            Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+            CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE));
+        var beyondEnd = payload(location("loc", 0, BYTES.length + 1,
+            LocationPrecision.LOCATION_PRECISION_EXACT,
+            Reproducibility.REPRODUCIBILITY_EXACT_FROM_SOURCE,
+            CoordinateSpace.COORDINATE_SPACE_ORIGINAL_SOURCE));
+
+        assertThat(binder.bindSourceSpan(empty, BYTES,
+            candidate("e", "loc", EvidenceBinder.Grounding.EXACT, null)).reason())
+            .isEqualTo("SOURCE_SPAN_OUT_OF_RANGE");
+        assertThat(binder.bindSourceSpan(reversed, BYTES,
+            candidate("r", "loc", EvidenceBinder.Grounding.EXACT, null)).reason())
+            .isEqualTo("SOURCE_SPAN_OUT_OF_RANGE");
+        assertThat(binder.bindSourceSpan(beyondEnd, BYTES,
+            candidate("b", "loc", EvidenceBinder.Grounding.EXACT, null)).reason())
+            .isEqualTo("SOURCE_SPAN_OUT_OF_RANGE");
     }
 
     @Test

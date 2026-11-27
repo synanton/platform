@@ -95,11 +95,12 @@ Return approximate evidence only when:
 - the producer explicitly marks precision `APPROXIMATE`;
 - unit is `UTF8_BYTE` and coordinate space is `ORIGINAL_SOURCE`;
 - the range is in-bounds and non-empty;
-- a testable mapping exists between the declared approximate representation and the original source bytes;
-- the approximated portion is explicitly identified and validated; and
+- the candidate supplies an explicit `expectedSourceSha256` for the declared byte range;
+- the digest matches the immutable source bytes at that range;
+- any supplied expected source text also matches the decoded range; and
 - reproducibility/limitation is retained.
 
-`DEPENDS_ON_PARSER` or `DEPENDS_ON_NORMALIZATION` alone is not sufficient. An in-bounds range can still reference the wrong text. If the mapping cannot be validated, reject the candidate; do not downgrade it to approximate.
+`DEPENDS_ON_PARSER` or `DEPENDS_ON_NORMALIZATION` alone is not sufficient. An in-bounds range can still reference the wrong text. If the digest-bound mapping cannot be validated, reject the candidate; do not downgrade it to approximate. This is a byte-digest mapping, not a text search.
 
 ### UNAVAILABLE
 
@@ -214,7 +215,9 @@ The evaluation-only path is implemented in `EvidenceBinder.bindSourceSpan`:
 
 - Existing canonical `bind(...)` behavior is unchanged.
 - Only `ORIGINAL_SOURCE` + `UTF8_BYTE` locations are accepted.
-- Exact, unmapped, and misbound outcomes are covered by `SourceSpanEvidenceBinderTest`.
-- Approximate source spans remain `MISBOUND` until an explicit approximate-mapping contract is implemented; matching a caller-supplied substring is not accepted as validation.
-- Source version is checked when the evaluation candidate supplies an authoritative expected version.
+- Exact, validated approximate, unmapped, and misbound outcomes are covered by `SourceSpanEvidenceBinderTest`.
+- Approximate source spans require `LOCATION_PRECISION_APPROXIMATE` and a matching
+  `expectedSourceSha256` over the declared byte range; unvalidated approximations remain `MISBOUND`.
+- Source source-version identity is required; a supplied expected version must match it.
+- A selected location without a text range is `UNMAPPED`, not misbound.
 - The path is not wired into production consumers, `GraphWriter`, or #947 migration.
