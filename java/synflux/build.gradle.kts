@@ -45,6 +45,13 @@ dependencies {
     testImplementation(libs.testcontainers.cassandra)
 }
 
+tasks.test {
+    useJUnitPlatform()
+    // Shared Cassandra fixture uses one keyspace and class-level truncation.
+    maxParallelForks = 1
+    systemProperty("junit.jupiter.execution.parallel.enabled", "false")
+}
+
 tasks.named<BootJar>("bootJar") {
     archiveBaseName.set("synflux")
 }

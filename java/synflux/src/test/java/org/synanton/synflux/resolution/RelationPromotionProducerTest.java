@@ -1,5 +1,6 @@
 package org.synanton.synflux.resolution;
 
+import org.synanton.synflux.SynfluxCassandraTestSupport;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -47,7 +48,6 @@ class RelationPromotionProducerTest {
     private static final String ONTOLOGY_VERSION = "1.0.0";
     private static final Instant NOW = Instant.parse("2026-11-14T00:00:00Z");
 
-    private static CassandraContainer cassandra;
     private static CqlSession session;
     private static PromotionOwnershipStore ownership;
 
@@ -58,30 +58,11 @@ class RelationPromotionProducerTest {
 
     @BeforeAll
     static void startCassandra() {
-        cassandra = new CassandraContainer(DockerImageName.parse("cassandra:4.1"));
-        cassandra.start();
-        InetSocketAddress contact = new InetSocketAddress(cassandra.getHost(),
-                cassandra.getMappedPort(9042));
-        try (CqlSession admin = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").build()) {
-            admin.execute("CREATE KEYSPACE IF NOT EXISTS ingestion_cache WITH replication = "
-                    + "{'class':'SimpleStrategy','replication_factor':1}");
-        }
-        session = CqlSession.builder().addContactPoint(contact)
-                .withLocalDatacenter("datacenter1").withKeyspace("ingestion_cache").build();
-        SchemaInstaller.install(session);
+        session = SynfluxCassandraTestSupport.session();
+        SynfluxCassandraTestSupport.reset();
         ownership = new PromotionOwnershipStore(session);
     }
 
-    @AfterAll
-    static void stopCassandra() {
-        if (session != null) {
-            session.close();
-        }
-        if (cassandra != null) {
-            cassandra.stop();
-        }
-    }
 
     @Test
     void competingProducersOnlyOneValidatesAndInsertsRows() throws Exception {
