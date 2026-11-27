@@ -2,8 +2,8 @@
 
 **Ticket:** #966  
 **Run:** `synthetic-ingestion-v1-run2`  
-**Status:** BLOCKED at runtime readiness (Relix startup)  
-**Captured:** 2026-11-27T19:20Z
+**Status:** PASS — clean-start runtime readiness; fixture not ingested  
+**Captured:** 2026-11-27T19:35Z
 
 ## Environment identities
 
@@ -12,6 +12,7 @@
 | Platform commit | `c3c833d5ab12dfeb379c3f2a21863d99f93205a8` (`main`) | PASS |
 | Content Extractor commit | `ecc339a2aa2df49eca3eb75dc0f453c9bdc525e3` (`main`, PR #31) | PASS |
 | Image tag | `run2-c3c833d5ab12` | PASS |
+| Compose configuration revision | `8205cdb6` | PASS |
 
 Built and verified images:
 
@@ -30,53 +31,58 @@ The stack containers use these exact image references.
 
 | Check | Observation | Status |
 |---|---|---|
-| Fresh data root | `/tmp/opencode/synthetic-ingestion-run2-data`; initially empty | PASS |
+| Fresh data root | `/tmp/opencode/synthetic-ingestion-run2-clean-2`; initially empty | PASS |
 | Compose project | `synanton-local-real-demo`; `local-real-demo` profile | PASS |
 | Production services/credentials | no remote production endpoints in resolved config | PASS |
 | Tenant | `synthetic-ingestion` | PASS |
 | Graph projection | `EXTRACTION_GRAPH_ENABLED=false` | PASS |
 
-## Runtime readiness
+## Neo4j initialization fix (#967)
 
-Started with registry images and `--no-build`.
+Compose `neo4j-init` was missing `source_revision_fence_unique`. Fixed in `8205cdb6` and covered by:
 
-Healthy:
+- `Neo4jSchemaManifestConsistencyTest.localComposeInitCoversEveryRequiredConstraint`
+- `scripts/ci/check-local-real-demo-neo4j-constraints.sh`
 
-- postgres
-- cassandra
-- minio
-- extraction-gateway
-- security
-- synflux
-- synquest
-- neo4j
-- syntology
-- mock-extraction
-
-Failed:
-
-- `relix` — `Exited (1)`
-
-Relix startup error:
+Live clean-start check:
 
 ```text
-Neo4j is missing required constraints: [source_revision_fence_unique]
+Required constraints (7): ... source_revision_fence_unique
+Observed constraints (7): ... source_revision_fence_unique
+PASS: local-real-demo Neo4j has every required constraint
 ```
 
-Root cause: Compose `neo4j-init` creates six of the seven constraints required by
-`Neo4jSchemaVerifier`; it omits `source_revision_fence_unique`. The homelab Kubernetes init
-already creates it. Separate issue: #967.
+## Runtime readiness
+
+All services healthy on the fresh data root:
+
+```text
+cassandra              healthy
+extraction-gateway     healthy
+minio                  healthy
+mock-extraction        healthy
+neo4j                  healthy
+postgres               healthy
+relix                  healthy
+security               healthy
+synflux                healthy
+synquest               healthy
+syntology              healthy
+```
 
 | Check | Status |
 |---|---|
-| Extraction client enabled at runtime | PASS |
-| Extraction endpoint | `extraction-gateway:9091` — PASS |
-| Gateway health from synflux | `{"status":"UP"}` — PASS |
+| Neo4j required constraints | 7 / 7 — PASS |
+| Relix readiness | POST `/health` → `{"status":"ready"}` — PASS |
 | Synflux health | `{"status":"UP"}` — PASS |
 | Synquest health | `{"status":"ready"}` — PASS |
-| Graph/consumer disabled | PASS |
-| Relix readiness | FAIL |
-| Complete stack readiness | FAIL |
+| Gateway process health | `{"status":"UP", ...}` — PASS |
+| Gateway reachable from synflux | `http://extraction-gateway:8092/actuator/health` → UP — PASS |
+| Extraction client enabled | `EXTRACTION_CLIENT_ENABLED=true` — PASS |
+| Extraction endpoint | `extraction-gateway:9091` — PASS |
+| Extraction provider | `regex` — PASS |
+| Extraction consumer | disabled — PASS |
+| Graph projection | disabled — PASS |
 
 ## Production-path verification
 
@@ -113,13 +119,13 @@ frozen `SHA256SUMS`; #944 has not been altered.
 
 ## Gate result
 
-**Assignment 1: BLOCKED.**
+**Assignment 1: PASS.**
 
-Stop condition: the stack is not fully ready because Relix exits on a missing required Neo4j
-constraint. SCEP connectivity and production-path static checks pass, but runtime readiness is not
-complete. No fixture ingestion was performed.
+Clean-start runtime readiness is established on a fresh data root. SCEP connectivity, production
+path wiring, service health, and the complete Relix Neo4j constraint contract are verified.
 
-No production code, fixture, gold, ontology, schema, validator, baseline, or evaluation artifact
-was changed. The deployment defect is tracked separately as #967.
+No fixture ingestion was performed. No production code, fixture, gold, ontology, schema,
+validator, baseline, or evaluation artifact was changed.
 
-**Next action:** fix #967, restart the isolated stack, and repeat the runtime-readiness gate.
+**Next action:** request approval to ingest the frozen fixture once through the existing
+local-real-demo path.
