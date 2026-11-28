@@ -39,3 +39,7 @@ Run-v2 had 12 chunks with 3 missing containers, a duplicate Appendix A, breadcru
 ## Artifacts
 
 `run-manifest.json`, `extraction-evidence.json`, `chunk-comparison.json`, `negative-assertions.json`, `stage-results.json`, raw API/Cassandra captures, `SHA256SUMS`.
+
+## Environment deviation
+
+Local Docker Compose on `main` lacked the #968 `source_revision_fence_unique` constraint, so Relix exited at startup during this run. The constraint was applied after the chunking operation; Relix became healthy. Ingestion and chunking do not use Relix. This is recorded as an environment deviation; it is not a chunking failure.
