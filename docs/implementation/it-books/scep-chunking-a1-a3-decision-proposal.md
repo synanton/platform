@@ -33,17 +33,18 @@ Contract:
    - `outcome`: `PROJECTION_OUTCOME_SUCCESS_LOSSLESS`
    - `digest`: lowercase SHA-256 of the UTF-8 projection bytes.
 2. `canonical_text_digest` equals the projection digest.
-3. `canonical_text_id` is deterministic: `ct-v1:sha256:<canonical_text_digest>`.
-4. Every element with canonical evidence carries the same identity fields:
+4. `canonical_text_id` is deterministic: `ct-v1:<canonical_text_digest>`
+   (for example `ct-v1:sha256:<hex>`).
+5. Every element with canonical evidence carries the same identity fields:
    - source document/digest/version
    - extraction execution ID
    - normalization profile/version
    - projection contract ID/version
    - NFC normalization and LF line endings
-5. Ranges are half-open UTF-16 code-unit offsets into the canonical projection.
-6. Platform verifies: projection exists exactly once, digest matches, identity matches the
+6. Ranges are half-open UTF-16 code-unit offsets into the canonical projection.
+7. Platform verifies: projection exists exactly once, digest matches, identity matches the
    source descriptor, and every accepted range is in-bounds and half-open.
-7. Platform never translates original-source byte spans into canonical offsets and never
+8. Platform never translates original-source byte spans into canonical offsets and never
    reparses source text to manufacture a range.
 
 Illustrative payload shape:
@@ -118,11 +119,13 @@ non-semantic.**
 - The canonical projection includes the preamble and comments because the frozen benchmark
   canonical text includes them.
 - Metadata does not become semantic elements and must not produce mentions.
-- The container `book` chunk can use the canonical text slice from the book heading start to the
-  next heading start; no separate metadata element is required.
-- The chunker consumes the projection slice; it must not inject metadata from the original
-  Markdown or reconstruct it.
-- Negative assertions remain unchanged.
+- The `book` container chunk begins at the **start of the canonical document**, including the
+  preamble, and ends at the next top-level structural boundary according to the P1 canonical
+  contract. It does not begin at the first heading immediately before the body.
+- The chunk text is the canonical projection slice `[0, nextTopLevelBoundary)`. The chunker
+  consumes that slice; it must not inject metadata from the original Markdown or reconstruct it.
+- Negative assertions remain unchanged: metadata text may be chunk content but must never become
+  a mention or semantic relation.
 
 Alternative: exclude the preamble through a separately reviewed, versioned benchmark contract.
 That would require a new gold version and is not proposed for this milestone.
@@ -131,8 +134,9 @@ That would require a new gold version and is not proposed for this milestone.
 
 | Area | Impact |
 |---|---|
-| Chunk boundaries | Book container includes preamble; section boundaries unchanged |
+| Chunk boundaries | Book container starts at canonical document offset 0 and includes the preamble; section boundaries unchanged |
 | Text comparison | Canonical projection contains metadata text; metadata labels remain non-mentions |
+| Regression | Exact book chunk text must equal the canonical slice and include the preamble |
 | Offsets | P1 canonical offsets remain valid |
 | Gold | No change under the recommended option |
 
@@ -154,16 +158,40 @@ That would require a new gold version and is not proposed for this milestone.
 ### Proposed decision — **REQUIRES APPROVAL**
 
 1. Emit one half-open canonical range only when the complete chunk is contiguous in canonical text.
-2. A chunk is contiguous when the heading and all included content occupy one canonical interval;
-   gaps containing non-included semantic content make it discontiguous.
-3. For discontiguous chunks:
+2. Operationally, the canonical ranges of the heading and all included content must union into one
+   continuous interval with no gap containing excluded content. Gaps containing only canonical
+   whitespace/separators are contiguous; a gap containing excluded non-whitespace content is
+   discontiguous.
+3. For a TABLE chunk, use the TABLE element's declared canonical range. Nested TABLE_ROW/TABLE_CELL
+   ranges must lie inside it. Never derive the table range from the minimum/maximum descendant
+   offsets.
+4. If the TABLE has no canonical range but descendants do, the table is unmapped; do not infer a
+   range.
+5. For discontiguous chunks:
    - emit `documentOffsetStart=-1`, `documentOffsetEnd=-1`;
    - retain contributing element IDs;
-   - record an explicit `DISCONTIGUOUS_SOURCE_EVIDENCE` reason.
-4. Never synthesize a min/max range.
-5. Defer multi-span storage until a real consumer requires it. Any future addition must be
+   - record `DISCONTIGUOUS_SOURCE_EVIDENCE` in `SemanticChunk.metadata` and in the evaluation
+     artifacts.
+6. Never synthesize a min/max range.
+7. Defer multi-span storage until a real consumer requires it. Any future addition must be
    additive and separately approved.
-6. Missing/invalid evidence remains explicit unmapped, never approximate or guessed.
+8. Missing/invalid evidence remains explicit unmapped, never approximate or guessed.
+
+### Diagnostic storage caveat
+
+`SemanticChunk.metadata` can carry `evidence_status=DISCONTIGUOUS_SOURCE_EVIDENCE` in-process, and
+run artifacts can preserve it. Persisted `ChunkRow` has no metadata field today, so production
+persistence only retains `-1/-1` plus `sourceElements`; it cannot distinguish discontiguous from
+missing/invalid without an additive evidence contract. This milestone does not add that field.
+If runtime persistence must preserve the distinction, that is a separate approved contract change;
+otherwise the distinction is retained in evaluation evidence only. This limitation must not be
+hidden by inventing a range.
+
+### Exact-text regression proposal
+
+The fixture test will assert that the `book` chunk text equals the canonical projection slice from
+offset `0` to the next top-level boundary and contains the frozen preamble text. The frozen gold is
+read-only; the test compares against its existing span and does not regenerate it.
 
 Derived tests:
 
@@ -172,6 +200,7 @@ Derived tests:
 | Heading + body contiguous | One range |
 | Table + nested cells with contiguous table span | One table range |
 | Two included spans separated by excluded content | `-1/-1`, element IDs, discontiguous reason |
+| Table parent range plus nested row/cell ranges | uses parent TABLE range, never min/max |
 | Missing canonical identity | `-1/-1`, missing-evidence reason |
 | No consumer for multi-span | No span-list schema change |
 
