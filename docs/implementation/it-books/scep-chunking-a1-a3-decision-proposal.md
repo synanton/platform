@@ -1,9 +1,10 @@
-# SCEP Chunking A1–A3 Decision Proposal
+# SCEP Chunking A1–A3 Decision Record
 
-**Status:** Approval preparation only. No implementation authorized.  
-**Specification:** #969, merged at `154a4caf`  
-**Governance record:** #970, merged at `2e23d4d2`  
-**Run evidence:** frozen run-v2 under `evaluation/it-books/synthetic-ingestion-v1/results/run-v2/`  
+**Status:** APPROVED — implemented in #972, merged at `7af7ff98`.<br>
+**Specification:** #969, merged at `154a4caf`.<br>
+**Governance record:** #970, merged at `2e23d4d2`.<br>
+**Implementation:** #972, merged at `7af7ff98`.<br>
+**Run evidence:** frozen run-v2 under `evaluation/it-books/synthetic-ingestion-v1/results/run-v2/`.<br>
 **Upstream:** `content_extractor` issues #33 and #34; A4 remains #32.
 
 ## A1 — Canonical offset ownership
@@ -19,7 +20,7 @@
 - SCEP Markdown extraction currently populates original-source UTF-8 byte spans only;
   run-v2 had `canonical_range_count=0`.
 
-### Proposed decision — **REQUIRES APPROVAL**
+### Approved decision
 
 **SCEP owns canonical-text generation and identity. Platform consumes it.**
 
@@ -116,7 +117,7 @@ Illustrative payload shape:
   element or range.
 - Gold `book` chunk includes the preamble; `preface` starts after it.
 
-### Proposed decision — **REQUIRES APPROVAL**
+### Approved decision
 
 **Recommendation: include the preamble in the canonical text projection, while keeping metadata
 non-semantic.**
@@ -168,7 +169,7 @@ That would require a new gold version and is not proposed for this milestone.
 - P1/gold section spans are contiguous. Table source spans are contiguous even though row/cell
   elements are nested.
 
-### Proposed decision — **REQUIRES APPROVAL**
+### Approved decision
 
 1. Emit one half-open canonical range only when the complete chunk is contiguous in canonical text.
 2. Operationally, the canonical ranges of the heading and all included content must union into one
@@ -176,8 +177,9 @@ That would require a new gold version and is not proposed for this milestone.
    bridgeable only when every code point in it has the Unicode `White_Space` property
    (`UnicodeData.txt` / UAX #44). This is a Unicode code-point test, not a language-specific
    `isWhitespace` shortcut.
-   - `v1` canonical text uses LF line endings. CR and other line-ending forms are invalid canonical
-     evidence, not bridgeable whitespace.
+   - `v1` canonical text uses LF line endings. LF (`U+000A`) remains bridgeable; VT (`U+000B`),
+     FF (`U+000C`), CR (`U+000D`), NEL (`U+0085`), LS (`U+2028`), and PS (`U+2029`) are invalid
+     canonical evidence and are not bridgeable whitespace.
    - Any gap containing an excluded non-whitespace code point is discontiguous.
    - Bridging does not extend into excluded semantic content or alter the chunk text.
 3. For a TABLE chunk, use the TABLE element's declared canonical range. Nested TABLE_ROW/TABLE_CELL
@@ -211,23 +213,35 @@ hidden by inventing a range.
 |---|---|
 | Heading + body contiguous | One range |
 | Table + nested cells with contiguous table span | One table range |
-| Two included spans separated by Unicode whitespace | one bridged range |
+| Two included spans separated by permitted canonical whitespace | one bridged range |
 | Two included spans separated by excluded non-whitespace | `-1/-1`, element IDs, discontiguous reason |
-| Gap containing CR in canonical v1 | invalid canonical evidence, not bridged |
+| Gap containing a non-LF line ending in canonical v1 | invalid canonical evidence, not bridged |
 | Table parent range plus nested row/cell ranges | uses parent TABLE range, never min/max |
 | Missing canonical identity | `-1/-1`, missing-evidence reason |
 | No consumer for multi-span | No span-list schema change |
 
 ## Approval status
 
-| Gate | Proposal | Owner | Status |
+| Gate | Decision | Owner | Status |
 |---|---|---|---|
-| A1 | SCEP owns canonical projection/identity/ranges; Platform consumes UTF-16 canonical ranges | Platform + Content Extractor | PENDING |
-| A2 | Include metadata preamble in canonical projection; keep metadata non-semantic | Benchmark owner + Content Extractor | PENDING |
-| A3 | Single contiguous range only; no min/max; defer span lists | Platform chunking owner | PENDING |
+| A1 | SCEP owns canonical projection/identity/ranges; Platform consumes UTF-16 canonical ranges | Platform + Content Extractor | APPROVED |
+| A2 | Include metadata preamble in canonical projection; keep metadata non-semantic | Benchmark owner + Content Extractor | APPROVED |
+| A3 | Single contiguous range only; no min/max; defer span lists | Platform chunking owner | APPROVED |
 | A4 | `schema_digest` population | Content Extractor #32 | SEPARATE, NON-BLOCKING |
 
-This document records proposals only. No gate is approved until the named owners respond.
+A1–A3 were approved and implemented in #972 (`7af7ff98`). The implementation remains gated on
+`content_extractor` #33 and #34 for live canonical offsets and preamble evidence; A4 remains
+independent and non-blocking.
+
+## Implementation reference
+
+- PR #972 — `feat: implement SCEP benchmark chunking contract`, merged at `7af7ff98`.
+- `CanonicalTextEvidence` validates the A1 canonical projection, identity, digest, UTF-8 encoding,
+  source identity, normalization, and per-element range consistency.
+- `SemanticChunker` enforces the A2 document-root container range `[0, nextTopLevelBoundary)` and
+  consumes the canonical slice without reconstructing preamble text.
+- `UnicodeWhiteSpace` applies the Unicode 15.1.0 UAX #44 `White_Space` property for A3 gap
+  bridging and rejects all non-LF line-ending forms.
 
 ## Linked upstream work
 
@@ -235,13 +249,15 @@ This document records proposals only. No gate is approved until the named owners
 - `content_extractor` #34 — metadata preamble canonical evidence (A2).
 - `content_extractor` #32 — `schema_digest` (A4, independent).
 
-## Open questions
+## Resolved questions
 
-1. Does Content Extractor accept ownership of the canonical-text projection and stable identity?
-2. Is the proposed `ct-v1:sha256:<digest>` identity format acceptable?
-3. Does the benchmark owner approve including the metadata preamble in canonical text without
-   changing frozen gold?
-4. Is `-1/-1` plus element IDs sufficient indefinitely for discontiguous evidence?
-5. Should a canonical-text projection be stored/transported inline or by reference for large
-   documents?
-6. Does the canonical-text normalization contract exactly match P1 for all supported formats?
+1. Content Extractor owns the canonical-text projection, stable identity, and UTF-16 ranges (A1).
+2. The `ct-v1:sha256:<digest>` identity format is approved and implemented.
+3. The benchmark owner approved including the metadata preamble in canonical text without changing
+   frozen gold; upstream evidence remains tracked in `content_extractor` #34.
+4. `-1/-1` plus contributing element IDs is sufficient for this milestone; lossless multi-span
+   storage remains deferred until a real consumer requires it.
+5. Inline canonical projection content is used for this milestone; transport/storage by reference
+   for large documents remains future work.
+6. Canonical-text normalization is validated as NFC with LF line endings and matches P1 for the
+   supported benchmark format.
