@@ -1,0 +1,36 @@
+{
+  "runId": "synthetic-ingestion-v1-run2",
+  "operationId": "3b1b5c8a-47b9-488a-a958-63a7a7779070",
+  "stages": {
+    "preflight": "PASS",
+    "sourceRegistration": "PASS",
+    "extractionPayload": "PASS",
+    "structuralParsing": "PARTIAL",
+    "semanticChunking": "PARTIAL",
+    "headingContext": "PARTIAL",
+    "chunkOrdering": "PASS",
+    "chunkCoverage": "PARTIAL",
+    "metadataNegativeAssertions": "PARTIAL",
+    "mentionExtraction": "NOT_RUN",
+    "canonicalResolution": "NOT_RUN",
+    "relationExtraction": "NOT_RUN",
+    "ontologyValidation": "NOT_RUN",
+    "evidenceBinding": "NOT_RUN",
+    "graphProjection": "NOT_RUN",
+    "retrieval": "CONDITIONAL"
+  },
+  "reasons": {
+    "structuralParsing": "SCEP payload has 51 elements and 51 source locations; chunk offsets are not propagated (-1).",
+    "semanticChunking": "12 chunks generated; 14 gold chunks expected; container headings missing and Appendix A duplicated.",
+    "headingContext": "Heading levels/section paths are present for emitted chunks; three required container paths are absent.",
+    "chunkCoverage": "11 of 14 gold section paths represented; Appendix A duplicated.",
+    "metadataNegativeAssertions": "Metadata surfaces absent from chunk text; mention-level assertions cannot run with extraction consumer disabled.",
+    "mentionExtraction": "EXTRACTION_CONSUMER_ENABLED=false; extraction_results has 0 rows.",
+    "canonicalResolution": "source_versions.resolution_status is null; no resolver run.",
+    "relationExtraction": "No extraction_result rows.",
+    "ontologyValidation": "Graph validation disabled (EXTRACTION_GRAPH_ENABLED=false).",
+    "evidenceBinding": "No production evidence binding in this pipeline path.",
+    "graphProjection": "Graph projection disabled; source_versions.graph_status=PENDING.",
+    "retrieval": "Search projection timestamp exists, but retrieval was not evaluated; not a pass."
+  }
+}

@@ -1,0 +1,3 @@
+HTTP 500 from POST /v1/ingestion-runs before operation creation.
+Root cause: /content-cache named volume was stale and owned by _apt; synflux uid 999 could not create /content-cache/blobs/db.
+Disposition: no ingestion operation/run ID was created. Project-scoped volumes were reset and the fixture was submitted once again on a clean stack.

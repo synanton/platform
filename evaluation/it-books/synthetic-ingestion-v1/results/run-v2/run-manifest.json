@@ -1,0 +1,129 @@
+{
+  "runManifestVersion": "synthetic-ingestion-run-v1",
+  "runId": "synthetic-ingestion-v1-run2",
+  "gitCommit": "c3c833d5ab12dfeb379c3f2a21863d99f93205a8",
+  "configurationCommit": "8205cdb6",
+  "startedAt": "2026-11-27T19:58:53.497Z",
+  "completedAt": "2026-11-27T19:58:54.585Z",
+  "fixture": {
+    "fixtureVersion": "synthetic-ingestion-v1",
+    "sourcePath": "evaluation/it-books/synthetic-ingestion-v1/source/distributed-systems-primer.md",
+    "sourceSha256": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "goldPath": "evaluation/it-books/synthetic-ingestion-v1/gold/manifest.json",
+    "goldSha256": "f12619bd00056e7e996c776f288c2c814840dae31549936e9cbb61b41f04411b"
+  },
+  "ontology": {
+    "ontologyId": "it-books",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"
+  },
+  "pipeline": {
+    "source": "existing local-real-demo API",
+    "composeProject": "synanton-local-real-demo",
+    "profile": "local-real-demo",
+    "tenant": "synthetic-ingestion",
+    "imageTag": "run2-c3c833d5ab12",
+    "imageDigests": {
+      "synflux": "sha256:149dbd3523e1727332f8c37dffea069bd67a3b3cd4c0b92a8311c6f531cff582",
+      "synquest": "sha256:a1e7838724a8a569b0b25ae963ece18e35550dece162546a01b220a5c716e1da",
+      "security": "sha256:fa9c057d97e81f71ab66f5d65b6ac733e7b4448bf48d696c94c5981a9a257519",
+      "relix": "sha256:8041fe74d8b113e24853fd2a8f91177a3baaa001a5e4aae5217924f32409ab30",
+      "syntology": "sha256:3a5f4b0a8bf94628ce5d4ca1b28ada4e16591500dc80683df7814de6ceb34ed9",
+      "extraction-gateway": "sha256:6e0ff9d602f3862d1cb9ea2ef22c55c1f5c682f60bf8baf95cd8db6f299dc856"
+    },
+    "extractionProvider": "regex",
+    "extractionClientEnabled": true,
+    "extractionConsumerEnabled": false,
+    "semanticModelInvoked": false,
+    "graphEnabled": false,
+    "productionGraphWrites": false
+  },
+  "source": {
+    "sourceId": "synthetic-distributed-systems-primer-v1",
+    "runId": "583d92c7-0332-30a6-86ea-f8faa1dcb3d9",
+    "operationId": "3b1b5c8a-47b9-488a-a958-63a7a7779070",
+    "operationStatus": "SUCCEEDED",
+    "operationOutcome": "PARTIAL",
+    "versionId": "6937e6eb-0f26-570d-aed0-76b37c91cde1",
+    "contentDigest": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "contentCacheReference": "v1:tenant_id=synthetic-ingestion&artifact_id=6db4473b-bdc4-4e03-a4dd-4f120b687b1e&digest=sha256%3Adb4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063&generation=1&serializer_version=1"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "submissionStatus": 500,
+      "operationCreated": false,
+      "reason": "stale named content-cache volume permission",
+      "artifact": "attempts/attempt-1-submit-500.json"
+    },
+    {
+      "attempt": 2,
+      "submissionStatus": 202,
+      "operationId": "3b1b5c8a-47b9-488a-a958-63a7a7779070",
+      "reason": "clean project volumes and data root",
+      "artifact": "submit.json"
+    }
+  ],
+  "stages": {
+    "preflight": "PASS",
+    "sourceRegistration": "PASS",
+    "extractionPayload": "PASS",
+    "structuralParsing": "PARTIAL",
+    "semanticChunking": "PARTIAL",
+    "headingContext": "PARTIAL",
+    "chunkOrdering": "PASS",
+    "chunkCoverage": "PARTIAL",
+    "metadataNegativeAssertions": "PARTIAL",
+    "mentionExtraction": "NOT_RUN",
+    "canonicalResolution": "NOT_RUN",
+    "relationExtraction": "NOT_RUN",
+    "ontologyValidation": "NOT_RUN",
+    "evidenceBinding": "NOT_RUN",
+    "graphProjection": "NOT_RUN",
+    "retrieval": "CONDITIONAL"
+  },
+  "counts": {
+    "goldChunks": 14,
+    "generatedChunks": 12,
+    "matchedSectionPaths": 11,
+    "missingSectionPaths": 3,
+    "duplicateSectionPaths": 1,
+    "scepElements": 51,
+    "sourceLocations": 51,
+    "extractionResultRows": 0
+  },
+  "findings": [
+    "SCEP payload present: processor text-adapter, 51 elements, 51 source locations.",
+    "Chunking is partial: 12 generated vs 14 gold; book/Chapter 1/Chapter 2 container chunks missing.",
+    "Appendix A emitted twice (TABLE and SUBSECTION).",
+    "All chunk document offsets are -1.",
+    "Chunk text contains section-path prefix and repeated heading; gold requires exact heading boundaries.",
+    "Mention/relation rows are absent because EXTRACTION_CONSUMER_ENABLED=false.",
+    "Resolution, ontology validation, evidence binding, graph projection, and retrieval were not run."
+  ],
+  "errors": [
+    "Operation outcome is PARTIAL.",
+    "Metadata features include embeddedImages=FEATURE_UNSUPPORTED."
+  ],
+  "checksums": {
+    ".gitattributes": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+    "REPORT.md": "341ccc766383766b49672fdfb9837d24bf644adb1a8796cb7d39ebb873636fb5",
+    "attempts/attempt-1-failure.txt": "05fe909f5273eb6f0a438c8e9b3816a8c38c131c9711eec2299598dc31cc76bc",
+    "attempts/attempt-1-source.json": "3835ab7431c3d6bd337fcd2b4c5595cb758b2f1371609b7b80570b996d30d6ff",
+    "attempts/attempt-1-submit-500.json": "0762e4e2a8e131ad1a1eba5d489f815d45624f64c5d4642d84b97c7fa3a326ec",
+    "attempts/attempt-1-submit.headers": "5552c1f918d9f342287b114639d8e33e5346e533b3eae598cdcb035246a9c89d",
+    "chunk-comparison.json": "095be65bf97b034d0aabc80013bcd2cec86057ac606d7cb3a865d004b186b988",
+    "chunks.csv": "f2f3e907a8dbc914e2f20019d4e490a3e18874fb062ea3de795a4f8cb7b5a0a2",
+    "extraction-evidence.json": "b8336b684c04b657cb1c3fb1f38248f3b5d585007d620bc9297ccf6702949ce3",
+    "extraction.csv": "de9add7d6b48f08333c29820d4daba2157e5ff4961b2443e26c258da57c4bf78",
+    "negative-assertions.json": "f87c2654b5901cb6451f536547a8f3d459be140e5cdf5c1df5c049f5d88da488",
+    "operation.json": "ee58bf1876b8f460b99a6dcc64f0ea2d0007f8089213e9a4d4fbdf37fb954c21",
+    "preflight.md": "c2bf299940ca3a011f418f74ca12416e0520804fd8f62129d064319e8689b2e2",
+    "runs.csv": "f4874de80148fd2e42aaaf2b3950f6368afd1b97e7ae60c1adcc159cebd2aa81",
+    "source.json": "f1b2f4af468fa890bfdde16adcde04575b799bfdcff34c7ad445ebe92201fbbc",
+    "source_versions.csv": "d30d899d95b7ab112eb9508e8236850ce29242d157a58792335c80d0dc119174",
+    "stage-results.json": "a4670faa38f68a0c74794b6507e3ec1de745ecce3b75eb6eb5a7ce01a48a5fbf",
+    "submit.json": "0a45faa21ca2b5aac24a05c2bf1de7b7d894e241271c05bce0d14a6f116f9644",
+    "versions.json": "b045dc66522fbec2a284a052b861c586437e3554a7972f76c3961b1a64927348"
+  }
+}
