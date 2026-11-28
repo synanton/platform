@@ -1,7 +1,7 @@
 {
   "runManifestVersion": "synthetic-ingestion-run-v1",
   "runId": "synthetic-ingestion-v1-run3",
-  "gitCommit": "7fc0f5558be2",
+  "gitCommit": "c36677bc",
   "configurationCommit": "7fc0f5558be2",
   "startedAt": "2026-11-28T08:49:52.232Z",
   "completedAt": "2026-11-28T08:49:53.299Z",
@@ -107,5 +107,7 @@
     "stage-results.json": "a85c04123d92fbbd1f3de739e962f30be8fa3186fa39b106d4788f19a695aa3d",
     "submit.json": "44703b0e4a2e6bf618c666d49c9b27c3f7e3c42b0313fdae1eb28b300b1675ba",
     "versions.json": "99b836a8621dcba717b25aa1ee9e79d35c904315fb7c428e12ff3ce2e0060051"
-  }
+  },
+  "imageBuildCommit": "7fc0f555",
+  "implementationCommit": "c36677bc"
 }
