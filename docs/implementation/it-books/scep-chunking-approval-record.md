@@ -21,7 +21,7 @@
 | A1 | Canonical offset ownership | Offsets are UTF-16 into P1 canonical structural text; SCEP must supply canonical identity/ranges. The chunker consumes them and never reconstructs or substitutes original-source bytes. | PENDING |
 | A2 | Metadata preamble in benchmark chunk | Include it only if the canonical-text contract includes it; SCEP must supply corresponding canonical evidence, or a separately reviewed gold version must define its exclusion. | PENDING |
 | A3 | Discontiguous source evidence | Do not synthesize min/max ranges. Until a real consumer requires lossless multi-span evidence, emit explicit unmapped state plus contributing element IDs. | PENDING |
-| A4 | `schema_digest` population | Track independently in `content_extractor`; not part of the chunking milestone. | PENDING / SEPARATE |
+| A4 | `schema_digest` population | Track independently in `content_extractor` issue #32; requires its own gateway-to-persistence acceptance test. It does **not** block A1–A3 or the chunking milestone. | SEPARATE / NON-BLOCKING |
 
 ## Implementation gate
 
@@ -35,6 +35,9 @@ No chunker implementation may start until A1–A3 are approved. Once approved, t
 
 The frozen fixture, gold, ontology, run-v2 artifacts, and production retrieval defaults must not change.
 
+A4 is explicitly outside this milestone. Missing `schema_digest` population is tracked in
+`content_extractor` issue #32 and does not block heading/container, table, or text-policy work.
+
 ## Required approvals
 
 | Gate | Owner | Decision |
@@ -42,4 +45,4 @@ The frozen fixture, gold, ontology, run-v2 artifacts, and production retrieval d
 | A1 | Platform + Content Extractor | pending |
 | A2 | Benchmark owner + Content Extractor | pending |
 | A3 | Platform chunking owner | pending |
-| A4 | Content Extractor owner | pending |
+| A4 | Content Extractor owner | separate, non-blocking ([issue #32](https://github.com/synanton/content_extractor/issues/32)) |
