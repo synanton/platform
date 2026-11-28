@@ -1,0 +1,204 @@
+# SCEP Chunking A1–A3 Decision Proposal
+
+**Status:** Approval preparation only. No implementation authorized.  
+**Specification:** #969, merged at `154a4caf`  
+**Governance record:** #970, merged at `2e23d4d2`  
+**Run evidence:** frozen run-v2 under `evaluation/it-books/synthetic-ingestion-v1/results/run-v2/`  
+**Upstream:** `content_extractor` issues #33 and #34; A4 remains #32.
+
+## A1 — Canonical offset ownership
+
+### Evidence
+
+- P1 defines document/chunk offsets as UTF-16 units into canonical structural text
+  (`docs/implementation/it-books/p1-structural-contract.md:39`).
+- Frozen gold offsets validate against P1 structural text:
+  `SyntheticFixtureValidationTest.goldManifestMatchesP1StructuralTextAndEvidence`.
+- SCEP already has `CanonicalTextIdentity` and `CanonicalTextRange` fields
+  (`extraction_payload.proto:360-382`), including UTF-16 unit and NFC/LF semantics.
+- SCEP Markdown extraction currently populates original-source UTF-8 byte spans only;
+  run-v2 had `canonical_range_count=0`.
+
+### Proposed decision — **REQUIRES APPROVAL**
+
+**SCEP owns canonical-text generation and identity. Platform consumes it.**
+
+Contract:
+
+1. SCEP emits one lossless canonical-text projection:
+   - `projection_id`: `canonical-text`
+   - `format`: `text/plain; charset=utf-8`
+   - `contract_id`: `synanton.canonical-text`
+   - `contract_version`: `1`
+   - `outcome`: `PROJECTION_OUTCOME_SUCCESS_LOSSLESS`
+   - `digest`: lowercase SHA-256 of the UTF-8 projection bytes.
+2. `canonical_text_digest` equals the projection digest.
+3. `canonical_text_id` is deterministic: `ct-v1:sha256:<canonical_text_digest>`.
+4. Every element with canonical evidence carries the same identity fields:
+   - source document/digest/version
+   - extraction execution ID
+   - normalization profile/version
+   - projection contract ID/version
+   - NFC normalization and LF line endings
+5. Ranges are half-open UTF-16 code-unit offsets into the canonical projection.
+6. Platform verifies: projection exists exactly once, digest matches, identity matches the
+   source descriptor, and every accepted range is in-bounds and half-open.
+7. Platform never translates original-source byte spans into canonical offsets and never
+   reparses source text to manufacture a range.
+
+Illustrative payload shape:
+
+```json
+{
+  "projections": [{
+    "projection_id": "canonical-text",
+    "format": "text/plain; charset=utf-8",
+    "contract_id": "synanton.canonical-text",
+    "contract_version": "1",
+    "outcome": "PROJECTION_OUTCOME_SUCCESS_LOSSLESS",
+    "digest": "sha256:..."
+  }],
+  "elements": [{
+    "id": "e1",
+    "type": "ELEMENT_HEADING",
+    "canonical_text_range": {
+      "identity": {
+        "canonical_text_id": "ct-v1:sha256:...",
+        "canonical_text_digest": "sha256:...",
+        "encoding": "UTF-8",
+        "source_document_id": "synthetic-distributed-systems-primer-v1",
+        "source_digest": "db4f2e99...",
+        "source_version": "v1",
+        "extraction_execution_id": "exec-1",
+        "normalization_profile": "p1-markdown",
+        "normalization_version": "1",
+        "projection_contract_id": "synanton.canonical-text",
+        "projection_contract_version": "1"
+      },
+      "unit": "OFFSET_UNIT_UTF16_CODE_UNIT",
+      "start": 0,
+      "end": 12
+    }
+  }]
+}
+```
+
+### Failure semantics
+
+| Condition | Result |
+|---|---|
+| No canonical projection | Offset unavailable; no fallback to source bytes |
+| Projection digest mismatch | Reject canonical evidence |
+| Missing identity | Offset unavailable; explicit reason |
+| Identity/source mismatch | Reject canonical evidence |
+| Invalid/out-of-bounds/reversed range | Reject range |
+| Consumer uses source span as canonical | Contract violation |
+
+### Required upstream issue
+
+`content_extractor` #33 — supply canonical text identity/ranges.
+
+## A2 — Metadata preamble
+
+### Evidence
+
+- P1 canonical text includes the Markdown metadata preamble and comments; the frozen gold validates
+  against P1 text.
+- SCEP Markdown extraction skips metadata lines and HTML comments
+  (`TextModalityAdapter.java:149-172`).
+- Run-v2 payload metadata map contains Author/Edition/Document ID, but no canonical preamble
+  element or range.
+- Gold `book` chunk includes the preamble; `preface` starts after it.
+
+### Proposed decision — **REQUIRES APPROVAL**
+
+**Recommendation: include the preamble in the canonical text projection, while keeping metadata
+non-semantic.**
+
+- The canonical projection includes the preamble and comments because the frozen benchmark
+  canonical text includes them.
+- Metadata does not become semantic elements and must not produce mentions.
+- The container `book` chunk can use the canonical text slice from the book heading start to the
+  next heading start; no separate metadata element is required.
+- The chunker consumes the projection slice; it must not inject metadata from the original
+  Markdown or reconstruct it.
+- Negative assertions remain unchanged.
+
+Alternative: exclude the preamble through a separately reviewed, versioned benchmark contract.
+That would require a new gold version and is not proposed for this milestone.
+
+### Impact
+
+| Area | Impact |
+|---|---|
+| Chunk boundaries | Book container includes preamble; section boundaries unchanged |
+| Text comparison | Canonical projection contains metadata text; metadata labels remain non-mentions |
+| Offsets | P1 canonical offsets remain valid |
+| Gold | No change under the recommended option |
+
+### Required upstream issue
+
+`content_extractor` #34 — include metadata preamble in canonical evidence if approved.
+
+## A3 — Discontiguous evidence
+
+### Evidence
+
+- Current consumers use one `documentOffsetStart` / `documentOffsetEnd`.
+- No current consumer requires lossless multi-span chunk evidence.
+- GraphWriter derives mention offsets from the single chunk start; it cannot represent a list of
+  spans.
+- P1/gold section spans are contiguous. Table source spans are contiguous even though row/cell
+  elements are nested.
+
+### Proposed decision — **REQUIRES APPROVAL**
+
+1. Emit one half-open canonical range only when the complete chunk is contiguous in canonical text.
+2. A chunk is contiguous when the heading and all included content occupy one canonical interval;
+   gaps containing non-included semantic content make it discontiguous.
+3. For discontiguous chunks:
+   - emit `documentOffsetStart=-1`, `documentOffsetEnd=-1`;
+   - retain contributing element IDs;
+   - record an explicit `DISCONTIGUOUS_SOURCE_EVIDENCE` reason.
+4. Never synthesize a min/max range.
+5. Defer multi-span storage until a real consumer requires it. Any future addition must be
+   additive and separately approved.
+6. Missing/invalid evidence remains explicit unmapped, never approximate or guessed.
+
+Derived tests:
+
+| Case | Expected |
+|---|---|
+| Heading + body contiguous | One range |
+| Table + nested cells with contiguous table span | One table range |
+| Two included spans separated by excluded content | `-1/-1`, element IDs, discontiguous reason |
+| Missing canonical identity | `-1/-1`, missing-evidence reason |
+| No consumer for multi-span | No span-list schema change |
+
+## Approval status
+
+| Gate | Proposal | Owner | Status |
+|---|---|---|---|
+| A1 | SCEP owns canonical projection/identity/ranges; Platform consumes UTF-16 canonical ranges | Platform + Content Extractor | PENDING |
+| A2 | Include metadata preamble in canonical projection; keep metadata non-semantic | Benchmark owner + Content Extractor | PENDING |
+| A3 | Single contiguous range only; no min/max; defer span lists | Platform chunking owner | PENDING |
+| A4 | `schema_digest` population | Content Extractor #32 | SEPARATE, NON-BLOCKING |
+
+This document records proposals only. No gate is approved until the named owners respond.
+
+## Linked upstream work
+
+- `content_extractor` #33 — canonical text identity and UTF-16 ranges (A1).
+- `content_extractor` #34 — metadata preamble canonical evidence (A2).
+- `content_extractor` #32 — `schema_digest` (A4, independent).
+
+## Open questions
+
+1. Does Content Extractor accept ownership of the canonical-text projection and stable identity?
+2. Is the proposed `ct-v1:sha256:<digest>` identity format acceptable?
+3. Does the benchmark owner approve including the metadata preamble in canonical text without
+   changing frozen gold?
+4. Is `-1/-1` plus element IDs sufficient indefinitely for discontiguous evidence?
+5. Should a canonical-text projection be stored/transported inline or by reference for large
+   documents?
+6. Does the canonical-text normalization contract exactly match P1 for all supported formats?
