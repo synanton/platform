@@ -238,8 +238,8 @@ class SemanticChunkerBenchmarkTest {
     }
 
     @Test
-    void bridgesOnlyUnicodeWhiteSpaceGaps() {
-        String text = "Title\n\n\u00A0\u0085\n\nBody";
+    void bridgesOnlyPermittedCanonicalWhiteSpaceGaps() {
+        String text = "Title\n\n\u00A0\u2000\n\nBody";
         var payload = canonicalPayload(text,
             heading("Title", 1, "h1", 0, 5),
             paragraph("p1", "Body", text.indexOf("Body"), text.indexOf("Body") + 4));
@@ -250,6 +250,21 @@ class SemanticChunkerBenchmarkTest {
 
         assertThat(body.documentOffsetStart()).isZero();
         assertThat(body.documentOffsetEnd()).isEqualTo(text.length());
+    }
+
+    @Test
+    void doesNotBridgeNextLineGap() {
+        String text = "Title\n\n\u0085\n\nBody";
+        var payload = canonicalPayload(text,
+            heading("Title", 1, "h1", 0, 5),
+            paragraph("p1", "Body", text.indexOf("Body"), text.indexOf("Body") + 4));
+
+        var chunks = chunks(payload, CanonicalTextEvidence.from(payload));
+        var body = chunks.stream().filter(c -> c.type() == SemanticChunk.ChunkType.SECTION)
+            .findFirst().orElseThrow();
+
+        assertThat(body.documentOffsetStart()).isEqualTo(-1);
+        assertThat(body.metadata()).containsEntry("evidence_status", "DISCONTIGUOUS_SOURCE_EVIDENCE");
     }
 
     @Test

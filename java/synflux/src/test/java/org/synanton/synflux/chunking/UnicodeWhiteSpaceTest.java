@@ -37,9 +37,21 @@ class UnicodeWhiteSpaceTest {
     }
 
     @Test
-    void doesNotBridgeCarriageReturnInCanonicalV1() {
-        assertThat(UnicodeWhiteSpace.isBridgeableGap("\n\u00A0\u0085")).isTrue();
+    void bridgesPermittedCanonicalWhitespaceIncludingLf() {
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\n")).isTrue();
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\n\u00A0\u2000\u202F\n")).isTrue();
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\u3000")).isTrue();
+    }
+
+    @Test
+    void doesNotBridgeNonLfLineEndingsInCanonicalV1() {
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\u000B")).isFalse();
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\u000C")).isFalse();
         assertThat(UnicodeWhiteSpace.isBridgeableGap("\r")).isFalse();
         assertThat(UnicodeWhiteSpace.isBridgeableGap("\r\n")).isFalse();
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\u0085")).isFalse();
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\u2028")).isFalse();
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\u2029")).isFalse();
+        assertThat(UnicodeWhiteSpace.isBridgeableGap("\n\u00A0\u0085\n")).isFalse();
     }
 }

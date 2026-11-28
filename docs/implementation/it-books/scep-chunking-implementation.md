@@ -30,8 +30,8 @@
     `ct-v1:<canonical_text_digest>` identity, UTF-8 encoding, source document/digest/version,
     normalization profile/version, execution identity, UTF-16 unit, NFC/LF, and half-open bounds.
   - Requires every element to carry an identical canonical identity and fails closed otherwise.
-  - Bridges only gaps whose code points have the Unicode 15.1.0 UAX #44 White_Space property;
-    CR is rejected because canonical v1 uses LF line endings.
+  - Bridges only gaps whose code points have the Unicode 15.1.0 UAX #44 White_Space property and
+    are not non-LF line endings. Canonical v1 keeps LF valid and rejects VT, FF, CR, NEL, LS, and PS.
   - Never derives a range from original-source spans or descendant min/max.
   - Emits explicit `CANONICAL_EVIDENCE_UNAVAILABLE`, `DISCONTIGUOUS_SOURCE_EVIDENCE`, or invalid-evidence status.
 - Metadata preamble:
@@ -54,7 +54,8 @@
 - document-root container starting at offset zero when the heading follows a preamble;
 - `ct-v1` identity, digest, encoding, source, and normalization consistency, including fail-closed
   mixed/invalid identity cases;
-- UAX #44 White_Space boundaries (`U+0085`, `U+00A0`, and excluded code points) and CR rejection.
+- UAX #44 White_Space boundaries (`U+0085`, `U+00A0`, and excluded code points) and rejection of
+  non-LF line endings (`U+000B`, `U+000C`, `U+000D`, `U+0085`, `U+2028`, `U+2029`).
 
 Existing `SemanticChunkerTest` and `SemanticChunkStageTest` remain green. Full `:java:synflux:test` passed in 7m07s before the final defensive `keepTableAtomic` guard.
 

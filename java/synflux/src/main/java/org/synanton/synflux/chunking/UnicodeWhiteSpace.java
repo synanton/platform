@@ -39,6 +39,13 @@ final class UnicodeWhiteSpace {
     }
 
     static boolean isBridgeableGap(String value) {
-        return value.codePoints().allMatch(cp -> cp != '\r' && isWhiteSpace(cp));
+        return value.codePoints().allMatch(cp -> isWhiteSpace(cp) && !isNonLfLineEnding(cp));
+    }
+
+    private static boolean isNonLfLineEnding(int codePoint) {
+        return switch (codePoint) {
+            case 0x000B, 0x000C, 0x000D, 0x0085, 0x2028, 0x2029 -> true;
+            default -> false;
+        };
     }
 }
