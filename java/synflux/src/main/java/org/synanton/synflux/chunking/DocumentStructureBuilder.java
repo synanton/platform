@@ -49,6 +49,7 @@ public class DocumentStructureBuilder {
                 section.pageStart = pageOf(el);
                 section.pageEnd   = pageOf(el);
 
+                section.headingElement = el;
                 stack.peek().children.add(section);
                 stack.push(section);
             } else {
@@ -92,6 +93,7 @@ public class DocumentStructureBuilder {
         final List<MutableSection> children  = new ArrayList<>();
         int pageStart = -1;
         int pageEnd   = -1;
+        DocumentElement headingElement;
 
         MutableSection(String heading, int headingLevel, List<String> sectionPath, String id) {
             this.id           = id;
@@ -105,7 +107,7 @@ public class DocumentStructureBuilder {
                 id, heading, headingLevel, sectionPath,
                 List.copyOf(elements),
                 children.stream().map(MutableSection::toNode).toList(),
-                pageStart, pageEnd
+                pageStart, pageEnd, headingElement
             );
         }
     }

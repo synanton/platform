@@ -199,9 +199,13 @@ public class SynfluxConfig {
             case "fixed-window" -> new ChunkStage(targetTokens, overlapTokens);
             case "hierarchical" -> new HierarchicalChunkStage();
             case "semantic" -> new SemanticChunkStage(ChunkerConfig.of(targetTokens));
+            case "semantic-benchmark" -> new SemanticChunkStage(
+                    ChunkerConfig.benchmarkV1(),
+                    org.synanton.synflux.chunking.ChunkTextPolicy.BENCHMARK_V1);
             case "sentence" -> new SentenceChunkStage(targetTokens, 1);
             default -> throw new IllegalStateException(
-                    "unknown ingest.chunk.strategy: " + strategy + " (want fixed-window|semantic|hierarchical|sentence)");
+                    "unknown ingest.chunk.strategy: " + strategy
+                        + " (want fixed-window|semantic|semantic-benchmark|hierarchical|sentence)");
         };
     }
 
