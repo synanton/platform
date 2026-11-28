@@ -2,6 +2,8 @@ package org.synanton.synflux.chunking;
 
 import com.google.protobuf.ByteString;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.synanton.extraction.v1.CanonicalTextIdentity;
 import org.synanton.extraction.v1.CanonicalTextRange;
 import org.synanton.extraction.v1.DocumentElement;
@@ -252,9 +254,10 @@ class SemanticChunkerBenchmarkTest {
         assertThat(body.documentOffsetEnd()).isEqualTo(text.length());
     }
 
-    @Test
-    void doesNotBridgeNextLineGap() {
-        String text = "Title\n\n\u0085\n\nBody";
+    @ParameterizedTest
+    @ValueSource(strings = {"\u000B", "\u000C", "\r", "\u0085", "\u2028", "\u2029"})
+    void doesNotBridgeNonLfLineEndingGap(String lineEnding) {
+        String text = "Title\n\n" + lineEnding + "\n\nBody";
         var payload = canonicalPayload(text,
             heading("Title", 1, "h1", 0, 5),
             paragraph("p1", "Body", text.indexOf("Body"), text.indexOf("Body") + 4));
