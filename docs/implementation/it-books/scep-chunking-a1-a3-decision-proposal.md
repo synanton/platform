@@ -31,8 +31,13 @@ Contract:
    - `contract_id`: `synanton.canonical-text`
    - `contract_version`: `1`
    - `outcome`: `PROJECTION_OUTCOME_SUCCESS_LOSSLESS`
-   - `digest`: lowercase SHA-256 of the UTF-8 projection bytes.
-2. `canonical_text_digest` equals the projection digest.
+   - `digest`: `sha256:` followed by 64 lowercase hex characters.
+2. `SUCCESS_LOSSLESS` means no canonical content is omitted. It does **not** mean byte-for-byte
+   identity with the original source: NFC normalization and LF line endings are intentional
+   transformations.
+3. `canonical_text_digest` equals the projection digest, using the same `sha256:<hex>` form.
+   Bare hexadecimal digests are not used for canonical evidence; the source descriptor remains a
+   separate identity surface.
 4. `canonical_text_id` is deterministic: `ct-v1:<canonical_text_digest>`
    (for example `ct-v1:sha256:<hex>`).
 5. Every element with canonical evidence carries the same identity fields:
@@ -140,6 +145,14 @@ That would require a new gold version and is not proposed for this milestone.
 | Offsets | P1 canonical offsets remain valid |
 | Gold | No change under the recommended option |
 
+### Required regression
+
+- The exact `book` chunk text must equal the canonical projection slice `[0, nextTopLevelBoundary)`.
+- The text must include the frozen preamble: `**Author:**`, `**Edition:**`, `**Document ID:**`,
+  and the metadata comments.
+- Those metadata surfaces must not become mentions or semantic relations.
+- The frozen gold is read-only.
+
 ### Required upstream issue
 
 `content_extractor` #34 — include metadata preamble in canonical evidence if approved.
@@ -187,13 +200,7 @@ If runtime persistence must preserve the distinction, that is a separate approve
 otherwise the distinction is retained in evaluation evidence only. This limitation must not be
 hidden by inventing a range.
 
-### Exact-text regression proposal
-
-The fixture test will assert that the `book` chunk text equals the canonical projection slice from
-offset `0` to the next top-level boundary and contains the frozen preamble text. The frozen gold is
-read-only; the test compares against its existing span and does not regenerate it.
-
-Derived tests:
+### Derived tests
 
 | Case | Expected |
 |---|---|
