@@ -59,6 +59,13 @@ public record SemanticChunk(
             sourceElements, pageStart, pageEnd, tokenCount, partial, metadata, classification, sha256,
             sectionId, parentSectionId, headingLevel, documentOffsetStart, documentOffsetEnd);
     }
+
+    public SemanticChunk withEvidence(int documentOffsetStart, int documentOffsetEnd,
+                                      Map<String, Object> evidenceMetadata) {
+        return new SemanticChunk(chunkId, documentId, ordinal, type, content, structuredContent, sectionPath, heading,
+            sourceElements, pageStart, pageEnd, tokenCount, isPartialSection, evidenceMetadata, classification,
+            sha256, sectionId, parentSectionId, headingLevel, documentOffsetStart, documentOffsetEnd);
+    }
     public enum ChunkType {
         SECTION, SUBSECTION, SUBSECTION_CHUNK, PARAGRAPH, LIST, TABLE, FIGURE,
         HEADING, IMAGE, FALLBACK, CONVERSATION_TURN, IMAGE_OCR, IMAGE_DESCRIPTION,

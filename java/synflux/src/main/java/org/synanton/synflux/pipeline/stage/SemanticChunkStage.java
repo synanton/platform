@@ -1,5 +1,7 @@
 package org.synanton.synflux.pipeline.stage;
 
+import org.synanton.synflux.chunking.CanonicalTextEvidence;
+import org.synanton.synflux.chunking.ChunkTextPolicy;
 import org.synanton.synflux.chunking.DocumentStructureBuilder;
 import org.synanton.synflux.chunking.SemanticChunker;
 import org.synanton.synflux.chunking.SectionNode;
@@ -23,11 +25,17 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
     private static final Logger log = LoggerFactory.getLogger(SemanticChunkStage.class);
 
     private final ChunkerConfig config;
+    private final ChunkTextPolicy policy;
     private final DocumentStructureBuilder structureBuilder;
     private final SemanticChunker chunker;
 
     public SemanticChunkStage(ChunkerConfig config) {
+        this(config, ChunkTextPolicy.RETRIEVAL);
+    }
+
+    public SemanticChunkStage(ChunkerConfig config, ChunkTextPolicy policy) {
         this.config = config;
+        this.policy = policy;
         this.structureBuilder = new DocumentStructureBuilder();
         this.chunker = new SemanticChunker();
     }
@@ -58,7 +66,8 @@ public class SemanticChunkStage implements PipelineStage<ParsedDocument, Chunked
                 payload.getElementsCount(), doc.acquired().contentRefId());
 
             List<SectionNode> sections = structureBuilder.build(payload.getElementsList());
-            chunks = new ArrayList<>(chunker.chunk(sections, documentId, config));
+            chunks = new ArrayList<>(chunker.chunk(
+                sections, documentId, config, policy, CanonicalTextEvidence.from(payload)));
 
             if (chunks.isEmpty()) {
                 throw new StructuredChunkingRequiredException(

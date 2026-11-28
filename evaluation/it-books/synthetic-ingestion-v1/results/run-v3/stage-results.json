@@ -1,0 +1,35 @@
+{
+  "runId": "synthetic-ingestion-v1-run3",
+  "operationId": "640dad56-6e64-4b67-a2b1-8efbc7f2de77",
+  "stages": {
+    "preflight": "PASS",
+    "sourceRegistration": "PASS",
+    "extractionPayload": "PASS",
+    "structuralParsing": "PARTIAL",
+    "semanticChunking": "PARTIAL",
+    "headingContext": "PASS",
+    "chunkOrdering": "PASS",
+    "chunkCoverage": "PASS",
+    "tableAtomicity": "PASS",
+    "metadataNegativeAssertions": "PARTIAL",
+    "mentionExtraction": "NOT_RUN",
+    "canonicalResolution": "NOT_RUN",
+    "relationExtraction": "NOT_RUN",
+    "ontologyValidation": "NOT_RUN",
+    "evidenceBinding": "NOT_RUN",
+    "graphProjection": "NOT_RUN",
+    "retrieval": "CONDITIONAL"
+  },
+  "reasons": {
+    "structuralParsing": "SCEP has 51 elements/51 source locations but 0 canonical ranges; all chunk offsets are -1.",
+    "semanticChunking": "14 section-path chunks generated; canonical offsets and metadata preamble remain upstream-blocked.",
+    "metadataNegativeAssertions": "Metadata surfaces absent from chunks; mention-level checks not run and preamble is not present.",
+    "mentionExtraction": "EXTRACTION_CONSUMER_ENABLED=false.",
+    "canonicalResolution": "No resolver run.",
+    "relationExtraction": "No extraction result rows.",
+    "ontologyValidation": "Graph validation disabled.",
+    "evidenceBinding": "Not wired into this path.",
+    "graphProjection": "Graph projection disabled.",
+    "retrieval": "Projection timestamp exists; not evaluated."
+  }
+}

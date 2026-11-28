@@ -17,5 +17,6 @@ public record SectionNode(
     List<DocumentElement> elements,
     List<SectionNode> children,
     int pageStart,
-    int pageEnd
+    int pageEnd,
+    DocumentElement headingElement
 ) {}

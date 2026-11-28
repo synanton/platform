@@ -1,0 +1,15 @@
+705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/.gitattributes
+95dd4f3ba2bb0f37ad553fbe2a8468b3de400499b6d54b7cf3ad55e130abbd23  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/REPORT.md
+5623a98c0334152a2c3d4911ffe4cc47036ddd9f1bce86321c898d9beedaf5e6  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/chunk-comparison.json
+aa4b52d3e70e9dbc6cec914f8c4d7ae633b9430aa3c99e1d8ef05ee88eafd128  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/chunks.csv
+074f2e3c8f8bd160897189163bc14521d72d6da01e21e96f6ebeaf2e34f1dffd  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/extraction-evidence.json
+de9add7d6b48f08333c29820d4daba2157e5ff4961b2443e26c258da57c4bf78  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/extraction.csv
+77025ebfb12242d7c946314250ecbf7d29aa239f875a57916ce13ed1ec08ff22  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/negative-assertions.json
+4d6337e7e7463412c4694225d7e3690bef23d5de0ba7121333c6c1449db103a9  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/operation.json
+380ff4c76dc59f5049bdcef8a1b9a540e54136683b6a407306e884c2a6025513  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/run-manifest.json
+846c9e1f99402679ebd04120c40e4b8495ca0fa5a9ded29cf7671a58d4847d74  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/runs.csv
+4fb8d911983feeaba685835f59d12758bc576815e916319b51befa3f05ee23c9  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/source.json
+8c65386e01621e63c8c4e78fd412693d8fcfe0a1029efc3f8115229088427c09  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/source_versions.csv
+a85c04123d92fbbd1f3de739e962f30be8fa3186fa39b106d4788f19a695aa3d  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/stage-results.json
+44703b0e4a2e6bf618c666d49c9b27c3f7e3c42b0313fdae1eb28b300b1675ba  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/submit.json
+99b836a8621dcba717b25aa1ee9e79d35c904315fb7c428e12ff3ce2e0060051  evaluation/it-books/synthetic-ingestion-v1/results/run-v3/versions.json
