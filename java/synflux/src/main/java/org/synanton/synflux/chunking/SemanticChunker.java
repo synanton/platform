@@ -67,7 +67,8 @@ public class SemanticChunker {
         for (DocumentElement element : elements) {
             byId.put(element.getId(), element);
         }
-        Set<String> tableDescendants = tableDescendantIds(elements, byId);
+        Set<String> tableDescendants = config.keepTableAtomic()
+            ? tableDescendantIds(elements, byId) : Set.of();
         List<DocumentElement> batch = new ArrayList<>();
         int batchTokens = 0;
 

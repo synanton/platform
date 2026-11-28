@@ -1,0 +1,53 @@
+{
+  "runId": "synthetic-ingestion-v1-run3",
+  "operationId": "640dad56-6e64-4b67-a2b1-8efbc7f2de77",
+  "gold": {
+    "chunkCount": 14,
+    "uniqueSectionPaths": 14
+  },
+  "generated": {
+    "chunkCount": 14,
+    "uniqueSectionPaths": 14,
+    "allDocumentOffsetsNonNegative": false,
+    "chunkTypes": {
+      "HEADING": 3,
+      "SUBSECTION": 10,
+      "TABLE": 1
+    }
+  },
+  "coverage": {
+    "matchedSectionPaths": 14,
+    "missingSectionPaths": [],
+    "unexpectedSectionPaths": [],
+    "duplicateSectionPaths": {}
+  },
+  "containerChunks": [
+    "Distributed Systems: A Short Technical Primer",
+    "Distributed Systems: A Short Technical Primer > Chapter 1: Nodes and Communication",
+    "Distributed Systems: A Short Technical Primer > Chapter 2: Coordination and Reliability"
+  ],
+  "bookChunk": {
+    "ordinal": 0,
+    "headingLevel": 1,
+    "heading": "Distributed Systems: A Short Technical Primer",
+    "sectionPath": "Distributed Systems: A Short Technical Primer",
+    "documentOffsetStart": -1,
+    "documentOffsetEnd": -1,
+    "chunkType": "HEADING",
+    "partialSection": "False",
+    "chunkSha256": "c9a956f202dd5659e3c4e61cad16dee85dcb2d2aaa5038e622c116eee180e085",
+    "tokenCount": 11,
+    "sourceElements": [
+      "e1"
+    ]
+  },
+  "findings": [
+    "14 generated chunks match 14 gold section paths; no duplicate section path.",
+    "Book, Chapter 1, and Chapter 2 are emitted as HEADING container chunks.",
+    "Appendix A is emitted once as a TABLE chunk; descendant table rows/cells are consumed.",
+    "All document offsets remain -1 because SCEP has no canonical projection/ranges.",
+    "Book chunk is heading-only; metadata preamble is not available from SCEP and is not injected.",
+    "Benchmark text has no breadcrumb prefix and no repeated heading."
+  ],
+  "status": "PARTIAL"
+}

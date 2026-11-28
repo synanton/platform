@@ -1,0 +1,52 @@
+{
+  "runId": "synthetic-ingestion-v1-run3",
+  "operationId": "640dad56-6e64-4b67-a2b1-8efbc7f2de77",
+  "metadataSurfaces": [
+    "SPDX-License-Identifier",
+    "Author",
+    "Edition",
+    "Document ID"
+  ],
+  "metadataSurfacesFoundInChunks": [],
+  "metadataPreambleInBookChunk": false,
+  "assertions": [
+    {
+      "id": "gold:negative:no-spdx-mention",
+      "kind": "NO_MENTION",
+      "reason": "Metadata comment is not a knowledge mention.",
+      "surface": "SPDX-License-Identifier",
+      "chunkLevel": "PASS",
+      "mentionLevel": "NOT_RUN",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "gold:negative:no-author-label",
+      "kind": "NO_MENTION",
+      "reason": "Metadata field label is not a domain mention.",
+      "surface": "Author",
+      "chunkLevel": "PASS",
+      "mentionLevel": "NOT_RUN",
+      "status": "PARTIAL"
+    },
+    {
+      "id": "gold:negative:no-replication-fault-tolerance",
+      "kind": "NO_RELATION",
+      "reason": "Text explicitly denies that replication alone guarantees fault tolerance.",
+      "forbiddenPredicate": "DEPENDS_ON",
+      "chunkLevel": "NOT_APPLICABLE",
+      "relationLevel": "NOT_RUN",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "gold:negative:no-code-arrows",
+      "kind": "NO_RELATION",
+      "reason": "Code arrows and table rows are illustrative formatting.",
+      "forbiddenPredicate": "ANY",
+      "chunkLevel": "NOT_APPLICABLE",
+      "relationLevel": "NOT_RUN",
+      "status": "NOT_RUN"
+    }
+  ],
+  "status": "PARTIAL",
+  "reason": "Chunk-level metadata surfaces are absent; mention/relation extraction is disabled. The metadata preamble is absent because SCEP supplies no canonical projection/range for it."
+}

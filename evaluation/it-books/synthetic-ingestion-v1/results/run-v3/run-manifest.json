@@ -1,0 +1,111 @@
+{
+  "runManifestVersion": "synthetic-ingestion-run-v1",
+  "runId": "synthetic-ingestion-v1-run3",
+  "gitCommit": "7fc0f5558be2",
+  "configurationCommit": "7fc0f5558be2",
+  "startedAt": "2026-11-28T08:49:52.232Z",
+  "completedAt": "2026-11-28T08:49:53.299Z",
+  "fixture": {
+    "fixtureVersion": "synthetic-ingestion-v1",
+    "sourcePath": "evaluation/it-books/synthetic-ingestion-v1/source/distributed-systems-primer.md",
+    "sourceSha256": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "goldPath": "evaluation/it-books/synthetic-ingestion-v1/gold/manifest.json",
+    "goldSha256": "f12619bd00056e7e996c776f288c2c814840dae31549936e9cbb61b41f04411b"
+  },
+  "ontology": {
+    "ontologyId": "it-books",
+    "releaseId": "47fe38f8-9f72-481b-826a-6c5b12a6027a",
+    "releaseDigest": "3a4a5edf876792ac92fa63494bd7181e4d8eb3826fb70e6fe4112d796be3831c"
+  },
+  "pipeline": {
+    "source": "existing local-real-demo API",
+    "composeProject": "synanton-local-real-demo",
+    "profile": "local-real-demo",
+    "tenant": "synthetic-ingestion",
+    "chunkStrategy": "semantic-benchmark",
+    "imageTag": "run3-7fc0f5558be2",
+    "imageIds": {
+      "synflux": "sha256:8c07ecd8c0fc9db351cb87ab97ff30b9e49ef4a81077f4383e35f68aa8003bd8",
+      "synquest": "sha256:d6692a808321c7efa6b5dd5308822248b763d1078fc7f99eeaff32a2b6b6da8f",
+      "security": "sha256:1f82ed0292deeb3106e1daa80d4a78150b602e6bd126db8639b36aa1ee473acd",
+      "relix": "sha256:69d7e9b8bd3a9ef464d59e63a87c6efedcc2943197614d2d64dee4875f8bad0b",
+      "syntology": "sha256:af4e0057e1adb9497405f2a17c6f81590660ee6cc259b4ed4e6c48e08b9d9b31",
+      "extraction-gateway": "sha256:42768cd28bbe65f93f1b26a8cb495e37643c9a5394d6ee3ebc0b839f3bff0105"
+    },
+    "extractionProvider": "regex",
+    "extractionClientEnabled": true,
+    "extractionConsumerEnabled": false,
+    "semanticModelInvoked": false,
+    "graphEnabled": false,
+    "productionGraphWrites": false
+  },
+  "source": {
+    "sourceId": "synthetic-distributed-systems-primer-v1",
+    "runId": "76cc94f3-1eac-31bd-b756-16062f04ad8a",
+    "operationId": "640dad56-6e64-4b67-a2b1-8efbc7f2de77",
+    "operationStatus": "SUCCEEDED",
+    "operationOutcome": "PARTIAL",
+    "versionId": "6937e6eb-0f26-570d-aed0-76b37c91cde1",
+    "contentDigest": "db4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063",
+    "contentCacheReference": "v1:tenant_id=synthetic-ingestion&artifact_id=468ec675-1b0c-4ef0-98e0-97653f94b451&digest=sha256%3Adb4f2e992df82deb62578b0245eed4e99c04cb6bc16c88674820fbcb73add063&generation=1&serializer_version=1"
+  },
+  "stages": {
+    "preflight": "PASS",
+    "sourceRegistration": "PASS",
+    "extractionPayload": "PASS",
+    "structuralParsing": "PARTIAL",
+    "semanticChunking": "PARTIAL",
+    "headingContext": "PASS",
+    "chunkOrdering": "PASS",
+    "chunkCoverage": "PASS",
+    "tableAtomicity": "PASS",
+    "metadataNegativeAssertions": "PARTIAL",
+    "mentionExtraction": "NOT_RUN",
+    "canonicalResolution": "NOT_RUN",
+    "relationExtraction": "NOT_RUN",
+    "ontologyValidation": "NOT_RUN",
+    "evidenceBinding": "NOT_RUN",
+    "graphProjection": "NOT_RUN",
+    "retrieval": "CONDITIONAL"
+  },
+  "counts": {
+    "goldChunks": 14,
+    "generatedChunks": 14,
+    "uniqueSectionPaths": 14,
+    "containerChunks": 3,
+    "tableChunks": 1,
+    "scepElements": 51,
+    "sourceLocations": 51,
+    "canonicalRanges": 0,
+    "extractionResultRows": 0
+  },
+  "findings": [
+    "14/14 gold section paths represented.",
+    "Book, Chapter 1, and Chapter 2 containers emitted as HEADING.",
+    "Appendix A emitted once as TABLE; child rows/cells consumed.",
+    "All document offsets remain -1; SCEP canonical projection/ranges are absent.",
+    "Metadata preamble is absent from book chunk; not reconstructed.",
+    "Chunk text has no breadcrumb prefix or repeated heading."
+  ],
+  "errors": [
+    "SCEP canonical projection/ranges unavailable (content_extractor #33).",
+    "Metadata preamble evidence unavailable (content_extractor #34).",
+    "schema_digest empty; content_extractor #32."
+  ],
+  "checksums": {
+    ".gitattributes": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+    "REPORT.md": "517050633e258c3533459465b7d0a38574a395dd7f9958976e93b2ae7053427a",
+    "chunk-comparison.json": "5623a98c0334152a2c3d4911ffe4cc47036ddd9f1bce86321c898d9beedaf5e6",
+    "chunks.csv": "aa4b52d3e70e9dbc6cec914f8c4d7ae633b9430aa3c99e1d8ef05ee88eafd128",
+    "extraction-evidence.json": "074f2e3c8f8bd160897189163bc14521d72d6da01e21e96f6ebeaf2e34f1dffd",
+    "extraction.csv": "de9add7d6b48f08333c29820d4daba2157e5ff4961b2443e26c258da57c4bf78",
+    "negative-assertions.json": "77025ebfb12242d7c946314250ecbf7d29aa239f875a57916ce13ed1ec08ff22",
+    "operation.json": "4d6337e7e7463412c4694225d7e3690bef23d5de0ba7121333c6c1449db103a9",
+    "runs.csv": "846c9e1f99402679ebd04120c40e4b8495ca0fa5a9ded29cf7671a58d4847d74",
+    "source.json": "4fb8d911983feeaba685835f59d12758bc576815e916319b51befa3f05ee23c9",
+    "source_versions.csv": "8c65386e01621e63c8c4e78fd412693d8fcfe0a1029efc3f8115229088427c09",
+    "stage-results.json": "a85c04123d92fbbd1f3de739e962f30be8fa3186fa39b106d4788f19a695aa3d",
+    "submit.json": "44703b0e4a2e6bf618c666d49c9b27c3f7e3c42b0313fdae1eb28b300b1675ba",
+    "versions.json": "99b836a8621dcba717b25aa1ee9e79d35c904315fb7c428e12ff3ce2e0060051"
+  }
+}
