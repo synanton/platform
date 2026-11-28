@@ -45,8 +45,14 @@ public class SemanticChunker {
 
         List<SemanticChunk> result = new ArrayList<>();
         AtomicInteger ordinal = new AtomicInteger();
+        String documentRootId = sections.stream()
+            .filter(section -> section.headingElement() != null)
+            .map(SectionNode::id)
+            .findFirst()
+            .orElse(null);
         for (SectionNode section : sections) {
-            chunkSection(section, "", documentId, config, policy, canonical, result, ordinal);
+            chunkSection(section, "", documentId, config, policy, canonical, result, ordinal,
+                section.id().equals(documentRootId));
         }
         return Collections.unmodifiableList(result);
     }
@@ -59,7 +65,8 @@ public class SemanticChunker {
             ChunkTextPolicy policy,
             CanonicalTextEvidence canonical,
             List<SemanticChunk> out,
-            AtomicInteger ordinal) {
+            AtomicInteger ordinal,
+            boolean documentRootContainer) {
 
         int firstOwn = out.size();
         List<DocumentElement> elements = section.elements();
@@ -76,7 +83,8 @@ public class SemanticChunker {
                 && section.headingElement() != null
                 && elements.isEmpty()
                 && !section.children().isEmpty()) {
-            out.add(buildContainerChunk(section, documentId, ordinal.getAndIncrement(), canonical));
+            out.add(buildContainerChunk(section, documentId, ordinal.getAndIncrement(), canonical,
+                documentRootContainer));
         }
 
         String headingPrefix = ((policy == ChunkTextPolicy.BENCHMARK_V1 || config.includeHeadingInContent())
@@ -151,7 +159,8 @@ public class SemanticChunker {
                 c.isPartialSection() || (isBatch && batches > 1)));
         }
         for (SectionNode child : section.children()) {
-            chunkSection(child, section.id(), documentId, config, policy, canonical, out, ordinal);
+            chunkSection(child, section.id(), documentId, config, policy, canonical, out, ordinal,
+                false);
         }
     }
 
@@ -542,12 +551,14 @@ public class SemanticChunker {
             SectionNode section,
             String documentId,
             int ordinal,
-            CanonicalTextEvidence canonical) {
+            CanonicalTextEvidence canonical,
+            boolean documentRootContainer) {
 
         DocumentElement heading = section.headingElement();
         List<String> sourceIds = heading == null || heading.getId().isBlank()
             ? List.of() : List.of(heading.getId());
-        Optional<CanonicalTextEvidence.Range> range = containerRange(section, canonical);
+        Optional<CanonicalTextEvidence.Range> range =
+            containerRange(section, canonical, documentRootContainer);
         String text = range.flatMap(canonical::text).orElseGet(() -> section.heading() == null ? "" : section.heading());
         EvidenceRange evidence = range
             .map(value -> new EvidenceRange(Optional.of(value), ""))
@@ -562,18 +573,25 @@ public class SemanticChunker {
     }
 
     private static Optional<CanonicalTextEvidence.Range> containerRange(
-            SectionNode section, CanonicalTextEvidence canonical) {
+            SectionNode section,
+            CanonicalTextEvidence canonical,
+            boolean documentRootContainer) {
         if (!canonical.available() || section.headingElement() == null || section.children().isEmpty()) {
             return Optional.empty();
         }
-        Optional<CanonicalTextEvidence.Range> start = canonical.range(section.headingElement().getId());
+        Optional<CanonicalTextEvidence.Range> heading =
+            canonical.range(section.headingElement().getId());
         DocumentElement firstChildHeading = section.children().getFirst().headingElement();
         Optional<CanonicalTextEvidence.Range> end = firstChildHeading == null
             ? Optional.empty() : canonical.range(firstChildHeading.getId());
-        if (start.isEmpty() || end.isEmpty() || end.get().start() <= start.get().start()) {
+        if (heading.isEmpty() || end.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(new CanonicalTextEvidence.Range(start.get().start(), end.get().start()));
+        int start = documentRootContainer ? 0 : heading.get().start();
+        if (end.get().start() <= start) {
+            return Optional.empty();
+        }
+        return Optional.of(new CanonicalTextEvidence.Range(start, end.get().start()));
     }
 
     private static EvidenceRange contiguousEvidence(
@@ -608,16 +626,12 @@ public class SemanticChunker {
                 continue;
             }
             String gap = canonical.text(new CanonicalTextEvidence.Range(end, next.start())).orElse("");
-            if (!isUnicodeWhitespace(gap)) {
+            if (!UnicodeWhiteSpace.isBridgeableGap(gap)) {
                 return new EvidenceRange(Optional.empty(), "DISCONTIGUOUS_SOURCE_EVIDENCE");
             }
             end = next.end();
         }
         return new EvidenceRange(Optional.of(new CanonicalTextEvidence.Range(start, end)), "");
-    }
-
-    private static boolean isUnicodeWhitespace(String value) {
-        return value.codePoints().allMatch(cp -> Character.isWhitespace(cp) || Character.isSpaceChar(cp));
     }
 
     private static String evidenceReason(CanonicalTextEvidence canonical) {

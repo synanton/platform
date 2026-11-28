@@ -26,10 +26,18 @@
   - Retrieval defaults remain unchanged.
 - Canonical evidence consumption:
   - Reads `synanton.canonical-text` projection.
-  - Validates projection digest, identity, source identity, UTF-16 unit, NFC/LF, and half-open bounds.
-  - Bridges only UAX #44 White_Space gaps.
+  - Validates projection format, lossless outcome, `sha256:<64 lowercase hex>` digest,
+    `ct-v1:<canonical_text_digest>` identity, UTF-8 encoding, source document/digest/version,
+    normalization profile/version, execution identity, UTF-16 unit, NFC/LF, and half-open bounds.
+  - Requires every element to carry an identical canonical identity and fails closed otherwise.
+  - Bridges only gaps whose code points have the Unicode 15.1.0 UAX #44 White_Space property;
+    CR is rejected because canonical v1 uses LF line endings.
   - Never derives a range from original-source spans or descendant min/max.
   - Emits explicit `CANONICAL_EVIDENCE_UNAVAILABLE`, `DISCONTIGUOUS_SOURCE_EVIDENCE`, or invalid-evidence status.
+- Metadata preamble:
+  - The document-root container range is `[0, nextTopLevelBoundary)`.
+  - Its text is the canonical projection slice, so the preamble is included only when SCEP
+    supplies it in canonical text. No preamble is reconstructed or injected.
 - `SemanticChunk.withEvidence` preserves offsets and metadata.
 
 ## Tests
@@ -42,7 +50,11 @@
 - contiguous canonical offsets;
 - missing and discontiguous evidence;
 - table parent-range authority;
-- canonical preamble slice for a container.
+- canonical preamble slice for a container;
+- document-root container starting at offset zero when the heading follows a preamble;
+- `ct-v1` identity, digest, encoding, source, and normalization consistency, including fail-closed
+  mixed/invalid identity cases;
+- UAX #44 White_Space boundaries (`U+0085`, `U+00A0`, and excluded code points) and CR rejection.
 
 Existing `SemanticChunkerTest` and `SemanticChunkStageTest` remain green. Full `:java:synflux:test` passed in 7m07s before the final defensive `keepTableAtomic` guard.
 

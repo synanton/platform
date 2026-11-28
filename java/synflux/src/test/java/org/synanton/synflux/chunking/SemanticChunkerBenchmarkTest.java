@@ -6,8 +6,10 @@ import org.synanton.extraction.v1.CanonicalTextIdentity;
 import org.synanton.extraction.v1.CanonicalTextRange;
 import org.synanton.extraction.v1.DocumentElement;
 import org.synanton.extraction.v1.DocumentElementType;
+import org.synanton.extraction.v1.DocumentIdentity;
 import org.synanton.extraction.v1.DocumentPayload;
 import org.synanton.extraction.v1.DocumentProjection;
+import org.synanton.extraction.v1.ExtractionProvenance;
 import org.synanton.extraction.v1.LineEndingPolicy;
 import org.synanton.extraction.v1.OffsetUnit;
 import org.synanton.extraction.v1.ProjectionOutcome;
@@ -216,6 +218,95 @@ class SemanticChunkerBenchmarkTest {
         assertThat(container.documentOffsetEnd()).isEqualTo(prefaceStart);
     }
 
+    @Test
+    void documentRootContainerStartsAtCanonicalOffsetZeroWhenHeadingFollowsPreamble() {
+        String text = "Author: Alex\n\nBook\n\nPreface\n\nBody";
+        int bookStart = text.indexOf("Book");
+        int prefaceStart = text.indexOf("Preface");
+        var payload = canonicalPayload(text,
+            heading("Book", 1, "h1", bookStart, bookStart + 4),
+            heading("Preface", 2, "h2", prefaceStart, prefaceStart + 7),
+            paragraph("p1", "Body", text.indexOf("Body"), text.indexOf("Body") + 4));
+
+        var chunks = chunks(payload, CanonicalTextEvidence.from(payload));
+        var container = chunks.stream().filter(c -> c.type() == SemanticChunk.ChunkType.HEADING)
+            .findFirst().orElseThrow();
+
+        assertThat(container.content()).isEqualTo("Author: Alex\n\nBook\n\n");
+        assertThat(container.documentOffsetStart()).isZero();
+        assertThat(container.documentOffsetEnd()).isEqualTo(prefaceStart);
+    }
+
+    @Test
+    void bridgesOnlyUnicodeWhiteSpaceGaps() {
+        String text = "Title\n\n\u00A0\u0085\n\nBody";
+        var payload = canonicalPayload(text,
+            heading("Title", 1, "h1", 0, 5),
+            paragraph("p1", "Body", text.indexOf("Body"), text.indexOf("Body") + 4));
+
+        var chunks = chunks(payload, CanonicalTextEvidence.from(payload));
+        var body = chunks.stream().filter(c -> c.type() == SemanticChunk.ChunkType.SECTION)
+            .findFirst().orElseThrow();
+
+        assertThat(body.documentOffsetStart()).isZero();
+        assertThat(body.documentOffsetEnd()).isEqualTo(text.length());
+    }
+
+    @Test
+    void doesNotBridgeZeroWidthSpaceGap() {
+        String text = "Title\n\n\u200B\n\nBody";
+        var payload = canonicalPayload(text,
+            heading("Title", 1, "h1", 0, 5),
+            paragraph("p1", "Body", text.indexOf("Body"), text.indexOf("Body") + 4));
+
+        var chunks = chunks(payload, CanonicalTextEvidence.from(payload));
+        var body = chunks.stream().filter(c -> c.type() == SemanticChunk.ChunkType.SECTION)
+            .findFirst().orElseThrow();
+
+        assertThat(body.documentOffsetStart()).isEqualTo(-1);
+        assertThat(body.metadata()).containsEntry("evidence_status", "DISCONTIGUOUS_SOURCE_EVIDENCE");
+    }
+
+    @Test
+    void rejectsCanonicalIdentityWhoseIdDoesNotMatchDigest() {
+        String text = "Title\n\nBody";
+        var payload = canonicalPayload(text,
+            heading("Title", 1, "h1", 0, 5),
+            paragraph("p1", "Body", 7, 11));
+        var first = payload.getElements(0);
+        var broken = first.toBuilder()
+            .setCanonicalTextRange(first.getCanonicalTextRange().toBuilder()
+                .setIdentity(first.getCanonicalTextRange().getIdentity().toBuilder()
+                    .setCanonicalTextId("ct-v1:sha256:test")))
+            .build();
+        var invalid = payload.toBuilder().setElements(0, broken).build();
+
+        var evidence = CanonicalTextEvidence.from(invalid);
+
+        assertThat(evidence.available()).isFalse();
+        assertThat(evidence.reason()).isEqualTo("CANONICAL_ELEMENT_RANGE_INVALID");
+    }
+
+    @Test
+    void rejectsMixedCanonicalIdentityAcrossElements() {
+        String text = "Title\n\nBody";
+        var payload = canonicalPayload(text,
+            heading("Title", 1, "h1", 0, 5),
+            paragraph("p1", "Body", 7, 11));
+        var second = payload.getElements(1);
+        var mixed = second.toBuilder()
+            .setCanonicalTextRange(second.getCanonicalTextRange().toBuilder()
+                .setIdentity(second.getCanonicalTextRange().getIdentity().toBuilder()
+                    .setNormalizationProfile("other-profile")))
+            .build();
+        var invalid = payload.toBuilder().setElements(1, mixed).build();
+
+        var evidence = CanonicalTextEvidence.from(invalid);
+
+        assertThat(evidence.available()).isFalse();
+        assertThat(evidence.reason()).isEqualTo("CANONICAL_IDENTITY_MIXED");
+    }
+
     private List<SemanticChunk> chunks(DocumentPayload payload, CanonicalTextEvidence canonical) {
         var sections = builder.build(payload.getElementsList());
         return chunker.chunk(sections, "doc", ChunkerConfig.benchmarkV1(),
@@ -262,11 +353,13 @@ class SemanticChunkerBenchmarkTest {
     private static DocumentPayload canonicalPayload(String text, DocumentElement... elements) {
         byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
         String digest = sha256(bytes);
-        String sourceDigest = "source-digest";
+        String sourceDigest = "sha256:source-digest";
         var payload = DocumentPayload.newBuilder()
             .setMediaType("text/markdown")
+            .setIdentity(DocumentIdentity.newBuilder().setDocumentId("doc"))
             .setSource(SourceDescriptor.newBuilder().setMediaType("text/markdown")
                 .setSourceFormat("markdown").setSourceDigest(sourceDigest).setSourceVersion("v1"))
+            .setProvenance(ExtractionProvenance.newBuilder().setPrimaryExecutionId("exec-1"))
             .addProjections(DocumentProjection.newBuilder()
                 .setProjectionId("canonical-text")
                 .setContractId("synanton.canonical-text")
@@ -288,14 +381,16 @@ class SemanticChunkerBenchmarkTest {
     }
 
     private static CanonicalTextRange range(int start, int end, String sourceDigest, String textDigest) {
+        String canonicalDigest = "sha256:" + textDigest;
         return CanonicalTextRange.newBuilder()
             .setIdentity(CanonicalTextIdentity.newBuilder()
-                .setCanonicalTextId("ct-v1:sha256:test")
-                .setCanonicalTextDigest("sha256:" + textDigest)
+                .setCanonicalTextId("ct-v1:" + canonicalDigest)
+                .setCanonicalTextDigest(canonicalDigest)
                 .setEncoding("UTF-8")
                 .setSourceDocumentId("doc")
                 .setSourceDigest(sourceDigest)
                 .setSourceVersion("v1")
+                .setExtractionExecutionId("exec-1")
                 .setNormalizationProfile("p1-markdown")
                 .setNormalizationVersion("1")
                 .setProjectionContractId("synanton.canonical-text")
