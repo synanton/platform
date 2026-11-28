@@ -172,9 +172,14 @@ That would require a new gold version and is not proposed for this milestone.
 
 1. Emit one half-open canonical range only when the complete chunk is contiguous in canonical text.
 2. Operationally, the canonical ranges of the heading and all included content must union into one
-   continuous interval with no gap containing excluded content. Gaps containing only canonical
-   whitespace/separators are contiguous; a gap containing excluded non-whitespace content is
-   discontiguous.
+   continuous interval after bridging gaps that contain only canonical whitespace. A gap is
+   bridgeable only when every code point in it has the Unicode `White_Space` property
+   (`UnicodeData.txt` / UAX #44). This is a Unicode code-point test, not a language-specific
+   `isWhitespace` shortcut.
+   - `v1` canonical text uses LF line endings. CR and other line-ending forms are invalid canonical
+     evidence, not bridgeable whitespace.
+   - Any gap containing an excluded non-whitespace code point is discontiguous.
+   - Bridging does not extend into excluded semantic content or alter the chunk text.
 3. For a TABLE chunk, use the TABLE element's declared canonical range. Nested TABLE_ROW/TABLE_CELL
    ranges must lie inside it. Never derive the table range from the minimum/maximum descendant
    offsets.
@@ -206,7 +211,9 @@ hidden by inventing a range.
 |---|---|
 | Heading + body contiguous | One range |
 | Table + nested cells with contiguous table span | One table range |
-| Two included spans separated by excluded content | `-1/-1`, element IDs, discontiguous reason |
+| Two included spans separated by Unicode whitespace | one bridged range |
+| Two included spans separated by excluded non-whitespace | `-1/-1`, element IDs, discontiguous reason |
+| Gap containing CR in canonical v1 | invalid canonical evidence, not bridged |
 | Table parent range plus nested row/cell ranges | uses parent TABLE range, never min/max |
 | Missing canonical identity | `-1/-1`, missing-evidence reason |
 | No consumer for multi-span | No span-list schema change |
